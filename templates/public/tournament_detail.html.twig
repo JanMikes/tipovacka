@@ -7,7 +7,11 @@
     <div class="mb-8">
         <div class="flex items-center gap-3 mb-2 flex-wrap">
             <h1 class="text-3xl font-bold text-[#081e44]">{{ tournament.name }}</h1>
-            <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Veřejný</span>
+            {% if tournament.isPublic %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Veřejný</span>
+            {% else %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Soukromý</span>
+            {% endif %}
             {% if tournament.isFinished %}
                 <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">Ukončen</span>
             {% endif %}
@@ -39,7 +43,7 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm p-6">
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
         <h2 class="text-lg font-semibold text-[#081e44] mb-4">Skupiny</h2>
 
         {% if groups|length == 0 %}
@@ -70,6 +74,38 @@
                                 <span class="text-xs text-gray-500">Ověřte e-mail pro připojení</span>
                             {% endif %}
                         </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-[#081e44] mb-4">Zápasy</h2>
+
+        {% set matches = sport_matches ?? [] %}
+        {% if matches|length == 0 %}
+            <p class="text-sm text-gray-500">V tomto turnaji zatím nejsou žádné zápasy.</p>
+        {% else %}
+            <ul class="divide-y divide-gray-100">
+                {% for m in matches %}
+                    <li class="py-3 flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <span class="font-medium">{{ m.homeTeam }} vs {{ m.awayTeam }}</span>
+                            <span class="text-xs text-gray-500 ml-2">{{ m.kickoffAt|date('d. m. Y H:i') }}</span>
+                        </div>
+                        <span class="ml-3 text-xs px-2 py-0.5 rounded
+                            {% if m.state.value == 'scheduled' %}bg-blue-100 text-blue-800
+                            {% elseif m.state.value == 'live' %}bg-orange-100 text-orange-800
+                            {% elseif m.state.value == 'finished' %}bg-green-100 text-green-800
+                            {% elseif m.state.value == 'postponed' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-200 text-gray-800{% endif %}">
+                            {% if m.state.value == 'scheduled' %}Naplánován
+                            {% elseif m.state.value == 'live' %}Probíhá
+                            {% elseif m.state.value == 'finished' %}{{ m.homeScore }} : {{ m.awayScore }}
+                            {% elseif m.state.value == 'postponed' %}Odložen
+                            {% else %}Zrušen{% endif %}
+                        </span>
                     </li>
                 {% endfor %}
             </ul>

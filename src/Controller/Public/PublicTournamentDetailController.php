@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Controller\Public;
 
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
 use App\Exception\TournamentNotFound;
 use App\Query\ListGroupsForTournament\ListGroupsForTournament;
+use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
 use App\Query\QueryBus;
 use App\Repository\MembershipRepository;
 use App\Repository\TournamentRepository;
+use App\Voter\TournamentVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,11 +37,12 @@ final class PublicTournamentDetailController extends AbstractController
             throw new NotFoundHttpException($e->getMessage(), $e);
         }
 
-        if (TournamentVisibility::Public !== $tournament->visibility || null !== $tournament->deletedAt) {
+        if (null !== $tournament->deletedAt || !$this->isGranted(TournamentVoter::VIEW, $tournament)) {
             throw new NotFoundHttpException('Tournament not found.');
         }
 
         $groups = $this->queryBus->handle(new ListGroupsForTournament(tournamentId: $tournament->id));
+        $matches = $this->queryBus->handle(new ListTournamentSportMatches(tournamentId: $tournament->id));
 
         $user = $this->getUser();
         $memberGroupIds = [];
@@ -55,6 +57,7 @@ final class PublicTournamentDetailController extends AbstractController
         return $this->render('public/tournament_detail.html.twig', [
             'tournament' => $tournament,
             'groups' => $groups,
+            'sport_matches' => $matches,
             'member_group_ids' => $memberGroupIds,
         ]);
     }
