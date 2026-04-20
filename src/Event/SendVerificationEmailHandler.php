@@ -27,7 +27,7 @@ final readonly class SendVerificationEmailHandler
 
         // Passwordless users (e.g. created during guest checkout) cannot log in,
         // so sending a verification email would be confusing and pointless.
-        if (!$user->hasPassword()) {
+        if (!$user->hasPassword) {
             return;
         }
 

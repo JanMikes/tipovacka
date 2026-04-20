@@ -34,7 +34,7 @@ class LoginSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if (!$user->isVerified()) {
+        if (!$user->isVerified) {
             // User needs email verification
             $request = $this->requestStack->getCurrentRequest();
             if (null !== $request && $request->hasSession()) {

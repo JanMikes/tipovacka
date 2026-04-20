@@ -86,7 +86,8 @@ class User
 - ID generated externally via `ProvideIdentity`, passed to constructor
 - Let Doctrine infer types from PHP; use `Types::` constants only when needed (TEXT, DECIMAL)
 - Explicit table name only for SQL reserved words (`#[ORM\Table(name: 'users')]`)
-- No getters - use property hooks or direct property access
+- No getters — use property hooks or direct property access
+- **Do not write trivial accessor methods like `isX(): bool`, `getX(): T`, `hasX(): bool`.** If the state can be exposed directly, declare the backing field `public private(set)` (or `public readonly` for constructor-only fields) and read the property directly: `$user->isVerified`, NOT `$user->isVerified()`. If the accessor computes something non-trivial (e.g. `hasPassword = null !== $this->password && '' !== $this->password`), use a virtual property with a `get` hook: `public bool $hasPassword { get => ...; }`. Methods like `getUserIdentifier()`, `getRoles()`, `getPassword()` are allowed **only** because Symfony Security interfaces require them.
 
 ### Repositories (Composition)
 

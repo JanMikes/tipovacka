@@ -30,10 +30,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
     private array $roles;
 
     #[ORM\Column]
-    private bool $isVerified = false;
+    public private(set) bool $isVerified = false;
 
     #[ORM\Column]
-    private bool $isActive = true;
+    public private(set) bool $isActive = true;
+
+    public bool $hasPassword {
+        get => null !== $this->password && '' !== $this->password;
+    }
 
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
@@ -90,11 +94,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         return $this->password;
     }
 
-    public function hasPassword(): bool
-    {
-        return null !== $this->password && '' !== $this->password;
-    }
-
     public function changePassword(string $hashedPassword, \DateTimeImmutable $now): void
     {
         $this->password = $hashedPassword;
@@ -110,16 +109,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
     public function getRoles(): array
     {
         return $this->roles;
-    }
-
-    public function isVerified(): bool
-    {
-        return $this->isVerified;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->isActive;
     }
 
     public function markAsVerified(\DateTimeImmutable $now): void

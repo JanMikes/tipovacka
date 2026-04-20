@@ -20,8 +20,8 @@ final class FixtureLoadingTest extends IntegrationTestCase
         self::assertNotNull($user);
         self::assertSame(AppFixtures::ADMIN_EMAIL, $user->email);
         self::assertSame(AppFixtures::ADMIN_NICKNAME, $user->nickname);
-        self::assertTrue($user->isVerified());
-        self::assertTrue($user->isActive());
+        self::assertTrue($user->isVerified);
+        self::assertTrue($user->isActive);
         self::assertFalse($user->isDeleted());
         self::assertContains('ROLE_ADMIN', $user->getRoles());
     }
@@ -31,7 +31,7 @@ final class FixtureLoadingTest extends IntegrationTestCase
         $user = $this->entityManager()->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
 
         self::assertNotNull($user);
-        self::assertTrue($user->isVerified());
+        self::assertTrue($user->isVerified);
         self::assertFalse($user->isDeleted());
     }
 
@@ -40,7 +40,7 @@ final class FixtureLoadingTest extends IntegrationTestCase
         $user = $this->entityManager()->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
 
         self::assertNotNull($user);
-        self::assertFalse($user->isVerified());
+        self::assertFalse($user->isVerified);
     }
 
     public function testDeletedUserLoaded(): void
