@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Auth;
 
 use App\Command\RegisterUser\RegisterUserCommand;
+use App\Entity\User;
 use App\Exception\NicknameAlreadyTaken;
 use App\Exception\UserAlreadyExists;
 use App\Form\RegistrationFormData;
 use App\Form\RegistrationFormType;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +25,8 @@ final class RegistrationController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $commandBus,
+        private readonly UserRepository $userRepository,
+        private readonly Security $security,
     ) {
     }
 
@@ -44,6 +49,11 @@ final class RegistrationController extends AbstractController
                 ));
 
                 $this->addFlash('success', 'Registrace proběhla úspěšně. Zkontrolujte svoji e-mailovou schránku pro ověření.');
+
+                $user = $this->userRepository->findByEmail($formData->email);
+                assert($user instanceof User, 'Just-registered user must exist.');
+
+                $this->security->login($user);
 
                 return $this->redirectToRoute('app_verify_email_pending');
             } catch (HandlerFailedException $e) {

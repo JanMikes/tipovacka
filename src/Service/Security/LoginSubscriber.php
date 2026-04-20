@@ -55,10 +55,18 @@ final class LoginSubscriber implements EventSubscriberInterface
         $flashBag = (null !== $request && $request->hasSession()) ? $request->getSession()->getFlashBag() : null;
 
         if (!$user->isVerified) {
-            $flashBag?->add(
-                'warning',
-                'Nejprve ověřte svou e-mailovou adresu. Zkontrolujte svoji e-mailovou schránku.'
-            );
+            $currentRoute = $request?->attributes->get('_route');
+
+            // During registration, the controller already shows a richer success flash
+            // ("Registrace proběhla úspěšně. Zkontrolujte…"), so the generic warning
+            // would duplicate it. Only add the warning when the user is re-logging in
+            // to an unverified account.
+            if ('app_register' !== $currentRoute) {
+                $flashBag?->add(
+                    'warning',
+                    'Nejprve ověřte svou e-mailovou adresu. Zkontrolujte svoji e-mailovou schránku.'
+                );
+            }
 
             $event->setResponse(
                 new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'))

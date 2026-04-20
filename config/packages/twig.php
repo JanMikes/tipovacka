@@ -7,6 +7,9 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 return App::config([
     'twig' => [
         'file_name_pattern' => '*.twig',
+        'form_themes' => [
+            'form/_form_theme.html.twig',
+        ],
         'date' => [
             'timezone' => 'Europe/Prague',
         ],

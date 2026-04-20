@@ -33,7 +33,7 @@ final class TournamentRuleConfigurationFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $nonOwner = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        $nonOwner = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
         self::assertNotNull($nonOwner);
         $client->loginUser($nonOwner);
 

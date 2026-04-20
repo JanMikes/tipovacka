@@ -38,6 +38,10 @@ final class AppFixtures extends Fixture
     public const string VERIFIED_USER_EMAIL = 'user@tipovacka.test';
     public const string VERIFIED_USER_NICKNAME = 'tipovac';
 
+    public const string SECOND_VERIFIED_USER_ID = '01933333-0000-7000-8000-000000000099';
+    public const string SECOND_VERIFIED_USER_EMAIL = 'other@tipovacka.test';
+    public const string SECOND_VERIFIED_USER_NICKNAME = 'druhy_tipovac';
+
     public const string UNVERIFIED_USER_ID = '01933333-0000-7000-8000-000000000003';
     public const string UNVERIFIED_USER_EMAIL = 'unverified@tipovacka.test';
     public const string UNVERIFIED_USER_NICKNAME = 'novy_uzivatel';
@@ -142,6 +146,21 @@ final class AppFixtures extends Fixture
         $verified->markAsVerified($now);
         $verified->popEvents();
         $manager->persist($verified);
+
+        $secondVerified = new User(
+            id: Uuid::fromString(self::SECOND_VERIFIED_USER_ID),
+            email: self::SECOND_VERIFIED_USER_EMAIL,
+            password: null,
+            nickname: self::SECOND_VERIFIED_USER_NICKNAME,
+            createdAt: $now,
+        );
+        $secondVerified->changePassword(
+            $this->passwordHasher->hashPassword($secondVerified, self::DEFAULT_PASSWORD),
+            $now,
+        );
+        $secondVerified->markAsVerified($now);
+        $secondVerified->popEvents();
+        $manager->persist($secondVerified);
 
         $unverified = new User(
             id: Uuid::fromString(self::UNVERIFIED_USER_ID),

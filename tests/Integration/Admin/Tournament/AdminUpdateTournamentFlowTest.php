@@ -42,7 +42,7 @@ final class AdminUpdateTournamentFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $user = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
         self::assertNotNull($user);
         $client->loginUser($user);
 

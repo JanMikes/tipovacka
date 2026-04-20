@@ -17,3 +17,18 @@
         cursor: not-allowed;
     }
 }
+
+/* Danger border for inputs that failed server-side validation. Symfony's
+   form component sets aria-invalid="true" automatically on fields with
+   errors. Utilities layer wins over the default .border-gray-300 set on
+   form widgets in individual templates. */
+@layer utilities {
+    [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]) {
+        border-color: var(--color-red-400);
+    }
+
+    [aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]):focus {
+        --tw-ring-color: var(--color-red-400);
+        border-color: var(--color-red-400);
+    }
+}
