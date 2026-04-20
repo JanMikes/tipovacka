@@ -6,10 +6,15 @@ namespace App\Controller\Portal\Group;
 
 use App\Entity\User;
 use App\Enum\UserRole;
+use App\Form\SendInvitationFormData;
+use App\Form\SendInvitationFormType;
 use App\Query\GetGroupDetail\GetGroupDetail;
+use App\Query\ListPendingInvitationsForGroup\ListPendingInvitationsForGroup;
+use App\Query\ListPendingJoinRequestsForGroup\ListPendingJoinRequestsForGroup;
 use App\Query\QueryBus;
 use App\Repository\GroupRepository;
 use App\Voter\GroupVoter;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,6 +31,7 @@ final class GroupDetailController extends AbstractController
     public function __construct(
         private readonly GroupRepository $groupRepository,
         private readonly QueryBus $queryBus,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -45,9 +51,33 @@ final class GroupDetailController extends AbstractController
             viewerIsAdmin: $isAdmin,
         ));
 
+        $canInvite = $this->isGranted(GroupVoter::INVITE_MEMBER, $group);
+        $canManage = $this->isGranted(GroupVoter::MANAGE_MEMBERS, $group);
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+
+        $pendingInvitations = $canInvite
+            ? $this->queryBus->handle(new ListPendingInvitationsForGroup(
+                groupId: $group->id,
+                now: $now,
+            ))
+            : [];
+
+        $pendingJoinRequests = ($canManage && $group->tournament->isPublic)
+            ? $this->queryBus->handle(new ListPendingJoinRequestsForGroup(
+                groupId: $group->id,
+            ))
+            : [];
+
+        $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
+            'action' => $this->generateUrl('portal_group_invitation_send', ['id' => $group->id->toRfc4122()]),
+        ]);
+
         return $this->render('portal/group/detail.html.twig', [
             'group' => $group,
             'detail' => $detail,
+            'invitationForm' => $invitationForm->createView(),
+            'pendingInvitations' => $pendingInvitations,
+            'pendingJoinRequests' => $pendingJoinRequests,
         ]);
     }
 }

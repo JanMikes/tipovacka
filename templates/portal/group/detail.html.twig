@@ -83,6 +83,90 @@
         </div>
     {% endif %}
 
+    {% if is_granted('group_invite_member', group) %}
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Pozvánky e-mailem</h2>
+
+            {{ form_start(invitationForm, {attr: {class: 'mb-6'}}) }}
+                <div class="flex gap-3 flex-wrap items-end">
+                    <div class="flex-1 min-w-[220px]">
+                        {{ form_row(invitationForm.email) }}
+                    </div>
+                    <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+                        Odeslat pozvánku
+                    </button>
+                </div>
+            {{ form_end(invitationForm) }}
+
+            {% if pendingInvitations|length > 0 %}
+                <p class="text-sm font-medium text-gray-500 mb-2">Čekající pozvánky</p>
+                <ul class="divide-y divide-gray-100">
+                    {% for inv in pendingInvitations %}
+                        <li class="py-3 flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                                <span class="font-medium text-[#081e44]">{{ inv.email }}</span>
+                                <p class="text-xs text-gray-500">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('d. m. Y H:i') }} · vyprší {{ inv.expiresAt|date('d. m. Y') }}</p>
+                            </div>
+                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('invitation_revoke_' ~ inv.invitationId.toRfc4122) }}">
+                                <button
+                                    type="submit"
+                                    class="text-sm text-red-600 hover:underline"
+                                    onclick="return confirm('Opravdu chceš pozvánku zrušit?')"
+                                >
+                                    Zrušit
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">Žádné čekající pozvánky.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if is_granted('group_manage_members', group) and group.tournament.isPublic %}
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Žádosti o připojení</h2>
+
+            {% if pendingJoinRequests|length > 0 %}
+                <ul class="divide-y divide-gray-100">
+                    {% for req in pendingJoinRequests %}
+                        <li class="py-3 flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                                <span class="font-medium text-[#081e44]">{{ req.nickname }}</span>
+                                <p class="text-xs text-gray-500">Žádost {{ req.requestedAt|date('d. m. Y H:i') }}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <form method="post" action="{{ path('portal_join_request_approve', {requestId: req.requestId.toRfc4122}) }}" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('join_request_approve_' ~ req.requestId.toRfc4122) }}">
+                                    <button
+                                        type="submit"
+                                        class="text-sm bg-green-600 hover:bg-green-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
+                                    >
+                                        Schválit
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('join_request_reject_' ~ req.requestId.toRfc4122) }}">
+                                    <button
+                                        type="submit"
+                                        class="text-sm bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
+                                    >
+                                        Zamítnout
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-sm text-gray-500">Žádné čekající žádosti.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <h2 class="text-lg font-semibold text-[#081e44] mb-4">Členové ({{ detail.members|length }})</h2>
         <ul class="divide-y divide-gray-100">

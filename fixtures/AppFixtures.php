@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Group;
+use App\Entity\GroupInvitation;
+use App\Entity\GroupJoinRequest;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\Tournament;
@@ -56,6 +58,12 @@ final class AppFixtures extends Fixture
 
     public const string VERIFIED_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
     public const string PUBLIC_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
+
+    public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
+    public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
+    public const string PENDING_INVITATION_EMAIL = 'outsider@tipovacka.test';
+
+    public const string PENDING_JOIN_REQUEST_ID = '019ccccc-0000-7000-8000-000000000002';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -208,6 +216,28 @@ final class AppFixtures extends Fixture
         );
         $publicOwnerMembership->popEvents();
         $manager->persist($publicOwnerMembership);
+
+        $pendingInvitation = new GroupInvitation(
+            id: Uuid::fromString(self::PENDING_INVITATION_ID),
+            group: $publicGroup,
+            inviter: $admin,
+            email: self::PENDING_INVITATION_EMAIL,
+            token: self::PENDING_INVITATION_TOKEN,
+            createdAt: $now,
+            expiresAt: $now->modify('+7 days'),
+        );
+        $pendingInvitation->popEvents();
+        $manager->persist($pendingInvitation);
+
+        // Verified user is not a member of PUBLIC_GROUP, so a pending join request is valid.
+        $pendingJoinRequest = new GroupJoinRequest(
+            id: Uuid::fromString(self::PENDING_JOIN_REQUEST_ID),
+            group: $publicGroup,
+            user: $verified,
+            requestedAt: $now,
+        );
+        $pendingJoinRequest->popEvents();
+        $manager->persist($pendingJoinRequest);
 
         $manager->flush();
     }

@@ -286,4 +286,121 @@ final class GroupVoterTest extends TestCase
 
         self::assertSame(-1, $this->voter->vote($this->token($other), $group, [GroupVoter::LEAVE]));
     }
+
+    public function testMemberCanInviteMember(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::MEMBER_ID);
+        $group = $this->makeGroup($owner);
+        $this->markAsMember($member, $group);
+
+        self::assertSame(1, $this->voter->vote($this->token($member), $group, [GroupVoter::INVITE_MEMBER]));
+    }
+
+    public function testOwnerCanInviteMember(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $group = $this->makeGroup($owner);
+
+        self::assertSame(1, $this->voter->vote($this->token($owner), $group, [GroupVoter::INVITE_MEMBER]));
+    }
+
+    public function testNonMemberCannotInviteMember(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $other = $this->makeUser(self::NON_OWNER_ID);
+        $group = $this->makeGroup($owner);
+
+        self::assertSame(-1, $this->voter->vote($this->token($other), $group, [GroupVoter::INVITE_MEMBER]));
+    }
+
+    public function testInviteBlockedWhenTournamentFinished(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $tournament = $this->makeTournament($owner, finished: true);
+        $group = $this->makeGroup($owner, $tournament);
+
+        self::assertSame(-1, $this->voter->vote($this->token($owner), $group, [GroupVoter::INVITE_MEMBER]));
+    }
+
+    public function testInviteBlockedWhenGroupDeleted(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $group = $this->makeGroup($owner, deleted: true);
+
+        self::assertSame(-1, $this->voter->vote($this->token($owner), $group, [GroupVoter::INVITE_MEMBER]));
+    }
+
+    public function testRequestJoinDeniedForPrivateTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $outsider = $this->makeUser(self::NON_OWNER_ID);
+        $group = $this->makeGroup($owner);
+
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $group, [GroupVoter::REQUEST_JOIN]));
+    }
+
+    public function testRequestJoinAllowedForPublicTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $outsider = $this->makeUser(self::NON_OWNER_ID);
+        $tournament = $this->makePublicTournament($owner);
+        $group = $this->makeGroup($owner, $tournament);
+
+        self::assertSame(1, $this->voter->vote($this->token($outsider), $group, [GroupVoter::REQUEST_JOIN]));
+    }
+
+    public function testRequestJoinDeniedForMember(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::MEMBER_ID);
+        $tournament = $this->makePublicTournament($owner);
+        $group = $this->makeGroup($owner, $tournament);
+        $this->markAsMember($member, $group);
+
+        self::assertSame(-1, $this->voter->vote($this->token($member), $group, [GroupVoter::REQUEST_JOIN]));
+    }
+
+    public function testRequestJoinDeniedForUnverifiedUser(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $outsider = $this->makeUser(self::NON_OWNER_ID, verified: false);
+        $tournament = $this->makePublicTournament($owner);
+        $group = $this->makeGroup($owner, $tournament);
+
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $group, [GroupVoter::REQUEST_JOIN]));
+    }
+
+    public function testRequestJoinDeniedWhenTournamentFinished(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $outsider = $this->makeUser(self::NON_OWNER_ID);
+        $tournament = $this->makePublicTournament($owner, finished: true);
+        $group = $this->makeGroup($owner, $tournament);
+
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $group, [GroupVoter::REQUEST_JOIN]));
+    }
+
+    private function makePublicTournament(User $owner, bool $finished = false): Tournament
+    {
+        $tournament = new Tournament(
+            id: Uuid::fromString(AppFixtures::PUBLIC_TOURNAMENT_ID),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            owner: $owner,
+            visibility: TournamentVisibility::Public,
+            name: 'Veřejný turnaj',
+            description: null,
+            startAt: null,
+            endAt: null,
+            createdAt: $this->now,
+        );
+
+        if ($finished) {
+            $tournament->markFinished($this->now);
+        }
+
+        $tournament->popEvents();
+
+        return $tournament;
+    }
 }

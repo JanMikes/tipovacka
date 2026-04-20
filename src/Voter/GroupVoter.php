@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<'group_view'|'group_edit'|'group_delete'|'group_manage_members'|'group_join'|'group_leave', Group>
+ * @extends Voter<'group_view'|'group_edit'|'group_delete'|'group_manage_members'|'group_join'|'group_leave'|'group_invite_member'|'group_request_join', Group>
  */
 final class GroupVoter extends Voter
 {
@@ -23,6 +23,8 @@ final class GroupVoter extends Voter
     public const string MANAGE_MEMBERS = 'group_manage_members';
     public const string JOIN = 'group_join';
     public const string LEAVE = 'group_leave';
+    public const string INVITE_MEMBER = 'group_invite_member';
+    public const string REQUEST_JOIN = 'group_request_join';
 
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
@@ -38,6 +40,8 @@ final class GroupVoter extends Voter
             self::MANAGE_MEMBERS,
             self::JOIN,
             self::LEAVE,
+            self::INVITE_MEMBER,
+            self::REQUEST_JOIN,
         ], true) && $subject instanceof Group;
     }
 
@@ -61,6 +65,12 @@ final class GroupVoter extends Voter
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
             self::JOIN => $currentUser->isVerified && !$subject->tournament->isFinished && $subject->isNotDeleted,
             self::LEAVE => $isMember && !$isOwner,
+            self::INVITE_MEMBER => $isMember && $subject->isNotDeleted && !$subject->tournament->isFinished,
+            self::REQUEST_JOIN => $subject->tournament->isPublic
+                && $subject->isNotDeleted
+                && !$subject->tournament->isFinished
+                && $currentUser->isVerified
+                && !$isMember,
         };
     }
 }
