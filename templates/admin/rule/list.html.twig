@@ -2,33 +2,39 @@
 
 {% block title %}Pravidla — Admin — Tipovačka{% endblock %}
 
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li class="text-gray-700 font-medium" aria-current="page">Pravidla</li>
+{% endblock %}
+
+{% block admin_title %}Registrovaná pravidla{% endblock %}
+{% block admin_subtitle %}Tento přehled je pouze pro čtení. Body pro konkrétní turnaj lze upravit v jeho nastavení.{% endblock %}
+
 {% block admin_body %}
-<h1 class="text-2xl font-bold text-[#081e44] mb-4">Registrovaná pravidla</h1>
-
-<p class="text-sm text-gray-600 mb-4">Tento přehled je pouze pro čtení. Body pro konkrétní turnaj lze upravit v jeho nastavení.</p>
-
-<div class="bg-white rounded-2xl shadow overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-4 py-2">Identifikátor</th>
-                <th class="text-left px-4 py-2">Název</th>
-                <th class="text-left px-4 py-2">Popis</th>
-                <th class="text-left px-4 py-2">Výchozí body</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rule in rules %}
-                <tr class="border-t">
-                    <td class="px-4 py-2 font-mono text-xs">{{ rule.identifier }}</td>
-                    <td class="px-4 py-2">{{ rule.label }}</td>
-                    <td class="px-4 py-2 text-gray-600">{{ rule.description }}</td>
-                    <td class="px-4 py-2">{{ rule.defaultPoints }}</td>
+<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600">
+                <tr>
+                    <th class="text-left px-4 py-3 font-semibold">Identifikátor</th>
+                    <th class="text-left px-4 py-3 font-semibold">Název</th>
+                    <th class="text-left px-4 py-3 font-semibold">Popis</th>
+                    <th class="text-left px-4 py-3 font-semibold">Výchozí body</th>
                 </tr>
-            {% else %}
-                <tr><td colspan="4" class="px-4 py-6 text-center text-gray-500">Žádná pravidla nejsou registrována.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for rule in rules %}
+                    <tr class="text-gray-800 hover:bg-gray-50">
+                        <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ rule.identifier }}</td>
+                        <td class="px-4 py-3 font-medium">{{ rule.label }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ rule.description }}</td>
+                        <td class="px-4 py-3">{{ rule.defaultPoints }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Žádná pravidla nejsou registrována.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

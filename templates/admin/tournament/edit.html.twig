@@ -2,12 +2,27 @@
 
 {% block title %}Upravit turnaj — Admin — Tipovačka{% endblock %}
 
-{% block admin_body %}
-<h1 class="text-2xl font-bold text-[#081e44] mb-4">Upravit turnaj</h1>
-<p class="text-gray-500 mb-6">{{ tournament.name }}</p>
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li><a href="{{ path('admin_tournament_list') }}" class="hover:text-[#149AD5] transition-colors">Turnaje</a></li>
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li class="text-gray-700 font-medium" aria-current="page">Upravit</li>
+{% endblock %}
 
-<div class="bg-white rounded-2xl shadow p-6">
-    {{ form_start(form, {attr: {class: 'space-y-4', novalidate: 'novalidate'}}) }}
+{% block admin_title %}Upravit turnaj{% endblock %}
+{% block admin_subtitle %}{{ tournament.name }}{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_tournament_list') }}" class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Zpět na turnaje
+    </a>
+{% endblock %}
+
+{% block admin_body %}
+<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-6 md:p-8 max-w-3xl">
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
         <div>
             {{ form_label(form.name) }}
             {{ form_widget(form.name) }}
@@ -30,9 +45,13 @@
                 {{ form_errors(form.endAt) }}
             </div>
         </div>
-        <div class="flex gap-3">
-            <button type="submit" class="bg-[#081e44] text-white py-2 px-4 rounded">Uložit změny</button>
-            <a href="{{ path('admin_tournament_list') }}" class="bg-gray-100 text-gray-700 py-2 px-4 rounded">Zrušit</a>
+        <div class="flex flex-wrap gap-3 pt-2">
+            <button type="submit" class="inline-flex items-center justify-center bg-[#081e44] hover:bg-[#0f2d5f] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                Uložit změny
+            </button>
+            <a href="{{ path('admin_tournament_list') }}" class="inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                Zrušit
+            </a>
         </div>
     {{ form_end(form) }}
 </div>

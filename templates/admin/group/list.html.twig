@@ -2,41 +2,51 @@
 
 {% block title %}Skupiny — Admin — Tipovačka{% endblock %}
 
-{% block admin_body %}
-<h1 class="text-2xl font-bold text-[#081e44] mb-4">Skupiny</h1>
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li class="text-gray-700 font-medium" aria-current="page">Skupiny</li>
+{% endblock %}
 
-<div class="bg-white rounded-2xl shadow overflow-hidden">
-    <table class="w-full text-sm">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="text-left px-4 py-2">Název</th>
-                <th class="text-left px-4 py-2">Turnaj</th>
-                <th class="text-left px-4 py-2">Vlastník</th>
-                <th class="text-left px-4 py-2">Členové</th>
-                <th class="text-left px-4 py-2">Akce</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for group in groups %}
-                <tr class="border-t {% if group.isDeleted %}text-gray-400{% endif %}">
-                    <td class="px-4 py-2">{{ group.name }}{% if group.isDeleted %} (smazáno){% endif %}</td>
-                    <td class="px-4 py-2">{{ group.tournamentName }}</td>
-                    <td class="px-4 py-2">{{ group.ownerNickname }}</td>
-                    <td class="px-4 py-2">{{ group.memberCount }}</td>
-                    <td class="px-4 py-2 space-x-2">
-                        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="text-blue-600 hover:underline">Detail</a>
-                        {% if not group.isDeleted %}
-                            <form method="post" action="{{ path('admin_group_delete', {id: group.id.toRfc4122}) }}" class="inline">
-                                <input type="hidden" name="_token" value="{{ csrf_token('admin_group_delete_' ~ group.id.toRfc4122) }}">
-                                <button type="submit" class="text-red-600 hover:underline">Smazat</button>
-                            </form>
-                        {% endif %}
-                    </td>
+{% block admin_title %}Skupiny{% endblock %}
+{% block admin_subtitle %}Všechny skupiny napříč turnaji.{% endblock %}
+
+{% block admin_body %}
+<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-600">
+                <tr>
+                    <th class="text-left px-4 py-3 font-semibold">Název</th>
+                    <th class="text-left px-4 py-3 font-semibold">Turnaj</th>
+                    <th class="text-left px-4 py-3 font-semibold">Vlastník</th>
+                    <th class="text-left px-4 py-3 font-semibold">Členové</th>
+                    <th class="text-right px-4 py-3 font-semibold">Akce</th>
                 </tr>
-            {% else %}
-                <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">Žádné skupiny.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for group in groups %}
+                    <tr class="{% if group.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-gray-50{% endif %}">
+                        <td class="px-4 py-3 font-medium">{{ group.name }}{% if group.isDeleted %} <span class="text-xs font-normal">(smazáno)</span>{% endif %}</td>
+                        <td class="px-4 py-3">{{ group.tournamentName }}</td>
+                        <td class="px-4 py-3">{{ group.ownerNickname }}</td>
+                        <td class="px-4 py-3">{{ group.memberCount }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-3 whitespace-nowrap">
+                                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Detail</a>
+                                {% if not group.isDeleted %}
+                                    <form method="post" action="{{ path('admin_group_delete', {id: group.id.toRfc4122}) }}" class="inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_group_delete_' ~ group.id.toRfc4122) }}">
+                                        <button type="submit" class="text-red-600 hover:underline text-sm">Smazat</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Žádné skupiny.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

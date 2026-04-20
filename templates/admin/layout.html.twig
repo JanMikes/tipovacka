@@ -1,20 +1,81 @@
 {% extends 'base.html.twig' %}
 
+{# Blocks declared at top level — referenced via `block()` below so they render
+   only inside the page header, not duplicated. Child templates override these. #}
+{% block admin_title %}{% endblock %}
+{% block admin_subtitle %}{% endblock %}
+{% block admin_actions %}{% endblock %}
+{% block admin_breadcrumbs %}{% endblock %}
+
 {% block body %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
-        <aside class="bg-white rounded-2xl shadow p-4">
-            <h2 class="text-sm font-bold uppercase text-gray-500 mb-3">Admin</h2>
-            <nav class="flex flex-col gap-1 text-sm">
-                <a href="{{ path('admin_user_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Uživatelé</a>
-                <a href="{{ path('admin_tournament_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Turnaje</a>
-                <a href="{{ path('admin_tournament_create') }}" class="px-3 py-2 rounded hover:bg-gray-100">Nový turnaj</a>
-                <a href="{{ path('admin_group_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Skupiny</a>
-                <a href="{{ path('admin_rule_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Pravidla</a>
-            </nav>
+{% set _route = app.request.attributes.get('_route') %}
+{% set _nav = [
+    {route: 'admin_tournament_list', label: 'Turnaje', match: ['admin_tournament_list', 'admin_tournament_edit', 'admin_tournament_create', 'admin_tournament_rule_configuration', 'admin_sport_match_list']},
+    {route: 'admin_group_list', label: 'Skupiny', match: ['admin_group_list']},
+    {route: 'admin_user_list', label: 'Uživatelé', match: ['admin_user_list']},
+    {route: 'admin_rule_list', label: 'Pravidla', match: ['admin_rule_list']},
+] %}
+{% set _title = block('admin_title')|trim %}
+{% set _subtitle = block('admin_subtitle')|trim %}
+{% set _actions = block('admin_actions')|trim %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+
+        <aside class="md:sticky md:top-6 md:self-start">
+            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-3">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3 pt-2 pb-3">
+                    Administrace
+                </p>
+                <nav class="flex flex-col gap-0.5 text-sm">
+                    {% for item in _nav %}
+                        {% set is_active = _route in item.match %}
+                        <a href="{{ path(item.route) }}"
+                           class="flex items-center px-3 py-2 rounded-lg transition-colors {{ is_active ? 'bg-[#081e44] text-white font-semibold shadow-sm' : 'text-gray-700 hover:bg-gray-100' }}">
+                            {{ item.label }}
+                        </a>
+                    {% endfor %}
+                </nav>
+                <div class="border-t border-gray-100 mt-3 pt-3 px-1">
+                    <a href="{{ path('admin_tournament_create') }}"
+                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#149AD5] hover:bg-blue-50 transition-colors font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Nový veřejný turnaj
+                    </a>
+                </div>
+            </div>
         </aside>
 
-        <section>
+        <section class="min-w-0 space-y-6">
+            <nav aria-label="Breadcrumb" class="text-sm">
+                <ol class="flex items-center flex-wrap gap-1 text-gray-500">
+                    <li class="flex items-center">
+                        <a href="{{ path('admin_tournament_list') }}" class="hover:text-[#149AD5] transition-colors">Admin</a>
+                    </li>
+                    {{ block('admin_breadcrumbs') }}
+                </ol>
+            </nav>
+
+            {% if _title is not empty %}
+                <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
+                        <h1 class="text-2xl md:text-3xl font-bold text-[#081e44] break-words">
+                            {{- _title|raw -}}
+                        </h1>
+                        {% if _subtitle is not empty %}
+                            <p class="text-gray-500 mt-1">{{ _subtitle|raw }}</p>
+                        {% endif %}
+                    </div>
+                    {% if _actions is not empty %}
+                        <div class="flex flex-wrap gap-2 shrink-0">
+                            {{ _actions|raw }}
+                        </div>
+                    {% endif %}
+                </header>
+            {% endif %}
+
             {% block admin_body %}{% endblock %}
         </section>
     </div>

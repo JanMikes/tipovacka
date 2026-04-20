@@ -2,43 +2,64 @@
 
 {% block title %}Pravidla — {{ tournament.name }} — Admin{% endblock %}
 
-{% block admin_body %}
-<h1 class="text-2xl font-bold text-[#081e44] mb-2">Pravidla bodování</h1>
-<p class="text-gray-600 mb-6">Turnaj: {{ tournament.name }}</p>
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li><a href="{{ path('admin_tournament_list') }}" class="hover:text-[#149AD5] transition-colors">Turnaje</a></li>
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li><a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="hover:text-[#149AD5] transition-colors">{{ tournament.name }}</a></li>
+    <li aria-hidden="true" class="text-gray-300">/</li>
+    <li class="text-gray-700 font-medium" aria-current="page">Pravidla</li>
+{% endblock %}
 
+{% block admin_title %}Pravidla bodování{% endblock %}
+{% block admin_subtitle %}Turnaj: {{ tournament.name }}{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_tournament_list') }}" class="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Zpět na turnaje
+    </a>
+{% endblock %}
+
+{% block admin_body %}
 {{ form_start(form, {'attr': {
     'data-controller': 'confirm-recalculation',
     'data-confirm-recalculation-count-value': evaluationCount,
     'data-action': 'submit->confirm-recalculation#confirmIfNeeded',
 }}) }}
 
-<div class="bg-white rounded-2xl shadow p-6 mb-6 space-y-6">
+<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-5 md:p-6 space-y-4">
     {% for item in items %}
         {% set entryForm = form.rules[item.identifier] %}
-        <div class="border border-gray-100 rounded-lg p-4">
-            <div class="flex items-start justify-between gap-4 mb-2">
-                <div>
-                    <h2 class="text-lg font-semibold text-[#081e44]">{{ item.label }}</h2>
-                    <p class="text-sm text-gray-500">{{ item.description }}</p>
+        <div class="border border-gray-100 rounded-xl p-4 bg-gray-50/40">
+            <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-[#081e44]">{{ item.label }}</h2>
+                    <p class="text-sm text-gray-500 mt-0.5">{{ item.description }}</p>
                     <p class="text-xs text-gray-400 mt-1">Výchozí body: {{ item.defaultPoints }}</p>
                 </div>
-                <div>
+                <label class="flex items-center gap-2 shrink-0 cursor-pointer">
                     {{ form_widget(entryForm.enabled) }}
-                    {{ form_label(entryForm.enabled) }}
-                </div>
+                    <span class="text-sm text-gray-700">Aktivní</span>
+                </label>
             </div>
-            <div class="flex items-center gap-2">
-                {{ form_label(entryForm.points) }}
-                {{ form_widget(entryForm.points, {'attr': {'class': 'border rounded px-2 py-1 w-24'}}) }}
+            <div class="flex items-center gap-3">
+                {{ form_label(entryForm.points, null, {label_attr: {class: 'text-sm text-gray-600 mb-0'}}) }}
+                {{ form_widget(entryForm.points, {'attr': {'class': 'w-24 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition'}}) }}
             </div>
             {{ form_errors(entryForm.points) }}
         </div>
     {% endfor %}
 </div>
 
-<div class="flex gap-3">
-    <button type="submit" class="bg-[#081e44] text-white py-2 px-4 rounded">Uložit pravidla</button>
-    <a href="{{ path('admin_tournament_list') }}" class="bg-gray-100 text-gray-800 py-2 px-4 rounded">Zpět</a>
+<div class="flex flex-wrap gap-3 mt-6">
+    <button type="submit" class="inline-flex items-center justify-center bg-[#081e44] hover:bg-[#0f2d5f] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Uložit pravidla
+    </button>
+    <a href="{{ path('admin_tournament_list') }}" class="inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
+        Zpět
+    </a>
 </div>
 
 {{ form_end(form) }}

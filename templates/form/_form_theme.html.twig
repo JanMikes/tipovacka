@@ -1,3 +1,9 @@
+{% use 'form_div_layout.html.twig' %}
+
+{# Default Tailwind classes for form widgets.
+   Per-field `attr.class` / `label_attr.class` still wins — the |default filter
+   only fills in when nothing was passed. #}
+
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
         <ul class="mt-1 space-y-0.5 text-sm text-red-600">
@@ -7,3 +13,47 @@
         </ul>
     {%- endif -%}
 {%- endblock form_errors -%}
+
+{%- block form_label -%}
+    {%- if label is not same as(false) -%}
+        {%- if 'checkbox' in block_prefixes or 'radio' in block_prefixes -%}
+            {%- set label_attr = label_attr|merge({class: label_attr.class|default('inline-block text-sm text-gray-700 ml-2 align-middle')}) -%}
+        {%- else -%}
+            {%- set label_attr = label_attr|merge({class: label_attr.class|default('block text-sm font-medium text-gray-700 mb-1')}) -%}
+        {%- endif -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock form_label -%}
+
+{%- block form_widget_simple -%}
+    {%- set type = type|default('text') -%}
+    {%- if type != 'hidden' -%}
+        {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition bg-white')}) -%}
+    {%- endif -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
+{%- block textarea_widget -%}
+    {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition bg-white')}) -%}
+    {{- parent() -}}
+{%- endblock textarea_widget -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition bg-white')}) -%}
+    {{- parent() -}}
+{%- endblock choice_widget_collapsed -%}
+
+{%- block checkbox_widget -%}
+    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 rounded border-gray-300 text-[#149AD5] focus:ring-[#149AD5]')}) -%}
+    {{- parent() -}}
+{%- endblock checkbox_widget -%}
+
+{%- block radio_widget -%}
+    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 border-gray-300 text-[#149AD5] focus:ring-[#149AD5]')}) -%}
+    {{- parent() -}}
+{%- endblock radio_widget -%}
+
+{%- block button_widget -%}
+    {%- set attr = attr|merge({class: attr.class|default('inline-flex items-center justify-center bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors')}) -%}
+    {{- parent() -}}
+{%- endblock button_widget -%}
