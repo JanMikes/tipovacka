@@ -294,6 +294,9 @@ final class UserAlreadyExists extends \DomainException
   - **Interfaces**: NO `Interface` suffix. `interface Rule`, not `interface RuleInterface`. Existing examples: `SoftDeletable`, `EntityWithEvents`, `QueryMessage`, `ProvideIdentity`, `DeleteDomainEvent`, `Rule`.
   - **Exceptions**: NO `Exception` suffix. `UserAlreadyExists`, not `UserAlreadyExistsException`. `SportNotFound`, not `SportNotFoundException`. Existing examples in `src/Exception/`: `UserNotFound`, `UserAlreadyExists`, `UnverifiedUser`, `InvalidCurrentPassword`, `SportNotFound`.
   - Apply this wherever it makes sense: traits, abstract classes, handlers — use the domain word, skip the technical tag. Exceptions to the rule (pun intended) exist only where a framework contract forces a suffix (e.g. Symfony form types end in `FormType`).
+- **Migrations are generated, never hand-written.** After changing entities / ORM attributes, run `docker compose exec web bin/console doctrine:migrations:diff` and commit whatever it produces. Hand-written migrations drift from Doctrine's expected schema (custom index names, DB-only defaults, duplicated comments) and break the `migrations-up-to-date` CI check. Only add data-seed `addSql('INSERT …')` statements and the like on top of the generated schema changes; never re-type schema DDL by hand.
+- **No `DC2Type` column comments.** In Doctrine 3 DBAL 4+ the `DC2Type:<type>` comment convention is no longer needed — type info comes from the mapping. Let `doctrine:migrations:diff` decide; do not manually add `COMMENT ON COLUMN … IS '(DC2Type:…)'` statements.
+- **Express partial unique indexes in the mapping**, not only in SQL. Use `#[ORM\UniqueConstraint(name: '…', columns: ['…'], options: ['where' => '…'])]` at the entity class level (Doctrine 3 DBAL 4+ supports this on PostgreSQL). Otherwise `schema:validate` keeps flagging drift.
 
 ## Frontend
 
