@@ -3,65 +3,92 @@
 {% block title %}{{ breakdown.nickname }} — Žebříček — Tipovačka{% endblock %}
 
 {% block body %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-6">
-        <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="text-sm text-[#149AD5] hover:underline">
-            ← Zpět na žebříček
-        </a>
-        <h1 class="text-3xl font-bold text-[#081e44] mt-2">{{ breakdown.nickname }}</h1>
-        <p class="text-gray-500">Celkem bodů: <span class="font-semibold text-[#081e44]">{{ breakdown.totalPoints }}</span></p>
-    </div>
+<div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
-    <div class="bg-white rounded-2xl shadow-lg p-6">
-        <h2 class="text-lg font-semibold text-[#081e44] mb-4">Přehled zápasů</h2>
+    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="hover:text-cyan-600">Žebříček</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="truncate text-navy-900/80">{{ breakdown.nickname }}</span>
+    </nav>
+
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="flex items-center gap-3 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
+                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-lg font-semibold text-cyan-700">
+                    {{ breakdown.nickname|slice(0, 1)|upper }}
+                </span>
+                {{ breakdown.nickname }}
+            </h1>
+        </div>
+        <div class="rounded-2xl bg-gradient-to-br from-navy-900 to-navy-700 px-5 py-3 text-white shadow-card">
+            <p class="text-xs font-medium uppercase tracking-wider text-white/60">Celkem bodů</p>
+            <p class="text-3xl font-bold tabular-nums">{{ breakdown.totalPoints }}</p>
+        </div>
+    </header>
+
+    <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+        <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+            <twig:ux:icon name="lucide:calendar" class="h-5 w-5 text-cyan-500" />
+            <h2 class="text-lg font-semibold text-navy-900">Přehled zápasů</h2>
+        </header>
 
         {% if breakdown.rows|length == 0 %}
-            <p class="text-sm text-gray-500">Zatím žádné odehrané zápasy.</p>
+            <p class="px-6 py-10 text-center text-sm text-navy-900/60">Zatím žádné odehrané zápasy.</p>
         {% else %}
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left text-gray-500 border-b border-gray-200">
-                        <th class="py-2">Zápas</th>
-                        <th class="py-2 text-center">Výsledek</th>
-                        <th class="py-2 text-center">Tvůj tip</th>
-                        <th class="py-2">Detail</th>
-                        <th class="py-2 text-right">Body</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in breakdown.rows %}
-                        <tr class="border-b border-gray-100">
-                            <td class="py-2">
-                                <div class="font-medium text-[#081e44]">{{ row.homeTeam }} — {{ row.awayTeam }}</div>
-                                <div class="text-xs text-gray-500">{{ row.kickoffAt|date('d. m. Y H:i') }}</div>
-                            </td>
-                            <td class="py-2 text-center font-semibold">
-                                {{ row.actualHomeScore }} : {{ row.actualAwayScore }}
-                            </td>
-                            <td class="py-2 text-center">
-                                {% if row.myHomeScore is not null %}
-                                    {{ row.myHomeScore }} : {{ row.myAwayScore }}
-                                {% else %}
-                                    <span class="text-xs text-gray-400">netipováno</span>
-                                {% endif %}
-                            </td>
-                            <td class="py-2 text-xs text-gray-500">
-                                {% if row.breakdown|length > 0 %}
-                                    <ul class="space-y-0.5">
-                                        {% for item in row.breakdown %}
-                                            <li>{{ item.ruleIdentifier }}: <span class="font-semibold">{{ item.points }}</span></li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                            <td class="py-2 text-right font-semibold">{{ row.totalPoints }}</td>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-navy-100/70 text-left text-xs font-semibold uppercase tracking-wider text-navy-900/50">
+                            <th class="px-6 py-3">Zápas</th>
+                            <th class="px-3 py-3 text-center">Výsledek</th>
+                            <th class="px-3 py-3 text-center">Tvůj tip</th>
+                            <th class="px-3 py-3">Detail</th>
+                            <th class="px-6 py-3 text-right">Body</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-navy-100/50">
+                        {% for row in breakdown.rows %}
+                            <tr>
+                                <td class="px-6 py-3">
+                                    <div class="font-medium text-navy-900">{{ row.homeTeam }} <span class="text-navy-900/40">—</span> {{ row.awayTeam }}</div>
+                                    <div class="text-xs text-navy-900/60">{{ row.kickoffAt|date('d. m. Y H:i') }}</div>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <span class="inline-block rounded-md bg-navy-50 px-2 py-0.5 font-bold tabular-nums text-navy-900">
+                                        {{ row.actualHomeScore }} : {{ row.actualAwayScore }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    {% if row.myHomeScore is not null %}
+                                        <span class="font-semibold tabular-nums text-navy-900">{{ row.myHomeScore }} : {{ row.myAwayScore }}</span>
+                                    {% else %}
+                                        <span class="text-xs text-navy-900/40">netipováno</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 py-3 text-xs text-navy-900/60">
+                                    {% if row.breakdown|length > 0 %}
+                                        <ul class="space-y-0.5">
+                                            {% for item in row.breakdown %}
+                                                <li>{{ item.ruleIdentifier }}: <span class="font-semibold text-navy-900">{{ item.points }}</span></li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <span class="font-bold tabular-nums text-navy-900">{{ row.totalPoints }}</span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endif %}
-    </div>
+    </section>
 </div>
 {% endblock %}

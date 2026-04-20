@@ -4,7 +4,7 @@
 
 {% block body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h1 class="text-2xl font-bold text-[#081e44] mb-2">Pravidla bodování</h1>
+    <h1 class="text-2xl font-bold text-navy-900 mb-2">Pravidla bodování</h1>
     <p class="text-gray-600 mb-6">Turnaj: {{ tournament.name }}</p>
 
     {{ form_start(form, {'attr': {
@@ -13,14 +13,14 @@
         'data-action': 'submit->confirm-recalculation#confirmIfNeeded',
     }}) }}
 
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 space-y-6">
+    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-6 mb-6 space-y-6">
         {% for item in items %}
             {% set entryForm = form.rules[item.identifier] %}
-            <div class="border border-gray-100 rounded-lg p-4">
+            <div class="border border-navy-100/70 rounded-lg p-4">
                 <div class="flex items-start justify-between gap-4 mb-2">
                     <div>
-                        <h2 class="text-lg font-semibold text-[#081e44]">{{ item.label }}</h2>
-                        <p class="text-sm text-gray-500">{{ item.description }}</p>
+                        <h2 class="text-lg font-semibold text-navy-900">{{ item.label }}</h2>
+                        <p class="text-sm text-navy-900/60">{{ item.description }}</p>
                         <p class="text-xs text-gray-400 mt-1">Výchozí body: {{ item.defaultPoints }}</p>
                     </div>
                     <div>
@@ -38,7 +38,7 @@
     </div>
 
     <div class="flex gap-3">
-        <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium">
+        <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
             Uložit pravidla
         </button>
         <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}"

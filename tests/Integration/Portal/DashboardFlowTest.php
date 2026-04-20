@@ -34,7 +34,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Moje skupiny');
         self::assertSelectorTextContains('body', 'Nadcházející zápasy');
-        self::assertSelectorTextContains('body', 'Objevte další turnaje');
+        self::assertSelectorTextContains('body', 'Objev další turnaje');
     }
 
     public function testUserSeesOwnGroups(): void

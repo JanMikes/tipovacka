@@ -1,12 +1,12 @@
 <div{{ attributes.defaults({class: 'bg-white rounded-lg shadow p-4'}) }}>
-    <h3 class="text-sm font-semibold text-[#081e44] mb-3">Tvůj tip</h3>
+    <h3 class="text-sm font-semibold text-navy-900 mb-3">Tvůj tip</h3>
 
     {% if this.isLocked %}
         <p class="text-sm text-gray-500">
             Tipování bylo uzavřeno – zápas už začal nebo není aktivní.
         </p>
         {% if this.existingGuess %}
-            <p class="mt-2 text-lg font-semibold text-[#081e44]">
+            <p class="mt-2 text-lg font-semibold text-navy-900">
                 {{ this.existingGuess.homeScore }} : {{ this.existingGuess.awayScore }}
             </p>
         {% endif %}
@@ -56,7 +56,7 @@
                 {% endif %}
             </div>
 
-            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded text-sm font-medium">
+            <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-2 px-4 rounded text-sm font-medium">
                 {{ this.hasExistingGuess ? 'Upravit tip' : 'Odeslat tip' }}
             </button>
         </form>

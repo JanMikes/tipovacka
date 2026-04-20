@@ -25,7 +25,7 @@ final class AccountDeleteFlowTest extends WebTestCase
 
         $client->request('GET', '/portal/ucet/smazat');
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Opravdu chcete smazat');
+        self::assertSelectorTextContains('h1', 'Opravdu chceš smazat');
     }
 
     public function testPostSoftDeletesAndLogsOut(): void

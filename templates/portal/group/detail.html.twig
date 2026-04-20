@@ -3,278 +3,321 @@
 {% block title %}{{ detail.name }} — Tipovačka{% endblock %}
 
 {% block body %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-8">
-        <div class="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 class="text-3xl font-bold text-[#081e44]">{{ detail.name }}</h1>
+<div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+
+    {# Breadcrumb #}
+    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_tournament_detail', {id: detail.tournamentId.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ detail.tournamentName }}</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="truncate text-navy-900/80">{{ detail.name }}</span>
+    </nav>
+
+    {# Hero #}
+    <header class="mb-6">
+        <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">{{ detail.name }}</h1>
             {% if detail.tournamentIsFinished %}
-                <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">Turnaj ukončen</span>
+                <span class="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-800">Turnaj ukončen</span>
             {% endif %}
         </div>
-        <p class="text-gray-500">
-            Turnaj:
-            <a href="{{ path('portal_tournament_detail', {id: detail.tournamentId.toRfc4122}) }}" class="text-[#149AD5] hover:underline">
-                {{ detail.tournamentName }}
-            </a>
-            · Vlastník: {{ detail.ownerNickname }}
+        <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-navy-900/60">
+            <span class="inline-flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:trophy" class="h-4 w-4" />
+                <a href="{{ path('portal_tournament_detail', {id: detail.tournamentId.toRfc4122}) }}" class="hover:text-cyan-600">{{ detail.tournamentName }}</a>
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:user" class="h-4 w-4" />{{ detail.ownerNickname }}
+            </span>
         </p>
-    </div>
+    </header>
 
     {% if detail.description %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <p class="text-sm font-medium text-gray-500 mb-1">Popis</p>
-            <p class="text-[#081e44] whitespace-pre-line">{{ detail.description }}</p>
-        </div>
+        <section class="mb-6 rounded-2xl bg-white p-6 shadow-card ring-1 ring-navy-900/5">
+            <p class="whitespace-pre-line text-navy-900/80">{{ detail.description }}</p>
+        </section>
     {% endif %}
 
-    {% if is_granted('group_manage_members', group) %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Pozvánky</h2>
+    <div class="grid gap-6 lg:grid-cols-12">
 
-            <div class="mb-5">
-                <p class="text-sm font-medium text-gray-500 mb-1">PIN pro připojení</p>
-                {% if detail.pin %}
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <code class="bg-gray-100 text-[#081e44] font-mono text-lg px-3 py-1.5 rounded">{{ detail.pin }}</code>
-                        <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_pin_regenerate_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-[#149AD5] hover:underline">Obnovit</button>
-                        </form>
-                        <form method="post" action="{{ path('portal_group_pin_revoke', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_pin_revoke_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-red-600 hover:underline">Zrušit</button>
-                        </form>
+        {# ───── Main column ───── #}
+        <div class="space-y-6 lg:col-span-8">
+
+            {# Members #}
+            <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                <header class="flex items-center justify-between gap-3 border-b border-navy-100/70 px-6 py-4">
+                    <div class="flex items-center gap-2.5">
+                        <twig:ux:icon name="lucide:users" class="h-5 w-5 text-cyan-500" />
+                        <h2 class="text-lg font-semibold text-navy-900">Členové</h2>
+                        <span class="rounded-full bg-navy-50 px-2.5 py-0.5 text-xs font-semibold text-navy-700">{{ detail.members|length }}</span>
                     </div>
-                {% else %}
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-gray-500 text-sm">PIN není aktivní.</span>
-                        <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_pin_regenerate_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-[#149AD5] hover:underline">Vygenerovat PIN</button>
-                        </form>
-                    </div>
-                {% endif %}
-            </div>
+                </header>
 
-            <div>
-                <p class="text-sm font-medium text-gray-500 mb-1">Pozvánkový odkaz</p>
-                {% if detail.shareableLinkToken %}
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <code class="bg-gray-100 text-[#081e44] text-xs px-3 py-1.5 rounded break-all">{{ url('group_join_by_link', {token: detail.shareableLinkToken}) }}</code>
-                        <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_link_regenerate_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-[#149AD5] hover:underline">Obnovit</button>
-                        </form>
-                        <form method="post" action="{{ path('portal_group_link_revoke', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_link_revoke_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-red-600 hover:underline">Zrušit</button>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-gray-500 text-sm">Odkaz není aktivní.</span>
-                        <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_link_regenerate_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="text-sm text-[#149AD5] hover:underline">Vygenerovat odkaz</button>
-                        </form>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
-
-    {% if is_granted('group_invite_member', group) %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Pozvánky e-mailem</h2>
-
-            {{ form_start(invitationForm, {attr: {class: 'mb-6'}}) }}
-                <div class="flex gap-3 flex-wrap items-end">
-                    <div class="flex-1 min-w-[220px]">
-                        {{ form_row(invitationForm.email) }}
-                    </div>
-                    <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
-                        Odeslat pozvánku
-                    </button>
-                </div>
-            {{ form_end(invitationForm) }}
-
-            {% if bulkInvitationForm %}
-                <div class="border-t border-gray-100 pt-5 mb-6">
-                    <h3 class="text-sm font-semibold text-[#081e44] mb-1">Pozvat více lidí najednou</h3>
-                    <p class="text-xs text-gray-500 mb-3">
-                        Pro neznámé e-maily založíme prázdný účet a odešleme odkaz na dokončení registrace —
-                        pozvaný si jen zvolí heslo a rovnou se připojí.
-                    </p>
-                    {{ form_start(bulkInvitationForm) }}
-                        <div class="space-y-3">
-                            {{ form_row(bulkInvitationForm.emails) }}
-                            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
-                                Odeslat hromadně
-                            </button>
-                        </div>
-                    {{ form_end(bulkInvitationForm) }}
-                </div>
-            {% endif %}
-
-            {% if pendingInvitations|length > 0 %}
-                <p class="text-sm font-medium text-gray-500 mb-2">Čekající pozvánky</p>
-                <ul class="divide-y divide-gray-100">
-                    {% for inv in pendingInvitations %}
-                        <li class="py-3 flex items-center justify-between flex-wrap gap-3">
-                            <div>
-                                <span class="font-medium text-[#081e44]">{{ inv.email }}</span>
-                                <p class="text-xs text-gray-500">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('d. m. Y H:i') }} · vyprší {{ inv.expiresAt|date('d. m. Y') }}</p>
+                <ul class="divide-y divide-navy-100/70">
+                    {% for member in detail.members %}
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-navy-100 text-xs font-semibold text-navy-700">
+                                        {{ member.nickname|slice(0, 1)|upper }}
+                                    </span>
+                                    <span class="font-medium text-navy-900">{{ member.nickname }}</span>
+                                    {% if member.isOwner %}
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-800">
+                                            <twig:ux:icon name="lucide:crown" class="h-3 w-3" />Vlastník
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 pl-10 text-xs text-navy-900/60">Přidán {{ member.joinedAt|date('d. m. Y') }}</p>
                             </div>
-                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline">
-                                <input type="hidden" name="_token" value="{{ csrf_token('invitation_revoke_' ~ inv.invitationId.toRfc4122) }}">
-                                <button
-                                    type="submit"
-                                    class="text-sm text-red-600 hover:underline"
-                                    onclick="return confirm('Opravdu chceš pozvánku zrušit?')"
-                                >
-                                    Zrušit
-                                </button>
-                            </form>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-sm text-gray-500">Žádné čekající pozvánky.</p>
-            {% endif %}
-        </div>
-    {% endif %}
-
-    {% if is_granted('group_manage_members', group) and group.tournament.isPublic %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Žádosti o připojení</h2>
-
-            {% if pendingJoinRequests|length > 0 %}
-                <ul class="divide-y divide-gray-100">
-                    {% for req in pendingJoinRequests %}
-                        <li class="py-3 flex items-center justify-between flex-wrap gap-3">
-                            <div>
-                                <span class="font-medium text-[#081e44]">{{ req.nickname }}</span>
-                                <p class="text-xs text-gray-500">Žádost {{ req.requestedAt|date('d. m. Y H:i') }}</p>
-                            </div>
-                            <div class="flex gap-2">
-                                <form method="post" action="{{ path('portal_join_request_approve', {requestId: req.requestId.toRfc4122}) }}" class="inline">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('join_request_approve_' ~ req.requestId.toRfc4122) }}">
-                                    <button
-                                        type="submit"
-                                        class="text-sm bg-green-600 hover:bg-green-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
-                                    >
-                                        Schválit
+                            {% if is_granted('group_manage_members', group) and not member.isOwner %}
+                                <form method="post" action="{{ path('portal_group_remove_member', {id: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('group_remove_member_' ~ group.id.toRfc4122 ~ '_' ~ member.userId.toRfc4122) }}">
+                                    <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline" onclick="return confirm('Opravdu chceš tohoto člena odebrat?')">
+                                        Odebrat
                                     </button>
                                 </form>
-                                <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('join_request_reject_' ~ req.requestId.toRfc4122) }}">
-                                    <button
-                                        type="submit"
-                                        class="text-sm bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors"
-                                    >
-                                        Zamítnout
-                                    </button>
-                                </form>
-                            </div>
+                            {% endif %}
                         </li>
+                    {% else %}
+                        <li class="px-6 py-10 text-center text-sm text-navy-900/60">Zatím žádní členové.</li>
                     {% endfor %}
                 </ul>
-            {% else %}
-                <p class="text-sm text-gray-500">Žádné čekající žádosti.</p>
-            {% endif %}
-        </div>
-    {% endif %}
+            </section>
 
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <h2 class="text-lg font-semibold text-[#081e44] mb-4">Členové ({{ detail.members|length }})</h2>
-        <ul class="divide-y divide-gray-100">
-            {% for member in detail.members %}
-                <li class="py-3 flex items-center justify-between flex-wrap gap-3">
-                    <div>
-                        <span class="font-medium text-[#081e44]">{{ member.nickname }}</span>
-                        {% if member.isOwner %}
-                            <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Vlastník</span>
+            {# Pending join requests (public tournaments only) #}
+            {% if is_granted('group_manage_members', group) and group.tournament.isPublic %}
+                <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                    <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+                        <twig:ux:icon name="lucide:log-in" class="h-5 w-5 text-cyan-500" />
+                        <h2 class="text-lg font-semibold text-navy-900">Žádosti o připojení</h2>
+                        {% if pendingJoinRequests|length > 0 %}
+                            <span class="rounded-full bg-cyan-100 px-2.5 py-0.5 text-xs font-semibold text-cyan-700">{{ pendingJoinRequests|length }}</span>
                         {% endif %}
-                        <p class="text-xs text-gray-500">Přidán {{ member.joinedAt|date('d. m. Y') }}</p>
+                    </header>
+
+                    {% if pendingJoinRequests|length > 0 %}
+                        <ul class="divide-y divide-navy-100/70">
+                            {% for req in pendingJoinRequests %}
+                                <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                                    <div>
+                                        <span class="font-medium text-navy-900">{{ req.nickname }}</span>
+                                        <p class="text-xs text-navy-900/60">Žádost {{ req.requestedAt|date('d. m. Y H:i') }}</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <form method="post" action="{{ path('portal_join_request_approve', {requestId: req.requestId.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('join_request_approve_' ~ req.requestId.toRfc4122) }}">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-green-700">
+                                                <twig:ux:icon name="lucide:check" class="h-3.5 w-3.5" />Schválit
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('join_request_reject_' ~ req.requestId.toRfc4122) }}">
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700">
+                                                <twig:ux:icon name="lucide:x" class="h-3.5 w-3.5" />Zamítnout
+                                            </button>
+                                        </form>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="px-6 py-10 text-center text-sm text-navy-900/60">Žádné čekající žádosti.</p>
+                    {% endif %}
+                </section>
+            {% endif %}
+
+            {# Email invitations #}
+            {% if is_granted('group_invite_member', group) %}
+                <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                    <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+                        <twig:ux:icon name="lucide:mail" class="h-5 w-5 text-cyan-500" />
+                        <h2 class="text-lg font-semibold text-navy-900">Pozvánky e-mailem</h2>
+                    </header>
+
+                    <div class="px-6 py-5">
+                        {{ form_start(invitationForm) }}
+                            <div class="flex flex-wrap items-end gap-3">
+                                <div class="min-w-[220px] flex-1">
+                                    {{ form_row(invitationForm.email) }}
+                                </div>
+                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                                    <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
+                                    Odeslat pozvánku
+                                </button>
+                            </div>
+                        {{ form_end(invitationForm) }}
+
+                        {% if bulkInvitationForm %}
+                            <details class="mt-5 border-t border-navy-100/70 pt-5">
+                                <summary class="cursor-pointer text-sm font-semibold text-navy-900 hover:text-cyan-600">
+                                    Pozvat více lidí najednou
+                                </summary>
+                                <div class="mt-3">
+                                    <p class="mb-3 text-xs text-navy-900/60">
+                                        Pro neznámé e-maily založíme prázdný účet a odešleme odkaz na dokončení registrace — pozvaný si jen zvolí heslo a rovnou se připojí.
+                                    </p>
+                                    {{ form_start(bulkInvitationForm) }}
+                                        <div class="space-y-3">
+                                            {{ form_row(bulkInvitationForm.emails) }}
+                                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                                                <twig:ux:icon name="lucide:users" class="h-4 w-4" />
+                                                Odeslat hromadně
+                                            </button>
+                                        </div>
+                                    {{ form_end(bulkInvitationForm) }}
+                                </div>
+                            </details>
+                        {% endif %}
+
+                        {% if pendingInvitations|length > 0 %}
+                            <div class="mt-6 border-t border-navy-100/70 pt-5">
+                                <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-navy-900/50">Čekající pozvánky</p>
+                                <ul class="divide-y divide-navy-100/70">
+                                    {% for inv in pendingInvitations %}
+                                        <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                                            <div>
+                                                <span class="font-medium text-navy-900">{{ inv.email }}</span>
+                                                <p class="text-xs text-navy-900/60">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('d. m. Y H:i') }} · vyprší {{ inv.expiresAt|date('d. m. Y') }}</p>
+                                            </div>
+                                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('invitation_revoke_' ~ inv.invitationId.toRfc4122) }}">
+                                                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline" onclick="return confirm('Opravdu chceš pozvánku zrušit?')">
+                                                    Zrušit
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if is_granted('group_manage_members', group) and not member.isOwner %}
-                        <form method="post" action="{{ path('portal_group_remove_member', {id: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline">
-                            <input type="hidden" name="_token" value="{{ csrf_token('group_remove_member_' ~ group.id.toRfc4122 ~ '_' ~ member.userId.toRfc4122) }}">
-                            <button
-                                type="submit"
-                                class="text-sm text-red-600 hover:underline"
-                                onclick="return confirm('Opravdu chceš tohoto člena odebrat?')"
-                            >
-                                Odebrat
+                </section>
+            {% endif %}
+        </div>
+
+        {# ───── Sidebar ───── #}
+        <aside class="space-y-6 lg:col-span-4">
+
+            {# Leaderboard CTA #}
+            {% if is_granted('leaderboard_view', group) %}
+                <section class="rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card">
+                    <div class="flex items-center gap-2.5">
+                        <twig:ux:icon name="lucide:trophy" class="h-5 w-5 text-cyan-400" />
+                        <h2 class="text-sm font-semibold uppercase tracking-wider">Žebříček</h2>
+                    </div>
+                    <p class="mt-2 text-sm text-white/70">Podívej se, kdo vede a kolik má bodů.</p>
+                    <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
+                        Zobrazit žebříček
+                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    </a>
+                </section>
+            {% endif %}
+
+            {# Invites (PIN + shareable link) #}
+            {% if is_granted('group_manage_members', group) %}
+                <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                    <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+                        <twig:ux:icon name="lucide:key-round" class="h-5 w-5 text-cyan-500" />
+                        <h2 class="text-lg font-semibold text-navy-900">Rychlé pozvánky</h2>
+                    </header>
+                    <div class="space-y-5 px-6 py-5">
+                        <div>
+                            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-navy-900/50">PIN</p>
+                            {% if detail.pin %}
+                                <div class="space-y-2">
+                                    <code class="block rounded-lg bg-navy-50 px-3 py-2 text-center font-mono text-lg tracking-[0.3em] text-navy-900">{{ detail.pin }}</code>
+                                    <div class="flex flex-wrap gap-3 text-xs">
+                                        <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('group_pin_regenerate_' ~ group.id.toRfc4122) }}">
+                                            <button type="submit" class="font-medium text-cyan-600 hover:underline">Obnovit</button>
+                                        </form>
+                                        <form method="post" action="{{ path('portal_group_pin_revoke', {id: group.id.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('group_pin_revoke_' ~ group.id.toRfc4122) }}">
+                                            <button type="submit" class="font-medium text-red-600 hover:underline">Zrušit</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-navy-900/60">PIN není aktivní.</p>
+                                <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="mt-2 inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('group_pin_regenerate_' ~ group.id.toRfc4122) }}">
+                                    <button type="submit" class="text-sm font-medium text-cyan-600 hover:underline">Vygenerovat PIN</button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <div class="border-t border-navy-100/70 pt-4">
+                            <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-navy-900/50">
+                                <twig:ux:icon name="lucide:share-2" class="h-3.5 w-3.5" />
+                                Odkaz
+                            </p>
+                            {% if detail.shareableLinkToken %}
+                                <div class="space-y-2">
+                                    <code class="block break-all rounded-lg bg-navy-50 px-3 py-2 text-xs text-navy-900">{{ url('group_join_by_link', {token: detail.shareableLinkToken}) }}</code>
+                                    <div class="flex flex-wrap gap-3 text-xs">
+                                        <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('group_link_regenerate_' ~ group.id.toRfc4122) }}">
+                                            <button type="submit" class="font-medium text-cyan-600 hover:underline">Obnovit</button>
+                                        </form>
+                                        <form method="post" action="{{ path('portal_group_link_revoke', {id: group.id.toRfc4122}) }}" class="inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('group_link_revoke_' ~ group.id.toRfc4122) }}">
+                                            <button type="submit" class="font-medium text-red-600 hover:underline">Zrušit</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-navy-900/60">Odkaz není aktivní.</p>
+                                <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="mt-2 inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('group_link_regenerate_' ~ group.id.toRfc4122) }}">
+                                    <button type="submit" class="text-sm font-medium text-cyan-600 hover:underline">Vygenerovat odkaz</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </section>
+            {% endif %}
+
+            {# Actions #}
+            <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+                    <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-cyan-500" />
+                    <h2 class="text-lg font-semibold text-navy-900">Správa</h2>
+                </header>
+                <div class="space-y-2 px-6 py-5">
+                    {% if is_granted('group_edit', group) %}
+                        <a href="{{ path('portal_group_edit', {id: group.id.toRfc4122}) }}" class="flex w-full items-center gap-2 rounded-lg bg-navy-50 px-4 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100">
+                            <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit skupinu
+                        </a>
+                    {% endif %}
+
+                    {% if is_granted('group_manage_members', group) %}
+                        <a href="{{ path('portal_group_manage_member_tips', {id: group.id.toRfc4122}) }}" class="flex w-full items-center gap-2 rounded-lg bg-navy-50 px-4 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100">
+                            <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat za členy
+                        </a>
+                    {% endif %}
+
+                    {% if is_granted('group_leave', group) %}
+                        <form method="post" action="{{ path('portal_group_leave', {id: group.id.toRfc4122}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('group_leave_' ~ group.id.toRfc4122) }}">
+                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-800 transition-colors hover:bg-yellow-100" onclick="return confirm('Opravdu chceš skupinu opustit?')">
+                                <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />Opustit skupinu
                             </button>
                         </form>
                     {% endif %}
-                </li>
-            {% else %}
-                <li class="py-3 text-sm text-gray-500">Zatím žádní členové.</li>
-            {% endfor %}
-        </ul>
-    </div>
 
-    {% if is_granted('leaderboard_view', group) %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Žebříček</h2>
-            <a
-                href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}"
-                class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors inline-block"
-            >
-                Zobrazit žebříček
-            </a>
-        </div>
-    {% endif %}
-
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-        <h2 class="text-lg font-semibold text-[#081e44] mb-4">Správa</h2>
-        <div class="flex flex-wrap gap-3">
-            {% if is_granted('group_edit', group) %}
-                <a
-                    href="{{ path('portal_group_edit', {id: group.id.toRfc4122}) }}"
-                    class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                >
-                    Upravit
-                </a>
-            {% endif %}
-
-            {% if is_granted('group_manage_members', group) %}
-                <a
-                    href="{{ path('portal_group_manage_member_tips', {id: group.id.toRfc4122}) }}"
-                    class="bg-white border border-[#081e44] text-[#081e44] hover:bg-[#081e44] hover:text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                >
-                    Tipovat za členy
-                </a>
-            {% endif %}
-
-            {% if is_granted('group_leave', group) %}
-                <form method="post" action="{{ path('portal_group_leave', {id: group.id.toRfc4122}) }}" class="inline">
-                    <input type="hidden" name="_token" value="{{ csrf_token('group_leave_' ~ group.id.toRfc4122) }}">
-                    <button
-                        type="submit"
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        onclick="return confirm('Opravdu chceš skupinu opustit?')"
-                    >
-                        Opustit skupinu
-                    </button>
-                </form>
-            {% endif %}
-
-            {% if is_granted('group_delete', group) %}
-                <form method="post" action="{{ path('portal_group_delete', {id: group.id.toRfc4122}) }}" class="inline">
-                    <input type="hidden" name="_token" value="{{ csrf_token('group_delete_' ~ group.id.toRfc4122) }}">
-                    <button
-                        type="submit"
-                        class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-                        onclick="return confirm('Opravdu chceš skupinu smazat?')"
-                    >
-                        Smazat skupinu
-                    </button>
-                </form>
-            {% endif %}
-        </div>
+                    {% if is_granted('group_delete', group) %}
+                        <form method="post" action="{{ path('portal_group_delete', {id: group.id.toRfc4122}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('group_delete_' ~ group.id.toRfc4122) }}">
+                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100" onclick="return confirm('Opravdu chceš skupinu smazat?')">
+                                <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat skupinu
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+        </aside>
     </div>
 </div>
 {% endblock %}

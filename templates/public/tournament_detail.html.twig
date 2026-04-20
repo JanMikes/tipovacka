@@ -208,13 +208,13 @@
                         {% endif %}
                     </dl>
 
-                    {% if groups|length > 0 and not tournament.isFinished %}
-                        <a href="#groups" class="mt-6 flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
-                            <twig:ux:icon name="lucide:users" class="h-4 w-4" />
-                            Připojit se do skupiny
-                        </a>
-                    {% endif %}
                 </div>
+
+                {% if app.user and app.user.isVerified and not tournament.isFinished %}
+                    <div class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-navy-900/5">
+                        {{ include('_partials/join_by_pin_form.html.twig', { size: 'compact' }) }}
+                    </div>
+                {% endif %}
 
                 {% if app.user is null %}
                     <div class="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-cyan-50/50 p-5 text-sm">

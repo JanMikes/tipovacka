@@ -1,0 +1,79 @@
+{#
+    Shared PIN join form.
+    Params:
+      - size: 'large' (default) or 'compact'
+#}
+{% set size = size|default('large') %}
+{% set redirect_to = app.request.requestUri %}
+
+{% if size == 'compact' %}
+    <form method="post" action="{{ path('portal_group_join_by_pin_quick') }}" class="space-y-3">
+        <input type="hidden" name="_token" value="{{ csrf_token('join_by_pin_quick') }}">
+        <input type="hidden" name="redirect_to" value="{{ redirect_to }}">
+
+        <label for="pin-compact" class="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-navy-900/60">
+            <twig:ux:icon name="lucide:key-round" class="h-4 w-4" />
+            Připojit se přes PIN
+        </label>
+
+        <input
+            type="text"
+            inputmode="numeric"
+            pattern="\d{8}"
+            maxlength="8"
+            minlength="8"
+            autocomplete="off"
+            id="pin-compact"
+            name="pin"
+            placeholder="12345678"
+            required
+            class="w-full rounded-lg border border-navy-200 bg-white px-3 py-2.5 text-center font-mono text-lg tracking-[0.3em] text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+        >
+
+        <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
+            <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
+            Připojit se
+        </button>
+    </form>
+{% else %}
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
+        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-500/15 blur-3xl"></div>
+
+        <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+            <div class="flex items-start gap-4">
+                <span class="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur sm:flex">
+                    <twig:ux:icon name="lucide:key-round" class="h-6 w-6 text-cyan-400" />
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-xl font-bold tracking-tight sm:text-2xl">Máš PIN od skupiny?</h2>
+                    <p class="mt-1 text-sm text-white/75 sm:text-base">Zadej 8místný kód a rovnou se připoj — žádná pozvánka, žádné čekání.</p>
+                </div>
+            </div>
+
+            <form method="post" action="{{ path('portal_group_join_by_pin_quick') }}" class="flex flex-col gap-3 sm:flex-row sm:items-start md:w-[26rem]">
+                <input type="hidden" name="_token" value="{{ csrf_token('join_by_pin_quick') }}">
+                <input type="hidden" name="redirect_to" value="{{ redirect_to }}">
+
+                <label for="pin-large" class="sr-only">PIN skupiny (8 číslic)</label>
+                <input
+                    type="text"
+                    inputmode="numeric"
+                    pattern="\d{8}"
+                    maxlength="8"
+                    minlength="8"
+                    autocomplete="off"
+                    id="pin-large"
+                    name="pin"
+                    placeholder="12345678"
+                    required
+                    aria-label="PIN skupiny"
+                    class="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-center font-mono text-xl tracking-[0.4em] text-white placeholder-white/40 outline-none transition focus:border-transparent focus:bg-white/15 focus:ring-2 focus:ring-cyan-400"
+                >
+                <button type="submit" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
+                    Připojit se
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}

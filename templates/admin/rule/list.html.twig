@@ -11,10 +11,10 @@
 {% block admin_subtitle %}Tento přehled je pouze pro čtení. Body pro konkrétní turnaj lze upravit v jeho nastavení.{% endblock %}
 
 {% block admin_body %}
-<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+<div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-gray-600">
+            <thead class="bg-navy-50/40 text-gray-600">
                 <tr>
                     <th class="text-left px-4 py-3 font-semibold">Identifikátor</th>
                     <th class="text-left px-4 py-3 font-semibold">Název</th>
@@ -22,16 +22,16 @@
                     <th class="text-left px-4 py-3 font-semibold">Výchozí body</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-navy-100/70">
                 {% for rule in rules %}
-                    <tr class="text-gray-800 hover:bg-gray-50">
+                    <tr class="text-gray-800 hover:bg-navy-50/40">
                         <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ rule.identifier }}</td>
                         <td class="px-4 py-3 font-medium">{{ rule.label }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ rule.description }}</td>
                         <td class="px-4 py-3">{{ rule.defaultPoints }}</td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Žádná pravidla nejsou registrována.</td></tr>
+                    <tr><td colspan="4" class="px-4 py-8 text-center text-navy-900/60">Žádná pravidla nejsou registrována.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

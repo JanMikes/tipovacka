@@ -6,49 +6,49 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-6">
         <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
-           class="text-sm text-[#149AD5] hover:underline">&larr; {{ group.name }}</a>
+           class="text-sm text-cyan-500 hover:underline">&larr; {{ group.name }}</a>
     </div>
 
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-[#081e44]">Správa tipů členů</h1>
-        <p class="text-gray-500 mt-2">
+        <h1 class="text-3xl font-bold text-navy-900">Správa tipů členů</h1>
+        <p class="text-navy-900/60 mt-2">
             Zadej nebo uprav tipy za libovolného člena skupiny. Užitečné pro členy, kteří sami do aplikace nechodí.
             Zobrazují se jen nadcházející zápasy, u kterých je tipování otevřené.
         </p>
     </div>
 
     {% if matrix|length == 0 %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 text-center text-gray-500">
+        <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-6 text-center text-navy-900/60">
             Žádné nadcházející zápasy k tipování.
         </div>
     {% endif %}
 
     {% for row in matrix %}
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-5">
+        <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-6 mb-5">
             <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-[#081e44]">
+                    <h2 class="text-lg font-semibold text-navy-900">
                         {{ row.match.homeTeam }} <span class="text-gray-400">vs.</span> {{ row.match.awayTeam }}
                     </h2>
-                    <p class="text-xs text-gray-500">Výkop {{ row.match.kickoffAt|date('d. m. Y H:i') }}</p>
+                    <p class="text-xs text-navy-900/60">Výkop {{ row.match.kickoffAt|date('d. m. Y H:i') }}</p>
                 </div>
                 <a href="{{ path('portal_group_sport_match_guesses', {
                          groupId: group.id.toRfc4122,
                          sportMatchId: row.match.id.toRfc4122,
                    }) }}"
-                   class="text-sm text-[#149AD5] hover:underline">Detail zápasu</a>
+                   class="text-sm text-cyan-500 hover:underline">Detail zápasu</a>
             </div>
 
             {% if row.cells|length == 0 %}
-                <p class="text-sm text-gray-500">Skupina zatím nemá žádné členy.</p>
+                <p class="text-sm text-navy-900/60">Skupina zatím nemá žádné členy.</p>
             {% else %}
-                <ul class="divide-y divide-gray-100">
+                <ul class="divide-y divide-navy-100/70">
                     {% for cell in row.cells %}
                         <li class="py-2 flex items-center justify-between gap-3 flex-wrap">
                             <div class="min-w-[140px]">
-                                <span class="font-medium text-[#081e44]">{{ cell.user.nickname }}</span>
+                                <span class="font-medium text-navy-900">{{ cell.user.nickname }}</span>
                                 {% if not cell.user.isVerified %}
-                                    <span class="ml-2 text-xs text-gray-500">(neověřený)</span>
+                                    <span class="ml-2 text-xs text-navy-900/60">(neověřený)</span>
                                 {% endif %}
                             </div>
 
@@ -64,15 +64,15 @@
                                 <input type="hidden" name="redirect_to" value="{{ path('portal_group_manage_member_tips', {id: group.id.toRfc4122}) }}">
                                 <input type="number" name="homeScore" min="0" max="99" required
                                        value="{{ cell.guess ? cell.guess.homeScore : '' }}"
-                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       class="w-16 px-2 py-1 border border-navy-100 rounded text-center"
                                        aria-label="Domácí">
                                 <span class="text-gray-400">:</span>
                                 <input type="number" name="awayScore" min="0" max="99" required
                                        value="{{ cell.guess ? cell.guess.awayScore : '' }}"
-                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       class="w-16 px-2 py-1 border border-navy-100 rounded text-center"
                                        aria-label="Hosté">
                                 <button type="submit"
-                                        class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-1 px-3 rounded text-sm font-medium">
+                                        class="bg-navy-900 hover:bg-navy-700 text-white py-1 px-3 rounded text-sm font-medium">
                                     {{ cell.guess ? 'Upravit' : 'Uložit' }}
                                 </button>
                             </form>

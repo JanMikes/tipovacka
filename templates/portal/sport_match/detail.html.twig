@@ -6,14 +6,14 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-6">
         <a href="{{ path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122}) }}"
-           class="text-sm text-[#149AD5] hover:underline">
+           class="text-sm text-cyan-500 hover:underline">
             &larr; {{ sport_match.tournament.name }}
         </a>
     </div>
 
     <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <div class="flex items-center justify-between mb-6">
-            <h1 class="text-3xl font-bold text-[#081e44]">
+            <h1 class="text-3xl font-bold text-navy-900">
                 {{ sport_match.homeTeam }} <span class="text-gray-400">vs.</span> {{ sport_match.awayTeam }}
             </h1>
             <span class="px-3 py-1 rounded-full text-xs font-medium
@@ -33,12 +33,12 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
                 <p class="text-sm font-medium text-gray-500 mb-1">Začátek</p>
-                <p class="text-[#081e44]">{{ sport_match.kickoffAt|date('d. m. Y H:i') }}</p>
+                <p class="text-navy-900">{{ sport_match.kickoffAt|date('d. m. Y H:i') }}</p>
             </div>
             {% if sport_match.venue %}
                 <div>
                     <p class="text-sm font-medium text-gray-500 mb-1">Místo</p>
-                    <p class="text-[#081e44]">{{ sport_match.venue }}</p>
+                    <p class="text-navy-900">{{ sport_match.venue }}</p>
                 </div>
             {% endif %}
         </div>
@@ -46,7 +46,7 @@
         {% if sport_match.isFinished %}
             <div class="mt-4 p-4 bg-gray-50 rounded-lg text-center">
                 <p class="text-sm font-medium text-gray-500 mb-1">Konečné skóre</p>
-                <p class="text-4xl font-bold text-[#081e44]">
+                <p class="text-4xl font-bold text-navy-900">
                     {{ sport_match.homeScore }} : {{ sport_match.awayScore }}
                 </p>
             </div>
@@ -55,12 +55,12 @@
 
     {% if my_groups_for_tournament|default([])|length > 0 %}
         <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Tipy podle skupiny</h2>
+            <h2 class="text-lg font-semibold text-navy-900 mb-4">Tipy podle skupiny</h2>
             <ul class="space-y-2">
                 {% for g in my_groups_for_tournament %}
                     <li>
                         <a href="{{ path('portal_group_sport_match_guesses', {groupId: g.id.toRfc4122, sportMatchId: sport_match.id.toRfc4122}) }}"
-                           class="text-[#149AD5] hover:underline text-sm">
+                           class="text-cyan-500 hover:underline text-sm">
                             {{ g.name }} – otevřít tipování
                         </a>
                     </li>
@@ -71,11 +71,11 @@
 
     {% if is_granted('sport_match_edit', sport_match) or is_granted('sport_match_set_score', sport_match) or is_granted('sport_match_cancel', sport_match) or is_granted('sport_match_delete', sport_match) %}
         <div class="bg-white rounded-2xl shadow-lg p-6">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Správa zápasu</h2>
+            <h2 class="text-lg font-semibold text-navy-900 mb-4">Správa zápasu</h2>
             <div class="flex flex-wrap gap-3">
                 {% if is_granted('sport_match_edit', sport_match) %}
                     <a href="{{ path('portal_sport_match_edit', {id: sport_match.id.toRfc4122}) }}"
-                       class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium">
+                       class="bg-navy-900 hover:bg-navy-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
                         Upravit
                     </a>
                 {% endif %}

@@ -3,41 +3,57 @@
 {% block title %}Tipy – {{ sport_match.homeTeam }} vs {{ sport_match.awayTeam }}{% endblock %}
 
 {% block body %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-6">
-        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
-           class="text-sm text-[#149AD5] hover:underline">
-            &larr; {{ group.name }}
-        </a>
-    </div>
+<div class="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
-    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-bold text-[#081e44]">
-                {{ sport_match.homeTeam }} <span class="text-gray-400">vs.</span> {{ sport_match.awayTeam }}
-            </h1>
-            <span class="px-3 py-1 rounded-full text-xs font-medium
-                {% if sport_match.isScheduled %}bg-blue-100 text-blue-800
-                {% elseif sport_match.isLive %}bg-orange-100 text-orange-800
-                {% elseif sport_match.isFinished %}bg-green-100 text-green-800
-                {% elseif sport_match.isPostponed %}bg-yellow-100 text-yellow-800
-                {% else %}bg-gray-200 text-gray-800{% endif %}">
+    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="text-navy-900/80">Tip na zápas</span>
+    </nav>
+
+    {# Match hero card #}
+    <section class="relative mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
+        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-500/15 blur-3xl"></div>
+
+        <div class="relative flex flex-wrap items-start justify-between gap-3">
+            <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold
+                {% if sport_match.isScheduled %}bg-blue-500/20 text-blue-300
+                {% elseif sport_match.isLive %}bg-orange-500/20 text-orange-300 animate-pulse
+                {% elseif sport_match.isFinished %}bg-green-500/20 text-green-300
+                {% elseif sport_match.isPostponed %}bg-yellow-500/20 text-yellow-300
+                {% else %}bg-white/10 text-white{% endif %}">
                 {% if sport_match.isScheduled %}Naplánován
-                {% elseif sport_match.isLive %}Probíhá
-                {% elseif sport_match.isFinished %}Ukončen
+                {% elseif sport_match.isLive %}Živě
+                {% elseif sport_match.isFinished %}Odehrán
                 {% elseif sport_match.isPostponed %}Odložen
                 {% else %}Zrušen{% endif %}
             </span>
+            <span class="inline-flex items-center gap-1.5 text-sm text-white/75">
+                <twig:ux:icon name="lucide:clock" class="h-4 w-4" />
+                {{ sport_match.kickoffAt|date('d. m. Y H:i') }}
+            </span>
         </div>
 
-        <p class="text-sm text-gray-600">Výkop: {{ sport_match.kickoffAt|date('d. m. Y H:i') }}</p>
-
-        {% if sport_match.isFinished %}
-            <p class="mt-4 text-center text-3xl font-bold text-[#081e44]">
-                {{ sport_match.homeScore }} : {{ sport_match.awayScore }}
-            </p>
-        {% endif %}
-    </div>
+        <div class="relative mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-center">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-white/50">Domácí</p>
+                <p class="mt-1 text-xl font-bold sm:text-2xl">{{ sport_match.homeTeam }}</p>
+            </div>
+            {% if sport_match.isFinished %}
+                <p class="rounded-xl bg-white/10 px-4 py-2 text-3xl font-bold tabular-nums backdrop-blur sm:text-4xl">
+                    {{ sport_match.homeScore }} : {{ sport_match.awayScore }}
+                </p>
+            {% else %}
+                <p class="text-sm font-semibold text-white/50">vs</p>
+            {% endif %}
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-white/50">Hosté</p>
+                <p class="mt-1 text-xl font-bold sm:text-2xl">{{ sport_match.awayTeam }}</p>
+            </div>
+        </div>
+    </section>
 
     <div class="space-y-4">
         <twig:Guess:GuessSubmitForm sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
@@ -45,21 +61,24 @@
         <twig:Guess:MatchGuessesList sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
 
         {% if is_granted('group_manage_members', group) and member_rows|length > 0 %}
-            <div class="bg-white rounded-2xl shadow-lg p-6">
-                <h2 class="text-lg font-semibold text-[#081e44] mb-1">Tipy členů</h2>
-                <p class="text-xs text-gray-500 mb-4">
-                    Jako vlastník můžeš zadat tip za člena, který sám nemá přístup.
-                </p>
+            <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                <header class="border-b border-navy-100/70 px-6 py-4">
+                    <div class="flex items-center gap-2.5">
+                        <twig:ux:icon name="lucide:users" class="h-5 w-5 text-cyan-500" />
+                        <h2 class="text-lg font-semibold text-navy-900">Tipy členů</h2>
+                    </div>
+                    <p class="mt-1 text-xs text-navy-900/60">Jako vlastník můžeš zadat tip za člena, který sám nemá přístup.</p>
+                </header>
 
                 {% set can_edit = sport_match.isOpenForGuesses and (sport_match.kickoffAt > date()) %}
 
-                <ul class="divide-y divide-gray-100">
+                <ul class="divide-y divide-navy-100/70">
                     {% for row in member_rows %}
-                        <li class="py-3 flex items-center justify-between gap-3 flex-wrap">
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                             <div class="min-w-[140px]">
-                                <span class="font-medium text-[#081e44]">{{ row.user.nickname }}</span>
+                                <span class="font-medium text-navy-900">{{ row.user.nickname }}</span>
                                 {% if not row.user.isVerified %}
-                                    <span class="ml-2 text-xs text-gray-500">(neověřený)</span>
+                                    <span class="ml-2 inline-flex items-center gap-0.5 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">neověřený</span>
                                 {% endif %}
                             </div>
 
@@ -75,24 +94,24 @@
                                 <input type="number" name="homeScore" min="0" max="99" required
                                        value="{{ row.guess ? row.guess.homeScore : '' }}"
                                        {% if not can_edit %}disabled{% endif %}
-                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       class="w-16 rounded-lg border border-navy-100 px-2 py-1 text-center font-semibold outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
                                        aria-label="Domácí">
-                                <span class="text-gray-400">:</span>
+                                <span class="text-navy-900/40">:</span>
                                 <input type="number" name="awayScore" min="0" max="99" required
                                        value="{{ row.guess ? row.guess.awayScore : '' }}"
                                        {% if not can_edit %}disabled{% endif %}
-                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       class="w-16 rounded-lg border border-navy-100 px-2 py-1 text-center font-semibold outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-60"
                                        aria-label="Hosté">
                                 <button type="submit"
                                         {% if not can_edit %}disabled{% endif %}
-                                        class="bg-[#081e44] hover:bg-[#0f2d5f] disabled:opacity-40 disabled:cursor-not-allowed text-white py-1 px-3 rounded text-sm font-medium">
+                                        class="inline-flex items-center rounded-lg bg-navy-900 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700 disabled:cursor-not-allowed disabled:opacity-40">
                                     {{ row.guess ? 'Upravit' : 'Uložit' }}
                                 </button>
                             </form>
                         </li>
                     {% endfor %}
                 </ul>
-            </div>
+            </section>
         {% endif %}
     </div>
 </div>

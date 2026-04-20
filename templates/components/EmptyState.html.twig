@@ -17,15 +17,15 @@
         loading="lazy"
         decoding="async"
     >
-    <h3 class="mt-6 text-xl font-semibold text-[#081e44]">{{ title }}</h3>
-    <p class="mt-2 text-base text-[#081e44]/70">{{ body }}</p>
+    <h3 class="mt-6 text-xl font-semibold text-navy-900">{{ title }}</h3>
+    <p class="mt-2 text-base text-navy-900/70">{{ body }}</p>
     {% if ctaLabel and ctaPath %}
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <a href="{{ ctaPath }}" class="rounded-md bg-[#149AD5] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0f84b8]">
+            <a href="{{ ctaPath }}" class="rounded-md bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
                 {{ ctaLabel }}
             </a>
             {% if secondaryLabel and secondaryPath %}
-                <a href="{{ secondaryPath }}" class="text-sm font-semibold text-[#081e44] transition-colors hover:text-[#149AD5]">
+                <a href="{{ secondaryPath }}" class="text-sm font-semibold text-navy-900 transition-colors hover:text-cyan-500">
                     {{ secondaryLabel }}
                 </a>
             {% endif %}

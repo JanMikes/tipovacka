@@ -5,16 +5,16 @@
 {% block body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-[#081e44]">Import zápasů z Excelu nebo CSV</h1>
-        <p class="text-gray-500 mt-1">Turnaj: {{ tournament.name }}</p>
+        <h1 class="text-3xl font-bold text-navy-900">Import zápasů z Excelu nebo CSV</h1>
+        <p class="text-navy-900/60 mt-1">Turnaj: {{ tournament.name }}</p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8 mb-6">
         <p class="text-sm text-gray-600 mb-4">
             Soubor musí obsahovat sloupce: <strong>Domácí</strong>, <strong>Hosté</strong>,
             <strong>Začátek (YYYY-MM-DD HH:MM)</strong>, <strong>Místo (nepovinné)</strong>.
         </p>
-        <a href="{{ path('portal_sport_match_template_download') }}" class="text-[#149AD5] hover:underline text-sm">
+        <a href="{{ path('portal_sport_match_template_download') }}" class="text-cyan-500 hover:underline text-sm">
             Stáhnout šablonu (CSV)
         </a>
 
@@ -25,15 +25,15 @@
                 {{ form_errors(form.file) }}
             </div>
 
-            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-6 rounded-lg font-medium">
+            <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-3 px-6 rounded-lg font-medium">
                 Nahrát a zobrazit náhled
             </button>
         {{ form_end(form) }}
     </div>
 
     {% if preview is not null %}
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-            <h2 class="text-xl font-semibold text-[#081e44] mb-4">Náhled importu</h2>
+        <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8">
+            <h2 class="text-xl font-semibold text-navy-900 mb-4">Náhled importu</h2>
 
             {% if preview.errors|length > 0 %}
                 <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded">
@@ -63,7 +63,7 @@
                         </thead>
                         <tbody>
                             {% for row in preview.validRows %}
-                                <tr class="border-t border-gray-100">
+                                <tr class="border-t border-navy-100/70">
                                     <td class="py-2 px-3">{{ row.rowNumber }}</td>
                                     <td class="py-2 px-3">{{ row.homeTeam }}</td>
                                     <td class="py-2 px-3">{{ row.awayTeam }}</td>
@@ -92,7 +92,7 @@
                     </p>
                 {% endif %}
             {% else %}
-                <p class="text-sm text-gray-500">Žádné platné řádky nebyly nalezeny.</p>
+                <p class="text-sm text-navy-900/60">Žádné platné řádky nebyly nalezeny.</p>
             {% endif %}
         </div>
     {% endif %}

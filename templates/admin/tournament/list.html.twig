@@ -10,7 +10,7 @@
 {% block admin_title %}Turnaje{% endblock %}
 {% block admin_subtitle %}Přehled veřejných i soukromých turnajů.{% endblock %}
 {% block admin_actions %}
-    <a href="{{ path('admin_tournament_create') }}" class="inline-flex items-center gap-2 bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+    <a href="{{ path('admin_tournament_create') }}" class="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
         </svg>
@@ -19,10 +19,10 @@
 {% endblock %}
 
 {% block admin_body %}
-<div class="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 overflow-hidden">
+<div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-gray-50 text-gray-600">
+            <thead class="bg-navy-50/40 text-gray-600">
                 <tr>
                     <th class="text-left px-4 py-3 font-semibold">Název</th>
                     <th class="text-left px-4 py-3 font-semibold">Viditelnost</th>
@@ -33,9 +33,9 @@
                     <th class="text-right px-4 py-3 font-semibold">Akce</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-navy-100/70">
                 {% for tournament in tournaments %}
-                    <tr class="{% if tournament.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-gray-50{% endif %}">
+                    <tr class="{% if tournament.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-navy-50/40{% endif %}">
                         <td class="px-4 py-3 font-medium">{{ tournament.name }}{% if tournament.isDeleted %} <span class="text-xs font-normal">(smazáno)</span>{% endif %}</td>
                         <td class="px-4 py-3">{{ tournament.visibility.label }}</td>
                         <td class="px-4 py-3">{{ tournament.sportCode }}</td>
@@ -50,11 +50,11 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-3 whitespace-nowrap">
-                                <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm font-medium">Otevřít</a>
-                                <a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Upravit</a>
-                                <a href="{{ path('admin_tournament_rule_configuration', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Pravidla</a>
-                                <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Zápasy</a>
-                                <a href="{{ path('admin_group_list', {tournament: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Skupiny</a>
+                                <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm font-medium">Otevřít</a>
+                                <a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Upravit</a>
+                                <a href="{{ path('admin_tournament_rule_configuration', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Pravidla</a>
+                                <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Zápasy</a>
+                                <a href="{{ path('admin_group_list', {tournament: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Skupiny</a>
                                 {% if not tournament.isFinished and not tournament.isDeleted %}
                                     <form method="post" action="{{ path('admin_tournament_finish', {id: tournament.id.toRfc4122}) }}" class="inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_tournament_finish_' ~ tournament.id.toRfc4122) }}">
@@ -71,7 +71,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Žádné turnaje.</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-navy-900/60">Žádné turnaje.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

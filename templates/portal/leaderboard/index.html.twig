@@ -3,9 +3,19 @@
 {% block title %}Žebříček — {{ group.name }} — Tipovačka{% endblock %}
 
 {% block body %}
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+
+    {# Breadcrumb #}
+    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="text-navy-900/80">Žebříček</span>
+    </nav>
+
     {% if group.tournament.isFinished and winner is defined and winner is not null %}
-        <section class="mb-10 rounded-2xl bg-white p-6 shadow-sm sm:p-10">
+        <section class="mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-10">
             <picture>
                 <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">
                 <source media="(min-width: 768px)" srcset="{{ asset('images/winner/winner-wide.png') }}">
@@ -17,38 +27,40 @@
                     decoding="async"
                 >
             </picture>
-
             <div class="mt-6 text-center">
-                <h2 class="text-3xl font-bold text-[#081e44] sm:text-4xl">
-                    Gratulujeme, <span class="text-[#149AD5]">{{ winner.nickname }}</span>!
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                    <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
+                    Vítěz
+                </span>
+                <h2 class="mt-3 text-3xl font-bold sm:text-4xl">
+                    Gratulujeme, <span class="bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent">{{ winner.nickname }}</span>!
                 </h2>
-                <p class="mt-3 text-base text-[#081e44]/70 sm:text-lg">
-                    {{ winner.nickname }} vyhrává turnaj <strong>{{ group.tournament.name }}</strong> s {{ winner.totalPoints }} body.
+                <p class="mt-3 text-base text-white/75 sm:text-lg">
+                    {{ winner.nickname }} vyhrává turnaj <strong class="text-white">{{ group.tournament.name }}</strong> s {{ winner.totalPoints }} body.
                 </p>
             </div>
         </section>
     {% endif %}
 
-    <div class="mb-6 flex items-center justify-between flex-wrap gap-3">
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-[#081e44]">Žebříček</h1>
-            <p class="text-gray-500">
-                Skupina:
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline">
-                    {{ group.name }}
-                </a>
+            <h1 class="flex items-center gap-2.5 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
+                <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-cyan-500" />
+                Žebříček
+            </h1>
+            <p class="mt-2 text-navy-900/70">
+                Skupina
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">{{ group.name }}</a>
             </p>
         </div>
 
         {% if is_granted('leaderboard_resolve_ties', group) %}
-            <a
-                href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}"
-                class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-            >
+            <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
                 Rozřadit shody
             </a>
         {% endif %}
-    </div>
+    </header>
 
     {{ component('Leaderboard:GroupLeaderboard', {group: group}) }}
 </div>
