@@ -8,6 +8,7 @@ use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
 use App\Enum\UserRole;
 use App\Event\EmailVerified;
+use App\Event\PasswordChanged;
 use App\Event\UserBlocked;
 use App\Event\UserDeleted;
 use App\Event\UserProfileUpdated;
@@ -101,6 +102,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
     {
         $this->password = $hashedPassword;
         $this->updatedAt = $now;
+
+        $this->recordThat(new PasswordChanged(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     /**
