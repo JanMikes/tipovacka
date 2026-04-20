@@ -62,4 +62,28 @@ final class RegisterUserHandlerTest extends IntegrationTestCase
             plainPassword: 'password123',
         ));
     }
+
+    public function testAutoVerifyMarksUserVerifiedOnRegister(): void
+    {
+        $this->commandBus()->dispatch(new RegisterUserCommand(
+            email: 'autoverified@example.test',
+            nickname: 'autoverified',
+            plainPassword: 'password123',
+            autoVerify: true,
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $user = $em->createQueryBuilder()
+            ->select('u')
+            ->from(User::class, 'u')
+            ->where('u.email = :e')
+            ->setParameter('e', 'autoverified@example.test')
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(User::class, $user);
+        self::assertTrue($user->isVerified);
+    }
 }

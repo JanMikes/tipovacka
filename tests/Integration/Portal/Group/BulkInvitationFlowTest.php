@@ -52,14 +52,21 @@ final class BulkInvitationFlowTest extends WebTestCase
         // Log out to simulate the invitee clicking the link fresh.
         $client->request('GET', '/odhlaseni');
 
-        // Hitting the accept URL should redirect to the "complete registration" page for stub users.
+        // Hit the unified landing page: email step shows the locked invitation email.
         $client->request('GET', '/pozvanka/'.$alice->token);
-        self::assertResponseRedirects('/pozvanka/'.$alice->token.'/dokoncit-registraci');
-
-        $crawler = $client->request('GET', '/pozvanka/'.$alice->token.'/dokoncit-registraci');
         self::assertResponseIsSuccessful();
 
+        // Submit the email step — server detects the stub account and renders the "set password" sub-form.
+        $client->submitForm('Pokračovat', [
+            '_action' => 'check_email',
+            'invitation_email_form[email]' => 'alice@example.com',
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Dokončení registrace');
+
         $client->submitForm('Dokončit registraci a připojit se', [
+            '_action' => 'complete_registration',
+            'email' => 'alice@example.com',
             'complete_invitation_registration_form[password][first]' => 'Str0ngP4ssword!',
             'complete_invitation_registration_form[password][second]' => 'Str0ngP4ssword!',
         ]);

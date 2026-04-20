@@ -1,56 +1,32 @@
 {% extends 'base.html.twig' %}
 
 {#
-    Split-screen auth shell — navy brand panel on the left (lg+), form card on the right.
+    Auth shell — centered form card on a light background with a subtle cyan/navy gradient accent.
     Child templates fill:
-      - {% block auth_panel_tagline %} (small copy shown under headline in the brand panel, optional)
+      - {% block auth_panel_tagline %} (small copy shown above the card, optional)
       - {% block auth_card %} (main form/content card — required)
 #}
 
 {% block body %}
-<div class="flex flex-1 items-stretch">
-    {# ───── Left: brand panel ───── #}
-    <aside class="relative hidden w-5/12 overflow-hidden bg-navy-900 p-12 text-white lg:block xl:w-1/2">
-        <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl"></div>
-
-        <div class="relative flex h-full flex-col">
-            <a href="{{ path('app_home') }}" class="inline-flex items-center gap-2.5 self-start">
-                <img src="{{ asset('images/logo/logo-icon.png') }}" alt="" class="h-9 w-9 rounded-md bg-white p-0.5" width="36" height="36">
-                <span class="text-lg font-bold tracking-tight">Tipovačka</span>
-            </a>
-
-            <div class="mt-auto">
-                <h2 class="text-3xl font-bold leading-tight xl:text-4xl">
-                    Tipuj zápasy.<br>
-                    <span class="bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent">Poraz kamarády.</span>
-                </h2>
-                <p class="mt-4 max-w-sm text-white/70">
-                    {% block auth_panel_tagline %}Založ soukromou skupinu, zvi přátele a bojujte o prvenství v tabulce.{% endblock %}
-                </p>
-
-                <ul class="mt-8 space-y-3 text-sm">
-                    <li class="flex items-center gap-3">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10"><twig:ux:icon name="lucide:shield-check" class="h-4 w-4 text-cyan-300" /></span>
-                        Zdarma a bez reklam
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10"><twig:ux:icon name="lucide:users" class="h-4 w-4 text-cyan-300" /></span>
-                        Soukromé skupiny s kamarády
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10"><twig:ux:icon name="lucide:trophy" class="h-4 w-4 text-cyan-300" /></span>
-                        Žebříček po každém zápase
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </aside>
-
-    {# ───── Right: form card ───── #}
-    <div class="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-10">
-        <div class="w-full max-w-md">
-            {% block auth_card %}{% endblock %}
-        </div>
+<section class="relative flex flex-1 items-center justify-center overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8">
+    {# Decorative background accents #}
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+        <div class="absolute -top-40 left-1/2 h-[32rem] w-[32rem] -translate-x-1/2 rounded-full bg-cyan-200/40 blur-3xl"></div>
+        <div class="absolute -bottom-48 -right-32 h-[28rem] w-[28rem] rounded-full bg-navy-200/50 blur-3xl"></div>
+        <div class="absolute -bottom-40 -left-32 h-[24rem] w-[24rem] rounded-full bg-cyan-100/60 blur-3xl"></div>
     </div>
-</div>
+
+    <div class="relative w-full max-w-md">
+        {% block auth_panel_tagline_wrapper %}
+            {% set tagline = block('auth_panel_tagline') ?? null %}
+            {% if tagline %}
+                <p class="mb-6 text-center text-sm text-navy-900/60">{{ tagline|raw }}</p>
+            {% endif %}
+        {% endblock %}
+
+        {% block auth_card %}{% endblock %}
+    </div>
+</section>
 {% endblock %}
+
+{% block auth_panel_tagline %}{% endblock %}

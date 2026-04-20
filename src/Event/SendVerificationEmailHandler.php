@@ -31,6 +31,12 @@ final readonly class SendVerificationEmailHandler
             return;
         }
 
+        // Auto-verified users (e.g. registering through an email-targeted invitation)
+        // already have their address confirmed — skip the redundant email.
+        if ($user->isVerified) {
+            return;
+        }
+
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             routeName: 'app_verify_email',
             userId: (string) $user->id,

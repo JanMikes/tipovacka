@@ -53,6 +53,8 @@ return App::config([
                 '../src/Service/SportMatch/SportMatchImportRow.php',
                 '../src/Service/SportMatch/SportMatchImportError.php',
                 '../src/Service/SportMatch/SportMatchImportPreview.php',
+                '../src/Service/Invitation/InvitationContext.php',
+                '../src/Service/Invitation/InvitationContextStatus.php',
             ],
         ],
         'App\\Voter\\' => [

@@ -47,6 +47,10 @@ final readonly class RegisterUserHandler
         $hashed = $this->passwordHasher->hashPassword($user, $command->plainPassword);
         $user->changePassword($hashed, $now);
 
+        if ($command->autoVerify) {
+            $user->markAsVerified($now);
+        }
+
         $this->userRepository->save($user);
 
         return $user;
