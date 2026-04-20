@@ -20,7 +20,7 @@ final class PublicTournamentDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', AppFixtures::PUBLIC_TOURNAMENT_NAME);
         self::assertSelectorTextContains('body', AppFixtures::PUBLIC_GROUP_NAME);
-        self::assertSelectorTextContains('body', 'Přihlásit se pro připojení');
+        self::assertSelectorTextContains('body', 'Přihlásit se');
     }
 
     public function testAuthenticatedNonMemberSeesRequestJoinButton(): void

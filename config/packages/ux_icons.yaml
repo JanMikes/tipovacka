@@ -1,0 +1,16 @@
+ux_icons:
+    icon_dir: '%kernel.project_dir%/assets/icons'
+
+    default_icon_attributes:
+        height: '1em'
+        width: '1em'
+
+    iconify:
+        enabled: true
+        on_demand: false
+
+    ignore_not_found: false
+
+when@prod:
+    ux_icons:
+        ignore_not_found: true

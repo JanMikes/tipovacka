@@ -1,93 +1,86 @@
-{% extends 'base.html.twig' %}
+{% extends 'auth/_layout.html.twig' %}
 
 {% block title %}Přihlášení — Tipovačka{% endblock %}
 
-{% block body %}
-<div class="flex-1 flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md">
-        <div class="bg-white rounded-2xl shadow-lg p-8">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-[#081e44]">Přihlášení</h1>
-                <p class="text-gray-500 mt-2">Přihlaste se do svého účtu</p>
-            </div>
-
-            {% if error %}
-                <div class="bg-red-50 border-l-4 border-red-400 text-red-800 px-4 py-3 rounded-r-lg mb-6" role="alert">
-                    {{ error.messageKey|trans(error.messageData, 'security') }}
-                </div>
-            {% endif %}
-
-            <form method="post" action="{{ path('app_login') }}" class="space-y-5">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-                        E-mailová adresa
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="_username"
-                        value="{{ lastUsername }}"
-                        autocomplete="email"
-                        required
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition"
-                        placeholder="vas@email.cz"
-                    >
-                </div>
-
-                <div data-controller="password-visibility">
-                    <div class="flex items-center justify-between mb-1">
-                        <label for="password" class="block text-sm font-medium text-gray-700">
-                            Heslo
-                        </label>
-                        <a href="{{ path('app_forgot_password_request') }}" class="text-sm text-[#149AD5] hover:underline">
-                            Zapomněli jste heslo?
-                        </a>
-                    </div>
-                    <div class="relative">
-                        <input
-                            type="password"
-                            id="password"
-                            name="_password"
-                            autocomplete="current-password"
-                            required
-                            data-password-visibility-target="input"
-                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition pr-12"
-                            placeholder="Vaše heslo"
-                        >
-                        <button
-                            type="button"
-                            data-action="password-visibility#toggle"
-                            class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
-                            aria-label="Zobrazit/skrýt heslo"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center">
-                    <input type="checkbox" id="remember_me" name="_remember_me" class="rounded border-gray-300 text-[#149AD5] focus:ring-[#149AD5]">
-                    <label for="remember_me" class="ml-2 text-sm text-gray-600">Zapamatovat si mě</label>
-                </div>
-
-                <button
-                    type="submit"
-                    class="w-full bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                >
-                    Přihlásit se
-                </button>
-            </form>
-
-            <p class="text-center text-sm text-gray-500 mt-6">
-                Nemáte účet?
-                <a href="{{ path('app_register') }}" class="text-[#149AD5] hover:underline font-medium">
-                    Zaregistrujte se
-                </a>
-            </p>
-        </div>
+{% block auth_card %}
+<div class="rounded-2xl bg-white p-8 shadow-card ring-1 ring-navy-900/5 sm:p-10">
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight text-navy-900">Vítej zpátky</h1>
+        <p class="mt-2 text-navy-900/60">Přihlas se do svého účtu</p>
     </div>
+
+    {% if error %}
+        <div class="mb-6 flex items-start gap-2.5 rounded-r-lg border-l-4 border-red-400 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-5 w-5 shrink-0" />
+            <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+        </div>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_login') }}" class="space-y-5">
+        <div>
+            <label for="email" class="mb-1.5 block text-sm font-medium text-navy-900">E-mailová adresa</label>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                    <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
+                </span>
+                <input
+                    type="email"
+                    id="email"
+                    name="_username"
+                    value="{{ lastUsername }}"
+                    autocomplete="email"
+                    required
+                    class="w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                    placeholder="vas@email.cz"
+                >
+            </div>
+        </div>
+
+        <div data-controller="password-visibility">
+            <div class="mb-1.5 flex items-center justify-between">
+                <label for="password" class="block text-sm font-medium text-navy-900">Heslo</label>
+                <a href="{{ path('app_forgot_password_request') }}" class="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline">Zapomněli jste heslo?</a>
+            </div>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                    <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
+                </span>
+                <input
+                    type="password"
+                    id="password"
+                    name="_password"
+                    autocomplete="current-password"
+                    required
+                    data-password-visibility-target="input"
+                    class="w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                    placeholder="Vaše heslo"
+                >
+                <button
+                    type="button"
+                    data-action="password-visibility#toggle"
+                    class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900"
+                    aria-label="Zobrazit/skrýt heslo"
+                >
+                    <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
+                    <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
+                </button>
+            </div>
+        </div>
+
+        <label class="flex items-center gap-2 text-sm text-navy-900/70">
+            <input type="checkbox" name="_remember_me" class="h-4 w-4 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500">
+            Zapamatovat si mě
+        </label>
+
+        <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+            Přihlásit se
+            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+        </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-navy-900/60">
+        Nemáš účet?
+        <a href="{{ path('app_register') }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">Zaregistruj se</a>
+    </p>
 </div>
 {% endblock %}

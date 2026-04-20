@@ -33,6 +33,6 @@ final class EmailVerificationFlowTest extends WebTestCase
         $client->request('GET', '/overeni-ceka');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Zkontrolujte');
+        self::assertSelectorTextContains('h1', 'Zkontroluj');
     }
 }

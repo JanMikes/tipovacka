@@ -1,12 +1,15 @@
-{% extends 'base.html.twig' %}
+{% extends 'auth/_layout.html.twig' %}
 
 {% block title %}Pozvánka do skupiny — Tipovačka{% endblock %}
 
-{% block body %}
-<div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
-        <h1 class="text-2xl font-bold text-[#081e44] mb-3">Pozvánka do skupiny</h1>
-        <p class="text-gray-500">Přesměrováváme tě…</p>
+{% block auth_panel_tagline %}Chvíli vydrž — připojujeme tě ke skupině.{% endblock %}
+
+{% block auth_card %}
+<div class="rounded-2xl bg-white p-8 text-center shadow-card ring-1 ring-navy-900/5 sm:p-10">
+    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600">
+        <twig:ux:icon name="lucide:users" class="h-8 w-8" />
     </div>
+    <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka do skupiny</h1>
+    <p class="mt-3 text-navy-900/60">Přesměrováváme tě…</p>
 </div>
 {% endblock %}

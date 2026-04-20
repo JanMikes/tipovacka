@@ -15,7 +15,7 @@ final class PasswordResetFlowTest extends WebTestCase
         $client->request('GET', '/reset-hesla');
         self::assertResponseIsSuccessful();
 
-        $client->submitForm('Odeslat odkaz pro obnovení hesla', [
+        $client->submitForm('Odeslat odkaz pro obnovení', [
             'request_password_reset_form[email]' => 'nobody@nowhere.com',
         ]);
 
@@ -27,7 +27,7 @@ final class PasswordResetFlowTest extends WebTestCase
         $client = static::createClient();
         $client->request('GET', '/reset-hesla');
 
-        $client->submitForm('Odeslat odkaz pro obnovení hesla', [
+        $client->submitForm('Odeslat odkaz pro obnovení', [
             'request_password_reset_form[email]' => AppFixtures::VERIFIED_USER_EMAIL,
         ]);
 
@@ -40,7 +40,7 @@ final class PasswordResetFlowTest extends WebTestCase
         $client->request('GET', '/reset-hesla/email-odeslan');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Zkontrolujte');
+        self::assertSelectorTextContains('h1', 'Zkontroluj');
     }
 
     public function testInvalidTokenShowsError(): void

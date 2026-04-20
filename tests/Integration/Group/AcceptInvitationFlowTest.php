@@ -111,6 +111,6 @@ final class AcceptInvitationFlowTest extends WebTestCase
 
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'již byla přijata');
+        self::assertSelectorTextContains('body', 'už byla přijata');
     }
 }
