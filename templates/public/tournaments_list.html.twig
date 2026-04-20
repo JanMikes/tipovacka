@@ -8,8 +8,24 @@
     <p class="text-gray-500 mb-8">Připoj se do jedné ze skupin a začni tipovat.</p>
 
     {% if tournaments|length == 0 %}
-        <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <p class="text-gray-500">Aktuálně nejsou k dispozici žádné veřejné turnaje.</p>
+        <div class="bg-white rounded-2xl shadow-sm">
+            {% if app.user %}
+                <twig:EmptyState
+                    illustration="search"
+                    title="Žádné veřejné turnaje"
+                    body="Aktuálně nejsou k dispozici žádné veřejné turnaje. Založ si vlastní soukromý turnaj."
+                    ctaLabel="Vytvořit turnaj"
+                    ctaPath="{{ path('portal_tournament_create') }}"
+                />
+            {% else %}
+                <twig:EmptyState
+                    illustration="search"
+                    title="Žádné veřejné turnaje"
+                    body="Aktuálně nejsou k dispozici žádné veřejné turnaje. Zaregistruj se a založ si vlastní."
+                    ctaLabel="Zaregistruj se"
+                    ctaPath="{{ path('app_register') }}"
+                />
+            {% endif %}
         </div>
     {% else %}
         <ul class="space-y-4">

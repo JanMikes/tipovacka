@@ -93,7 +93,23 @@
 
         {% set matches = sport_matches ?? [] %}
         {% if matches|length == 0 %}
-            <p class="text-sm text-gray-500">Zatím zde nejsou žádné zápasy.</p>
+            {% if is_granted('sport_match_create', tournament) %}
+                <twig:EmptyState
+                    illustration="matches"
+                    title="Žádné zápasy v plánu"
+                    body="Přidej první zápas ručně, nebo nahraj celý rozpis z Excelu či CSV."
+                    ctaLabel="Přidat zápas"
+                    ctaPath="{{ path('portal_sport_match_create', {tournamentId: tournament.id.toRfc4122}) }}"
+                    secondaryLabel="Nahrát z Excelu/CSV"
+                    secondaryPath="{{ path('portal_sport_match_import', {tournamentId: tournament.id.toRfc4122}) }}"
+                />
+            {% else %}
+                <twig:EmptyState
+                    illustration="matches"
+                    title="Žádné zápasy v plánu"
+                    body="Správce brzy přidá zápasy. Můžeš zatím pozvat další kamarády."
+                />
+            {% endif %}
         {% else %}
             <ul class="divide-y divide-gray-100">
                 {% for m in matches %}

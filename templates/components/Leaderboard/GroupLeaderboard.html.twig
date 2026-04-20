@@ -2,7 +2,21 @@
     <h2 class="text-lg font-semibold text-[#081e44] mb-4">Žebříček</h2>
 
     {% if this.leaderboard.rows|length == 0 %}
-        <p class="text-sm text-gray-500">Žebříček zatím nemá žádné členy.</p>
+        {% if is_granted('group_invite_member', this.group) %}
+            <twig:EmptyState
+                illustration="leaderboard"
+                title="Tabulka je zatím prázdná"
+                body="Jakmile první člen zadá tip, objeví se tady žebříček."
+                ctaLabel="Pozvat kamarády"
+                ctaPath="{{ path('portal_group_detail', {id: this.group.id.toRfc4122}) }}"
+            />
+        {% else %}
+            <twig:EmptyState
+                illustration="leaderboard"
+                title="Tabulka je zatím prázdná"
+                body="Jakmile první člen zadá tip, objeví se tady žebříček."
+            />
+        {% endif %}
     {% else %}
         <table class="w-full text-sm">
             <thead>

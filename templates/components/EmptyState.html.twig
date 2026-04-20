@@ -1,0 +1,34 @@
+{# @var illustration string 'leaderboard'|'tournaments'|'matches'|'search' #}
+{# @var title string #}
+{# @var body string #}
+{# @var ctaLabel string|null #}
+{# @var ctaPath string|null #}
+{# @var secondaryLabel string|null #}
+{# @var secondaryPath string|null #}
+
+{% props illustration, title, body, ctaLabel = null, ctaPath = null, secondaryLabel = null, secondaryPath = null %}
+
+<div{{ attributes.defaults({class: 'mx-auto flex max-w-md flex-col items-center py-16 text-center'}) }}>
+    <img
+        src="{{ asset('images/empty-states/empty-' ~ illustration ~ '.png') }}"
+        alt=""
+        role="presentation"
+        class="h-40 w-40"
+        loading="lazy"
+        decoding="async"
+    >
+    <h3 class="mt-6 text-xl font-semibold text-[#081e44]">{{ title }}</h3>
+    <p class="mt-2 text-base text-[#081e44]/70">{{ body }}</p>
+    {% if ctaLabel and ctaPath %}
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <a href="{{ ctaPath }}" class="rounded-md bg-[#149AD5] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0f84b8]">
+                {{ ctaLabel }}
+            </a>
+            {% if secondaryLabel and secondaryPath %}
+                <a href="{{ secondaryPath }}" class="text-sm font-semibold text-[#081e44] transition-colors hover:text-[#149AD5]">
+                    {{ secondaryLabel }}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

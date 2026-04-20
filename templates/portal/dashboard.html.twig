@@ -17,11 +17,16 @@
         </div>
 
         {% if my_groups|length == 0 %}
-            <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
-                <p class="text-gray-500 mb-4">Zatím nejsi v žádné skupině.</p>
-                <a href="{{ path('public_tournaments_list') }}" class="inline-block bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    Prohlédni si turnaje
-                </a>
+            <div class="bg-white rounded-2xl shadow-sm">
+                <twig:EmptyState
+                    illustration="tournaments"
+                    title="Ještě nehraješ v žádném turnaji"
+                    body="Založ si vlastní turnaj se skupinou, nebo se přidej k veřejnému."
+                    ctaLabel="Vytvořit turnaj"
+                    ctaPath="{{ path('portal_tournament_create') }}"
+                    secondaryLabel="Procházet turnaje"
+                    secondaryPath="{{ path('public_tournaments_list') }}"
+                />
             </div>
         {% else %}
             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-4">
