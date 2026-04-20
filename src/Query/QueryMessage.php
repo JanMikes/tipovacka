@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Query;
 
 /**
- * @template TResult of object
+ * @template TResult
  */
 interface QueryMessage
 {

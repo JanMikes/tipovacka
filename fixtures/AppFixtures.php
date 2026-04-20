@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Sport;
+use App\Entity\Tournament;
 use App\Entity\User;
+use App\Enum\TournamentVisibility;
 use App\Enum\UserRole;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -34,6 +36,12 @@ final class AppFixtures extends Fixture
     public const string DELETED_USER_ID = '01933333-0000-7000-8000-000000000004';
     public const string DELETED_USER_EMAIL = 'deleted@tipovacka.test';
     public const string DELETED_USER_NICKNAME = 'smazany';
+
+    public const string PUBLIC_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000001';
+    public const string PUBLIC_TOURNAMENT_NAME = 'Liga mistrů 2026/27';
+
+    public const string PRIVATE_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000002';
+    public const string PRIVATE_TOURNAMENT_NAME = 'Chlapi u piva';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -114,6 +122,34 @@ final class AppFixtures extends Fixture
         $deleted->softDelete(new \DateTimeImmutable('2025-06-16 09:00:00 UTC'));
         $deleted->popEvents();
         $manager->persist($deleted);
+
+        $public = new Tournament(
+            id: Uuid::fromString(self::PUBLIC_TOURNAMENT_ID),
+            sport: $football,
+            owner: $admin,
+            visibility: TournamentVisibility::Public,
+            name: self::PUBLIC_TOURNAMENT_NAME,
+            description: null,
+            startAt: null,
+            endAt: null,
+            createdAt: $now,
+        );
+        $public->popEvents();
+        $manager->persist($public);
+
+        $private = new Tournament(
+            id: Uuid::fromString(self::PRIVATE_TOURNAMENT_ID),
+            sport: $football,
+            owner: $verified,
+            visibility: TournamentVisibility::Private,
+            name: self::PRIVATE_TOURNAMENT_NAME,
+            description: null,
+            startAt: null,
+            endAt: null,
+            createdAt: $now,
+        );
+        $private->popEvents();
+        $manager->persist($private);
 
         $manager->flush();
     }

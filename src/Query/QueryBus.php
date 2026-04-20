@@ -17,13 +17,13 @@ final readonly class QueryBus
     }
 
     /**
-     * @template TResult of object
+     * @template TResult
      *
      * @param QueryMessage<TResult> $query
      *
      * @return TResult
      */
-    public function handle(QueryMessage $query): object
+    public function handle(QueryMessage $query): mixed
     {
         $envelope = $this->queryBus->dispatch($query);
         $handledStamp = $envelope->last(HandledStamp::class);

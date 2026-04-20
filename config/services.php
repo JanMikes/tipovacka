@@ -32,7 +32,7 @@ return App::config([
             'resource' => '../src/Form/*FormType.php',
         ],
         'App\\Query\\' => [
-            'resource' => '../src/Query/*Query.php',
+            'resource' => '../src/Query/**/*Query.php',
         ],
         'App\\Query\\QueryBus' => null,
         'App\\Rule\\RuleRegistry' => null,

@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Upravit turnaj — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-[#081e44]">Upravit turnaj</h1>
+        <p class="text-gray-500 mt-1">{{ tournament.name }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg p-8">
+        {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+
+            <div>
+                {{ form_label(form.name, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                {{ form_widget(form.name, {attr: {class: 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition'}}) }}
+                {{ form_errors(form.name) }}
+            </div>
+
+            <div>
+                {{ form_label(form.description, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                {{ form_widget(form.description, {attr: {class: 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition'}}) }}
+                {{ form_errors(form.description) }}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    {{ form_label(form.startAt, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.startAt, {attr: {class: 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition'}}) }}
+                    {{ form_errors(form.startAt) }}
+                </div>
+
+                <div>
+                    {{ form_label(form.endAt, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.endAt, {attr: {class: 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition'}}) }}
+                    {{ form_errors(form.endAt) }}
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button
+                    type="submit"
+                    class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-6 rounded-lg font-medium transition-colors"
+                >
+                    Uložit změny
+                </button>
+
+                <a
+                    href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}"
+                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium transition-colors"
+                >
+                    Zrušit
+                </a>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
