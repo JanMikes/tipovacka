@@ -37,5 +37,9 @@ return App::config([
             'alias' => 'event.bus',
             'public' => true,
         ],
+        'test.security.csrf.token_manager' => [
+            'alias' => 'security.csrf.token_manager',
+            'public' => true,
+        ],
     ],
 ]);

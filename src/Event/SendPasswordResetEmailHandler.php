@@ -21,19 +21,17 @@ final readonly class SendPasswordResetEmailHandler
 
     public function __invoke(PasswordResetRequested $event): void
     {
-        // Generate the reset URL
         $resetUrl = $this->urlGenerator->generate(
             'app_reset_password',
             ['token' => $event->resetToken],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        // Create and send the email
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to($event->email)
-            ->subject('Obnovení hesla')
-            ->htmlTemplate('user/email/reset_password.html.twig')
+            ->subject('Obnovení hesla — Tipovačka')
+            ->htmlTemplate('emails/password_reset.html.twig')
             ->context([
                 'resetUrl' => $resetUrl,
                 'userEmail' => $event->email,

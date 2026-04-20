@@ -13,8 +13,8 @@ parameters:
         - src
         - tests
     excludePaths:
-        - tests/Integration/*  # Temporarily exclude until test container issue is fixed
         - tests/Support/IntegrationTestCase.php  # Uses test-env-only public aliases
+        - tests/Integration/Auth/AdminBlockFlowTest.php  # Uses test-env-only public aliases
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     doctrine:
@@ -35,3 +35,7 @@ parameters:
         # Doctrine event args have unresolvable types when mocked
         - '#Return type of call to method PHPUnit\\Framework\\TestCase::createMock\(\) contains unresolvable type#'
         - '#PHPDoc tag @var for variable \$args contains unresolvable type#'
+        # Intersection mock types on final classes are unresolvable by phpstan's PHPUnit extension,
+        # but work correctly at runtime. Safe to ignore for test mocks.
+        - '#PHPDoc tag @var for property .* contains unresolvable type\.#'
+        - '#Property .* has unresolvable native type\.#'

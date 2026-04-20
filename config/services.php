@@ -17,7 +17,7 @@ return App::config([
             ],
         ],
         'App\\Command\\' => [
-            'resource' => '../src/Command/*Handler.php',
+            'resource' => '../src/Command/**/*Handler.php',
         ],
         'App\\Console\\' => [
             'resource' => '../src/Console/',
@@ -41,6 +41,9 @@ return App::config([
         ],
         'App\\Service\\' => [
             'resource' => '../src/Service/',
+        ],
+        'App\\Voter\\' => [
+            'resource' => '../src/Voter/',
         ],
         'App\\Service\\Identity\\ProvideIdentity' => [
             'alias' => 'App\\Service\\Identity\\RandomIdentityProvider',

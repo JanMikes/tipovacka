@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 
-class LoginSubscriber implements EventSubscriberInterface
+final class LoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
@@ -35,19 +35,17 @@ class LoginSubscriber implements EventSubscriberInterface
         }
 
         if (!$user->isVerified) {
-            // User needs email verification
             $request = $this->requestStack->getCurrentRequest();
+
             if (null !== $request && $request->hasSession()) {
-                $session = $request->getSession();
-                $session->set('unverified_user_email', $user->email);
-                $session->getFlashBag()->add(
+                $request->getSession()->getFlashBag()->add(
                     'warning',
-                    'Nejprve ověřte svou emailovou adresu. Zkontrolujte svou schránku pro ověřovací odkaz.'
+                    'Nejprve ověřte svou e-mailovou adresu. Zkontrolujte svoji e-mailovou schránku.'
                 );
             }
 
             $event->setResponse(
-                new RedirectResponse($this->urlGenerator->generate('app_login'))
+                new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'))
             );
         }
     }

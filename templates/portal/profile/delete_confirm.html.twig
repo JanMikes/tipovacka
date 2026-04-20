@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Smazat účet — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <div class="flex justify-center mb-6">
+                <div class="bg-red-100 rounded-full p-4">
+                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-bold text-center text-[#081e44] mb-3">Opravdu chcete smazat účet?</h1>
+            <p class="text-gray-500 text-center mb-8">
+                Tato akce je <strong>nevratná</strong>. Váš účet a všechna přidružená data budou trvale smazána.
+            </p>
+
+            <form method="post" action="{{ path('portal_account_delete') }}" class="space-y-4">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_account') }}">
+
+                <button
+                    type="submit"
+                    class="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                    Ano, smazat můj účet
+                </button>
+
+                <a
+                    href="{{ path('portal_profile_edit') }}"
+                    class="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                    Zrušit
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

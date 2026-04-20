@@ -50,7 +50,16 @@ final class PredictableIdentityProvider implements ProvideIdentity, ResetInterfa
         '01933333-0000-7000-8000-000000000030',
     ];
 
-    private int $currentIndex = 0;
+    // Fixtures in AppFixtures persist users with hardcoded UUIDs 001–004
+    // (ADMIN, VERIFIED, UNVERIFIED, DELETED) via Uuid::fromString() — they never
+    // call ProvideIdentity::next(). Integration tests that dispatch commands
+    // (e.g. RegisterUserCommand) DO call next() via this provider, so without
+    // an offset the very first next() would return UUID 001 and collide with
+    // the ADMIN fixture on Postgres' unique ID constraint. Starting at index 4
+    // skips past all four reserved fixture UUIDs.
+    private const int FIXTURE_RESERVED_COUNT = 4;
+
+    private int $currentIndex = self::FIXTURE_RESERVED_COUNT;
 
     public function next(): Uuid
     {
@@ -66,6 +75,6 @@ final class PredictableIdentityProvider implements ProvideIdentity, ResetInterfa
 
     public function reset(): void
     {
-        $this->currentIndex = 0;
+        $this->currentIndex = self::FIXTURE_RESERVED_COUNT;
     }
 }

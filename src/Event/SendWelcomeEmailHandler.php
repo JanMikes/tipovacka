@@ -25,23 +25,19 @@ final readonly class SendWelcomeEmailHandler
     {
         $user = $this->userRepository->get($event->userId);
 
-        // Generate the login URL
         $loginUrl = $this->urlGenerator->generate(
             'app_login',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        $displayName = '' !== $user->fullName ? $user->fullName : $user->nickname;
-
-        // Create and send the welcome email
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $displayName))
+            ->to(new Address($user->email, $user->nickname))
             ->subject('Vítejte v Tipovačce!')
-            ->htmlTemplate('email/welcome.html.twig')
+            ->htmlTemplate('emails/welcome.html.twig')
             ->context([
-                'name' => $displayName,
+                'nickname' => $user->nickname,
                 'loginUrl' => $loginUrl,
             ]);
 

@@ -8,8 +8,11 @@ use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
 use App\Enum\UserRole;
 use App\Event\EmailVerified;
+use App\Event\UserBlocked;
 use App\Event\UserDeleted;
+use App\Event\UserProfileUpdated;
 use App\Event\UserRegistered;
+use App\Event\UserUnblocked;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -132,12 +135,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
     {
         $this->isActive = true;
         $this->updatedAt = $now;
+
+        $this->recordThat(new UserUnblocked(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     public function deactivate(\DateTimeImmutable $now): void
     {
         $this->isActive = false;
         $this->updatedAt = $now;
+
+        $this->recordThat(new UserBlocked(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     public function updateProfile(
@@ -150,6 +163,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         $this->lastName = $lastName;
         $this->phone = $phone;
         $this->updatedAt = $now;
+
+        $this->recordThat(new UserProfileUpdated(
+            userId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     public function softDelete(\DateTimeImmutable $now): void

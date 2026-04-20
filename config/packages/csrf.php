@@ -9,6 +9,6 @@ return App::config([
         'form' => [
             'csrf_protection' => false,
         ],
-        'csrf_protection' => false,
+        'csrf_protection' => true,
     ],
 ]);

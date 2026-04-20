@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nástěnka — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    <div class="max-w-lg mx-auto">
+        <div class="flex justify-center mb-6">
+            <div class="bg-[#149AD5]/10 rounded-full p-6">
+                <svg class="w-16 h-16 text-[#149AD5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="1.5"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2a10 10 0 0 1 7.07 17.07M4.93 4.93A10 10 0 0 0 12 22"/>
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="text-3xl font-bold text-[#081e44] mb-4">
+            Vítejte, {{ app.user.nickname }}!
+        </h1>
+        <p class="text-gray-500 text-lg mb-8">
+            Brzy to ožije… Pracujeme na tom, aby tu byly vaše skupiny, zápasy a tipy.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="{{ path('portal_profile_edit') }}" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                Upravit profil
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

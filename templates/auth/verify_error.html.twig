@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Neplatný odkaz — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md text-center">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <div class="flex justify-center mb-6">
+                <div class="bg-red-100 rounded-full p-4">
+                    <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-bold text-[#081e44] mb-3">Odkaz je neplatný</h1>
+            <p class="text-gray-500 mb-8">
+                {{ errorMessage ?? 'Ověřovací odkaz je neplatný nebo vypršel.' }}
+            </p>
+
+            {% if showResend is defined and showResend %}
+                <a href="{{ path('app_verify_email_pending') }}" class="inline-block bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-6 rounded-lg font-medium transition-colors mb-4">
+                    Vyžádat nový ověřovací e-mail
+                </a>
+                <br>
+            {% endif %}
+
+            <a href="{{ path('app_login') }}" class="text-sm text-[#149AD5] hover:underline">
+                Zpět na přihlášení
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

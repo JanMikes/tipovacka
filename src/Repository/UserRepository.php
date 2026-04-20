@@ -43,6 +43,17 @@ final class UserRepository
             ->getOneOrNullResult();
     }
 
+    public function findByNickname(string $nickname): ?User
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('u')
+            ->from(User::class, 'u')
+            ->where('u.nickname = :nickname')
+            ->setParameter('nickname', $nickname)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     /**
      * @return User[]
      */

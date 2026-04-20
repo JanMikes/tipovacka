@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ověření e-mailu čeká — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md text-center">
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <div class="flex justify-center mb-6">
+                <div class="bg-[#149AD5]/10 rounded-full p-4">
+                    <svg class="w-12 h-12 text-[#149AD5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-bold text-[#081e44] mb-3">Zkontrolujte svoji e-mailovou schránku</h1>
+            <p class="text-gray-500 mb-8">
+                Odeslali jsme vám ověřovací e-mail. Klikněte na odkaz v e-mailu pro aktivaci vašeho účtu.
+                Odkaz je platný 7 dní.
+            </p>
+
+            {% if app.user %}
+                <form method="post" action="{{ path('app_resend_verification_email') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
+                    <button
+                        type="submit"
+                        class="w-full bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-4 rounded-lg font-medium transition-colors mb-4"
+                    >
+                        Odeslat ověřovací e-mail znovu
+                    </button>
+                </form>
+            {% endif %}
+
+            <a href="{{ path('app_login') }}" class="text-sm text-[#149AD5] hover:underline">
+                Zpět na přihlášení
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

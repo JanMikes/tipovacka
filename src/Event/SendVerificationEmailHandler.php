@@ -31,7 +31,6 @@ final readonly class SendVerificationEmailHandler
             return;
         }
 
-        // Generate verification token/URL
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             routeName: 'app_verify_email',
             userId: (string) $user->id,
@@ -39,21 +38,17 @@ final readonly class SendVerificationEmailHandler
             extraParams: ['id' => (string) $user->id],
         );
 
-        $displayName = '' !== $user->fullName ? $user->fullName : $user->nickname;
-
-        // Create email with verification link
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $displayName))
+            ->to(new Address($user->email, $user->nickname))
             ->subject('Ověřte prosím svou e-mailovou adresu')
-            ->htmlTemplate('email/verification.html.twig')
+            ->htmlTemplate('emails/verify_email.html.twig')
             ->context([
-                'name' => $displayName,
+                'nickname' => $user->nickname,
                 'verificationUrl' => $signatureComponents->getSignedUrl(),
                 'expiresAt' => $signatureComponents->getExpiresAt(),
             ]);
 
-        // Send email
         $this->mailer->send($email);
     }
 }

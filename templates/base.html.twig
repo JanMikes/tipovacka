@@ -4,30 +4,26 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}Tipovačka{% endblock %}</title>
-        <meta name="description" content="{% block meta_description %}Tipovačka{% endblock %}">
+        <meta name="description" content="{% block meta_description %}Tipovačka — tipuj výsledky fotbalových zápasů{% endblock %}">
 
-        <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ app.request.uri }}">
         <meta property="og:title" content="{% block og_title %}Tipovačka{% endblock %}">
         <meta property="og:description" content="{% block og_description %}Tipovačka{% endblock %}">
         <meta property="og:image" content="{{ absolute_url(asset('images/og-image.jpg')) }}">
-        <meta property="og:image:width" content="1920">
-        <meta property="og:image:height" content="896">
 
-        <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{% block twitter_title %}Tipovačka{% endblock %}">
         <meta name="twitter:description" content="{% block twitter_description %}Tipovačka{% endblock %}">
         <meta name="twitter:image" content="{{ absolute_url(asset('images/og-image.jpg')) }}">
 
-        <!-- Favicons -->
         <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/icons/favicon-32x32.png') }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/icons/favicon-16x16.png') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/icons/apple-touch-icon.png') }}">
         <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-        <meta name="theme-color" content="#1f2937">
+        <meta name="theme-color" content="#081e44">
+
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         {% endblock %}
@@ -36,7 +32,109 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body data-turbo="false">
-        {% block body %}{% endblock %}
+    <body data-turbo="false" class="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+
+        {# Navigation #}
+        <header class="bg-[#081e44] text-white shadow-lg" data-controller="mobile-nav">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+
+                    {# Logo #}
+                    <a href="{{ app.user ? path('portal_dashboard') : path('app_home') }}" class="flex items-center gap-2 text-white font-bold text-xl tracking-tight hover:text-[#149AD5] transition-colors">
+                        <svg class="w-7 h-7 text-[#149AD5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                            <path stroke-width="2" d="M12 2a10 10 0 0 1 7.07 17.07M4.93 4.93A10 10 0 0 0 12 22"/>
+                        </svg>
+                        Tipovačka
+                    </a>
+
+                    {# Desktop nav #}
+                    <nav class="hidden md:flex items-center gap-6">
+                        {% if app.user %}
+                            <a href="{{ path('portal_dashboard') }}" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                                Nástěnka
+                            </a>
+                            <a href="{{ path('portal_profile_edit') }}" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                                Profil
+                            </a>
+                            {% if is_granted('ROLE_ADMIN') %}
+                                <a href="/admin" class="text-[#149AD5] hover:text-white transition-colors text-sm font-medium">
+                                    Admin
+                                </a>
+                            {% endif %}
+                            <a href="{{ path('app_logout') }}" class="bg-[#149AD5] hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                Odhlásit se
+                            </a>
+                        {% else %}
+                            <a href="{{ path('app_login') }}" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                                Přihlásit se
+                            </a>
+                            <a href="{{ path('app_register') }}" class="bg-[#149AD5] hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                Registrace
+                            </a>
+                        {% endif %}
+                    </nav>
+
+                    {# Mobile menu button #}
+                    <button
+                        data-action="mobile-nav#toggle"
+                        class="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                        aria-label="Otevřít menu"
+                        aria-expanded="false"
+                        data-mobile-nav-target="button"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path data-mobile-nav-target="iconOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            <path data-mobile-nav-target="iconClose" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {# Mobile menu #}
+            <div class="hidden md:hidden border-t border-white/10" data-mobile-nav-target="menu">
+                <div class="px-4 py-3 space-y-2">
+                    {% if app.user %}
+                        <a href="{{ path('portal_dashboard') }}" class="block py-2 text-gray-300 hover:text-white text-sm font-medium">Nástěnka</a>
+                        <a href="{{ path('portal_profile_edit') }}" class="block py-2 text-gray-300 hover:text-white text-sm font-medium">Profil</a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="/admin" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Admin</a>
+                        {% endif %}
+                        <a href="{{ path('app_logout') }}" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Odhlásit se</a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="block py-2 text-gray-300 hover:text-white text-sm font-medium">Přihlásit se</a>
+                        <a href="{{ path('app_register') }}" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Registrace</a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        {# Flash messages #}
+        {% set flash_types = {
+            'success': 'bg-green-50 border-green-400 text-green-800',
+            'error': 'bg-red-50 border-red-400 text-red-800',
+            'warning': 'bg-yellow-50 border-yellow-400 text-yellow-800',
+            'info': 'bg-blue-50 border-blue-400 text-blue-800',
+        } %}
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="border-l-4 px-4 py-3 {{ flash_types[type] ?? 'bg-gray-50 border-gray-400 text-gray-800' }} mx-4 mt-3 rounded-r-lg" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {# Main content #}
+        <main class="flex-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        {# Footer #}
+        <footer class="bg-[#081e44] text-gray-400 py-6 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
+                <p>&copy; {{ "now"|date("Y") }} Tipovačka. Všechna práva vyhrazena.</p>
+            </div>
+        </footer>
+
     </body>
 </html>
