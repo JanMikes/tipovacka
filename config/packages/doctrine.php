@@ -9,6 +9,7 @@ return App::config([
         'dbal' => [
             'url' => '%env(resolve:DATABASE_URL)%',
             'profiling_collect_backtrace' => '%kernel.debug%',
+            'schema_filter' => '~^(?!sessions$)~',
         ],
         'orm' => [
             'naming_strategy' => 'doctrine.orm.naming_strategy.underscore_number_aware',
