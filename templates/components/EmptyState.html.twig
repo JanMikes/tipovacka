@@ -9,15 +9,7 @@
 {% props illustration, title, body, ctaLabel = null, ctaPath = null, secondaryLabel = null, secondaryPath = null %}
 
 <div{{ attributes.defaults({class: 'mx-auto flex max-w-md flex-col items-center py-16 text-center'}) }}>
-    <img
-        src="{{ asset('images/empty-states/empty-' ~ illustration ~ '.png') }}"
-        alt=""
-        role="presentation"
-        class="h-40 w-40"
-        loading="lazy"
-        decoding="async"
-    >
-    <h3 class="mt-6 text-xl font-semibold text-navy-900">{{ title }}</h3>
+    <h3 class="text-xl font-semibold text-navy-900">{{ title }}</h3>
     <p class="mt-2 text-base text-navy-900/70">{{ body }}</p>
     {% if ctaLabel and ctaPath %}
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
