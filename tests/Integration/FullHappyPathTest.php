@@ -175,7 +175,7 @@ final class FullHappyPathTest extends IntegrationTestCase
 
     protected function commandBus(): MessageBusInterface
     {
-        /** @var MessageBusInterface */
+        /* @var MessageBusInterface */
         return self::getContainer()->get('test.command.bus');
     }
 }
