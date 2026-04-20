@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Query\GetGroupDetail;
+
+use Symfony\Component\Uid\Uuid;
+
+final readonly class GroupMemberListItem
+{
+    public function __construct(
+        public Uuid $userId,
+        public string $nickname,
+        public \DateTimeImmutable $joinedAt,
+        public bool $isOwner,
+    ) {
+    }
+}

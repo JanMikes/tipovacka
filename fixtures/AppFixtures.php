@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Entity\Group;
+use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\Tournament;
 use App\Entity\User;
@@ -42,6 +44,18 @@ final class AppFixtures extends Fixture
 
     public const string PRIVATE_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000002';
     public const string PRIVATE_TOURNAMENT_NAME = 'Chlapi u piva';
+
+    public const string VERIFIED_GROUP_ID = '019bbbbb-0000-7000-8000-000000000001';
+    public const string VERIFIED_GROUP_NAME = 'Kámoši u piva';
+    public const string VERIFIED_GROUP_PIN = '12345678';
+    public const string VERIFIED_GROUP_LINK_TOKEN = '019bbbbb00007000800000000000000119bbbbb0000700b1';
+
+    public const string PUBLIC_GROUP_ID = '019bbbbb-0000-7000-8000-000000000002';
+    public const string PUBLIC_GROUP_NAME = 'Admin liga';
+    public const string PUBLIC_GROUP_LINK_TOKEN = '019bbbbb00007000800000000000000219bbbbb0000700b2';
+
+    public const string VERIFIED_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
+    public const string PUBLIC_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -150,6 +164,50 @@ final class AppFixtures extends Fixture
         );
         $private->popEvents();
         $manager->persist($private);
+
+        $verifiedGroup = new Group(
+            id: Uuid::fromString(self::VERIFIED_GROUP_ID),
+            tournament: $private,
+            owner: $verified,
+            name: self::VERIFIED_GROUP_NAME,
+            description: null,
+            pin: self::VERIFIED_GROUP_PIN,
+            shareableLinkToken: self::VERIFIED_GROUP_LINK_TOKEN,
+            createdAt: $now,
+        );
+        $verifiedGroup->popEvents();
+        $manager->persist($verifiedGroup);
+
+        $verifiedOwnerMembership = new Membership(
+            id: Uuid::fromString(self::VERIFIED_GROUP_OWNER_MEMBERSHIP_ID),
+            group: $verifiedGroup,
+            user: $verified,
+            joinedAt: $now,
+        );
+        $verifiedOwnerMembership->popEvents();
+        $manager->persist($verifiedOwnerMembership);
+
+        $publicGroup = new Group(
+            id: Uuid::fromString(self::PUBLIC_GROUP_ID),
+            tournament: $public,
+            owner: $admin,
+            name: self::PUBLIC_GROUP_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: self::PUBLIC_GROUP_LINK_TOKEN,
+            createdAt: $now,
+        );
+        $publicGroup->popEvents();
+        $manager->persist($publicGroup);
+
+        $publicOwnerMembership = new Membership(
+            id: Uuid::fromString(self::PUBLIC_GROUP_OWNER_MEMBERSHIP_ID),
+            group: $publicGroup,
+            user: $admin,
+            joinedAt: $now,
+        );
+        $publicOwnerMembership->popEvents();
+        $manager->persist($publicOwnerMembership);
 
         $manager->flush();
     }

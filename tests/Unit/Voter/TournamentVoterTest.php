@@ -10,6 +10,7 @@ use App\Entity\Tournament;
 use App\Entity\User;
 use App\Enum\TournamentVisibility;
 use App\Enum\UserRole;
+use App\Repository\MembershipRepository;
 use App\Voter\TournamentVoter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
@@ -23,10 +24,28 @@ final class TournamentVoterTest extends TestCase
     private TournamentVoter $voter;
     private \DateTimeImmutable $now;
 
+    /**
+     * @var array<string, bool>
+     */
+    private array $membershipLookup = [];
+
     protected function setUp(): void
     {
-        $this->voter = new TournamentVoter();
         $this->now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $this->membershipLookup = [];
+
+        $repository = $this->createStub(MembershipRepository::class);
+        $repository->method('hasActiveMembershipInTournament')
+            ->willReturnCallback(function (Uuid $userId, Uuid $tournamentId): bool {
+                return $this->membershipLookup[$userId->toRfc4122().'|'.$tournamentId->toRfc4122()] ?? false;
+            });
+
+        $this->voter = new TournamentVoter($repository);
+    }
+
+    private function markAsMember(User $user, Tournament $tournament): void
+    {
+        $this->membershipLookup[$user->id->toRfc4122().'|'.$tournament->id->toRfc4122()] = true;
     }
 
     private function makeUser(string $id, bool $isAdmin = false): User
@@ -148,6 +167,18 @@ final class TournamentVoterTest extends TestCase
         $tournament = $this->makeTournament(TournamentVisibility::Public, $owner);
 
         $result = $this->voter->vote($this->token($user), $tournament, [TournamentVoter::VIEW]);
+
+        self::assertSame(1, $result);
+    }
+
+    public function testGroupMemberCanViewPrivateTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::NON_OWNER_ID);
+        $tournament = $this->makeTournament(TournamentVisibility::Private, $owner);
+        $this->markAsMember($member, $tournament);
+
+        $result = $this->voter->vote($this->token($member), $tournament, [TournamentVoter::VIEW]);
 
         self::assertSame(1, $result);
     }
