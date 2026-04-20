@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command\SendBulkGroupInvitations;
 
 use App\Entity\GroupInvitation;
+use App\Entity\Membership;
 use App\Entity\User;
 use App\Repository\GroupInvitationRepository;
 use App\Repository\GroupRepository;
@@ -96,6 +97,17 @@ final readonly class SendBulkGroupInvitationsHandler
 
             if (null === $existingUser) {
                 $existingUser = $this->createStubUser($email, $now);
+            }
+
+            // Active membership up front so group managers can submit guesses on the
+            // invitee's behalf before they accept the invitation.
+            if (!$this->membershipRepository->hasActiveMembership($existingUser->id, $group->id)) {
+                $this->membershipRepository->save(new Membership(
+                    id: $this->identity->next(),
+                    group: $group,
+                    user: $existingUser,
+                    joinedAt: $now,
+                ));
             }
 
             $invitation = new GroupInvitation(

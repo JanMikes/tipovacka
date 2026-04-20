@@ -8,6 +8,7 @@ use App\Command\SendBulkGroupInvitations\BulkInvitationResult;
 use App\Command\SendBulkGroupInvitations\SendBulkGroupInvitationsCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\GroupInvitation;
+use App\Entity\Membership;
 use App\Entity\User;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
@@ -43,6 +44,14 @@ final class SendBulkGroupInvitationsHandlerTest extends IntegrationTestCase
             ->where('i.email = :e')->setParameter('e', 'brand-new@example.com')
             ->getQuery()->getResult();
         self::assertCount(1, $invitations);
+
+        $membership = $em->createQueryBuilder()
+            ->select('m')->from(Membership::class, 'm')
+            ->where('m.user = :uid')->setParameter('uid', $user->id)
+            ->andWhere('m.group = :gid')->setParameter('gid', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->andWhere('m.leftAt IS NULL')
+            ->getQuery()->getOneOrNullResult();
+        self::assertInstanceOf(Membership::class, $membership);
     }
 
     public function testReusesExistingUserWithoutCreatingDuplicate(): void

@@ -71,8 +71,15 @@ return App::config([
             'factory' => ['@doctrine.dbal.default_connection', 'getNativeConnection'],
         ],
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\PdoSessionHandler' => [
+            // LOCK_ADVISORY is required because the handler shares Doctrine's native PDO
+            // (see session.pdo above). The default LOCK_TRANSACTIONAL wraps the whole
+            // request in a PDO-level transaction, which then clashes with
+            // doctrine_transaction middleware ("there is already an active transaction").
             'arguments' => [
                 '@session.pdo',
+                [
+                    'lock_mode' => \Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler::LOCK_ADVISORY,
+                ],
             ],
         ],
         'App\\Twig\\' => [
