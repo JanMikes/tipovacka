@@ -42,6 +42,15 @@ jobs:
             -   run: composer run-script phpstan
 
 
+    cs-check:
+        runs-on: ubuntu-latest
+        container: ghcr.io/thedevs-cz/php:8.5
+        steps:
+            -   uses: actions/checkout@v4
+            -   run: composer install --no-scripts --no-progress
+            -   run: composer run-script cs:check
+
+
     migrations-up-to-date:
         runs-on: ubuntu-latest
         container: ghcr.io/thedevs-cz/php:8.5
