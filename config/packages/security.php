@@ -55,6 +55,7 @@ return App::config([
             ['path' => '^/-/health-check/liveness', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/skupiny/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
+            ['path' => '^/turnaje', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/nastenka', 'roles' => 'ROLE_USER'],
             ['path' => '^/portal', 'roles' => 'ROLE_USER'],
             ['path' => '^/pripojit', 'roles' => 'ROLE_USER'],
@@ -65,6 +66,7 @@ return App::config([
             ['path' => '^/overeni-ceka', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/odhlaseni', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/admin', 'roles' => 'ROLE_ADMIN'],
+            ['path' => '^/$', 'roles' => 'PUBLIC_ACCESS'],
         ],
         'role_hierarchy' => [
             'ROLE_ADMIN' => ['ROLE_USER'],

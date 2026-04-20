@@ -15,6 +15,7 @@ parameters:
     excludePaths:
         - tests/Support/IntegrationTestCase.php  # Uses test-env-only public aliases
         - tests/Integration/Auth/AdminBlockFlowTest.php  # Uses test-env-only public aliases
+        - tests/Integration/Public/PublicTournamentsListFlowTest.php  # Uses test-env-only public aliases
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     doctrine:

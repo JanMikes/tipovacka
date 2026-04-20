@@ -50,6 +50,6 @@ final class NavigationTest extends WebTestCase
 
         $client->request('GET', '/nastenka');
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('a[href="/admin"]');
+        self::assertSelectorExists('a[href^="/admin/turnaje"]');
     }
 }

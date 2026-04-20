@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Veřejné turnaje — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl font-bold text-[#081e44] mb-2">Veřejné turnaje</h1>
+    <p class="text-gray-500 mb-8">Připoj se do jedné ze skupin a začni tipovat.</p>
+
+    {% if tournaments|length == 0 %}
+        <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+            <p class="text-gray-500">Aktuálně nejsou k dispozici žádné veřejné turnaje.</p>
+        </div>
+    {% else %}
+        <ul class="space-y-4">
+            {% for t in tournaments %}
+                <li class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-xl font-semibold text-[#081e44] mb-1">
+                                <a href="{{ path('public_tournament_detail', {id: t.id.toRfc4122}) }}" class="hover:text-[#149AD5]">
+                                    {{ t.name }}
+                                </a>
+                            </h2>
+                            <p class="text-sm text-gray-500">Vlastník: {{ t.ownerNickname }}</p>
+                            {% if t.startAt or t.endAt %}
+                                <p class="text-xs text-gray-500 mt-2">
+                                    {% if t.startAt %}Od {{ t.startAt|date('d. m. Y') }}{% endif %}
+                                    {% if t.endAt %} do {{ t.endAt|date('d. m. Y') }}{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <a href="{{ path('public_tournament_detail', {id: t.id.toRfc4122}) }}" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            Detail
+                        </a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+{% endblock %}

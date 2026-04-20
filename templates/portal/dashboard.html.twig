@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nástěnka — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl font-bold text-[#081e44] mb-2">Vítejte, {{ app.user.nickname }}!</h1>
+    <p class="text-gray-500 mb-10">Přehled vašich skupin, zápasů a turnajů.</p>
+
+    {# Section 1: Moje skupiny #}
+    <section class="mb-12">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 class="text-xl font-semibold text-[#081e44]">Moje skupiny</h2>
+            <a href="{{ path('portal_group_join_by_pin') }}" class="text-sm text-[#149AD5] hover:underline">
+                Připojit se pomocí PINu
+            </a>
+        </div>
+
+        {% if my_groups|length == 0 %}
+            <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p class="text-gray-500 mb-4">Zatím nejsi v žádné skupině.</p>
+                <a href="{{ path('public_tournaments_list') }}" class="inline-block bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Prohlédni si turnaje
+                </a>
+            </div>
+        {% else %}
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for g in my_groups %}
+                    <li class="bg-white rounded-2xl shadow-sm p-5">
+                        <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
+                            <h3 class="text-lg font-semibold text-[#081e44]">
+                                <a href="{{ path('portal_group_detail', {id: g.groupId.toRfc4122}) }}" class="hover:text-[#149AD5]">
+                                    {{ g.groupName }}
+                                </a>
+                            </h3>
+                            {% if g.isOwner %}
+                                <span class="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800">Vlastník</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500">
+                            Turnaj: {{ g.tournamentName }}
+                            {% if g.tournamentIsFinished %}
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs bg-gray-200 text-gray-800">Ukončen</span>
+                            {% endif %}
+                        </p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {# Section 2: Nadcházející zápasy #}
+    <section class="mb-12">
+        <h2 class="text-xl font-semibold text-[#081e44] mb-4">Nadcházející zápasy</h2>
+
+        {% if upcoming_matches|length == 0 %}
+            <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p class="text-gray-500">Žádné nadcházející zápasy.</p>
+            </div>
+        {% else %}
+            <ul class="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
+                {% for m in upcoming_matches %}
+                    <li class="p-5 flex items-center justify-between gap-4 flex-wrap">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-[#081e44]">{{ m.homeTeam }} vs {{ m.awayTeam }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ m.tournamentName }} · {{ m.kickoffAt|date('d. m. Y H:i') }}
+                                {% if m.venue %} · {{ m.venue }}{% endif %}
+                            </p>
+                        </div>
+                        <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}" class="bg-[#149AD5] hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            Tipovat
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    {# Section 3: Objevte další turnaje #}
+    <section>
+        <h2 class="text-xl font-semibold text-[#081e44] mb-4">Objevte další turnaje</h2>
+
+        {% if discoverable_tournaments|length == 0 %}
+            <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+                <p class="text-gray-500">Žádné další dostupné turnaje.</p>
+            </div>
+        {% else %}
+            <ul class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for t in discoverable_tournaments %}
+                    <li class="bg-white rounded-2xl shadow-sm p-5">
+                        <h3 class="text-lg font-semibold text-[#081e44] mb-2">
+                            <a href="{{ path('public_tournament_detail', {id: t.tournamentId.toRfc4122}) }}" class="hover:text-[#149AD5]">
+                                {{ t.name }}
+                            </a>
+                        </h3>
+                        <p class="text-sm text-gray-500">
+                            Skupin: {{ t.groupCount }} · Členů: {{ t.memberCount }}
+                        </p>
+                        {% if t.startAt or t.endAt %}
+                            <p class="text-xs text-gray-500 mt-2">
+                                {% if t.startAt %}Od {{ t.startAt|date('d. m. Y') }}{% endif %}
+                                {% if t.endAt %} do {{ t.endAt|date('d. m. Y') }}{% endif %}
+                            </p>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

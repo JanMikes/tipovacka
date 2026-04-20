@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ tournament.name }} — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+            <h1 class="text-3xl font-bold text-[#081e44]">{{ tournament.name }}</h1>
+            <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Veřejný</span>
+            {% if tournament.isFinished %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800">Ukončen</span>
+            {% endif %}
+        </div>
+        <p class="text-gray-500">Vlastník: {{ tournament.owner.nickname }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+        {% if tournament.description %}
+            <div class="mb-6 pb-6 border-b border-gray-100">
+                <p class="text-sm font-medium text-gray-500 mb-1">Popis</p>
+                <p class="text-[#081e44] whitespace-pre-line">{{ tournament.description }}</p>
+            </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% if tournament.startAt %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">Začátek</p>
+                    <p class="text-[#081e44]">{{ tournament.startAt|date('d. m. Y H:i') }}</p>
+                </div>
+            {% endif %}
+            {% if tournament.endAt %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-1">Konec</p>
+                    <p class="text-[#081e44]">{{ tournament.endAt|date('d. m. Y H:i') }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-[#081e44] mb-4">Skupiny</h2>
+
+        {% if groups|length == 0 %}
+            <p class="text-sm text-gray-500">V tomto turnaji zatím nejsou žádné skupiny.</p>
+        {% else %}
+            <ul class="divide-y divide-gray-100">
+                {% for g in groups %}
+                    <li class="py-4 flex items-center justify-between gap-4 flex-wrap">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-[#081e44]">{{ g.groupName }}</p>
+                            <p class="text-xs text-gray-500">Vlastník: {{ g.ownerNickname }}</p>
+                        </div>
+                        <div>
+                            {% if app.user is null %}
+                                <a href="{{ path('app_login') }}" class="bg-[#149AD5] hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    Přihlásit se pro připojení
+                                </a>
+                            {% elseif g.groupId.toRfc4122 in member_group_ids %}
+                                <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-800">Jste členem</span>
+                            {% elseif not tournament.isFinished and app.user.isVerified %}
+                                <form method="post" action="{{ path('portal_group_request_join', {id: g.groupId.toRfc4122}) }}" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('group_request_join_' ~ g.groupId.toRfc4122) }}">
+                                    <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                        Požádat o připojení
+                                    </button>
+                                </form>
+                            {% elseif not app.user.isVerified %}
+                                <span class="text-xs text-gray-500">Ověřte e-mail pro připojení</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
