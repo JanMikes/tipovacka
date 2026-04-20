@@ -12,7 +12,7 @@ return App::config([
             'public' => true,
         ],
         '_instanceof' => [
-            'App\\Rule\\RuleInterface' => [
+            'App\\Rule\\Rule' => [
                 'tags' => [['app.rule' => []]],
             ],
         ],

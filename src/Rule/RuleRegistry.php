@@ -9,12 +9,12 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 final readonly class RuleRegistry
 {
     /**
-     * @var array<string, RuleInterface>
+     * @var array<string, Rule>
      */
     private array $rules;
 
     /**
-     * @param iterable<RuleInterface> $rules
+     * @param iterable<Rule> $rules
      */
     public function __construct(
         #[AutowireIterator('app.rule')]
@@ -23,27 +23,25 @@ final readonly class RuleRegistry
         $indexed = [];
 
         foreach ($rules as $rule) {
-            $identifier = $rule->getIdentifier();
-
-            if (array_key_exists($identifier, $indexed)) {
-                throw new \LogicException(sprintf('Duplicate rule identifier "%s" detected. Each rule must have a unique identifier.', $identifier));
+            if (array_key_exists($rule->identifier, $indexed)) {
+                throw new \LogicException(sprintf('Duplicate rule identifier "%s" detected. Each rule must have a unique identifier.', $rule->identifier));
             }
 
-            $indexed[$identifier] = $rule;
+            $indexed[$rule->identifier] = $rule;
         }
 
         $this->rules = $indexed;
     }
 
     /**
-     * @return array<string, RuleInterface>
+     * @return array<string, Rule>
      */
     public function all(): array
     {
         return $this->rules;
     }
 
-    public function get(string $identifier): RuleInterface
+    public function get(string $identifier): Rule
     {
         return $this->rules[$identifier]
             ?? throw new \LogicException(sprintf('Rule with identifier "%s" is not registered.', $identifier));

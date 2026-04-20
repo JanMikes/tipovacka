@@ -6,7 +6,7 @@ namespace App\Tests\Unit\Rule;
 
 use App\Entity\Guess;
 use App\Entity\SportMatch;
-use App\Rule\RuleInterface;
+use App\Rule\Rule;
 use App\Rule\RuleRegistry;
 use PHPUnit\Framework\TestCase;
 
@@ -46,32 +46,19 @@ final class RuleRegistryTest extends TestCase
         new RuleRegistry([$this->makeRule('duplicate'), $this->makeRule('duplicate')]);
     }
 
-    private function makeRule(string $identifier): RuleInterface
+    private function makeRule(string $identifier): Rule
     {
-        return new class ($identifier) implements RuleInterface {
-            public function __construct(private readonly string $id)
-            {
+        return new class ($identifier) implements Rule {
+            public function __construct(
+                public readonly string $identifier,
+            ) {
             }
 
-            public function getIdentifier(): string
-            {
-                return $this->id;
-            }
+            public string $label { get => 'Test'; }
 
-            public function getLabel(): string
-            {
-                return 'Test';
-            }
+            public string $description { get => 'Test rule'; }
 
-            public function getDescription(): string
-            {
-                return 'Test rule';
-            }
-
-            public function getDefaultPoints(): int
-            {
-                return 1;
-            }
+            public int $defaultPoints { get => 1; }
 
             public function evaluate(Guess $guess, SportMatch $match): int
             {

@@ -8,8 +8,8 @@ namespace App\Rule;
  * Declarative marker for scoring rules.
  *
  * Note: the `app.rule` service tag is applied by the `_instanceof` block in
- * config/services.php, which matches on `RuleInterface` (not on this attribute).
- * This attribute is purely documentation — implementing `RuleInterface` is what
+ * config/services.php, which matches on `Rule` (not on this attribute).
+ * This attribute is purely documentation — implementing `Rule` is what
  * registers a class with the `RuleRegistry`. Apply both for clarity.
  */
 #[\Attribute(\Attribute::TARGET_CLASS)]

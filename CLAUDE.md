@@ -290,6 +290,10 @@ final class UserAlreadyExists extends \DomainException
 - All entity IDs: UUID v7 via `ProvideIdentity` interface
 - ID generation: Production uses `RandomIdentityProvider`, tests use `PredictableIdentityProvider`
 - **Logging exceptions**: Always use `'exception' => $e` in logger context, never `$e->getMessage()`. Monolog extracts the message, trace, and class automatically from the `exception` key.
+- **Naming — prefer domain-oriented names over technical suffixes.**
+  - **Interfaces**: NO `Interface` suffix. `interface Rule`, not `interface RuleInterface`. Existing examples: `SoftDeletable`, `EntityWithEvents`, `QueryMessage`, `ProvideIdentity`, `DeleteDomainEvent`, `Rule`.
+  - **Exceptions**: NO `Exception` suffix. `UserAlreadyExists`, not `UserAlreadyExistsException`. `SportNotFound`, not `SportNotFoundException`. Existing examples in `src/Exception/`: `UserNotFound`, `UserAlreadyExists`, `UnverifiedUser`, `InvalidCurrentPassword`, `SportNotFound`.
+  - Apply this wherever it makes sense: traits, abstract classes, handlers — use the domain word, skip the technical tag. Exceptions to the rule (pun intended) exist only where a framework contract forces a suffix (e.g. Symfony form types end in `FormType`).
 
 ## Frontend
 

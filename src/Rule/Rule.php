@@ -7,19 +7,19 @@ namespace App\Rule;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 
-interface RuleInterface
+interface Rule
 {
     /** Machine identifier, e.g. 'exact_score'. Must be unique across all registered rules. */
-    public function getIdentifier(): string;
+    public string $identifier { get; }
 
     /** Czech human-readable label, e.g. 'Přesný výsledek'. */
-    public function getLabel(): string;
+    public string $label { get; }
 
-    /** Czech description shown in tournament rule config UI. */
-    public function getDescription(): string;
+    /** Czech description shown in tournament rule-configuration UI. */
+    public string $description { get; }
 
     /** Default awarded points. Tournament config may override. */
-    public function getDefaultPoints(): int;
+    public int $defaultPoints { get; }
 
     /**
      * Returns 1 if the rule triggers for this guess/match pair, 0 otherwise.
