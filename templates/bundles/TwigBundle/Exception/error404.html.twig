@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Stránka nenalezena - Tipovačka{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+    <div class="card w-full max-w-md">
+        <div class="card-body text-center">
+            <div class="text-6xl mb-4">🔍</div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">404 - Stránka nenalezena</h1>
+            <p class="text-gray-600 mb-6">
+                Omlouváme se, ale požadovanou stránku se nepodařilo najít.
+                Možná byla přesunuta nebo neexistuje.
+            </p>
+
+            <div class="flex justify-center gap-2 flex-wrap">
+                <a href="{{ path('app_home') }}" class="btn btn-primary">
+                    Zpět na úvodní stránku
+                </a>
+                {% if is_granted('ROLE_USER') %}
+                <a href="{{ path('app_profile') }}" class="btn btn-secondary">
+                    Můj profil
+                </a>
+                {% else %}
+                <a href="{{ path('app_login') }}" class="btn btn-secondary">
+                    Přihlásit se
+                </a>
+                {% endif %}
+                <button onclick="history.back()" class="btn btn-ghost">
+                    Zpět
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
