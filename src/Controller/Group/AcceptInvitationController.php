@@ -14,6 +14,8 @@ use App\Exception\GroupInvitationExpired;
 use App\Exception\InvalidInvitationToken;
 use App\Query\GetInvitationByToken\GetInvitationByToken;
 use App\Query\QueryBus;
+use App\Repository\GroupInvitationRepository;
+use App\Repository\UserRepository;
 use App\Service\Security\InvitationIntentSession;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,6 +34,8 @@ final class AcceptInvitationController extends AbstractController
         private readonly MessageBusInterface $commandBus,
         private readonly InvitationIntentSession $intent,
         private readonly ClockInterface $clock,
+        private readonly GroupInvitationRepository $invitationRepository,
+        private readonly UserRepository $userRepository,
     ) {
     }
 
@@ -84,6 +88,15 @@ final class AcceptInvitationController extends AbstractController
         $user = $this->getUser();
 
         if (!$user instanceof User) {
+            // If a stub account (passwordless) was pre-provisioned for this invitee
+            // (bulk-invite flow), send them to set a password rather than to login.
+            $invitation = $this->invitationRepository->getByToken($token);
+            $invitedUser = $this->userRepository->findByEmail($invitation->email);
+
+            if (null !== $invitedUser && !$invitedUser->hasPassword) {
+                return $this->redirectToRoute('invitation_complete_registration', ['token' => $token]);
+            }
+
             $this->intent->store($token);
             $this->addFlash('info', 'Pro přijetí pozvánky se prosím přihlaste.');
 

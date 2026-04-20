@@ -6,6 +6,7 @@ namespace App\Voter;
 
 use App\Entity\Guess;
 use App\Entity\User;
+use App\Enum\UserRole;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -18,14 +19,18 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * SUBMIT and VIEW require a GuessVotingContext subject (SportMatch + groupId),
  * because a "submit" decision is specific to the group under which the user
  * is tipping. UPDATE takes an existing Guess and checks ownership + match state.
+ * SUBMIT_ON_BEHALF / UPDATE_ON_BEHALF let a group owner (or admin) fill or edit
+ * a guess for another active member (e.g. a proxy player who never logs in).
  *
- * @extends Voter<'guess_submit'|'guess_update'|'guess_view', Guess|GuessVotingContext>
+ * @extends Voter<'guess_submit'|'guess_update'|'guess_view'|'guess_submit_on_behalf'|'guess_update_on_behalf', Guess|GuessVotingContext|GuessOnBehalfContext>
  */
 final class GuessVoter extends Voter
 {
     public const string SUBMIT = 'guess_submit';
     public const string UPDATE = 'guess_update';
     public const string VIEW = 'guess_view';
+    public const string SUBMIT_ON_BEHALF = 'guess_submit_on_behalf';
+    public const string UPDATE_ON_BEHALF = 'guess_update_on_behalf';
 
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
@@ -35,15 +40,12 @@ final class GuessVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        if (!in_array($attribute, [self::SUBMIT, self::UPDATE, self::VIEW], true)) {
-            return false;
-        }
-
-        if (self::UPDATE === $attribute) {
-            return $subject instanceof Guess;
-        }
-
-        return $subject instanceof GuessVotingContext;
+        return match ($attribute) {
+            self::UPDATE, self::UPDATE_ON_BEHALF => $subject instanceof Guess,
+            self::SUBMIT_ON_BEHALF => $subject instanceof GuessOnBehalfContext,
+            self::SUBMIT, self::VIEW => $subject instanceof GuessVotingContext,
+            default => false,
+        };
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
@@ -66,6 +68,48 @@ final class GuessVoter extends Voter
             }
 
             return null === $subject->deletedAt;
+        }
+
+        if (self::UPDATE_ON_BEHALF === $attribute) {
+            \assert($subject instanceof Guess);
+
+            if (!$this->isGroupManager($currentUser, $subject->group->owner->id)) {
+                return false;
+            }
+
+            if (!$subject->sportMatch->isOpenForGuesses) {
+                return false;
+            }
+
+            return null === $subject->deletedAt;
+        }
+
+        if (self::SUBMIT_ON_BEHALF === $attribute) {
+            \assert($subject instanceof GuessOnBehalfContext);
+
+            if (!$this->isGroupManager($currentUser, $subject->group->owner->id)) {
+                return false;
+            }
+
+            if (!$this->membershipRepository->hasActiveMembership($subject->targetUser->id, $subject->group->id)) {
+                return false;
+            }
+
+            if (!$subject->sportMatch->tournament->id->equals($subject->group->tournament->id)) {
+                return false;
+            }
+
+            if (!$subject->sportMatch->isOpenForGuesses) {
+                return false;
+            }
+
+            $existing = $this->guessRepository->findActiveByUserMatchGroup(
+                $subject->targetUser->id,
+                $subject->sportMatch->id,
+                $subject->group->id,
+            );
+
+            return null === $existing;
         }
 
         \assert($subject instanceof GuessVotingContext);
@@ -96,5 +140,14 @@ final class GuessVoter extends Voter
         );
 
         return null === $existing;
+    }
+
+    private function isGroupManager(User $currentUser, \Symfony\Component\Uid\Uuid $ownerId): bool
+    {
+        if (in_array(UserRole::ADMIN->value, $currentUser->getRoles(), true)) {
+            return true;
+        }
+
+        return $currentUser->id->equals($ownerId);
     }
 }

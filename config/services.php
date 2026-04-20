@@ -59,12 +59,22 @@ return App::config([
             'resource' => '../src/Voter/',
             'exclude' => [
                 '../src/Voter/GuessVotingContext.php',
+                '../src/Voter/GuessOnBehalfContext.php',
             ],
         ],
         'App\\Service\\Identity\\ProvideIdentity' => [
             'alias' => 'App\\Service\\Identity\\RandomIdentityProvider',
         ],
         'App\\Middleware\\DispatchDomainEventsMiddleware' => null,
+        'session.pdo' => [
+            'class' => \PDO::class,
+            'factory' => ['@doctrine.dbal.default_connection', 'getNativeConnection'],
+        ],
+        'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\PdoSessionHandler' => [
+            'arguments' => [
+                '@session.pdo',
+            ],
+        ],
         'App\\Twig\\' => [
             'resource' => '../src/Twig/',
             'exclude' => ['../src/Twig/Components/'],

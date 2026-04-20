@@ -33,6 +33,10 @@ class Guess implements EntityWithEvents, SoftDeletable
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'submitted_by_user_id', referencedColumnName: 'id', nullable: true)]
+    public private(set) ?User $submittedBy = null;
+
     public function __construct(
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
@@ -50,6 +54,7 @@ class Guess implements EntityWithEvents, SoftDeletable
         int $awayScore,
         #[ORM\Column]
         private(set) \DateTimeImmutable $submittedAt,
+        ?User $submittedBy = null,
     ) {
         if ($homeScore < 0 || $awayScore < 0) {
             throw InvalidGuessScore::create();
@@ -58,6 +63,7 @@ class Guess implements EntityWithEvents, SoftDeletable
         $this->homeScore = $homeScore;
         $this->awayScore = $awayScore;
         $this->updatedAt = $this->submittedAt;
+        $this->submittedBy = $submittedBy;
 
         $this->recordThat(new GuessSubmitted(
             guessId: $this->id,

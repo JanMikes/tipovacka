@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Guess;
 
 use App\Repository\GroupRepository;
+use App\Repository\GuessRepository;
+use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Voter\GroupVoter;
 use App\Voter\GuessVoter;
@@ -26,6 +28,8 @@ final class SportMatchGuessesController extends AbstractController
     public function __construct(
         private readonly GroupRepository $groupRepository,
         private readonly SportMatchRepository $sportMatchRepository,
+        private readonly MembershipRepository $membershipRepository,
+        private readonly GuessRepository $guessRepository,
     ) {
     }
 
@@ -40,9 +44,27 @@ final class SportMatchGuessesController extends AbstractController
         $context = new GuessVotingContext(sportMatch: $sportMatch, groupId: $group->id);
         $this->denyAccessUnlessGranted(GuessVoter::VIEW, $context);
 
+        $memberRows = [];
+
+        if ($this->isGranted(GroupVoter::MANAGE_MEMBERS, $group)) {
+            $memberships = $this->membershipRepository->findActiveByGroup($group->id);
+            foreach ($memberships as $membership) {
+                $guess = $this->guessRepository->findActiveByUserMatchGroup(
+                    $membership->user->id,
+                    $sportMatch->id,
+                    $group->id,
+                );
+                $memberRows[] = [
+                    'user' => $membership->user,
+                    'guess' => $guess,
+                ];
+            }
+        }
+
         return $this->render('portal/guess/detail.html.twig', [
             'group' => $group,
             'sport_match' => $sportMatch,
+            'member_rows' => $memberRows,
         ]);
     }
 }

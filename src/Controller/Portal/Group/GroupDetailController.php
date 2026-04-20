@@ -6,6 +6,8 @@ namespace App\Controller\Portal\Group;
 
 use App\Entity\User;
 use App\Enum\UserRole;
+use App\Form\BulkInvitationFormData;
+use App\Form\BulkInvitationFormType;
 use App\Form\SendInvitationFormData;
 use App\Form\SendInvitationFormType;
 use App\Query\GetGroupDetail\GetGroupDetail;
@@ -72,10 +74,17 @@ final class GroupDetailController extends AbstractController
             'action' => $this->generateUrl('portal_group_invitation_send', ['id' => $group->id->toRfc4122()]),
         ]);
 
+        $bulkInvitationForm = $canManage
+            ? $this->createForm(BulkInvitationFormType::class, new BulkInvitationFormData(), [
+                'action' => $this->generateUrl('portal_group_invitation_send_bulk', ['id' => $group->id->toRfc4122()]),
+            ])
+            : null;
+
         return $this->render('portal/group/detail.html.twig', [
             'group' => $group,
             'detail' => $detail,
             'invitationForm' => $invitationForm->createView(),
+            'bulkInvitationForm' => $bulkInvitationForm?->createView(),
             'pendingInvitations' => $pendingInvitations,
             'pendingJoinRequests' => $pendingJoinRequests,
         ]);

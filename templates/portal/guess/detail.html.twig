@@ -43,6 +43,57 @@
         <twig:Guess:GuessSubmitForm sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
 
         <twig:Guess:MatchGuessesList sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
+
+        {% if is_granted('group_manage_members', group) and member_rows|length > 0 %}
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-lg font-semibold text-[#081e44] mb-1">Tipy členů</h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    Jako vlastník můžeš zadat tip za člena, který sám nemá přístup.
+                </p>
+
+                {% set can_edit = sport_match.isOpenForGuesses and (sport_match.kickoffAt > date()) %}
+
+                <ul class="divide-y divide-gray-100">
+                    {% for row in member_rows %}
+                        <li class="py-3 flex items-center justify-between gap-3 flex-wrap">
+                            <div class="min-w-[140px]">
+                                <span class="font-medium text-[#081e44]">{{ row.user.nickname }}</span>
+                                {% if not row.user.isVerified %}
+                                    <span class="ml-2 text-xs text-gray-500">(neověřený)</span>
+                                {% endif %}
+                            </div>
+
+                            <form method="post"
+                                  action="{{ path('portal_group_guess_on_behalf', {
+                                      groupId: group.id.toRfc4122,
+                                      sportMatchId: sport_match.id.toRfc4122,
+                                      memberId: row.user.id.toRfc4122,
+                                  }) }}"
+                                  class="flex items-center gap-2">
+                                <input type="hidden" name="_token"
+                                       value="{{ csrf_token('guess_on_behalf_' ~ group.id.toRfc4122 ~ '_' ~ sport_match.id.toRfc4122 ~ '_' ~ row.user.id.toRfc4122) }}">
+                                <input type="number" name="homeScore" min="0" max="99" required
+                                       value="{{ row.guess ? row.guess.homeScore : '' }}"
+                                       {% if not can_edit %}disabled{% endif %}
+                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       aria-label="Domácí">
+                                <span class="text-gray-400">:</span>
+                                <input type="number" name="awayScore" min="0" max="99" required
+                                       value="{{ row.guess ? row.guess.awayScore : '' }}"
+                                       {% if not can_edit %}disabled{% endif %}
+                                       class="w-16 px-2 py-1 border border-gray-300 rounded text-center"
+                                       aria-label="Hosté">
+                                <button type="submit"
+                                        {% if not can_edit %}disabled{% endif %}
+                                        class="bg-[#081e44] hover:bg-[#0f2d5f] disabled:opacity-40 disabled:cursor-not-allowed text-white py-1 px-3 rounded text-sm font-medium">
+                                    {{ row.guess ? 'Upravit' : 'Uložit' }}
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

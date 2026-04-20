@@ -98,6 +98,24 @@
                 </div>
             {{ form_end(invitationForm) }}
 
+            {% if bulkInvitationForm %}
+                <div class="border-t border-gray-100 pt-5 mb-6">
+                    <h3 class="text-sm font-semibold text-[#081e44] mb-1">Pozvat více lidí najednou</h3>
+                    <p class="text-xs text-gray-500 mb-3">
+                        Pro neznámé e-maily založíme prázdný účet a odešleme odkaz na dokončení registrace —
+                        pozvaný si jen zvolí heslo a rovnou se připojí.
+                    </p>
+                    {{ form_start(bulkInvitationForm) }}
+                        <div class="space-y-3">
+                            {{ form_row(bulkInvitationForm.emails) }}
+                            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
+                                Odeslat hromadně
+                            </button>
+                        </div>
+                    {{ form_end(bulkInvitationForm) }}
+                </div>
+            {% endif %}
+
             {% if pendingInvitations|length > 0 %}
                 <p class="text-sm font-medium text-gray-500 mb-2">Čekající pozvánky</p>
                 <ul class="divide-y divide-gray-100">
@@ -219,6 +237,15 @@
                     class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
                 >
                     Upravit
+                </a>
+            {% endif %}
+
+            {% if is_granted('group_manage_members', group) %}
+                <a
+                    href="{{ path('portal_group_manage_member_tips', {id: group.id.toRfc4122}) }}"
+                    class="bg-white border border-[#081e44] text-[#081e44] hover:bg-[#081e44] hover:text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                >
+                    Tipovat za členy
                 </a>
             {% endif %}
 
