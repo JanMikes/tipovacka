@@ -45,8 +45,15 @@ class Tournament implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $finishedAt = null;
 
+    #[ORM\Column(length: 8, nullable: true)]
+    public private(set) ?string $creationPin = null;
+
     public bool $isPublic {
         get => TournamentVisibility::Public === $this->visibility;
+    }
+
+    public bool $hasCreationPin {
+        get => null !== $this->creationPin && '' !== $this->creationPin;
     }
 
     public bool $isFinished {
@@ -75,11 +82,13 @@ class Tournament implements EntityWithEvents, SoftDeletable
         ?\DateTimeImmutable $endAt,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
+        ?string $creationPin = null,
     ) {
         $this->name = $name;
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
+        $this->creationPin = '' !== $creationPin ? $creationPin : null;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new TournamentCreated(
@@ -102,6 +111,23 @@ class Tournament implements EntityWithEvents, SoftDeletable
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new TournamentUpdated(
+            tournamentId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    public function setCreationPin(?string $pin, \DateTimeImmutable $now): void
+    {
+        $normalized = null === $pin || '' === $pin ? null : $pin;
+
+        if ($normalized === $this->creationPin) {
+            return;
+        }
+
+        $this->creationPin = $normalized;
         $this->updatedAt = $now;
 
         $this->recordThat(new TournamentUpdated(

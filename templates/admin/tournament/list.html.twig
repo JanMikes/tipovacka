@@ -50,6 +50,7 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-3 whitespace-nowrap">
+                                <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm font-medium">Otevřít</a>
                                 <a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Upravit</a>
                                 <a href="{{ path('admin_tournament_rule_configuration', {id: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Pravidla</a>
                                 <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="text-[#149AD5] hover:underline text-sm">Zápasy</a>

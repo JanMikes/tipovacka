@@ -47,12 +47,26 @@ final class TournamentFormType extends AbstractType
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
         ]);
+
+        if (true === $options['with_creation_pin']) {
+            $builder->add('creationPin', TextType::class, [
+                'label' => 'PIN pro vytváření skupin',
+                'required' => false,
+                'help' => 'Kdokoliv s tímto PINem bude moci v tomto soukromém turnaji založit novou skupinu. Nech prázdné, pokud chceš zakládání omezit jen na sebe.',
+                'attr' => [
+                    'placeholder' => 'Např. SKUP2026',
+                    'maxlength' => 8,
+                ],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => TournamentFormData::class,
+            'with_creation_pin' => false,
         ]);
+        $resolver->setAllowedTypes('with_creation_pin', 'bool');
     }
 }

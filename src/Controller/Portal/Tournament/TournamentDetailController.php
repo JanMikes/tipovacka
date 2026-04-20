@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Tournament;
 
+use App\Query\ListGroupsForTournament\ListGroupsForTournament;
 use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
 use App\Query\QueryBus;
 use App\Repository\TournamentRepository;
@@ -30,10 +31,12 @@ final class TournamentDetailController extends AbstractController
         $this->denyAccessUnlessGranted(TournamentVoter::VIEW, $tournament);
 
         $matches = $this->queryBus->handle(new ListTournamentSportMatches(tournamentId: $tournament->id));
+        $groups = $this->queryBus->handle(new ListGroupsForTournament(tournamentId: $tournament->id));
 
         return $this->render('portal/tournament/detail.html.twig', [
             'tournament' => $tournament,
             'sport_matches' => $matches,
+            'groups' => $groups,
         ]);
     }
 }

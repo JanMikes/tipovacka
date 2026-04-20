@@ -45,6 +45,14 @@
                 {{ form_errors(form.endAt) }}
             </div>
         </div>
+        {% if form.creationPin is defined %}
+            <div>
+                {{ form_label(form.creationPin) }}
+                {{ form_widget(form.creationPin) }}
+                {{ form_help(form.creationPin) }}
+                {{ form_errors(form.creationPin) }}
+            </div>
+        {% endif %}
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="inline-flex items-center justify-center bg-[#081e44] hover:bg-[#0f2d5f] text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors">
                 Uložit změny

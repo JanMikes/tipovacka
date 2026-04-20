@@ -20,6 +20,8 @@ final class GroupFormData
 
     public bool $withPin = false;
 
+    public ?string $tournamentCreationPin = null;
+
     public static function fromGroup(Group $group): self
     {
         $formData = new self();

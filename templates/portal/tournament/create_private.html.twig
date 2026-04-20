@@ -38,6 +38,15 @@
                 </div>
             </div>
 
+            {% if form.creationPin is defined %}
+                <div>
+                    {{ form_label(form.creationPin, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-1'}}) }}
+                    {{ form_widget(form.creationPin, {attr: {class: 'w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#149AD5] focus:border-transparent outline-none transition font-mono tracking-wider uppercase'}}) }}
+                    {{ form_help(form.creationPin) }}
+                    {{ form_errors(form.creationPin) }}
+                </div>
+            {% endif %}
+
             <button
                 type="submit"
                 class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-6 rounded-lg font-medium transition-colors"

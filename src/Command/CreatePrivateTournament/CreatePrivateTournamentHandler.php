@@ -41,6 +41,7 @@ final readonly class CreatePrivateTournamentHandler
             startAt: $command->startAt,
             endAt: $command->endAt,
             createdAt: $now,
+            creationPin: $command->creationPin,
         );
 
         $this->tournamentRepository->save($tournament);

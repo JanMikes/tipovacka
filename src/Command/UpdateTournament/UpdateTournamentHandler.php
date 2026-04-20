@@ -35,5 +35,9 @@ final readonly class UpdateTournamentHandler
             endAt: $command->endAt,
             now: $now,
         );
+
+        if ($command->updateCreationPin) {
+            $tournament->setCreationPin($command->creationPin, $now);
+        }
     }
 }

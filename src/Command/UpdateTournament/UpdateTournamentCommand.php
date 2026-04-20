@@ -14,6 +14,8 @@ final readonly class UpdateTournamentCommand
         public ?string $description,
         public ?\DateTimeImmutable $startAt,
         public ?\DateTimeImmutable $endAt,
+        public bool $updateCreationPin = false,
+        public ?string $creationPin = null,
     ) {
     }
 }

@@ -22,6 +22,18 @@ final class TournamentFormData
 
     public ?\DateTimeImmutable $endAt = null;
 
+    #[Assert\Length(
+        min: 4,
+        max: 8,
+        minMessage: 'PIN musí mít alespoň {{ limit }} znaky.',
+        maxMessage: 'PIN nesmí být delší než {{ limit }} znaků.',
+    )]
+    #[Assert\Regex(
+        pattern: '/^[A-Za-z0-9]+$/',
+        message: 'PIN smí obsahovat jen písmena a číslice.',
+    )]
+    public ?string $creationPin = null;
+
     public static function fromTournament(Tournament $tournament): self
     {
         $formData = new self();
@@ -29,6 +41,7 @@ final class TournamentFormData
         $formData->description = $tournament->description;
         $formData->startAt = $tournament->startAt;
         $formData->endAt = $tournament->endAt;
+        $formData->creationPin = $tournament->creationPin;
 
         return $formData;
     }

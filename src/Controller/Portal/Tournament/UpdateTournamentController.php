@@ -32,7 +32,10 @@ final class UpdateTournamentController extends AbstractController
         $this->denyAccessUnlessGranted(TournamentVoter::EDIT, $tournament);
 
         $formData = TournamentFormData::fromTournament($tournament);
-        $form = $this->createForm(TournamentFormType::class, $formData);
+        $withCreationPin = !$tournament->isPublic;
+        $form = $this->createForm(TournamentFormType::class, $formData, [
+            'with_creation_pin' => $withCreationPin,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -42,6 +45,8 @@ final class UpdateTournamentController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
+                updateCreationPin: $withCreationPin,
+                creationPin: $formData->creationPin ?: null,
             ));
 
             $this->addFlash('success', 'Turnaj byl uložen.');

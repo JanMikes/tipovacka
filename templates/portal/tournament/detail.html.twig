@@ -43,6 +43,37 @@
         </div>
     </div>
 
+    {% set canCreateGroup = is_granted('tournament_create_group', tournament) %}
+    {% set canUsePinGate = not canCreateGroup and app.user and app.user.isVerified and tournament.isActive and tournament.hasCreationPin %}
+
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#081e44]">Skupiny</h2>
+            {% if canCreateGroup or canUsePinGate %}
+                <a href="{{ path('portal_group_create', {tournamentId: tournament.id.toRfc4122}) }}"
+                   class="bg-[#149AD5] hover:bg-[#0f7fb0] text-white py-2 px-4 rounded-lg text-sm font-medium">
+                    {% if canUsePinGate %}Založit skupinu s PINem{% else %}Založit skupinu{% endif %}
+                </a>
+            {% endif %}
+        </div>
+
+        {% if groups|length == 0 %}
+            <p class="text-sm text-gray-500">V tomto turnaji zatím nejsou žádné skupiny.</p>
+        {% else %}
+            <ul class="divide-y divide-gray-100">
+                {% for g in groups %}
+                    <li class="py-3 flex items-center justify-between">
+                        <a href="{{ path('portal_group_detail', {id: g.groupId.toRfc4122}) }}"
+                           class="flex-1 hover:text-[#149AD5]">
+                            <span class="font-medium">{{ g.groupName }}</span>
+                            <span class="text-xs text-gray-500 ml-2">{{ g.ownerNickname }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-semibold text-[#081e44]">Zápasy</h2>

@@ -14,6 +14,7 @@ final readonly class CreatePrivateTournamentCommand
         public ?string $description,
         public ?\DateTimeImmutable $startAt,
         public ?\DateTimeImmutable $endAt,
+        public ?string $creationPin = null,
     ) {
     }
 }

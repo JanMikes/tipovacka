@@ -13,12 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * Tournament authorization voter.
- *
- * Stage 3 retrofit: VIEW on private tournaments is also granted to users with
- * an active Membership in any Group of the tournament.
- *
- * @extends Voter<'tournament_view'|'tournament_edit'|'tournament_delete'|'tournament_finish'|'tournament_create_match', Tournament>
+ * @extends Voter<'tournament_view'|'tournament_edit'|'tournament_delete'|'tournament_finish'|'tournament_create_match'|'tournament_create_group', Tournament>
  */
 final class TournamentVoter extends Voter
 {
@@ -27,6 +22,7 @@ final class TournamentVoter extends Voter
     public const string DELETE = 'tournament_delete';
     public const string FINISH = 'tournament_finish';
     public const string CREATE_MATCH = 'tournament_create_match';
+    public const string CREATE_GROUP = 'tournament_create_group';
 
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
@@ -35,7 +31,7 @@ final class TournamentVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH], true)
+        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH, self::CREATE_GROUP], true)
             && $subject instanceof Tournament;
     }
 
@@ -57,6 +53,9 @@ final class TournamentVoter extends Voter
                 || $isOwner
                 || $this->membershipRepository->hasActiveMembershipInTournament($currentUser->id, $subject->id),
             self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH => $isAdmin || ($isOwner && $subject->isActive),
+            self::CREATE_GROUP => $currentUser->isVerified
+                && $subject->isActive
+                && ($isAdmin || $isOwner || $subject->isPublic),
         };
     }
 }

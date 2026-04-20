@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * @extends AbstractType<GroupFormData>
@@ -45,6 +46,22 @@ final class GroupFormType extends AbstractType
         }
 
         $builder->add('withPin', CheckboxType::class, $withPinOptions);
+
+        if (true === $options['require_tournament_creation_pin']) {
+            $builder->add('tournamentCreationPin', TextType::class, [
+                'label' => 'PIN turnaje',
+                'required' => true,
+                'help' => 'Pro založení skupiny v tomto soukromém turnaji je potřeba zadat PIN od vlastníka.',
+                'attr' => [
+                    'autocomplete' => 'off',
+                    'maxlength' => 8,
+                ],
+                'constraints' => [
+                    new NotBlank(message: 'Zadejte prosím PIN turnaje.'),
+                ],
+                'mapped' => true,
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -52,7 +69,9 @@ final class GroupFormType extends AbstractType
         $resolver->setDefaults([
             'data_class' => GroupFormData::class,
             'with_pin_disabled' => false,
+            'require_tournament_creation_pin' => false,
         ]);
         $resolver->setAllowedTypes('with_pin_disabled', 'bool');
+        $resolver->setAllowedTypes('require_tournament_creation_pin', 'bool');
     }
 }

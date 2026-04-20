@@ -31,7 +31,9 @@ final class CreatePrivateTournamentController extends AbstractController
         $user = $this->getUser();
 
         $formData = new TournamentFormData();
-        $form = $this->createForm(TournamentFormType::class, $formData);
+        $form = $this->createForm(TournamentFormType::class, $formData, [
+            'with_creation_pin' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -41,6 +43,7 @@ final class CreatePrivateTournamentController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
+                creationPin: $formData->creationPin ?: null,
             ));
 
             $tournament = $this->extractTournament($envelope);
