@@ -1,45 +1,85 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tipovačka — tipuj s kamarády{% endblock %}
+{% block title %}Tipovačka — tipuj zápasy, poraz kamarády{% endblock %}
+{% block meta_description %}Založ soukromou skupinu, zvi kamarády a bojujte o prvenství v tabulce. Tipování fotbalových zápasů zdarma.{% endblock %}
+
+{% block og_title %}Tipovačka — Tipuj zápasy. Poraz kamarády.{% endblock %}
+{% block og_description %}Založ skupinu, zvi přátele a bojujte o prvenství v tabulce.{% endblock %}
 
 {% block body %}
-<section class="bg-[#081e44] text-white">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <h1 class="text-4xl sm:text-5xl font-bold mb-4">Tipuj, vyhrávej s kamarády</h1>
-        <p class="text-lg text-gray-300 mb-8">Jednoduchá aplikace na tipování fotbalových zápasů.</p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="{{ path('app_register') }}" class="bg-[#149AD5] hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                Zaregistruj se zdarma
-            </a>
-            <a href="{{ path('public_tournaments_list') }}" class="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                Prohlédni si turnaje
-            </a>
+<section class="relative overflow-hidden bg-white">
+    <div class="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
+        <div class="max-w-xl">
+            <h1 class="text-4xl font-semibold tracking-tight text-[#081e44] sm:text-5xl lg:text-6xl">
+                Tipuj zápasy. Poraz kamarády.
+            </h1>
+            <p class="mt-6 text-lg text-[#081e44]/70 sm:text-xl">
+                Založ soukromou skupinu, zvi přátele a bojujte o prvenství v tabulce.
+            </p>
+            <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center rounded-lg bg-[#149AD5] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#0f84b8]">
+                    Zaregistruj se zdarma
+                </a>
+                <a href="{{ path('public_tournaments_list') }}" class="inline-flex items-center justify-center rounded-lg px-4 py-3 text-base font-semibold text-[#081e44] transition-colors hover:text-[#149AD5]">
+                    Procházet turnaje →
+                </a>
+            </div>
+        </div>
+
+        <div class="relative">
+            <picture>
+                <source media="(max-width: 767px)" srcset="{{ asset('images/hero/hero-portrait.png') }}">
+                <source media="(min-width: 768px)" srcset="{{ asset('images/hero/hero-desktop.png') }}">
+                <img
+                    src="{{ asset('images/hero/hero-desktop.png') }}"
+                    alt=""
+                    role="presentation"
+                    class="mx-auto h-auto w-full max-w-xl"
+                    loading="eager"
+                    fetchpriority="high"
+                    decoding="async"
+                >
+            </picture>
         </div>
     </div>
 </section>
 
-<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div class="bg-white rounded-2xl shadow-sm p-6 text-center">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-2">Vytvoř skupinu</h2>
-            <p class="text-gray-600 text-sm">Založ si vlastní tipovací partu a pozvi kamarády.</p>
+<section class="bg-white py-20 sm:py-24">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+            <h2 class="text-3xl font-semibold tracking-tight text-[#081e44] sm:text-4xl">Jak to funguje</h2>
+            <p class="mt-4 text-lg text-[#081e44]/70">Tři kroky od registrace k první výhře.</p>
         </div>
-        <div class="bg-white rounded-2xl shadow-sm p-6 text-center">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-2">Tipuj zápasy</h2>
-            <p class="text-gray-600 text-sm">Odhadni výsledky a utkej se o body.</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-6 text-center">
-            <h2 class="text-lg font-semibold text-[#081e44] mb-2">Sleduj žebříček</h2>
-            <p class="text-gray-600 text-sm">Průběžné pořadí v každé skupině.</p>
+
+        <div class="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-x-8 gap-y-14 md:grid-cols-3">
+            {% set steps = [
+                { img: 'step-1-create-group.png', title: 'Vytvoř skupinu', body: 'Založ soukromou skupinu a pozvi kamarády přes odkaz nebo PIN.' },
+                { img: 'step-2-predict.png',     title: 'Tipuj zápasy',   body: 'Zadej svůj tip na každý zápas až do výkopu.' },
+                { img: 'step-3-climb.png',       title: 'Získej body',    body: 'Správné tipy ti nasbírají body a vyženou tě na špici tabulky.' }
+            ] %}
+            {% for step in steps %}
+                <div class="flex flex-col items-center text-center">
+                    <img
+                        src="{{ asset('images/how-it-works/' ~ step.img) }}"
+                        alt=""
+                        role="presentation"
+                        class="h-40 w-40 sm:h-48 sm:w-48"
+                        loading="lazy"
+                        decoding="async"
+                    >
+                    <h3 class="mt-6 text-xl font-semibold text-[#081e44]">{{ step.title }}</h3>
+                    <p class="mt-2 text-base text-[#081e44]/70">{{ step.body }}</p>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="bg-gray-100">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <h2 class="text-2xl font-bold text-[#081e44] mb-3">Připoj se zdarma</h2>
-        <p class="text-gray-600 mb-6">Žádné poplatky, žádné složité nastavení.</p>
-        <a href="{{ path('app_register') }}" class="inline-block bg-[#149AD5] hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+<section class="bg-gray-50">
+    <div class="mx-auto max-w-3xl px-4 py-14 text-center sm:px-6 sm:py-16 lg:px-8">
+        <h2 class="text-2xl font-semibold text-[#081e44] sm:text-3xl">Připoj se zdarma</h2>
+        <p class="mt-3 text-base text-[#081e44]/70">Žádné poplatky, žádné složité nastavení.</p>
+        <a href="{{ path('app_register') }}" class="mt-6 inline-flex items-center justify-center rounded-lg bg-[#149AD5] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#0f84b8]">
             Zaregistruj se zdarma
         </a>
     </div>
