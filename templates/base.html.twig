@@ -37,7 +37,7 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body data-turbo="false" class="min-h-screen flex flex-col bg-navy-50/40 text-navy-900 antialiased">
+    <body data-turbo="false" class="min-h-screen flex flex-col {% block body_class %}bg-navy-50/40{% endblock %} text-navy-900 antialiased">
 
         {# ───────── Navigation ───────── #}
         <header class="sticky top-0 z-40 bg-navy-900 text-white shadow-lg" data-controller="mobile-nav">

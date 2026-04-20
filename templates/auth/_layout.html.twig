@@ -1,11 +1,13 @@
 {% extends 'base.html.twig' %}
 
 {#
-    Auth shell — centered form card on a light background with a subtle cyan/navy gradient accent.
+    Auth shell — centered form card on a white background with a subtle cyan/navy gradient accent.
     Child templates fill:
       - {% block auth_panel_tagline %} (small copy shown above the card, optional)
       - {% block auth_card %} (main form/content card — required)
 #}
+
+{% block body_class %}bg-white{% endblock %}
 
 {% block body %}
 <section class="relative flex flex-1 items-center justify-center overflow-hidden bg-white px-4 py-16 sm:px-6 lg:px-8">
@@ -17,16 +19,12 @@
     </div>
 
     <div class="relative w-full max-w-md">
-        {% block auth_panel_tagline_wrapper %}
-            {% set tagline = block('auth_panel_tagline') ?? null %}
-            {% if tagline %}
-                <p class="mb-6 text-center text-sm text-navy-900/60">{{ tagline|raw }}</p>
-            {% endif %}
-        {% endblock %}
+        {% set tagline %}{% block auth_panel_tagline %}{% endblock %}{% endset %}
+        {% if tagline|trim %}
+            <p class="mb-6 text-center text-sm text-navy-900/60">{{ tagline|raw }}</p>
+        {% endif %}
 
         {% block auth_card %}{% endblock %}
     </div>
 </section>
 {% endblock %}
-
-{% block auth_panel_tagline %}{% endblock %}
