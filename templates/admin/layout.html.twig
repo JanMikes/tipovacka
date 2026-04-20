@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
+        <aside class="bg-white rounded-2xl shadow p-4">
+            <h2 class="text-sm font-bold uppercase text-gray-500 mb-3">Admin</h2>
+            <nav class="flex flex-col gap-1 text-sm">
+                <a href="{{ path('admin_user_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Uživatelé</a>
+                <a href="{{ path('admin_tournament_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Turnaje</a>
+                <a href="{{ path('admin_tournament_create') }}" class="px-3 py-2 rounded hover:bg-gray-100">Nový turnaj</a>
+                <a href="{{ path('admin_group_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Skupiny</a>
+                <a href="{{ path('admin_rule_list') }}" class="px-3 py-2 rounded hover:bg-gray-100">Pravidla</a>
+            </nav>
+        </aside>
+
+        <section>
+            {% block admin_body %}{% endblock %}
+        </section>
+    </div>
+</div>
+{% endblock %}

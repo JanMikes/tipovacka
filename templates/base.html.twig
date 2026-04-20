@@ -61,7 +61,7 @@
                                 Profil
                             </a>
                             {% if is_granted('ROLE_ADMIN') %}
-                                <a href="{{ path('admin_tournament_create') }}" class="text-[#149AD5] hover:text-white transition-colors text-sm font-medium">
+                                <a href="{{ path('admin_tournament_list') }}" class="text-[#149AD5] hover:text-white transition-colors text-sm font-medium">
                                     Admin
                                 </a>
                             {% endif %}
@@ -108,7 +108,7 @@
                         <a href="{{ path('public_tournaments_list') }}" class="block py-2 text-gray-300 hover:text-white text-sm font-medium">Turnaje</a>
                         <a href="{{ path('portal_profile_edit') }}" class="block py-2 text-gray-300 hover:text-white text-sm font-medium">Profil</a>
                         {% if is_granted('ROLE_ADMIN') %}
-                            <a href="{{ path('admin_tournament_create') }}" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Admin</a>
+                            <a href="{{ path('admin_tournament_list') }}" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Admin</a>
                         {% endif %}
                         <a href="{{ path('app_logout') }}" class="block py-2 text-[#149AD5] hover:text-white text-sm font-medium">Odhlásit se</a>
                     {% else %}

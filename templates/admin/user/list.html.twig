@@ -1,0 +1,71 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Uživatelé — Admin — Tipovačka{% endblock %}
+
+{% block admin_body %}
+<h1 class="text-2xl font-bold text-[#081e44] mb-4">Uživatelé</h1>
+
+<div class="bg-white rounded-2xl shadow p-6 mb-4">
+    {{ form_start(form, {attr: {class: 'space-y-3'}}) }}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+                {{ form_label(form.search) }}
+                {{ form_widget(form.search) }}
+            </div>
+            <div>
+                {{ form_label(form.verified) }}
+                {{ form_widget(form.verified) }}
+            </div>
+            <div>
+                {{ form_label(form.active) }}
+                {{ form_widget(form.active) }}
+            </div>
+        </div>
+        <button type="submit" class="bg-[#081e44] text-white py-2 px-4 rounded">Filtrovat</button>
+    {{ form_end(form) }}
+</div>
+
+<div class="bg-white rounded-2xl shadow overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="text-left px-4 py-2">E-mail</th>
+                <th class="text-left px-4 py-2">Přezdívka</th>
+                <th class="text-left px-4 py-2">Role</th>
+                <th class="text-left px-4 py-2">Stav</th>
+                <th class="text-left px-4 py-2">Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr class="border-t {% if user.isDeleted %}text-gray-400{% endif %}">
+                    <td class="px-4 py-2">{{ user.email }}{% if user.isDeleted %} (smazán){% endif %}</td>
+                    <td class="px-4 py-2">{{ user.nickname }}</td>
+                    <td class="px-4 py-2">{{ user.roles|join(', ') }}</td>
+                    <td class="px-4 py-2">
+                        {% if not user.isVerified %}<span class="text-yellow-700">neověřený</span>{% endif %}
+                        {% if not user.isActive %}<span class="text-red-700">zablokovaný</span>{% endif %}
+                        {% if user.isVerified and user.isActive %}<span class="text-green-700">aktivní</span>{% endif %}
+                    </td>
+                    <td class="px-4 py-2">
+                        <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="text-blue-600 hover:underline mr-2">Přihlásit se jako</a>
+                        {% if user.isActive %}
+                            <form method="post" action="{{ path('admin_user_block', {id: user.id.toRfc4122}) }}" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('admin_user_block_' ~ user.id.toRfc4122) }}">
+                                <button type="submit" class="text-red-600 hover:underline">Zablokovat</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('admin_user_unblock', {id: user.id.toRfc4122}) }}" class="inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('admin_user_unblock_' ~ user.id.toRfc4122) }}">
+                                <button type="submit" class="text-green-600 hover:underline">Odblokovat</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" class="px-4 py-6 text-center text-gray-500">Žádní uživatelé.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

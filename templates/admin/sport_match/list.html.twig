@@ -1,0 +1,48 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Zápasy — {{ tournament.name }} — Admin{% endblock %}
+
+{% block admin_body %}
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-[#081e44]">Zápasy: {{ tournament.name }}</h1>
+    <a href="{{ path('portal_sport_match_create', {tournamentId: tournament.id.toRfc4122}) }}" class="bg-[#081e44] text-white py-2 px-4 rounded">Nový zápas</a>
+</div>
+
+<div class="bg-white rounded-2xl shadow overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="text-left px-4 py-2">Zápas</th>
+                <th class="text-left px-4 py-2">Výkop</th>
+                <th class="text-left px-4 py-2">Místo</th>
+                <th class="text-left px-4 py-2">Stav</th>
+                <th class="text-left px-4 py-2">Skóre</th>
+                <th class="text-left px-4 py-2">Akce</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in matches %}
+                <tr class="border-t">
+                    <td class="px-4 py-2">{{ match.homeTeam }} vs {{ match.awayTeam }}</td>
+                    <td class="px-4 py-2">{{ match.kickoffAt|date('d. m. Y H:i') }}</td>
+                    <td class="px-4 py-2">{{ match.venue ?? '—' }}</td>
+                    <td class="px-4 py-2">{{ match.state.value }}</td>
+                    <td class="px-4 py-2">
+                        {% if match.homeScore is not null and match.awayScore is not null %}
+                            {{ match.homeScore }}:{{ match.awayScore }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 space-x-2">
+                        <a href="{{ path('portal_sport_match_detail', {id: match.id.toRfc4122}) }}" class="text-blue-600 hover:underline">Detail</a>
+                        <a href="{{ path('portal_sport_match_edit', {id: match.id.toRfc4122}) }}" class="text-blue-600 hover:underline">Upravit</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">Žádné zápasy.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
