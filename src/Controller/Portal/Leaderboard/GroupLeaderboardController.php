@@ -38,6 +38,7 @@ final class GroupLeaderboardController extends AbstractController
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;
+
                     break;
                 }
             }
