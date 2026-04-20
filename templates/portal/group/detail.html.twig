@@ -198,6 +198,18 @@
         </ul>
     </div>
 
+    {% if is_granted('leaderboard_view', group) %}
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 class="text-lg font-semibold text-[#081e44] mb-4">Žebříček</h2>
+            <a
+                href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}"
+                class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors inline-block"
+            >
+                Zobrazit žebříček
+            </a>
+        </div>
+    {% endif %}
+
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <h2 class="text-lg font-semibold text-[#081e44] mb-4">Správa</h2>
         <div class="flex flex-wrap gap-3">

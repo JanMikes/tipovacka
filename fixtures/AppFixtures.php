@@ -81,6 +81,8 @@ final class AppFixtures extends Fixture
 
     public const string FIXTURE_GUESS_EVAL_RULE_POINTS_ID = '019eeeee-0000-7000-8000-000000000003';
 
+    public const string FIXTURE_TIE_RESOLUTION_ID = '019eeeee-0000-7000-8000-000000000004';
+
     /** Fixed UUIDs for the 8 rule configurations (4 per tournament, 2 tournaments). */
     public const string PUBLIC_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000001';
     public const string PUBLIC_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000002';
