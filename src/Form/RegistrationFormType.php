@@ -26,17 +26,10 @@ class RegistrationFormType extends AbstractType
             ],
         ]);
 
-        $builder->add('firstName', TextType::class, [
-            'label' => 'Jméno',
+        $builder->add('nickname', TextType::class, [
+            'label' => 'Přezdívka',
             'attr' => [
-                'placeholder' => 'Jan',
-            ],
-        ]);
-
-        $builder->add('lastName', TextType::class, [
-            'label' => 'Příjmení',
-            'attr' => [
-                'placeholder' => 'Novák',
+                'placeholder' => 'vase_prezdivka',
             ],
         ]);
 

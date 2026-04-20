@@ -11,6 +11,11 @@ return App::config([
             'autoconfigure' => true,
             'public' => true,
         ],
+        '_instanceof' => [
+            'App\\Rule\\RuleInterface' => [
+                'tags' => [['app.rule' => []]],
+            ],
+        ],
         'App\\Command\\' => [
             'resource' => '../src/Command/*Handler.php',
         ],
@@ -30,6 +35,7 @@ return App::config([
             'resource' => '../src/Query/*Query.php',
         ],
         'App\\Query\\QueryBus' => null,
+        'App\\Rule\\RuleRegistry' => null,
         'App\\Repository\\' => [
             'resource' => '../src/Repository/',
         ],

@@ -23,8 +23,8 @@ final class ProfileFormData
     public static function fromUser(User $user): self
     {
         $formData = new self();
-        $formData->firstName = $user->firstName;
-        $formData->lastName = $user->lastName;
+        $formData->firstName = $user->firstName ?? '';
+        $formData->lastName = $user->lastName ?? '';
         $formData->phone = $user->phone;
 
         return $formData;

@@ -14,6 +14,7 @@ parameters:
         - tests
     excludePaths:
         - tests/Integration/*  # Temporarily exclude until test container issue is fixed
+        - tests/Support/IntegrationTestCase.php  # Uses test-env-only public aliases
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     doctrine:

@@ -32,14 +32,16 @@ final readonly class SendWelcomeEmailHandler
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
+        $displayName = '' !== $user->fullName ? $user->fullName : $user->nickname;
+
         // Create and send the welcome email
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $user->fullName))
+            ->to(new Address($user->email, $displayName))
             ->subject('Vítejte v Tipovačce!')
             ->htmlTemplate('email/welcome.html.twig')
             ->context([
-                'name' => $user->fullName,
+                'name' => $displayName,
                 'loginUrl' => $loginUrl,
             ]);
 

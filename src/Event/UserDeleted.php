@@ -6,7 +6,7 @@ namespace App\Event;
 
 use Symfony\Component\Uid\Uuid;
 
-final readonly class UserRegistered
+final readonly class UserDeleted
 {
     public function __construct(
         public Uuid $userId,

@@ -39,14 +39,16 @@ final readonly class SendVerificationEmailHandler
             extraParams: ['id' => (string) $user->id],
         );
 
+        $displayName = '' !== $user->fullName ? $user->fullName : $user->nickname;
+
         // Create email with verification link
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $user->fullName))
+            ->to(new Address($user->email, $displayName))
             ->subject('Ověřte prosím svou e-mailovou adresu')
             ->htmlTemplate('email/verification.html.twig')
             ->context([
-                'name' => $user->fullName,
+                'name' => $displayName,
                 'verificationUrl' => $signatureComponents->getSignedUrl(),
                 'expiresAt' => $signatureComponents->getExpiresAt(),
             ]);

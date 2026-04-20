@@ -10,7 +10,7 @@ use App\Exception\UserNotFound;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
-class UserRepository
+final class UserRepository
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -51,6 +51,7 @@ class UserRepository
         return $this->entityManager->createQueryBuilder()
             ->select('u')
             ->from(User::class, 'u')
+            ->where('u.deletedAt IS NULL')
             ->orderBy('u.createdAt', 'DESC')
             ->addOrderBy('u.id', 'DESC')
             ->getQuery()
@@ -67,6 +68,7 @@ class UserRepository
         return $this->entityManager->createQueryBuilder()
             ->select('u')
             ->from(User::class, 'u')
+            ->where('u.deletedAt IS NULL')
             ->orderBy('u.createdAt', 'DESC')
             ->addOrderBy('u.id', 'DESC')
             ->setFirstResult($offset)
@@ -78,7 +80,7 @@ class UserRepository
     public function countTotal(): int
     {
         $connection = $this->entityManager->getConnection();
-        $result = $connection->executeQuery('SELECT COUNT(id) FROM users')->fetchOne();
+        $result = $connection->executeQuery('SELECT COUNT(id) FROM users WHERE deleted_at IS NULL')->fetchOne();
 
         return (int) $result;
     }
@@ -87,7 +89,7 @@ class UserRepository
     {
         $connection = $this->entityManager->getConnection();
         $result = $connection->executeQuery(
-            'SELECT COUNT(id) FROM users WHERE is_verified = :isVerified',
+            'SELECT COUNT(id) FROM users WHERE is_verified = :isVerified AND deleted_at IS NULL',
             ['isVerified' => true],
             ['isVerified' => \Doctrine\DBAL\Types\Types::BOOLEAN]
         )->fetchOne();
@@ -99,7 +101,7 @@ class UserRepository
     {
         $connection = $this->entityManager->getConnection();
         $result = $connection->executeQuery(
-            'SELECT COUNT(id) FROM users WHERE roles::jsonb @> :role::jsonb',
+            'SELECT COUNT(id) FROM users WHERE roles::jsonb @> :role::jsonb AND deleted_at IS NULL',
             ['role' => json_encode([$role])],
             ['role' => \Doctrine\DBAL\Types\Types::STRING]
         )->fetchOne();
@@ -116,7 +118,7 @@ class UserRepository
     {
         $connection = $this->entityManager->getConnection();
         $ids = $connection->executeQuery(
-            'SELECT id FROM users WHERE roles::jsonb @> :role::jsonb',
+            'SELECT id FROM users WHERE roles::jsonb @> :role::jsonb AND deleted_at IS NULL',
             ['role' => json_encode([$role->value])],
             ['role' => \Doctrine\DBAL\Types\Types::STRING]
         )->fetchFirstColumn();

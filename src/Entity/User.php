@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Entity\Concerns\SoftDeletable;
+use App\Entity\Concerns\SoftDeletes;
 use App\Enum\UserRole;
 use App\Event\EmailVerified;
+use App\Event\UserDeleted;
 use App\Event\UserRegistered;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -15,9 +18,11 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityWithEvents
+class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityWithEvents, SoftDeletable
 {
     use HasEvents;
+    use SoftDeletes;
+
     /**
      * @var array<string>
      */
@@ -28,13 +33,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
     private bool $isVerified = false;
 
     #[ORM\Column]
+    private bool $isActive = true;
+
+    #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    public private(set) ?string $firstName = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    public private(set) ?string $lastName = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     public private(set) ?string $phone = null;
 
     public string $fullName {
-        get => trim($this->firstName.' '.$this->lastName);
+        get => trim(($this->firstName ?? '').' '.($this->lastName ?? ''));
     }
 
     public function __construct(
@@ -45,10 +59,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         private(set) string $email,
         #[ORM\Column(nullable: true)]
         private ?string $password,
-        #[ORM\Column(length: 100)]
-        private(set) string $firstName,
-        #[ORM\Column(length: 100)]
-        private(set) string $lastName,
+        #[ORM\Column(length: 30, unique: true)]
+        private(set) string $nickname,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
     ) {
@@ -58,8 +70,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         $this->recordThat(new UserRegistered(
             userId: $this->id,
             email: $this->email,
-            firstName: $this->firstName,
-            lastName: $this->lastName,
+            nickname: $this->nickname,
             occurredOn: $this->createdAt,
         ));
     }
@@ -106,6 +117,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         return $this->isVerified;
     }
 
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
     public function markAsVerified(\DateTimeImmutable $now): void
     {
         $this->isVerified = true;
@@ -123,9 +139,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         $this->updatedAt = $now;
     }
 
+    public function activate(\DateTimeImmutable $now): void
+    {
+        $this->isActive = true;
+        $this->updatedAt = $now;
+    }
+
+    public function deactivate(\DateTimeImmutable $now): void
+    {
+        $this->isActive = false;
+        $this->updatedAt = $now;
+    }
+
     public function updateProfile(
-        string $firstName,
-        string $lastName,
+        ?string $firstName,
+        ?string $lastName,
         ?string $phone,
         \DateTimeImmutable $now,
     ): void {
@@ -133,5 +161,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         $this->lastName = $lastName;
         $this->phone = $phone;
         $this->updatedAt = $now;
+    }
+
+    public function softDelete(\DateTimeImmutable $now): void
+    {
+        $this->markDeleted($now);
+        $this->updatedAt = $now;
+
+        $this->recordThat(new UserDeleted(
+            userId: $this->id,
+            email: $this->email,
+            nickname: $this->nickname,
+            occurredOn: $now,
+        ));
     }
 }
