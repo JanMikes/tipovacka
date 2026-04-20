@@ -10,6 +10,7 @@ use App\Enum\TournamentVisibility;
 use App\Event\TournamentCreated;
 use App\Event\TournamentDeleted;
 use App\Event\TournamentFinished;
+use App\Event\TournamentRulesChanged;
 use App\Event\TournamentUpdated;
 use App\Exception\TournamentAlreadyFinished;
 use Doctrine\DBAL\Types\Types;
@@ -120,6 +121,17 @@ class Tournament implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new TournamentFinished(
             tournamentId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    public function recordRulesChanged(User $editor, \DateTimeImmutable $now): void
+    {
+        $this->updatedAt = $now;
+
+        $this->recordThat(new TournamentRulesChanged(
+            tournamentId: $this->id,
+            changedByUserId: $editor->id,
             occurredOn: $now,
         ));
     }

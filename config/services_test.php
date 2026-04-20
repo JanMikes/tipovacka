@@ -30,5 +30,10 @@ return App::config([
             'class' => 'Symfony\\Component\\Clock\\MockClock',
             'arguments' => ['2025-06-15 12:00:00 UTC'],
         ],
+        // Expose the in-memory async transport so integration tests can assert on dispatched messages.
+        'test.messenger.transport.async' => [
+            'alias' => 'messenger.transport.async',
+            'public' => true,
+        ],
     ],
 ]);

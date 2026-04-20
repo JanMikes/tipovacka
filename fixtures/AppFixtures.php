@@ -8,10 +8,13 @@ use App\Entity\Group;
 use App\Entity\GroupInvitation;
 use App\Entity\GroupJoinRequest;
 use App\Entity\Guess;
+use App\Entity\GuessEvaluation;
+use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\Tournament;
+use App\Entity\TournamentRuleConfiguration;
 use App\Entity\User;
 use App\Enum\TournamentVisibility;
 use App\Enum\UserRole;
@@ -73,6 +76,20 @@ final class AppFixtures extends Fixture
     public const string MATCH_PRIVATE_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000004';
 
     public const string FIXTURE_GUESS_ID = '019eeeee-0000-7000-8000-000000000001';
+
+    public const string FIXTURE_GUESS_EVALUATION_ID = '019eeeee-0000-7000-8000-000000000002';
+
+    public const string FIXTURE_GUESS_EVAL_RULE_POINTS_ID = '019eeeee-0000-7000-8000-000000000003';
+
+    /** Fixed UUIDs for the 8 rule configurations (4 per tournament, 2 tournaments). */
+    public const string PUBLIC_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000001';
+    public const string PUBLIC_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000002';
+    public const string PUBLIC_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000003';
+    public const string PUBLIC_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000004';
+    public const string PRIVATE_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000005';
+    public const string PRIVATE_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000006';
+    public const string PRIVATE_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000007';
+    public const string PRIVATE_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000008';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -311,6 +328,44 @@ final class AppFixtures extends Fixture
         );
         $adminGuess->popEvents();
         $manager->persist($adminGuess);
+
+        // Stage 7: rule configurations for both tournaments (defaults).
+        foreach ([
+            [self::PUBLIC_RULE_EXACT_SCORE_ID, $public, 'exact_score', 5],
+            [self::PUBLIC_RULE_CORRECT_OUTCOME_ID, $public, 'correct_outcome', 3],
+            [self::PUBLIC_RULE_CORRECT_HOME_GOALS_ID, $public, 'correct_home_goals', 1],
+            [self::PUBLIC_RULE_CORRECT_AWAY_GOALS_ID, $public, 'correct_away_goals', 1],
+            [self::PRIVATE_RULE_EXACT_SCORE_ID, $private, 'exact_score', 5],
+            [self::PRIVATE_RULE_CORRECT_OUTCOME_ID, $private, 'correct_outcome', 3],
+            [self::PRIVATE_RULE_CORRECT_HOME_GOALS_ID, $private, 'correct_home_goals', 1],
+            [self::PRIVATE_RULE_CORRECT_AWAY_GOALS_ID, $private, 'correct_away_goals', 1],
+        ] as $row) {
+            [$id, $tournament, $identifier, $points] = $row;
+            $configuration = new TournamentRuleConfiguration(
+                id: Uuid::fromString($id),
+                tournament: $tournament,
+                ruleIdentifier: $identifier,
+                enabled: true,
+                points: $points,
+                now: $now,
+            );
+            $manager->persist($configuration);
+        }
+
+        // Stage 7: seeded evaluation for admin's guess (3:0 vs actual 2:1).
+        // Expected: correct_outcome hits (both home wins) → 3 points total.
+        $evaluation = new GuessEvaluation(
+            id: Uuid::fromString(self::FIXTURE_GUESS_EVALUATION_ID),
+            guess: $adminGuess,
+            evaluatedAt: $now,
+        );
+        $evaluation->addRulePoints(new GuessEvaluationRulePoints(
+            id: Uuid::fromString(self::FIXTURE_GUESS_EVAL_RULE_POINTS_ID),
+            evaluation: $evaluation,
+            ruleIdentifier: 'correct_outcome',
+            points: 3,
+        ));
+        $manager->persist($evaluation);
 
         $manager->flush();
     }

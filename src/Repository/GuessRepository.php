@@ -110,6 +110,49 @@ class GuessRepository
     }
 
     /**
+     * @return list<Guess>
+     */
+    public function findActiveByMatch(Uuid $sportMatchId): array
+    {
+        /** @var list<Guess> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('g')
+            ->from(Guess::class, 'g')
+            ->where('g.sportMatch = :sportMatchId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->orderBy('g.submittedAt', 'ASC')
+            ->addOrderBy('g.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
+     * @return list<Guess>
+     */
+    public function findActiveForFinishedMatchesInTournament(Uuid $tournamentId): array
+    {
+        /** @var list<Guess> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('g', 'm')
+            ->from(Guess::class, 'g')
+            ->innerJoin('g.sportMatch', 'm')
+            ->where('m.tournament = :tournamentId')
+            ->andWhere('m.state = :finished')
+            ->andWhere('m.deletedAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('tournamentId', $tournamentId)
+            ->setParameter('finished', \App\Enum\SportMatchState::Finished)
+            ->orderBy('g.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
      * Bulk-void all active guesses for a given match.
      * Returns the number of affected entities.
      */

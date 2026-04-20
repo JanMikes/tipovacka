@@ -35,6 +35,14 @@ return App::config([
             'resource' => '../src/Query/**/*Query.php',
         ],
         'App\\Query\\QueryBus' => null,
+        'App\\Rule\\' => [
+            'resource' => '../src/Rule/',
+            'exclude' => [
+                '../src/Rule/AsRule.php',
+                '../src/Rule/Rule.php',
+                '../src/Rule/RuleRegistry.php',
+            ],
+        ],
         'App\\Rule\\RuleRegistry' => null,
         'App\\Repository\\' => [
             'resource' => '../src/Repository/',
