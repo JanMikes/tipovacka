@@ -2,7 +2,7 @@
     <h2 class="text-lg font-semibold text-navy-900 mb-4">Žebříček</h2>
 
     {% if this.leaderboard.rows|length == 0 %}
-        {% if is_granted('group_invite_member', this.group) %}
+        {% if is_granted('group_manage_members', this.group) %}
             <twig:EmptyState
                 illustration="leaderboard"
                 title="Tabulka je zatím prázdná"

@@ -287,14 +287,14 @@ final class GroupVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($other), $group, [GroupVoter::LEAVE]));
     }
 
-    public function testMemberCanInviteMember(): void
+    public function testRegularMemberCannotInviteMember(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::MEMBER_ID);
         $group = $this->makeGroup($owner);
         $this->markAsMember($member, $group);
 
-        self::assertSame(1, $this->voter->vote($this->token($member), $group, [GroupVoter::INVITE_MEMBER]));
+        self::assertSame(-1, $this->voter->vote($this->token($member), $group, [GroupVoter::INVITE_MEMBER]));
     }
 
     public function testOwnerCanInviteMember(): void

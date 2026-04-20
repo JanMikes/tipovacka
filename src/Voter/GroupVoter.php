@@ -65,7 +65,7 @@ final class GroupVoter extends Voter
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
             self::JOIN => $currentUser->isVerified && !$subject->tournament->isFinished && $subject->isNotDeleted,
             self::LEAVE => $isMember && !$isOwner,
-            self::INVITE_MEMBER => $isMember && $subject->isNotDeleted && !$subject->tournament->isFinished,
+            self::INVITE_MEMBER => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->tournament->isFinished,
             self::REQUEST_JOIN => $subject->tournament->isPublic
                 && $subject->isNotDeleted
                 && !$subject->tournament->isFinished

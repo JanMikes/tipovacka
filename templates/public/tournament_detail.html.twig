@@ -79,37 +79,56 @@
                 {% else %}
                     <ul class="divide-y divide-navy-100/70">
                         {% for g in groups %}
-                            <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-medium text-navy-900">{{ g.groupName }}</p>
-                                    <p class="mt-0.5 flex items-center gap-1.5 text-xs text-navy-900/60">
-                                        <twig:ux:icon name="lucide:user" class="h-3.5 w-3.5" />
-                                        {{ g.ownerNickname }}
-                                    </p>
-                                </div>
-                                <div class="shrink-0">
-                                    {% if app.user is null %}
-                                        <a href="{{ path('app_login') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
-                                            <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
-                                            Přihlásit se
-                                        </a>
-                                    {% elseif g.groupId.toRfc4122 in member_group_ids %}
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                            <twig:ux:icon name="lucide:check" class="h-3.5 w-3.5" />
-                                            Jste členem
+                            {% set is_member = app.user and g.groupId.toRfc4122 in member_group_ids %}
+                            <li>
+                                {% if is_member %}
+                                    <a href="{{ path('portal_group_detail', {id: g.groupId.toRfc4122}) }}" class="group flex flex-wrap items-center justify-between gap-4 px-6 py-4 transition-colors hover:bg-navy-50/40">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="flex items-center gap-2 font-medium text-navy-900 transition-colors group-hover:text-cyan-600">
+                                                {{ g.groupName }}
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                                                    <twig:ux:icon name="lucide:check" class="h-3 w-3" />Jste členem
+                                                </span>
+                                            </p>
+                                            <p class="mt-0.5 flex items-center gap-1.5 text-xs text-navy-900/60">
+                                                <twig:ux:icon name="lucide:user" class="h-3.5 w-3.5" />
+                                                {{ g.ownerNickname }}
+                                            </p>
+                                        </div>
+                                        <span class="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-cyan-600">
+                                            Přejít do skupiny
+                                            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                                         </span>
-                                    {% elseif not tournament.isFinished and app.user.isVerified %}
-                                        <form method="post" action="{{ path('portal_group_request_join', {id: g.groupId.toRfc4122}) }}" class="inline">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('group_request_join_' ~ g.groupId.toRfc4122) }}">
-                                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
-                                                Požádat o připojení
-                                                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                                            </button>
-                                        </form>
-                                    {% elseif not app.user.isVerified %}
-                                        <span class="text-xs text-navy-900/60">Ověřte e-mail pro připojení</span>
-                                    {% endif %}
-                                </div>
+                                    </a>
+                                {% else %}
+                                    <div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4">
+                                        <div class="min-w-0 flex-1">
+                                            <p class="font-medium text-navy-900">{{ g.groupName }}</p>
+                                            <p class="mt-0.5 flex items-center gap-1.5 text-xs text-navy-900/60">
+                                                <twig:ux:icon name="lucide:user" class="h-3.5 w-3.5" />
+                                                {{ g.ownerNickname }}
+                                            </p>
+                                        </div>
+                                        <div class="shrink-0">
+                                            {% if app.user is null %}
+                                                <a href="{{ path('app_login') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
+                                                    <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
+                                                    Přihlásit se
+                                                </a>
+                                            {% elseif not tournament.isFinished and app.user.isVerified %}
+                                                <form method="post" action="{{ path('portal_group_request_join', {id: g.groupId.toRfc4122}) }}" class="inline">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('group_request_join_' ~ g.groupId.toRfc4122) }}">
+                                                    <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                                                        Požádat o připojení
+                                                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                                                    </button>
+                                                </form>
+                                            {% elseif not app.user.isVerified %}
+                                                <span class="text-xs text-navy-900/60">Ověřte e-mail pro připojení</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ul>

@@ -11,10 +11,13 @@ use App\Form\BulkInvitationFormType;
 use App\Form\SendInvitationFormData;
 use App\Form\SendInvitationFormType;
 use App\Query\GetGroupDetail\GetGroupDetail;
+use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
+use App\Query\GetMyGuessesInTournament\GetMyGuessesInTournament;
 use App\Query\ListPendingInvitationsForGroup\ListPendingInvitationsForGroup;
 use App\Query\ListPendingJoinRequestsForGroup\ListPendingJoinRequestsForGroup;
 use App\Query\QueryBus;
 use App\Repository\GroupRepository;
+use App\Repository\MembershipRepository;
 use App\Voter\GroupVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,6 +35,7 @@ final class GroupDetailController extends AbstractController
 {
     public function __construct(
         private readonly GroupRepository $groupRepository,
+        private readonly MembershipRepository $membershipRepository,
         private readonly QueryBus $queryBus,
         private readonly ClockInterface $clock,
     ) {
@@ -70,6 +74,21 @@ final class GroupDetailController extends AbstractController
             ))
             : [];
 
+        $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
+        $scoreByUserId = [];
+        foreach ($leaderboard->rows as $row) {
+            $scoreByUserId[$row->userId->toRfc4122()] = $row;
+        }
+
+        $isMember = $this->membershipRepository->hasActiveMembership($user->id, $group->id);
+        $myGuesses = $isMember
+            ? $this->queryBus->handle(new GetMyGuessesInTournament(
+                userId: $user->id,
+                tournamentId: $group->tournament->id,
+                groupId: $group->id,
+            ))
+            : [];
+
         $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
             'action' => $this->generateUrl('portal_group_invitation_send', ['id' => $group->id->toRfc4122()]),
         ]);
@@ -87,6 +106,8 @@ final class GroupDetailController extends AbstractController
             'bulkInvitationForm' => $bulkInvitationForm?->createView(),
             'pendingInvitations' => $pendingInvitations,
             'pendingJoinRequests' => $pendingJoinRequests,
+            'score_by_user_id' => $scoreByUserId,
+            'my_guesses' => $myGuesses,
         ]);
     }
 }

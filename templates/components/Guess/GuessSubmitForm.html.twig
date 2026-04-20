@@ -1,63 +1,81 @@
-<div{{ attributes.defaults({class: 'bg-white rounded-lg shadow p-4'}) }}>
-    <h3 class="text-sm font-semibold text-navy-900 mb-3">Tvůj tip</h3>
+{#
+    Props (via `this`):
+      - sportMatch       — SportMatch entity
+      - groupId          — group UUID as string
+      - isLocked         — bool
+      - existingGuess    — Guess|null
+      - hasExistingGuess — bool
+
+    Caller can override wrapper classes by passing `class="..."` on the component.
+    Default wrapper provides a shadow-card with its own padding.
+#}
+<div{{ attributes.defaults({class: 'rounded-xl bg-white p-4 shadow-card ring-1 ring-navy-900/5'}) }}>
 
     {% if this.isLocked %}
-        <p class="text-sm text-gray-500">
-            Tipování bylo uzavřeno – zápas už začal nebo není aktivní.
+        <p class="flex items-center gap-1.5 text-sm text-navy-900/60">
+            <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
+            Tipování uzavřeno — zápas už začal nebo není aktivní.
         </p>
         {% if this.existingGuess %}
-            <p class="mt-2 text-lg font-semibold text-navy-900">
+            <p class="mt-2 text-2xl font-bold tabular-nums text-navy-900">
                 {{ this.existingGuess.homeScore }} : {{ this.existingGuess.awayScore }}
             </p>
         {% endif %}
     {% else %}
         {% if this.errorMessage %}
-            <p class="mb-2 text-sm text-red-600">{{ this.errorMessage }}</p>
+            <p class="mb-3 flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0" />
+                {{ this.errorMessage }}
+            </p>
         {% endif %}
 
-        <form data-action="live#action" data-live-action-param="submit" class="flex items-end gap-2">
-            <div>
-                <label class="block text-xs text-gray-500 mb-1" for="guess_home_{{ this.sportMatch.id }}">
+        <form data-action="live#action" data-live-action-param="submit" class="flex flex-wrap items-end gap-3">
+            <div class="min-w-0">
+                <label class="mb-1 block text-xs font-medium text-navy-900/60" for="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}">
                     {{ this.sportMatch.homeTeam }}
                 </label>
                 <input
                     type="number"
                     min="0"
                     max="99"
-                    id="guess_home_{{ this.sportMatch.id }}"
+                    id="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="homeScore"
                     value="{{ homeScore ?? (this.existingGuess ? this.existingGuess.homeScore : '') }}"
-                    class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                    class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
                     required
                 />
                 {% if _errors is defined and _errors.getAll('homeScore')|length > 0 %}
-                    <p class="text-xs text-red-600">{{ _errors.getAll('homeScore')[0].message }}</p>
+                    <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('homeScore')[0].message }}</p>
                 {% endif %}
             </div>
 
-            <span class="text-lg font-semibold text-gray-400 pb-1">:</span>
+            <span class="pb-2 text-lg font-semibold text-navy-900/30">:</span>
 
-            <div>
-                <label class="block text-xs text-gray-500 mb-1" for="guess_away_{{ this.sportMatch.id }}">
+            <div class="min-w-0">
+                <label class="mb-1 block text-xs font-medium text-navy-900/60" for="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}">
                     {{ this.sportMatch.awayTeam }}
                 </label>
                 <input
                     type="number"
                     min="0"
                     max="99"
-                    id="guess_away_{{ this.sportMatch.id }}"
+                    id="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="awayScore"
                     value="{{ awayScore ?? (this.existingGuess ? this.existingGuess.awayScore : '') }}"
-                    class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                    class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
                     required
                 />
                 {% if _errors is defined and _errors.getAll('awayScore')|length > 0 %}
-                    <p class="text-xs text-red-600">{{ _errors.getAll('awayScore')[0].message }}</p>
+                    <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('awayScore')[0].message }}</p>
                 {% endif %}
             </div>
 
-            <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-2 px-4 rounded text-sm font-medium">
-                {{ this.hasExistingGuess ? 'Upravit tip' : 'Odeslat tip' }}
+            <button type="submit" class="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                {% if this.hasExistingGuess %}
+                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />Upravit tip
+                {% else %}
+                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />Odeslat tip
+                {% endif %}
             </button>
         </form>
     {% endif %}
