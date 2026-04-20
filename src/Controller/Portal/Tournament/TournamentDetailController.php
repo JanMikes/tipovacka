@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Tournament;
 
+use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
+use App\Query\QueryBus;
 use App\Repository\TournamentRepository;
 use App\Voter\TournamentVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,6 +19,7 @@ final class TournamentDetailController extends AbstractController
 {
     public function __construct(
         private readonly TournamentRepository $tournamentRepository,
+        private readonly QueryBus $queryBus,
     ) {
     }
 
@@ -26,8 +29,11 @@ final class TournamentDetailController extends AbstractController
 
         $this->denyAccessUnlessGranted(TournamentVoter::VIEW, $tournament);
 
+        $matches = $this->queryBus->handle(new ListTournamentSportMatches(tournamentId: $tournament->id));
+
         return $this->render('portal/tournament/detail.html.twig', [
             'tournament' => $tournament,
+            'sport_matches' => $matches,
         ]);
     }
 }

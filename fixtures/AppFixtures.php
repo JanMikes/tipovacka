@@ -9,6 +9,7 @@ use App\Entity\GroupInvitation;
 use App\Entity\GroupJoinRequest;
 use App\Entity\Membership;
 use App\Entity\Sport;
+use App\Entity\SportMatch;
 use App\Entity\Tournament;
 use App\Entity\User;
 use App\Enum\TournamentVisibility;
@@ -64,6 +65,10 @@ final class AppFixtures extends Fixture
     public const string PENDING_INVITATION_EMAIL = 'outsider@tipovacka.test';
 
     public const string PENDING_JOIN_REQUEST_ID = '019ccccc-0000-7000-8000-000000000002';
+
+    public const string MATCH_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000001';
+    public const string MATCH_LIVE_ID = '019ddddd-0000-7000-8000-000000000002';
+    public const string MATCH_FINISHED_ID = '019ddddd-0000-7000-8000-000000000003';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -238,6 +243,44 @@ final class AppFixtures extends Fixture
         );
         $pendingJoinRequest->popEvents();
         $manager->persist($pendingJoinRequest);
+
+        $scheduledMatch = new SportMatch(
+            id: Uuid::fromString(self::MATCH_SCHEDULED_ID),
+            tournament: $public,
+            homeTeam: 'Sparta Praha',
+            awayTeam: 'Slavia Praha',
+            kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+            venue: 'Generali Arena',
+            createdAt: $now,
+        );
+        $scheduledMatch->popEvents();
+        $manager->persist($scheduledMatch);
+
+        $liveMatch = new SportMatch(
+            id: Uuid::fromString(self::MATCH_LIVE_ID),
+            tournament: $public,
+            homeTeam: 'Viktoria Plzeň',
+            awayTeam: 'Baník Ostrava',
+            kickoffAt: new \DateTimeImmutable('2025-06-15 11:00:00 UTC'),
+            venue: null,
+            createdAt: $now,
+        );
+        $liveMatch->beginLive($now);
+        $liveMatch->popEvents();
+        $manager->persist($liveMatch);
+
+        $finishedMatch = new SportMatch(
+            id: Uuid::fromString(self::MATCH_FINISHED_ID),
+            tournament: $public,
+            homeTeam: 'Bohemians 1905',
+            awayTeam: 'Jablonec',
+            kickoffAt: new \DateTimeImmutable('2025-06-10 18:00:00 UTC'),
+            venue: 'Ďolíček',
+            createdAt: $now,
+        );
+        $finishedMatch->setFinalScore(2, 1, $now);
+        $finishedMatch->popEvents();
+        $manager->persist($finishedMatch);
 
         $manager->flush();
     }

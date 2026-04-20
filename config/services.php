@@ -41,6 +41,11 @@ return App::config([
         ],
         'App\\Service\\' => [
             'resource' => '../src/Service/',
+            'exclude' => [
+                '../src/Service/SportMatch/SportMatchImportRow.php',
+                '../src/Service/SportMatch/SportMatchImportError.php',
+                '../src/Service/SportMatch/SportMatchImportPreview.php',
+            ],
         ],
         'App\\Voter\\' => [
             'resource' => '../src/Voter/',

@@ -43,6 +43,53 @@
         </div>
     </div>
 
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-[#081e44]">Zápasy</h2>
+            {% if is_granted('sport_match_create', tournament) %}
+                <div class="flex gap-2">
+                    <a href="{{ path('portal_sport_match_create', {tournamentId: tournament.id.toRfc4122}) }}"
+                       class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded-lg text-sm font-medium">
+                        Přidat zápas
+                    </a>
+                    <a href="{{ path('portal_sport_match_import', {tournamentId: tournament.id.toRfc4122}) }}"
+                       class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-sm font-medium">
+                        Nahrát z Excelu/CSV
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% set matches = sport_matches ?? [] %}
+        {% if matches|length == 0 %}
+            <p class="text-sm text-gray-500">Zatím zde nejsou žádné zápasy.</p>
+        {% else %}
+            <ul class="divide-y divide-gray-100">
+                {% for m in matches %}
+                    <li class="py-3 flex items-center justify-between">
+                        <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}"
+                           class="flex-1 hover:text-[#149AD5]">
+                            <span class="font-medium">{{ m.homeTeam }} vs {{ m.awayTeam }}</span>
+                            <span class="text-xs text-gray-500 ml-2">{{ m.kickoffAt|date('d. m. Y H:i') }}</span>
+                        </a>
+                        <span class="ml-3 text-xs px-2 py-0.5 rounded
+                            {% if m.state.value == 'scheduled' %}bg-blue-100 text-blue-800
+                            {% elseif m.state.value == 'live' %}bg-orange-100 text-orange-800
+                            {% elseif m.state.value == 'finished' %}bg-green-100 text-green-800
+                            {% elseif m.state.value == 'postponed' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-200 text-gray-800{% endif %}">
+                            {% if m.state.value == 'scheduled' %}Naplánován
+                            {% elseif m.state.value == 'live' %}Probíhá
+                            {% elseif m.state.value == 'finished' %}{{ m.homeScore }} : {{ m.awayScore }}
+                            {% elseif m.state.value == 'postponed' %}Odložen
+                            {% else %}Zrušen{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
     {% if is_granted('tournament_edit', tournament) %}
         <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <h2 class="text-lg font-semibold text-[#081e44] mb-4">Správa turnaje</h2>

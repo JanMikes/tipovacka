@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Import zápasů — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-[#081e44]">Import zápasů z Excelu nebo CSV</h1>
+        <p class="text-gray-500 mt-1">Turnaj: {{ tournament.name }}</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <p class="text-sm text-gray-600 mb-4">
+            Soubor musí obsahovat sloupce: <strong>Domácí</strong>, <strong>Hosté</strong>,
+            <strong>Začátek (YYYY-MM-DD HH:MM)</strong>, <strong>Místo (nepovinné)</strong>.
+        </p>
+        <a href="{{ path('portal_sport_match_template_download') }}" class="text-[#149AD5] hover:underline text-sm">
+            Stáhnout šablonu (CSV)
+        </a>
+
+        {{ form_start(form, {attr: {class: 'space-y-5 mt-6', novalidate: 'novalidate', enctype: 'multipart/form-data'}}) }}
+            <div>
+                {{ form_label(form.file) }}
+                {{ form_widget(form.file) }}
+                {{ form_errors(form.file) }}
+            </div>
+
+            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-3 px-6 rounded-lg font-medium">
+                Nahrát a zobrazit náhled
+            </button>
+        {{ form_end(form) }}
+    </div>
+
+    {% if preview is not null %}
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-xl font-semibold text-[#081e44] mb-4">Náhled importu</h2>
+
+            {% if preview.errors|length > 0 %}
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded">
+                    <h3 class="text-sm font-semibold text-red-800 mb-2">Chyby ({{ preview.errors|length }})</h3>
+                    <ul class="text-sm text-red-700 space-y-1">
+                        {% for err in preview.errors %}
+                            <li>Řádek {{ err.rowNumber }} / {{ err.column }}: {{ err.message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if preview.validRows|length > 0 %}
+                <p class="text-sm text-gray-600 mb-3">
+                    Platné řádky: <strong>{{ preview.validRows|length }}</strong>
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="text-left py-2 px-3">Řádek</th>
+                                <th class="text-left py-2 px-3">Domácí</th>
+                                <th class="text-left py-2 px-3">Hosté</th>
+                                <th class="text-left py-2 px-3">Začátek</th>
+                                <th class="text-left py-2 px-3">Místo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in preview.validRows %}
+                                <tr class="border-t border-gray-100">
+                                    <td class="py-2 px-3">{{ row.rowNumber }}</td>
+                                    <td class="py-2 px-3">{{ row.homeTeam }}</td>
+                                    <td class="py-2 px-3">{{ row.awayTeam }}</td>
+                                    <td class="py-2 px-3">{{ row.kickoffAt|date('d. m. Y H:i') }}</td>
+                                    <td class="py-2 px-3">{{ row.venue ?: '—' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if preview.errors|length == 0 %}
+                    <form method="post"
+                          action="{{ path('portal_sport_match_import_commit', {tournamentId: tournament.id.toRfc4122}) }}"
+                          class="mt-6">
+                        <input type="hidden" name="_token"
+                               value="{{ csrf_token('sport_match_import_commit_' ~ tournament.id.toRfc4122) }}">
+                        <button type="submit"
+                                class="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-medium">
+                            Potvrdit import ({{ preview.validRows|length }} zápasů)
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="mt-4 text-sm text-red-700">
+                        Před importem opravte chyby ve zdrojovém souboru a nahrajte jej znovu.
+                    </p>
+                {% endif %}
+            {% else %}
+                <p class="text-sm text-gray-500">Žádné platné řádky nebyly nalezeny.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
