@@ -6,6 +6,7 @@ namespace App\Controller\Auth;
 
 use App\Command\VerifyUserEmail\VerifyUserEmailCommand;
 use App\Exception\UserAlreadyVerified;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +23,7 @@ final class VerifyEmailController extends AbstractController
     public function __construct(
         private readonly VerifyEmailHelperInterface $verifyEmailHelper,
         private readonly MessageBusInterface $commandBus,
+        private readonly UserRepository $userRepository,
     ) {
     }
 
@@ -36,11 +38,23 @@ final class VerifyEmailController extends AbstractController
             ]);
         }
 
+        // The signed URL's HMAC is computed from userId+userEmail, but the URL only
+        // carries the id query param — the email is not round-tripped. We must load
+        // the user's current email to recompute the expected token.
+        $user = $this->userRepository->find(Uuid::fromString($userId));
+
+        if (null === $user) {
+            return $this->render('auth/verify_error.html.twig', [
+                'errorMessage' => 'Ověřovací odkaz je neplatný.',
+                'showResend' => false,
+            ]);
+        }
+
         try {
             $this->verifyEmailHelper->validateEmailConfirmationFromRequest(
                 $request,
                 $userId,
-                (string) $request->query->get('email', ''),
+                $user->email,
             );
         } catch (VerifyEmailExceptionInterface) {
             return $this->render('auth/verify_error.html.twig', [
