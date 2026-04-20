@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tipy – {{ sport_match.homeTeam }} vs {{ sport_match.awayTeam }}{% endblock %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-6">
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
+           class="text-sm text-[#149AD5] hover:underline">
+            &larr; {{ group.name }}
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold text-[#081e44]">
+                {{ sport_match.homeTeam }} <span class="text-gray-400">vs.</span> {{ sport_match.awayTeam }}
+            </h1>
+            <span class="px-3 py-1 rounded-full text-xs font-medium
+                {% if sport_match.isScheduled %}bg-blue-100 text-blue-800
+                {% elseif sport_match.isLive %}bg-orange-100 text-orange-800
+                {% elseif sport_match.isFinished %}bg-green-100 text-green-800
+                {% elseif sport_match.isPostponed %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-200 text-gray-800{% endif %}">
+                {% if sport_match.isScheduled %}Naplánován
+                {% elseif sport_match.isLive %}Probíhá
+                {% elseif sport_match.isFinished %}Ukončen
+                {% elseif sport_match.isPostponed %}Odložen
+                {% else %}Zrušen{% endif %}
+            </span>
+        </div>
+
+        <p class="text-sm text-gray-600">Výkop: {{ sport_match.kickoffAt|date('d. m. Y H:i') }}</p>
+
+        {% if sport_match.isFinished %}
+            <p class="mt-4 text-center text-3xl font-bold text-[#081e44]">
+                {{ sport_match.homeScore }} : {{ sport_match.awayScore }}
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="space-y-4">
+        <twig:Guess:GuessSubmitForm sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
+
+        <twig:Guess:MatchGuessesList sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
+    </div>
+</div>
+{% endblock %}

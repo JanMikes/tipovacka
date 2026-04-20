@@ -1,0 +1,64 @@
+<div{{ attributes.defaults({class: 'bg-white rounded-lg shadow p-4'}) }}>
+    <h3 class="text-sm font-semibold text-[#081e44] mb-3">Tvůj tip</h3>
+
+    {% if this.isLocked %}
+        <p class="text-sm text-gray-500">
+            Tipování bylo uzavřeno – zápas už začal nebo není aktivní.
+        </p>
+        {% if this.existingGuess %}
+            <p class="mt-2 text-lg font-semibold text-[#081e44]">
+                {{ this.existingGuess.homeScore }} : {{ this.existingGuess.awayScore }}
+            </p>
+        {% endif %}
+    {% else %}
+        {% if this.errorMessage %}
+            <p class="mb-2 text-sm text-red-600">{{ this.errorMessage }}</p>
+        {% endif %}
+
+        <form data-action="live#action" data-live-action-param="submit" class="flex items-end gap-2">
+            <div>
+                <label class="block text-xs text-gray-500 mb-1" for="guess_home_{{ this.sportMatch.id }}">
+                    {{ this.sportMatch.homeTeam }}
+                </label>
+                <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    id="guess_home_{{ this.sportMatch.id }}"
+                    data-model="homeScore"
+                    value="{{ homeScore ?? (this.existingGuess ? this.existingGuess.homeScore : '') }}"
+                    class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                    required
+                />
+                {% if _errors is defined and _errors.getAll('homeScore')|length > 0 %}
+                    <p class="text-xs text-red-600">{{ _errors.getAll('homeScore')[0].message }}</p>
+                {% endif %}
+            </div>
+
+            <span class="text-lg font-semibold text-gray-400 pb-1">:</span>
+
+            <div>
+                <label class="block text-xs text-gray-500 mb-1" for="guess_away_{{ this.sportMatch.id }}">
+                    {{ this.sportMatch.awayTeam }}
+                </label>
+                <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    id="guess_away_{{ this.sportMatch.id }}"
+                    data-model="awayScore"
+                    value="{{ awayScore ?? (this.existingGuess ? this.existingGuess.awayScore : '') }}"
+                    class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                    required
+                />
+                {% if _errors is defined and _errors.getAll('awayScore')|length > 0 %}
+                    <p class="text-xs text-red-600">{{ _errors.getAll('awayScore')[0].message }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="bg-[#081e44] hover:bg-[#0f2d5f] text-white py-2 px-4 rounded text-sm font-medium">
+                {{ this.hasExistingGuess ? 'Upravit tip' : 'Odeslat tip' }}
+            </button>
+        </form>
+    {% endif %}
+</div>

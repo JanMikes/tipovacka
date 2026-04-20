@@ -32,12 +32,12 @@ final class ListTournamentSportMatchesQueryTest extends IntegrationTestCase
         self::assertSame(SportMatchState::Finished, $result[0]->state);
     }
 
-    public function testReturnsEmptyForOtherTournament(): void
+    public function testListsMatchesForPrivateTournament(): void
     {
         $result = $this->queryBus()->handle(new ListTournamentSportMatches(
             tournamentId: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
         ));
 
-        self::assertCount(0, $result);
+        self::assertCount(1, $result);
     }
 }

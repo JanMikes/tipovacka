@@ -49,6 +49,9 @@ return App::config([
         ],
         'App\\Voter\\' => [
             'resource' => '../src/Voter/',
+            'exclude' => [
+                '../src/Voter/GuessVotingContext.php',
+            ],
         ],
         'App\\Service\\Identity\\ProvideIdentity' => [
             'alias' => 'App\\Service\\Identity\\RandomIdentityProvider',

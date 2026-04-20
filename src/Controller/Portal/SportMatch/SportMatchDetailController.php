@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\SportMatch;
 
+use App\Entity\User;
+use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +23,7 @@ final class SportMatchDetailController extends AbstractController
 {
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
+        private readonly MembershipRepository $membershipRepository,
     ) {
     }
 
@@ -29,8 +32,23 @@ final class SportMatchDetailController extends AbstractController
         $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(SportMatchVoter::VIEW, $sportMatch);
 
+        $user = $this->getUser();
+        $myGroupsForTournament = [];
+
+        if ($user instanceof User) {
+            foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
+                if ($membership->group->tournament->id->equals($sportMatch->tournament->id)) {
+                    $myGroupsForTournament[] = [
+                        'id' => $membership->group->id,
+                        'name' => $membership->group->name,
+                    ];
+                }
+            }
+        }
+
         return $this->render('portal/sport_match/detail.html.twig', [
             'sport_match' => $sportMatch,
+            'my_groups_for_tournament' => $myGroupsForTournament,
         ]);
     }
 }

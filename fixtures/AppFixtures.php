@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Entity\Group;
 use App\Entity\GroupInvitation;
 use App\Entity\GroupJoinRequest;
+use App\Entity\Guess;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -69,6 +70,9 @@ final class AppFixtures extends Fixture
     public const string MATCH_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000001';
     public const string MATCH_LIVE_ID = '019ddddd-0000-7000-8000-000000000002';
     public const string MATCH_FINISHED_ID = '019ddddd-0000-7000-8000-000000000003';
+    public const string MATCH_PRIVATE_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000004';
+
+    public const string FIXTURE_GUESS_ID = '019eeeee-0000-7000-8000-000000000001';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -281,6 +285,32 @@ final class AppFixtures extends Fixture
         $finishedMatch->setFinalScore(2, 1, $now);
         $finishedMatch->popEvents();
         $manager->persist($finishedMatch);
+
+        $privateScheduledMatch = new SportMatch(
+            id: Uuid::fromString(self::MATCH_PRIVATE_SCHEDULED_ID),
+            tournament: $private,
+            homeTeam: 'Tygři',
+            awayTeam: 'Lvi',
+            kickoffAt: new \DateTimeImmutable('2025-06-20 19:00:00 UTC'),
+            venue: null,
+            createdAt: $now,
+        );
+        $privateScheduledMatch->popEvents();
+        $manager->persist($privateScheduledMatch);
+
+        // Admin is a member of PUBLIC_GROUP (owner) and tipped 3:0 on the finished
+        // MATCH_FINISHED (actual 2:1). Useful baseline for Stage 7 evaluation.
+        $adminGuess = new Guess(
+            id: Uuid::fromString(self::FIXTURE_GUESS_ID),
+            user: $admin,
+            sportMatch: $finishedMatch,
+            group: $publicGroup,
+            homeScore: 3,
+            awayScore: 0,
+            submittedAt: $now,
+        );
+        $adminGuess->popEvents();
+        $manager->persist($adminGuess);
 
         $manager->flush();
     }
