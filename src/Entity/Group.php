@@ -22,6 +22,8 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'user_groups')]
 #[ORM\Index(columns: ['tournament_id', 'deleted_at'], name: 'IDX_user_groups_tournament')]
 #[ORM\Index(columns: ['owner_id', 'deleted_at'], name: 'IDX_user_groups_owner')]
+#[ORM\UniqueConstraint(name: 'UIDX_user_groups_pin', columns: ['pin'], options: ['where' => '(pin IS NOT NULL)'])]
+#[ORM\UniqueConstraint(name: 'UIDX_user_groups_shareable_link_token', columns: ['shareable_link_token'], options: ['where' => '(shareable_link_token IS NOT NULL)'])]
 class Group implements EntityWithEvents, SoftDeletable
 {
     use HasEvents;

@@ -15,6 +15,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'memberships')]
 #[ORM\Index(columns: ['group_id', 'left_at'], name: 'IDX_memberships_group_active')]
 #[ORM\Index(columns: ['user_id', 'left_at'], name: 'IDX_memberships_user_active')]
+#[ORM\UniqueConstraint(name: 'UIDX_memberships_active', columns: ['group_id', 'user_id'], options: ['where' => '(left_at IS NULL)'])]
 class Membership implements EntityWithEvents
 {
     use HasEvents;
