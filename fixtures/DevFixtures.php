@@ -267,13 +267,18 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             $this->finishedMatch($manager, $fortuna, 'ddbb0102', 'Viktoria Plzeň', 'Slovácko', '2025-06-10 19:00:00', 'Doosan Arena', 2, 2, $now),
         ];
         $this->liveMatch($manager, $fortuna, 'ddbb0103', 'Baník Ostrava', 'Pardubice', '2025-06-15 11:30:00', 'Ostravar Arena', $now);
-        $this->scheduledMatch($manager, $fortuna, 'ddbb0104', 'Bohemians 1905', 'Mladá Boleslav', '2025-06-21 17:00:00', 'Ďolíček');
-        $this->scheduledMatch($manager, $fortuna, 'ddbb0105', 'Teplice', 'Liberec', '2025-06-22 15:00:00', null);
-        $this->scheduledMatch($manager, $fortuna, 'ddbb0106', 'Hradec Králové', 'Zlín', '2025-06-28 17:30:00', 'Malšovická aréna');
+
+        // Scheduled matches are anchored to the real "today" so the portal dashboard
+        // always has upcoming matches to exercise the UI, regardless of when fixtures
+        // are reloaded. Finished/live matches stay at their historical dates.
+        $today = (new \DateTimeImmutable('today', new \DateTimeZone('UTC')));
+        $fortunaUpcoming1 = $this->scheduledMatch($manager, $fortuna, 'ddbb0104', 'Bohemians 1905', 'Mladá Boleslav', $today->modify('+2 days')->setTime(17, 0)->format('Y-m-d H:i:s'), 'Ďolíček');
+        $fortunaUpcoming2 = $this->scheduledMatch($manager, $fortuna, 'ddbb0105', 'Teplice', 'Liberec', $today->modify('+5 days')->setTime(15, 0)->format('Y-m-d H:i:s'), null);
+        $this->scheduledMatch($manager, $fortuna, 'ddbb0106', 'Hradec Králové', 'Zlín', $today->modify('+10 days')->setTime(17, 30)->format('Y-m-d H:i:s'), 'Malšovická aréna');
 
         // Private tournament — mostly scheduled, one finished.
-        $this->scheduledMatch($manager, $firma, 'ddcc0101', 'Tygři', 'Lvi', '2025-06-25 18:00:00', null);
-        $this->scheduledMatch($manager, $firma, 'ddcc0102', 'Orli', 'Medvědi', '2025-07-02 18:00:00', null);
+        $this->scheduledMatch($manager, $firma, 'ddcc0101', 'Tygři', 'Lvi', $today->modify('+3 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
+        $this->scheduledMatch($manager, $firma, 'ddcc0102', 'Orli', 'Medvědi', $today->modify('+14 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
         $firmaFinished = $this->finishedMatch($manager, $firma, 'ddcc0103', 'Kohouti', 'Vlci', '2025-06-08 17:00:00', null, 1, 0, $now);
 
         // -- Guesses + evaluations ---------------------------------------
@@ -306,6 +311,17 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
                 $this->createEvaluatedGuess($manager, $member, $match, $prahaGroup, $gh, $ga, $now);
             }
         }
+
+        // VŠCHT members who have already tipped on the closest upcoming Fortuna match,
+        // so the dashboard surfaces an "awaiting result" state (honza = users[1] tips too).
+        foreach ([$verified, $users[1], $users[10], $users[11]] as $memberIndex => $member) {
+            [$gh, $ga] = $guessPattern[$memberIndex % count($guessPattern)];
+            $this->createEvaluatedGuess($manager, $member, $fortunaUpcoming1, $vsChtGroup, $gh, $ga, $now);
+        }
+
+        // Honza also tips on the second upcoming Fortuna match via the Praha group,
+        // so both his groups show activity on upcoming fixtures.
+        $this->createEvaluatedGuess($manager, $users[1], $fortunaUpcoming2, $prahaGroup, 1, 2, $now);
 
         // Firma tournaments — one finished match, both groups tip on it.
         foreach ([$users[17], $users[18], $users[19], $users[20], $users[21]] as $memberIndex => $member) {
@@ -497,7 +513,11 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         int $awayScore,
         \DateTimeImmutable $now,
     ): void {
-        $submittedAt = $match->kickoffAt->modify('-2 hours');
+        // Historical matches: tipped shortly before kickoff. Upcoming matches (kickoff in
+        // real future): clamp to real "now" so the UI doesn't render submittedAt in the future.
+        $realNow = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $preKickoff = $match->kickoffAt->modify('-2 hours');
+        $submittedAt = $preKickoff > $realNow ? $realNow : $preKickoff;
 
         $guess = new Guess(
             id: Uuid::v7(),
