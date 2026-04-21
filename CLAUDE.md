@@ -309,6 +309,12 @@ Hotwire Turbo is installed but **disabled globally** via `data-turbo="false"` on
 <a href="..." data-turbo="true">Link</a>
 ```
 
+## Features
+
+Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`](.docs/features/). When adding a new reusable pattern (modal, widget, Stimulus controller), drop a brief doc there and link it below.
+
+- [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
+
 ## Testing
 
 - `tests/Unit/` - Domain logic (no database, fast)
