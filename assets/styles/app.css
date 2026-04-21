@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../vendor/flatpickr/dist/flatpickr.min.css";
 
 @theme {
     /* Brand navy — used for primary text, dark surfaces, nav bar */
@@ -92,6 +93,7 @@ label.required::after {
 
 .flatpickr-months .flatpickr-month,
 .flatpickr-current-month,
+.flatpickr-current-month .cur-month,
 .flatpickr-current-month input.cur-year,
 .flatpickr-current-month .flatpickr-monthDropdown-months {
     color: #fff;
@@ -118,22 +120,38 @@ label.required::after {
     border-top-color: rgba(255, 255, 255, 0.6);
 }
 
+.flatpickr-prev-month,
+.flatpickr-next-month,
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-    color: rgba(255, 255, 255, 0.75);
-    fill: rgba(255, 255, 255, 0.75);
-    padding: 0.45rem;
+    color: rgba(255, 255, 255, 0.8);
+    fill: rgba(255, 255, 255, 0.8);
 }
 
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg,
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg,
+.flatpickr-prev-month svg path,
+.flatpickr-next-month svg path {
+    fill: currentColor;
+}
+
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover,
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
     color: var(--color-cyan-400);
     fill: var(--color-cyan-400);
 }
 
-.flatpickr-months .flatpickr-prev-month svg,
-.flatpickr-months .flatpickr-next-month svg {
-    fill: currentColor;
+.flatpickr-prev-month:hover svg,
+.flatpickr-next-month:hover svg,
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg,
+.flatpickr-prev-month:hover svg path,
+.flatpickr-next-month:hover svg path {
+    fill: var(--color-cyan-400);
 }
 
 .flatpickr-weekdays {
