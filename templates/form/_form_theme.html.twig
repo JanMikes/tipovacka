@@ -2,7 +2,9 @@
 
 {# Default Tailwind classes for form widgets.
    Per-field `attr.class` / `label_attr.class` still wins — the |default filter
-   only fills in when nothing was passed. #}
+   only fills in when nothing was passed. Invalid widgets get aria-invalid="true"
+   (assets/styles/app.css applies the red-border style via attribute selector),
+   and required fields get a red asterisk next to their label. #}
 
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
@@ -25,21 +27,37 @@
     {{- parent() -}}
 {%- endblock form_label -%}
 
+{%- block form_label_content -%}
+    {{- parent() -}}
+    {%- if required and label is not same as(false) and 'checkbox' not in block_prefixes and 'radio' not in block_prefixes -%}
+        <span class="ml-0.5 text-red-500" aria-hidden="true">*</span>
+    {%- endif -%}
+{%- endblock form_label_content -%}
+
 {%- block form_widget_simple -%}
     {%- set type = type|default('text') -%}
     {%- if type != 'hidden' -%}
         {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+        {%- if not valid -%}
+            {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+        {%- endif -%}
     {%- endif -%}
     {{- parent() -}}
 {%- endblock form_widget_simple -%}
 
 {%- block textarea_widget -%}
     {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+    {%- if not valid -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock textarea_widget -%}
 
 {%- block choice_widget_collapsed -%}
     {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+    {%- if not valid -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock choice_widget_collapsed -%}
 

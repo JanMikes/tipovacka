@@ -57,6 +57,9 @@ return App::config([
                 '../src/Service/Invitation/InvitationContextStatus.php',
             ],
         ],
+        'App\\Validator\\' => [
+            'resource' => '../src/Validator/',
+        ],
         'App\\Voter\\' => [
             'resource' => '../src/Voter/',
             'exclude' => [

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Auth;
 
 use App\DataFixtures\AppFixtures;
+use App\Form\RegistrationFormData;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class RegistrationFlowTest extends WebTestCase
@@ -36,32 +39,80 @@ final class RegistrationFlowTest extends WebTestCase
         self::assertSame('/overeni-ceka', $response->headers->get('Location'));
     }
 
-    public function testDuplicateEmailRendersInlineError(): void
+    public function testDuplicateEmailRejected(): void
     {
         static::createClient();
 
         $component = $this->createLiveComponent('Auth:RegistrationForm');
+
+        $this->expectException(UnprocessableEntityHttpException::class);
+
         $component->submitForm(
             $this->validRegistrationFormValues(['email' => AppFixtures::VERIFIED_USER_EMAIL]),
             'register',
         );
-
-        self::assertSame(200, $component->response()->getStatusCode());
-        self::assertStringContainsString('e-mail je již zaregistrován', (string) $component->render());
     }
 
-    public function testDuplicateNicknameRendersInlineError(): void
+    public function testDuplicateNicknameRejected(): void
     {
         static::createClient();
 
         $component = $this->createLiveComponent('Auth:RegistrationForm');
+
+        $this->expectException(UnprocessableEntityHttpException::class);
+
         $component->submitForm(
             $this->validRegistrationFormValues(['nickname' => AppFixtures::VERIFIED_USER_NICKNAME]),
             'register',
         );
+    }
 
-        self::assertSame(200, $component->response()->getStatusCode());
-        self::assertStringContainsString('přezdívka je již obsazena', (string) $component->render());
+    public function testUniqueEmailValidatorMessage(): void
+    {
+        $client = static::createClient();
+        /** @var ValidatorInterface $validator */
+        $validator = $client->getContainer()->get('validator');
+
+        $data = new RegistrationFormData();
+        $data->email = AppFixtures::VERIFIED_USER_EMAIL;
+        $data->firstName = 'Jan';
+        $data->lastName = 'Novák';
+        $data->nickname = 'available_nick';
+        $data->password = 'Securepassword1';
+
+        $violations = $validator->validate($data);
+        self::assertTrue($this->hasViolation($violations, 'email', 'Tento e-mail je již zaregistrován.'));
+    }
+
+    public function testUniqueNicknameValidatorMessage(): void
+    {
+        $client = static::createClient();
+        /** @var ValidatorInterface $validator */
+        $validator = $client->getContainer()->get('validator');
+
+        $data = new RegistrationFormData();
+        $data->email = 'available@example.com';
+        $data->firstName = 'Jan';
+        $data->lastName = 'Novák';
+        $data->nickname = AppFixtures::VERIFIED_USER_NICKNAME;
+        $data->password = 'Securepassword1';
+
+        $violations = $validator->validate($data);
+        self::assertTrue($this->hasViolation($violations, 'nickname', 'Tato přezdívka je již obsazena.'));
+    }
+
+    private function hasViolation(
+        ConstraintViolationListInterface $violations,
+        string $propertyPath,
+        string $expectedMessage,
+    ): bool {
+        foreach ($violations as $v) {
+            if ($v->getPropertyPath() === $propertyPath && $v->getMessage() === $expectedMessage) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function testInvalidNicknameRegexRejected(): void

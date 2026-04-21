@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Form;
 
 use App\Form\InvitationFormData;
+use App\Validator\UniqueNicknameValidator;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\ConstraintValidator;
+use Symfony\Component\Validator\ConstraintValidatorFactoryInterface;
+use Symfony\Component\Validator\ConstraintValidatorInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -16,8 +21,35 @@ final class InvitationFormDataTest extends TestCase
 
     protected function setUp(): void
     {
+        $noopValidator = new class extends ConstraintValidator {
+            public function validate(mixed $value, Constraint $constraint): void
+            {
+            }
+        };
+
+        $factory = new class($noopValidator) implements ConstraintValidatorFactoryInterface {
+            public function __construct(private readonly ConstraintValidatorInterface $noopValidator)
+            {
+            }
+
+            public function getInstance(Constraint $constraint): ConstraintValidatorInterface
+            {
+                $className = $constraint->validatedBy();
+
+                if (UniqueNicknameValidator::class === $className) {
+                    return $this->noopValidator;
+                }
+
+                $instance = new $className();
+                \assert($instance instanceof ConstraintValidatorInterface);
+
+                return $instance;
+            }
+        };
+
         $this->validator = Validation::createValidatorBuilder()
             ->enableAttributeMapping()
+            ->setConstraintValidatorFactory($factory)
             ->getValidator();
     }
 

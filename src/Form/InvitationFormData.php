@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Validator\UniqueNickname;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -18,15 +19,19 @@ final class InvitationFormData
     public const string KIND_HAS_PASSWORD = 'has_password';
     public const string KIND_STUB = 'stub';
 
-    #[Assert\NotBlank(message: 'Zadejte prosím e-mailovou adresu.')]
-    #[Assert\Email(message: 'Zadejte prosím platnou e-mailovou adresu.')]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(message: 'Zadejte prosím e-mailovou adresu.'),
+        new Assert\Email(message: 'Zadejte prosím platnou e-mailovou adresu.'),
+    ])]
     public string $email = '';
 
-    #[Assert\NotBlank(message: 'Zadejte prosím heslo.')]
-    #[Assert\When(
-        expression: 'this.userKind in ["new", "stub"]',
-        constraints: [new Assert\Length(min: 8, minMessage: 'Heslo musí mít alespoň {{ limit }} znaků.')],
-    )]
+    #[Assert\Sequentially([
+        new Assert\NotBlank(message: 'Zadejte prosím heslo.'),
+        new Assert\When(
+            expression: 'this.userKind in ["new", "stub"]',
+            constraints: [new Assert\Length(min: 8, minMessage: 'Heslo musí mít alespoň {{ limit }} znaků.')],
+        ),
+    ])]
     public ?string $password = null;
 
     #[Assert\When(
@@ -41,17 +46,20 @@ final class InvitationFormData
     #[Assert\When(
         expression: 'this.userKind === "new"',
         constraints: [
-            new Assert\NotBlank(message: 'Zadejte prosím přezdívku.'),
-            new Assert\Length(
-                min: 3,
-                max: 30,
-                minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky.',
-                maxMessage: 'Přezdívka nesmí být delší než {{ limit }} znaků.',
-            ),
-            new Assert\Regex(
-                pattern: '/^[A-Za-z0-9_.\-]+$/',
-                message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
-            ),
+            new Assert\Sequentially([
+                new Assert\NotBlank(message: 'Zadejte prosím přezdívku.'),
+                new Assert\Length(
+                    min: 3,
+                    max: 30,
+                    minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky.',
+                    maxMessage: 'Přezdívka nesmí být delší než {{ limit }} znaků.',
+                ),
+                new Assert\Regex(
+                    pattern: '/^[A-Za-z0-9_.\-]+$/',
+                    message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
+                ),
+                new UniqueNickname(),
+            ]),
         ],
     )]
     public string $nickname = '';
