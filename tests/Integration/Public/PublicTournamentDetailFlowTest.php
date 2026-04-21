@@ -28,7 +28,8 @@ final class PublicTournamentDetailFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        // Second verified user has no pending join request, so the button should be visible.
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
         self::assertNotNull($user);
         $client->loginUser($user);
 
@@ -36,6 +37,23 @@ final class PublicTournamentDetailFlowTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Požádat o připojení');
+    }
+
+    public function testUserWithPendingRequestSeesPendingLabel(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        // Verified user has a pending join request for PUBLIC_GROUP in the fixtures.
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $client->request('GET', '/turnaje/'.AppFixtures::PUBLIC_TOURNAMENT_ID);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Žádost čeká na schválení');
+        self::assertSelectorTextNotContains('body', 'Požádat o připojení');
     }
 
     public function testMemberSeesMemberBadge(): void

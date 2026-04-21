@@ -7,6 +7,7 @@ namespace App\Controller\Public;
 use App\Entity\User;
 use App\Exception\TournamentNotFound;
 use App\Query\ListGroupsForTournament\ListGroupsForTournament;
+use App\Query\ListMyOpenJoinRequests\ListMyOpenJoinRequests;
 use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
 use App\Query\QueryBus;
 use App\Repository\MembershipRepository;
@@ -46,11 +47,16 @@ final class PublicTournamentDetailController extends AbstractController
 
         $user = $this->getUser();
         $memberGroupIds = [];
+        $pendingRequestGroupIds = [];
         if ($user instanceof User) {
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
                 if ($membership->group->tournament->id->equals($tournament->id)) {
                     $memberGroupIds[] = $membership->group->id->toRfc4122();
                 }
+            }
+
+            foreach ($this->queryBus->handle(new ListMyOpenJoinRequests(userId: $user->id)) as $openRequest) {
+                $pendingRequestGroupIds[] = $openRequest->groupId->toRfc4122();
             }
         }
 
@@ -59,6 +65,7 @@ final class PublicTournamentDetailController extends AbstractController
             'groups' => $groups,
             'sport_matches' => $matches,
             'member_group_ids' => $memberGroupIds,
+            'pending_request_group_ids' => $pendingRequestGroupIds,
         ]);
     }
 }

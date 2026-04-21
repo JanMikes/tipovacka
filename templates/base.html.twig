@@ -160,15 +160,17 @@
         {# ───────── Main content ───────── #}
         <main class="flex flex-1 flex-col">
             {# Flash messages #}
+            {# `app.flashes` consumes the flash bag on each call, so capture once. #}
+            {% set flash_messages = app.flashes %}
             {% set flash_config = {
                 'success': { icon: 'lucide:circle-check-big', classes: 'bg-green-50 border-green-400 text-green-800' },
                 'error':   { icon: 'lucide:circle-alert',     classes: 'bg-red-50 border-red-400 text-red-800' },
                 'warning': { icon: 'lucide:triangle-alert',   classes: 'bg-yellow-50 border-yellow-400 text-yellow-800' },
                 'info':    { icon: 'lucide:info',             classes: 'bg-blue-50 border-blue-400 text-blue-800' },
             } %}
-            {% if app.flashes|length %}
+            {% if flash_messages|length %}
                 <div class="mx-auto w-full max-w-[88rem] px-4 pt-4 sm:px-6 lg:px-8">
-                    {% for type, messages in app.flashes %}
+                    {% for type, messages in flash_messages %}
                         {% set cfg = flash_config[type] ?? { icon: 'lucide:info', classes: 'bg-gray-50 border-gray-400 text-gray-800' } %}
                         {% for message in messages %}
                             <div class="mb-3 flex items-start gap-3 rounded-r-lg border-l-4 px-4 py-3 {{ cfg.classes }}" role="alert">
