@@ -81,14 +81,15 @@
                     <li class="relative">
                         {% if not g.hasGuess %}
                             <span
-                                class="absolute -left-2 -top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-yellow-900 shadow-md ring-2 ring-white"
+                                class="absolute -top-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-yellow-900 shadow-md ring-2 ring-white"
                                 title="Pro tuto skupinu chybí tvůj tip"
                                 aria-label="Chybí tip pro tuto skupinu"
                             >
                                 <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4" />
+                                Nevyplněno
                             </span>
                         {% endif %}
-                        <article class="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+                        <article class="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card {% if not g.hasGuess %}ring-2 ring-yellow-400{% else %}ring-1 ring-navy-900/5{% endif %}">
                             <header class="flex items-center justify-between gap-3 border-b border-navy-100/70 px-5 py-3">
                                 <div class="flex min-w-0 items-center gap-2">
                                     <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600">
