@@ -21,13 +21,13 @@ final class InvitationFormDataTest extends TestCase
 
     protected function setUp(): void
     {
-        $noopValidator = new class extends ConstraintValidator {
+        $noopValidator = new class () extends ConstraintValidator {
             public function validate(mixed $value, Constraint $constraint): void
             {
             }
         };
 
-        $factory = new class($noopValidator) implements ConstraintValidatorFactoryInterface {
+        $factory = new class ($noopValidator) implements ConstraintValidatorFactoryInterface {
             public function __construct(private readonly ConstraintValidatorInterface $noopValidator)
             {
             }
