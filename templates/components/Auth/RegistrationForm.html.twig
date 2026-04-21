@@ -1,5 +1,5 @@
 <div{{ attributes }}>
-    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register'}}) }}
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register'}}) }}
 
         <div>
             {{ form_label(form.email, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
@@ -9,7 +9,6 @@
                 </span>
                 {{ form_widget(form.email, {attr: {
                     class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    'data-model': 'on(change)|*',
                 }}) }}
             </div>
             {{ form_errors(form.email) }}
@@ -24,7 +23,6 @@
                     </span>
                     {{ form_widget(form.firstName, {attr: {
                         class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                        'data-model': 'on(change)|*',
                     }}) }}
                 </div>
                 {{ form_errors(form.firstName) }}
@@ -38,7 +36,6 @@
                     </span>
                     {{ form_widget(form.lastName, {attr: {
                         class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                        'data-model': 'on(change)|*',
                     }}) }}
                 </div>
                 {{ form_errors(form.lastName) }}
@@ -53,7 +50,6 @@
                 </span>
                 {{ form_widget(form.nickname, {attr: {
                     class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    'data-model': 'on(change)|*',
                 }}) }}
             </div>
             <p class="mt-1 text-xs text-navy-900/50">3–30 znaků, pouze písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
@@ -69,7 +65,6 @@
                 {{ form_widget(form.password.first, {attr: {
                     class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
                     'data-password-visibility-target': 'input',
-                    'data-model': 'on(change)|*',
                 }}) }}
                 <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900" aria-label="Zobrazit/skrýt heslo">
                     <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
@@ -87,7 +82,6 @@
                 </span>
                 {{ form_widget(form.password.second, {attr: {
                     class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    'data-model': 'on(change)|*',
                 }}) }}
             </div>
             {{ form_errors(form.password.second) }}
