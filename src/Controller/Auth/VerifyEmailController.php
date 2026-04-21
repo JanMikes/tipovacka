@@ -8,6 +8,7 @@ use App\Command\VerifyUserEmail\VerifyUserEmailCommand;
 use App\Exception\UserAlreadyVerified;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -24,6 +25,7 @@ final class VerifyEmailController extends AbstractController
         private readonly VerifyEmailHelperInterface $verifyEmailHelper,
         private readonly MessageBusInterface $commandBus,
         private readonly UserRepository $userRepository,
+        private readonly Security $security,
     ) {
     }
 
@@ -68,6 +70,9 @@ final class VerifyEmailController extends AbstractController
                 userId: Uuid::fromString($userId),
             ));
         } catch (HandlerFailedException $e) {
+            // Already-verified is a terminal state: the signed URL is valid for 7 days,
+            // so replaying it must not keep handing out fresh sessions. Redirect to the
+            // login form instead of auto-logging in.
             if ($e->getPrevious() instanceof UserAlreadyVerified) {
                 $this->addFlash('info', 'Váš e-mail byl již dříve ověřen. Můžete se přihlásit.');
 
@@ -77,8 +82,9 @@ final class VerifyEmailController extends AbstractController
             throw $e;
         }
 
-        $this->addFlash('success', 'E-mail byl úspěšně ověřen! Nyní se můžete přihlásit.');
+        $this->security->login($user, firewallName: 'main');
+        $this->addFlash('success', 'E-mail byl úspěšně ověřen. Jsi přihlášen(a).');
 
-        return $this->redirectToRoute('app_login');
+        return $this->redirectToRoute('portal_dashboard');
     }
 }
