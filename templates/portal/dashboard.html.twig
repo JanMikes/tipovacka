@@ -67,10 +67,11 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <h3 class="mt-3 text-lg font-semibold leading-tight text-navy-900 transition-colors group-hover:text-cyan-600">{{ g.groupName }}</h3>
+                            <h3 class="mt-3 text-lg font-semibold leading-tight text-navy-900 transition-colors group-hover:text-cyan-600 flex items-center gap-1.5">
+                                <twig:ux:icon name="lucide:trophy" class="h-4 w-4" />{{ g.tournamentName }}
+                            </h3>
                             <p class="mt-1 flex items-center gap-1.5 text-sm text-navy-900/60">
-                                <twig:ux:icon name="lucide:trophy" class="h-4 w-4" />
-                                {{ g.tournamentName }}
+                                {{ g.groupName }}
                             </p>
                         </a>
                     </li>

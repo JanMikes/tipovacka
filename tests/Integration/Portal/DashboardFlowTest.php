@@ -32,7 +32,7 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Moje skupiny');
+        self::assertSelectorTextContains('body', 'Moje soutěže');
         self::assertSelectorTextContains('body', 'Nadcházející zápasy');
         self::assertSelectorTextContains('body', 'Objev další turnaje');
     }
