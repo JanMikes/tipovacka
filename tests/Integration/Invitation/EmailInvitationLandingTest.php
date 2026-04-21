@@ -140,6 +140,72 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertCount(1, $memberships);
     }
 
+    public function testRegisterStepWithEmptyPasswordReRendersWithError(): void
+    {
+        $client = static::createClient();
+
+        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+
+        $client->submitForm('Vytvořit účet a připojit se', [
+            '_action' => 'register',
+            'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+            'invitation_register_form[nickname]' => 'newcomer',
+            'invitation_register_form[password][first]' => '',
+            'invitation_register_form[password][second]' => '',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+    }
+
+    public function testRegisterStepWithMismatchedPasswordsReRendersWithError(): void
+    {
+        $client = static::createClient();
+
+        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+
+        $client->submitForm('Vytvořit účet a připojit se', [
+            '_action' => 'register',
+            'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+            'invitation_register_form[nickname]' => 'newcomer',
+            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
+            'invitation_register_form[password][second]' => 'Different1!',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Hesla se musí shodovat.');
+    }
+
+    public function testCompleteRegistrationWithEmptyPasswordReRendersWithError(): void
+    {
+        $client = static::createClient();
+        $em = $this->em($client);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $stub = new User(
+            id: Uuid::v7(),
+            email: AppFixtures::PENDING_INVITATION_EMAIL,
+            password: null,
+            nickname: 'stub_'.bin2hex(random_bytes(3)),
+            createdAt: $now,
+        );
+        $stub->popEvents();
+        $em->persist($stub);
+        $em->flush();
+
+        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+
+        $client->submitForm('Dokončit registraci a připojit se', [
+            '_action' => 'complete_registration',
+            'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+            'complete_invitation_registration_form[password][first]' => '',
+            'complete_invitation_registration_form[password][second]' => '',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+    }
+
     public function testCheckEmailForExistingVerifiedStubShowsLoginStep(): void
     {
         $client = static::createClient();

@@ -23,5 +23,5 @@ final class InvitationRegisterFormData
 
     #[Assert\NotBlank(message: 'Zadejte prosím heslo.')]
     #[Assert\Length(min: 8, minMessage: 'Heslo musí mít alespoň {{ limit }} znaků.')]
-    public string $password = '';
+    public ?string $password = null;
 }

@@ -150,6 +150,42 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertCount(0, $memberships);
     }
 
+    public function testRegisterStepWithEmptyPasswordReRendersWithError(): void
+    {
+        $client = static::createClient();
+
+        $this->submitEmailForm($client, self::LINK_URL, 'fresh-empty@example.test');
+
+        $client->submitForm('Vytvořit účet a připojit se', [
+            '_action' => 'register',
+            'email' => 'fresh-empty@example.test',
+            'invitation_register_form[nickname]' => 'fresh_empty',
+            'invitation_register_form[password][first]' => '',
+            'invitation_register_form[password][second]' => '',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+    }
+
+    public function testRegisterStepWithMismatchedPasswordsReRendersWithError(): void
+    {
+        $client = static::createClient();
+
+        $this->submitEmailForm($client, self::LINK_URL, 'fresh-mismatch@example.test');
+
+        $client->submitForm('Vytvořit účet a připojit se', [
+            '_action' => 'register',
+            'email' => 'fresh-mismatch@example.test',
+            'invitation_register_form[nickname]' => 'fresh_mismatch',
+            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
+            'invitation_register_form[password][second]' => 'Different1!',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Hesla se musí shodovat.');
+    }
+
     public function testAuthenticatedVerifiedUserJoinsImmediately(): void
     {
         $client = static::createClient();

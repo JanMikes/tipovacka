@@ -72,4 +72,36 @@ final class RegistrationFlowTest extends WebTestCase
 
         self::assertSame(422, $client->getResponse()->getStatusCode());
     }
+
+    public function testEmptyPasswordReRendersFormWithError(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/registrace');
+        $client->submitForm('Vytvořit účet', [
+            'registration_form[email]' => 'valid@example.com',
+            'registration_form[nickname]' => 'goodnick',
+            'registration_form[password][first]' => '',
+            'registration_form[password][second]' => '',
+        ]);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+    }
+
+    public function testMismatchedPasswordsReRenderFormWithError(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/registrace');
+        $client->submitForm('Vytvořit účet', [
+            'registration_form[email]' => 'valid@example.com',
+            'registration_form[nickname]' => 'goodnick',
+            'registration_form[password][first]' => 'Password1!',
+            'registration_form[password][second]' => 'Different1!',
+        ]);
+
+        self::assertSame(422, $client->getResponse()->getStatusCode());
+        self::assertSelectorTextContains('body', 'Hesla se musí shodovat.');
+    }
 }

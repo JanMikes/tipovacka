@@ -18,5 +18,5 @@ final class CompleteInvitationRegistrationFormData
         minScore: Assert\PasswordStrength::STRENGTH_MEDIUM,
         message: 'Heslo je příliš slabé. Zvolte prosím silnější heslo.',
     )]
-    public string $password = '';
+    public ?string $password = null;
 }

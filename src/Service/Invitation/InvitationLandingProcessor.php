@@ -232,6 +232,7 @@ final readonly class InvitationLandingProcessor
         }
 
         $data = $form->getData();
+        \assert(null !== $data->password, 'Validated by NotBlank.');
 
         try {
             $this->commandBus->dispatch(new RegisterUserCommand(
@@ -298,10 +299,13 @@ final readonly class InvitationLandingProcessor
             return $this->renderCompleteRegistrationStep($context, $email, $form);
         }
 
+        $password = $form->getData()->password;
+        \assert(null !== $password, 'Validated by NotBlank.');
+
         try {
             $this->commandBus->dispatch(new CompleteInvitationRegistrationCommand(
                 token: $context->token,
-                plainPassword: $form->getData()->password,
+                plainPassword: $password,
             ));
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();

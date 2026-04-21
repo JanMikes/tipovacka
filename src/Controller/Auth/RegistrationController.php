@@ -42,6 +42,7 @@ final class RegistrationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
+                \assert(null !== $formData->password, 'Validated by NotBlank.');
                 $this->commandBus->dispatch(new RegisterUserCommand(
                     email: $formData->email,
                     nickname: $formData->nickname,
