@@ -6,69 +6,64 @@
 {% block og_title %}Tipovačka — Tipuj zápasy. Poraz kamarády.{% endblock %}
 {% block og_description %}Založ skupinu, zvi přátele a bojujte o prvenství v tabulce.{% endblock %}
 
+{% block body_class %}bg-navy-900{% endblock %}
+
 {% block body %}
 {# ───────── Hero ───────── #}
-<section class="relative overflow-hidden bg-gradient-to-br from-navy-50 via-white to-white">
-    <div aria-hidden="true" class="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-navy-500/10 blur-3xl"></div>
-
-    <div class="relative mx-auto grid max-w-[88rem] grid-cols-1 items-center gap-10 px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-12 lg:gap-12 lg:px-8 lg:pb-24 lg:pt-20">
-        <div class="lg:col-span-6">
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-600">
-                <twig:ux:icon name="lucide:trophy" class="h-3.5 w-3.5" />
+<section class="hero-bg">
+    <div class="relative z-10 mx-auto grid max-w-[88rem] grid-cols-1 items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-28">
+        <div>
+            <span class="inline-flex items-center gap-2 rounded-full bg-cyan-500/[0.08] px-3 py-1.5 text-[13px] font-medium text-navy-900">
+                <twig:ux:icon name="lucide:trophy" class="h-4 w-4 text-cyan-500" />
                 Fotbalová tipovací liga
             </span>
-            <h1 class="mt-5 text-4xl font-bold tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
+            <h1 class="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
                 Tipuj zápasy.<br>
-                <span class="bg-gradient-to-r from-cyan-500 to-cyan-600 bg-clip-text text-transparent">Poraz kamarády.</span>
+                <span class="text-cyan-500">Poraz kamarády.</span>
             </h1>
-            <p class="mt-6 max-w-xl text-lg text-navy-900/70 sm:text-xl">
+            <p class="mt-6 max-w-xl text-lg leading-relaxed text-navy-900/70 lg:text-xl">
                 Založ soukromou skupinu, zvi přátele a bojujte o prvenství v tabulce. Zdarma a bez reklam.
             </p>
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600 hover:shadow-cyan-500/30">
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-cyan-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2">
                     Zaregistruj se zdarma
-                    <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5" />
+                    <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
                 </a>
-                <a href="{{ path('public_tournaments_list') }}" class="inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-3.5 text-base font-semibold text-navy-900 transition-colors hover:text-cyan-600">
+                <a href="{{ path('public_tournaments_list') }}" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-navy-900/15 px-6 py-3.5 text-base font-semibold text-navy-900 transition-colors hover:border-navy-900 hover:bg-navy-900/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2">
                     Procházet turnaje
-                    <twig:ux:icon name="lucide:chevron-right" class="h-5 w-5" />
+                    <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
                 </a>
             </div>
 
             {# Trust strip #}
-            <dl class="mt-10 grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-4">
+            <ul class="mt-10 flex flex-wrap gap-3">
                 {% set badges = [
                     { icon: 'lucide:shield-check', label: 'Zdarma' },
                     { icon: 'lucide:users',        label: 'Soukromé skupiny' },
-                    { icon: 'lucide:trophy',       label: 'Žebříček naživo' },
+                    { icon: 'lucide:list-ordered', label: 'Žebříček naživo' },
                     { icon: 'lucide:clock',        label: 'Tipuj do výkopu' },
                 ] %}
                 {% for b in badges %}
-                    <div class="flex items-center gap-2 text-sm text-navy-900/70">
-                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-cyan-500 shadow-card">
-                            <twig:ux:icon name="{{ b.icon }}" class="h-4 w-4" />
-                        </span>
-                        <span class="font-medium">{{ b.label }}</span>
-                    </div>
+                    <li class="inline-flex items-center gap-2 rounded-full bg-navy-900/[0.04] px-3.5 py-2 text-[13px] font-medium text-navy-900">
+                        <twig:ux:icon name="{{ b.icon }}" class="h-3.5 w-3.5 text-cyan-500" />
+                        {{ b.label }}
+                    </li>
                 {% endfor %}
-            </dl>
+            </ul>
         </div>
 
-        <div class="relative lg:col-span-6">
-            <picture>
-                <source media="(max-width: 767px)" srcset="{{ asset('images/hero/hero-portrait.png') }}">
-                <source media="(min-width: 768px)" srcset="{{ asset('images/hero/hero-desktop.png') }}">
-                <img
-                    src="{{ asset('images/hero/hero-desktop.png') }}"
-                    alt=""
-                    role="presentation"
-                    class="mx-auto h-auto w-full max-w-xl drop-shadow-xl"
-                    loading="eager"
-                    fetchpriority="high"
-                    decoding="async"
-                >
-            </picture>
+        <div class="hidden lg:block" aria-hidden="true">
+            <img
+                src="{{ asset('images/hero/hero-desktop.png') }}"
+                alt=""
+                role="presentation"
+                class="mx-auto w-full max-w-xl 2xl:max-w-2xl"
+                width="1536"
+                height="1024"
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
+            >
         </div>
     </div>
 </section>
@@ -89,7 +84,7 @@
                 { img: 'step-3-climb.png',       title: 'Získej body',    body: 'Správné tipy ti nasbírají body a vyženou tě na špici tabulky.' }
             ] %}
             {% for step in steps %}
-                <div class="group relative flex flex-col items-center rounded-2xl bg-white p-8 text-center shadow-card ring-1 ring-navy-900/5 transition-shadow hover:shadow-card-hover">
+                <div class="group relative flex flex-col items-center rounded-2xl bg-white p-8 text-center shadow-lg shadow-navy-900/10 ring-1 ring-navy-900/5 transition-shadow hover:shadow-xl hover:shadow-navy-900/15">
                     <span class="absolute -top-4 left-1/2 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full bg-cyan-500 text-sm font-bold text-white shadow-lg shadow-cyan-500/30">
                         {{ loop.index }}
                     </span>
@@ -110,7 +105,7 @@
 </section>
 
 {# ───────── Features ───────── #}
-<section class="bg-navy-50/60 py-20 sm:py-24">
+<section class="bg-navy-50 py-20 sm:py-24">
     <div class="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
             <span class="inline-block rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-600">Co všechno umíme</span>
@@ -124,7 +119,7 @@
                 { icon: 'lucide:share-2',      title: 'Pozvánky na pár kliků', body: 'Nasdílej odkaz, zvi přes PIN, nebo tipuj za hráče, kteří nechtějí účet.' }
             ] %}
             {% for f in features %}
-                <div class="group flex flex-col rounded-2xl bg-white p-8 shadow-card ring-1 ring-navy-900/5 transition-shadow hover:shadow-card-hover">
+                <div class="group flex flex-col rounded-2xl bg-white p-8 shadow-lg shadow-navy-900/10 ring-1 ring-navy-900/5 transition-shadow hover:shadow-xl hover:shadow-navy-900/15">
                     <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 text-white shadow-md shadow-cyan-500/20">
                         <twig:ux:icon name="{{ f.icon }}" class="h-6 w-6" />
                     </span>
