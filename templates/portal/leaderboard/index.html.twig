@@ -57,7 +57,7 @@
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/10 transition-colors hover:bg-navy-50">
                 <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-cyan-500" />
-                Matice tipů
+                Tabulka
             </a>
             {% if is_granted('leaderboard_resolve_ties', group) %}
                 <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
