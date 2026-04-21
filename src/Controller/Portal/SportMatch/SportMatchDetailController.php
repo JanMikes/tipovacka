@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\SportMatch;
 
 use App\Entity\User;
+use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Voter\SportMatchVoter;
@@ -24,6 +25,7 @@ final class SportMatchDetailController extends AbstractController
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly MembershipRepository $membershipRepository,
+        private readonly GuessRepository $guessRepository,
     ) {
     }
 
@@ -38,9 +40,15 @@ final class SportMatchDetailController extends AbstractController
         if ($user instanceof User) {
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
                 if ($membership->group->tournament->id->equals($sportMatch->tournament->id)) {
+                    $guess = $this->guessRepository->findActiveByUserMatchGroup(
+                        $user->id,
+                        $sportMatch->id,
+                        $membership->group->id,
+                    );
                     $myGroupsForTournament[] = [
                         'id' => $membership->group->id,
                         'name' => $membership->group->name,
+                        'hasGuess' => null !== $guess,
                     ];
                 }
             }

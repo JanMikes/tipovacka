@@ -15,7 +15,7 @@
     </nav>
 
     {% if group.tournament.isFinished and winner is defined and winner is not null %}
-        <section class="mb-8 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-10">
+        <section class="mb-8 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-navy-900/10 shadow-card sm:p-10">
             <picture>
                 <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">
                 <source media="(min-width: 768px)" srcset="{{ asset('images/winner/winner-wide.png') }}">
@@ -28,15 +28,15 @@
                 >
             </picture>
             <div class="mt-6 text-center">
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-600">
                     <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
                     Vítěz
                 </span>
-                <h2 class="mt-3 text-3xl font-bold sm:text-4xl">
-                    Gratulujeme, <span class="bg-gradient-to-r from-cyan-300 to-cyan-500 bg-clip-text text-transparent">{{ winner.nickname }}</span>!
+                <h2 class="mt-3 text-3xl font-bold text-navy-900 sm:text-4xl">
+                    Gratulujeme, <span class="text-cyan-500">{{ winner.nickname }}</span>!
                 </h2>
-                <p class="mt-3 text-base text-white/75 sm:text-lg">
-                    {{ winner.nickname }} vyhrává turnaj <strong class="text-white">{{ group.tournament.name }}</strong> s {{ winner.totalPoints }} body.
+                <p class="mt-3 text-base text-navy-900/70 sm:text-lg">
+                    {{ winner.nickname }} vyhrává turnaj <strong class="text-navy-900">{{ group.tournament.name }}</strong> s {{ winner.totalPoints }} body.
                 </p>
             </div>
         </section>
@@ -54,12 +54,18 @@
             </p>
         </div>
 
-        {% if is_granted('leaderboard_resolve_ties', group) %}
-            <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
-                <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
-                Rozřadit shody
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/10 transition-colors hover:bg-navy-50">
+                <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-cyan-500" />
+                Matice tipů
             </a>
-        {% endif %}
+            {% if is_granted('leaderboard_resolve_ties', group) %}
+                <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                    <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
+                    Rozřadit shody
+                </a>
+            {% endif %}
+        </div>
     </header>
 
     {{ component('Leaderboard:GroupLeaderboard', {group: group}) }}

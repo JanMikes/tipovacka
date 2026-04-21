@@ -2,8 +2,12 @@
     Shared PIN join form.
     Params:
       - size: 'large' (default) or 'compact'
+      - collapsible: bool — only applies to 'large'. When true, the card starts
+        collapsed to a single CTA row and expands on click. Use this when the
+        user is already in at least one group and doesn't need the full intro.
 #}
 {% set size = size|default('large') %}
+{% set collapsible = collapsible|default(false) %}
 {% set redirect_to = app.request.requestUri %}
 
 {% if size == 'compact' %}
@@ -35,6 +39,49 @@
             Připojit se
         </button>
     </form>
+{% elseif collapsible %}
+    <details class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 text-white shadow-card">
+        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-500/15 blur-3xl"></div>
+
+        <summary class="relative flex cursor-pointer list-none items-center justify-between gap-4 p-5 transition-colors hover:bg-white/5 sm:px-6 [&::-webkit-details-marker]:hidden">
+            <div class="flex min-w-0 items-center gap-3">
+                <span class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur sm:flex">
+                    <twig:ux:icon name="lucide:key-round" class="h-5 w-5 text-cyan-400" />
+                </span>
+                <h2 class="truncate text-base font-bold tracking-tight sm:text-lg">Máš PIN od skupiny?</h2>
+            </div>
+            <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-white/70 transition-transform group-open:rotate-180" />
+        </summary>
+
+        <div class="relative border-t border-white/10 px-5 pb-6 pt-5 sm:px-6 sm:pb-7 sm:pt-6">
+            <p class="text-sm text-white/75 sm:text-base">Zadej 8místný kód a rovnou se připoj — žádná pozvánka, žádné čekání.</p>
+
+            <form method="post" action="{{ path('portal_group_join_by_pin_quick') }}" class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start md:w-[26rem]">
+                <input type="hidden" name="_token" value="{{ csrf_token('join_by_pin_quick') }}">
+                <input type="hidden" name="redirect_to" value="{{ redirect_to }}">
+
+                <label for="pin-large" class="sr-only">PIN skupiny (8 číslic)</label>
+                <input
+                    type="text"
+                    inputmode="numeric"
+                    pattern="\d{8}"
+                    maxlength="8"
+                    minlength="8"
+                    autocomplete="off"
+                    id="pin-large"
+                    name="pin"
+                    placeholder="12345678"
+                    required
+                    aria-label="PIN skupiny"
+                    class="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-center font-mono text-xl tracking-[0.4em] text-white placeholder-white/40 outline-none transition focus:border-transparent focus:bg-white/15 focus:ring-2 focus:ring-cyan-400"
+                >
+                <button type="submit" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
+                    Připojit se
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                </button>
+            </form>
+        </div>
+    </details>
 {% else %}
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
         <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-500/15 blur-3xl"></div>

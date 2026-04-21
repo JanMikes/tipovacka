@@ -27,7 +27,7 @@
 
     {% if app.user and app.user.isVerified %}
         <div class="mb-10">
-            {{ include('_partials/join_by_pin_form.html.twig', { size: 'large' }) }}
+            {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: user_has_groups|default(false) }) }}
         </div>
     {% endif %}
 

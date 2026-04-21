@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Matice tipů — {{ group.name }} — Tipovačka{% endblock %}
+
+{% block body %}
+<div class="mx-auto w-full max-w-[min(100vw-2rem,120rem)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+
+    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="hover:text-cyan-600">Žebříček</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="text-navy-900/80">Matice tipů</span>
+    </nav>
+
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="flex items-center gap-2.5 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
+                <twig:ux:icon name="lucide:table-2" class="h-7 w-7 text-cyan-500" />
+                Matice tipů
+            </h1>
+            <p class="mt-2 text-navy-900/70">
+                Skupina
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">{{ group.name }}</a>
+                — tipy a body za každý zápas, řádek na hráče, sloupec na zápas.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs text-navy-900/60">
+            <span class="font-semibold uppercase tracking-wider">Legenda</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-500/25 ring-1 ring-cyan-500/40"></span>1. místo</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-400/15 ring-1 ring-cyan-400/30"></span>2. místo</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-200/50 ring-1 ring-cyan-200"></span>3. místo</span>
+        </div>
+    </header>
+
+    {% if matrix.matches|length == 0 or matrix.members|length == 0 %}
+        <section class="rounded-2xl bg-white p-10 text-center shadow-card ring-1 ring-navy-900/5">
+            <p class="text-sm text-navy-900/60">
+                {% if matrix.matches|length == 0 %}
+                    V turnaji zatím nejsou žádné zápasy.
+                {% else %}
+                    Skupina zatím nemá žádné členy.
+                {% endif %}
+            </p>
+        </section>
+    {% else %}
+        <div class="relative overflow-auto rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5" style="max-height: calc(100vh - 12rem);">
+            <table class="min-w-full border-separate border-spacing-0 text-sm">
+                <thead>
+                    <tr>
+                        <th scope="col" class="sticky left-0 top-0 z-30 border-b border-r border-navy-100/70 bg-white px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-900/60">
+                            <div class="flex min-w-[200px] items-center gap-3">
+                                <span class="w-6 text-right">#</span>
+                                <span class="flex-1">Hráč</span>
+                                <span class="tabular-nums">Body</span>
+                            </div>
+                        </th>
+                        {% for m in matrix.matches %}
+                            {% set stateLabel = '' %}
+                            {% if m.state.value == 'finished' %}{% set stateLabel = ' — odehráno ' ~ m.actualHomeScore ~ ':' ~ m.actualAwayScore %}
+                            {% elseif m.state.value == 'live' %}{% set stateLabel = ' — živě ' ~ m.actualHomeScore ~ ':' ~ m.actualAwayScore %}
+                            {% elseif m.state.value == 'postponed' %}{% set stateLabel = ' — odloženo' %}
+                            {% endif %}
+                            <th scope="col" class="sticky top-0 z-20 whitespace-nowrap border-b border-navy-100/70 bg-white px-2 py-2 text-center"
+                                title="{{ m.homeTeam }} – {{ m.awayTeam }} ({{ m.kickoffAt|date('d. m. Y H:i') }}){{ stateLabel }}">
+                                <div class="text-[11px] font-bold tracking-wider text-navy-900">
+                                    {{ m.homeTeam|slice(0, 3)|upper }}<span class="mx-0.5 text-navy-900/40">–</span>{{ m.awayTeam|slice(0, 3)|upper }}
+                                </div>
+                                <div class="mt-0.5 text-[10px] font-normal">
+                                    {% if m.state.value == 'finished' %}
+                                        <span class="inline-block rounded bg-navy-50 px-1.5 py-0.5 tabular-nums text-navy-900">{{ m.actualHomeScore }}:{{ m.actualAwayScore }}</span>
+                                    {% elseif m.state.value == 'live' %}
+                                        <span class="inline-flex items-center gap-1 rounded bg-orange-50 px-1.5 py-0.5 tabular-nums text-orange-700">
+                                            <span class="h-1 w-1 animate-pulse rounded-full bg-orange-500"></span>
+                                            {{ m.actualHomeScore }}:{{ m.actualAwayScore }}
+                                        </span>
+                                    {% elseif m.state.value == 'postponed' %}
+                                        <span class="text-yellow-600">odloženo</span>
+                                    {% else %}
+                                        <span class="tabular-nums text-navy-900/40">{{ m.kickoffAt|date('d.m.') }}</span>
+                                    {% endif %}
+                                </div>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in matrix.members %}
+                        <tr class="group">
+                            <th scope="row" class="sticky left-0 z-10 border-b border-r border-navy-100/70 bg-white px-4 py-3 text-left">
+                                <div class="flex min-w-[200px] items-center gap-3">
+                                    <span class="w-6 text-right text-xs font-semibold tabular-nums text-navy-900/50">{{ member.rank }}.</span>
+                                    <a href="{{ path('portal_group_leaderboard_member', {groupId: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}"
+                                       class="flex-1 truncate font-semibold text-navy-900 hover:text-cyan-600 hover:underline">
+                                        {{ member.nickname }}
+                                    </a>
+                                    <span class="tabular-nums font-bold text-navy-900">{{ member.totalPoints }}</span>
+                                </div>
+                            </th>
+                            {% for m in matrix.matches %}
+                                {% set matchKey = m.sportMatchId.toRfc4122 %}
+                                {% set cell = member.cells[matchKey] ?? null %}
+                                {% set highlight = '' %}
+                                {% if cell is not null and cell.points is not null and cell.points > 0 %}
+                                    {% if m.topScores[0] is defined and cell.points == m.topScores[0] %}
+                                        {% set highlight = 'bg-cyan-500/25' %}
+                                    {% elseif m.topScores[1] is defined and cell.points == m.topScores[1] %}
+                                        {% set highlight = 'bg-cyan-400/15' %}
+                                    {% elseif m.topScores[2] is defined and cell.points == m.topScores[2] %}
+                                        {% set highlight = 'bg-cyan-200/50' %}
+                                    {% endif %}
+                                {% endif %}
+                                <td class="whitespace-nowrap border-b border-navy-100/70 px-2 py-2 text-center {{ highlight }}">
+                                    {% if cell is not null %}
+                                        <div class="text-[11px] tabular-nums text-navy-900/60">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
+                                        <div class="mt-0.5 text-sm font-bold tabular-nums text-navy-900">
+                                            {% if cell.points is null %}
+                                                <span class="text-navy-900/30">—</span>
+                                            {% else %}
+                                                {{ cell.points }}
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-navy-900/25">—</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

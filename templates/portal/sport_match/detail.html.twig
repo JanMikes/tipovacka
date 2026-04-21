@@ -78,7 +78,16 @@
 
             <ul class="grid grid-cols-1 gap-4 {% if my_groups|length > 1 %}md:grid-cols-2{% endif %}">
                 {% for g in my_groups %}
-                    <li>
+                    <li class="relative">
+                        {% if not g.hasGuess %}
+                            <span
+                                class="absolute -left-2 -top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full bg-yellow-400 text-yellow-900 shadow-md ring-2 ring-white"
+                                title="Pro tuto skupinu chybí tvůj tip"
+                                aria-label="Chybí tip pro tuto skupinu"
+                            >
+                                <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4" />
+                            </span>
+                        {% endif %}
                         <article class="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
                             <header class="flex items-center justify-between gap-3 border-b border-navy-100/70 px-5 py-3">
                                 <div class="flex min-w-0 items-center gap-2">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Twig\Components\Guess;
 
+use App\Command\DeleteGuess\DeleteGuessCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\Command\UpdateGuess\UpdateGuessCommand;
 use App\Entity\Guess;
@@ -21,10 +22,10 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
-use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 use Symfony\UX\LiveComponent\ValidatableComponentTrait;
+use Symfony\UX\TwigComponent\Attribute\PostMount;
 
 #[AsLiveComponent(name: 'Guess:GuessSubmitForm')]
 final class GuessSubmitForm
@@ -39,19 +40,20 @@ final class GuessSubmitForm
     public string $groupId = '';
 
     #[LiveProp(writable: true)]
-    #[Assert\NotNull]
     #[Assert\GreaterThanOrEqual(0)]
     #[Assert\LessThanOrEqual(99)]
     public ?int $homeScore = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\NotNull]
     #[Assert\GreaterThanOrEqual(0)]
     #[Assert\LessThanOrEqual(99)]
     public ?int $awayScore = null;
 
     #[LiveProp]
     public ?string $errorMessage = null;
+
+    #[LiveProp]
+    public ?string $successMessage = null;
 
     public function __construct(
         private readonly Security $security,
@@ -60,6 +62,17 @@ final class GuessSubmitForm
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
     ) {
+    }
+
+    #[PostMount]
+    public function prefillFromExistingGuess(): void
+    {
+        $existing = $this->findExistingGuess();
+
+        if (null !== $existing) {
+            $this->homeScore = $existing->homeScore;
+            $this->awayScore = $existing->awayScore;
+        }
     }
 
     public bool $hasExistingGuess {
@@ -101,7 +114,7 @@ final class GuessSubmitForm
     public function submit(): void
     {
         $this->errorMessage = null;
-        $this->validate();
+        $this->successMessage = null;
 
         $user = $this->security->getUser();
 
@@ -111,27 +124,47 @@ final class GuessSubmitForm
             return;
         }
 
-        \assert(null !== $this->homeScore);
-        \assert(null !== $this->awayScore);
-
         $existing = $this->findExistingGuess();
+        $homeScore = $this->homeScore;
+        $awayScore = $this->awayScore;
+        $bothCleared = null === $homeScore && null === $awayScore;
 
         try {
+            if ($bothCleared && null !== $existing) {
+                $this->dispatchCommand(new DeleteGuessCommand(
+                    userId: $user->id,
+                    guessId: $existing->id,
+                ));
+                $this->successMessage = 'Tip smazán.';
+
+                return;
+            }
+
+            if (null === $homeScore || null === $awayScore) {
+                $this->errorMessage = 'Vyplň prosím oba tipy.';
+
+                return;
+            }
+
+            $this->validate();
+
             if (null === $existing) {
                 $this->dispatchCommand(new SubmitGuessCommand(
                     userId: $user->id,
                     groupId: Uuid::fromString($this->groupId),
                     sportMatchId: $this->sportMatch->id,
-                    homeScore: $this->homeScore,
-                    awayScore: $this->awayScore,
+                    homeScore: $homeScore,
+                    awayScore: $awayScore,
                 ));
+                $this->successMessage = 'Tip uložen.';
             } else {
                 $this->dispatchCommand(new UpdateGuessCommand(
                     userId: $user->id,
                     guessId: $existing->id,
-                    homeScore: $this->homeScore,
-                    awayScore: $this->awayScore,
+                    homeScore: $homeScore,
+                    awayScore: $awayScore,
                 ));
+                $this->successMessage = 'Tip upraven.';
             }
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
@@ -142,27 +175,6 @@ final class GuessSubmitForm
             $this->errorMessage = $e->getMessage();
 
             return;
-        }
-    }
-
-    #[LiveAction]
-    public function loadExisting(#[LiveArg] ?int $homeScore = null, #[LiveArg] ?int $awayScore = null): void
-    {
-        $existing = $this->findExistingGuess();
-
-        if (null !== $existing) {
-            $this->homeScore = $existing->homeScore;
-            $this->awayScore = $existing->awayScore;
-
-            return;
-        }
-
-        if (null !== $homeScore) {
-            $this->homeScore = $homeScore;
-        }
-
-        if (null !== $awayScore) {
-            $this->awayScore = $awayScore;
         }
     }
 

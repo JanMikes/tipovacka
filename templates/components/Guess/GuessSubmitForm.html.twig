@@ -29,7 +29,14 @@
             </p>
         {% endif %}
 
-        <form data-action="live#action" data-live-action-param="submit" class="flex flex-wrap items-end gap-3">
+        {% if this.successMessage %}
+            <p class="mb-3 flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+                <twig:ux:icon name="lucide:circle-check-big" class="h-4 w-4 shrink-0" />
+                {{ this.successMessage }}
+            </p>
+        {% endif %}
+
+        <form data-action="live#action:prevent" data-live-action-param="submit" class="flex flex-wrap items-end gap-3">
             <div class="min-w-0">
                 <label class="mb-1 block text-xs font-medium text-navy-900/60" for="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}">
                     {{ this.sportMatch.homeTeam }}
@@ -40,9 +47,8 @@
                     max="99"
                     id="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="homeScore"
-                    value="{{ homeScore ?? (this.existingGuess ? this.existingGuess.homeScore : '') }}"
+                    value="{{ homeScore ?? '' }}"
                     class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
-                    required
                 />
                 {% if _errors is defined and _errors.getAll('homeScore')|length > 0 %}
                     <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('homeScore')[0].message }}</p>
@@ -61,17 +67,19 @@
                     max="99"
                     id="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="awayScore"
-                    value="{{ awayScore ?? (this.existingGuess ? this.existingGuess.awayScore : '') }}"
+                    value="{{ awayScore ?? '' }}"
                     class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
-                    required
                 />
                 {% if _errors is defined and _errors.getAll('awayScore')|length > 0 %}
                     <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('awayScore')[0].message }}</p>
                 {% endif %}
             </div>
 
-            <button type="submit" class="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
-                {% if this.hasExistingGuess %}
+            {% set is_clearing = this.hasExistingGuess and homeScore is null and awayScore is null %}
+            <button type="submit" class="ml-auto inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors {{ is_clearing ? 'bg-red-600 hover:bg-red-700' : 'bg-navy-900 hover:bg-navy-700' }}">
+                {% if is_clearing %}
+                    <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat tip
+                {% elseif this.hasExistingGuess %}
                     <twig:ux:icon name="lucide:check" class="h-4 w-4" />Upravit tip
                 {% else %}
                     <twig:ux:icon name="lucide:target" class="h-4 w-4" />Odeslat tip

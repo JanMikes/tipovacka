@@ -7,6 +7,7 @@ namespace App\Controller\Portal;
 use App\Entity\User;
 use App\Query\ListDiscoverablePublicTournaments\ListDiscoverablePublicTournaments;
 use App\Query\ListMyGroups\ListMyGroups;
+use App\Query\ListRecentEvaluatedGuessesForUser\ListRecentEvaluatedGuessesForUser;
 use App\Query\ListUpcomingMatchesForUser\ListUpcomingMatchesForUser;
 use App\Query\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,11 +29,13 @@ final class DashboardController extends AbstractController
 
         $myGroups = $this->queryBus->handle(new ListMyGroups(userId: $user->id));
         $upcomingMatches = $this->queryBus->handle(new ListUpcomingMatchesForUser(userId: $user->id));
+        $evaluatedGuesses = $this->queryBus->handle(new ListRecentEvaluatedGuessesForUser(userId: $user->id));
         $discoverableTournaments = $this->queryBus->handle(new ListDiscoverablePublicTournaments(userId: $user->id));
 
         return $this->render('portal/dashboard.html.twig', [
             'my_groups' => $myGroups,
             'upcoming_matches' => $upcomingMatches,
+            'evaluated_guesses' => $evaluatedGuesses,
             'discoverable_tournaments' => $discoverableTournaments,
         ]);
     }
