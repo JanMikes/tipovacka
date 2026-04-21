@@ -19,12 +19,19 @@ use App\Entity\User;
 use App\Enum\TournamentVisibility;
 use App\Enum\UserRole;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
-final class AppFixtures extends Fixture
+final class AppFixtures extends Fixture implements FixtureGroupInterface
 {
+    public static function getGroups(): array
+    {
+        return ['test', 'dev'];
+    }
+
+
     // NOTE: tests/bootstrap.php uses `doctrine:schema:create`, NOT migrations.
     // The football Sport row seeded by the migration is therefore NOT present in the
     // test database. We seed it here too so tests (and any local `doctrine:fixtures:load`)

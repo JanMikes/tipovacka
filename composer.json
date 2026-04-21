@@ -106,7 +106,7 @@
         "tailwind:watch": "php bin/console tailwind:build --watch",
         "assets:compile": "php bin/console asset-map:compile",
         "db:fixtures": [
-            "php bin/console doctrine:fixtures:load --no-interaction"
+            "php bin/console doctrine:fixtures:load --no-interaction --group=dev"
         ],
         "db:reset": [
             "php bin/console doctrine:database:drop --force --if-exists",

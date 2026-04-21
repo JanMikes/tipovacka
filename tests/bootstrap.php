@@ -57,6 +57,7 @@ function bootstrapDatabase(string $cacheFilePath): void
     $result = $application->run(new ArrayInput([
         'command' => 'doctrine:fixtures:load',
         '--no-interaction' => 1,
+        '--group' => ['test'],
     ]));
 
     if (0 !== $result) {
