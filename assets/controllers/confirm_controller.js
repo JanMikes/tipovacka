@@ -66,7 +66,7 @@ export default class extends Controller {
             : 'bg-yellow-500 hover:bg-yellow-600 focus-visible:ring-yellow-400';
 
         const dialog = document.createElement('dialog');
-        dialog.className = 'w-full max-w-md rounded-2xl p-0 bg-white shadow-card ring-1 ring-navy-900/5';
+        dialog.className = 'confirm-dialog w-full max-w-md rounded-2xl p-0 bg-white shadow-card ring-1 ring-navy-900/5';
 
         const container = document.createElement('div');
         container.className = 'p-6';

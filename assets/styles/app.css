@@ -66,10 +66,54 @@ label.required::after {
     color: var(--color-red-500);
 }
 
-/* Backdrop for confirm-dialog modals (see confirm_controller.js). */
-dialog[open]::backdrop {
+/* Confirm-dialog modals (see confirm_controller.js). Centers the dialog and
+   animates both dialog and backdrop in/out. `allow-discrete` on `display` and
+   `overlay` lets the exit animation play before the element is removed from
+   the top layer. `@starting-style` defines the pre-open state so the entry
+   animation runs on .showModal(). */
+.confirm-dialog {
+    margin: auto;
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+    transition:
+        opacity 180ms ease-out,
+        transform 180ms ease-out,
+        overlay 180ms ease-out allow-discrete,
+        display 180ms ease-out allow-discrete;
+}
+
+.confirm-dialog[open] {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
+@starting-style {
+    .confirm-dialog[open] {
+        opacity: 0;
+        transform: scale(0.96) translateY(4px);
+    }
+}
+
+.confirm-dialog::backdrop {
+    background-color: rgba(8, 30, 68, 0);
+    backdrop-filter: blur(0);
+    transition:
+        background-color 180ms ease-out,
+        backdrop-filter 180ms ease-out,
+        overlay 180ms ease-out allow-discrete,
+        display 180ms ease-out allow-discrete;
+}
+
+.confirm-dialog[open]::backdrop {
     background-color: rgba(8, 30, 68, 0.6);
     backdrop-filter: blur(4px);
+}
+
+@starting-style {
+    .confirm-dialog[open]::backdrop {
+        background-color: rgba(8, 30, 68, 0);
+        backdrop-filter: blur(0);
+    }
 }
 
 /* Public homepage hero — soft diagonal gradient wash + dot grid. Both are
