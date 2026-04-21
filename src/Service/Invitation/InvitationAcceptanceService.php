@@ -60,7 +60,7 @@ final readonly class InvitationAcceptanceService
 
         if (InvitationKind::Email === $context->kind
             && null !== $context->presetEmail
-            && 0 !== strcasecmp($currentUser->email, $context->presetEmail)
+            && (null === $currentUser->email || 0 !== strcasecmp($currentUser->email, $context->presetEmail))
         ) {
             return new Response($this->twig->render('invitation/landing.html.twig', [
                 'step' => 'email_mismatch',

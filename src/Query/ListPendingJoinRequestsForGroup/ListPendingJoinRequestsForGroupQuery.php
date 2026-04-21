@@ -27,7 +27,7 @@ final readonly class ListPendingJoinRequestsForGroupQuery
             static fn (GroupJoinRequest $r): JoinRequestListItem => new JoinRequestListItem(
                 requestId: $r->id,
                 userId: $r->user->id,
-                nickname: $r->user->nickname,
+                nickname: $r->user->displayName,
                 requestedAt: $r->requestedAt,
             ),
             $requests,

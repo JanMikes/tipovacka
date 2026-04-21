@@ -30,8 +30,12 @@ final readonly class RegisterUserHandler
             throw UserAlreadyExists::withEmail($command->email);
         }
 
-        if (null !== $this->userRepository->findByNickname($command->nickname)) {
-            throw NicknameAlreadyTaken::withNickname($command->nickname);
+        $nickname = null !== $command->nickname && '' !== $command->nickname
+            ? $command->nickname
+            : null;
+
+        if (null !== $nickname && null !== $this->userRepository->findByNickname($nickname)) {
+            throw NicknameAlreadyTaken::withNickname($nickname);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
@@ -40,7 +44,7 @@ final readonly class RegisterUserHandler
             id: $this->identity->next(),
             email: $command->email,
             password: null,
-            nickname: $command->nickname,
+            nickname: $nickname,
             createdAt: $now,
         );
 

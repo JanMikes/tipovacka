@@ -64,9 +64,9 @@ final class InvitationFormDataTest extends TestCase
         $this->assertHasViolation($violations, 'email', 'Zadejte prosím e-mailovou adresu.');
         $this->assertHasViolation($violations, 'password', 'Zadejte prosím heslo.');
         $this->assertHasViolation($violations, 'passwordConfirm', 'Zopakujte prosím heslo.');
-        $this->assertHasViolation($violations, 'nickname', 'Zadejte prosím přezdívku.');
         $this->assertHasViolation($violations, 'firstName', 'Zadejte prosím jméno.');
         $this->assertHasViolation($violations, 'lastName', 'Zadejte prosím příjmení.');
+        $this->assertNoViolationOnPath($violations, 'nickname');
     }
 
     public function testNewKindAcceptsCompleteInput(): void
@@ -221,6 +221,24 @@ final class InvitationFormDataTest extends TestCase
             $propertyPath,
             $expectedMessage,
             (string) $violations,
+        ));
+    }
+
+    private function assertNoViolationOnPath(
+        ConstraintViolationListInterface $violations,
+        string $propertyPath,
+    ): void {
+        $offending = [];
+        foreach ($violations as $v) {
+            if ($v->getPropertyPath() === $propertyPath) {
+                $offending[] = (string) $v->getMessage();
+            }
+        }
+
+        self::assertSame([], $offending, sprintf(
+            'Did not expect violations on "%s", got: %s',
+            $propertyPath,
+            implode('; ', $offending),
         ));
     }
 }

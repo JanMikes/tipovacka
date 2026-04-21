@@ -47,6 +47,10 @@ final class ResendVerificationEmailController extends AbstractController
             return $this->redirectToRoute('portal_dashboard');
         }
 
+        if (null === $user->email) {
+            throw $this->createNotFoundException();
+        }
+
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             routeName: 'app_verify_email',
             userId: (string) $user->id,
@@ -56,11 +60,11 @@ final class ResendVerificationEmailController extends AbstractController
 
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $user->nickname))
+            ->to(new Address($user->email, $user->displayName))
             ->subject('Ověřte prosím svou e-mailovou adresu')
             ->htmlTemplate('emails/verify_email.html.twig')
             ->context([
-                'nickname' => $user->nickname,
+                'nickname' => $user->displayName,
                 'verificationUrl' => $signatureComponents->getSignedUrl(),
                 'expiresAt' => $signatureComponents->getExpiresAt(),
             ]);

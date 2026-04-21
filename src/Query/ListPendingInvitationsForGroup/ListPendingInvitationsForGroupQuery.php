@@ -27,7 +27,7 @@ final readonly class ListPendingInvitationsForGroupQuery
             static fn (GroupInvitation $i): PendingInvitationListItem => new PendingInvitationListItem(
                 invitationId: $i->id,
                 email: $i->email,
-                inviterNickname: $i->inviter->nickname,
+                inviterNickname: $i->inviter->displayName,
                 sentAt: $i->createdAt,
                 expiresAt: $i->expiresAt,
             ),

@@ -115,7 +115,7 @@ final readonly class GetGroupGuessMatrixQuery
             $userKey = $membership->user->id->toRfc4122();
             $baseRows[] = [
                 'userId' => $membership->user->id,
-                'nickname' => $membership->user->nickname,
+                'nickname' => $membership->user->displayName,
                 'total' => $totalByUser[$userKey] ?? 0,
                 'cells' => $cellsByUser[$userKey] ?? [],
             ];

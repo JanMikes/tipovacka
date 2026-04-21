@@ -53,6 +53,36 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
         self::assertTrue($guess->submittedBy->id->equals(Uuid::fromString(AppFixtures::VERIFIED_USER_ID)));
     }
 
+    public function testOwnerCanSubmitGuessForAnonymousMember(): void
+    {
+        $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
+            actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            targetUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
+            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
+            homeScore: 3,
+            awayScore: 2,
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        /** @var Guess|null $guess */
+        $guess = $em->createQueryBuilder()
+            ->select('g')->from(Guess::class, 'g')
+            ->where('g.user = :u')
+            ->andWhere('g.sportMatch = :m')
+            ->setParameter('u', Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID))
+            ->setParameter('m', Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID))
+            ->getQuery()->getOneOrNullResult();
+
+        self::assertInstanceOf(Guess::class, $guess);
+        self::assertSame(3, $guess->homeScore);
+        self::assertSame(2, $guess->awayScore);
+        self::assertNotNull($guess->submittedBy);
+        self::assertTrue($guess->submittedBy->id->equals(Uuid::fromString(AppFixtures::VERIFIED_USER_ID)));
+    }
+
     public function testNonOwnerNonAdminCannotSubmitOnBehalf(): void
     {
         // Second verified user joins the public group as a regular member.

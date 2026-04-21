@@ -54,7 +54,7 @@ final readonly class GetGroupLeaderboardQuery
             $userKey = $membership->user->id->toRfc4122();
             $baseRows[] = [
                 'userId' => $membership->user->id,
-                'nickname' => $membership->user->nickname,
+                'nickname' => $membership->user->displayName,
                 'points' => $pointsByUser[$userKey] ?? 0,
             ];
         }

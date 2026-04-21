@@ -37,7 +37,7 @@ final readonly class SendGroupInvitationEmailHandler
             ->subject('Pozvánka do skupiny na Tipovačce')
             ->htmlTemplate('emails/group_invitation.html.twig')
             ->context([
-                'inviterNickname' => $invitation->inviter->nickname,
+                'inviterNickname' => $invitation->inviter->displayName,
                 'groupName' => $invitation->group->name,
                 'tournamentName' => $invitation->group->tournament->name,
                 'invitationUrl' => $invitationUrl,

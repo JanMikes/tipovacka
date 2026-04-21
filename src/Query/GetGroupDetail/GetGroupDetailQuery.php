@@ -28,9 +28,10 @@ final readonly class GetGroupDetailQuery
         $members = array_map(
             static fn (Membership $m): GroupMemberListItem => new GroupMemberListItem(
                 userId: $m->user->id,
-                nickname: $m->user->nickname,
+                displayName: $m->user->displayName,
                 joinedAt: $m->joinedAt,
                 isOwner: $m->user->id->equals($m->group->owner->id),
+                isAnonymous: $m->user->isAnonymous,
             ),
             $memberships,
         );
@@ -41,7 +42,7 @@ final readonly class GetGroupDetailQuery
             tournamentName: $group->tournament->name,
             tournamentIsFinished: $group->tournament->isFinished,
             ownerId: $group->owner->id,
-            ownerNickname: $group->owner->nickname,
+            ownerNickname: $group->owner->displayName,
             name: $group->name,
             description: $group->description,
             pin: $canSeeSecrets ? $group->pin : null,

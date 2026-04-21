@@ -41,7 +41,7 @@ final readonly class ListActivePublicTournamentsQuery
                 id: $t->id,
                 name: $t->name,
                 visibility: $t->visibility,
-                ownerNickname: $t->owner->nickname,
+                ownerNickname: $t->owner->displayName,
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,
                 endAt: $t->endAt,

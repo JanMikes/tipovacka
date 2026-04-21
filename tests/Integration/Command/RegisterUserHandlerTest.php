@@ -63,6 +63,32 @@ final class RegisterUserHandlerTest extends IntegrationTestCase
         ));
     }
 
+    public function testRegisteringWithoutNicknameStoresNull(): void
+    {
+        $this->commandBus()->dispatch(new RegisterUserCommand(
+            email: 'no-nick@example.test',
+            nickname: null,
+            plainPassword: 'password123',
+            firstName: 'Jana',
+            lastName: 'Bez',
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $user = $em->createQueryBuilder()
+            ->select('u')
+            ->from(User::class, 'u')
+            ->where('u.email = :e')
+            ->setParameter('e', 'no-nick@example.test')
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(User::class, $user);
+        self::assertNull($user->nickname);
+        self::assertSame('Jana Bez', $user->displayName);
+    }
+
     public function testAutoVerifyMarksUserVerifiedOnRegister(): void
     {
         $this->commandBus()->dispatch(new RegisterUserCommand(

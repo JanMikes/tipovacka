@@ -13,7 +13,7 @@ use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Group\InvitationTokenGenerator;
 use App\Service\Identity\ProvideIdentity;
-use App\Service\User\StubUserNicknameGenerator;
+use App\Service\User\UserNicknameGenerator;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -28,7 +28,7 @@ final readonly class SendBulkGroupInvitationsHandler
         private GroupInvitationRepository $invitationRepository,
         private MembershipRepository $membershipRepository,
         private InvitationTokenGenerator $tokenGenerator,
-        private StubUserNicknameGenerator $nicknameGenerator,
+        private UserNicknameGenerator $nicknameGenerator,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
         private ValidatorInterface $validator,

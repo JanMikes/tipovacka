@@ -25,7 +25,7 @@ final readonly class GetGuessesForMatchInGroupQuery
         $items = array_map(
             static fn ($g): GuessForMatchItem => new GuessForMatchItem(
                 userId: $g->user->id,
-                nickname: $g->user->nickname,
+                nickname: $g->user->displayName,
                 homeScore: $g->homeScore,
                 awayScore: $g->awayScore,
                 submittedAt: $g->submittedAt,

@@ -25,20 +25,24 @@ final class RegistrationFormData
     #[Assert\Length(max: 100, maxMessage: 'Příjmení nesmí být delší než {{ limit }} znaků.')]
     public string $lastName = '';
 
-    #[Assert\Sequentially([
-        new Assert\NotBlank(message: 'Zadejte prosím přezdívku.'),
-        new Assert\Length(
-            min: 3,
-            max: 30,
-            minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky.',
-            maxMessage: 'Přezdívka nesmí být delší než {{ limit }} znaků.',
-        ),
-        new Assert\Regex(
-            pattern: '/^[A-Za-z0-9_.\-]+$/',
-            message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
-        ),
-        new UniqueNickname(),
-    ])]
+    #[Assert\When(
+        expression: 'this.nickname != ""',
+        constraints: [
+            new Assert\Sequentially([
+                new Assert\Length(
+                    min: 3,
+                    max: 30,
+                    minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky.',
+                    maxMessage: 'Přezdívka nesmí být delší než {{ limit }} znaků.',
+                ),
+                new Assert\Regex(
+                    pattern: '/^[A-Za-z0-9_.\-]+$/',
+                    message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
+                ),
+                new UniqueNickname(),
+            ]),
+        ],
+    )]
     public string $nickname = '';
 
     #[Assert\Sequentially([

@@ -49,6 +49,46 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
         self::assertNotNull($memberships[0]->leftAt);
     }
 
+    public function testAnonymousMemberIsSoftDeletedWhenLastMembershipEnds(): void
+    {
+        // Anonymous fixture is a member of VERIFIED_GROUP only.
+        $this->commandBus()->dispatch(new RemoveMemberCommand(
+            ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            targetUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $anonymous = $em->find(User::class, Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID));
+        self::assertNotNull($anonymous);
+        self::assertTrue($anonymous->isDeleted());
+    }
+
+    public function testRegularMemberIsNotSoftDeletedOnRemoval(): void
+    {
+        $user = $this->createVerifiedUser();
+
+        $this->commandBus()->dispatch(new JoinGroupByPinCommand(
+            userId: $user->id,
+            pin: AppFixtures::VERIFIED_GROUP_PIN,
+        ));
+
+        $this->commandBus()->dispatch(new RemoveMemberCommand(
+            ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            targetUserId: $user->id,
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $refreshed = $em->find(User::class, $user->id);
+        self::assertNotNull($refreshed);
+        self::assertFalse($refreshed->isDeleted());
+    }
+
     public function testCannotRemoveOwner(): void
     {
         $this->expectException(HandlerFailedException::class);

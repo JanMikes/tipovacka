@@ -21,7 +21,8 @@ final class GetGroupDetailQueryTest extends IntegrationTestCase
 
         self::assertSame(AppFixtures::VERIFIED_GROUP_PIN, $result->pin);
         self::assertSame(AppFixtures::VERIFIED_GROUP_LINK_TOKEN, $result->shareableLinkToken);
-        self::assertCount(1, $result->members);
+        // Owner + anonymous fixture member.
+        self::assertCount(2, $result->members);
     }
 
     public function testAdminSeesSecrets(): void

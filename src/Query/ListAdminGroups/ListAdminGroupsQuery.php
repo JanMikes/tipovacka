@@ -47,7 +47,7 @@ final readonly class ListAdminGroupsQuery
                 name: $g->name,
                 tournamentId: $g->tournament->id,
                 tournamentName: $g->tournament->name,
-                ownerNickname: $g->owner->nickname,
+                ownerNickname: $g->owner->displayName,
                 memberCount: $memberCounts[$g->id->toRfc4122()] ?? 0,
                 isDeleted: null !== $g->deletedAt,
             ),

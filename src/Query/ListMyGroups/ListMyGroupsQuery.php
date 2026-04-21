@@ -30,7 +30,7 @@ final readonly class ListMyGroupsQuery
                 tournamentId: $m->group->tournament->id,
                 tournamentName: $m->group->tournament->name,
                 tournamentIsFinished: $m->group->tournament->isFinished,
-                ownerNickname: $m->group->owner->nickname,
+                ownerNickname: $m->group->owner->displayName,
                 isOwner: $m->user->id->equals($m->group->owner->id),
                 joinedAt: $m->joinedAt,
             ),

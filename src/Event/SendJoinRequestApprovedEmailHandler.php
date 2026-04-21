@@ -25,6 +25,10 @@ final readonly class SendJoinRequestApprovedEmailHandler
     {
         $request = $this->requestRepository->get($event->requestId);
 
+        if (null === $request->user->email) {
+            return;
+        }
+
         $groupUrl = $this->urlGenerator->generate(
             'portal_group_detail',
             ['id' => $request->group->id->toRfc4122()],
@@ -33,11 +37,11 @@ final readonly class SendJoinRequestApprovedEmailHandler
 
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($request->user->email, $request->user->nickname))
+            ->to(new Address($request->user->email, $request->user->displayName))
             ->subject('Byl(a) jsi přijat(a) do skupiny na Tipovačce')
             ->htmlTemplate('emails/join_request_approved.html.twig')
             ->context([
-                'nickname' => $request->user->nickname,
+                'nickname' => $request->user->displayName,
                 'groupName' => $request->group->name,
                 'tournamentName' => $request->group->tournament->name,
                 'groupUrl' => $groupUrl,

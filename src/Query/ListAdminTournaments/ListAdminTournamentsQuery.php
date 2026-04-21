@@ -42,7 +42,7 @@ final readonly class ListAdminTournamentsQuery
                 name: $t->name,
                 visibility: $t->visibility,
                 sportCode: $t->sport->code,
-                ownerNickname: $t->owner->nickname,
+                ownerNickname: $t->owner->displayName,
                 isFinished: $t->isFinished,
                 isDeleted: null !== $t->deletedAt,
                 groupCount: $counts[$t->id->toRfc4122()] ?? 0,

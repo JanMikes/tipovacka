@@ -40,7 +40,8 @@ final class ListAdminGroupsQueryTest extends IntegrationTestCase
             $byId[$item->id->toRfc4122()] = $item;
         }
 
-        self::assertSame(1, $byId[AppFixtures::VERIFIED_GROUP_ID]->memberCount);
+        // Owner + anonymous fixture member.
+        self::assertSame(2, $byId[AppFixtures::VERIFIED_GROUP_ID]->memberCount);
         self::assertSame(1, $byId[AppFixtures::PUBLIC_GROUP_ID]->memberCount);
     }
 }

@@ -45,7 +45,7 @@ final class VerifyEmailController extends AbstractController
         // the user's current email to recompute the expected token.
         $user = $this->userRepository->find(Uuid::fromString($userId));
 
-        if (null === $user) {
+        if (null === $user || null === $user->email) {
             return $this->render('auth/verify_error.html.twig', [
                 'errorMessage' => 'Ověřovací odkaz je neplatný.',
                 'showResend' => false,

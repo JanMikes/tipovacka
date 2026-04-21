@@ -10,8 +10,8 @@ final readonly class UserRegistered
 {
     public function __construct(
         public Uuid $userId,
-        public string $email,
-        public string $nickname,
+        public ?string $email,
+        public ?string $nickname,
         public \DateTimeImmutable $occurredOn,
     ) {
     }

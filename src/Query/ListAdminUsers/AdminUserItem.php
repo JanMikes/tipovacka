@@ -13,8 +13,8 @@ final readonly class AdminUserItem
      */
     public function __construct(
         public Uuid $id,
-        public string $email,
-        public string $nickname,
+        public ?string $email,
+        public ?string $nickname,
         public array $roles,
         public bool $isVerified,
         public bool $isActive,

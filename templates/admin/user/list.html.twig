@@ -50,8 +50,21 @@
             <tbody class="divide-y divide-navy-100/70">
                 {% for user in users %}
                     <tr class="{% if user.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-navy-50/40{% endif %}">
-                        <td class="px-4 py-3">{{ user.email }}{% if user.isDeleted %} <span class="text-xs">(smazán)</span>{% endif %}</td>
-                        <td class="px-4 py-3">{{ user.nickname }}</td>
+                        <td class="px-4 py-3">
+                            {% if user.email is not null %}
+                                {{ user.email }}
+                            {% else %}
+                                <span class="text-gray-400 italic">— anonymní —</span>
+                            {% endif %}
+                            {% if user.isDeleted %} <span class="text-xs">(smazán)</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if user.nickname is not null %}
+                                {{ user.nickname }}
+                            {% else %}
+                                <span class="text-gray-400 italic">— anonymní —</span>
+                            {% endif %}
+                        </td>
                         <td class="px-4 py-3">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                 {{ user.roles|join(', ') }}
@@ -70,12 +83,14 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-3 whitespace-nowrap">
-                                <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="text-cyan-500 hover:underline text-sm">Přihlásit se jako</a>
+                                {% if user.email is not null %}
+                                    <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="text-cyan-500 hover:underline text-sm">Přihlásit se jako</a>
+                                {% endif %}
                                 {% if user.isActive %}
                                     <form method="post" action="{{ path('admin_user_block', {id: user.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-title-value="Zablokovat uživatele"
-                                        data-confirm-message-value="Opravdu chceš uživatele {{ user.email }} zablokovat? Přestane se moct přihlásit."
+                                        data-confirm-message-value="Opravdu chceš uživatele {{ user.email ?? user.id.toRfc4122 }} zablokovat? Přestane se moct přihlásit."
                                         data-confirm-confirm-label-value="Ano, zablokovat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_user_block_' ~ user.id.toRfc4122) }}">
                                         <button type="submit" class="text-red-600 hover:underline text-sm">Zablokovat</button>

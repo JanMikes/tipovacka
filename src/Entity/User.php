@@ -11,6 +11,7 @@ use App\Event\EmailVerified;
 use App\Event\PasswordChanged;
 use App\Event\UserBlocked;
 use App\Event\UserDeleted;
+use App\Event\UserEmailAssigned;
 use App\Event\UserProfileUpdated;
 use App\Event\UserRegistered;
 use App\Event\UserUnblocked;
@@ -22,6 +23,8 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
+#[ORM\UniqueConstraint(name: 'users_email_unique', columns: ['email'], options: ['where' => '(email IS NOT NULL)'])]
+#[ORM\UniqueConstraint(name: 'users_nickname_unique', columns: ['nickname'], options: ['where' => '(nickname IS NOT NULL)'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityWithEvents, SoftDeletable
 {
     use HasEvents;
@@ -43,6 +46,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         get => null !== $this->password && '' !== $this->password;
     }
 
+    public bool $isAnonymous {
+        get => null === $this->email;
+    }
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -59,16 +66,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
         get => trim(($this->firstName ?? '').' '.($this->lastName ?? ''));
     }
 
+    public string $displayName {
+        get {
+            if (null !== $this->nickname && '' !== $this->nickname) {
+                return $this->nickname;
+            }
+
+            $fullName = $this->fullName;
+
+            if ('' !== $fullName) {
+                return $fullName;
+            }
+
+            return 'Uživatel';
+        }
+    }
+
     public function __construct(
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
         private(set) Uuid $id,
-        #[ORM\Column(length: 180, unique: true)]
-        private(set) string $email,
+        #[ORM\Column(length: 180, nullable: true)]
+        private(set) ?string $email,
         #[ORM\Column(nullable: true)]
         private ?string $password,
-        #[ORM\Column(length: 30, unique: true)]
-        private(set) string $nickname,
+        #[ORM\Column(length: 30, nullable: true)]
+        private(set) ?string $nickname,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
     ) {
@@ -88,7 +111,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
      */
     public function getUserIdentifier(): string
     {
-        assert('' !== $this->email, 'Email must not be empty');
+        if (null === $this->email || '' === $this->email) {
+            return 'anon:'.$this->id->toRfc4122();
+        }
 
         return $this->email;
     }
@@ -105,6 +130,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
 
         $this->recordThat(new PasswordChanged(
             userId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    public function assignEmail(string $email, \DateTimeImmutable $now): void
+    {
+        if (null !== $this->email) {
+            throw new \DomainException('Tento účet už má přiřazený e-mail.');
+        }
+
+        $this->email = $email;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new UserEmailAssigned(
+            userId: $this->id,
+            email: $email,
             occurredOn: $now,
         ));
     }

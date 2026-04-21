@@ -113,7 +113,7 @@ final readonly class GetMemberLeaderboardBreakdownQuery
 
         return new MemberBreakdownResult(
             userId: $user->id,
-            nickname: $user->nickname,
+            nickname: $user->displayName,
             totalPoints: $totalPoints,
             rows: $rows,
         );

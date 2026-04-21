@@ -25,6 +25,11 @@ final readonly class SendVerificationEmailHandler
     {
         $user = $this->userRepository->get($event->userId);
 
+        // Anonymous users (no email) obviously can't receive a verification message.
+        if (null === $user->email) {
+            return;
+        }
+
         // Passwordless users (e.g. created during guest checkout) cannot log in,
         // so sending a verification email would be confusing and pointless.
         if (!$user->hasPassword) {
@@ -46,11 +51,11 @@ final readonly class SendVerificationEmailHandler
 
         $email = (new TemplatedEmail())
             ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
-            ->to(new Address($user->email, $user->nickname))
+            ->to(new Address($user->email, $user->displayName))
             ->subject('Ověřte prosím svou e-mailovou adresu')
             ->htmlTemplate('emails/verify_email.html.twig')
             ->context([
-                'nickname' => $user->nickname,
+                'nickname' => $user->displayName,
                 'verificationUrl' => $signatureComponents->getSignedUrl(),
                 'expiresAt' => $signatureComponents->getExpiresAt(),
             ]);

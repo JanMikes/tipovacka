@@ -28,7 +28,7 @@ final readonly class ListGroupsForTournamentQuery
                 groupId: $g->id,
                 groupName: $g->name,
                 ownerId: $g->owner->id,
-                ownerNickname: $g->owner->nickname,
+                ownerNickname: $g->owner->displayName,
                 createdAt: $g->createdAt,
             ),
             $groups,

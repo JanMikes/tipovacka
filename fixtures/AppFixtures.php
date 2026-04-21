@@ -57,6 +57,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string DELETED_USER_EMAIL = 'deleted@tipovacka.test';
     public const string DELETED_USER_NICKNAME = 'smazany';
 
+    public const string ANONYMOUS_USER_ID = '01933333-0000-7000-8000-000000000005';
+    public const string ANONYMOUS_USER_FIRST_NAME = 'František';
+    public const string ANONYMOUS_USER_LAST_NAME = 'Novák';
+
     public const string PUBLIC_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000001';
     public const string PUBLIC_TOURNAMENT_NAME = 'Liga mistrů 2026/27';
 
@@ -74,6 +78,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
     public const string VERIFIED_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
     public const string PUBLIC_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
+    public const string ANONYMOUS_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa03';
 
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
     public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
@@ -248,6 +253,33 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         );
         $verifiedOwnerMembership->popEvents();
         $manager->persist($verifiedOwnerMembership);
+
+        // Anonymous member added by the verified user (group owner) so managers
+        // can practise submitting guesses on someone else's behalf.
+        $anonymous = new User(
+            id: Uuid::fromString(self::ANONYMOUS_USER_ID),
+            email: null,
+            password: null,
+            nickname: null,
+            createdAt: $now,
+        );
+        $anonymous->updateProfile(
+            firstName: self::ANONYMOUS_USER_FIRST_NAME,
+            lastName: self::ANONYMOUS_USER_LAST_NAME,
+            phone: null,
+            now: $now,
+        );
+        $anonymous->popEvents();
+        $manager->persist($anonymous);
+
+        $anonymousMembership = new Membership(
+            id: Uuid::fromString(self::ANONYMOUS_MEMBERSHIP_ID),
+            group: $verifiedGroup,
+            user: $anonymous,
+            joinedAt: $now,
+        );
+        $anonymousMembership->popEvents();
+        $manager->persist($anonymousMembership);
 
         $publicGroup = new Group(
             id: Uuid::fromString(self::PUBLIC_GROUP_ID),

@@ -23,7 +23,7 @@ final readonly class GetInvitationByTokenQuery
             token: $invitation->token,
             groupName: $invitation->group->name,
             tournamentName: $invitation->group->tournament->name,
-            inviterNickname: $invitation->inviter->nickname,
+            inviterNickname: $invitation->inviter->displayName,
             isExpired: $invitation->isExpiredAt($query->now),
             isAccepted: $invitation->isAccepted,
             isRevoked: $invitation->isRevoked,

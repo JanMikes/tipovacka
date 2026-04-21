@@ -10,9 +10,10 @@ final readonly class GroupMemberListItem
 {
     public function __construct(
         public Uuid $userId,
-        public string $nickname,
+        public string $displayName,
         public \DateTimeImmutable $joinedAt,
         public bool $isOwner,
+        public bool $isAnonymous,
     ) {
     }
 }

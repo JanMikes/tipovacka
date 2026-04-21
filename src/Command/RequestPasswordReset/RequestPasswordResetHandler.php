@@ -43,6 +43,9 @@ final readonly class RequestPasswordResetHandler
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
+        // User was found via findByEmail, so email is guaranteed non-null.
+        assert(null !== $user->email);
+
         $this->eventBus->dispatch(new PasswordResetRequested(
             userId: $user->id,
             email: $user->email,

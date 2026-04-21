@@ -44,10 +44,9 @@ final class InvitationFormData
     public ?string $passwordConfirm = null;
 
     #[Assert\When(
-        expression: 'this.userKind === "new"',
+        expression: 'this.userKind === "new" and this.nickname != ""',
         constraints: [
             new Assert\Sequentially([
-                new Assert\NotBlank(message: 'Zadejte prosím přezdívku.'),
                 new Assert\Length(
                     min: 3,
                     max: 30,

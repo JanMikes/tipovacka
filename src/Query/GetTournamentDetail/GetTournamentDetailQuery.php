@@ -42,7 +42,7 @@ final readonly class GetTournamentDetailQuery
             sportCode: $tournament->sport->code,
             sportName: $tournament->sport->name,
             ownerId: $tournament->owner->id,
-            ownerNickname: $tournament->owner->nickname,
+            ownerNickname: $tournament->owner->displayName,
             startAt: $tournament->startAt,
             endAt: $tournament->endAt,
             createdAt: $tournament->createdAt,

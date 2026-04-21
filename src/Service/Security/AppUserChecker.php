@@ -25,6 +25,10 @@ final class AppUserChecker implements UserCheckerInterface
         if (!$user->isActive) {
             throw new CustomUserMessageAuthenticationException('Váš účet byl zablokován. Pro více informací kontaktujte podporu.');
         }
+
+        if (null === $user->email) {
+            throw new CustomUserMessageAuthenticationException('Tento účet nemá přiřazený e-mail, přihlášení není možné.');
+        }
     }
 
     public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
