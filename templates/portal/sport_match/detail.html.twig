@@ -156,18 +156,27 @@
                 {% endif %}
 
                 {% if can_cancel and not sport_match.isFinished and not sport_match.isCancelled %}
-                    <form method="post" action="{{ path('portal_sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline">
+                    <form method="post" action="{{ path('portal_sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                        data-controller="confirm"
+                        data-confirm-variant-value="warning"
+                        data-confirm-title-value="Zrušit zápas"
+                        data-confirm-message-value="Opravdu chceš zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} zrušit? Tipy na něj nebudou bodovány."
+                        data-confirm-confirm-label-value="Ano, zrušit">
                         <input type="hidden" name="_token" value="{{ csrf_token('sport_match_cancel_' ~ sport_match.id.toRfc4122) }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600" onclick="return confirm('Opravdu chceš zápas zrušit?')">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
                             <twig:ux:icon name="lucide:circle-x" class="h-4 w-4" />Zrušit zápas
                         </button>
                     </form>
                 {% endif %}
 
                 {% if can_delete %}
-                    <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline">
+                    <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                        data-controller="confirm"
+                        data-confirm-title-value="Smazat zápas"
+                        data-confirm-message-value="Opravdu chceš zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} smazat? Všechny tipy na něj zmizí."
+                        data-confirm-confirm-label-value="Ano, smazat">
                         <input type="hidden" name="_token" value="{{ csrf_token('sport_match_delete_' ~ sport_match.id.toRfc4122) }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100" onclick="return confirm('Opravdu chceš zápas smazat?')">
+                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100">
                             <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat
                         </button>
                     </form>

@@ -197,7 +197,12 @@
                         </a>
 
                         {% if is_granted('tournament_finish', tournament) %}
-                            <form method="post" action="{{ path('portal_tournament_finish', {id: tournament.id.toRfc4122}) }}">
+                            <form method="post" action="{{ path('portal_tournament_finish', {id: tournament.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Ukončit turnaj"
+                                data-confirm-message-value="Opravdu chceš turnaj ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
+                                data-confirm-confirm-label-value="Ano, ukončit">
                                 <input type="hidden" name="_token" value="{{ csrf_token('tournament_finish_' ~ tournament.id.toRfc4122) }}">
                                 <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-800 transition-colors hover:bg-yellow-100">
                                     <twig:ux:icon name="lucide:award" class="h-4 w-4" />Ukončit turnaj
@@ -206,9 +211,13 @@
                         {% endif %}
 
                         {% if is_granted('tournament_delete', tournament) %}
-                            <form method="post" action="{{ path('portal_tournament_delete', {id: tournament.id.toRfc4122}) }}">
+                            <form method="post" action="{{ path('portal_tournament_delete', {id: tournament.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-title-value="Smazat turnaj"
+                                data-confirm-message-value="Opravdu chceš turnaj „{{ tournament.name }}“ smazat? Společně s ním zmizí všechny zápasy, skupiny i tipy."
+                                data-confirm-confirm-label-value="Ano, smazat">
                                 <input type="hidden" name="_token" value="{{ csrf_token('tournament_delete_' ~ tournament.id.toRfc4122) }}">
-                                <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100" onclick="return confirm('Opravdu chcete turnaj smazat?')">
+                                <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100">
                                     <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat turnaj
                                 </button>
                             </form>

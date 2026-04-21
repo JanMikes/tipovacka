@@ -87,9 +87,13 @@
                                     </div>
                                 {% endif %}
                                 {% if is_granted('group_manage_members', group) and not member.isOwner %}
-                                    <form method="post" action="{{ path('portal_group_remove_member', {id: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline">
+                                    <form method="post" action="{{ path('portal_group_remove_member', {id: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-title-value="Odebrat člena"
+                                        data-confirm-message-value="Opravdu chceš člena {{ member.nickname }} odebrat ze skupiny? Ztratí všechny své tipy v této skupině."
+                                        data-confirm-confirm-label-value="Ano, odebrat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('group_remove_member_' ~ group.id.toRfc4122 ~ '_' ~ member.userId.toRfc4122) }}">
-                                        <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline" onclick="return confirm('Opravdu chceš tohoto člena odebrat?')">
+                                        <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
                                             Odebrat
                                         </button>
                                     </form>
@@ -184,7 +188,11 @@
                                                 <twig:ux:icon name="lucide:check" class="h-3.5 w-3.5" />Schválit
                                             </button>
                                         </form>
-                                        <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline">
+                                        <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zamítnout žádost"
+                                            data-confirm-message-value="Opravdu chceš zamítnout žádost od {{ req.nickname }}?"
+                                            data-confirm-confirm-label-value="Ano, zamítnout">
                                             <input type="hidden" name="_token" value="{{ csrf_token('join_request_reject_' ~ req.requestId.toRfc4122) }}">
                                             <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-red-700">
                                                 <twig:ux:icon name="lucide:x" class="h-3.5 w-3.5" />Zamítnout
@@ -253,9 +261,13 @@
                                                 <span class="font-medium text-navy-900">{{ inv.email }}</span>
                                                 <p class="text-xs text-navy-900/60">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('d. m. Y H:i') }} · vyprší {{ inv.expiresAt|date('d. m. Y') }}</p>
                                             </div>
-                                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline">
+                                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline"
+                                                data-controller="confirm"
+                                                data-confirm-title-value="Zrušit pozvánku"
+                                                data-confirm-message-value="Opravdu chceš zrušit pozvánku pro {{ inv.email }}? Odkaz z e-mailu přestane fungovat."
+                                                data-confirm-confirm-label-value="Ano, zrušit">
                                                 <input type="hidden" name="_token" value="{{ csrf_token('invitation_revoke_' ~ inv.invitationId.toRfc4122) }}">
-                                                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline" onclick="return confirm('Opravdu chceš pozvánku zrušit?')">
+                                                <button type="submit" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">
                                                     Zrušit
                                                 </button>
                                             </form>
@@ -301,11 +313,20 @@
                                 <div class="space-y-2">
                                     <code class="block rounded-lg bg-navy-50 px-3 py-2 text-center font-mono text-lg tracking-[0.3em] text-navy-900">{{ detail.pin }}</code>
                                     <div class="flex flex-wrap gap-3 text-xs">
-                                        <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
+                                        <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-variant-value="warning"
+                                            data-confirm-title-value="Obnovit PIN"
+                                            data-confirm-message-value="Vygenerujeme nový PIN a stávající přestane platit. Pokud jsi starý PIN někomu poslal, přestane se s ním dát připojit."
+                                            data-confirm-confirm-label-value="Ano, obnovit">
                                             <input type="hidden" name="_token" value="{{ csrf_token('group_pin_regenerate_' ~ group.id.toRfc4122) }}">
                                             <button type="submit" class="font-medium text-cyan-600 hover:underline">Obnovit</button>
                                         </form>
-                                        <form method="post" action="{{ path('portal_group_pin_revoke', {id: group.id.toRfc4122}) }}" class="inline">
+                                        <form method="post" action="{{ path('portal_group_pin_revoke', {id: group.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zrušit PIN"
+                                            data-confirm-message-value="PIN bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový PIN můžeš kdykoli vygenerovat znovu."
+                                            data-confirm-confirm-label-value="Ano, zrušit">
                                             <input type="hidden" name="_token" value="{{ csrf_token('group_pin_revoke_' ~ group.id.toRfc4122) }}">
                                             <button type="submit" class="font-medium text-red-600 hover:underline">Zrušit</button>
                                         </form>
@@ -329,11 +350,20 @@
                                 <div class="space-y-2">
                                     <code class="block break-all rounded-lg bg-navy-50 px-3 py-2 text-xs text-navy-900">{{ url('group_join_by_link', {token: detail.shareableLinkToken}) }}</code>
                                     <div class="flex flex-wrap gap-3 text-xs">
-                                        <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline">
+                                        <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-variant-value="warning"
+                                            data-confirm-title-value="Obnovit odkaz"
+                                            data-confirm-message-value="Vygenerujeme nový odkaz a ten stávající přestane fungovat. Pokud jsi ho někomu poslal, nebude se přes něj dát připojit."
+                                            data-confirm-confirm-label-value="Ano, obnovit">
                                             <input type="hidden" name="_token" value="{{ csrf_token('group_link_regenerate_' ~ group.id.toRfc4122) }}">
                                             <button type="submit" class="font-medium text-cyan-600 hover:underline">Obnovit</button>
                                         </form>
-                                        <form method="post" action="{{ path('portal_group_link_revoke', {id: group.id.toRfc4122}) }}" class="inline">
+                                        <form method="post" action="{{ path('portal_group_link_revoke', {id: group.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zrušit odkaz"
+                                            data-confirm-message-value="Odkaz bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový odkaz můžeš kdykoli vygenerovat znovu."
+                                            data-confirm-confirm-label-value="Ano, zrušit">
                                             <input type="hidden" name="_token" value="{{ csrf_token('group_link_revoke_' ~ group.id.toRfc4122) }}">
                                             <button type="submit" class="font-medium text-red-600 hover:underline">Zrušit</button>
                                         </form>
@@ -371,18 +401,27 @@
                     {% endif %}
 
                     {% if is_granted('group_leave', group) %}
-                        <form method="post" action="{{ path('portal_group_leave', {id: group.id.toRfc4122}) }}">
+                        <form method="post" action="{{ path('portal_group_leave', {id: group.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Opustit skupinu"
+                            data-confirm-message-value="Opravdu chceš skupinu opustit? Přijdeš o všechny tipy, které jsi v ní zadal."
+                            data-confirm-confirm-label-value="Ano, opustit">
                             <input type="hidden" name="_token" value="{{ csrf_token('group_leave_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-800 transition-colors hover:bg-yellow-100" onclick="return confirm('Opravdu chceš skupinu opustit?')">
+                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-yellow-50 px-4 py-2.5 text-sm font-semibold text-yellow-800 transition-colors hover:bg-yellow-100">
                                 <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />Opustit skupinu
                             </button>
                         </form>
                     {% endif %}
 
                     {% if is_granted('group_delete', group) %}
-                        <form method="post" action="{{ path('portal_group_delete', {id: group.id.toRfc4122}) }}">
+                        <form method="post" action="{{ path('portal_group_delete', {id: group.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-title-value="Smazat skupinu"
+                            data-confirm-message-value="Opravdu chceš skupinu „{{ detail.name }}“ smazat? Všichni členové přijdou o své tipy a skupina zmizí ze žebříčku."
+                            data-confirm-confirm-label-value="Ano, smazat">
                             <input type="hidden" name="_token" value="{{ csrf_token('group_delete_' ~ group.id.toRfc4122) }}">
-                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100" onclick="return confirm('Opravdu chceš skupinu smazat?')">
+                            <button type="submit" class="flex w-full items-center gap-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100">
                                 <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat skupinu
                             </button>
                         </form>

@@ -56,13 +56,22 @@
                                 <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Zápasy</a>
                                 <a href="{{ path('admin_group_list', {tournament: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Skupiny</a>
                                 {% if not tournament.isFinished and not tournament.isDeleted %}
-                                    <form method="post" action="{{ path('admin_tournament_finish', {id: tournament.id.toRfc4122}) }}" class="inline">
+                                    <form method="post" action="{{ path('admin_tournament_finish', {id: tournament.id.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-variant-value="warning"
+                                        data-confirm-title-value="Ukončit turnaj"
+                                        data-confirm-message-value="Opravdu chceš turnaj „{{ tournament.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
+                                        data-confirm-confirm-label-value="Ano, ukončit">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_tournament_finish_' ~ tournament.id.toRfc4122) }}">
                                         <button type="submit" class="text-yellow-700 hover:underline text-sm">Ukončit</button>
                                     </form>
                                 {% endif %}
                                 {% if not tournament.isDeleted %}
-                                    <form method="post" action="{{ path('admin_tournament_delete', {id: tournament.id.toRfc4122}) }}" class="inline">
+                                    <form method="post" action="{{ path('admin_tournament_delete', {id: tournament.id.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-title-value="Smazat turnaj"
+                                        data-confirm-message-value="Opravdu chceš turnaj „{{ tournament.name }}“ smazat? Společně s ním zmizí všechny zápasy, skupiny i tipy."
+                                        data-confirm-confirm-label-value="Ano, smazat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_tournament_delete_' ~ tournament.id.toRfc4122) }}">
                                         <button type="submit" class="text-red-600 hover:underline text-sm">Smazat</button>
                                     </form>

@@ -72,7 +72,11 @@
                             <div class="flex items-center justify-end gap-3 whitespace-nowrap">
                                 <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="text-cyan-500 hover:underline text-sm">Přihlásit se jako</a>
                                 {% if user.isActive %}
-                                    <form method="post" action="{{ path('admin_user_block', {id: user.id.toRfc4122}) }}" class="inline">
+                                    <form method="post" action="{{ path('admin_user_block', {id: user.id.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-title-value="Zablokovat uživatele"
+                                        data-confirm-message-value="Opravdu chceš uživatele {{ user.email }} zablokovat? Přestane se moct přihlásit."
+                                        data-confirm-confirm-label-value="Ano, zablokovat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_user_block_' ~ user.id.toRfc4122) }}">
                                         <button type="submit" class="text-red-600 hover:underline text-sm">Zablokovat</button>
                                     </form>

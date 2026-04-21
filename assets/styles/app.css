@@ -66,6 +66,12 @@ label.required::after {
     color: var(--color-red-500);
 }
 
+/* Backdrop for confirm-dialog modals (see confirm_controller.js). */
+dialog[open]::backdrop {
+    background-color: rgba(8, 30, 68, 0.6);
+    backdrop-filter: blur(4px);
+}
+
 /* Public homepage hero — soft diagonal gradient wash + dot grid. Both are
    masked/faded so they stay quiet behind the copy and illustration. */
 .hero-bg {

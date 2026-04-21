@@ -34,7 +34,11 @@
                             <div class="flex items-center justify-end gap-3 whitespace-nowrap">
                                 <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Detail</a>
                                 {% if not group.isDeleted %}
-                                    <form method="post" action="{{ path('admin_group_delete', {id: group.id.toRfc4122}) }}" class="inline">
+                                    <form method="post" action="{{ path('admin_group_delete', {id: group.id.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-title-value="Smazat skupinu"
+                                        data-confirm-message-value="Opravdu chceš skupinu „{{ group.name }}“ smazat? Všichni členové přijdou o své tipy a skupina zmizí ze žebříčku."
+                                        data-confirm-confirm-label-value="Ano, smazat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_group_delete_' ~ group.id.toRfc4122) }}">
                                         <button type="submit" class="text-red-600 hover:underline text-sm">Smazat</button>
                                     </form>
