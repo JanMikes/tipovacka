@@ -28,7 +28,7 @@ final class CreateSportMatchFlowTest extends WebTestCase
         $client->submitForm('Vytvořit zápas', [
             'sport_match_form[homeTeam]' => 'Tým A',
             'sport_match_form[awayTeam]' => 'Tým B',
-            'sport_match_form[kickoffAt]' => '2025-09-15T18:00',
+            'sport_match_form[kickoffAt]' => '2025-09-15 18:00',
             'sport_match_form[venue]' => 'Stadion',
         ]);
 

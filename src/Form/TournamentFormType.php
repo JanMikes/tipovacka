@@ -39,6 +39,9 @@ final class TournamentFormType extends AbstractType
             'required' => false,
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
+            'html5' => false,
+            'with_seconds' => false,
+            'format' => 'yyyy-MM-dd HH:mm',
         ]);
 
         $builder->add('endAt', DateTimeType::class, [
@@ -46,6 +49,9 @@ final class TournamentFormType extends AbstractType
             'required' => false,
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
+            'html5' => false,
+            'with_seconds' => false,
+            'format' => 'yyyy-MM-dd HH:mm',
         ]);
 
         if (true === $options['with_creation_pin']) {

@@ -21,6 +21,8 @@ final class PostponeSportMatchFormType extends AbstractType
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
             'with_seconds' => false,
+            'html5' => false,
+            'format' => 'yyyy-MM-dd HH:mm',
         ]);
     }
 

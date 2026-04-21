@@ -66,6 +66,155 @@ label.required::after {
     color: var(--color-red-500);
 }
 
+/* ─── Flatpickr skin — match the navy / cyan palette. Loaded on top of the
+   base flatpickr.min.css that's imported from app.js. ─────────────────── */
+.flatpickr-calendar {
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-navy-100);
+    box-shadow: 0 18px 40px -18px rgba(8, 30, 68, 0.28), 0 2px 8px -2px rgba(8, 30, 68, 0.08);
+    font-family: inherit;
+    overflow: hidden;
+}
+
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before,
+.flatpickr-calendar.arrowBottom::after {
+    border-bottom-color: var(--color-navy-900);
+    border-top-color: var(--color-navy-900);
+}
+
+.flatpickr-months {
+    background: var(--color-navy-900);
+    color: #fff;
+    padding: 0.35rem 0 0.25rem;
+}
+
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month,
+.flatpickr-current-month input.cur-year,
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    color: #fff;
+    fill: #fff;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: transparent;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.flatpickr-current-month .numInputWrapper:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowUp::after {
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowDown::after {
+    border-top-color: rgba(255, 255, 255, 0.6);
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: rgba(255, 255, 255, 0.75);
+    fill: rgba(255, 255, 255, 0.75);
+    padding: 0.45rem;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    color: var(--color-cyan-400);
+    fill: var(--color-cyan-400);
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+    fill: currentColor;
+}
+
+.flatpickr-weekdays {
+    background: var(--color-navy-50);
+}
+
+span.flatpickr-weekday {
+    background: var(--color-navy-50);
+    color: var(--color-navy-700);
+    font-weight: 600;
+}
+
+.flatpickr-days {
+    padding: 0.25rem 0;
+}
+
+.flatpickr-day {
+    border-radius: 0.5rem;
+    color: var(--color-navy-900);
+    font-weight: 500;
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background: var(--color-cyan-100);
+    border-color: transparent;
+    color: var(--color-navy-900);
+}
+
+.flatpickr-day.today {
+    border-color: var(--color-cyan-500);
+    color: var(--color-cyan-600);
+    font-weight: 700;
+}
+
+.flatpickr-day.today:hover,
+.flatpickr-day.today:focus {
+    background: var(--color-cyan-100);
+    border-color: var(--color-cyan-500);
+    color: var(--color-cyan-600);
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.selected:focus,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.startRange.selected,
+.flatpickr-day.endRange.selected {
+    background: var(--color-cyan-500);
+    border-color: var(--color-cyan-500);
+    color: #fff;
+    box-shadow: 0 4px 10px -4px rgba(20, 154, 213, 0.45);
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: rgba(8, 30, 68, 0.35);
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: rgba(8, 30, 68, 0.25);
+    background: transparent;
+}
+
+.flatpickr-time {
+    border-top: 1px solid var(--color-navy-100);
+}
+
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator {
+    color: var(--color-navy-900);
+    font-weight: 600;
+}
+
+.flatpickr-time input:focus,
+.flatpickr-time input:hover {
+    background: var(--color-cyan-100);
+}
+
 /* Confirm-dialog modals (see confirm_controller.js). Centers the dialog and
    animates both dialog and backdrop in/out. `allow-discrete` on `display` and
    `overlay` lets the exit animation play before the element is removed from
