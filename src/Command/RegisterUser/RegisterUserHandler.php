@@ -47,6 +47,15 @@ final readonly class RegisterUserHandler
         $hashed = $this->passwordHasher->hashPassword($user, $command->plainPassword);
         $user->changePassword($hashed, $now);
 
+        if (null !== $command->firstName || null !== $command->lastName) {
+            $user->updateProfile(
+                firstName: $command->firstName,
+                lastName: $command->lastName,
+                phone: null,
+                now: $now,
+            );
+        }
+
         if ($command->autoVerify) {
             $user->markAsVerified($now);
         }

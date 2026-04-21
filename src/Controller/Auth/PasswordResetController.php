@@ -4,42 +4,37 @@ declare(strict_types=1);
 
 namespace App\Controller\Auth;
 
-use App\Command\ResetUserPassword\ResetUserPasswordCommand;
 use App\Entity\User;
-use App\Form\ResetPasswordFormData;
-use App\Form\ResetPasswordFormType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use SymfonyCasts\Bundle\ResetPassword\Controller\ResetPasswordControllerTrait;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
-#[Route('/reset-hesla/nove', name: 'app_reset_password_form', methods: ['GET', 'POST'])]
-#[Route('/reset-hesla/token/{token}', name: 'app_reset_password')]
+#[Route('/reset-hesla/nove', name: 'app_reset_password_form', methods: ['GET'])]
+#[Route('/reset-hesla/token/{token}', name: 'app_reset_password', methods: ['GET'])]
 final class PasswordResetController extends AbstractController
 {
     use ResetPasswordControllerTrait;
 
     public function __construct(
         private readonly ResetPasswordHelperInterface $resetPasswordHelper,
-        private readonly MessageBusInterface $commandBus,
     ) {
     }
 
-    public function __invoke(Request $request, string $token = ''): Response
+    public function __invoke(string $token = ''): Response
     {
         if ('' !== $token) {
             $this->storeTokenInSession($token);
 
-            return $this->redirectToRoute('app_reset_password_form');
+            return new RedirectResponse($this->generateUrl('app_reset_password_form'));
         }
 
-        $token = $this->getTokenFromSession();
+        $sessionToken = $this->getTokenFromSession();
 
-        if (null === $token) {
+        if (null === $sessionToken) {
             return $this->render('auth/verify_error.html.twig', [
                 'errorMessage' => 'Nebyl nalezen žádný token pro obnovení hesla. Zkuste to znovu.',
                 'showResend' => false,
@@ -48,7 +43,7 @@ final class PasswordResetController extends AbstractController
 
         try {
             /** @var User $user */
-            $user = $this->resetPasswordHelper->validateTokenAndFetchUser($token);
+            $user = $this->resetPasswordHelper->validateTokenAndFetchUser($sessionToken);
         } catch (ResetPasswordExceptionInterface) {
             $this->cleanSessionAfterReset();
 
@@ -58,27 +53,7 @@ final class PasswordResetController extends AbstractController
             ]);
         }
 
-        $formData = new ResetPasswordFormData();
-        $form = $this->createForm(ResetPasswordFormType::class, $formData);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->resetPasswordHelper->removeResetRequest($token);
-
-            $this->commandBus->dispatch(new ResetUserPasswordCommand(
-                userId: $user->id,
-                plainPassword: $formData->newPassword,
-            ));
-
-            $this->cleanSessionAfterReset();
-
-            $this->addFlash('success', 'Heslo bylo úspěšně obnoveno. Nyní se můžete přihlásit.');
-
-            return $this->redirectToRoute('app_login');
-        }
-
         return $this->render('auth/password_reset.html.twig', [
-            'form' => $form,
             'tokenLifetime' => $this->resetPasswordHelper->getTokenLifetime(),
         ]);
     }

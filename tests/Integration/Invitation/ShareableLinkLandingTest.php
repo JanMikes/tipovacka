@@ -7,25 +7,30 @@ namespace App\Tests\Integration\Invitation;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\InvitationKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class ShareableLinkLandingTest extends WebTestCase
 {
+    use InteractsWithLiveComponents;
+
     private const string LINK_URL = '/skupiny/pozvanka/'.AppFixtures::VERIFIED_GROUP_LINK_TOKEN;
 
-    public function testAnonymousSeesLandingWithEditableEmailStep(): void
+    public function testAnonymousSeesLandingWithEditableEmailField(): void
     {
         $client = static::createClient();
         $client->request('GET', self::LINK_URL);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', AppFixtures::VERIFIED_GROUP_NAME);
-        self::assertSelectorExists('input[name="invitation_email_form[email]"]');
-        self::assertSelectorNotExists('input[name="invitation_email_form[email]"][disabled]');
+        self::assertSelectorExists('input[name="invitation_form[email]"]');
+        self::assertSelectorNotExists('input[name="invitation_form[email]"][disabled]');
     }
 
     public function testInvalidTokenReturns404(): void
@@ -37,25 +42,35 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Pozvánka nenalezena');
     }
 
-    public function testCheckEmailForExistingUserShowsLoginStep(): void
+    public function testEnteringExistingUsersEmailHidesNicknameAndNameInputs(): void
     {
         $client = static::createClient();
 
-        $this->submitEmailForm($client, self::LINK_URL, AppFixtures::VERIFIED_USER_EMAIL);
+        $component = $this->createInvitationFormComponent($client);
+        $rendered = (string) $component
+            ->set('invitation_form', ['email' => AppFixtures::VERIFIED_USER_EMAIL])
+            ->render();
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('input[name="invitation_login_form[password]"]');
+        self::assertStringNotContainsString('invitation_form[nickname]', $rendered);
+        self::assertStringNotContainsString('invitation_form[firstName]', $rendered);
+        self::assertStringNotContainsString('invitation_form[lastName]', $rendered);
+        self::assertStringNotContainsString('invitation_form[passwordConfirm]', $rendered);
+        self::assertStringContainsString('invitation_form[password]', $rendered);
     }
 
-    public function testCheckEmailForNewUserShowsRegisterStep(): void
+    public function testEnteringNewEmailRevealsNicknameAndNameInputs(): void
     {
         $client = static::createClient();
 
-        $this->submitEmailForm($client, self::LINK_URL, 'fresh-user@example.test');
+        $component = $this->createInvitationFormComponent($client);
+        $rendered = (string) $component
+            ->set('invitation_form', ['email' => 'fresh-user@example.test'])
+            ->render();
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Vytvoř si účet');
-        self::assertSelectorExists('input[name="invitation_register_form[nickname]"]');
+        self::assertStringContainsString('invitation_form[nickname]', $rendered);
+        self::assertStringContainsString('invitation_form[firstName]', $rendered);
+        self::assertStringContainsString('invitation_form[lastName]', $rendered);
+        self::assertStringContainsString('invitation_form[passwordConfirm]', $rendered);
     }
 
     public function testLoginFlowJoinsShareableGroup(): void
@@ -66,16 +81,18 @@ final class ShareableLinkLandingTest extends WebTestCase
         $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($admin);
 
-        // Admin is not yet a member of VERIFIED_GROUP (private group owned by the verified user).
-        $this->submitEmailForm($client, self::LINK_URL, AppFixtures::ADMIN_EMAIL);
+        $component = $this->createInvitationFormComponent($client);
+        $response = $component
+            ->submitForm([
+                'invitation_form' => [
+                    'email' => AppFixtures::ADMIN_EMAIL,
+                    'password' => AppFixtures::DEFAULT_PASSWORD,
+                ],
+            ], 'submit')
+            ->response();
 
-        $client->submitForm('Přihlásit se a připojit', [
-            '_action' => 'login',
-            'email' => AppFixtures::ADMIN_EMAIL,
-            'invitation_login_form[password]' => AppFixtures::DEFAULT_PASSWORD,
-        ]);
-
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID);
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()
@@ -89,40 +106,36 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertCount(1, $memberships);
     }
 
-    public function testLoginWithWrongPasswordReRendersLoginStepWithError(): void
+    public function testLoginWithWrongPasswordRendersInlineError(): void
     {
         $client = static::createClient();
 
-        $this->submitEmailForm($client, self::LINK_URL, AppFixtures::ADMIN_EMAIL);
+        $component = $this->createInvitationFormComponent($client);
+        $component->submitForm([
+            'invitation_form' => [
+                'email' => AppFixtures::ADMIN_EMAIL,
+                'password' => 'wrongpassword',
+            ],
+        ], 'submit');
 
-        $client->submitForm('Přihlásit se a připojit', [
-            '_action' => 'login',
-            'email' => AppFixtures::ADMIN_EMAIL,
-            'invitation_login_form[password]' => 'wrongpassword',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Nesprávný e-mail nebo heslo');
-        // Token stays in URL and email is preserved across re-render.
-        self::assertSelectorExists('input[name="invitation_login_form[password]"]');
+        self::assertSame(200, $component->response()->getStatusCode());
+        self::assertStringContainsString('Nesprávný e-mail nebo heslo', (string) $component->render());
     }
 
     public function testRegisterThroughShareableLinkDoesNotAutoVerify(): void
     {
         $client = static::createClient();
 
-        $this->submitEmailForm($client, self::LINK_URL, 'new-link-user@example.test');
+        $component = $this->createInvitationFormComponent($client);
+        $response = $component
+            ->submitForm($this->validRegistration([
+                'email' => 'new-link-user@example.test',
+                'nickname' => 'new_link_user',
+            ]), 'submit')
+            ->response();
 
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
-            'email' => 'new-link-user@example.test',
-            'invitation_register_form[nickname]' => 'new_link_user',
-            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
-            'invitation_register_form[password][second]' => 'Str0ngP4ssword!',
-        ]);
-
-        // Unverified users cannot join immediately — they bounce through email verification.
-        self::assertResponseRedirects('/overeni-ceka');
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/overeni-ceka', $response->headers->get('Location'));
 
         $em = $this->em($client);
         $em->clear();
@@ -138,7 +151,6 @@ final class ShareableLinkLandingTest extends WebTestCase
             'Shareable-link registrations must require email verification.',
         );
 
-        // No membership yet — it will be created only after the email-verification round-trip.
         $memberships = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
@@ -150,40 +162,32 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertCount(0, $memberships);
     }
 
-    public function testRegisterStepWithEmptyPasswordReRendersWithError(): void
+    public function testRegisterWithEmptyPasswordRejected(): void
     {
         $client = static::createClient();
+        $component = $this->createInvitationFormComponent($client);
 
-        $this->submitEmailForm($client, self::LINK_URL, 'fresh-empty@example.test');
+        $this->expectException(UnprocessableEntityHttpException::class);
 
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
+        $component->submitForm($this->validRegistration([
             'email' => 'fresh-empty@example.test',
-            'invitation_register_form[nickname]' => 'fresh_empty',
-            'invitation_register_form[password][first]' => '',
-            'invitation_register_form[password][second]' => '',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+            'password' => '',
+            'passwordConfirm' => '',
+        ]), 'submit');
     }
 
-    public function testRegisterStepWithMismatchedPasswordsReRendersWithError(): void
+    public function testRegisterWithMismatchedPasswordsRejected(): void
     {
         $client = static::createClient();
+        $component = $this->createInvitationFormComponent($client);
 
-        $this->submitEmailForm($client, self::LINK_URL, 'fresh-mismatch@example.test');
+        $this->expectException(UnprocessableEntityHttpException::class);
 
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
+        $component->submitForm($this->validRegistration([
             'email' => 'fresh-mismatch@example.test',
-            'invitation_register_form[nickname]' => 'fresh_mismatch',
-            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
-            'invitation_register_form[password][second]' => 'Different1!',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Hesla se musí shodovat.');
+            'password' => 'Str0ngP4ssword!',
+            'passwordConfirm' => 'Different1!',
+        ]), 'submit');
     }
 
     public function testAuthenticatedVerifiedUserJoinsImmediately(): void
@@ -213,18 +217,39 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID);
     }
 
+    /**
+     * @return \Symfony\UX\LiveComponent\Test\TestLiveComponent
+     */
+    private function createInvitationFormComponent(KernelBrowser $client)
+    {
+        return $this->createLiveComponent('Auth:InvitationForm', [
+            'kind' => InvitationKind::ShareableLink->value,
+            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+        ], $client);
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function validRegistration(array $overrides = []): array
+    {
+        return [
+            'invitation_form' => array_replace([
+                'email' => 'newuser@example.com',
+                'password' => 'Str0ngP4ssword!',
+                'passwordConfirm' => 'Str0ngP4ssword!',
+                'nickname' => 'newuser123',
+                'firstName' => 'Jan',
+                'lastName' => 'Novák',
+            ], $overrides),
+        ];
+    }
+
     private function em(KernelBrowser $client): EntityManagerInterface
     {
         /* @var EntityManagerInterface */
         return $client->getContainer()->get('doctrine.orm.entity_manager');
-    }
-
-    private function submitEmailForm(KernelBrowser $client, string $url, string $email): void
-    {
-        $client->request('GET', $url);
-        $client->submitForm('Pokračovat', [
-            '_action' => 'check_email',
-            'invitation_email_form[email]' => $email,
-        ]);
     }
 }

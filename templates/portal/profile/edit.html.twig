@@ -45,34 +45,7 @@
                 </header>
 
                 <div class="px-6 py-5">
-                    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-
-                        <div class="grid gap-5 sm:grid-cols-2">
-                            <div>
-                                {{ form_label(form.firstName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                                {{ form_widget(form.firstName, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white px-4 py-2.5 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                                {{ form_errors(form.firstName) }}
-                            </div>
-
-                            <div>
-                                {{ form_label(form.lastName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                                {{ form_widget(form.lastName, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white px-4 py-2.5 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                                {{ form_errors(form.lastName) }}
-                            </div>
-                        </div>
-
-                        <div>
-                            {{ form_label(form.phone, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                            {{ form_widget(form.phone, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white px-4 py-2.5 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                            {{ form_errors(form.phone) }}
-                        </div>
-
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
-                            <twig:ux:icon name="lucide:check" class="h-4 w-4" />
-                            Uložit změny
-                        </button>
-
-                    {{ form_end(form) }}
+                    <twig:Profile:ProfileForm />
                 </div>
             </section>
         </div>

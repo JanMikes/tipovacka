@@ -7,49 +7,44 @@ namespace App\Tests\Integration\Invitation;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\InvitationKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 /**
- * Verifies the token carried in the URL (and form action) is load-bearing, so the flow
- * does not rely on session cookies alone. Clearing cookies between steps must not orphan the flow.
+ * The token in the URL (and the live component's `token` LiveProp) is load-bearing,
+ * so the flow does not rely on session state. Verifies that the InvitationContext is
+ * re-resolved from props on each request, not anchored in a session.
  */
 final class LandingSessionResilienceTest extends WebTestCase
 {
-    private const string LINK_URL = '/skupiny/pozvanka/'.AppFixtures::VERIFIED_GROUP_LINK_TOKEN;
+    use InteractsWithLiveComponents;
 
-    public function testShareableLinkLoginStillWorksAfterSessionWipe(): void
+    public function testShareableLinkLoginWorksFromAFreshComponentMount(): void
     {
         $client = static::createClient();
         $em = $this->em($client);
         $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($admin);
 
-        // Step 1 — email check.
-        $client->request('GET', self::LINK_URL);
-        $client->submitForm('Pokračovat', [
-            '_action' => 'check_email',
-            'invitation_email_form[email]' => AppFixtures::ADMIN_EMAIL,
-        ]);
+        // No prior request, no session state — submit straight against the freshly-mounted component.
+        $component = $this->createLiveComponent('Auth:InvitationForm', [
+            'kind' => InvitationKind::ShareableLink->value,
+            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+        ], $client);
 
-        self::assertResponseIsSuccessful();
-
-        // Simulate a session loss between steps — cookies wiped completely.
-        $client->getCookieJar()->clear();
-
-        // Step 2 — submit login directly at the landing URL. Token is in URL + hidden email field,
-        // no session anchor is involved.
-        $client->request('POST', self::LINK_URL, [
-            '_action' => 'login',
-            'email' => AppFixtures::ADMIN_EMAIL,
-            'invitation_login_form' => [
+        $response = $component->submitForm([
+            'invitation_form' => [
+                'email' => AppFixtures::ADMIN_EMAIL,
                 'password' => AppFixtures::DEFAULT_PASSWORD,
             ],
-        ]);
+        ], 'submit')->response();
 
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID);
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()

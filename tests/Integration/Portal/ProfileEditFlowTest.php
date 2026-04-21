@@ -10,9 +10,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class ProfileEditFlowTest extends WebTestCase
 {
+    use InteractsWithLiveComponents;
+
     public function testUnauthenticatedRedirectedToLogin(): void
     {
         $client = static::createClient();
@@ -36,14 +39,17 @@ final class ProfileEditFlowTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->getVerifiedUser($client));
 
-        $client->request('GET', '/portal/profil');
-        $client->submitForm('Uložit změny', [
-            'profile_form[firstName]' => 'Jan',
-            'profile_form[lastName]' => 'Novák',
-            'profile_form[phone]' => '+420123456789',
-        ]);
+        $component = $this->createLiveComponent('Profile:ProfileForm', [], $client);
+        $response = $component->submitForm([
+            'profile_form' => [
+                'firstName' => 'Jan',
+                'lastName' => 'Novák',
+                'phone' => '+420123456789',
+            ],
+        ], 'save')->response();
 
-        self::assertResponseRedirects('/portal/profil');
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/profil', $response->headers->get('Location'));
     }
 
     private function getVerifiedUser(KernelBrowser $client): User

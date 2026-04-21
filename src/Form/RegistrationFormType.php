@@ -21,15 +21,37 @@ class RegistrationFormType extends AbstractType
     {
         $builder->add('email', EmailType::class, [
             'label' => 'E-mailová adresa',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'vas@email.cz',
+                'autocomplete' => 'email',
+            ],
+        ]);
+
+        $builder->add('firstName', TextType::class, [
+            'label' => 'Jméno',
+            'empty_data' => '',
+            'attr' => [
+                'placeholder' => 'Jan',
+                'autocomplete' => 'given-name',
+            ],
+        ]);
+
+        $builder->add('lastName', TextType::class, [
+            'label' => 'Příjmení',
+            'empty_data' => '',
+            'attr' => [
+                'placeholder' => 'Novák',
+                'autocomplete' => 'family-name',
             ],
         ]);
 
         $builder->add('nickname', TextType::class, [
             'label' => 'Přezdívka',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'vase_prezdivka',
+                'autocomplete' => 'nickname',
             ],
         ]);
 

@@ -10,6 +10,8 @@ final readonly class RegisterUserCommand
         public string $email,
         public string $nickname,
         public string $plainPassword,
+        public ?string $firstName = null,
+        public ?string $lastName = null,
         public bool $autoVerify = false,
     ) {
     }

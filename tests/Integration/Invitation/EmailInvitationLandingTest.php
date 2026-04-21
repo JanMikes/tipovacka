@@ -8,26 +8,31 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\GroupInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\InvitationKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class EmailInvitationLandingTest extends WebTestCase
 {
+    use InteractsWithLiveComponents;
+
     private const string EMAIL_TOKEN_URL = '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN;
 
-    public function testAnonymousSeesLandingWithLockedEmailStep(): void
+    public function testAnonymousSeesLandingWithLiveFormMounted(): void
     {
         $client = static::createClient();
         $client->request('GET', self::EMAIL_TOKEN_URL);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', AppFixtures::PUBLIC_GROUP_NAME);
-        // Locked email input carries the invitation's target address.
-        self::assertInputValueSame('invitation_email_form[email]', AppFixtures::PENDING_INVITATION_EMAIL);
-        self::assertSelectorExists('input[name="invitation_email_form[email]"][disabled]');
+        // Live component mounted with locked email pre-filled.
+        self::assertSelectorExists('input[name="invitation_form[email]"][disabled]');
+        self::assertInputValueSame('invitation_form[email]', AppFixtures::PENDING_INVITATION_EMAIL);
     }
 
     public function testInvalidTokenReturns404WithLandingTemplate(): void
@@ -87,31 +92,20 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertSelectorTextContains('body', 'už byla přijata');
     }
 
-    public function testCheckEmailForPresetAddressShowsRegisterStepForNewUser(): void
-    {
-        $client = static::createClient();
-
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Vytvoř si účet');
-        self::assertSelectorExists('input[name="invitation_register_form[nickname]"]');
-    }
-
     public function testRegisterThroughEmailInviteAutoVerifiesAndJoinsGroup(): void
     {
         $client = static::createClient();
+        $component = $this->createInvitationFormComponent($client);
 
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
-            'email' => AppFixtures::PENDING_INVITATION_EMAIL,
-            'invitation_register_form[nickname]' => 'outsider_new',
-            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
-            'invitation_register_form[password][second]' => 'Str0ngP4ssword!',
-        ]);
+        $response = $component
+            ->submitForm($this->validRegistration([
+                'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+                'nickname' => 'outsider_new',
+            ]), 'submit')
+            ->response();
 
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID);
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID, $response->headers->get('Location'));
 
         $em = $this->em($client);
         $em->clear();
@@ -124,6 +118,8 @@ final class EmailInvitationLandingTest extends WebTestCase
 
         self::assertInstanceOf(User::class, $user);
         self::assertTrue($user->isVerified, 'Email-invite registrations must auto-verify.');
+        self::assertSame('Jan', $user->firstName);
+        self::assertSame('Novák', $user->lastName);
 
         $invitation = $em->find(GroupInvitation::class, Uuid::fromString(AppFixtures::PENDING_INVITATION_ID));
         self::assertNotNull($invitation);
@@ -140,73 +136,35 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertCount(1, $memberships);
     }
 
-    public function testRegisterStepWithEmptyPasswordReRendersWithError(): void
+    public function testRegisterStepWithEmptyPasswordRejected(): void
     {
         $client = static::createClient();
+        $component = $this->createInvitationFormComponent($client);
 
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+        $this->expectException(UnprocessableEntityHttpException::class);
 
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
+        $component->submitForm($this->validRegistration([
             'email' => AppFixtures::PENDING_INVITATION_EMAIL,
-            'invitation_register_form[nickname]' => 'newcomer',
-            'invitation_register_form[password][first]' => '',
-            'invitation_register_form[password][second]' => '',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
+            'password' => '',
+            'passwordConfirm' => '',
+        ]), 'submit');
     }
 
-    public function testRegisterStepWithMismatchedPasswordsReRendersWithError(): void
+    public function testRegisterStepWithMismatchedPasswordsRejected(): void
     {
         $client = static::createClient();
+        $component = $this->createInvitationFormComponent($client);
 
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+        $this->expectException(UnprocessableEntityHttpException::class);
 
-        $client->submitForm('Vytvořit účet a připojit se', [
-            '_action' => 'register',
+        $component->submitForm($this->validRegistration([
             'email' => AppFixtures::PENDING_INVITATION_EMAIL,
-            'invitation_register_form[nickname]' => 'newcomer',
-            'invitation_register_form[password][first]' => 'Str0ngP4ssword!',
-            'invitation_register_form[password][second]' => 'Different1!',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Hesla se musí shodovat.');
+            'password' => 'Str0ngP4ssword!',
+            'passwordConfirm' => 'Different1!',
+        ]), 'submit');
     }
 
-    public function testCompleteRegistrationWithEmptyPasswordReRendersWithError(): void
-    {
-        $client = static::createClient();
-        $em = $this->em($client);
-
-        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
-        $stub = new User(
-            id: Uuid::v7(),
-            email: AppFixtures::PENDING_INVITATION_EMAIL,
-            password: null,
-            nickname: 'stub_'.bin2hex(random_bytes(3)),
-            createdAt: $now,
-        );
-        $stub->popEvents();
-        $em->persist($stub);
-        $em->flush();
-
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
-
-        $client->submitForm('Dokončit registraci a připojit se', [
-            '_action' => 'complete_registration',
-            'email' => AppFixtures::PENDING_INVITATION_EMAIL,
-            'complete_invitation_registration_form[password][first]' => '',
-            'complete_invitation_registration_form[password][second]' => '',
-        ]);
-
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Zadejte prosím heslo.');
-    }
-
-    public function testCheckEmailForExistingVerifiedStubShowsLoginStep(): void
+    public function testCheckEmailForExistingVerifiedUserShowsLoginUi(): void
     {
         $client = static::createClient();
         $em = $this->em($client);
@@ -227,10 +185,77 @@ final class EmailInvitationLandingTest extends WebTestCase
         $em->persist($user);
         $em->flush();
 
-        $this->submitEmailForm($client, self::EMAIL_TOKEN_URL, AppFixtures::PENDING_INVITATION_EMAIL);
+        $component = $this->createInvitationFormComponent($client);
+        $rendered = (string) $component->render();
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorExists('input[name="invitation_login_form[password]"]');
+        // Login UI: nickname/firstName/lastName/passwordConfirm fields gone, password remains.
+        self::assertStringContainsString('Přihlášení', $rendered);
+        self::assertStringNotContainsString('invitation_form[nickname]', $rendered);
+        self::assertStringNotContainsString('invitation_form[firstName]', $rendered);
+        self::assertStringNotContainsString('invitation_form[passwordConfirm]', $rendered);
+        self::assertStringContainsString('invitation_form[password]', $rendered);
+    }
+
+    public function testCompleteRegistrationFromStubAccount(): void
+    {
+        $client = static::createClient();
+        $em = $this->em($client);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $stub = new User(
+            id: Uuid::v7(),
+            email: AppFixtures::PENDING_INVITATION_EMAIL,
+            password: null,
+            nickname: 'stub_'.bin2hex(random_bytes(3)),
+            createdAt: $now,
+        );
+        $stub->popEvents();
+        $em->persist($stub);
+        $em->flush();
+
+        $component = $this->createInvitationFormComponent($client);
+        $response = $component
+            ->submitForm([
+                'invitation_form' => [
+                    'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+                    'password' => 'Str0ngP4ssword!',
+                    'passwordConfirm' => 'Str0ngP4ssword!',
+                ],
+            ], 'submit')
+            ->response();
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID, $response->headers->get('Location'));
+    }
+
+    public function testCompleteRegistrationWithEmptyPasswordRejected(): void
+    {
+        $client = static::createClient();
+        $em = $this->em($client);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $stub = new User(
+            id: Uuid::v7(),
+            email: AppFixtures::PENDING_INVITATION_EMAIL,
+            password: null,
+            nickname: 'stub_'.bin2hex(random_bytes(3)),
+            createdAt: $now,
+        );
+        $stub->popEvents();
+        $em->persist($stub);
+        $em->flush();
+
+        $component = $this->createInvitationFormComponent($client);
+
+        $this->expectException(UnprocessableEntityHttpException::class);
+
+        $component->submitForm([
+            'invitation_form' => [
+                'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+                'password' => '',
+                'passwordConfirm' => '',
+            ],
+        ], 'submit');
     }
 
     public function testAuthenticatedVerifiedUserMatchingPresetEmailIsAddedImmediately(): void
@@ -277,18 +302,39 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Pozvánka je pro jiný e-mail');
     }
 
+    /**
+     * @return \Symfony\UX\LiveComponent\Test\TestLiveComponent
+     */
+    private function createInvitationFormComponent(KernelBrowser $client)
+    {
+        return $this->createLiveComponent('Auth:InvitationForm', [
+            'kind' => InvitationKind::Email->value,
+            'token' => AppFixtures::PENDING_INVITATION_TOKEN,
+        ], $client);
+    }
+
+    /**
+     * @param array<string, mixed> $overrides
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function validRegistration(array $overrides = []): array
+    {
+        return [
+            'invitation_form' => array_replace([
+                'email' => 'newuser@example.com',
+                'password' => 'Str0ngP4ssword!',
+                'passwordConfirm' => 'Str0ngP4ssword!',
+                'nickname' => 'newuser123',
+                'firstName' => 'Jan',
+                'lastName' => 'Novák',
+            ], $overrides),
+        ];
+    }
+
     private function em(KernelBrowser $client): EntityManagerInterface
     {
         /* @var EntityManagerInterface */
         return $client->getContainer()->get('doctrine.orm.entity_manager');
-    }
-
-    private function submitEmailForm(KernelBrowser $client, string $url, string $email): void
-    {
-        $client->request('GET', $url);
-        $client->submitForm('Pokračovat', [
-            '_action' => 'check_email',
-            'invitation_email_form[email]' => $email,
-        ]);
     }
 }

@@ -12,12 +12,6 @@
     {% endif %}
 {% endblock %}
 
-{% set form_action = context
-    ? (context.kind.value == 'email'
-        ? path('group_accept_invitation', { token: context.token })
-        : path('group_join_by_link', { token: context.token }))
-    : '' %}
-
 {% block auth_card %}
 <div class="rounded-2xl bg-white p-8 shadow-card ring-1 ring-navy-900/5 sm:p-10">
 
@@ -91,7 +85,7 @@
         </div>
 
     {% else %}
-        {# Active states: email / login / register / complete_registration #}
+        {# Active state — anonymous: render the unified live form #}
         <div class="mb-6 rounded-xl bg-cyan-50 p-4 ring-1 ring-cyan-100">
             <div class="flex items-start gap-3">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-600 shadow-sm">
@@ -109,180 +103,11 @@
             </div>
         </div>
 
-        {% if step == 'email' %}
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold tracking-tight text-navy-900">Připojit se ke skupině</h1>
-                <p class="mt-2 text-sm text-navy-900/60">
-                    {% if context.kind.value == 'email' %}
-                        Pozvánka byla poslána na {{ context.presetEmail }}. Pokračuj níže.
-                    {% else %}
-                        Zadej svůj e-mail — zjistíme, jestli už máš účet.
-                    {% endif %}
-                </p>
-            </div>
+        <twig:Auth:InvitationForm kind="{{ context.kind.value }}" token="{{ context.token }}" />
 
-            {{ form_start(email_form, {action: form_action, attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-                <input type="hidden" name="_action" value="check_email">
-                <div>
-                    {{ form_label(email_form.email, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(email_form.email, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500 disabled:bg-navy-50'}}) }}
-                    </div>
-                    {{ form_errors(email_form.email) }}
-                </div>
-
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
-                    Pokračovat
-                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                </button>
-            {{ form_end(email_form) }}
-
-        {% elseif step == 'login' %}
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold tracking-tight text-navy-900">Přihlášení</h1>
-                <p class="mt-2 text-sm text-navy-900/60">Už máš účet na <strong>{{ email }}</strong>. Zadej heslo a přidáme tě.</p>
-            </div>
-
-            {{ form_start(login_form, {action: form_action, attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-                <input type="hidden" name="_action" value="login">
-                <input type="hidden" name="email" value="{{ email }}">
-
-                <div data-controller="password-visibility">
-                    <div class="mb-1.5 flex items-center justify-between">
-                        {{ form_label(login_form.password, null, {label_attr: {class: 'block text-sm font-medium text-navy-900'}}) }}
-                        <a href="{{ path('app_forgot_password_request') }}" class="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline">Zapomenuté heslo?</a>
-                    </div>
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(login_form.password, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500', 'data-password-visibility-target': 'input'}}) }}
-                        <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900" aria-label="Zobrazit/skrýt heslo">
-                            <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
-                            <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
-                        </button>
-                    </div>
-                    {{ form_errors(login_form.password) }}
-                </div>
-
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
-                    Přihlásit se a připojit
-                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                </button>
-            {{ form_end(login_form) }}
-
-            <p class="mt-6 text-center text-sm text-navy-900/60">
-                Nejsi to ty?
-                <a href="{{ form_action }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">Zadat jiný e-mail</a>
-            </p>
-
-        {% elseif step == 'register' %}
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold tracking-tight text-navy-900">Vytvoř si účet</h1>
-                <p class="mt-2 text-sm text-navy-900/60">
-                    {% if context.kind.value == 'email' %}
-                        Zaregistruj účet pro <strong>{{ email }}</strong> — hned tě přidáme do skupiny.
-                    {% else %}
-                        Účet pro <strong>{{ email }}</strong> ještě neexistuje. Vyplň přezdívku a heslo.
-                    {% endif %}
-                </p>
-            </div>
-
-            {{ form_start(register_form, {action: form_action, attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-                <input type="hidden" name="_action" value="register">
-                <input type="hidden" name="email" value="{{ email }}">
-
-                <div>
-                    {{ form_label(register_form.nickname, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:user" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(register_form.nickname, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                    </div>
-                    <p class="mt-1 text-xs text-navy-900/50">3–30 znaků, pouze písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
-                    {{ form_errors(register_form.nickname) }}
-                </div>
-
-                <div data-controller="password-visibility">
-                    {{ form_label(register_form.password.first, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(register_form.password.first, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500', 'data-password-visibility-target': 'input'}}) }}
-                        <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900" aria-label="Zobrazit/skrýt heslo">
-                            <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
-                            <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
-                        </button>
-                    </div>
-                    {{ form_errors(register_form.password.first) }}
-                </div>
-
-                <div>
-                    {{ form_label(register_form.password.second, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(register_form.password.second, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                    </div>
-                    {{ form_errors(register_form.password.second) }}
-                    {{ form_errors(register_form.password) }}
-                </div>
-
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
-                    Vytvořit účet a připojit se
-                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                </button>
-            {{ form_end(register_form) }}
-
-            <p class="mt-6 text-center text-sm text-navy-900/60">
-                Nejsi to ty?
-                <a href="{{ form_action }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">Zadat jiný e-mail</a>
-            </p>
-
-        {% elseif step == 'complete_registration' %}
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold tracking-tight text-navy-900">Dokončení registrace</h1>
-                <p class="mt-2 text-sm text-navy-900/60">Pro <strong>{{ email }}</strong> už máme rozpracovaný účet. Zvol si heslo a rovnou tě připojíme.</p>
-            </div>
-
-            {{ form_start(complete_registration_form, {action: form_action, attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-                <input type="hidden" name="_action" value="complete_registration">
-                <input type="hidden" name="email" value="{{ email }}">
-
-                <div>
-                    {{ form_label(complete_registration_form.password.first, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(complete_registration_form.password.first, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                    </div>
-                    {{ form_errors(complete_registration_form.password.first) }}
-                </div>
-                <div>
-                    {{ form_label(complete_registration_form.password.second, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    <div class="relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                            <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                        </span>
-                        {{ form_widget(complete_registration_form.password.second, {attr: {class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500'}}) }}
-                    </div>
-                    {{ form_errors(complete_registration_form.password.second) }}
-                    {{ form_errors(complete_registration_form.password) }}
-                </div>
-
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
-                    Dokončit registraci a připojit se
-                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                </button>
-            {{ form_end(complete_registration_form) }}
-        {% endif %}
+        <p class="mt-6 text-center text-sm text-navy-900/60">
+            <a href="{{ path('app_login') }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">Mám už účet a chci se přihlásit jinak</a>
+        </p>
     {% endif %}
 </div>
 {% endblock %}

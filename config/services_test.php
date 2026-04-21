@@ -11,9 +11,6 @@ return App::config([
             'autoconfigure' => true,
             'public' => true,
         ],
-        'test.service_container' => [
-            'alias' => 'service_container',
-        ],
         // Test-specific overrides
         'App\\Tests\\Support\\PredictableIdentityProvider' => [
             'tags' => [['name' => 'kernel.reset', 'method' => 'reset']],

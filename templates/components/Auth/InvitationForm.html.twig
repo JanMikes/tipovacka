@@ -1,0 +1,135 @@
+<div{{ attributes }}>
+    {% set kind = this.userKind %}
+    {% set kind_new = constant('App\\Form\\InvitationFormData::KIND_NEW') %}
+    {% set kind_has_password = constant('App\\Form\\InvitationFormData::KIND_HAS_PASSWORD') %}
+    {% set kind_stub = constant('App\\Form\\InvitationFormData::KIND_STUB') %}
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold tracking-tight text-navy-900">
+            {% if kind == kind_has_password %}
+                Přihlášení
+            {% elseif kind == kind_stub %}
+                Dokončení registrace
+            {% else %}
+                Vytvoř si účet
+            {% endif %}
+        </h1>
+        <p class="mt-2 text-sm text-navy-900/60">
+            {% if this.emailLocked %}
+                Pozvánka byla poslána na <strong>{{ this.context.presetEmail }}</strong>.
+            {% else %}
+                Zadej svůj e-mail — zjistíme, jestli už máš účet.
+            {% endif %}
+        </p>
+    </div>
+
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-action': 'live#action:prevent', 'data-live-action-param': 'submit'}}) }}
+
+        <div>
+            {{ form_label(form.email, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                    <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
+                </span>
+                {{ form_widget(form.email, {attr: {
+                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500 disabled:bg-navy-50',
+                }}) }}
+            </div>
+            {{ form_errors(form.email) }}
+        </div>
+
+        {% if kind == kind_new %}
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    {{ form_label(form.firstName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                            <twig:ux:icon name="lucide:user" class="h-5 w-5" />
+                        </span>
+                        {{ form_widget(form.firstName, {attr: {
+                            class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
+                        }}) }}
+                    </div>
+                    {{ form_errors(form.firstName) }}
+                </div>
+
+                <div>
+                    {{ form_label(form.lastName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                            <twig:ux:icon name="lucide:user" class="h-5 w-5" />
+                        </span>
+                        {{ form_widget(form.lastName, {attr: {
+                            class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
+                        }}) }}
+                    </div>
+                    {{ form_errors(form.lastName) }}
+                </div>
+            </div>
+
+            <div>
+                {{ form_label(form.nickname, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                        <twig:ux:icon name="lucide:user" class="h-5 w-5" />
+                    </span>
+                    {{ form_widget(form.nickname, {attr: {
+                        class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
+                    }}) }}
+                </div>
+                <p class="mt-1 text-xs text-navy-900/50">3–30 znaků, pouze písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
+                {{ form_errors(form.nickname) }}
+            </div>
+        {% endif %}
+
+        <div data-controller="password-visibility">
+            <div class="mb-1.5 flex items-center justify-between">
+                {{ form_label(form.password, null, {label_attr: {class: 'block text-sm font-medium text-navy-900'}}) }}
+                {% if kind == kind_has_password %}
+                    <a href="{{ path('app_forgot_password_request') }}" class="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline">Zapomenuté heslo?</a>
+                {% endif %}
+            </div>
+            <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                    <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
+                </span>
+                {{ form_widget(form.password, {attr: {
+                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
+                    'data-password-visibility-target': 'input',
+                }}) }}
+                <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900" aria-label="Zobrazit/skrýt heslo">
+                    <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
+                    <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
+                </button>
+            </div>
+            {{ form_errors(form.password) }}
+        </div>
+
+        {% if kind != kind_has_password %}
+            <div>
+                {{ form_label(form.passwordConfirm, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
+                        <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
+                    </span>
+                    {{ form_widget(form.passwordConfirm, {attr: {
+                        class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
+                    }}) }}
+                </div>
+                {{ form_errors(form.passwordConfirm) }}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
+            {% if kind == kind_has_password %}
+                Přihlásit se a připojit
+            {% elseif kind == kind_stub %}
+                Dokončit registraci a připojit
+            {% else %}
+                Vytvořit účet a připojit se
+            {% endif %}
+            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+        </button>
+
+    {{ form_end(form) }}
+</div>

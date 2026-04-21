@@ -8,12 +8,16 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\GroupInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Enum\InvitationKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class BulkInvitationFlowTest extends WebTestCase
 {
+    use InteractsWithLiveComponents;
+
     public function testOwnerCanBulkInviteAndInviteeCompletesRegistration(): void
     {
         $client = static::createClient();
@@ -52,26 +56,23 @@ final class BulkInvitationFlowTest extends WebTestCase
         // Log out to simulate the invitee clicking the link fresh.
         $client->request('GET', '/odhlaseni');
 
-        // Hit the unified landing page: email step shows the locked invitation email.
-        $client->request('GET', '/pozvanka/'.$alice->token);
-        self::assertResponseIsSuccessful();
+        // Mount the unified live invitation form for alice's token (email-kind, locked email).
+        // Stub account exists for alice → the form should adapt into the "set password" branch.
+        $component = $this->createLiveComponent('Auth:InvitationForm', [
+            'kind' => InvitationKind::Email->value,
+            'token' => $alice->token,
+        ], $client);
 
-        // Submit the email step — server detects the stub account and renders the "set password" sub-form.
-        $client->submitForm('Pokračovat', [
-            '_action' => 'check_email',
-            'invitation_email_form[email]' => 'alice@example.com',
-        ]);
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Dokončení registrace');
+        $response = $component->submitForm([
+            'invitation_form' => [
+                'email' => 'alice@example.com',
+                'password' => 'Str0ngP4ssword!',
+                'passwordConfirm' => 'Str0ngP4ssword!',
+            ],
+        ], 'submit')->response();
 
-        $client->submitForm('Dokončit registraci a připojit se', [
-            '_action' => 'complete_registration',
-            'email' => 'alice@example.com',
-            'complete_invitation_registration_form[password][first]' => 'Str0ngP4ssword!',
-            'complete_invitation_registration_form[password][second]' => 'Str0ngP4ssword!',
-        ]);
-
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID);
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID, $response->headers->get('Location'));
 
         $em->clear();
 

@@ -6,32 +6,45 @@ namespace App\Tests\Integration\Auth;
 
 use App\DataFixtures\AppFixtures;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\UX\LiveComponent\Test\InteractsWithLiveComponents;
 
 final class PasswordResetFlowTest extends WebTestCase
 {
-    public function testPasswordResetRequestAlwaysRedirects(): void
+    use InteractsWithLiveComponents;
+
+    public function testRequestPageRenders(): void
     {
         $client = static::createClient();
         $client->request('GET', '/reset-hesla');
+
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="request_password_reset_form[email]"]');
+    }
 
-        $client->submitForm('Odeslat odkaz pro obnovení', [
-            'request_password_reset_form[email]' => 'nobody@nowhere.com',
-        ]);
+    public function testPasswordResetRequestForUnknownEmailRedirects(): void
+    {
+        static::createClient();
 
-        self::assertResponseRedirects('/reset-hesla/email-odeslan');
+        $component = $this->createLiveComponent('Auth:RequestPasswordResetForm');
+        $response = $component->submitForm([
+            'request_password_reset_form' => ['email' => 'nobody@nowhere.com'],
+        ], 'submit')->response();
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/reset-hesla/email-odeslan', $response->headers->get('Location'));
     }
 
     public function testPasswordResetRequestForExistingUserRedirects(): void
     {
-        $client = static::createClient();
-        $client->request('GET', '/reset-hesla');
+        static::createClient();
 
-        $client->submitForm('Odeslat odkaz pro obnovení', [
-            'request_password_reset_form[email]' => AppFixtures::VERIFIED_USER_EMAIL,
-        ]);
+        $component = $this->createLiveComponent('Auth:RequestPasswordResetForm');
+        $response = $component->submitForm([
+            'request_password_reset_form' => ['email' => AppFixtures::VERIFIED_USER_EMAIL],
+        ], 'submit')->response();
 
-        self::assertResponseRedirects('/reset-hesla/email-odeslan');
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame('/reset-hesla/email-odeslan', $response->headers->get('Location'));
     }
 
     public function testCheckEmailPageRenders(): void

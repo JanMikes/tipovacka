@@ -18,5 +18,5 @@ final class ResetPasswordFormData
         minScore: Assert\PasswordStrength::STRENGTH_MEDIUM,
         message: 'Heslo je příliš slabé. Použijte prosím silnější heslo.',
     )]
-    public string $newPassword = '';
+    public ?string $newPassword = null;
 }
