@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Returns the importmap for this application.
  *
@@ -53,5 +51,18 @@ return [
     'glightbox/dist/css/glightbox.min.css' => [
         'version' => '3.3.1',
         'type' => 'css',
+    ],
+    'tom-select' => [
+        'version' => '2.6.0',
+    ],
+    'tom-select/dist/css/tom-select.min.css' => [
+        'version' => '2.6.0',
+        'type' => 'css',
+    ],
+    '@orchidjs/sifter' => [
+        'version' => '1.1.0',
+    ],
+    '@orchidjs/unicode-variants' => [
+        'version' => '1.1.2',
     ],
 ];

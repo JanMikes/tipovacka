@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../vendor/flatpickr/dist/flatpickr.min.css";
+@import "../vendor/tom-select/dist/css/tom-select.min.css";
 
 @theme {
     /* Brand navy — used for primary text, dark surfaces, nav bar */
@@ -318,4 +319,101 @@ span.flatpickr-weekday {
     background: linear-gradient(90deg, transparent, rgba(8, 30, 68, 0.08), transparent);
     pointer-events: none;
     z-index: 0;
+}
+
+/* Tom Select — reskin to match our navy/cyan form controls.
+   Base layout comes from the vendor CSS; we only override colors, radii,
+   focus ring, and spacing so the control matches <input>/<select> siblings. */
+.ts-wrapper {
+    font-family: inherit;
+}
+
+.ts-wrapper.single .ts-control,
+.ts-wrapper.multi .ts-control {
+    background: #fff;
+    background-image: none;
+    box-shadow: none;
+    border: 1px solid var(--color-navy-100);
+    border-radius: 0.5rem;
+    padding: 0.625rem 2.25rem 0.625rem 1rem;
+    min-height: 42px;
+    font-size: 0.875rem;
+    color: var(--color-navy-900);
+    transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.ts-wrapper.focus .ts-control,
+.ts-wrapper.single.focus .ts-control {
+    border-color: transparent;
+    box-shadow: 0 0 0 2px var(--color-cyan-500);
+}
+
+.ts-wrapper.single .ts-control::after {
+    border-color: var(--color-navy-900) transparent transparent transparent;
+    border-width: 6px 5px 0 5px;
+    margin-top: -3px;
+    right: 16px;
+}
+
+.ts-wrapper.single.dropdown-active .ts-control::after {
+    border-color: transparent transparent var(--color-navy-900) transparent;
+    border-width: 0 5px 6px 5px;
+    margin-top: -3px;
+}
+
+.ts-wrapper .ts-control > input {
+    color: var(--color-navy-900);
+    font-size: 0.875rem;
+}
+
+.ts-wrapper .ts-control > input::placeholder {
+    color: rgba(8, 30, 68, 0.45);
+}
+
+.ts-dropdown {
+    margin-top: 6px;
+    border: 1px solid var(--color-navy-100);
+    border-radius: 0.75rem;
+    box-shadow:
+        0 10px 30px -10px rgba(8, 30, 68, 0.18),
+        0 4px 12px -4px rgba(8, 30, 68, 0.08);
+    padding: 4px;
+    color: var(--color-navy-900);
+    font-size: 0.875rem;
+    overflow: hidden;
+}
+
+.ts-dropdown .option {
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--color-navy-900);
+}
+
+.ts-dropdown .option.active,
+.ts-dropdown .active.option {
+    background: var(--color-cyan-100);
+    color: var(--color-navy-900);
+}
+
+.ts-dropdown .option.selected {
+    background: var(--color-navy-50);
+    color: var(--color-navy-900);
+}
+
+.ts-dropdown .option:hover:not(.active) {
+    background: var(--color-navy-50);
+}
+
+.ts-dropdown .no-results {
+    padding: 0.75rem;
+    color: rgba(8, 30, 68, 0.55);
+    font-style: normal;
+}
+
+/* Hide the original <select> when Tom Select takes over, so it doesn't flash
+   as a native control before the controller connects. */
+select[data-controller~="tom-select"] {
+    opacity: 0;
 }

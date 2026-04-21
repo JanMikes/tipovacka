@@ -40,21 +40,29 @@ final class ManageMemberTipsFlowTest extends WebTestCase
 
         $client->loginUser($owner);
 
+        // Land on page without a selected member: shows selectbox, no score form yet.
         $crawler = $client->request('GET', '/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID.'/spravovat-tipy');
         self::assertResponseIsSuccessful();
+        self::assertGreaterThan(0, $crawler->filter('select[name="member"]')->count(), 'Member selectbox not found.');
 
-        $formAction = sprintf(
-            '/portal/skupiny/%s/zapasy/%s/clenove/%s/tip',
+        // Pick the unverified member via query param (as the <select>'s auto-submit would).
+        $crawler = $client->request(
+            'GET',
+            '/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID.'/spravovat-tipy?member='.AppFixtures::UNVERIFIED_USER_ID,
+        );
+        self::assertResponseIsSuccessful();
+
+        $batchAction = sprintf(
+            '/portal/skupiny/%s/spravovat-tipy/%s',
             AppFixtures::VERIFIED_GROUP_ID,
-            AppFixtures::MATCH_PRIVATE_SCHEDULED_ID,
             AppFixtures::UNVERIFIED_USER_ID,
         );
-        $formNode = $crawler->filter(sprintf('form[action="%s"]', $formAction));
-        self::assertGreaterThan(0, $formNode->count(), 'Manager form for member not found.');
+        $formNode = $crawler->filter(sprintf('form[action="%s"]', $batchAction));
+        self::assertGreaterThan(0, $formNode->count(), 'Batch save form not found.');
 
         $form = $formNode->form();
-        $form['homeScore'] = '2';
-        $form['awayScore'] = '1';
+        $form['guesses['.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'][homeScore]'] = '2';
+        $form['guesses['.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'][awayScore]'] = '1';
         $client->submit($form);
 
         self::assertResponseRedirects();
