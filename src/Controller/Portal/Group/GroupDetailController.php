@@ -108,6 +108,7 @@ final class GroupDetailController extends AbstractController
             'pendingJoinRequests' => $pendingJoinRequests,
             'score_by_user_id' => $scoreByUserId,
             'my_guesses' => $myGuesses,
+            'isMember' => $isMember,
         ]);
     }
 }

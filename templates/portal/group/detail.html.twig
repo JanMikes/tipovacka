@@ -44,6 +44,22 @@
         {# ───── Main column ───── #}
         <div class="space-y-6 lg:col-span-8">
 
+            {# Quick-tip CTA: batch-fill all my guesses for this group at once.
+               Only shown to members while the tournament is still running. #}
+            {% if isMember and not detail.tournamentIsFinished %}
+                <a href="{{ path('portal_group_my_tips_batch', {id: group.id.toRfc4122}) }}"
+                   class="group flex items-center gap-4 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 p-5 text-white shadow-card transition-shadow hover:shadow-card-hover">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                        <twig:ux:icon name="lucide:zap" class="h-6 w-6" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-base font-semibold">Tipnout všechny zápasy najednou</p>
+                        <p class="mt-0.5 text-sm text-white/80">Vyplň nebo uprav své tipy v jedné tabulce. Prázdná pole se přeskočí.</p>
+                    </div>
+                    <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
+                </a>
+            {% endif %}
+
             {# Members #}
             <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
                 <details class="group">
@@ -420,6 +436,12 @@
                     {% if is_granted('group_edit', group) %}
                         <a href="{{ path('portal_group_edit', {id: group.id.toRfc4122}) }}" class="flex w-full items-center gap-2 rounded-lg bg-navy-50 px-4 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit skupinu
+                        </a>
+                    {% endif %}
+
+                    {% if isMember and not detail.tournamentIsFinished %}
+                        <a href="{{ path('portal_group_my_tips_batch', {id: group.id.toRfc4122}) }}" class="flex w-full items-center gap-2 rounded-lg bg-navy-50 px-4 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100">
+                            <twig:ux:icon name="lucide:zap" class="h-4 w-4" />Tipnout vše najednou
                         </a>
                     {% endif %}
 

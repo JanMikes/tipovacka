@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Moje tipy — {{ group.name }}{% endblock %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32">
+    <div class="mb-6">
+        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
+           class="text-sm text-cyan-500 hover:underline">&larr; {{ group.name }}</a>
+    </div>
+
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-navy-900">Moje tipy</h1>
+        <p class="text-navy-900/60 mt-2">
+            Zadej nebo uprav všechny své tipy v jedné tabulce.
+            Zobrazují se jen zápasy, u kterých je tipování ještě otevřené.
+            Prázdná pole se přeskočí — nebo smažou stávající tip.
+        </p>
+    </div>
+
+    {% if rows|length == 0 %}
+        <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-6 text-center text-navy-900/60">
+            Žádné nadcházející zápasy k tipování.
+        </div>
+    {% else %}
+        <form method="post"
+              action="{{ path('portal_group_my_tips_batch', {id: group.id.toRfc4122}) }}">
+            <input type="hidden" name="_token"
+                   value="{{ csrf_token('my_tips_batch_' ~ group.id.toRfc4122 ~ '_' ~ app.user.id.toRfc4122) }}">
+
+            <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 overflow-hidden">
+                <header class="border-b border-navy-100/70 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-navy-900">Nadcházející zápasy</h2>
+                    <p class="text-xs text-navy-900/60 mt-1">
+                        Vyplň skóre u zápasů, které chceš tipnout. Prázdné nech ty, které chceš přeskočit.
+                    </p>
+                </header>
+
+                <ul class="divide-y divide-navy-100/70">
+                    {% for row in rows %}
+                        <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="font-medium text-navy-900">
+                                    {{ row.match.homeTeam }} <span class="text-gray-400">vs.</span> {{ row.match.awayTeam }}
+                                </div>
+                                <p class="text-xs text-navy-900/60 mt-0.5">
+                                    {{ row.match.kickoffAt|date('d. m. Y H:i') }}
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <input type="number"
+                                       name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
+                                       min="0" max="99"
+                                       value="{{ row.guess ? row.guess.homeScore : '' }}"
+                                       class="w-16 rounded-lg border border-navy-100 px-2 py-1 text-center font-semibold outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                                       aria-label="Domácí – {{ row.match.homeTeam }}">
+                                <span class="text-navy-900/40">:</span>
+                                <input type="number"
+                                       name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
+                                       min="0" max="99"
+                                       value="{{ row.guess ? row.guess.awayScore : '' }}"
+                                       class="w-16 rounded-lg border border-navy-100 px-2 py-1 text-center font-semibold outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                                       aria-label="Hosté – {{ row.match.awayTeam }}">
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="fixed inset-x-0 bottom-0 z-30 border-t border-navy-100 bg-white/95 backdrop-blur shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+                <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+                    <p class="text-xs text-navy-900/60 hidden sm:block">
+                        {{ rows|length }} {{ rows|length == 1 ? 'zápas' : (rows|length < 5 ? 'zápasy' : 'zápasů') }}
+                    </p>
+                    <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 hover:bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors w-full sm:w-auto justify-center">
+                        <twig:ux:icon name="lucide:save" class="h-4 w-4" />
+                        Uložit vše
+                    </button>
+                </div>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
