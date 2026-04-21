@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -17,6 +18,7 @@ return App::config([
             'send_default_pii' => true,
             'ignore_exceptions' => [
                 AccessDeniedException::class,
+                MethodNotAllowedHttpException::class,
                 NotFoundHttpException::class,
             ],
             'max_breadcrumbs' => 50,
