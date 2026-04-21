@@ -57,18 +57,19 @@ class RegistrationFormType extends AbstractType
 
         $builder->add('password', RepeatedType::class, [
             'type' => PasswordType::class,
+            'options' => [
+                'always_empty' => false,
+            ],
             'first_options' => [
                 'label' => 'Heslo',
                 'attr' => [
                     'placeholder' => 'Zadejte heslo',
-
                 ],
             ],
             'second_options' => [
                 'label' => 'Heslo znovu',
                 'attr' => [
                     'placeholder' => 'Zopakujte heslo',
-
                 ],
             ],
             'invalid_message' => 'Hesla se musí shodovat.',

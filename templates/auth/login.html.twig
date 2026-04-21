@@ -18,7 +18,7 @@
 
     <form method="post" action="{{ path('app_login') }}" class="space-y-5">
         <div>
-            <label for="email" class="mb-1.5 block text-sm font-medium text-navy-900">E-mailová adresa</label>
+            <label for="email" class="required mb-1.5 block text-sm font-medium text-navy-900">E-mailová adresa</label>
             <div class="relative">
                 <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
                     <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
@@ -38,7 +38,7 @@
 
         <div data-controller="password-visibility">
             <div class="mb-1.5 flex items-center justify-between">
-                <label for="password" class="block text-sm font-medium text-navy-900">Heslo</label>
+                <label for="password" class="required block text-sm font-medium text-navy-900">Heslo</label>
                 <a href="{{ path('app_forgot_password_request') }}" class="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline">Zapomněli jste heslo?</a>
             </div>
             <div class="relative">

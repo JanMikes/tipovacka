@@ -57,6 +57,15 @@
     }
 }
 
+/* Red asterisk on labels for required fields. Symfony's form component
+   automatically adds class="required" to labels of required fields; the
+   login template (plain HTML) adds it by hand. */
+label.required::after {
+    content: '*';
+    margin-left: 0.125rem;
+    color: var(--color-red-500);
+}
+
 /* Public homepage hero — soft diagonal gradient wash + dot grid. Both are
    masked/faded so they stay quiet behind the copy and illustration. */
 .hero-bg {

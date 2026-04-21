@@ -19,18 +19,19 @@ final class ResetPasswordFormType extends AbstractType
     {
         $builder->add('newPassword', RepeatedType::class, [
             'type' => PasswordType::class,
+            'options' => [
+                'always_empty' => false,
+            ],
             'first_options' => [
                 'label' => 'Nové heslo',
                 'attr' => [
                     'placeholder' => 'Zadejte nové heslo',
-
                 ],
             ],
             'second_options' => [
                 'label' => 'Potvrzení hesla',
                 'attr' => [
                     'placeholder' => 'Zopakujte nové heslo',
-
                 ],
             ],
             'invalid_message' => 'Hesla se musí shodovat.',
