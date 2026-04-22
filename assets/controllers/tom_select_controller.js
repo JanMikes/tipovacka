@@ -9,6 +9,9 @@ export default class extends Controller {
     };
 
     connect() {
+        // Primary line = nickname when present; otherwise fall back to the option's visible text
+        // (which is the fullName for nickname-less users, or '' for the empty placeholder).
+        // Subtitle line = fullName, shown only when there's a separate nickname above it.
         const primary = (data) => data.nickname || data.text;
         const subtitle = (data) => (data.fullName && data.nickname) ? data.fullName : '';
 
@@ -24,11 +27,11 @@ export default class extends Controller {
                 option: (data, escape) => {
                     const sub = subtitle(data);
                     const unverified = data.unverified ? ' <span class="text-xs text-gray-400">(neověřený)</span>' : '';
-                    return `<div class="py-1"><div>${escape(primary(data))}${unverified}</div>${sub ? `<small class="block text-xs text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${sub ? `<small class="mt-0.5 block text-xs leading-tight text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
                 },
                 item: (data, escape) => {
                     const sub = subtitle(data);
-                    return `<div>${escape(primary(data))}${sub ? ` <small class="text-xs text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                    return `<div class="leading-tight"><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
                 },
             },
         };
