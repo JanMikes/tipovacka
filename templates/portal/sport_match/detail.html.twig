@@ -104,6 +104,7 @@
 
                             <div class="flex-1 p-5">
                                 <twig:Guess:GuessSubmitForm
+                                    id="guess-form-{{ g.id.toRfc4122 }}"
                                     sportMatch="{{ sport_match }}"
                                     groupId="{{ g.id.toRfc4122 }}"
                                     class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"

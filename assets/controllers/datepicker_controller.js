@@ -32,13 +32,6 @@ export default class extends Controller {
     connect() {
         const mode = MODES[this.modeValue] ?? MODES.datetime;
 
-        // Wrap the input so we can absolutely-position a clear button beside the alt input.
-        const wrapper = document.createElement('span');
-        wrapper.className = 'relative block w-full';
-        this.element.parentNode.insertBefore(wrapper, this.element);
-        wrapper.appendChild(this.element);
-        this.wrapper = wrapper;
-
         // Reserve space on the right for the clear button so it doesn't overlap text.
         const altInputClass = `${this.element.className} pr-9`.trim();
 
@@ -63,18 +56,30 @@ export default class extends Controller {
 
         this.instance = flatpickr(this.element, options);
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.tabIndex = -1;
-        button.setAttribute('aria-label', 'Vymazat');
-        button.className = 'absolute right-2.5 top-1/2 -translate-y-1/2 hidden h-5 w-5 items-center justify-center rounded text-navy-900/40 transition hover:text-navy-900 focus:outline-none focus:ring-2 focus:ring-cyan-500';
-        button.innerHTML = CLEAR_ICON;
-        button.addEventListener('click', (event) => {
-            event.preventDefault();
-            this.instance?.clear();
-        });
-        wrapper.appendChild(button);
-        this.clearButton = button;
+        // Wrap the flatpickr-created altInput (not `this.element`) so we don't
+        // trigger Stimulus' observer into an unmatch→match loop. altInput carries
+        // no data-controller attribute, so moving it is safe.
+        const altInput = this.instance.altInput;
+        if (altInput && altInput.parentNode) {
+            const wrapper = document.createElement('span');
+            wrapper.className = 'relative block w-full';
+            altInput.parentNode.insertBefore(wrapper, altInput);
+            wrapper.appendChild(altInput);
+            this.wrapper = wrapper;
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.tabIndex = -1;
+            button.setAttribute('aria-label', 'Vymazat');
+            button.className = 'absolute right-2.5 top-1/2 -translate-y-1/2 hidden h-5 w-5 items-center justify-center rounded text-navy-900/40 transition hover:text-navy-900 focus:outline-none focus:ring-2 focus:ring-cyan-500';
+            button.innerHTML = CLEAR_ICON;
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.instance?.clear();
+            });
+            wrapper.appendChild(button);
+            this.clearButton = button;
+        }
 
         this.toggleClearButton(this.instance);
     }
@@ -94,10 +99,6 @@ export default class extends Controller {
     }
 
     disconnect() {
-        if (this.instance) {
-            this.instance.destroy();
-            this.instance = null;
-        }
         if (this.clearButton) {
             this.clearButton.remove();
             this.clearButton = null;
@@ -109,6 +110,10 @@ export default class extends Controller {
             }
             parent.removeChild(this.wrapper);
             this.wrapper = null;
+        }
+        if (this.instance) {
+            this.instance.destroy();
+            this.instance = null;
         }
     }
 }
