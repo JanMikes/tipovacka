@@ -26,7 +26,11 @@ final class Version20260422083635 extends AbstractMigration
         $this->addSql('CREATE UNIQUE INDEX UIDX_group_match_settings_group_match ON group_match_settings (group_id, sport_match_id)');
         $this->addSql('ALTER TABLE group_match_settings ADD CONSTRAINT FK_A0B2B321FE54D947 FOREIGN KEY (group_id) REFERENCES user_groups (id) NOT DEFERRABLE');
         $this->addSql('ALTER TABLE group_match_settings ADD CONSTRAINT FK_A0B2B3211C1C536C FOREIGN KEY (sport_match_id) REFERENCES sport_matches (id) NOT DEFERRABLE');
-        $this->addSql('ALTER TABLE user_groups ADD hide_others_tips_before_deadline BOOLEAN NOT NULL');
+        // Add the new boolean with a temporary DEFAULT so the NOT NULL constraint
+        // succeeds against existing rows, then drop the default to match the
+        // entity (which has no DB-side default).
+        $this->addSql('ALTER TABLE user_groups ADD hide_others_tips_before_deadline BOOLEAN NOT NULL DEFAULT FALSE');
+        $this->addSql('ALTER TABLE user_groups ALTER hide_others_tips_before_deadline DROP DEFAULT');
         $this->addSql('ALTER TABLE user_groups ADD tips_deadline TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
     }
 
