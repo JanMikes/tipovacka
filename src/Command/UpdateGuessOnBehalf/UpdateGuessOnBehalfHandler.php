@@ -11,6 +11,7 @@ use App\Exception\GuessNotFound;
 use App\Exception\InvalidGuessScore;
 use App\Repository\GuessRepository;
 use App\Repository\UserRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -21,6 +22,7 @@ final readonly class UpdateGuessOnBehalfHandler
     public function __construct(
         private GuessRepository $guessRepository,
         private UserRepository $userRepository,
+        private EffectiveTipDeadlineResolver $deadlineResolver,
         private ClockInterface $clock,
     ) {
     }
@@ -45,8 +47,9 @@ final readonly class UpdateGuessOnBehalfHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $deadline = $this->deadlineResolver->resolve($guess->group, $guess->sportMatch);
 
-        if (!$guess->sportMatch->isOpenForGuesses || $now >= $guess->sportMatch->kickoffAt) {
+        if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();
         }
 

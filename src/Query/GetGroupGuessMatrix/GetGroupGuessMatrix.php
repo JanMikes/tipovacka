@@ -14,6 +14,8 @@ final readonly class GetGroupGuessMatrix implements QueryMessage
 {
     public function __construct(
         public Uuid $groupId,
+        public Uuid $requestingUserId,
+        public bool $applyHiding,
     ) {
     }
 }

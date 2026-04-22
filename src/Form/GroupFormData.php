@@ -22,12 +22,18 @@ final class GroupFormData
 
     public ?string $tournamentCreationPin = null;
 
+    public bool $hideOthersTipsBeforeDeadline = false;
+
+    public ?\DateTimeImmutable $tipsDeadline = null;
+
     public static function fromGroup(Group $group): self
     {
         $formData = new self();
         $formData->name = $group->name;
         $formData->description = $group->description;
         $formData->withPin = null !== $group->pin;
+        $formData->hideOthersTipsBeforeDeadline = $group->hideOthersTipsBeforeDeadline;
+        $formData->tipsDeadline = $group->tipsDeadline;
 
         return $formData;
     }

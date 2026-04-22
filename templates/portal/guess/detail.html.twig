@@ -36,6 +36,13 @@
             </span>
         </div>
 
+        {% if effective_deadline != sport_match.kickoffAt %}
+            <p class="relative mt-3 inline-flex items-center gap-1.5 text-xs text-white/70">
+                <twig:ux:icon name="lucide:hourglass" class="h-3.5 w-3.5" />
+                Uzávěrka tipů: {{ effective_deadline|date('d. m. Y H:i') }}
+            </p>
+        {% endif %}
+
         <div class="relative mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-center">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-white/50">Domácí</p>
@@ -58,7 +65,33 @@
     <div class="space-y-4">
         <twig:Guess:GuessSubmitForm sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
 
-        <twig:Guess:MatchGuessesList sportMatch="{{ sport_match }}" groupId="{{ group.id.toRfc4122 }}"/>
+        <twig:Guess:MatchGuessesList
+            sportMatch="{{ sport_match }}"
+            groupId="{{ group.id.toRfc4122 }}"
+            applyHiding="{{ not can_see_all_tips }}"
+        />
+
+        {% if deadline_form is not null %}
+            <section class="rounded-2xl bg-white p-6 shadow-card ring-1 ring-navy-900/5">
+                <header class="mb-4 flex items-center gap-2.5">
+                    <twig:ux:icon name="lucide:hourglass" class="h-5 w-5 text-cyan-500" />
+                    <h2 class="text-lg font-semibold text-navy-900">Uzávěrka tipů pro tento zápas</h2>
+                </header>
+                {{ form_start(deadline_form, {attr: {class: 'flex flex-wrap items-end gap-3'}}) }}
+                    <div class="flex-1 min-w-[220px]">
+                        {{ form_label(deadline_form.deadline, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+                        {{ form_widget(deadline_form.deadline, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition'}}) }}
+                        {% if deadline_form.deadline.vars.help %}
+                            <p class="text-xs text-navy-900/60 mt-1">{{ deadline_form.deadline.vars.help }}</p>
+                        {% endif %}
+                        {{ form_errors(deadline_form.deadline) }}
+                    </div>
+                    <button type="submit" class="rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                        Uložit
+                    </button>
+                {{ form_end(deadline_form) }}
+            </section>
+        {% endif %}
 
         {% if is_granted('group_manage_members', group) and member_rows|length > 0 %}
             <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
@@ -70,7 +103,7 @@
                     <p class="mt-1 text-xs text-navy-900/60">Jako vlastník můžeš zadat tip za člena, který sám nemá přístup.</p>
                 </header>
 
-                {% set can_edit = sport_match.isOpenForGuesses and (sport_match.kickoffAt > date()) %}
+                {% set can_edit = sport_match.isOpenForGuesses and (effective_deadline > date()) %}
 
                 <ul class="divide-y divide-navy-100/70">
                     {% for row in member_rows %}

@@ -95,13 +95,27 @@ final class GroupEntityTest extends TestCase
         self::assertFalse($group->isDeleted());
     }
 
+    public function testTipVisibilityDefaultsOnFreshGroup(): void
+    {
+        $group = $this->makeGroup();
+
+        self::assertFalse($group->hideOthersTipsBeforeDeadline);
+        self::assertNull($group->tipsDeadline);
+    }
+
     public function testUpdateDetailsRecordsEvent(): void
     {
         $group = $this->makeGroup();
         $group->popEvents();
 
         $later = new \DateTimeImmutable('2025-06-16 12:00:00 UTC');
-        $group->updateDetails(name: 'Nový', description: 'Popis', now: $later);
+        $group->updateDetails(
+            name: 'Nový',
+            description: 'Popis',
+            hideOthersTipsBeforeDeadline: false,
+            tipsDeadline: null,
+            now: $later,
+        );
 
         self::assertSame('Nový', $group->name);
         self::assertSame('Popis', $group->description);
@@ -110,6 +124,48 @@ final class GroupEntityTest extends TestCase
         $events = $group->popEvents();
         self::assertCount(1, $events);
         self::assertInstanceOf(GroupUpdated::class, $events[0]);
+    }
+
+    public function testUpdateDetailsAppliesNewTipVisibilityFields(): void
+    {
+        $group = $this->makeGroup();
+        $group->popEvents();
+
+        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00 UTC');
+        $group->updateDetails(
+            name: $group->name,
+            description: $group->description,
+            hideOthersTipsBeforeDeadline: true,
+            tipsDeadline: $deadline,
+            now: $this->now,
+        );
+
+        self::assertTrue($group->hideOthersTipsBeforeDeadline);
+        self::assertSame($deadline, $group->tipsDeadline);
+    }
+
+    public function testUpdateDetailsCanClearTipsDeadline(): void
+    {
+        $group = $this->makeGroup();
+        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00 UTC');
+        $group->updateDetails(
+            name: $group->name,
+            description: $group->description,
+            hideOthersTipsBeforeDeadline: true,
+            tipsDeadline: $deadline,
+            now: $this->now,
+        );
+
+        $group->updateDetails(
+            name: $group->name,
+            description: $group->description,
+            hideOthersTipsBeforeDeadline: false,
+            tipsDeadline: null,
+            now: $this->now,
+        );
+
+        self::assertFalse($group->hideOthersTipsBeforeDeadline);
+        self::assertNull($group->tipsDeadline);
     }
 
     public function testSetPinRecordsEvent(): void

@@ -10,7 +10,9 @@ use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
 use App\Repository\GroupRepository;
 use App\Repository\MembershipRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
@@ -20,6 +22,8 @@ final readonly class GetGroupGuessMatrixQuery
         private GroupRepository $groupRepository,
         private MembershipRepository $membershipRepository,
         private EntityManagerInterface $entityManager,
+        private EffectiveTipDeadlineResolver $deadlineResolver,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -27,6 +31,8 @@ final readonly class GetGroupGuessMatrixQuery
     {
         $group = $this->groupRepository->get($query->groupId);
         $memberships = $this->membershipRepository->findActiveByGroup($group->id);
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $requestingUserKey = $query->requestingUserId->toRfc4122();
 
         /** @var list<SportMatch> $matches */
         $matches = $this->entityManager->createQueryBuilder()
@@ -63,6 +69,8 @@ final readonly class GetGroupGuessMatrixQuery
             ->getQuery()
             ->getArrayResult();
 
+        $deadlineByMatchKey = $this->deadlineResolver->resolveMany($group, $matches);
+
         /** @var array<string, array<string, MatrixCell>> $cellsByUser */
         $cellsByUser = [];
         /** @var array<string, list<int>> $pointsByMatch */
@@ -75,11 +83,19 @@ final readonly class GetGroupGuessMatrixQuery
             $matchKey = $row['sportMatchId'];
             $points = null !== $row['totalPoints'] ? (int) $row['totalPoints'] : null;
 
-            $cellsByUser[$userKey][$matchKey] = new MatrixCell(
-                homeScore: (int) $row['homeScore'],
-                awayScore: (int) $row['awayScore'],
-                points: $points,
-            );
+            $deadline = $deadlineByMatchKey[$matchKey] ?? null;
+            $isHidden = $query->applyHiding
+                && $userKey !== $requestingUserKey
+                && null !== $deadline
+                && $now < $deadline;
+
+            $cellsByUser[$userKey][$matchKey] = $isHidden
+                ? MatrixCell::hidden()
+                : new MatrixCell(
+                    homeScore: (int) $row['homeScore'],
+                    awayScore: (int) $row['awayScore'],
+                    points: $points,
+                );
 
             if (null !== $points) {
                 $pointsByMatch[$matchKey][] = $points;

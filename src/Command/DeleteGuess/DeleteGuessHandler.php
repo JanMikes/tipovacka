@@ -7,6 +7,7 @@ namespace App\Command\DeleteGuess;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessNotFound;
 use App\Repository\GuessRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -15,6 +16,7 @@ final readonly class DeleteGuessHandler
 {
     public function __construct(
         private GuessRepository $guessRepository,
+        private EffectiveTipDeadlineResolver $deadlineResolver,
         private ClockInterface $clock,
     ) {
     }
@@ -32,8 +34,9 @@ final readonly class DeleteGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $deadline = $this->deadlineResolver->resolve($guess->group, $guess->sportMatch);
 
-        if (!$guess->sportMatch->isOpenForGuesses || $now >= $guess->sportMatch->kickoffAt) {
+        if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();
         }
 

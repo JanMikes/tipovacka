@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Voter;
 
+use App\Entity\Group;
 use App\Entity\Guess;
+use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\UserRole;
+use App\Repository\GroupRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
+use App\Service\EffectiveTipDeadlineResolver;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
@@ -35,6 +40,9 @@ final class GuessVoter extends Voter
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly GroupRepository $groupRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -63,7 +71,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$subject->sportMatch->isOpenForGuesses) {
+            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
                 return false;
             }
 
@@ -77,7 +85,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$subject->sportMatch->isOpenForGuesses) {
+            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
                 return false;
             }
 
@@ -99,7 +107,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$subject->sportMatch->isOpenForGuesses) {
+            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
                 return false;
             }
 
@@ -125,11 +133,13 @@ final class GuessVoter extends Voter
         }
 
         // SUBMIT: the match must belong to the same tournament as the group,
-        // must still be open for guesses, and the user must not already have
-        // an active guess for this (user, match, group) triple.
+        // must still be open for guesses, must be before the effective deadline
+        // (per-match override → group default → kickoff), and the user must not
+        // already have an active guess for this (user, match, group) triple.
         $sportMatch = $subject->sportMatch;
+        $group = $this->groupRepository->get($subject->groupId);
 
-        if (!$sportMatch->isOpenForGuesses) {
+        if (!$this->isWithinDeadline($group, $sportMatch)) {
             return false;
         }
 
@@ -140,6 +150,18 @@ final class GuessVoter extends Voter
         );
 
         return null === $existing;
+    }
+
+    private function isWithinDeadline(Group $group, SportMatch $sportMatch): bool
+    {
+        if (!$sportMatch->isOpenForGuesses) {
+            return false;
+        }
+
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $deadline = $this->deadlineResolver->resolve($group, $sportMatch);
+
+        return $now < $deadline;
     }
 
     private function isGroupManager(User $currentUser, \Symfony\Component\Uid\Uuid $ownerId): bool

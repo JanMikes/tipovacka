@@ -12,11 +12,15 @@ use App\Entity\SportMatch;
 use App\Entity\Tournament;
 use App\Entity\User;
 use App\Enum\TournamentVisibility;
+use App\Repository\GroupMatchSettingRepository;
+use App\Repository\GroupRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\GuessVoter;
 use App\Voter\GuessVotingContext;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Uid\Uuid;
@@ -34,11 +38,15 @@ final class GuessVoterTest extends TestCase
     /** @var array<string, bool> */
     private array $existingGuessLookup = [];
 
+    /** @var array<string, Group> */
+    private array $groupLookup = [];
+
     protected function setUp(): void
     {
         $this->now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
         $this->membershipLookup = [];
         $this->existingGuessLookup = [];
+        $this->groupLookup = [];
 
         $memberRepo = $this->createStub(MembershipRepository::class);
         $memberRepo->method('hasActiveMembership')
@@ -59,7 +67,31 @@ final class GuessVoterTest extends TestCase
                 return null;
             });
 
-        $this->voter = new GuessVoter($memberRepo, $guessRepo);
+        $groupRepo = $this->createStub(GroupRepository::class);
+        $groupRepo->method('get')
+            ->willReturnCallback(function (Uuid $id): Group {
+                $group = $this->groupLookup[$id->toRfc4122()] ?? null;
+                if (null === $group) {
+                    throw new \RuntimeException('Group not registered in test stub: '.$id->toRfc4122());
+                }
+
+                return $group;
+            });
+
+        $settingRepo = $this->createStub(GroupMatchSettingRepository::class);
+        $settingRepo->method('findByGroupAndMatch')->willReturn(null);
+        $settingRepo->method('findByGroupAndMatches')->willReturn([]);
+
+        $resolver = new EffectiveTipDeadlineResolver($settingRepo);
+
+        $clock = new MockClock($this->now);
+
+        $this->voter = new GuessVoter($memberRepo, $guessRepo, $groupRepo, $resolver, $clock);
+    }
+
+    private function registerGroup(Group $group): void
+    {
+        $this->groupLookup[$group->id->toRfc4122()] = $group;
     }
 
     private function makeDummyGuessForLookup(): Guess
@@ -137,6 +169,7 @@ final class GuessVoterTest extends TestCase
             createdAt: $this->now,
         );
         $group->popEvents();
+        $this->registerGroup($group);
 
         return $group;
     }
@@ -333,5 +366,44 @@ final class GuessVoterTest extends TestCase
         $guess->voidGuess($this->now);
 
         self::assertSame(-1, $this->voter->vote($this->token($owner), $guess, [GuessVoter::UPDATE]));
+    }
+
+    public function testOwnerCannotUpdateGuessAfterGroupDefaultDeadline(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $tournament = $this->makeTournament($owner);
+        $group = $this->makeGroup($owner, $tournament);
+        $match = $this->makeMatch($tournament);
+        // Group default deadline is in the past; match kickoff still in the future.
+        $group->updateDetails(
+            name: $group->name,
+            description: $group->description,
+            hideOthersTipsBeforeDeadline: false,
+            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00 UTC'),
+            now: $this->now,
+        );
+        $guess = $this->makeGuessOwnedBy($owner, $match, $group);
+
+        self::assertSame(-1, $this->voter->vote($this->token($owner), $guess, [GuessVoter::UPDATE]));
+    }
+
+    public function testMemberCannotSubmitAfterGroupDefaultDeadline(): void
+    {
+        $user = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $tournament = $this->makeTournament($user);
+        $group = $this->makeGroup($user, $tournament);
+        $match = $this->makeMatch($tournament);
+        $group->updateDetails(
+            name: $group->name,
+            description: $group->description,
+            hideOthersTipsBeforeDeadline: false,
+            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00 UTC'),
+            now: $this->now,
+        );
+        $this->markAsMember($user, $group);
+
+        $context = new GuessVotingContext($match, $group->id);
+
+        self::assertSame(-1, $this->voter->vote($this->token($user), $context, [GuessVoter::SUBMIT]));
     }
 }

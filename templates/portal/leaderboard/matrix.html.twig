@@ -115,14 +115,20 @@
                                 {% endif %}
                                 <td class="whitespace-nowrap border-b border-navy-100/70 px-2 py-2 text-center {{ highlight }}">
                                     {% if cell is not null %}
-                                        <div class="text-[11px] tabular-nums text-navy-900/60">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
-                                        <div class="mt-0.5 text-sm font-bold tabular-nums text-navy-900">
-                                            {% if cell.points is null %}
-                                                <span class="text-navy-900/30">—</span>
-                                            {% else %}
-                                                {{ cell.points }}
-                                            {% endif %}
-                                        </div>
+                                        {% if cell.hidden %}
+                                            <span class="inline-flex items-center justify-center text-navy-900/40" title="Tip skrytý do uzávěrky">
+                                                <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
+                                            </span>
+                                        {% else %}
+                                            <div class="text-[11px] tabular-nums text-navy-900/60">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
+                                            <div class="mt-0.5 text-sm font-bold tabular-nums text-navy-900">
+                                                {% if cell.points is null %}
+                                                    <span class="text-navy-900/30">—</span>
+                                                {% else %}
+                                                    {{ cell.points }}
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
                                     {% else %}
                                         <span class="text-navy-900/25">—</span>
                                     {% endif %}

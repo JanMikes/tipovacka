@@ -51,6 +51,8 @@ final class UpdateGroupController extends AbstractController
                 groupId: $group->id,
                 name: $formData->name,
                 description: $formData->description ?: null,
+                hideOthersTipsBeforeDeadline: $formData->hideOthersTipsBeforeDeadline,
+                tipsDeadline: $formData->tipsDeadline,
             ));
 
             $this->addFlash('success', 'Skupina byla uložena.');

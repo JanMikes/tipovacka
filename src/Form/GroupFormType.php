@@ -6,6 +6,7 @@ namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -46,6 +47,23 @@ final class GroupFormType extends AbstractType
         }
 
         $builder->add('withPin', CheckboxType::class, $withPinOptions);
+
+        $builder->add('hideOthersTipsBeforeDeadline', CheckboxType::class, [
+            'label' => 'Schovat tipy ostatních před uzávěrkou',
+            'required' => false,
+            'help' => 'Když je zapnuto, ostatní členové uvidí tvůj tip až po uzávěrce. Ty samozřejmě vždy vidíš svoje.',
+        ]);
+
+        $builder->add('tipsDeadline', DateTimeType::class, [
+            'label' => 'Uzávěrka všech tipů',
+            'required' => false,
+            'widget' => 'single_text',
+            'input' => 'datetime_immutable',
+            'html5' => false,
+            'with_seconds' => false,
+            'format' => 'yyyy-MM-dd HH:mm',
+            'help' => 'Uzávěrku lze nastavit i jednotlivě pro každý zápas. Pokud zde žádnou nezadáš a tipy ostatních jsou skryté, zveřejní se v okamžiku začátku zápasu.',
+        ]);
 
         if (true === $options['require_tournament_creation_pin']) {
             $builder->add('tournamentCreationPin', TextType::class, [

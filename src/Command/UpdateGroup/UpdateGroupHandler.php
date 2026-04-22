@@ -25,6 +25,8 @@ final readonly class UpdateGroupHandler
         $group->updateDetails(
             name: $command->name,
             description: $command->description,
+            hideOthersTipsBeforeDeadline: $command->hideOthersTipsBeforeDeadline,
+            tipsDeadline: $command->tipsDeadline,
             now: $now,
         );
     }

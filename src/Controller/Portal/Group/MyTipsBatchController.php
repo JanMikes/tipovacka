@@ -17,6 +17,7 @@ use App\Exception\NotAMember;
 use App\Repository\GroupRepository;
 use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\GroupVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -40,6 +41,7 @@ final class MyTipsBatchController extends AbstractController
         private readonly GroupRepository $groupRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly MessageBusInterface $commandBus,
         private readonly ClockInterface $clock,
     ) {
@@ -59,7 +61,7 @@ final class MyTipsBatchController extends AbstractController
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
-        $rows = $this->buildRows($group->id, $group->tournament->id, $user->id, $now);
+        $rows = $this->buildRows($group, $user->id, $now);
 
         return $this->render('portal/group/my_tips_batch.html.twig', [
             'group' => $group,
@@ -215,27 +217,35 @@ final class MyTipsBatchController extends AbstractController
     /**
      * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null}>
      */
-    private function buildRows(Uuid $groupId, Uuid $tournamentId, Uuid $userId, \DateTimeImmutable $now): array
+    private function buildRows(\App\Entity\Group $group, Uuid $userId, \DateTimeImmutable $now): array
     {
         $allMatches = $this->sportMatchRepository->listByTournament(
-            $tournamentId,
+            $group->tournament->id,
             SportMatchState::Scheduled,
             $now,
         );
-        $openMatches = array_values(array_filter(
+        $candidateMatches = array_values(array_filter(
             $allMatches,
             static fn ($m) => $m->isOpenForGuesses && $m->kickoffAt > $now,
         ));
 
+        $deadlines = $this->deadlineResolver->resolveMany($group, $candidateMatches);
+
         $rows = [];
 
-        foreach ($openMatches as $sportMatch) {
+        foreach ($candidateMatches as $sportMatch) {
+            $deadline = $deadlines[$sportMatch->id->toRfc4122()];
+
+            if ($deadline <= $now) {
+                continue;
+            }
+
             $rows[] = [
                 'match' => $sportMatch,
                 'guess' => $this->guessRepository->findActiveByUserMatchGroup(
                     $userId,
                     $sportMatch->id,
-                    $groupId,
+                    $group->id,
                 ),
             ];
         }

@@ -42,6 +42,12 @@ class Group implements EntityWithEvents, SoftDeletable
     public private(set) ?string $shareableLinkToken;
 
     #[ORM\Column]
+    public private(set) bool $hideOthersTipsBeforeDeadline = false;
+
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $tipsDeadline = null;
+
+    #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
     public bool $isNotDeleted {
@@ -80,10 +86,17 @@ class Group implements EntityWithEvents, SoftDeletable
         ));
     }
 
-    public function updateDetails(string $name, ?string $description, \DateTimeImmutable $now): void
-    {
+    public function updateDetails(
+        string $name,
+        ?string $description,
+        bool $hideOthersTipsBeforeDeadline,
+        ?\DateTimeImmutable $tipsDeadline,
+        \DateTimeImmutable $now,
+    ): void {
         $this->name = $name;
         $this->description = $description;
+        $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
+        $this->tipsDeadline = $tipsDeadline;
         $this->updatedAt = $now;
 
         $this->recordThat(new GroupUpdated(

@@ -16,6 +16,7 @@ final readonly class GetGuessesForMatchInGroup implements QueryMessage
         public Uuid $groupId,
         public Uuid $sportMatchId,
         public Uuid $viewerId,
+        public bool $applyHiding = false,
     ) {
     }
 }

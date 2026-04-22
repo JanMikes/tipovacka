@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Leaderboard;
 
+use App\Entity\User;
 use App\Query\GetGroupGuessMatrix\GetGroupGuessMatrix;
 use App\Query\QueryBus;
 use App\Repository\GroupRepository;
+use App\Voter\GroupVoter;
 use App\Voter\LeaderboardVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,10 +31,20 @@ final class GuessMatrixController extends AbstractController
 
     public function __invoke(string $groupId): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
         $group = $this->groupRepository->get(Uuid::fromString($groupId));
         $this->denyAccessUnlessGranted(LeaderboardVoter::VIEW, $group);
 
-        $matrix = $this->queryBus->handle(new GetGroupGuessMatrix(groupId: $group->id));
+        $applyHiding = $group->hideOthersTipsBeforeDeadline
+            && !$this->isGranted(GroupVoter::MANAGE_MEMBERS, $group);
+
+        $matrix = $this->queryBus->handle(new GetGroupGuessMatrix(
+            groupId: $group->id,
+            requestingUserId: $user->id,
+            applyHiding: $applyHiding,
+        ));
 
         return $this->render('portal/leaderboard/matrix.html.twig', [
             'group' => $group,

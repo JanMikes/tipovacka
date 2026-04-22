@@ -13,6 +13,8 @@ final readonly class UpdateGroupCommand
         public Uuid $groupId,
         public string $name,
         public ?string $description,
+        public bool $hideOthersTipsBeforeDeadline,
+        public ?\DateTimeImmutable $tipsDeadline,
     ) {
     }
 }

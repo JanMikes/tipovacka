@@ -14,6 +14,7 @@ use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -27,6 +28,7 @@ final readonly class SubmitGuessHandler
         private GroupRepository $groupRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
+        private EffectiveTipDeadlineResolver $deadlineResolver,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -51,8 +53,9 @@ final readonly class SubmitGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $deadline = $this->deadlineResolver->resolve($group, $sportMatch);
 
-        if (!$sportMatch->isOpenForGuesses || $now >= $sportMatch->kickoffAt) {
+        if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();
         }
 

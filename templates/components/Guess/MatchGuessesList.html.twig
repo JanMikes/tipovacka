@@ -23,9 +23,16 @@
                             {% if item.isMine %}<span class="ml-1 text-xs text-navy-900/60">(ty)</span>{% endif %}
                         </td>
                         <td class="py-2 text-center">
-                            <span class="rounded-md bg-navy-50 px-2 py-0.5 font-bold tabular-nums text-navy-900">
-                                {{ item.homeScore }} : {{ item.awayScore }}
-                            </span>
+                            {% if item.hidden %}
+                                <span class="inline-flex items-center gap-1 rounded-md bg-navy-50 px-2 py-0.5 text-xs text-navy-900/60">
+                                    <twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" />
+                                    skryto
+                                </span>
+                            {% else %}
+                                <span class="rounded-md bg-navy-50 px-2 py-0.5 font-bold tabular-nums text-navy-900">
+                                    {{ item.homeScore }} : {{ item.awayScore }}
+                                </span>
+                            {% endif %}
                         </td>
                         <td class="py-2 text-right text-xs text-navy-900/60">
                             {{ item.submittedAt|date('d. m. Y H:i') }}

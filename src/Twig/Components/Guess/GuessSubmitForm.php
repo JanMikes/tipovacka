@@ -10,7 +10,9 @@ use App\Command\UpdateGuess\UpdateGuessCommand;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Repository\GroupRepository;
 use App\Repository\GuessRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -58,6 +60,8 @@ final class GuessSubmitForm
     public function __construct(
         private readonly Security $security,
         private readonly GuessRepository $guessRepository,
+        private readonly GroupRepository $groupRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
@@ -86,8 +90,10 @@ final class GuessSubmitForm
             }
 
             $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+            $group = $this->groupRepository->get(Uuid::fromString($this->groupId));
+            $deadline = $this->deadlineResolver->resolve($group, $this->sportMatch);
 
-            return $now >= $this->sportMatch->kickoffAt;
+            return $now >= $deadline;
         }
     }
 
