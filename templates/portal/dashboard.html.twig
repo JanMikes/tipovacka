@@ -6,16 +6,10 @@
 <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     {# Page header #}
-    <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-            <p class="text-sm font-medium uppercase tracking-wider text-navy-900/50">Nástěnka</p>
-            <h1 class="mt-1 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">Vítej, {{ app.user.nickname }}</h1>
-            <p class="mt-2 max-w-xl text-navy-900/70">Tvoje skupiny, nadcházející zápasy a turnaje na jednom místě.</p>
-        </div>
-        <a href="{{ path('portal_tournament_create') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
-            <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
-            Vytvořit turnaj
-        </a>
+    <header class="mb-8">
+        <p class="text-sm font-medium uppercase tracking-wider text-navy-900/50">Nástěnka</p>
+        <h1 class="mt-1 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">Vítej, {{ app.user.nickname }}</h1>
+        <p class="mt-2 max-w-xl text-navy-900/70">Tvoje skupiny, nadcházející zápasy a turnaje na jednom místě.</p>
     </header>
 
     {# Primary CTA: join a group by PIN. Collapse when user already has groups — the
@@ -91,11 +85,9 @@
                 <twig:EmptyState
                     illustration="tournaments"
                     title="Ještě nehraješ v žádném turnaji"
-                    body="Založ si vlastní turnaj se skupinou, nebo se přidej k veřejnému."
-                    ctaLabel="Vytvořit turnaj"
-                    ctaPath="{{ path('portal_tournament_create') }}"
-                    secondaryLabel="Procházet turnaje"
-                    secondaryPath="{{ path('public_tournaments_list') }}"
+                    body="Projdi nabídku turnajů — přidej se k veřejnému, nebo si založ vlastní soukromý."
+                    ctaLabel="Procházet turnaje"
+                    ctaPath="{{ path('public_tournaments_list') }}"
                 />
             </div>
         {% else %}

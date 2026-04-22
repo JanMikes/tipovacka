@@ -6,6 +6,7 @@ namespace App\Controller\Public;
 
 use App\Entity\User;
 use App\Query\ListActivePublicTournaments\ListActivePublicTournaments;
+use App\Query\ListMyAccessiblePrivateTournaments\ListMyAccessiblePrivateTournaments;
 use App\Query\ListMyGroups\ListMyGroups;
 use App\Query\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,16 +23,19 @@ final class PublicTournamentsListController extends AbstractController
 
     public function __invoke(): Response
     {
-        $tournaments = $this->queryBus->handle(new ListActivePublicTournaments());
+        $publicTournaments = $this->queryBus->handle(new ListActivePublicTournaments());
 
         $user = $this->getUser();
         $userHasGroups = false;
+        $privateTournaments = [];
         if ($user instanceof User && $user->isVerified) {
             $userHasGroups = [] !== $this->queryBus->handle(new ListMyGroups(userId: $user->id));
+            $privateTournaments = $this->queryBus->handle(new ListMyAccessiblePrivateTournaments(userId: $user->id));
         }
 
         return $this->render('public/tournaments_list.html.twig', [
-            'tournaments' => $tournaments,
+            'public_tournaments' => $publicTournaments,
+            'private_tournaments' => $privateTournaments,
             'user_has_groups' => $userHasGroups,
         ]);
     }
