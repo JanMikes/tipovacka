@@ -272,4 +272,41 @@ final class TournamentVoterTest extends TestCase
 
         self::assertSame(-1, $result);
     }
+
+    public function testMemberCanCreateGroupInPrivateTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::NON_OWNER_ID);
+        $member->markAsVerified($this->now);
+        $tournament = $this->makeTournament(TournamentVisibility::Private, $owner);
+        $this->markAsMember($member, $tournament);
+
+        $result = $this->voter->vote($this->token($member), $tournament, [TournamentVoter::CREATE_GROUP]);
+
+        self::assertSame(1, $result);
+    }
+
+    public function testNonMemberCannotCreateGroupInPrivateTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $stranger = $this->makeUser(self::NON_OWNER_ID);
+        $stranger->markAsVerified($this->now);
+        $tournament = $this->makeTournament(TournamentVisibility::Private, $owner);
+
+        $result = $this->voter->vote($this->token($stranger), $tournament, [TournamentVoter::CREATE_GROUP]);
+
+        self::assertSame(-1, $result);
+    }
+
+    public function testVerifiedUserCanCreateGroupInPublicTournament(): void
+    {
+        $owner = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
+        $user = $this->makeUser(self::NON_OWNER_ID);
+        $user->markAsVerified($this->now);
+        $tournament = $this->makeTournament(TournamentVisibility::Public, $owner);
+
+        $result = $this->voter->vote($this->token($user), $tournament, [TournamentVoter::CREATE_GROUP]);
+
+        self::assertSame(1, $result);
+    }
 }

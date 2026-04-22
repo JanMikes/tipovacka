@@ -83,4 +83,22 @@ final class DashboardFlowTest extends WebTestCase
         // but NOT in "Objevte další turnaje".
         self::assertSelectorTextContains('body', AppFixtures::PUBLIC_GROUP_NAME);
     }
+
+    public function testUserSeesOwnedTournamentInMojeTurnaje(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $client->request('GET', '/nastenka');
+
+        self::assertResponseIsSuccessful();
+        // The verified user owns PRIVATE_TOURNAMENT — it must be reachable from
+        // the dashboard regardless of group membership.
+        self::assertSelectorTextContains('body', 'Moje turnaje');
+        self::assertSelectorTextContains('body', AppFixtures::PRIVATE_TOURNAMENT_NAME);
+    }
 }

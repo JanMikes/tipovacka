@@ -78,8 +78,10 @@ final class ListDiscoverablePublicTournamentsQueryTest extends IntegrationTestCa
         self::assertCount(0, $result);
     }
 
-    public function testIncludesAgainAfterMemberLeaves(): void
+    public function testExcludesTournamentsOwnedByUser(): void
     {
+        // Admin owns PUBLIC_TOURNAMENT — they should never see it in Discover,
+        // even if they had no membership at all.
         $em = $this->entityManager();
         $membership = $em->find(Membership::class, Uuid::fromString(AppFixtures::PUBLIC_GROUP_OWNER_MEMBERSHIP_ID));
         self::assertNotNull($membership);
@@ -91,6 +93,10 @@ final class ListDiscoverablePublicTournamentsQueryTest extends IntegrationTestCa
         ));
 
         $ids = array_map(static fn ($item) => $item->tournamentId->toRfc4122(), $result);
-        self::assertContains(AppFixtures::PUBLIC_TOURNAMENT_ID, $ids);
+        self::assertNotContains(
+            AppFixtures::PUBLIC_TOURNAMENT_ID,
+            $ids,
+            'Tournaments owned by the user must not appear in Discover.',
+        );
     }
 }

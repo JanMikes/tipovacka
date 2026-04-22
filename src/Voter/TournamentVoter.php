@@ -55,7 +55,12 @@ final class TournamentVoter extends Voter
             self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH => $isAdmin || ($isOwner && $subject->isActive),
             self::CREATE_GROUP => $currentUser->isVerified
                 && $subject->isActive
-                && ($isAdmin || $isOwner || $subject->isPublic),
+                && (
+                    $isAdmin
+                    || $isOwner
+                    || $subject->isPublic
+                    || $this->membershipRepository->hasActiveMembershipInTournament($currentUser->id, $subject->id)
+                ),
         };
     }
 }

@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Query\ListMyPrivateTournaments;
+namespace App\Query\ListMyOwnedTournaments;
 
 use App\Entity\Tournament;
-use App\Enum\TournamentVisibility;
 use App\Query\ListActivePublicTournaments\TournamentListItem;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
-final readonly class ListMyPrivateTournamentsQuery
+final readonly class ListMyOwnedTournamentsQuery
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -21,7 +20,7 @@ final readonly class ListMyPrivateTournamentsQuery
     /**
      * @return list<TournamentListItem>
      */
-    public function __invoke(ListMyPrivateTournaments $query): array
+    public function __invoke(ListMyOwnedTournaments $query): array
     {
         /** @var Tournament[] $tournaments */
         $tournaments = $this->entityManager->createQueryBuilder()
@@ -29,10 +28,8 @@ final readonly class ListMyPrivateTournamentsQuery
             ->from(Tournament::class, 't')
             ->innerJoin('t.owner', 'o')
             ->where('t.owner = :ownerId')
-            ->andWhere('t.visibility = :visibility')
             ->andWhere('t.deletedAt IS NULL')
             ->setParameter('ownerId', $query->ownerId)
-            ->setParameter('visibility', TournamentVisibility::Private)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')
             ->getQuery()

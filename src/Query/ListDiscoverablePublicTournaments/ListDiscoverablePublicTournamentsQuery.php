@@ -42,6 +42,7 @@ final readonly class ListDiscoverablePublicTournamentsQuery
             ->where('t.visibility = :visibility')
             ->andWhere('t.finishedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
+            ->andWhere('t.owner != :userId')
             ->andWhere(sprintf('t.id NOT IN (%s)', $membershipSubquery))
             ->setParameter('visibility', TournamentVisibility::Public)
             ->setParameter('userId', $query->userId)
