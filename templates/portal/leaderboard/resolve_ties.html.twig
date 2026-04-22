@@ -4,11 +4,15 @@
 
 {% block body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: 'Žebříček', path: path('portal_group_leaderboard', {groupId: group.id.toRfc4122})},
+        {label: 'Rozřazení shod'},
+    ]" />
+
     <div class="mb-6">
-        <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="text-sm text-cyan-500 hover:underline">
-            ← Zpět na žebříček
-        </a>
-        <h1 class="text-3xl font-bold text-navy-900 mt-2">Rozřazení shod</h1>
+        <h1 class="text-3xl font-bold text-navy-900">Rozřazení shod</h1>
         <p class="text-navy-900/60">Seřaďte hráče se stejnými body do požadovaného pořadí.</p>
     </div>
 

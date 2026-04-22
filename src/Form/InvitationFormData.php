@@ -81,5 +81,13 @@ final class InvitationFormData
     )]
     public string $lastName = '';
 
+    #[Assert\When(
+        expression: 'this.userKind in ["new", "stub"]',
+        constraints: [
+            new Assert\IsTrue(message: 'Pro pokračování je potřeba souhlasit se zpracováním osobních údajů.'),
+        ],
+    )]
+    public bool $gdprConsent = false;
+
     public string $userKind = self::KIND_NEW;
 }

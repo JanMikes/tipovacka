@@ -5,15 +5,12 @@
 {% block body %}
 <div class="mx-auto w-full max-w-[min(100vw-2rem,120rem)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
-    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
-        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <a href="{{ path('portal_group_leaderboard', {groupId: group.id.toRfc4122}) }}" class="hover:text-cyan-600">Žebříček</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <span class="text-navy-900/80">Tabulka</span>
-    </nav>
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: 'Žebříček', path: path('portal_group_leaderboard', {groupId: group.id.toRfc4122})},
+        {label: 'Tabulka'},
+    ]" />
 
     <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -94,8 +91,9 @@
                                 <div class="flex min-w-[132px] items-center gap-2 sm:min-w-[200px] sm:gap-3">
                                     <span class="w-4 text-right text-xs font-semibold tabular-nums text-navy-900/50 sm:w-6">{{ member.rank }}.</span>
                                     <a href="{{ path('portal_group_leaderboard_member', {groupId: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}"
-                                       class="flex-1 truncate font-semibold text-navy-900 hover:text-cyan-600 hover:underline">
-                                        {{ member.nickname }}
+                                       class="min-w-0 flex-1 font-semibold text-navy-900 hover:text-cyan-600 hover:underline">
+                                        <span class="block truncate">{{ member.nickname }}</span>
+                                        {% if member.fullName %}<small class="block truncate text-xs font-normal text-navy-900/60">{{ member.fullName }}</small>{% endif %}
                                     </a>
                                     <span class="tabular-nums font-bold text-navy-900">{{ member.totalPoints }}</span>
                                 </div>

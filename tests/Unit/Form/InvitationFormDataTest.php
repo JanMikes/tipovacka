@@ -79,6 +79,7 @@ final class InvitationFormDataTest extends TestCase
         $data->nickname = 'jan_n';
         $data->firstName = 'Jan';
         $data->lastName = 'Novák';
+        $data->gdprConsent = true;
 
         $violations = $this->validator->validate($data);
 
@@ -145,6 +146,7 @@ final class InvitationFormDataTest extends TestCase
         $data->email = 'jan@example.com';
         $data->password = 'Securepassword1';
         $data->passwordConfirm = 'Securepassword1';
+        $data->gdprConsent = true;
 
         $violations = $this->validator->validate($data);
 
@@ -192,6 +194,7 @@ final class InvitationFormDataTest extends TestCase
         $data->nickname = 'has space';
         $data->firstName = 'Jan';
         $data->lastName = 'Novák';
+        $data->gdprConsent = true;
 
         $violations = $this->validator->validate($data);
 
@@ -200,6 +203,57 @@ final class InvitationFormDataTest extends TestCase
             'nickname',
             'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
         );
+    }
+
+    public function testNewKindRequiresGdprConsent(): void
+    {
+        $data = new InvitationFormData();
+        $data->userKind = InvitationFormData::KIND_NEW;
+        $data->email = 'jan@example.com';
+        $data->password = 'Securepassword1';
+        $data->passwordConfirm = 'Securepassword1';
+        $data->firstName = 'Jan';
+        $data->lastName = 'Novák';
+        $data->gdprConsent = false;
+
+        $violations = $this->validator->validate($data);
+
+        $this->assertHasViolation(
+            $violations,
+            'gdprConsent',
+            'Pro pokračování je potřeba souhlasit se zpracováním osobních údajů.',
+        );
+    }
+
+    public function testStubKindRequiresGdprConsent(): void
+    {
+        $data = new InvitationFormData();
+        $data->userKind = InvitationFormData::KIND_STUB;
+        $data->email = 'jan@example.com';
+        $data->password = 'Securepassword1';
+        $data->passwordConfirm = 'Securepassword1';
+        $data->gdprConsent = false;
+
+        $violations = $this->validator->validate($data);
+
+        $this->assertHasViolation(
+            $violations,
+            'gdprConsent',
+            'Pro pokračování je potřeba souhlasit se zpracováním osobních údajů.',
+        );
+    }
+
+    public function testHasPasswordKindDoesNotRequireGdprConsent(): void
+    {
+        $data = new InvitationFormData();
+        $data->userKind = InvitationFormData::KIND_HAS_PASSWORD;
+        $data->email = 'jan@example.com';
+        $data->password = 'whatever-existing-password';
+        $data->gdprConsent = false;
+
+        $violations = $this->validator->validate($data);
+
+        self::assertCount(0, $violations, sprintf('Unexpected violations: %s', (string) $violations));
     }
 
     private function assertHasViolation(

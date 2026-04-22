@@ -243,6 +243,7 @@ final class ShareableLinkLandingTest extends WebTestCase
                 'nickname' => 'newuser123',
                 'firstName' => 'Jan',
                 'lastName' => 'Novák',
+                'gdprConsent' => '1',
             ], $overrides),
         ];
     }

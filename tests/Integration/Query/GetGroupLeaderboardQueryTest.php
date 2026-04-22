@@ -27,10 +27,91 @@ final class GetGroupLeaderboardQueryTest extends IntegrationTestCase
 
         self::assertCount(1, $result->rows);
         self::assertSame(AppFixtures::ADMIN_NICKNAME, $result->rows[0]->nickname);
+        self::assertNull($result->rows[0]->fullName, 'Admin has no fullName set, so subtitle stays null.');
         self::assertSame(3, $result->rows[0]->totalPoints);
         self::assertSame(1, $result->rows[0]->rank);
         self::assertFalse($result->rows[0]->isTieResolvedOverride);
         self::assertFalse($result->tournamentFinished);
+    }
+
+    public function testFullNameSubtitleIsSetWhenUserHasBothNicknameAndFullName(): void
+    {
+        $em = $this->entityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($verified);
+        $verified->updateProfile(firstName: 'Jan', lastName: 'Tipař', phone: null, now: $now);
+
+        $publicGroup = $em->find(Group::class, Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID));
+        self::assertNotNull($publicGroup);
+
+        $membership = new Membership(
+            id: Uuid::v7(),
+            group: $publicGroup,
+            user: $verified,
+            joinedAt: $now,
+        );
+        $membership->popEvents();
+        $em->persist($membership);
+        $em->flush();
+
+        $result = $this->queryBus()->handle(new GetGroupLeaderboard(
+            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+        ));
+
+        $verifiedRow = null;
+        foreach ($result->rows as $row) {
+            if (AppFixtures::VERIFIED_USER_NICKNAME === $row->nickname) {
+                $verifiedRow = $row;
+            }
+        }
+
+        self::assertNotNull($verifiedRow);
+        self::assertSame('Jan Tipař', $verifiedRow->fullName);
+    }
+
+    public function testFullNameSubtitleIsNullWhenUserHasNoNickname(): void
+    {
+        $em = $this->entityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        // Anonymous fixture has firstName+lastName but no nickname — the row should
+        // display fullName as primary (no subtitle needed).
+        $anonymous = $em->find(User::class, Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID));
+        self::assertNotNull($anonymous);
+
+        $publicGroup = $em->find(Group::class, Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID));
+        self::assertNotNull($publicGroup);
+
+        $membership = new Membership(
+            id: Uuid::v7(),
+            group: $publicGroup,
+            user: $anonymous,
+            joinedAt: $now,
+        );
+        $membership->popEvents();
+        $em->persist($membership);
+        $em->flush();
+
+        $result = $this->queryBus()->handle(new GetGroupLeaderboard(
+            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+        ));
+
+        $anonymousRow = null;
+        foreach ($result->rows as $row) {
+            if ($row->userId->equals(Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID))) {
+                $anonymousRow = $row;
+            }
+        }
+
+        self::assertNotNull($anonymousRow);
+        self::assertSame(
+            AppFixtures::ANONYMOUS_USER_FIRST_NAME.' '.AppFixtures::ANONYMOUS_USER_LAST_NAME,
+            $anonymousRow->nickname,
+            'With no nickname, displayName falls back to fullName as the primary text.',
+        );
+        self::assertNull($anonymousRow->fullName, 'No subtitle when there is no separate nickname.');
     }
 
     public function testTwoTiedMembersShareRankOne(): void

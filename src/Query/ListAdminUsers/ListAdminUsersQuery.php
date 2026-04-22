@@ -50,6 +50,7 @@ final readonly class ListAdminUsersQuery
                 id: $u->id,
                 email: $u->email,
                 nickname: $u->nickname,
+                fullName: '' !== $u->fullName ? $u->fullName : null,
                 roles: array_values($u->getRoles()),
                 isVerified: $u->isVerified,
                 isActive: $u->isActive,

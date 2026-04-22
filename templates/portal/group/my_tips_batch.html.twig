@@ -4,10 +4,11 @@
 
 {% block body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32">
-    <div class="mb-6">
-        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
-           class="text-sm text-cyan-500 hover:underline">&larr; {{ group.name }}</a>
-    </div>
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: 'Moje tipy'},
+    ]" />
 
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-navy-900">Moje tipy</h1>

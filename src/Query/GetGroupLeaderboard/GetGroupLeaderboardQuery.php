@@ -51,10 +51,15 @@ final readonly class GetGroupLeaderboardQuery
         $baseRows = [];
 
         foreach ($memberships as $membership) {
-            $userKey = $membership->user->id->toRfc4122();
+            $user = $membership->user;
+            $userKey = $user->id->toRfc4122();
+            $hasNickname = null !== $user->nickname && '' !== $user->nickname;
+            $hasFullName = '' !== $user->fullName;
+
             $baseRows[] = [
-                'userId' => $membership->user->id,
-                'nickname' => $membership->user->displayName,
+                'userId' => $user->id,
+                'nickname' => $user->displayName,
+                'fullName' => ($hasNickname && $hasFullName) ? $user->fullName : null,
                 'points' => $pointsByUser[$userKey] ?? 0,
             ];
         }
@@ -79,6 +84,7 @@ final readonly class GetGroupLeaderboardQuery
             $rows[] = [
                 'userId' => $row['userId'],
                 'nickname' => $row['nickname'],
+                'fullName' => $row['fullName'],
                 'points' => $row['points'],
                 'rank' => $rank,
                 'index' => $index,
@@ -94,6 +100,7 @@ final readonly class GetGroupLeaderboardQuery
             $finalRows[] = new LeaderboardRow(
                 userId: $row['userId'],
                 nickname: $row['nickname'],
+                fullName: $row['fullName'],
                 totalPoints: $row['points'],
                 rank: null !== $override ? $override->rank : $row['rank'],
                 isTieResolvedOverride: null !== $override,

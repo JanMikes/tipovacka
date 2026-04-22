@@ -128,10 +128,15 @@ final readonly class GetGroupGuessMatrixQuery
         $baseRows = [];
 
         foreach ($memberships as $membership) {
-            $userKey = $membership->user->id->toRfc4122();
+            $user = $membership->user;
+            $userKey = $user->id->toRfc4122();
+            $hasNickname = null !== $user->nickname && '' !== $user->nickname;
+            $hasFullName = '' !== $user->fullName;
+
             $baseRows[] = [
-                'userId' => $membership->user->id,
-                'nickname' => $membership->user->displayName,
+                'userId' => $user->id,
+                'nickname' => $user->displayName,
+                'fullName' => ($hasNickname && $hasFullName) ? $user->fullName : null,
                 'total' => $totalByUser[$userKey] ?? 0,
                 'cells' => $cellsByUser[$userKey] ?? [],
             ];
@@ -157,6 +162,7 @@ final readonly class GetGroupGuessMatrixQuery
             $memberRows[] = new MatrixMemberRow(
                 userId: $row['userId'],
                 nickname: $row['nickname'],
+                fullName: $row['fullName'],
                 totalPoints: $row['total'],
                 rank: $rank,
                 cells: $row['cells'],

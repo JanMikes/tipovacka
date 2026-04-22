@@ -9,14 +9,27 @@ export default class extends Controller {
     };
 
     connect() {
+        const primary = (data) => data.nickname || data.text;
+        const subtitle = (data) => (data.fullName && data.nickname) ? data.fullName : '';
+
         const options = {
             allowEmptyOption: true,
             create: false,
             maxOptions: 200,
             searchField: ['text'],
+            dataAttr: 'data-data',
             placeholder: this.placeholderValue || undefined,
             render: {
                 no_results: () => `<div class="no-results">${this.noResultsTextValue}</div>`,
+                option: (data, escape) => {
+                    const sub = subtitle(data);
+                    const unverified = data.unverified ? ' <span class="text-xs text-gray-400">(neověřený)</span>' : '';
+                    return `<div class="py-1"><div>${escape(primary(data))}${unverified}</div>${sub ? `<small class="block text-xs text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                },
+                item: (data, escape) => {
+                    const sub = subtitle(data);
+                    return `<div>${escape(primary(data))}${sub ? ` <small class="text-xs text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                },
             },
         };
 

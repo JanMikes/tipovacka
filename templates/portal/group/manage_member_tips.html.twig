@@ -4,10 +4,11 @@
 
 {% block body %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32">
-    <div class="mb-6">
-        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
-           class="text-sm text-cyan-500 hover:underline">&larr; {{ group.name }}</a>
-    </div>
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: 'Správa tipů členů'},
+    ]" />
 
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-navy-900">Správa tipů členů</h1>
@@ -28,9 +29,16 @@
                 data-tom-select-no-results-text-value="Žádný tipující nenalezen">
             <option value=""></option>
             {% for member in members %}
+                {% set hasNickname = member.nickname is not null and member.nickname != '' %}
+                {% set hasFullName = member.fullName != '' %}
                 <option value="{{ member.id.toRfc4122 }}"
+                        data-data="{{ {
+                            nickname: hasNickname ? member.nickname : '',
+                            fullName: hasFullName ? member.fullName : '',
+                            unverified: not member.isVerified,
+                        }|json_encode }}"
                         {% if selectedMember and selectedMember.id.equals(member.id) %}selected{% endif %}>
-                    {{ member.displayName }}{% if not member.isVerified %} (neověřený){% endif %}
+                    {{ member.displayName }}{% if hasNickname and hasFullName %} {{ member.fullName }}{% endif %}{% if not member.isVerified %} (neověřený){% endif %}
                 </option>
             {% endfor %}
         </select>

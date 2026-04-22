@@ -15,6 +15,7 @@ final readonly class AdminUserItem
         public Uuid $id,
         public ?string $email,
         public ?string $nickname,
+        public ?string $fullName,
         public array $roles,
         public bool $isVerified,
         public bool $isActive,

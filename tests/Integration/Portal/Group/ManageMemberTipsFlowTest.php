@@ -83,6 +83,48 @@ final class ManageMemberTipsFlowTest extends WebTestCase
         self::assertSame(1, $guess->awayScore);
     }
 
+    public function testMemberOptionsCarryDataDataJson(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $owner->updateProfile(firstName: 'Jan', lastName: 'Tipař', phone: null, now: $now);
+        $em->flush();
+
+        $client->loginUser($owner);
+
+        $crawler = $client->request('GET', '/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID.'/spravovat-tipy');
+        self::assertResponseIsSuccessful();
+
+        $ownerOption = $crawler->filter('select[name="member"] option[value="'.AppFixtures::VERIFIED_USER_ID.'"]');
+        self::assertGreaterThan(0, $ownerOption->count());
+        $ownerData = json_decode((string) $ownerOption->attr('data-data'), true);
+        self::assertIsArray($ownerData);
+        self::assertSame(AppFixtures::VERIFIED_USER_NICKNAME, $ownerData['nickname']);
+        self::assertSame('Jan Tipař', $ownerData['fullName']);
+        self::assertFalse($ownerData['unverified']);
+
+        // Anonymous member: no nickname, has fullName.
+        $anonymousOption = $crawler->filter('select[name="member"] option[value="'.AppFixtures::ANONYMOUS_USER_ID.'"]');
+        self::assertGreaterThan(0, $anonymousOption->count());
+        $anonymousData = json_decode((string) $anonymousOption->attr('data-data'), true);
+        self::assertIsArray($anonymousData);
+        self::assertSame('', $anonymousData['nickname']);
+        self::assertSame(
+            AppFixtures::ANONYMOUS_USER_FIRST_NAME.' '.AppFixtures::ANONYMOUS_USER_LAST_NAME,
+            $anonymousData['fullName'],
+        );
+
+        // Option text remains searchable: includes both nickname and fullName for the owner.
+        $ownerText = trim($ownerOption->text());
+        self::assertStringContainsString(AppFixtures::VERIFIED_USER_NICKNAME, $ownerText);
+        self::assertStringContainsString('Jan Tipař', $ownerText);
+    }
+
     public function testNonOwnerGets403ForManagePage(): void
     {
         $client = static::createClient();

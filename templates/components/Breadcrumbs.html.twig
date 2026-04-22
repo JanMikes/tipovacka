@@ -1,0 +1,35 @@
+{# @var items array — ordered list of trail entries. Each entry: {label: string, path?: string}.
+   The LAST entry is the current page (no `path`, rendered as plain text).
+   The second-to-last entry is the "parent" — surfaced as a thumb-sized back link on mobile. #}
+
+{% props items %}
+
+{% set parent = items|length >= 2 ? items[items|length - 2] : null %}
+
+<nav aria-label="Breadcrumb" class="mb-4">
+    {# Mobile: single-line "← Parent label" back link, easy thumb target. #}
+    {% if parent %}
+        <a href="{{ parent.path }}"
+           class="group inline-flex max-w-full items-center gap-1.5 text-sm font-medium text-navy-900/70 transition-colors hover:text-cyan-600 sm:hidden"
+           aria-label="Zpět na {{ parent.label }}">
+            <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
+            <span class="truncate">{{ parent.label }}</span>
+        </a>
+    {% endif %}
+
+    {# Desktop / tablet: full trail with chevrons. #}
+    <ol class="hidden flex-wrap items-center gap-1.5 text-sm text-navy-900/60 sm:flex">
+        {% for item in items %}
+            <li class="flex min-w-0 items-center gap-1.5">
+                {% if not loop.first %}
+                    <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 shrink-0 text-navy-900/40" />
+                {% endif %}
+                {% if loop.last %}
+                    <span class="truncate text-navy-900/80" aria-current="page">{{ item.label }}</span>
+                {% else %}
+                    <a href="{{ item.path }}" class="truncate transition-colors hover:text-cyan-600">{{ item.label }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>

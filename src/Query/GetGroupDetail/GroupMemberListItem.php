@@ -11,6 +11,7 @@ final readonly class GroupMemberListItem
     public function __construct(
         public Uuid $userId,
         public string $displayName,
+        public ?string $fullName,
         public \DateTimeImmutable $joinedAt,
         public bool $isOwner,
         public bool $isAnonymous,

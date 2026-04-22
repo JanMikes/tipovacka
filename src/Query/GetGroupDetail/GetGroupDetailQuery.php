@@ -26,13 +26,20 @@ final readonly class GetGroupDetailQuery
         $canSeeSecrets = $query->viewerIsAdmin || $group->owner->id->equals($query->viewerId);
 
         $members = array_map(
-            static fn (Membership $m): GroupMemberListItem => new GroupMemberListItem(
-                userId: $m->user->id,
-                displayName: $m->user->displayName,
-                joinedAt: $m->joinedAt,
-                isOwner: $m->user->id->equals($m->group->owner->id),
-                isAnonymous: $m->user->isAnonymous,
-            ),
+            static function (Membership $m): GroupMemberListItem {
+                $user = $m->user;
+                $hasNickname = null !== $user->nickname && '' !== $user->nickname;
+                $hasFullName = '' !== $user->fullName;
+
+                return new GroupMemberListItem(
+                    userId: $user->id,
+                    displayName: $user->displayName,
+                    fullName: ($hasNickname && $hasFullName) ? $user->fullName : null,
+                    joinedAt: $m->joinedAt,
+                    isOwner: $user->id->equals($m->group->owner->id),
+                    isAnonymous: $user->isAnonymous,
+                );
+            },
             $memberships,
         );
 

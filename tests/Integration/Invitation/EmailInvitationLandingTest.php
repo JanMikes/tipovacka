@@ -220,6 +220,7 @@ final class EmailInvitationLandingTest extends WebTestCase
                     'email' => AppFixtures::PENDING_INVITATION_EMAIL,
                     'password' => 'Str0ngP4ssword!',
                     'passwordConfirm' => 'Str0ngP4ssword!',
+                    'gdprConsent' => '1',
                 ],
             ], 'submit')
             ->response();
@@ -328,6 +329,7 @@ final class EmailInvitationLandingTest extends WebTestCase
                 'nickname' => 'newuser123',
                 'firstName' => 'Jan',
                 'lastName' => 'Novák',
+                'gdprConsent' => '1',
             ], $overrides),
         ];
     }

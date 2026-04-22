@@ -3,8 +3,13 @@
 {% block title %}Smazat účet — Tipovačka{% endblock %}
 
 {% block body %}
-<div class="flex flex-1 items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-    <div class="w-full max-w-md">
+<div class="mx-auto w-full max-w-md px-4 py-12 sm:px-6 lg:px-8">
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: 'Profil', path: path('portal_profile_edit')},
+        {label: 'Smazat účet'},
+    ]" />
+    <div>
         <div class="rounded-2xl bg-white p-8 text-center shadow-card ring-1 ring-navy-900/5 sm:p-10">
             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
                 <twig:ux:icon name="lucide:triangle-alert" class="h-8 w-8" />

@@ -5,14 +5,11 @@
 {% block body %}
 <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
-    {# Breadcrumb #}
-    <nav class="mb-4 flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
-        <a href="{{ path('portal_dashboard') }}" class="hover:text-cyan-600">Nástěnka</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="truncate hover:text-cyan-600">{{ group.name }}</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <span class="text-navy-900/80">Žebříček</span>
-    </nav>
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: 'Žebříček'},
+    ]" />
 
     {% if group.tournament.isFinished and winner is defined and winner is not null %}
         <section class="mb-8 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-navy-900/10 shadow-card sm:p-10">

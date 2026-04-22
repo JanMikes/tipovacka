@@ -50,4 +50,7 @@ final class RegistrationFormData
         new Assert\Length(min: 8, minMessage: 'Heslo musí mít alespoň {{ limit }} znaků.'),
     ])]
     public ?string $password = null;
+
+    #[Assert\IsTrue(message: 'Pro pokračování je potřeba souhlasit se zpracováním osobních údajů.')]
+    public bool $gdprConsent = false;
 }

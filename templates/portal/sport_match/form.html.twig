@@ -4,6 +4,20 @@
 
 {% block body %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    {% if mode == 'create' %}
+        <twig:Breadcrumbs :items="[
+            {label: 'Nástěnka', path: path('portal_dashboard')},
+            {label: tournament.name, path: path('portal_tournament_detail', {id: tournament.id.toRfc4122})},
+            {label: 'Nový zápas'},
+        ]" />
+    {% else %}
+        <twig:Breadcrumbs :items="[
+            {label: 'Nástěnka', path: path('portal_dashboard')},
+            {label: tournament.name, path: path('portal_tournament_detail', {id: tournament.id.toRfc4122})},
+            {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
+            {label: 'Upravit zápas'},
+        ]" />
+    {% endif %}
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-navy-900">
             {{ mode == 'create' ? 'Nový zápas' : 'Upravit zápas' }}

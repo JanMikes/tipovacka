@@ -4,6 +4,12 @@
 
 {% block body %}
 <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
+        {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
+        {label: 'Výsledek'},
+    ]" />
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-navy-900">Výsledek zápasu</h1>
         <p class="text-navy-900/60 mt-1">{{ sport_match.homeTeam }} vs. {{ sport_match.awayTeam }}</p>

@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Query;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\Command\UpdateGroup\UpdateGroupCommand;
 use App\DataFixtures\AppFixtures;
+use App\Entity\User;
 use App\Query\GetGroupGuessMatrix\GetGroupGuessMatrix;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -102,6 +103,39 @@ final class GetGroupGuessMatrixQueryTest extends IntegrationTestCase
                 self::assertFalse($row->cells[$matchKey]->hidden);
             }
         }
+    }
+
+    public function testFullNameSubtitleBranches(): void
+    {
+        $em = $this->entityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($verified);
+        $verified->updateProfile(firstName: 'Jan', lastName: 'Tipař', phone: null, now: $now);
+        $em->flush();
+
+        $matrix = $this->queryBus()->handle(new GetGroupGuessMatrix(
+            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            requestingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            applyHiding: false,
+        ));
+
+        $byUser = [];
+        foreach ($matrix->members as $row) {
+            $byUser[$row->userId->toRfc4122()] = $row;
+        }
+
+        self::assertArrayHasKey(AppFixtures::VERIFIED_USER_ID, $byUser);
+        self::assertSame(AppFixtures::VERIFIED_USER_NICKNAME, $byUser[AppFixtures::VERIFIED_USER_ID]->nickname);
+        self::assertSame('Jan Tipař', $byUser[AppFixtures::VERIFIED_USER_ID]->fullName);
+
+        self::assertArrayHasKey(AppFixtures::ANONYMOUS_USER_ID, $byUser);
+        self::assertSame(
+            AppFixtures::ANONYMOUS_USER_FIRST_NAME.' '.AppFixtures::ANONYMOUS_USER_LAST_NAME,
+            $byUser[AppFixtures::ANONYMOUS_USER_ID]->nickname,
+        );
+        self::assertNull($byUser[AppFixtures::ANONYMOUS_USER_ID]->fullName);
     }
 
     private function seedTwoTipsOnPrivateScheduledMatch(): void

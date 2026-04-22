@@ -11,6 +11,7 @@ final readonly class LeaderboardRow
     public function __construct(
         public Uuid $userId,
         public string $nickname,
+        public ?string $fullName,
         public int $totalPoints,
         public int $rank,
         public bool $isTieResolvedOverride,

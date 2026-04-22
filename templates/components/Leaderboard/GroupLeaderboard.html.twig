@@ -38,6 +38,7 @@
                                 class="text-cyan-500 hover:underline"
                             >
                                 {{ row.nickname }}
+                                {% if row.fullName %}<br><small class="text-xs font-normal text-navy-900/60">{{ row.fullName }}</small>{% endif %}
                             </a>
                         </td>
                         <td class="py-2 text-right font-semibold">{{ row.totalPoints }}</td>

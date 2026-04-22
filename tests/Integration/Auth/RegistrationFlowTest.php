@@ -26,6 +26,8 @@ final class RegistrationFlowTest extends WebTestCase
         self::assertSelectorExists('input[name="registration_form[firstName]"]');
         self::assertSelectorExists('input[name="registration_form[lastName]"]');
         self::assertSelectorExists('input[name="registration_form[nickname]"]');
+        self::assertSelectorExists('input[name="registration_form[gdprConsent]"]');
+        self::assertSelectorExists('a[href="/ochrana-soukromi"]');
     }
 
     public function testSuccessfulRegistrationRedirectsToPending(): void
@@ -202,7 +204,44 @@ final class RegistrationFlowTest extends WebTestCase
                     'first' => 'Securepassword1',
                     'second' => 'Securepassword1',
                 ],
+                'gdprConsent' => '1',
             ], $overrides),
         ];
+    }
+
+    public function testMissingGdprConsentRejected(): void
+    {
+        static::createClient();
+
+        $component = $this->createLiveComponent('Auth:RegistrationForm');
+
+        $this->expectException(UnprocessableEntityHttpException::class);
+
+        $component->submitForm(
+            $this->validRegistrationFormValues(['gdprConsent' => '0']),
+            'register',
+        );
+    }
+
+    public function testGdprConsentValidatorMessage(): void
+    {
+        $client = static::createClient();
+        /** @var ValidatorInterface $validator */
+        $validator = $client->getContainer()->get('validator');
+
+        $data = new RegistrationFormData();
+        $data->email = 'available@example.com';
+        $data->firstName = 'Jan';
+        $data->lastName = 'Novák';
+        $data->nickname = 'available_nick';
+        $data->password = 'Securepassword1';
+        $data->gdprConsent = false;
+
+        $violations = $validator->validate($data);
+        self::assertTrue($this->hasViolation(
+            $violations,
+            'gdprConsent',
+            'Pro pokračování je potřeba souhlasit se zpracováním osobních údajů.',
+        ));
     }
 }

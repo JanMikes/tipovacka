@@ -88,6 +88,17 @@
             {{ form_errors(form.password) }}
         </div>
 
+        <div>
+            <label class="flex items-start gap-2 text-sm text-navy-900/80">
+                {{ form_widget(form.gdprConsent, {attr: {class: 'mt-0.5 h-4 w-4 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500'}}) }}
+                <span>
+                    Souhlasím se
+                    <a href="{{ path('app_privacy') }}" target="_blank" rel="noopener" class="text-cyan-600 hover:text-cyan-700 hover:underline">zpracováním osobních údajů</a>.
+                </span>
+            </label>
+            {{ form_errors(form.gdprConsent) }}
+        </div>
+
         <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
             Vytvořit účet
             <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />

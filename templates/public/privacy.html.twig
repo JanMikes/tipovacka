@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ochrana soukromí — Tipovačka{% endblock %}
+{% block meta_description %}Jaká data o tobě ukládáme, s kým je sdílíme (nikým) a jak je chráníme.{% endblock %}
+
+{% block body %}
+<div class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+
+    <nav class="flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
+        <a href="{{ path('app_home') }}" class="hover:text-cyan-600">Domů</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+        <span class="text-navy-900/80">Ochrana soukromí</span>
+    </nav>
+
+    <h1 class="mt-2 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">Ochrana soukromí</h1>
+    <p class="mt-3 max-w-xl text-navy-900/70">
+        Krátce a bez právničiny: co o tobě víme, proč to víme a jak to chráníme.
+    </p>
+
+    <div class="mt-10 space-y-8 text-navy-900/85 leading-relaxed">
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co o tobě víme a proč</h2>
+            <p class="mt-2">
+                Tvůj <strong>e-mail</strong> slouží k přihlášení a k zaslání pozvánek do skupin.
+                <strong>Jméno, příjmení a přezdívku</strong> ukazujeme ostatním ve skupině, ať vědí, kdo tipuje.
+                Ukládáme také <strong>tvé tipy</strong>, ať se dá spočítat tabulka.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co veřejně vidí ostatní</h2>
+            <p class="mt-2">
+                Jen tvé <strong>jméno, příjmení a přezdívku</strong>. <strong>E-mail nevidí nikdo</strong> kromě tebe — ani členové tvé skupiny, ani správce turnaje.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Komu data předáváme</h2>
+            <p class="mt-2">
+                <strong>Nikomu.</strong> Tvoje údaje nesdílíme s žádnou třetí stranou. Nepoužíváme reklamní ani analytické služby cizích firem, neprodáváme data, neposíláme je nikam „do cloudu navíc".
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Jak chráníme tvé heslo</h2>
+            <p class="mt-2">
+                Heslo ukládáme v <strong>zašifrované (hashované) podobě</strong>. Ani my sami ho z databáze nezjistíme. Když ho zapomeneš, prostě si nastavíš nové přes odkaz v e-mailu.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Jak chráníme databázi</h2>
+            <p class="mt-2">
+                Komunikace mezi tvým prohlížečem a aplikací běží přes <strong>HTTPS</strong>. Server je aktualizovaný, přístupy do databáze jsou omezené a zálohy jsou šifrované.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co můžeš kdykoli udělat</h2>
+            <p class="mt-2">
+                Kdykoli si <strong>smažeš účet</strong> v <em>Nastavení → Smazat účet</em>. Tvá data zmizí z aplikace a nezůstanou nikde „stranou".
+            </p>
+        </section>
+
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Kontakt</h2>
+            <p class="mt-2">
+                {# TODO: doplnit reálný kontakt #}
+                Máš otázku nebo chceš požádat o výpis či smazání dat? Napiš na <a href="mailto:kontakt@tipovacka.cz" class="text-cyan-600 hover:text-cyan-700 hover:underline">kontakt@tipovacka.cz</a>.
+            </p>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
