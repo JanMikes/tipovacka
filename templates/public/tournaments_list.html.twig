@@ -18,55 +18,7 @@
         <p class="mt-2 max-w-2xl text-navy-900/70">Vytvoř si vlastní soukromou ligu pro kamarády, nebo se přidej do některého z veřejných turnajů.</p>
     </header>
 
-    {# ───── Hero CTA: create your own private tournament ───── #}
-    {% set createHref = app.user ? path('portal_tournament_create') : path('app_register') %}
-    <section class="relative mb-10 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
-        <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute -left-10 -bottom-20 h-56 w-56 rounded-full bg-purple-500/15 blur-3xl"></div>
-
-        <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-            <div class="flex items-start gap-4">
-                <span class="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur sm:flex">
-                    <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-cyan-400" />
-                </span>
-                <div class="min-w-0">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-cyan-500/20 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
-                        <twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />
-                        Nové
-                    </span>
-                    <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Vytvoř si vlastní soukromý turnaj</h2>
-                    <p class="mt-2 max-w-xl text-sm text-white/75 sm:text-base">Nastav si vlastní pravidla a bodování, založ skupiny pro různé party a tipujte jen s lidmi, které chceš.</p>
-
-                    <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/70 sm:text-sm">
-                        <li class="inline-flex items-center gap-1.5">
-                            <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-cyan-400" />
-                            Přístup přes pozvánku nebo PIN
-                        </li>
-                        <li class="inline-flex items-center gap-1.5">
-                            <twig:ux:icon name="lucide:users" class="h-4 w-4 text-cyan-400" />
-                            Více skupin v jednom turnaji
-                        </li>
-                        <li class="inline-flex items-center gap-1.5">
-                            <twig:ux:icon name="lucide:shield-check" class="h-4 w-4 text-cyan-400" />
-                            Zdarma, bez závazků
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="flex md:flex-col md:items-stretch md:justify-center">
-                <a href="{{ createHref }}" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 sm:w-auto">
-                    <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
-                    {% if app.user %}Vytvořit turnaj{% else %}Začít zdarma{% endif %}
-                </a>
-                {% if app.user is null %}
-                    <p class="mt-2 text-center text-xs text-white/60 md:mt-3">Stačí krátká registrace.</p>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
-    {# PIN-join — compact below the hero for authenticated users #}
+    {# PIN-join — compact for authenticated users #}
     {% if app.user and app.user.isVerified %}
         <div class="mb-12">
             {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: user_has_groups|default(false) }) }}
@@ -229,6 +181,54 @@
                 {% endfor %}
             </ul>
         {% endif %}
+    </section>
+
+    {# ───── Hero CTA: create your own private tournament ───── #}
+    {% set createHref = app.user ? path('portal_tournament_create') : path('app_register') %}
+    <section class="relative mt-12 overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
+        <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute -left-10 -bottom-20 h-56 w-56 rounded-full bg-purple-500/15 blur-3xl"></div>
+
+        <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+            <div class="flex items-start gap-4">
+                <span class="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur sm:flex">
+                    <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-cyan-400" />
+                </span>
+                <div class="min-w-0">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-cyan-500/20 px-2.5 py-0.5 text-xs font-semibold text-cyan-300">
+                        <twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />
+                        Nové
+                    </span>
+                    <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Vytvoř si vlastní soukromý turnaj</h2>
+                    <p class="mt-2 max-w-xl text-sm text-white/75 sm:text-base">Nastav si vlastní pravidla a bodování, založ skupiny pro různé party a tipujte jen s lidmi, které chceš.</p>
+
+                    <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/70 sm:text-sm">
+                        <li class="inline-flex items-center gap-1.5">
+                            <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-cyan-400" />
+                            Přístup přes pozvánku nebo PIN
+                        </li>
+                        <li class="inline-flex items-center gap-1.5">
+                            <twig:ux:icon name="lucide:users" class="h-4 w-4 text-cyan-400" />
+                            Více skupin v jednom turnaji
+                        </li>
+                        <li class="inline-flex items-center gap-1.5">
+                            <twig:ux:icon name="lucide:shield-check" class="h-4 w-4 text-cyan-400" />
+                            Zdarma, bez závazků
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex md:flex-col md:items-stretch md:justify-center">
+                <a href="{{ createHref }}" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 sm:w-auto">
+                    <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
+                    {% if app.user %}Vytvořit turnaj{% else %}Začít zdarma{% endif %}
+                </a>
+                {% if app.user is null %}
+                    <p class="mt-2 text-center text-xs text-white/60 md:mt-3">Stačí krátká registrace.</p>
+                {% endif %}
+            </div>
+        </div>
     </section>
 </div>
 {% endblock %}
