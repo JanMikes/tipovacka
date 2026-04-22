@@ -217,10 +217,10 @@ final class RegistrationFlowTest extends WebTestCase
 
         $this->expectException(UnprocessableEntityHttpException::class);
 
-        $component->submitForm(
-            $this->validRegistrationFormValues(['gdprConsent' => '0']),
-            'register',
-        );
+        $values = $this->validRegistrationFormValues();
+        unset($values['registration_form']['gdprConsent']);
+
+        $component->submitForm($values, 'register');
     }
 
     public function testGdprConsentValidatorMessage(): void

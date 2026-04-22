@@ -68,6 +68,7 @@ final class BulkInvitationFlowTest extends WebTestCase
                 'email' => 'alice@example.com',
                 'password' => 'Str0ngP4ssword!',
                 'passwordConfirm' => 'Str0ngP4ssword!',
+                'gdprConsent' => '1',
             ],
         ], 'submit')->response();
 

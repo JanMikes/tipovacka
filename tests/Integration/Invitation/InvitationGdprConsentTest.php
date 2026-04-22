@@ -46,7 +46,6 @@ final class InvitationGdprConsentTest extends WebTestCase
                 'nickname' => 'fresh_consent',
                 'firstName' => 'Jan',
                 'lastName' => 'Novák',
-                'gdprConsent' => '0',
             ],
         ], 'submit');
     }
@@ -79,7 +78,6 @@ final class InvitationGdprConsentTest extends WebTestCase
                 'nickname' => 'invite_newbie',
                 'firstName' => 'Jan',
                 'lastName' => 'Novák',
-                'gdprConsent' => '0',
             ],
         ], 'submit');
     }
@@ -113,7 +111,6 @@ final class InvitationGdprConsentTest extends WebTestCase
                 'email' => AppFixtures::PENDING_INVITATION_EMAIL,
                 'password' => 'Str0ngP4ssword!',
                 'passwordConfirm' => 'Str0ngP4ssword!',
-                'gdprConsent' => '0',
             ],
         ], 'submit');
     }
