@@ -62,9 +62,9 @@ final class VerifyEmailController extends AbstractController
                 $user->email,
             );
         } catch (VerifyEmailExceptionInterface $e) {
-            // Log the specific failure type so we can tell URL-mangling (Invalid),
-            // expiry, and email-mismatch (Wrong) cases apart in production.
-            $this->logger->info('Email verification link rejected', [
+            // Log at error so Sentry picks it up — we want to spot URL-mangling
+            // (Invalid), expiry, and email-mismatch (Wrong) cases in production.
+            $this->logger->error('Email verification link rejected', [
                 'exception' => $e,
                 'userId' => $userId,
                 'reason' => $e::class,
