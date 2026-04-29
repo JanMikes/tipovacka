@@ -51,13 +51,6 @@ final readonly class InvitationAcceptanceService
      */
     public function handleAuthenticated(InvitationContext $context, User $currentUser): Response
     {
-        if (!$currentUser->isVerified) {
-            $this->rememberIntent($context);
-            $this->flash('warning', 'Nejprve si ověř svou e-mailovou adresu.');
-
-            return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
-        }
-
         if (InvitationKind::Email === $context->kind
             && null !== $context->presetEmail
             && (null === $currentUser->email || 0 !== strcasecmp($currentUser->email, $context->presetEmail))
@@ -67,6 +60,16 @@ final readonly class InvitationAcceptanceService
                 'context' => $context,
                 'current_user_email' => $currentUser->email,
             ]));
+        }
+
+        // Email-kind invitations targeted at the user's own address verify the account
+        // implicitly when accepted (see AcceptGroupInvitationHandler), so don't block
+        // unverified users at the gate. Shareable-link invitations carry no such proof.
+        if (!$currentUser->isVerified && InvitationKind::Email !== $context->kind) {
+            $this->rememberIntent($context);
+            $this->flash('warning', 'Nejprve si ověř svou e-mailovou adresu.');
+
+            return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
         }
 
         return $this->joinGroupAsUser($context, $currentUser);

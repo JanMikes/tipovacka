@@ -33,6 +33,15 @@ final readonly class AcceptGroupInvitationHandler
 
         $invitation->accept($user->id, $now);
 
+        // Receiving the invitation in the user's mailbox is itself proof of email
+        // ownership, so accepting one targeted at their address verifies the account.
+        if (!$user->isVerified
+            && null !== $user->email
+            && 0 === strcasecmp($user->email, $invitation->email)
+        ) {
+            $user->markAsVerified($now);
+        }
+
         if (!$this->membershipRepository->hasActiveMembership($user->id, $invitation->group->id)) {
             $membership = new Membership(
                 id: $this->identity->next(),

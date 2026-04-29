@@ -79,6 +79,71 @@ final class EmailVerificationFlowTest extends WebTestCase
         self::assertResponseRedirects('/prihlaseni');
     }
 
+    public function testTamperedSignatureShowsResendCta(): void
+    {
+        $client = static::createClient();
+        $signedUrl = $this->buildSignedVerificationUrl(
+            $client,
+            AppFixtures::UNVERIFIED_USER_ID,
+            AppFixtures::UNVERIFIED_USER_EMAIL,
+        );
+
+        $tampered = preg_replace('/(signature=)([^&]+)/', '$1zzzzzzzzzz', $signedUrl);
+        self::assertIsString($tampered);
+
+        $client->request('GET', $tampered);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Odkaz je neplatný');
+        // The "Vyžádat nový" CTA must show so the user has a recovery path.
+        self::assertSelectorExists('a[href="/overeni-ceka"]');
+    }
+
+    public function testVerificationLeavesNoStaleSessionForUnknownUserId(): void
+    {
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            '/overit-email?id=00000000-0000-7000-8000-000000000000&token=whatever&signature=whatever&expires=99999999999',
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Odkaz je neplatný');
+    }
+
+    public function testUnverifiedExistingUserLoggingInViaEmailInvitationGetsVerifiedAndJoined(): void
+    {
+        // Mirrors the "I clicked the invitation but it told me to verify email" scenario:
+        // an existing password account, still unverified, follows an email invitation
+        // addressed to its own mailbox. Receiving the invite proves email ownership,
+        // so we accept + auto-verify rather than gating on the verification link.
+        $client = static::createClient();
+        $em = $this->entityManager($client);
+
+        $unverified = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        self::assertNotNull($unverified);
+        self::assertFalse($unverified->isVerified);
+
+        // Repoint the existing pending invitation at the unverified user's email.
+        $em->getConnection()->executeStatement(
+            'UPDATE group_invitations SET email = :email WHERE id = :id',
+            ['email' => AppFixtures::UNVERIFIED_USER_EMAIL, 'id' => AppFixtures::PENDING_INVITATION_ID],
+        );
+        $em->clear();
+
+        $client->loginUser(
+            $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID))
+                ?? self::fail('User vanished'),
+        );
+        $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
+
+        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID);
+
+        $em->clear();
+        $reloaded = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        self::assertNotNull($reloaded);
+        self::assertTrue($reloaded->isVerified, 'Accepting an email invitation must verify the user.');
+    }
+
     private function buildSignedVerificationUrl(KernelBrowser $client, string $userId, string $email): string
     {
         /** @var VerifyEmailHelperInterface $helper */

@@ -7,6 +7,7 @@ namespace App\Controller\Auth;
 use App\Command\VerifyUserEmail\VerifyUserEmailCommand;
 use App\Exception\UserAlreadyVerified;
 use App\Repository\UserRepository;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +16,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
+use SymfonyCasts\Bundle\VerifyEmail\Exception\ExpiredSignatureException;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 use SymfonyCasts\Bundle\VerifyEmail\VerifyEmailHelperInterface;
 
@@ -26,6 +28,7 @@ final class VerifyEmailController extends AbstractController
         private readonly MessageBusInterface $commandBus,
         private readonly UserRepository $userRepository,
         private readonly Security $security,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -58,9 +61,21 @@ final class VerifyEmailController extends AbstractController
                 $userId,
                 $user->email,
             );
-        } catch (VerifyEmailExceptionInterface) {
+        } catch (VerifyEmailExceptionInterface $e) {
+            // Log the specific failure type so we can tell URL-mangling (Invalid),
+            // expiry, and email-mismatch (Wrong) cases apart in production.
+            $this->logger->info('Email verification link rejected', [
+                'exception' => $e,
+                'userId' => $userId,
+                'reason' => $e::class,
+            ]);
+
+            $errorMessage = $e instanceof ExpiredSignatureException
+                ? 'Tento ověřovací odkaz vypršel. Vyžádejte si prosím nový.'
+                : 'Ověřovací odkaz je poškozený nebo neplatný. Vyžádejte si prosím nový.';
+
             return $this->render('auth/verify_error.html.twig', [
-                'errorMessage' => 'Ověřovací odkaz je neplatný nebo vypršel. Vyžádejte si nový.',
+                'errorMessage' => $errorMessage,
                 'showResend' => true,
             ]);
         }
@@ -82,9 +97,27 @@ final class VerifyEmailController extends AbstractController
             throw $e;
         }
 
-        $this->security->login($user, firewallName: 'main');
+        // Reload to pick up the verified flag the handler just persisted; the security
+        // layer (UserChecker, LoginSubscriber, RequireVerifiedEmailSubscriber on the
+        // redirect target) reads `isVerified` and must see the post-commit state.
+        $verifiedUser = $this->userRepository->find(Uuid::fromString($userId));
+
+        if (null === $verifiedUser) {
+            $this->logger->error('Verified user vanished between command dispatch and login', [
+                'userId' => $userId,
+            ]);
+
+            $this->addFlash('info', 'E-mail byl ověřen. Přihlas se prosím znovu.');
+
+            return $this->redirectToRoute('app_login');
+        }
+
+        // Security::login() may return a response when a LoginSuccessEvent subscriber
+        // sets one (e.g. invitation/join intent handling). Honor it so we don't drop
+        // the post-login redirect target on the floor.
+        $loginResponse = $this->security->login($verifiedUser, firewallName: 'main');
         $this->addFlash('success', 'E-mail byl úspěšně ověřen. Jsi přihlášen(a).');
 
-        return $this->redirectToRoute('portal_dashboard');
+        return $loginResponse ?? $this->redirectToRoute('portal_dashboard');
     }
 }

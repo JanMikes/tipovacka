@@ -47,6 +47,76 @@ final class AcceptGroupInvitationHandlerTest extends IntegrationTestCase
         self::assertCount(1, $memberships);
     }
 
+    public function testAcceptVerifiesUserWhenInvitationEmailMatches(): void
+    {
+        $em = $this->entityManager();
+        /** @var UserPasswordHasherInterface $hasher */
+        $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $unverified = new User(
+            id: $this->identityProvider()->next(),
+            email: AppFixtures::PENDING_INVITATION_EMAIL,
+            password: null,
+            nickname: 'invitee_unverified',
+            createdAt: $now,
+        );
+        $unverified->changePassword($hasher->hashPassword($unverified, 'password'), $now);
+        $unverified->popEvents();
+        $em->persist($unverified);
+        $em->flush();
+
+        self::assertFalse($unverified->isVerified);
+
+        $this->commandBus()->dispatch(new AcceptGroupInvitationCommand(
+            userId: $unverified->id,
+            token: AppFixtures::PENDING_INVITATION_TOKEN,
+        ));
+
+        $em->clear();
+
+        $reloaded = $em->find(User::class, $unverified->id);
+        self::assertNotNull($reloaded);
+        self::assertTrue(
+            $reloaded->isVerified,
+            'Receiving the invitation in the user mailbox proves email ownership.',
+        );
+    }
+
+    public function testAcceptDoesNotVerifyWhenInvitationEmailMismatches(): void
+    {
+        $em = $this->entityManager();
+        /** @var UserPasswordHasherInterface $hasher */
+        $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+        $unverified = new User(
+            id: $this->identityProvider()->next(),
+            email: 'someone-else@tipovacka.test',
+            password: null,
+            nickname: 'invitee_other_email',
+            createdAt: $now,
+        );
+        $unverified->changePassword($hasher->hashPassword($unverified, 'password'), $now);
+        $unverified->popEvents();
+        $em->persist($unverified);
+        $em->flush();
+
+        $this->commandBus()->dispatch(new AcceptGroupInvitationCommand(
+            userId: $unverified->id,
+            token: AppFixtures::PENDING_INVITATION_TOKEN,
+        ));
+
+        $em->clear();
+
+        $reloaded = $em->find(User::class, $unverified->id);
+        self::assertNotNull($reloaded);
+        self::assertFalse(
+            $reloaded->isVerified,
+            'Verification must require the invitation email and the user email to match.',
+        );
+    }
+
     public function testAcceptAlreadyMemberDoesNotDuplicateMembership(): void
     {
         $em = $this->entityManager();

@@ -213,7 +213,9 @@ final class InvitationForm extends AbstractController
             return null;
         }
 
-        if (!$user->isVerified) {
+        // Email-kind invitations are addressed to a specific mailbox; accepting one
+        // verifies the account in the handler, so we don't need to gate login here.
+        if (!$user->isVerified && InvitationKind::Email !== $this->context->kind) {
             $this->acceptanceService->rememberIntent($this->context);
             $this->security->login($user);
             $this->acceptanceService->flash('warning', 'Nejprve si ověř svou e-mailovou adresu. Zkontroluj schránku.');
