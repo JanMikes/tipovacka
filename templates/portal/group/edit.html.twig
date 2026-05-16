@@ -29,6 +29,19 @@
                 {{ form_errors(form.description) }}
             </div>
 
+            <div>
+                <label class="flex items-start gap-3 {{ form.withPin.vars.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer' }}">
+                    {{ form_widget(form.withPin, {attr: {class: 'mt-0.5 h-5 w-5 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500'}}) }}
+                    <span class="text-sm">
+                        <span class="block font-medium text-navy-900">{{ form.withPin.vars.label }}</span>
+                        {% if form.withPin.vars.help %}
+                            <span class="block text-xs text-navy-900/60 mt-1">{{ form.withPin.vars.help }}</span>
+                        {% endif %}
+                    </span>
+                </label>
+                {{ form_errors(form.withPin) }}
+            </div>
+
             <div class="border-t border-navy-100 pt-5 space-y-5">
                 <h2 class="text-sm font-semibold uppercase tracking-wider text-navy-900/50">Tipy a uzávěrka</h2>
 
