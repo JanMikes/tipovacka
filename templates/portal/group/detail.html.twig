@@ -342,6 +342,8 @@
                 </section>
             {% endif %}
 
+            {{ include('_partials/tournament_rules.html.twig', { items: rule_items }) }}
+
             {# Invites (PIN + shareable link) #}
             {% if is_granted('group_manage_members', group) %}
                 <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">

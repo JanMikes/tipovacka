@@ -6,6 +6,7 @@ namespace App\Controller\Public;
 
 use App\Entity\User;
 use App\Exception\TournamentNotFound;
+use App\Query\GetTournamentRuleConfiguration\GetTournamentRuleConfiguration;
 use App\Query\ListGroupsForTournament\ListGroupsForTournament;
 use App\Query\ListMyOpenJoinRequests\ListMyOpenJoinRequests;
 use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
@@ -44,6 +45,7 @@ final class PublicTournamentDetailController extends AbstractController
 
         $groups = $this->queryBus->handle(new ListGroupsForTournament(tournamentId: $tournament->id));
         $matches = $this->queryBus->handle(new ListTournamentSportMatches(tournamentId: $tournament->id));
+        $ruleConfiguration = $this->queryBus->handle(new GetTournamentRuleConfiguration(tournamentId: $tournament->id));
 
         $user = $this->getUser();
         $memberGroupIds = [];
@@ -66,6 +68,7 @@ final class PublicTournamentDetailController extends AbstractController
             'sport_matches' => $matches,
             'member_group_ids' => $memberGroupIds,
             'pending_request_group_ids' => $pendingRequestGroupIds,
+            'rule_items' => $ruleConfiguration->items,
         ]);
     }
 }

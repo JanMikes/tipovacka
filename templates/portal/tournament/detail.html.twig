@@ -180,6 +180,8 @@
 
         {# ───── Sidebar ───── #}
         <aside class="space-y-6 lg:col-span-4">
+            {{ include('_partials/tournament_rules.html.twig', { items: rule_items }) }}
+
             {% if is_granted('tournament_edit', tournament) %}
                 <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
                     <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">

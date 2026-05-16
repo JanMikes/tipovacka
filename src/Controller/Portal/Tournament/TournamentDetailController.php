@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Tournament;
 
+use App\Query\GetTournamentRuleConfiguration\GetTournamentRuleConfiguration;
 use App\Query\ListGroupsForTournament\ListGroupsForTournament;
 use App\Query\ListTournamentSportMatches\ListTournamentSportMatches;
 use App\Query\QueryBus;
@@ -32,11 +33,13 @@ final class TournamentDetailController extends AbstractController
 
         $matches = $this->queryBus->handle(new ListTournamentSportMatches(tournamentId: $tournament->id));
         $groups = $this->queryBus->handle(new ListGroupsForTournament(tournamentId: $tournament->id));
+        $ruleConfiguration = $this->queryBus->handle(new GetTournamentRuleConfiguration(tournamentId: $tournament->id));
 
         return $this->render('portal/tournament/detail.html.twig', [
             'tournament' => $tournament,
             'sport_matches' => $matches,
             'groups' => $groups,
+            'rule_items' => $ruleConfiguration->items,
         ]);
     }
 }

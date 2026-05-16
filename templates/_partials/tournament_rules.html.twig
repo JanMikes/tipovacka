@@ -1,0 +1,22 @@
+{# Compact read-only list of scoring rules for a tournament.
+   Usage: {{ include('_partials/tournament_rules.html.twig', { items: rule_items }) }}
+   `items` is a list of App\Query\GetTournamentRuleConfiguration\RuleConfigurationItem. #}
+{% set enabledItems = items|filter(item => item.enabled) %}
+{% if enabledItems|length > 0 %}
+    <section class="rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
+        <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
+            <twig:ux:icon name="lucide:activity" class="h-5 w-5 text-cyan-500" />
+            <h2 class="text-lg font-semibold text-navy-900">Pravidla bodování</h2>
+        </header>
+        <ul class="divide-y divide-navy-100/70">
+            {% for item in enabledItems %}
+                <li class="flex items-center justify-between gap-3 px-6 py-3">
+                    <span class="text-sm font-medium text-navy-900">{{ item.label }}</span>
+                    <span class="shrink-0 rounded-md bg-navy-50 px-2 py-0.5 text-sm font-semibold tabular-nums text-navy-900">
+                        {{ item.points }} b.
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

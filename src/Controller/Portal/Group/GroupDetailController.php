@@ -13,6 +13,7 @@ use App\Form\SendInvitationFormType;
 use App\Query\GetGroupDetail\GetGroupDetail;
 use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
 use App\Query\GetMyGuessesInTournament\GetMyGuessesInTournament;
+use App\Query\GetTournamentRuleConfiguration\GetTournamentRuleConfiguration;
 use App\Query\ListPendingInvitationsForGroup\ListPendingInvitationsForGroup;
 use App\Query\ListPendingJoinRequestsForGroup\ListPendingJoinRequestsForGroup;
 use App\Query\QueryBus;
@@ -99,6 +100,10 @@ final class GroupDetailController extends AbstractController
             ])
             : null;
 
+        $ruleConfiguration = $this->queryBus->handle(new GetTournamentRuleConfiguration(
+            tournamentId: $group->tournament->id,
+        ));
+
         return $this->render('portal/group/detail.html.twig', [
             'group' => $group,
             'detail' => $detail,
@@ -109,6 +114,7 @@ final class GroupDetailController extends AbstractController
             'score_by_user_id' => $scoreByUserId,
             'my_guesses' => $myGuesses,
             'isMember' => $isMember,
+            'rule_items' => $ruleConfiguration->items,
         ]);
     }
 }
