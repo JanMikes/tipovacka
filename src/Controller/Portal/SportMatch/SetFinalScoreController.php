@@ -43,7 +43,10 @@ final class SetFinalScoreController extends AbstractController
         $formData->homeScore = $sportMatch->homeScore;
         $formData->awayScore = $sportMatch->awayScore;
 
-        $form = $this->createForm(SetFinalScoreFormType::class, $formData);
+        $form = $this->createForm(SetFinalScoreFormType::class, $formData, [
+            'home_team' => $sportMatch->homeTeam,
+            'away_team' => $sportMatch->awayTeam,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

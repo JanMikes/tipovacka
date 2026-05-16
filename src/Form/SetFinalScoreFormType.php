@@ -17,12 +17,12 @@ final class SetFinalScoreFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('homeScore', IntegerType::class, [
-            'label' => 'Skóre domácích',
+            'label' => sprintf('Skóre %s', $options['home_team']),
             'attr' => ['min' => 0],
         ]);
 
         $builder->add('awayScore', IntegerType::class, [
-            'label' => 'Skóre hostů',
+            'label' => sprintf('Skóre %s', $options['away_team']),
             'attr' => ['min' => 0],
         ]);
     }
@@ -32,5 +32,8 @@ final class SetFinalScoreFormType extends AbstractType
         $resolver->setDefaults([
             'data_class' => SetFinalScoreFormData::class,
         ]);
+        $resolver->setRequired(['home_team', 'away_team']);
+        $resolver->setAllowedTypes('home_team', 'string');
+        $resolver->setAllowedTypes('away_team', 'string');
     }
 }
