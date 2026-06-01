@@ -112,8 +112,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | password reset / verify / check-email | `auth/*` | ✅ | |
 | Landing hero + how-it-works + features + CTA + footer | `home.html.twig` | ✅ | Live-match decoration in hero only (allowed). |
 | Funkce / Pro firmy / FAQ | `public/{features,for_business,faq}` | ✅ | |
-| **Ceník (3 plány)** | `public/pricing.html.twig` | ❌ **P1** | Promises a live paywall ("Vyzkoušet zdarma" on 99 Kč, "/ měsíc") + lists "Distribuce tipů" as paid. Reframe reference-only/„Připravujeme"; neutralize CTAs; drop "Distribuce tipů" (it's FREE). |
-| Soukromí | `public/privacy.html.twig` | ⚠️ **P1** | Lines 51,72 ASCII straight quotes → „…". |
+| **Ceník (3 plány)** | `public/pricing.html.twig` | ✅ | DONE (next commit): paid tier marked „Připravujeme" (pill-soon); CTA „Vyzkoušet zdarma"→„Začít zdarma" (→ register, no checkout); removed „Distribuce tipů" from the paid list (it's FREE, decision #5); „Kdy začnu platit?" + hero reframed as upcoming. Page kept as designed reference. **Product flag:** real billing still needs a payment backend (deferred). |
+| Soukromí | `public/privacy.html.twig` | ✅ | DONE (next commit): two ASCII straight close-quotes → Czech „…" (U+201C). |
 | public tournament list/detail | `public/tournaments_list`,`tournament_detail` | ✅ | **CUT-LEAK FIXED** (8b61588): `'live'` → "Uzamčeno" locked. |
 | invitation landing | `invitation/landing.html.twig` + `Auth/InvitationForm` | ✅ | |
 

@@ -16,7 +16,7 @@
             <br class="hidden sm:block">Plaťte, až když vás bude víc.
         </h1>
         <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
-            Pět hráčů zdarma navždy, bez časáku a bez karty. Větší party a firmy přejdou na placený plán od 99 Kč měsíčně.
+            Pět hráčů zdarma navždy, bez časáku a bez karty. Pro větší party a firmy chystáme placené plány od 99 Kč měsíčně.
         </p>
         <p class="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-win/30 bg-win/10 px-4 py-2 text-sm font-medium text-win">
             <twig:ux:icon name="lucide:check" class="h-4 w-4" />
@@ -65,7 +65,7 @@
             <article class="surface-accent flex flex-col p-8 lg:-mt-4 lg:mb-0">
                 <div class="flex items-center justify-between gap-3">
                     <span class="eyebrow text-white/85">Parta &amp; firma</span>
-                    <span class="pill pill-done">Doporučeno</span>
+                    <span class="pill pill-soon">Připravujeme</span>
                 </div>
                 <div class="mt-4 flex items-end gap-1.5">
                     <span class="text-sm text-white/85">od</span>
@@ -80,7 +80,6 @@
                         'Vše z plánu Free',
                         'Více hráčů bez limitu na 5',
                         'Vlastní pravidla a bodování',
-                        'Distribuce tipů — jak tipuje celá soutěž',
                         'Více skupin v jednom turnaji',
                         'Tip za členy pro organizátory',
                     ] %}
@@ -92,10 +91,10 @@
                     {% endfor %}
                 </ul>
                 <a href="{{ path('app_register') }}" class="btn btn-light mt-8 w-full">
-                    Vyzkoušet zdarma
+                    Začít zdarma
                     <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
                 </a>
-                <p class="mt-3 text-center text-xs text-white/75">Začněte na Free, přejdete, až vás bude víc.</p>
+                <p class="mt-3 text-center text-xs text-white/75">Placené plány teprve připravujeme — zatím je vše zdarma.</p>
             </article>
 
             {# Plan: Na míru #}
@@ -157,7 +156,7 @@
             {
                 icon: 'lucide:users',
                 title: 'Kdy začnu platit?',
-                body: 'Až když překročíte 5 hráčů nebo budete chtít vlastní pravidla a distribuci tipů. Do té doby je vše zdarma.'
+                body: 'Zatím nijak — placené plány teprve chystáme. Až je spustíme, budou pro party nad 5 hráčů a vlastní pravidla. Free zůstane zdarma navždy a distribuce tipů je součástí i tak.'
             },
             {
                 icon: 'lucide:circle-help',
