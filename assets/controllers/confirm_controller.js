@@ -60,13 +60,15 @@ export default class extends Controller {
 
     buildDialog() {
         const isDanger = this.variantValue !== 'warning';
-        const iconBg = isDanger ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700';
+        const iconBg = isDanger
+            ? 'bg-loss/15 text-loss border border-loss/30'
+            : 'bg-draw/15 text-draw border border-draw/30';
         const confirmClasses = isDanger
-            ? 'bg-red-600 hover:bg-red-700 focus-visible:ring-red-400'
-            : 'bg-yellow-500 hover:bg-yellow-600 focus-visible:ring-yellow-400';
+            ? 'btn btn-danger'
+            : 'btn btn-success';
 
         const dialog = document.createElement('dialog');
-        dialog.className = 'confirm-dialog w-full max-w-md rounded-2xl p-0 bg-white shadow-card ring-1 ring-navy-900/5';
+        dialog.className = 'confirm-dialog modal-panel w-full max-w-md p-0';
 
         const container = document.createElement('div');
         container.className = 'p-6';
@@ -83,11 +85,11 @@ export default class extends Controller {
         textWrap.className = 'min-w-0 flex-1';
 
         const titleEl = document.createElement('h2');
-        titleEl.className = 'text-lg font-semibold text-navy-900';
+        titleEl.className = 'text-lg font-semibold text-white';
         titleEl.textContent = this.titleValue;
 
         const msgEl = document.createElement('p');
-        msgEl.className = 'mt-1 text-sm text-navy-900/70';
+        msgEl.className = 'mt-1 text-sm text-white/70';
         msgEl.textContent = this.messageValue;
 
         textWrap.append(titleEl, msgEl);
@@ -98,13 +100,13 @@ export default class extends Controller {
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
-        cancelBtn.className = 'inline-flex items-center justify-center rounded-lg bg-navy-50 px-4 py-2.5 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-500';
+        cancelBtn.className = 'btn btn-ghost btn-sm';
         cancelBtn.textContent = this.cancelLabelValue;
         cancelBtn.addEventListener('click', () => this.dialog.close());
 
         const confirmBtn = document.createElement('button');
         confirmBtn.type = 'button';
-        confirmBtn.className = 'inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 ' + confirmClasses;
+        confirmBtn.className = confirmClasses + ' btn-sm';
         confirmBtn.textContent = this.confirmLabelValue;
         confirmBtn.addEventListener('click', () => this.confirm());
 

@@ -27,13 +27,6 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
-    'leaflet' => [
-        'version' => '1.9.4',
-    ],
-    'leaflet/dist/leaflet.min.css' => [
-        'version' => '1.9.4',
-        'type' => 'css',
-    ],
     'flatpickr' => [
         'version' => '4.6.13',
     ],
@@ -46,13 +39,6 @@ return [
     ],
     '@symfony/ux-live-component' => [
         'path' => './vendor/symfony/ux-live-component/assets/dist/live_controller.js',
-    ],
-    'alpinejs' => [
-        'version' => '3.15.3',
-    ],
-    'glightbox/dist/css/glightbox.min.css' => [
-        'version' => '3.3.1',
-        'type' => 'css',
     ],
     'tom-select' => [
         'version' => '2.6.0',

@@ -26,12 +26,12 @@ export default class extends Controller {
                 no_results: () => `<div class="no-results">${this.noResultsTextValue}</div>`,
                 option: (data, escape) => {
                     const sub = subtitle(data);
-                    const unverified = data.unverified ? ' <span class="text-xs text-gray-400">(neověřený)</span>' : '';
-                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${sub ? `<small class="mt-0.5 block text-xs leading-tight text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                    const unverified = data.unverified ? ' <span class="text-xs text-white/40">(neověřený)</span>' : '';
+                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${sub ? `<small class="mt-0.5 block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div>`;
                 },
                 item: (data, escape) => {
                     const sub = subtitle(data);
-                    return `<div class="leading-tight"><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-navy-900/60">${escape(sub)}</small>` : ''}</div>`;
+                    return `<div class="leading-tight"><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div>`;
                 },
             },
         };

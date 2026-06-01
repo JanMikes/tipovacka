@@ -71,7 +71,7 @@ export default class extends Controller {
             button.type = 'button';
             button.tabIndex = -1;
             button.setAttribute('aria-label', 'Vymazat');
-            button.className = 'absolute right-2.5 top-1/2 -translate-y-1/2 hidden h-5 w-5 items-center justify-center rounded text-navy-900/40 transition hover:text-navy-900 focus:outline-none focus:ring-2 focus:ring-cyan-500';
+            button.className = 'absolute right-2.5 top-1/2 -translate-y-1/2 hidden h-5 w-5 items-center justify-center rounded text-white/40 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-accent-500';
             button.innerHTML = CLEAR_ICON;
             button.addEventListener('click', (event) => {
                 event.preventDefault();
