@@ -143,7 +143,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 |---|---|---|
 | all 9 `admin/*` templates | ✅ | Fully dark via global form theme; no leakage. |
 | 4 `Exception/error*` pages | ✅ | Dark canvas + CTA. |
-| 5 `emails/*` templates | ⚠️ **P3** | Light body + navy header (deliverability-safe but off dark-brand). Reskin to navy body + light text (inline CSS, structure unchanged). |
+| 5 `emails/*` templates | ✅ | DONE (next commit): dark-brand re-skin — outer `#0a111e`, card `#141e36` (+`#1b2742` border), white headings, `#c4cddd` body, accent CTA. Solid inline hex (email-client-safe); color-only (51/51 symmetric diff, all vars/copy intact). 34 email tests green. |
 
 ---
 
