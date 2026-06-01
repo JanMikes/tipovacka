@@ -15,6 +15,12 @@ final readonly class LeaderboardRow
         public int $totalPoints,
         public int $rank,
         public bool $isTieResolvedOverride,
+        public int $evaluatedCount = 0,
+        public int $scoredCount = 0,
+        public int $exactCount = 0,
+        public int $partialCount = 0,
+        public int $accuracyPercent = 0,
+        public int $streak = 0,
     ) {
     }
 }

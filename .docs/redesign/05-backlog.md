@@ -15,7 +15,16 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 
 ## P1 — Build next (data already exists, high DS-fidelity value)
 
-### 1. Leaderboard + dashboard stats: úspěšnost / přesné / trefa / streak ✅ (in progress)
+### 1. Leaderboard stats: úspěšnost / přesné / trefa / streak ✅ DONE
+> Implemented: `GetGroupLeaderboardQuery` extended with evaluated/scored/exact
+> aggregates + a streak pass (trailing scoring run by kickoff); `LeaderboardRow`
+> gained `accuracyPercent/exactCount/partialCount/streak`; columns added to the
+> leaderboard component (hidden on mobile). Test asserts the fixture member's stats.
+> **Still TODO:** the player *dashboard*'s personal stat cards (rank/accuracy/streak
+> per soutěž) — needs a small per-user cross/single-group stats query feeding the
+> dashboard hero; the leaderboard columns are the main win and are done.
+
+### 1b. (original combined item — see #1)
 - **DS shows:** leaderboard columns Úspěšnost / Přesné / Trefa / Streak; dashboard
   stat cards (Přesné tipy 9/38, 23,7 % úspěšnost, Streak).
 - **Exists:** `GuessEvaluation` (totalPoints per guess) + `GuessEvaluationRulePoints`

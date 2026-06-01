@@ -6,6 +6,8 @@ namespace App\Query\GetGroupLeaderboard;
 
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
+use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\SportMatch;
 use App\Repository\GroupRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
@@ -28,9 +30,14 @@ final readonly class GetGroupLeaderboardQuery
         $group = $this->groupRepository->get($query->groupId);
         $memberships = $this->membershipRepository->findActiveByGroup($group->id);
 
-        /** @var list<array{userId: string, points: int}> $aggregates */
+        /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
         $aggregates = $this->entityManager->createQueryBuilder()
-            ->select('IDENTITY(g.user) AS userId', 'SUM(e.totalPoints) AS points')
+            ->select(
+                'IDENTITY(g.user) AS userId',
+                'SUM(e.totalPoints) AS points',
+                'COUNT(e.id) AS evaluated',
+                'SUM(CASE WHEN e.totalPoints > 0 THEN 1 ELSE 0 END) AS scored',
+            )
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
             ->where('g.group = :groupId')
@@ -41,9 +48,69 @@ final readonly class GetGroupLeaderboardQuery
             ->getArrayResult();
 
         $pointsByUser = [];
+        $evaluatedByUser = [];
+        $scoredByUser = [];
 
         foreach ($aggregates as $row) {
             $pointsByUser[$row['userId']] = (int) $row['points'];
+            $evaluatedByUser[$row['userId']] = (int) $row['evaluated'];
+            $scoredByUser[$row['userId']] = (int) $row['scored'];
+        }
+
+        // Exact-score hits per user (separate query so the rule-points join does not
+        // multiply the totalPoints SUM above).
+        /** @var list<array{userId: string, exact: int}> $exactAggregates */
+        $exactAggregates = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(g.user) AS userId', 'COUNT(rp.id) AS exact')
+            ->from(GuessEvaluationRulePoints::class, 'rp')
+            ->innerJoin(GuessEvaluation::class, 'e', 'WITH', 'e.id = rp.evaluation')
+            ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
+            ->where('g.group = :groupId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->andWhere('rp.ruleIdentifier = :exactId')
+            ->andWhere('rp.points > 0')
+            ->groupBy('g.user')
+            ->setParameter('groupId', $group->id)
+            ->setParameter('exactId', 'exact_score')
+            ->getQuery()
+            ->getArrayResult();
+
+        $exactByUser = [];
+
+        foreach ($exactAggregates as $row) {
+            $exactByUser[$row['userId']] = (int) $row['exact'];
+        }
+
+        // Current scoring streak: trailing run of non-zero evaluations by match kickoff (newest first).
+        /** @var list<array{userId: string, points: int}> $streakRows */
+        $streakRows = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(g.user) AS userId', 'e.totalPoints AS points')
+            ->from(GuessEvaluation::class, 'e')
+            ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
+            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.id = g.sportMatch')
+            ->where('g.group = :groupId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->orderBy('g.user', 'ASC')
+            ->addOrderBy('m.kickoffAt', 'DESC')
+            ->setParameter('groupId', $group->id)
+            ->getQuery()
+            ->getArrayResult();
+
+        $streakByUser = [];
+        $streakClosed = [];
+
+        foreach ($streakRows as $row) {
+            $userKey = $row['userId'];
+
+            if ($streakClosed[$userKey] ?? false) {
+                continue;
+            }
+
+            if ((int) $row['points'] > 0) {
+                $streakByUser[$userKey] = ($streakByUser[$userKey] ?? 0) + 1;
+            } else {
+                $streakClosed[$userKey] = true;
+            }
         }
 
         $resolutions = $this->resolutionRepository->findForGroup($group->id);
@@ -97,6 +164,10 @@ final readonly class GetGroupLeaderboardQuery
             $userKey = $row['userId']->toRfc4122();
             $override = $resolutions[$userKey] ?? null;
 
+            $evaluated = $evaluatedByUser[$userKey] ?? 0;
+            $scored = $scoredByUser[$userKey] ?? 0;
+            $exact = $exactByUser[$userKey] ?? 0;
+
             $finalRows[] = new LeaderboardRow(
                 userId: $row['userId'],
                 nickname: $row['nickname'],
@@ -104,6 +175,12 @@ final readonly class GetGroupLeaderboardQuery
                 totalPoints: $row['points'],
                 rank: null !== $override ? $override->rank : $row['rank'],
                 isTieResolvedOverride: null !== $override,
+                evaluatedCount: $evaluated,
+                scoredCount: $scored,
+                exactCount: $exact,
+                partialCount: max(0, $scored - $exact),
+                accuracyPercent: $evaluated > 0 ? (int) round($scored * 100 / $evaluated) : 0,
+                streak: $streakByUser[$userKey] ?? 0,
             );
         }
 

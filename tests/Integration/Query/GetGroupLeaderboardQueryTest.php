@@ -32,6 +32,14 @@ final class GetGroupLeaderboardQueryTest extends IntegrationTestCase
         self::assertSame(1, $result->rows[0]->rank);
         self::assertFalse($result->rows[0]->isTieResolvedOverride);
         self::assertFalse($result->tournamentFinished);
+
+        // Stats: admin's single evaluated guess scored (correct outcome = 3 b, not exact).
+        self::assertSame(1, $result->rows[0]->evaluatedCount);
+        self::assertSame(1, $result->rows[0]->scoredCount);
+        self::assertSame(0, $result->rows[0]->exactCount);
+        self::assertSame(1, $result->rows[0]->partialCount);
+        self::assertSame(100, $result->rows[0]->accuracyPercent);
+        self::assertSame(1, $result->rows[0]->streak);
     }
 
     public function testFullNameSubtitleIsSetWhenUserHasBothNicknameAndFullName(): void

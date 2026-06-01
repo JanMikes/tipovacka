@@ -22,6 +22,9 @@
                     <tr>
                         <th class="w-12">Pozice</th>
                         <th>Hráč</th>
+                        <th class="hidden text-right sm:table-cell">Úspěšnost</th>
+                        <th class="hidden text-right sm:table-cell">Přesné</th>
+                        <th class="hidden text-right sm:table-cell">Streak</th>
                         <th class="text-right">Body</th>
                     </tr>
                 </thead>
@@ -42,6 +45,26 @@
                                         {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
                                     </span>
                                 </a>
+                            </td>
+                            <td class="hidden sm:table-cell">
+                                {% if row.evaluatedCount > 0 %}
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="text-sm font-semibold tabular-nums text-white">{{ row.accuracyPercent }} %</span>
+                                        <span class="lb-acc-bar w-16"><i style="width: {{ row.accuracyPercent }}%"></i></span>
+                                    </div>
+                                {% else %}
+                                    <span class="block text-right text-white/30">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="hidden text-right sm:table-cell">
+                                <span class="text-sm font-semibold tabular-nums {{ row.exactCount > 0 ? 'text-win' : 'text-white/40' }}">{{ row.exactCount }}</span>
+                            </td>
+                            <td class="hidden text-right sm:table-cell">
+                                {% if row.streak > 0 %}
+                                    <span class="lb-streak inline-flex items-center gap-1"><twig:ux:icon name="lucide:flame" class="h-3.5 w-3.5" />{{ row.streak }}</span>
+                                {% else %}
+                                    <span class="text-white/30">—</span>
+                                {% endif %}
                             </td>
                             <td class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
                         </tr>
