@@ -126,12 +126,12 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | CreatePoolModal step1 (name+source) | `group/create` + `tournament/create_private` | ✅ | Split across real routes. |
 | **CreatePoolModal step2 `.variant-card` presets** | `portal/tournament/rule_configuration.html.twig` | ✅ | DONE (next commit): `Scoring/RuleFields` component with `.variant-card` presets + `.scoring-fields` rows, used by portal + admin. „+střelec" tile inert (🔮). |
 | CreatePoolModal step3 invite (chips + copy-field) | `group/detail` invites | ✅ | (b) DONE (next commit): PIN + invite link now use the DS `.copy-field` + a `copy` Stimulus controller (one-click „Zkopírováno"). (a) email **chip-input** = documented-acceptable: the existing single-email form + bulk textarea (`bulkInvitationForm`) are functionally equivalent; the chip UI is cosmetic polish, deferred (would need a sync-to-hidden-field Stimulus controller). |
-| CreatePoolModal step4 contributions tiers | — | 🔮 **P3** | Correctly absent. Reference-only later (premium). |
+| CreatePoolModal step4 contributions tiers | `/_design` (section A) | 🔮✅ | Prepared as inert reference in the `/_design` styleguide (not in any prod flow). |
 | InvitePlayersModal roster | `group/detail` + anon-member flows | ✅ | |
 | join-by-PIN 8-box | `_partials/join_by_pin_form.html.twig` | ✅ | |
 | TipForMembersScreen | `portal/group/manage_member_tips.html.twig` | ✅ | DONE (next commit): live „{filled}/{total} vyplněno" counter + bulk-fill shortcuts (domácí 2:1 / remíza 1:1 / hosté 1:2 / Smazat vše) via `tip_fill_controller.js` (fills only empty rows; dispatches input). Form/CSRF/submit untouched. |
 | TipForMembers batch (self) | `portal/group/my_tips_batch.html.twig` | ✅ | DONE: unified `.num-input` → `.score-input` (the canonical score-entry token). |
-| **SetResultModal scorers editor** | `portal/sport_match/set_score.html.twig` | 🔮 **P3** | Score entry ✅; scorers/timeline + „Trefený střelec" = deferred visual-only (inert, no backend). |
+| **SetResultModal scorers editor** | `set_score.html.twig` + `/_design` (B) | 🔮✅ | Score entry ✅; scorers/timeline + „Trefený střelec" prepared as inert reference in `/_design` (no backend). |
 | LiveMatch (live scoreboard) | `sport_match/detail` + `guess/detail` | ✅ | Live correctly stripped; dist free post-lock. |
 | PoolsDashboard / tournament grids | `portal/tournament/detail.html.twig` | ✅ | Payout quick-stats dropped (cut). |
 | match create / import (round field) | `portal/sport_match/{form,import}` | ✅ | |
@@ -152,13 +152,15 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 - Marketing-decoration live pills kept (allowed): landing hero `home.html.twig`, auth rail `login.html.twig`, `features.html.twig` badge. Admin match list keeps "Probíhá" (staff tooling).
 - No OAuth/social buttons, no nav bell, no Výplaty, no Tweaks panel, no premium paywall backend anywhere. ✅
 
-## 🔮 Reference-element tracker (STEP 3 — visual-only, inert, gated)
-Vehicle: a ROLE_ADMIN/kernel.debug `/_design` styleguide route mirroring DS preview, OR an off-by-default flag. Label „Připravujeme / reference". NO dead JS handlers, NO backend.
-- Premium/pricing tier cards + create-step-4 (extend `PremiumTeaser` + `premium_enabled`).
-- Scorers/timeline editor + „Trefený střelec" field (SetResultModal).
-- Notifications bell + feed.
-- Δ rank-change column (`.lb-delta-*` CSS exists; needs rank snapshots — show inert column in styleguide only).
-- „+střelec" scoring preset tile (in `RuleFields`, inert).
+## 🔮 Reference-element tracker (STEP 3 — visual-only, inert, gated) — ✅ DONE
+Vehicle: **`/_design`** (`DesignStyleguideController`, route `app_design_styleguide`,
+ROLE_ADMIN-gated; admin→200, non-admin→403, anon→login). `templates/design/styleguide.html.twig`.
+Inert (plain divs/spans, no dead handlers, no backend, no nav link). Test: `DesignStyleguideFlowTest`.
+- ✅ Premium/pricing tier cards + create-step-4 contributions („pivo" 10 Kč + 50/100/200) — reuses `PremiumTeaser` (section A).
+- ✅ Scorers editor + „Trefený střelec" field (section B, disabled inputs).
+- ✅ Notifications bell + feed (section C; generalized `.icon-btn` + new `.icon-dot`).
+- ✅ Δ rank-change column (section D, uses existing `.lb-delta-up/-down`; notes it needs rank snapshots).
+- ✅ „+střelec" scoring preset tile — inert in `Scoring/RuleFields` (shipped earlier).
 
 ## 🚫 Not-drawn (document only)
 - Bracket/pavouk + group-stage standings tables — DS never draws them; `round` label only (shipped).

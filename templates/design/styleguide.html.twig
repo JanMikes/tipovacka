@@ -1,0 +1,284 @@
+{% extends 'base.html.twig' %}
+
+{#
+    DEV/ADMIN-ONLY reference styleguide for DEFERRED (🔮) design-system elements.
+
+    Everything on this page is VISUAL-ONLY and INERT — no backend, no working JS, no
+    production wiring. Buttons are type="button" with NO data-action / handlers (or
+    disabled); inputs are disabled; there is NO `wtips:open-premium`, no Live wiring,
+    no dead handlers. CUT items (OAuth, in-product live match, Tweaks panel, payouts)
+    must NOT appear here. Each section is labeled „Připravujeme / reference".
+
+    Gate: admin-only via `denyAccessUnlessGranted('ROLE_ADMIN')` in the controller.
+    NOT linked from the production nav — URL-only reference.
+#}
+
+{% block title %}Design — reference (připravujeme) — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="bg-radial">
+<div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+
+    {# ───────── Intro ───────── #}
+    <header class="mb-10">
+        <p class="eyebrow mb-3">Design system · interní reference</p>
+        <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Design — reference (připravujeme)
+        </h1>
+        <p class="mt-3 max-w-2xl text-white/60">
+            Tahle stránka sdružuje <strong class="text-white/80">odložené</strong> prvky designového systému —
+            funkce, které zatím nestavíme. Slouží jako vizuální reference: vše je
+            <strong class="text-white/80">jen na ukázku a nefunkční</strong>, bez napojení na data či akce.
+            Stránka je přístupná pouze administrátorům a nikde v aplikaci na ni nevede odkaz.
+        </p>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+            <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+            <span class="text-xs text-white/40">Vizuální reference · žádný backend · žádné akce</span>
+        </div>
+    </header>
+
+    <div class="space-y-8">
+
+        {# ═════════ A. Premium / příspěvkové úrovně ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-[#f5cd54]" />
+                        Prémium a příspěvky
+                    </h2>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Dobrovolný příspěvek „na pivo" a prémiové úrovně. Odloženo do budoucí monetizační fáze —
+                        zatím bez plateb a bez backendu.
+                    </p>
+                </div>
+                <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+            </div>
+
+            {# existing visual-only teaser component #}
+            <twig:PremiumTeaser />
+
+            {# inert contribution tiers — gold accent matching PremiumTeaser #}
+            <div class="mt-6">
+                <p class="eyebrow mb-3">Příspěvkové úrovně</p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+                    {# „Pozvěte nás na pivo" — 10 Kč / hráč (doporučeno) #}
+                    <div class="relative overflow-hidden rounded-2xl border border-[#f5cd54]/45 bg-gradient-to-br from-[#f5cd54]/[0.12] to-transparent p-4">
+                        <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f5cd54]/40 bg-[#f5cd54]/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#f5cd54]">
+                            <twig:ux:icon name="lucide:star" class="h-3 w-3" />
+                            Doporučujeme
+                        </span>
+                        <div class="mt-3 text-2xl font-black tabular-nums tracking-tight text-white">10 Kč<span class="ml-1 text-sm font-medium text-white/50">/ hráč</span></div>
+                        <div class="mt-1 text-sm font-bold text-white">Pozvěte nás na pivo</div>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Zaplatíte za celou soutěž — cena je 10 Kč za každého hráče.</p>
+                    </div>
+
+                    {# 50 Kč #}
+                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">50 Kč</div>
+                        <div class="mt-1 text-sm font-bold text-white">Lišta tipů ostatních</div>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Uvidíte procenta, jak hlasovali kolegové.</p>
+                    </div>
+
+                    {# 100 Kč #}
+                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">100 Kč</div>
+                        <div class="mt-1 text-sm font-bold text-white">Konkrétní tipy kolegů</div>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Lišta tipů plus konkrétní tipy soutěžících v partičce.</p>
+                    </div>
+
+                    {# 200 Kč #}
+                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">200 Kč</div>
+                        <div class="mt-1 text-sm font-bold text-white">Měnit tip během turnaje</div>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Až hodinu před prvním zápasem dne.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═════════ B. Střelci zápasu + „Trefený střelec" ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:target" class="h-5 w-5 text-accent-300" />
+                        Střelci zápasu
+                    </h2>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Editor střelců v dialogu „Zapsat výsledek" a bodovací pravidlo „Trefený střelec".
+                        Vyžaduje nové entity a nové skórovací pravidlo — odloženo.
+                    </p>
+                </div>
+                <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+            </div>
+
+            {# inert scorers editor (rows: team toggle + minute + name) #}
+            <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
+                <p class="eyebrow mb-3">Střelci</p>
+
+                <div class="space-y-2">
+                    {% for scorer in [
+                        { team: 'h', minute: '24', name: 'Álvarez' },
+                        { team: 'a', minute: '38', name: 'Mbappé' },
+                    ] %}
+                        <div class="grid grid-cols-[minmax(0,1fr)_64px_minmax(0,2fr)] items-center gap-2 sm:grid-cols-[120px_72px_minmax(0,1fr)]">
+                            <select class="input" disabled aria-disabled="true">
+                                <option {{ scorer.team == 'h' ? 'selected' }}>Argentina</option>
+                                <option {{ scorer.team == 'a' ? 'selected' }}>Francie</option>
+                            </select>
+                            <input type="text" class="input text-center tabular-nums" value="{{ scorer.minute }}" placeholder="min" disabled aria-disabled="true" inputmode="numeric">
+                            <input type="text" class="input" value="{{ scorer.name }}" placeholder="Jméno střelce" disabled aria-disabled="true">
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-ghost btn-sm w-full border-dashed" disabled aria-disabled="true" title="Připravujeme">
+                        <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                        Přidat střelce
+                    </button>
+                </div>
+            </div>
+
+            {# inert „Trefený střelec" scoring row (num-input) #}
+            <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+                <p class="eyebrow mb-3">Bodování</p>
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                    <div class="min-w-0">
+                        <div class="field-label mb-0">Trefený střelec zápasu</div>
+                        <div class="mt-1 text-[13px] font-medium text-white">Hráč tipne i jméno střelce gólu</div>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-3">
+                        <label class="flex items-center gap-2 text-sm text-white/40">
+                            <input type="checkbox" disabled aria-disabled="true">
+                            <span>Aktivní</span>
+                        </label>
+                        <input type="text" class="num-input w-24" value="3" disabled aria-disabled="true" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ═════════ C. Notifikace — zvonek + feed ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:bell" class="h-5 w-5 text-accent-300" />
+                        Notifikace
+                    </h2>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Zvonek v navigaci a feed upozornění. Zatím existuje jen e-mail — feed v aplikaci je odložený,
+                        proto je zvonek v produkční navigaci skrytý.
+                    </p>
+                </div>
+                <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+            </div>
+
+            {# inert bell with unread dot #}
+            <div class="mb-5 flex items-center gap-3">
+                <span class="icon-btn" aria-hidden="true" title="Notifikace (ukázka)">
+                    <twig:ux:icon name="lucide:bell" class="h-[18px] w-[18px]" />
+                    <span class="icon-dot"></span>
+                </span>
+                <span class="text-xs text-white/40">Zvonek s ukazatelem nepřečtených</span>
+            </div>
+
+            {# sample notification feed (inert list) #}
+            <ul class="space-y-2">
+                {% for note in [
+                    { icon: 'clock',           tone: 'text-draw',    title: 'Uzávěrka tipu za 2 hodiny', detail: 'Soutěž „Admin liga" · zápas Argentina–Francie', time: 'před 5 min' },
+                    { icon: 'circle-check-big', tone: 'text-win',    title: 'Zápas byl vyhodnocen — +5 bodů', detail: 'Přesný tip ve skupině „Kámoši u piva"', time: 'před 1 h' },
+                    { icon: 'user-round-plus',  tone: 'text-accent-300', title: 'Nový hráč se připojil do soutěže', detail: '@tipovac vstoupil do „Admin liga"', time: 'včera' },
+                    { icon: 'trophy',          tone: 'text-[#f5cd54]', title: 'Turnaj skončil — gratulujeme!', detail: 'Skončili jste na 2. místě z 18 hráčů', time: 'před 3 dny' },
+                ] %}
+                    <li class="card flex items-start gap-3 p-3.5">
+                        <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] {{ note.tone }}">
+                            <twig:ux:icon name="lucide:{{ note.icon }}" class="h-[18px] w-[18px]" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-bold text-white">{{ note.title }}</div>
+                            <div class="mt-0.5 truncate text-[13px] text-white/55">{{ note.detail }}</div>
+                        </div>
+                        <span class="shrink-0 text-[11px] font-medium text-white/35">{{ note.time }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        {# ═════════ D. Δ — sloupec změny pořadí ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:list-ordered" class="h-5 w-5 text-accent-300" />
+                        Δ — změna pořadí
+                    </h2>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Sloupec „Δ" v žebříčku ukazuje posun oproti minulému kolu (zisk zeleně, propad červeně, beze změny šedě).
+                        Vyžaduje ukládání historických snímků pořadí — odloženo (zatím se nikde neukládá).
+                    </p>
+                </div>
+                <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="lb-table">
+                    <thead class="lb-thead">
+                        <tr>
+                            <th class="w-12">Pozice</th>
+                            <th>Hráč</th>
+                            <th class="text-right">Δ</th>
+                            <th class="text-right">Body</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in [
+                            { rank: 1, name: 'Marek Kulhánek', handle: '@marek', delta: 12, points: 147 },
+                            { rank: 2, name: 'Ana Pereira',     handle: '@anap',  delta: 9,  points: 142 },
+                            { rank: 3, name: 'Tomáš Linhart',   handle: '@tomasl', delta: -4, points: 138 },
+                            { rank: 4, name: 'Lukáš Berg',      handle: '@lukas', delta: 6,  points: 131 },
+                            { rank: 5, name: 'Sofia Rossi',     handle: '@sofia', delta: 0,  points: 128 },
+                        ] %}
+                            <tr class="lb-tr">
+                                <td>
+                                    <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
+                                </td>
+                                <td>
+                                    <span class="flex items-center gap-3">
+                                        <twig:Avatar name="{{ row.name }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm font-bold text-white">{{ row.name }}</span>
+                                            <small class="block truncate text-[11px] font-light text-white/50">{{ row.handle }}</small>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td class="text-right">
+                                    {% if row.delta > 0 %}
+                                        <span class="lb-delta-up inline-flex items-center justify-end gap-0.5">
+                                            <twig:ux:icon name="lucide:chevron-up" class="h-3.5 w-3.5" />{{ row.delta }}
+                                        </span>
+                                    {% elseif row.delta < 0 %}
+                                        <span class="lb-delta-down inline-flex items-center justify-end gap-0.5">
+                                            <twig:ux:icon name="lucide:chevron-down" class="h-3.5 w-3.5" />{{ row.delta|abs }}
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center justify-end gap-0.5 font-bold tabular-nums text-white/35">
+                                            <twig:ux:icon name="lucide:minus" class="h-3.5 w-3.5" />0
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right"><span class="lb-pts">{{ row.points }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+</div>
+</div>
+{% endblock %}

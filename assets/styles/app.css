@@ -506,8 +506,10 @@ label.required::after {
     .wtnav .primary a:hover { color: #fff; }
     .wtnav .primary a.active { color: #fff; font-weight: 600; border-bottom-color: var(--color-accent-500); }
     .wtnav .actions { margin-left: auto; display: flex; gap: 14px; align-items: center; }
-    .wtnav .icon-btn { position: relative; width: 36px; height: 36px; border-radius: 10px; background: var(--glass-bg); border: 1px solid var(--border-2); display: flex; align-items: center; justify-content: center; color: var(--fg-2); cursor: pointer; }
-    .wtnav .icon-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .icon-btn { position: relative; width: 36px; height: 36px; border-radius: 10px; background: var(--glass-bg); border: 1px solid var(--border-2); display: flex; align-items: center; justify-content: center; color: var(--fg-2); cursor: pointer; }
+    .icon-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    /* unread dot on a bell / icon button (DS nav notifications indicator) */
+    .icon-btn .icon-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-loss); border: 2px solid var(--color-navy-850); }
     .wtnav .avatar { width: 36px; height: 36px; font-size: 13px; border: 1px solid rgba(255,255,255,0.18); cursor: pointer; }
     .wtnav details > summary { list-style: none; }
     .wtnav details > summary::-webkit-details-marker { display: none; }
