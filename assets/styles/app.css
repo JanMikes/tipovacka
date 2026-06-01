@@ -476,6 +476,49 @@ label.required::after {
     /* ---- Modal ---- */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(7,11,20,0.72); backdrop-filter: blur(8px); z-index: 200; animation: fadeIn 200ms var(--ease-standard); }
     .modal-panel { background: linear-gradient(180deg,#1a2544,#141e36); border: 1px solid var(--border-3); border-radius: 20px; box-shadow: var(--shadow-xl); padding: 28px; animation: slideUp 300ms var(--ease-emphatic); }
+
+    /* ---- Horizontal tip row (Match/MatchRow) — ported from DS dashboard-hrac .tip-card grid ----
+       NOTE: distinctly named (.tip-row, NOT .tip-card) to avoid colliding with the
+       vertical tip-card above. Values transcribed verbatim from the design system. */
+    .tip-row {
+        position: relative; display: grid; align-items: center; gap: 14px;
+        grid-template-columns: 88px auto minmax(0,1.2fr) 96px minmax(0,1.2fr) 100px 132px;
+        padding: 16px 20px; border: 1px solid var(--border-1); border-radius: 14px;
+        background: var(--glass-bg); backdrop-filter: blur(8px);
+    }
+    .tip-row.tipped   { border-left: 3px solid var(--color-win); }   /* tip placed → green tint */
+    .tip-row.locked   { border-left: 3px solid var(--border-3); }    /* in-progress reads as Uzamčeno (live is CUT) */
+    .tip-row.done     { border-left: 3px solid var(--color-accent-500); }
+    .tip-row-when { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .tip-row-when .time { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tip-row-when .day  { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tip-row-when .round { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tip-row-teams { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .tip-row-teams.home { justify-content: flex-end; text-align: right; }
+    .tip-row-teams .name { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tip-row-teams .role { font-size: 9px; font-weight: 600; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.06em; }
+    .tip-row-score { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .tip-row-score .num { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .tip-row-score .sep { font-size: 14px; font-weight: 600; color: var(--fg-4); }
+    .tip-row-score.upcoming .num { font-size: 22px; font-weight: 700; color: var(--fg-3); }
+    .my-tip { padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-1); background: rgba(255,255,255,0.04); text-align: center; min-width: 88px; }
+    .my-tip.set   { border-color: rgba(62,213,152,0.40); background: rgba(62,213,152,0.08); }
+    .my-tip.empty { border-style: dashed; border-color: rgba(245,181,68,0.40); background: rgba(245,181,68,0.06); }
+    .my-tip-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 2px; }
+    .my-tip.empty .my-tip-lbl { color: #f5b544; }
+    .my-tip-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+    .my-tip.empty .my-tip-val { font-size: 12px; color: #f5b544; font-weight: 700; }
+    .result-tip { font-size: 13px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; color: var(--fg-3); }
+    .result-tip.exact   { color: var(--color-win); }
+    .result-tip.partial { color: #f5cd54; }
+    .tip-row-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+    /* below the 7-col grid, stack into a readable card (mirrors DS @media collapse) */
+    @media (max-width: 900px) {
+        .tip-row { grid-template-columns: 1fr; gap: 10px; }
+        .tip-row .pill { justify-self: start; }
+        .tip-row-teams.home { justify-content: flex-start; text-align: left; }
+        .tip-row-actions { justify-content: flex-start; }
+    }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }

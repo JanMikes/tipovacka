@@ -281,51 +281,27 @@
         {% else %}
             <ul class="flex flex-col gap-3">
                 {% for m in upcoming_matches %}
+                    {# stavová pilulka: chybí tip → „soon", vše natipováno → „tipped" #}
+                    {% set is_tipped = m.groupsCount > 0 and m.pendingGroupsCount == 0 %}
                     <li data-reveal-target="item" class="{% if loop.index0 >= upcoming_visible %}hidden{% endif %}">
-                        <div class="card-glass flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-                            {# datum a čas #}
-                            <div class="flex shrink-0 flex-col text-sm sm:w-20">
-                                <span class="font-semibold text-white tabular-nums">{{ m.kickoffAt|date('d. m.') }}</span>
-                                <span class="text-white/50 tabular-nums">{{ m.kickoffAt|date('H:i') }}</span>
-                            </div>
+                        <twig:Match:MatchRow
+                            :homeTeam="m.homeTeam"
+                            :awayTeam="m.awayTeam"
+                            :kickoffAt="m.kickoffAt"
+                            :round="m.round"
+                            :state="is_tipped ? 'tipped' : 'open'"
+                            :pillVariant="m.pendingGroupsCount > 0 ? 'soon' : (is_tipped ? 'tipped' : null)"
+                            :pillIcon="m.pendingGroupsCount > 0 ? 'circle-alert' : (is_tipped ? 'check' : null)"
+                            :pillLabel="m.pendingGroupsCount > 0
+                                ? (m.groupsCount > 1 ? 'Chybí tip v ' ~ m.pendingGroupsCount ~ ' z ' ~ m.groupsCount ~ ' skupin' : 'Chybí tip')
+                                : (is_tipped ? (m.groupsCount > 1 ? 'Tip odeslán (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Tip odeslán') : null)"
+                            :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
+                            detailLabel="Tipovat"
+                        />
 
-                            {# týmy #}
-                            <div class="flex min-w-0 flex-1 items-center gap-3">
-                                <div class="flex min-w-0 flex-1 items-center justify-end gap-2.5 text-right">
-                                    <span class="truncate font-semibold text-white">{{ m.homeTeam }}</span>
-                                    <twig:TeamFlag name="{{ m.homeTeam }}" size="36" />
-                                </div>
-                                <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">vs</span>
-                                <div class="flex min-w-0 flex-1 items-center gap-2.5">
-                                    <twig:TeamFlag name="{{ m.awayTeam }}" size="36" />
-                                    <span class="truncate font-semibold text-white">{{ m.awayTeam }}</span>
-                                </div>
-                            </div>
-
-                            {# stav tipu + CTA #}
-                            <div class="flex shrink-0 flex-wrap items-center justify-between gap-3 sm:justify-end">
-                                {% if m.pendingGroupsCount > 0 %}
-                                    <span class="pill pill-soon">
-                                        <twig:ux:icon name="lucide:circle-alert" class="h-3 w-3" />
-                                        {% if m.groupsCount > 1 %}Chybí tip v {{ m.pendingGroupsCount }} z {{ m.groupsCount }} skupin{% else %}Chybí tip{% endif %}
-                                    </span>
-                                {% elseif m.groupsCount > 0 %}
-                                    <span class="pill pill-tipped">
-                                        <twig:ux:icon name="lucide:check" class="h-3 w-3" />
-                                        {% if m.groupsCount > 1 %}Tip odeslán ({{ m.guessedGroupsCount }}/{{ m.groupsCount }}){% else %}Tip odeslán{% endif %}
-                                    </span>
-                                {% endif %}
-
-                                <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
-                                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />
-                                    Tipovat
-                                </a>
-                            </div>
-                        </div>
-
-                        {% if m.round or m.tournamentName or m.venue %}
+                        {% if m.tournamentName or m.venue %}
                             <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                                {% if m.round %}<span class="font-semibold text-white/55">{{ m.round }}</span> · {% endif %}{{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                                {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
                             </p>
                         {% endif %}
                     </li>
@@ -376,49 +352,27 @@
                 <ul class="divide-y divide-white/[0.06]">
                     {% for g in evaluated_guesses %}
                         {% set is_exact = g.myHomeScore == g.actualHomeScore and g.myAwayScore == g.actualAwayScore %}
-                        {% set has_points = g.totalPoints > 0 %}
-                        <li data-reveal-target="item" class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-5{% if loop.index0 >= evaluated_visible %} hidden{% endif %}">
-                            {# datum #}
-                            <div class="flex shrink-0 flex-col text-sm sm:w-20">
-                                <span class="font-semibold text-white tabular-nums">{{ g.kickoffAt|date('d. m.') }}</span>
-                                <span class="text-white/50 tabular-nums">{{ g.kickoffAt|date('H:i') }}</span>
-                            </div>
-
-                            {# zápas + skutečné skóre #}
-                            <div class="min-w-0 flex-1">
-                                <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-white">
-                                    <span class="truncate">{{ g.homeTeam }}</span>
-                                    <span class="final-score tabular-nums">{{ g.actualHomeScore }}:{{ g.actualAwayScore }}</span>
-                                    <span class="truncate">{{ g.awayTeam }}</span>
-                                </p>
-                                <p class="mt-1 truncate text-xs text-white/40">
-                                    {{ g.tournamentName }} · {{ g.groupName }}
-                                </p>
-                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
-                                    <span class="pill pill-neutral">
-                                        <twig:ux:icon name="lucide:target" class="h-3 w-3" />
-                                        Váš tip {{ g.myHomeScore }}:{{ g.myAwayScore }}
-                                    </span>
-                                    {% if is_exact %}
-                                        <span class="pill pill-success">
-                                            <twig:ux:icon name="lucide:check" class="h-3 w-3" />
-                                            Přesně
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            {# body #}
-                            <div class="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-1">
-                                <span class="text-2xl font-extrabold tabular-nums {{ has_points ? 'text-win' : 'text-white/40' }}">{{ g.totalPoints }}</span>
-                                <span class="text-xs font-medium uppercase tracking-wider {{ has_points ? 'text-win/80' : 'text-white/40' }}">
-                                    {% if g.totalPoints == 1 %}bod{% elseif g.totalPoints >= 2 and g.totalPoints <= 4 %}body{% else %}bodů{% endif %}
-                                </span>
-                                <a href="{{ path('portal_sport_match_detail', {id: g.sportMatchId.toRfc4122}) }}" class="btn btn-ghost btn-sm sm:hidden">
-                                    Detail
-                                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                                </a>
-                            </div>
+                        {# barva chipu výsledku: přesně → exact, jinak se ziskem → partial #}
+                        {% set hit_class = is_exact ? 'exact' : (g.totalPoints > 0 ? 'partial' : null) %}
+                        <li data-reveal-target="item" class="px-4 py-4 sm:px-5{% if loop.index0 >= evaluated_visible %} hidden{% endif %}">
+                            <twig:Match:MatchRow
+                                :homeTeam="g.homeTeam"
+                                :awayTeam="g.awayTeam"
+                                :kickoffAt="g.kickoffAt"
+                                :round="g.groupName"
+                                state="finished"
+                                :pillVariant="is_exact ? 'success' : null"
+                                :pillIcon="is_exact ? 'check' : null"
+                                :pillLabel="is_exact ? 'Přesně' : null"
+                                :myHome="g.myHomeScore"
+                                :myAway="g.myAwayScore"
+                                :resultHome="g.actualHomeScore"
+                                :resultAway="g.actualAwayScore"
+                                :points="g.totalPoints"
+                                :hitClass="hit_class"
+                                :detailUrl="path('portal_sport_match_detail', {id: g.sportMatchId.toRfc4122})"
+                            />
+                            <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">{{ g.tournamentName }}</p>
                         </li>
                     {% endfor %}
                 </ul>

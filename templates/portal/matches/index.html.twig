@@ -49,71 +49,48 @@
             {% for m in matches %}
                 {% set is_tippable = m.isOpenForGuesses and m.kickoffAt >= date() %}
                 {% set is_locked = not m.isFinished and not m.isPostponed and not is_tippable %}
+                {% set is_tipped = m.guessedGroupsCount > 0 and m.pendingGroupsCount == 0 %}
+                {% set has_pending = m.groupsCount > 0 and m.pendingGroupsCount > 0 and is_tippable %}
+                {#
+                    Stav → clean enum (live je CUT, probíhající zápas čteme jako „Uzamčeno"):
+                      finished | locked (vč. live/uzávěrka) | tipped (vše natipováno) | open (tipnutelný)
+                    Jeden pilulkový slot: stavová pilulka má přednost; u tipnutelných ukáže stav tipu.
+                #}
+                {% if m.isFinished %}
+                    {% set row_state = 'finished' %}{% set pill_variant = 'done' %}{% set pill_icon = 'check' %}{% set pill_label = 'Ukončeno' %}{% set pill_dot = false %}
+                {% elseif m.isPostponed %}
+                    {% set row_state = 'locked' %}{% set pill_variant = 'warn' %}{% set pill_icon = 'triangle-alert' %}{% set pill_label = 'Odloženo' %}{% set pill_dot = false %}
+                {% elseif is_locked %}
+                    {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
+                {% elseif has_pending %}
+                    {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
+                    {% set pill_label = m.groupsCount > 1 ? 'Chybí tip (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Chybí tip' %}
+                {% elseif is_tipped %}
+                    {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_dot = false %}
+                    {% set pill_label = m.groupsCount > 1 ? 'Tip odeslán (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Tip odeslán' %}
+                {% else %}
+                    {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
+                {% endif %}
                 <li>
-                    <div class="card-glass flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5{% if m.isFinished %} border-l-2 border-l-accent-500/40{% elseif m.guessedGroupsCount > 0 and m.pendingGroupsCount == 0 %} border-l-2 border-l-win/40{% endif %}">
-                        {# datum a čas #}
-                        <div class="flex shrink-0 flex-col text-sm sm:w-20">
-                            <span class="font-semibold text-white tabular-nums">{{ m.kickoffAt|date('d. m.') }}</span>
-                            <span class="text-white/50 tabular-nums">{{ m.kickoffAt|date('H:i') }}</span>
-                        </div>
+                    <twig:Match:MatchRow
+                        :homeTeam="m.homeTeam"
+                        :awayTeam="m.awayTeam"
+                        :kickoffAt="m.kickoffAt"
+                        :round="m.round"
+                        :state="row_state"
+                        :pillVariant="pill_variant"
+                        :pillIcon="pill_icon"
+                        :pillLabel="pill_label"
+                        :pillDot="pill_dot"
+                        :resultHome="m.isFinished ? m.homeScore : null"
+                        :resultAway="m.isFinished ? m.awayScore : null"
+                        :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
+                        :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
+                    />
 
-                        {# týmy + skóre/vs #}
-                        <div class="flex min-w-0 flex-1 items-center gap-3">
-                            <div class="flex min-w-0 flex-1 items-center justify-end gap-2.5 text-right">
-                                <span class="truncate font-semibold text-white">{{ m.homeTeam }}</span>
-                                <twig:TeamFlag name="{{ m.homeTeam }}" size="36" />
-                            </div>
-                            {% if m.isFinished %}
-                                <span class="shrink-0 px-1 text-base font-black text-white tabular-nums">{{ m.homeScore }}:{{ m.awayScore }}</span>
-                            {% else %}
-                                <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">vs</span>
-                            {% endif %}
-                            <div class="flex min-w-0 flex-1 items-center gap-2.5">
-                                <twig:TeamFlag name="{{ m.awayTeam }}" size="36" />
-                                <span class="truncate font-semibold text-white">{{ m.awayTeam }}</span>
-                            </div>
-                        </div>
-
-                        {# stav + CTA #}
-                        <div class="flex shrink-0 flex-wrap items-center justify-between gap-2 sm:justify-end">
-                            {% if m.isFinished %}
-                                <span class="pill pill-done"><twig:ux:icon name="lucide:check" class="h-3 w-3" />Ukončeno</span>
-                            {% elseif m.isPostponed %}
-                                <span class="pill pill-warn"><twig:ux:icon name="lucide:triangle-alert" class="h-3 w-3" />Odloženo</span>
-                            {% elseif is_locked %}
-                                <span class="pill pill-locked"><twig:ux:icon name="lucide:lock" class="h-3 w-3" />Uzamčeno</span>
-                            {% else %}
-                                <span class="pill pill-soon"><span class="dot"></span>Brzy</span>
-                            {% endif %}
-
-                            {% if m.groupsCount > 0 and not m.isFinished %}
-                                {% if m.pendingGroupsCount > 0 and is_tippable %}
-                                    <span class="pill pill-soon">
-                                        <twig:ux:icon name="lucide:circle-alert" class="h-3 w-3" />
-                                        {% if m.groupsCount > 1 %}Chybí tip ({{ m.guessedGroupsCount }}/{{ m.groupsCount }}){% else %}Chybí tip{% endif %}
-                                    </span>
-                                {% elseif m.guessedGroupsCount > 0 %}
-                                    <span class="pill pill-tipped">
-                                        <twig:ux:icon name="lucide:check" class="h-3 w-3" />
-                                        {% if m.groupsCount > 1 %}Tip odeslán ({{ m.guessedGroupsCount }}/{{ m.groupsCount }}){% else %}Tip odeslán{% endif %}
-                                    </span>
-                                {% endif %}
-                            {% endif %}
-
-                            <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}" class="btn {{ is_tippable ? 'btn-primary' : 'btn-ghost' }} btn-sm">
-                                {% if is_tippable %}
-                                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat
-                                {% else %}
-                                    Detail
-                                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                                {% endif %}
-                            </a>
-                        </div>
-                    </div>
-
-                    {% if m.round or m.tournamentName or m.venue %}
+                    {% if m.tournamentName or m.venue %}
                         <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                            {% if m.round %}<span class="font-semibold text-white/55">{{ m.round }}</span> · {% endif %}{{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                            {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
                         </p>
                     {% endif %}
                 </li>
