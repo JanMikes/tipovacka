@@ -355,10 +355,25 @@
                             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">PIN</p>
                             {% if detail.pin %}
                                 <div class="space-y-2">
-                                    <input type="text" readonly value="{{ detail.pin }}"
-                                        onclick="this.select()"
-                                        class="input text-center font-mono text-lg tracking-[0.3em]"
-                                        aria-label="PIN soutěže">
+                                    <div class="copy-field" data-controller="copy">
+                                        <input type="text" readonly value="{{ detail.pin }}"
+                                            data-copy-target="source"
+                                            onclick="this.select()"
+                                            class="text-center font-mono text-lg tracking-[0.3em]"
+                                            aria-label="PIN soutěže">
+                                        <button type="button"
+                                            data-copy-target="button"
+                                            data-action="copy#copy"
+                                            aria-label="Kopírovat PIN">
+                                            <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                                <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                            </span>
+                                            <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                                <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                                Zkopírováno
+                                            </span>
+                                        </button>
+                                    </div>
                                     <div class="flex flex-wrap gap-3 text-xs">
                                         <form method="post" action="{{ path('portal_group_pin_regenerate', {id: group.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"
@@ -395,10 +410,25 @@
                             </p>
                             {% if detail.shareableLinkToken %}
                                 <div class="space-y-2">
-                                    <input type="text" readonly value="{{ url('group_join_by_link', {token: detail.shareableLinkToken}) }}"
-                                        onclick="this.select()"
-                                        class="input text-xs"
-                                        aria-label="Odkaz pro připojení">
+                                    <div class="copy-field" data-controller="copy">
+                                        <input type="text" readonly value="{{ url('group_join_by_link', {token: detail.shareableLinkToken}) }}"
+                                            data-copy-target="source"
+                                            onclick="this.select()"
+                                            class="text-xs"
+                                            aria-label="Odkaz pro připojení">
+                                        <button type="button"
+                                            data-copy-target="button"
+                                            data-action="copy#copy"
+                                            aria-label="Kopírovat odkaz">
+                                            <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                                <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                            </span>
+                                            <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                                <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                                Zkopírováno
+                                            </span>
+                                        </button>
+                                    </div>
                                     <div class="flex flex-wrap gap-3 text-xs">
                                         <form method="post" action="{{ path('portal_group_link_regenerate', {id: group.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"

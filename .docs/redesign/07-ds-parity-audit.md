@@ -125,7 +125,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | PoolDetail matchday tip-cards | `portal/group/detail.html.twig` "Moje tipy" | ⚠️ **P3** | Compact rows; optionally reuse `.tip-card`. |
 | CreatePoolModal step1 (name+source) | `group/create` + `tournament/create_private` | ✅ | Split across real routes. |
 | **CreatePoolModal step2 `.variant-card` presets** | `portal/tournament/rule_configuration.html.twig` | ❌ **P2** | Plain rows, no preset tiles. Add `.variant-card`+`.scoring-fields` to `@layer`; build `Scoring/RuleFields`; dedupe portal+admin. „+střelec" tile = 🔮 inert. |
-| CreatePoolModal step3 invite (chips + copy-field) | `group/detail` invites | ⚠️ **P2** | (a) email **chip-input** missing (`.email-chips`); (b) PIN+link use raw readonly inputs, not `.copy-field` one-click-copy. Add classes + a `copy` Stimulus controller. |
+| CreatePoolModal step3 invite (chips + copy-field) | `group/detail` invites | ✅ | (b) DONE (next commit): PIN + invite link now use the DS `.copy-field` + a `copy` Stimulus controller (one-click „Zkopírováno"). (a) email **chip-input** = documented-acceptable: the existing single-email form + bulk textarea (`bulkInvitationForm`) are functionally equivalent; the chip UI is cosmetic polish, deferred (would need a sync-to-hidden-field Stimulus controller). |
 | CreatePoolModal step4 contributions tiers | — | 🔮 **P3** | Correctly absent. Reference-only later (premium). |
 | InvitePlayersModal roster | `group/detail` + anon-member flows | ✅ | |
 | join-by-PIN 8-box | `_partials/join_by_pin_form.html.twig` | ✅ | |

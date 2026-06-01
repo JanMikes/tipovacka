@@ -340,6 +340,26 @@ label.required::after {
     }
     .num-input:focus { border-color: rgba(70,153,208,0.6); box-shadow: 0 0 0 3px rgba(70,153,208,0.18); }
 
+    /* ---- one-click copy field ---- */
+    .copy-field {
+        display: flex; align-items: center;
+        background: var(--color-inset); border: 1px solid var(--border-2);
+        border-radius: 10px; overflow: hidden;
+    }
+    .copy-field input {
+        flex: 1; padding: 12px 14px; background: transparent; border: none;
+        color: #fff; font-size: 14px; outline: none; font-family: inherit;
+    }
+    .copy-field button {
+        padding: 0 14px; height: 44px; min-width: 44px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: transparent; color: var(--fg-3);
+        border-left: 1px solid var(--border-2);
+        transition: all 150ms var(--ease-standard);
+    }
+    .copy-field button:hover { background: rgba(70,153,208,0.1); color: var(--color-accent-300); }
+    .copy-field button.copied { color: var(--color-accent-300); }
+
     /* ---- 8-box PIN input ---- */
     .pin-inputs { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
     .pin-inputs .pin-sep { color: var(--fg-4); font-weight: 900; padding: 0 3px; }
