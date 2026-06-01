@@ -1,0 +1,97 @@
+{#
+    Scoring rule fields (DS „Vyber pravidla" step).
+
+    Renders the design-system scoring block inside an existing <form>:
+      (a) the `.variant-card` preset row  — Standardní / Vlastní / +střelec (inert)
+      (b) the `.scoring-fields` rows       — one labelled number row per rule
+          (enabled toggle + points num-input + errors), driven by the real
+          Symfony form fields in `form.rules`.
+
+    Glossary: scoring rules live at the turnaj (Tournament) level.
+    The „+střelec" preset / „Trefený střelec" field is DEFERRED (🔮): its tile is
+    rendered inert (disabled, „Připravujeme") and adds NO field and submits nothing.
+
+    props:
+      form        Symfony form view that exposes `.rules` (compound, keyed by rule identifier)
+      presetable  bool — render the preset `.variant-card` row (default true)
+
+    The component only restructures markup; CSRF/_errors stay on the surrounding <form>.
+#}
+{% props form, presetable = true %}
+
+{# Per-rule DS copy keyed by the fixed rule identifiers (CLAUDE: src/Rule/*). #}
+{% set rule_copy = {
+    correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
+    correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
+    correct_outcome:    { label: 'Dobrý tip výsledku',        sub: 'Výhra / remíza / prohra' },
+    exact_score:        { label: 'Přesný tip výsledku',       sub: 'Trefená obě skóre současně' },
+} %}
+
+<div data-controller="scoring-preset">
+    {% if presetable %}
+        <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button type="button"
+                    class="variant-card selected"
+                    data-scoring-preset-target="card"
+                    data-action="scoring-preset#standard">
+                <span class="variant-check" aria-hidden="true">
+                    <twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" />
+                </span>
+                <span class="block text-[13px] font-bold">Standardní</span>
+                <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Skóre + výsledek</span>
+            </button>
+
+            <button type="button"
+                    class="variant-card"
+                    data-scoring-preset-target="card"
+                    data-action="scoring-preset#custom">
+                <span class="variant-check" aria-hidden="true">
+                    <twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" />
+                </span>
+                <span class="block text-[13px] font-bold">Vlastní</span>
+                <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Nastavte si sami</span>
+            </button>
+
+            <button type="button"
+                    class="variant-card"
+                    disabled
+                    aria-disabled="true"
+                    title="Připravujeme">
+                <span class="variant-check" aria-hidden="true">
+                    <twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" />
+                </span>
+                <span class="block text-[13px] font-bold">+střelec</span>
+                <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Připravujeme</span>
+            </button>
+        </div>
+    {% endif %}
+
+    <div class="scoring-fields">
+        {% for identifier, entryForm in form.rules %}
+            {% set copy = rule_copy[identifier] ?? { label: entryForm.points.vars.label ?? identifier, sub: null } %}
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-white/[0.06] py-3 last:border-b-0">
+                <div class="min-w-0">
+                    <div class="field-label mb-0">{{ copy.label }}</div>
+                    {% if copy.sub %}
+                        <div class="mt-1 text-[13px] font-medium text-white">{{ copy.sub }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="flex shrink-0 items-center gap-3">
+                    <label class="flex cursor-pointer items-center gap-2 text-sm text-white/70">
+                        {{ form_widget(entryForm.enabled) }}
+                        <span class="cursor-pointer">Aktivní</span>
+                    </label>
+                    {{ form_widget(entryForm.points, {
+                        attr: {
+                            class: 'num-input w-24',
+                            'data-scoring-preset-target': 'field',
+                            'data-rule': identifier,
+                        },
+                    }) }}
+                </div>
+            </div>
+            {{ form_errors(entryForm.points) }}
+        {% endfor %}
+    </div>
+</div>

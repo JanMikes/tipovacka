@@ -22,28 +22,12 @@
         'data-action': 'submit->confirm-recalculation#confirmIfNeeded',
     }}) }}
 
-    <div class="card-glass mb-6 space-y-4 p-5 sm:p-6">
-        {% for item in items %}
-            {% set entryForm = form.rules[item.identifier] %}
-            <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <div class="mb-3 flex items-start justify-between gap-4">
-                    <div class="min-w-0">
-                        <h2 class="text-base font-semibold text-white">{{ item.label }}</h2>
-                        <p class="mt-0.5 text-sm text-white/70">{{ item.description }}</p>
-                        <p class="mt-1 text-xs text-white/40">Výchozí body: {{ item.defaultPoints }}</p>
-                    </div>
-                    <label class="flex shrink-0 cursor-pointer items-center gap-2 text-sm text-white/70">
-                        {{ form_widget(entryForm.enabled) }}
-                        {{ form_label(entryForm.enabled, null, {label_attr: {class: 'cursor-pointer'}}) }}
-                    </label>
-                </div>
-                <div class="flex items-center gap-3">
-                    {{ form_label(entryForm.points, null, {label_attr: {class: 'field-label mb-0'}}) }}
-                    {{ form_widget(entryForm.points, {'attr': {'class': 'num-input w-24'}}) }}
-                </div>
-                {{ form_errors(entryForm.points) }}
-            </div>
-        {% endfor %}
+    <p class="mb-4 text-sm leading-relaxed text-white/60">
+        Bodování ovlivní pořadí v žebříčku. Hodnoty lze kdykoli upravit.
+    </p>
+
+    <div class="card-glass mb-6 p-5 sm:p-6">
+        <twig:Scoring:RuleFields :form="form" />
     </div>
 
     <div class="flex flex-wrap gap-3">

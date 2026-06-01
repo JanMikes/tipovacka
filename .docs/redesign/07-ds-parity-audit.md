@@ -82,7 +82,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | pick distribution → `.dist-bar` | `Match/PickDistribution.html.twig` | ✅ | Free after lock. |
 | StatCard / Avatar / EmptyState | components | ✅ | |
 | **TeamFlag coin SVGs** | `TeamFlag.html.twig` | ⚠️ **P2** | Only `.flag.club` initials fallback; the curated country SVG set (CZE/SWE/FIN/CAN/…) is NOT shipped. Build `_flags` macro + name→code map per 02-components seed set. |
-| `Scoring/RuleFields` (`.variant-card` presets) | (missing) | ❌ **P2** | No `.variant-card`/`.scoring-fields` classes; rule rows duplicated in portal+admin `rule_configuration`. Build component + add classes. See F. |
+| `Scoring/RuleFields` (`.variant-card` presets) | `Scoring/RuleFields.html.twig` | ✅ | DONE (next commit): built the anonymous component + ported `.variant-card`/`.scoring-fields` CSS; used by both portal + admin rule_configuration (dedup). `scoring_preset_controller.js` prefills Standardní (1/1/3/5) / Vlastní; +střelec tile inert. |
 
 ## D. Player pages
 
@@ -124,7 +124,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | PoolDetail shell | `portal/group/detail.html.twig` | ✅ | (Optional: "Hráč" role chip on owner row; inline top-N LB preview — both ⚠️ P3.) |
 | PoolDetail matchday tip-cards | `portal/group/detail.html.twig` "Moje tipy" | ⚠️ **P3** | Compact rows; optionally reuse `.tip-card`. |
 | CreatePoolModal step1 (name+source) | `group/create` + `tournament/create_private` | ✅ | Split across real routes. |
-| **CreatePoolModal step2 `.variant-card` presets** | `portal/tournament/rule_configuration.html.twig` | ❌ **P2** | Plain rows, no preset tiles. Add `.variant-card`+`.scoring-fields` to `@layer`; build `Scoring/RuleFields`; dedupe portal+admin. „+střelec" tile = 🔮 inert. |
+| **CreatePoolModal step2 `.variant-card` presets** | `portal/tournament/rule_configuration.html.twig` | ✅ | DONE (next commit): `Scoring/RuleFields` component with `.variant-card` presets + `.scoring-fields` rows, used by portal + admin. „+střelec" tile inert (🔮). |
 | CreatePoolModal step3 invite (chips + copy-field) | `group/detail` invites | ✅ | (b) DONE (next commit): PIN + invite link now use the DS `.copy-field` + a `copy` Stimulus controller (one-click „Zkopírováno"). (a) email **chip-input** = documented-acceptable: the existing single-email form + bulk textarea (`bulkInvitationForm`) are functionally equivalent; the chip UI is cosmetic polish, deferred (would need a sync-to-hidden-field Stimulus controller). |
 | CreatePoolModal step4 contributions tiers | — | 🔮 **P3** | Correctly absent. Reference-only later (premium). |
 | InvitePlayersModal roster | `group/detail` + anon-member flows | ✅ | |

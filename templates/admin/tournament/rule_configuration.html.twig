@@ -27,28 +27,8 @@
     'data-action': 'submit->confirm-recalculation#confirmIfNeeded',
 }}) }}
 
-<div class="card-glass p-5 md:p-6 space-y-4">
-    {% for item in items %}
-        {% set entryForm = form.rules[item.identifier] %}
-        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <div class="flex items-start justify-between gap-4 mb-3">
-                <div class="min-w-0">
-                    <h2 class="text-base font-semibold text-white">{{ item.label }}</h2>
-                    <p class="text-sm text-white/60 mt-0.5">{{ item.description }}</p>
-                    <p class="text-xs text-white/40 mt-1">Výchozí body: {{ item.defaultPoints }}</p>
-                </div>
-                <label class="flex items-center gap-2 shrink-0 cursor-pointer">
-                    {{ form_widget(entryForm.enabled) }}
-                    <span class="text-sm text-white/70">Aktivní</span>
-                </label>
-            </div>
-            <div class="flex items-center gap-3">
-                {{ form_label(entryForm.points, null, {label_attr: {class: 'text-sm text-white/60 mb-0'}}) }}
-                {{ form_widget(entryForm.points, {'attr': {'class': 'num-input w-24'}}) }}
-            </div>
-            {{ form_errors(entryForm.points) }}
-        </div>
-    {% endfor %}
+<div class="card-glass p-5 md:p-6">
+    <twig:Scoring:RuleFields :form="form" />
 </div>
 
 <div class="flex flex-wrap gap-3 mt-6">

@@ -340,6 +340,24 @@ label.required::after {
     }
     .num-input:focus { border-color: rgba(70,153,208,0.6); box-shadow: 0 0 0 3px rgba(70,153,208,0.18); }
 
+    /* ---- scoring presets + fields (rule configuration) ---- */
+    .variant-card { padding: 16px 14px 16px; border-radius: 14px; text-align: center; cursor: pointer;
+        background: #0e1730; border: 1px solid rgba(255,255,255,0.06); color: #fff;
+        transition: all 150ms var(--ease-standard); position: relative;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04); min-height: 110px; }
+    .variant-card:hover { background: #11193a; border-color: rgba(255,255,255,0.12); }
+    .variant-card.selected { background: #0e1730; border-color: rgba(70,153,208,0.55);
+        box-shadow: 0 0 0 3px rgba(70,153,208,0.12); }
+    .variant-card > span { position: relative; z-index: 1; }
+    .variant-card[disabled], .variant-card:disabled { opacity: 0.45; cursor: not-allowed; }
+    .variant-card[disabled]:hover, .variant-card:disabled:hover { background: #0e1730; border-color: rgba(255,255,255,0.06); }
+    .variant-check { display: inline-flex; width: 100%; justify-content: center; margin-bottom: 6px;
+        color: rgba(255,255,255,0.22); transition: color 150ms var(--ease-standard); }
+    .variant-card.selected .variant-check { color: var(--color-accent-400); }
+
+    .scoring-fields { padding: 6px 16px; background: rgba(255,255,255,0.025);
+        border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
+
     /* ---- one-click copy field ---- */
     .copy-field {
         display: flex; align-items: center;
