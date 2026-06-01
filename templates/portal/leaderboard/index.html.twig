@@ -1,9 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Žebříček — {{ group.name }} — Tipovačka{% endblock %}
+{% block title %}Žebříček — {{ group.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+<div class="bg-radial mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
@@ -12,7 +12,7 @@
     ]" />
 
     {% if group.tournament.isFinished and winner is defined and winner is not null %}
-        <section class="mb-8 overflow-hidden rounded-2xl bg-white p-6 ring-1 ring-navy-900/10 shadow-card sm:p-10">
+        <section class="surface-accent mb-8 p-6 sm:p-10">
             <picture>
                 <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">
                 <source media="(min-width: 768px)" srcset="{{ asset('images/winner/winner-wide.png') }}">
@@ -25,15 +25,16 @@
                 >
             </picture>
             <div class="mt-6 text-center">
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-600">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ring-1 ring-white/25">
                     <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
                     Vítěz
                 </span>
-                <h2 class="mt-3 text-3xl font-bold text-navy-900 sm:text-4xl">
-                    Gratulujeme, <span class="text-cyan-500">{{ winner.nickname }}</span>!
+                <h2 class="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                    Gratulujeme, {{ winner.nickname }}!
                 </h2>
-                <p class="mt-3 text-base text-navy-900/70 sm:text-lg">
-                    {{ winner.nickname }} vyhrává turnaj <strong class="text-navy-900">{{ group.tournament.name }}</strong> s {{ winner.totalPoints }} body.
+                <p class="mt-3 text-base text-white/80 sm:text-lg">
+                    {{ winner.nickname }} vyhrává turnaj <strong class="font-bold text-white">{{ group.tournament.name }}</strong>
+                    s {{ winner.totalPoints }} {{ winner.totalPoints == 1 ? 'bodem' : 'body' }}.
                 </p>
             </div>
         </section>
@@ -41,23 +42,24 @@
 
     <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="flex items-center gap-2.5 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-                <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-cyan-500" />
-                Žebříček
+            <p class="eyebrow">Soutěžní žebříček</p>
+            <h1 class="mt-1 flex items-center gap-2.5 text-3xl font-black tracking-tight sm:text-4xl">
+                <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-accent-400" />
+                <span class="grad-headline">Žebříček</span>
             </h1>
-            <p class="mt-2 text-navy-900/70">
-                Skupina
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">{{ group.name }}</a>
+            <p class="mt-2 text-white/70">
+                Soutěž
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ group.name }}</a>
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/10 transition-colors hover:bg-navy-50">
-                <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-cyan-500" />
+            <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />
                 Tabulka
             </a>
             {% if is_granted('leaderboard_resolve_ties', group) %}
-                <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+                <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                     <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
                     Rozřadit shody
                 </a>

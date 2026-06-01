@@ -1,36 +1,32 @@
 {#
-    Props (via `this`):
-      - sportMatch       — SportMatch entity
-      - groupId          — group UUID as string
-      - isLocked         — bool
-      - existingGuess    — Guess|null
-      - hasExistingGuess — bool
-
-    Caller can override wrapper classes by passing `class="..."` on the component.
-    Default wrapper provides a shadow-card with its own padding.
+    Wtips dark score-input block for a single match guess (Live Component).
+    Props (via `this`): sportMatch, groupId, isLocked, existingGuess, hasExistingGuess.
+    Writable models: homeScore, awayScore. Caller can override the wrapper via class="...".
 #}
-<div{{ attributes.defaults({class: 'rounded-xl bg-white p-4 shadow-card ring-1 ring-navy-900/5'}) }}>
+<div{{ attributes.defaults({class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
 
     {% if this.isLocked %}
-        <p class="flex items-center gap-1.5 text-sm text-navy-900/60">
+        <p class="flex items-center gap-1.5 text-sm text-white/60">
             <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
             Tipování uzavřeno — zápas už začal nebo není aktivní.
         </p>
         {% if this.existingGuess %}
-            <p class="mt-2 text-2xl font-bold tabular-nums text-navy-900">
+            <p class="mt-2 text-2xl font-black tabular-nums text-white">
                 {{ this.existingGuess.homeScore }} : {{ this.existingGuess.awayScore }}
             </p>
+        {% else %}
+            <p class="mt-2 text-sm text-white/40">Netipováno.</p>
         {% endif %}
     {% else %}
         {% if this.errorMessage %}
-            <p class="mb-3 flex items-center gap-1.5 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-loss/30 bg-loss/10 px-3 py-2 text-sm text-loss">
                 <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0" />
                 {{ this.errorMessage }}
             </p>
         {% endif %}
 
         {% if this.successMessage %}
-            <p class="mb-3 flex items-center gap-1.5 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+            <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-win/30 bg-win/10 px-3 py-2 text-sm text-win">
                 <twig:ux:icon name="lucide:circle-check-big" class="h-4 w-4 shrink-0" />
                 {{ this.successMessage }}
             </p>
@@ -38,7 +34,7 @@
 
         <form data-action="live#action:prevent" data-live-action-param="submit" class="flex flex-wrap items-end gap-3">
             <div class="min-w-0">
-                <label class="mb-1 block text-xs font-medium text-navy-900/60" for="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}">
+                <label class="field-label mb-1 block" for="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}">
                     {{ this.sportMatch.homeTeam }}
                 </label>
                 <input
@@ -48,17 +44,17 @@
                     id="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="homeScore"
                     value="{{ homeScore ?? '' }}"
-                    class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                    class="score-input w-16"
                 />
                 {% if _errors is defined and _errors.getAll('homeScore')|length > 0 %}
-                    <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('homeScore')[0].message }}</p>
+                    <p class="mt-0.5 text-xs text-loss">{{ _errors.getAll('homeScore')[0].message }}</p>
                 {% endif %}
             </div>
 
-            <span class="pb-2 text-lg font-semibold text-navy-900/30">:</span>
+            <span class="pb-2 text-lg font-bold text-white/30">:</span>
 
             <div class="min-w-0">
-                <label class="mb-1 block text-xs font-medium text-navy-900/60" for="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}">
+                <label class="field-label mb-1 block" for="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}">
                     {{ this.sportMatch.awayTeam }}
                 </label>
                 <input
@@ -68,15 +64,15 @@
                     id="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}"
                     data-model="awayScore"
                     value="{{ awayScore ?? '' }}"
-                    class="w-16 rounded-lg border border-navy-100 px-2 py-1.5 text-center text-lg font-semibold tabular-nums text-navy-900 outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500"
+                    class="score-input w-16"
                 />
                 {% if _errors is defined and _errors.getAll('awayScore')|length > 0 %}
-                    <p class="mt-0.5 text-xs text-red-600">{{ _errors.getAll('awayScore')[0].message }}</p>
+                    <p class="mt-0.5 text-xs text-loss">{{ _errors.getAll('awayScore')[0].message }}</p>
                 {% endif %}
             </div>
 
             {% set is_clearing = this.hasExistingGuess and homeScore is null and awayScore is null %}
-            <button type="submit" class="ml-auto inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors {{ is_clearing ? 'bg-red-600 hover:bg-red-700' : 'bg-navy-900 hover:bg-navy-700' }}">
+            <button type="submit" class="btn btn-sm ml-auto {{ is_clearing ? 'btn-danger' : (this.hasExistingGuess ? 'btn-ghost' : 'btn-primary') }}">
                 {% if is_clearing %}
                     <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat tip
                 {% elseif this.hasExistingGuess %}

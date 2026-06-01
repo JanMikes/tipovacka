@@ -1,35 +1,38 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Připojit se ke skupině — Tipovačka{% endblock %}
+{% block title %}Připojit se k soutěži — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: 'Připojit se ke skupině'},
-    ]" />
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-navy-900">Připojit se ke skupině</h1>
-        <p class="text-navy-900/60 mt-1">Zadej 8místný PIN, který ti někdo dal.</p>
+    <div class="bg-radial mx-auto w-full max-w-md px-4 py-12 sm:px-6 lg:px-8">
+        <twig:Breadcrumbs :items="[
+            {label: 'Nástěnka', path: path('portal_dashboard')},
+            {label: 'Připojit se k soutěži'},
+        ]" />
+
+        <header class="mb-8">
+            <span class="eyebrow inline-flex items-center gap-2">
+                <twig:ux:icon name="lucide:key-round" class="h-3.5 w-3.5" />
+                Připojit se k soutěži
+            </span>
+            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-white">Zadejte PIN soutěže</h1>
+            <p class="mt-2 text-sm leading-relaxed text-white/60">Zadejte 8místný PIN, který vám dal organizátor — a rovnou se připojíte.</p>
+        </header>
+
+        <div class="card-glass p-8">
+            {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+
+                <div class="field">
+                    {{ form_label(form.pin, null, {label_attr: {class: 'field-label mb-1.5 block'}}) }}
+                    {{ form_widget(form.pin, {attr: {class: 'input text-center font-mono text-lg tracking-[0.3em]'}}) }}
+                    {{ form_errors(form.pin) }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    Připojit se
+                </button>
+
+            {{ form_end(form) }}
+        </div>
     </div>
-
-    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8">
-        {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-
-            <div>
-                {{ form_label(form.pin, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                {{ form_widget(form.pin, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition font-mono tracking-widest text-center text-lg'}}) }}
-                {{ form_errors(form.pin) }}
-            </div>
-
-            <button
-                type="submit"
-                class="w-full bg-navy-900 hover:bg-navy-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
-            >
-                Připojit se
-            </button>
-
-        {{ form_end(form) }}
-    </div>
-</div>
 {% endblock %}

@@ -1,0 +1,13 @@
+{#
+    Glass stat card. props: label, value, meta (optional), tone (win|loss|accent|null), icon (optional lucide)
+#}
+{% props label, value, meta = null, tone = null, icon = null %}
+{% set tone_class = {win: 'text-win', loss: 'text-loss', accent: 'text-accent-300', live: 'text-loss'}[tone] ?? 'text-white' %}
+<div class="stat">
+    <div class="stat-lbl flex items-center gap-1.5">
+        {% if icon %}<twig:ux:icon name="lucide:{{ icon }}" class="h-3 w-3" />{% endif %}
+        {{ label }}
+    </div>
+    <div class="stat-val {{ tone_class }}">{{ value|raw }}</div>
+    {% if meta %}<div class="stat-meta">{{ meta|raw }}</div>{% endif %}
+</div>

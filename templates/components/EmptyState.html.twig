@@ -6,20 +6,21 @@
 {# @var secondaryLabel string|null #}
 {# @var secondaryPath string|null #}
 
-{% props illustration, title, body, ctaLabel = null, ctaPath = null, secondaryLabel = null, secondaryPath = null %}
+{% props illustration = null, title, body, ctaLabel = null, ctaPath = null, secondaryLabel = null, secondaryPath = null %}
 
-<div{{ attributes.defaults({class: 'mx-auto flex max-w-md flex-col items-center py-16 text-center'}) }}>
-    <h3 class="text-xl font-semibold text-navy-900">{{ title }}</h3>
-    <p class="mt-2 text-base text-navy-900/70">{{ body }}</p>
+{% set icon = { leaderboard: 'trophy', tournaments: 'trophy', matches: 'calendar', search: 'search' }[illustration] ?? 'sparkles' %}
+
+<div{{ attributes.defaults({class: 'mx-auto flex max-w-md flex-col items-center py-14 text-center'}) }}>
+    <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-accent-300">
+        <twig:ux:icon name="lucide:{{ icon }}" class="h-6 w-6" />
+    </span>
+    <h3 class="text-lg font-bold tracking-tight text-white">{{ title }}</h3>
+    <p class="mt-2 text-sm leading-relaxed text-white/60">{{ body }}</p>
     {% if ctaLabel and ctaPath %}
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <a href="{{ ctaPath }}" class="rounded-md bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-cyan-600">
-                {{ ctaLabel }}
-            </a>
+            <a href="{{ ctaPath }}" class="btn btn-primary btn-sm">{{ ctaLabel }}</a>
             {% if secondaryLabel and secondaryPath %}
-                <a href="{{ secondaryPath }}" class="text-sm font-semibold text-navy-900 transition-colors hover:text-cyan-500">
-                    {{ secondaryLabel }}
-                </a>
+                <a href="{{ secondaryPath }}" class="text-sm font-semibold text-white/70 transition-colors hover:text-white">{{ secondaryLabel }}</a>
             {% endif %}
         </div>
     {% endif %}
