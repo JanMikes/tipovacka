@@ -1,105 +1,100 @@
 <div{{ attributes }}>
-    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register'}}) }}
+    {{ form_start(form, {attr: {class: 'flex flex-col gap-4', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register'}}) }}
 
-        <div>
-            {{ form_label(form.email, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-            <div class="relative">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                    <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
-                </span>
-                {{ form_widget(form.email, {attr: {
-                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                }}) }}
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="field">
+                {{ form_label(form.email, null, {label_attr: {class: 'field-label'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:mail" class="h-[18px] w-[18px]" />
+                    </span>
+                    {{ form_widget(form.email, {attr: {class: 'input !pl-[42px]', placeholder: 'vas@email.cz'}}) }}
+                </div>
+                {{ form_errors(form.email) }}
             </div>
-            {{ form_errors(form.email) }}
+
+            <div class="field">
+                {{ form_label(form.nickname, null, {label_attr: {class: 'field-label'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:user" class="h-[18px] w-[18px]" />
+                    </span>
+                    {{ form_widget(form.nickname, {attr: {class: 'input !pl-[42px]', placeholder: 'vase_prezdivka'}}) }}
+                </div>
+                <p class="text-[11px] leading-relaxed text-white/40">3–30 znaků, písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
+                {{ form_errors(form.nickname) }}
+            </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                {{ form_label(form.firstName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+            <div class="field">
+                {{ form_label(form.firstName, null, {label_attr: {class: 'field-label'}}) }}
                 <div class="relative">
-                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                        <twig:ux:icon name="lucide:user" class="h-5 w-5" />
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:user" class="h-[18px] w-[18px]" />
                     </span>
-                    {{ form_widget(form.firstName, {attr: {
-                        class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    }}) }}
+                    {{ form_widget(form.firstName, {attr: {class: 'input !pl-[42px]', placeholder: 'Jan'}}) }}
                 </div>
                 {{ form_errors(form.firstName) }}
             </div>
 
-            <div>
-                {{ form_label(form.lastName, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
+            <div class="field">
+                {{ form_label(form.lastName, null, {label_attr: {class: 'field-label'}}) }}
                 <div class="relative">
-                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                        <twig:ux:icon name="lucide:user" class="h-5 w-5" />
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:user" class="h-[18px] w-[18px]" />
                     </span>
-                    {{ form_widget(form.lastName, {attr: {
-                        class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    }}) }}
+                    {{ form_widget(form.lastName, {attr: {class: 'input !pl-[42px]', placeholder: 'Novák'}}) }}
                 </div>
                 {{ form_errors(form.lastName) }}
             </div>
         </div>
 
-        <div>
-            {{ form_label(form.nickname, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-            <div class="relative">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                    <twig:ux:icon name="lucide:user" class="h-5 w-5" />
-                </span>
-                {{ form_widget(form.nickname, {attr: {
-                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                }}) }}
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="field" data-controller="password-visibility">
+                {{ form_label(form.password.first, null, {label_attr: {class: 'field-label'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:lock" class="h-[18px] w-[18px]" />
+                    </span>
+                    {{ form_widget(form.password.first, {attr: {
+                        class: 'input !pl-[42px] !pr-12',
+                        placeholder: 'Zadejte heslo',
+                        'data-password-visibility-target': 'input',
+                    }}) }}
+                    <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 my-auto flex h-[30px] w-[30px] items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/5 hover:text-white" aria-label="Zobrazit/skrýt heslo">
+                        <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-[18px] w-[18px]" /></span>
+                        <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-[18px] w-[18px]" /></span>
+                    </button>
+                </div>
+                {{ form_errors(form.password.first) }}
             </div>
-            <p class="mt-1 text-xs text-navy-900/50">3–30 znaků, pouze písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
-            {{ form_errors(form.nickname) }}
-        </div>
 
-        <div data-controller="password-visibility">
-            {{ form_label(form.password.first, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-            <div class="relative">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                    <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                </span>
-                {{ form_widget(form.password.first, {attr: {
-                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-12 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                    'data-password-visibility-target': 'input',
-                }}) }}
-                <button type="button" data-action="password-visibility#toggle" class="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-navy-900/40 transition-colors hover:text-navy-900" aria-label="Zobrazit/skrýt heslo">
-                    <span data-password-visibility-target="iconShow"><twig:ux:icon name="lucide:eye" class="h-5 w-5" /></span>
-                    <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
-                </button>
+            <div class="field">
+                {{ form_label(form.password.second, null, {label_attr: {class: 'field-label'}}) }}
+                <div class="relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-white/50">
+                        <twig:ux:icon name="lucide:lock" class="h-[18px] w-[18px]" />
+                    </span>
+                    {{ form_widget(form.password.second, {attr: {class: 'input !pl-[42px]', placeholder: 'Zopakujte heslo'}}) }}
+                </div>
+                {{ form_errors(form.password.second) }}
+                {{ form_errors(form.password) }}
             </div>
-            {{ form_errors(form.password.first) }}
-        </div>
-
-        <div>
-            {{ form_label(form.password.second, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-            <div class="relative">
-                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-navy-900/40">
-                    <twig:ux:icon name="lucide:lock" class="h-5 w-5" />
-                </span>
-                {{ form_widget(form.password.second, {attr: {
-                    class: 'w-full rounded-lg border border-navy-100 bg-white py-2.5 pl-10 pr-4 text-navy-900 outline-none transition focus:border-transparent focus:ring-2 focus:ring-cyan-500',
-                }}) }}
-            </div>
-            {{ form_errors(form.password.second) }}
-            {{ form_errors(form.password) }}
         </div>
 
         <div>
-            <label class="flex items-start gap-2 text-sm text-navy-900/80">
-                {{ form_widget(form.gdprConsent, {attr: {class: 'mt-0.5 h-4 w-4 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500'}}) }}
+            <label class="flex cursor-pointer items-start gap-2.5 text-[13px] leading-relaxed text-white/70">
+                {{ form_widget(form.gdprConsent, {attr: {class: 'mt-0.5 h-[17px] w-[17px] shrink-0 rounded-md border-white/20 bg-inset text-accent-500 focus:ring-accent-500 focus:ring-offset-0'}}) }}
                 <span>
                     Souhlasím se
-                    <a href="{{ path('app_privacy') }}" target="_blank" rel="noopener" class="text-cyan-600 hover:text-cyan-700 hover:underline">zpracováním osobních údajů</a>.
+                    <a href="{{ path('app_privacy') }}" target="_blank" rel="noopener" class="font-semibold text-accent-300 underline decoration-accent-500/30 underline-offset-2 hover:text-white">zpracováním osobních údajů</a>.
                 </span>
             </label>
             {{ form_errors(form.gdprConsent) }}
         </div>
 
-        <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-colors hover:bg-cyan-600">
+        <button type="submit" class="btn btn-primary mt-2 w-full">
             Vytvořit účet
             <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
         </button>

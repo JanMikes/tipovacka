@@ -1,76 +1,89 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Ochrana soukromí — Tipovačka{% endblock %}
-{% block meta_description %}Jaká data o tobě ukládáme, s kým je sdílíme (nikým) a jak je chráníme.{% endblock %}
+{% block title %}Ochrana soukromí — {{ brand_name }}{% endblock %}
+{% block meta_description %}Jaká data o vás ukládáme, s kým je sdílíme (nikým) a jak je chráníme.{% endblock %}
 
 {% block body %}
+<div class="bg-radial">
 <div class="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
-    <nav class="flex items-center gap-1.5 text-sm text-navy-900/60" aria-label="Breadcrumb">
-        <a href="{{ path('app_home') }}" class="hover:text-cyan-600">Domů</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
-        <span class="text-navy-900/80">Ochrana soukromí</span>
+    <nav class="flex items-center gap-1.5 text-sm text-white/50" aria-label="Breadcrumb">
+        <a href="{{ path('app_home') }}" class="transition-colors hover:text-accent-300">Domů</a>
+        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 text-white/30" />
+        <span class="text-white/80">Ochrana soukromí</span>
     </nav>
 
-    <h1 class="mt-2 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">Ochrana soukromí</h1>
-    <p class="mt-3 max-w-xl text-navy-900/70">
-        Krátce a bez právničiny: co o tobě víme, proč to víme a jak to chráníme.
-    </p>
+    <header class="mt-4">
+        <p class="eyebrow mb-3 inline-flex items-center gap-1.5">
+            <twig:ux:icon name="lucide:shield" class="h-3.5 w-3.5" />
+            Vaše data
+        </p>
+        <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <span>Ochrana soukromí</span>
+        </h1>
+        <p class="mt-3 max-w-xl text-white/60">
+            Krátce a bez právničiny: co o vás víme, proč to víme a jak to chráníme.
+        </p>
+    </header>
 
-    <div class="mt-10 space-y-8 text-navy-900/85 leading-relaxed">
+    <div class="card-glass mt-10 p-6 sm:p-8">
+        <div class="space-y-8 leading-relaxed text-white/70">
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co o tobě víme a proč</h2>
-            <p class="mt-2">
-                Tvůj <strong>e-mail</strong> slouží k přihlášení a k zaslání pozvánek do skupin.
-                <strong>Jméno, příjmení a přezdívku</strong> ukazujeme ostatním ve skupině, ať vědí, kdo tipuje.
-                Ukládáme také <strong>tvé tipy</strong>, ať se dá spočítat tabulka.
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Co o vás víme a proč</h2>
+                <p class="mt-2">
+                    Váš <strong class="font-semibold text-white">e-mail</strong> slouží k přihlášení a k zaslání pozvánek do skupin.
+                    <strong class="font-semibold text-white">Jméno, příjmení a přezdívku</strong> ukazujeme ostatním ve skupině, ať vědí, kdo tipuje.
+                    Ukládáme také <strong class="font-semibold text-white">vaše tipy</strong>, ať se dá spočítat tabulka.
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co veřejně vidí ostatní</h2>
-            <p class="mt-2">
-                Jen tvé <strong>jméno, příjmení a přezdívku</strong>. <strong>E-mail nevidí nikdo</strong> kromě tebe — ani členové tvé skupiny, ani správce turnaje.
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Co veřejně vidí ostatní</h2>
+                <p class="mt-2">
+                    Jen vaše <strong class="font-semibold text-white">jméno, příjmení a přezdívku</strong>. <strong class="font-semibold text-white">E-mail nevidí nikdo</strong> kromě vás — ani členové vaší skupiny, ani správce turnaje.
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Komu data předáváme</h2>
-            <p class="mt-2">
-                <strong>Nikomu.</strong> Tvoje údaje nesdílíme s žádnou třetí stranou. Nepoužíváme reklamní ani analytické služby cizích firem, neprodáváme data, neposíláme je nikam „do cloudu navíc".
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Komu data předáváme</h2>
+                <p class="mt-2">
+                    <strong class="font-semibold text-white">Nikomu.</strong> Vaše údaje nesdílíme s žádnou třetí stranou. Nepoužíváme reklamní ani analytické služby cizích firem, neprodáváme data, neposíláme je nikam „do cloudu navíc".
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Jak chráníme tvé heslo</h2>
-            <p class="mt-2">
-                Heslo ukládáme v <strong>zašifrované (hashované) podobě</strong>. Ani my sami ho z databáze nezjistíme. Když ho zapomeneš, prostě si nastavíš nové přes odkaz v e-mailu.
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Jak chráníme vaše heslo</h2>
+                <p class="mt-2">
+                    Heslo ukládáme v <strong class="font-semibold text-white">zašifrované (hashované) podobě</strong>. Ani my sami ho z databáze nezjistíme. Když ho zapomenete, prostě si nastavíte nové přes odkaz v e-mailu.
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Jak chráníme databázi</h2>
-            <p class="mt-2">
-                Komunikace mezi tvým prohlížečem a aplikací běží přes <strong>HTTPS</strong>. Server je aktualizovaný, přístupy do databáze jsou omezené a zálohy jsou šifrované.
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Jak chráníme databázi</h2>
+                <p class="mt-2">
+                    Komunikace mezi vaším prohlížečem a aplikací běží přes <strong class="font-semibold text-white">HTTPS</strong>. Server je aktualizovaný, přístupy do databáze jsou omezené a zálohy jsou šifrované.
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Co můžeš kdykoli udělat</h2>
-            <p class="mt-2">
-                Kdykoli si <strong>smažeš účet</strong> v <em>Nastavení → Smazat účet</em>. Tvá data zmizí z aplikace a nezůstanou nikde „stranou".
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Co můžete kdykoli udělat</h2>
+                <p class="mt-2">
+                    Kdykoli si <strong class="font-semibold text-white">smažete účet</strong> v <em>Nastavení → Smazat účet</em>. Vaše data zmizí z aplikace a nezůstanou nikde „stranou".
+                </p>
+            </section>
 
-        <section>
-            <h2 class="text-xl font-semibold tracking-tight text-navy-900">Kontakt</h2>
-            <p class="mt-2">
-                {# TODO: doplnit reálný kontakt #}
-                Máš otázku nebo chceš požádat o výpis či smazání dat? Napiš na <a href="mailto:kontakt@tipovacka.cz" class="text-cyan-600 hover:text-cyan-700 hover:underline">kontakt@tipovacka.cz</a>.
-            </p>
-        </section>
+            <section>
+                <h2 class="text-xl font-semibold tracking-tight text-white">Kontakt</h2>
+                <p class="mt-2 inline-flex flex-wrap items-center gap-1.5">
+                    <twig:ux:icon name="lucide:mail" class="h-4 w-4 text-white/40" />
+                    Máte otázku nebo chcete požádat o výpis či smazání dat? Napište na
+                    <a href="mailto:kontakt@wtips.cz" class="text-accent-300 transition-colors hover:text-accent-400 hover:underline">kontakt@wtips.cz</a>.
+                </p>
+            </section>
 
+        </div>
     </div>
+</div>
 </div>
 {% endblock %}

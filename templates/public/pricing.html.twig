@@ -1,0 +1,184 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ceník — {{ brand_name }}{% endblock %}
+{% block meta_description %}{{ brand_name }} zdarma pro 5 hráčů navždy. Pro firmy a větší party od 99 Kč měsíčně. Bez sázek, žádné kurzy — jen tipování.{% endblock %}
+
+{% block og_title %}Ceník — {{ brand_name }}{% endblock %}
+{% block og_description %}5 hráčů zdarma navždy, placené plány od 99 Kč měsíčně pro firmy a větší party. Bez sázek, jen pro radost.{% endblock %}
+
+{% block body %}
+{# ───────── Hero ───────── #}
+<section class="hero-bg">
+    <div class="relative z-10 mx-auto max-w-[80rem] px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
+        <span class="eyebrow">Ceník</span>
+        <h1 class="mx-auto mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            <span class="grad-headline">Začněte zdarma.</span>
+            <br class="hidden sm:block">Plaťte, až když vás bude víc.
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
+            Pět hráčů zdarma navždy, bez časáku a bez karty. Větší party a firmy přejdou na placený plán od 99 Kč měsíčně.
+        </p>
+        <p class="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-win/30 bg-win/10 px-4 py-2 text-sm font-medium text-win">
+            <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+            Bez sázek, žádné kurzy — jen tipování.
+        </p>
+    </div>
+</section>
+
+{# ───────── Pricing columns ───────── #}
+<section class="bg-radial">
+    <div class="mx-auto max-w-[80rem] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-stretch">
+
+            {# Plan: Free #}
+            <article class="card-glass flex flex-col p-8">
+                <span class="eyebrow">Free</span>
+                <div class="mt-4 flex items-end gap-1.5">
+                    <span class="text-5xl font-black tracking-tight">0 Kč</span>
+                    <span class="pb-1.5 text-sm text-white/50">navždy</span>
+                </div>
+                <p class="mt-3 text-sm text-white/70">
+                    Pro partičku ze sportbaru, rodinu nebo malý tým. 5 hráčů zdarma navždy.
+                </p>
+                <ul class="mt-6 space-y-3 text-sm text-white/80">
+                    {% set free_features = [
+                        'Až 5 hráčů v soutěži',
+                        'Základní bodování 3 / 1 / 0',
+                        'Žebříček s úspěšností a streaky',
+                        'Pozvánky přes odkaz i PIN',
+                        'Web i mobil, bez instalace',
+                    ] %}
+                    {% for feature in free_features %}
+                        <li class="flex items-start gap-2.5">
+                            <twig:ux:icon name="lucide:check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />
+                            {{ feature }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ path('app_register') }}" class="btn btn-ghost mt-8 w-full">
+                    Začít zdarma
+                    <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+                </a>
+            </article>
+
+            {# Plan: Parta / firma (recommended) #}
+            <article class="surface-accent flex flex-col p-8 lg:-mt-4 lg:mb-0">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="eyebrow text-white/85">Parta &amp; firma</span>
+                    <span class="pill pill-done">Doporučeno</span>
+                </div>
+                <div class="mt-4 flex items-end gap-1.5">
+                    <span class="text-sm text-white/85">od</span>
+                    <span class="text-5xl font-black tracking-tight">99 Kč</span>
+                    <span class="pb-1.5 text-sm text-white/80">/ měsíc</span>
+                </div>
+                <p class="mt-3 text-sm text-white/85">
+                    Pro větší kanceláře a party, které to chtějí pořádně rozjet a nastavit si tipovačku po svém.
+                </p>
+                <ul class="mt-6 space-y-3 text-sm text-white">
+                    {% set pro_features = [
+                        'Vše z plánu Free',
+                        'Více hráčů bez limitu na 5',
+                        'Vlastní pravidla a bodování',
+                        'Distribuce tipů — jak tipuje celá soutěž',
+                        'Více skupin v jednom turnaji',
+                        'Tip za členy pro organizátory',
+                    ] %}
+                    {% for feature in pro_features %}
+                        <li class="flex items-start gap-2.5">
+                            <twig:ux:icon name="lucide:check" class="mt-0.5 h-4 w-4 shrink-0" />
+                            {{ feature }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ path('app_register') }}" class="btn btn-light mt-8 w-full">
+                    Vyzkoušet zdarma
+                    <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+                </a>
+                <p class="mt-3 text-center text-xs text-white/75">Začněte na Free, přejdete, až vás bude víc.</p>
+            </article>
+
+            {# Plan: Na míru #}
+            <article class="card-glass flex flex-col p-8">
+                <span class="eyebrow">Na míru</span>
+                <div class="mt-4 flex items-end gap-1.5">
+                    <span class="text-5xl font-black tracking-tight">Dohodou</span>
+                </div>
+                <p class="mt-3 text-sm text-white/70">
+                    Pro velké firmy a klubové komunity s vlastními požadavky na branding a integrace.
+                </p>
+                <ul class="mt-6 space-y-3 text-sm text-white/80">
+                    {% set custom_features = [
+                        'Vše z plánu Parta &amp; firma',
+                        'Firemní branding soutěže',
+                        'Velké turnaje napříč pobočkami',
+                        'Přednostní podpora',
+                    ] %}
+                    {% for feature in custom_features %}
+                        <li class="flex items-start gap-2.5">
+                            <twig:ux:icon name="lucide:check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />
+                            {{ feature|raw }}
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ path('app_for_business') }}" class="btn btn-ghost mt-8 w-full">
+                    Pro firmy
+                    <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+                </a>
+            </article>
+        </div>
+
+        {# Reassurance row #}
+        <ul class="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-white/60">
+            {% set reassure = [
+                { icon: 'lucide:check', label: 'Bez vkladů a výplat' },
+                { icon: 'lucide:check', label: 'Bez kurzů a marží' },
+                { icon: 'lucide:check', label: 'Zrušíte kdykoli' },
+            ] %}
+            {% for item in reassure %}
+                <li class="inline-flex items-center gap-2">
+                    <twig:ux:icon name="{{ item.icon }}" class="h-4 w-4 text-win" />
+                    {{ item.label }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+{# ───────── FAQ-to-pricing note ───────── #}
+<section class="mx-auto max-w-[80rem] px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
+    <div class="grid gap-4 md:grid-cols-3">
+        {% set notes = [
+            {
+                icon: 'lucide:wallet',
+                title: 'Vážně bez sázek?',
+                body: 'Ano. ' ~ brand_name ~ ' neoperuje s penězi ani kurzy. Co se „vyhraje“, řešíte mezi sebou — třeba o oběd nebo právo vychloubat se.'
+            },
+            {
+                icon: 'lucide:users',
+                title: 'Kdy začnu platit?',
+                body: 'Až když překročíte 5 hráčů nebo budete chtít vlastní pravidla a distribuci tipů. Do té doby je vše zdarma.'
+            },
+            {
+                icon: 'lucide:circle-help',
+                title: 'A když to nevyjde?',
+                body: 'Placený plán zrušíte kdykoli a vrátíte se na Free. Vaše soutěže a žebříčky zůstanou zachované.'
+            }
+        ] %}
+        {% for note in notes %}
+            <article class="card flex flex-col gap-3 p-6">
+                <span class="flex h-10 w-10 items-center justify-center rounded-xl border border-accent-500/40 bg-accent-500/10 text-accent-300">
+                    <twig:ux:icon name="{{ note.icon }}" class="h-5 w-5" />
+                </span>
+                <h3 class="text-base font-semibold text-white">{{ note.title }}</h3>
+                <p class="text-sm leading-relaxed text-white/70">{{ note.body }}</p>
+            </article>
+        {% endfor %}
+    </div>
+
+    <p class="mt-8 text-center text-sm text-white/50">
+        Další otázky? Mrkněte na <a href="{{ path('app_faq') }}" class="text-accent-300 underline-offset-2 hover:underline">časté otázky</a>
+        nebo se rovnou <a href="{{ path('app_register') }}" class="text-accent-300 underline-offset-2 hover:underline">zaregistrujte zdarma</a>.
+    </p>
+</section>
+{% endblock %}

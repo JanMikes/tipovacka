@@ -2,27 +2,28 @@
 
 {% set group_name = context ? context.groupName : null %}
 
-{% block title %}{{ group_name ? 'Pozvánka do ' ~ group_name : 'Pozvánka' }} — Tipovačka{% endblock %}
+{% block title %}{{ group_name ? 'Pozvánka do ' ~ group_name : 'Pozvánka' }} — {{ brand_name }}{% endblock %}
 
 {% block auth_panel_tagline %}
     {% if group_name %}
-        Za pár kliků přijmeš pozvánku do skupiny {{ group_name }} a začínáš tipovat.
+        Za pár kliků přijmete pozvánku do skupiny {{ group_name }} a začínáte tipovat.
     {% else %}
-        Přijmi pozvánku a začni tipovat s kamarády.
+        Přijměte pozvánku a začněte tipovat s partičkou.
     {% endif %}
 {% endblock %}
 
 {% block auth_card %}
-<div class="rounded-2xl bg-white p-8 shadow-card ring-1 ring-navy-900/5 sm:p-10">
+<div class="card-glass p-8 sm:p-10">
 
     {% if step == 'invalid' %}
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-                <twig:ux:icon name="lucide:triangle-alert" class="h-8 w-8" />
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-loss/30 bg-loss/10 text-loss">
+                <twig:ux:icon name="lucide:circle-x" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka nenalezena</h1>
-            <p class="mt-3 text-navy-900/60">Odkaz je neplatný nebo už neexistuje.</p>
-            <a href="{{ path('app_login') }}" class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka nenalezena</h2>
+            <p class="mt-3 text-white/60">Odkaz je neplatný nebo už neexistuje.</p>
+            <a href="{{ path('app_login') }}" class="btn btn-primary mt-8 w-full">
                 <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
                 Přihlášení
             </a>
@@ -30,29 +31,33 @@
 
     {% elseif step == 'expired' %}
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-draw/30 bg-draw/10 text-draw">
                 <twig:ux:icon name="lucide:clock" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka vypršela</h1>
-            <p class="mt-3 text-navy-900/60">Požádej pozvatele o novou pozvánku.</p>
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka vypršela</h2>
+            <p class="mt-3 text-white/60">Požádejte pozvatele o novou pozvánku.</p>
         </div>
 
     {% elseif step == 'revoked' %}
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-                <twig:ux:icon name="lucide:triangle-alert" class="h-8 w-8" />
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-loss/30 bg-loss/10 text-loss">
+                <twig:ux:icon name="lucide:circle-x" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka byla zrušena</h1>
-            <p class="mt-3 text-navy-900/60">Tato pozvánka už není platná.</p>
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka byla zrušena</h2>
+            <p class="mt-3 text-white/60">Tato pozvánka už není platná.</p>
         </div>
 
     {% elseif step == 'accepted' %}
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-green-600">
-                <twig:ux:icon name="lucide:circle-check-big" class="h-8 w-8" />
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-win/30 bg-win/10 text-win">
+                <twig:ux:icon name="lucide:circle-check" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka už byla přijata</h1>
-            <a href="{{ path('app_login') }}" class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka už byla přijata</h2>
+            <p class="mt-3 text-white/60">Přihlaste se a pokračujte v tipování.</p>
+            <a href="{{ path('app_login') }}" class="btn btn-primary mt-8 w-full">
                 <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
                 Přihlášení
             </a>
@@ -60,24 +65,26 @@
 
     {% elseif step == 'tournament_finished' %}
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-navy-100 text-navy-900">
-                <twig:ux:icon name="lucide:flag" class="h-8 w-8" />
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70">
+                <twig:ux:icon name="lucide:lock" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Turnaj už skončil</h1>
-            <p class="mt-3 text-navy-900/60">Turnaj této skupiny je už ukončen, připojit se nejde.</p>
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Turnaj už skončil</h2>
+            <p class="mt-3 text-white/60">Turnaj této skupiny je už ukončen, připojit se nejde.</p>
         </div>
 
     {% elseif step == 'email_mismatch' %}
         <div class="text-center">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-600">
-                <twig:ux:icon name="lucide:user-x" class="h-7 w-7" />
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-draw/30 bg-draw/10 text-draw">
+                <twig:ux:icon name="lucide:user-x" class="h-8 w-8" />
             </div>
-            <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Pozvánka je pro jiný e-mail</h1>
-            <p class="mt-3 text-navy-900/60">
-                Přihlášen(a) jsi jako <strong>{{ current_user_email }}</strong>, ale tato pozvánka patří adrese <strong>{{ context.presetEmail }}</strong>.
+            <p class="eyebrow mt-6">Pozvánka</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka je pro jiný e-mail</h2>
+            <p class="mt-3 text-white/60">
+                Jste přihlášen(a) jako <strong class="font-semibold text-white">{{ current_user_email }}</strong>, ale tato pozvánka patří adrese <strong class="font-semibold text-white">{{ context.presetEmail }}</strong>.
             </p>
-            <form method="post" action="{{ path('app_logout') }}" class="mt-6">
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+            <form method="post" action="{{ path('app_logout') }}" class="mt-8">
+                <button type="submit" class="btn btn-primary w-full">
                     <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />
                     Odhlásit se a pokračovat
                 </button>
@@ -86,27 +93,25 @@
 
     {% else %}
         {# Active state — anonymous: render the unified live form #}
-        <div class="mb-6 rounded-xl bg-cyan-50 p-4 ring-1 ring-cyan-100">
-            <div class="flex items-start gap-3">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-600 shadow-sm">
-                    <twig:ux:icon name="lucide:users" class="h-5 w-5" />
-                </span>
-                <div class="text-sm leading-relaxed text-navy-900/80">
-                    Pozvánka do skupiny <strong class="text-navy-900">{{ context.groupName }}</strong>
-                    {% if context.tournamentName %}
-                        v turnaji <strong class="text-navy-900">{{ context.tournamentName }}</strong>
-                    {% endif %}
-                    {% if context.inviterNickname %}
-                        od <strong class="text-navy-900">{{ context.inviterNickname }}</strong>
-                    {% endif %}.
-                </div>
+        <div class="mb-6 flex items-start gap-3 rounded-xl border border-accent-500/40 bg-accent-500/10 p-4">
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-500/40 bg-white/5 text-accent-300">
+                <twig:ux:icon name="lucide:users" class="h-5 w-5" />
+            </span>
+            <div class="text-sm leading-relaxed text-white/70">
+                Pozvánka do skupiny <strong class="font-semibold text-white">{{ context.groupName }}</strong>
+                {% if context.tournamentName %}
+                    v turnaji <strong class="font-semibold text-white">{{ context.tournamentName }}</strong>
+                {% endif %}
+                {% if context.inviterNickname %}
+                    od <strong class="font-semibold text-white">{{ context.inviterNickname }}</strong>
+                {% endif %}.
             </div>
         </div>
 
         <twig:Auth:InvitationForm kind="{{ context.kind.value }}" token="{{ context.token }}" />
 
-        <p class="mt-6 text-center text-sm text-navy-900/60">
-            <a href="{{ path('app_login') }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">Mám už účet a chci se přihlásit jinak</a>
+        <p class="mt-6 text-center text-sm text-white/50">
+            <a href="{{ path('app_login') }}" class="font-semibold text-accent-300 transition-colors hover:text-accent-200">Mám už účet a chci se přihlásit jinak</a>
         </p>
     {% endif %}
 </div>

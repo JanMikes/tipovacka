@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Časté otázky — {{ brand_name }}{% endblock %}
+{% block meta_description %}Co je {{ brand_name }}, kolik stojí, jak pozvat hráče a jak se počítají body. Odpovědi na nejčastější otázky o tipovacích soutěžích bez sázek.{% endblock %}
+{% block og_title %}Časté otázky — {{ brand_name }}{% endblock %}
+{% block og_description %}Odpovědi na nejčastější otázky o tipovacích soutěžích {{ brand_name }}.{% endblock %}
+
+{% block body %}
+
+    {# ───────── Hero ───────── #}
+    <section class="bg-radial relative overflow-hidden">
+        <div class="hero-bg absolute inset-0" aria-hidden="true"></div>
+        <div class="relative mx-auto w-full max-w-3xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
+            <p class="eyebrow mb-4">Časté otázky</p>
+            <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+                <span class="grad-headline">Vše, co potřebujete vědět</span>
+            </h1>
+            <p class="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-white/70">
+                Krátké odpovědi na to, co se ptáte nejčastěji. Když nenajdete to své, napište nám na
+                <a href="mailto:kontakt@wtips.cz" class="text-accent-300 hover:text-accent-400">kontakt@wtips.cz</a>.
+            </p>
+        </div>
+    </section>
+
+    {# ───────── Accordion ───────── #}
+    <section class="mx-auto w-full max-w-3xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div class="space-y-3">
+
+            <details class="card-glass group p-0" open>
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Co je {{ brand_name }}?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    {{ brand_name }} je tipovací soutěž pro firmy, partičky i klubové komunity. Vyberete turnaj,
+                    pozvete hráče a každý tipuje výsledky zápasů. Žebříček běží sám. Žádné sázky, žádné peníze —
+                    jen pro radost a vychloubání.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Stojí to něco?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Pro menší partu je {{ brand_name }} zdarma. Pro větší firmy, redakce nebo klubové komunity máme
+                    placené plány. Vyzkoušet a založit první soutěž můžete bez placení.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Sází se o peníze?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Ne. {{ brand_name }} neoperuje s penězi ani kurzy a nepotřebuje sázkovou licenci. Jestli si
+                    mezi sebou o něco hrajete, je to čistě vaše interní záležitost. Nám jde o radost a rivalitu.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Jak pozvu hráče?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Dvěma způsoby. Buď pošlete hráčům odkaz na soutěž — třeba na Slack, Teams nebo do skupinového
+                    chatu — nebo jim dáte osmimístný PIN, který zadají při připojení. Hráč klikne, tipuje a účet
+                    si vytvoří jedním klikem.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Jak se počítají body?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Za přesně trefené skóre dostanete plný počet bodů, za správnou tendenci (kdo vyhraje nebo remízu)
+                    menší. Po každém zápase se body připíšou automaticky a žebříček se posune. Bodování si jako
+                    organizátor můžete přizpůsobit.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Můžu tipovat víc turnajů najednou?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Ano. Můžete být zároveň ve firemní soutěži, klubové lize i tipovačce s kámoši. Každá soutěž má
+                    vlastní žebříček a na svém přehledu vidíte všechny pohromadě.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Funguje to na mobilu?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Funguje. {{ brand_name }} běží v prohlížeči na počítači i v telefonu. Žádná aplikace z obchodu,
+                    žádná instalace přes IT — stačí otevřít odkaz.
+                </div>
+            </details>
+
+            <details class="card-glass group p-0">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
+                    <span>Jak založím soutěž?</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-5 w-5 shrink-0 text-accent-300 transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <div class="px-6 pb-5 text-sm leading-relaxed text-white/65">
+                    Zaregistrujete se, vyberete turnaj a dáte soutěži název. Rozpis zápasů i soupisky natáhneme za vás.
+                    Pak už jen pozvete hráče a tipuje se. Celé to zabere pár minut.
+                </div>
+            </details>
+
+        </div>
+
+        {# ───────── CTA ───────── #}
+        <div class="surface-accent relative mt-10 overflow-hidden p-8 text-center sm:p-10">
+            <p class="eyebrow mb-3">Začněte zdarma</p>
+            <h2 class="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Pořád máte otázky? Nejlíp to zjistíte hraním.</h2>
+            <p class="mx-auto mt-3 max-w-lg text-white/70">
+                Založte si soutěž, pozvěte partu a do pár minut máte celé patro v napětí.
+            </p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <a href="{{ path('app_register') }}" class="btn btn-light btn-lg">
+                    Vytvořit soutěž zdarma
+                    <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5" />
+                </a>
+                <a href="mailto:kontakt@wtips.cz" class="btn btn-clear btn-lg">
+                    <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
+                    Napište nám
+                </a>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}
