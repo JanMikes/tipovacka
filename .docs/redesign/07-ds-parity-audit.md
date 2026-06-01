@@ -77,8 +77,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | 8-box PIN → `.pin-inputs` | `_partials/join_by_pin_form.html.twig` + `pin_input_controller` | ✅ | Works; numeric (correct). `PinInput.html.twig` extraction = optional, **not** needed (single surface). |
 | **leaderboard → `.lb-table`** | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P1** | Missing **Trefa** (partial) column (`partialCount` exists in DTO); "· Ty" inline text not the `.me` **TY badge**; DS col order Body-after-name; `.me` row not `position:sticky`. |
 | podium → `.podium`/`.pod` | `Leaderboard/Podium.html.twig` | ✅ | |
-| **match/tip card (vertical) → `.tip-card` 3-state** | `Guess/GuessSubmitForm.html.twig` | ❌ **P1** | GuessSubmitForm is a flat `card-glass` form, NOT the `.tip-card` surface-states (no `pill-soon/tipped`, no `.btn-primary-block`/`.btn-edit-block`, no accent-finished surface + `.result-banner`). Re-skin it (keep Live wiring + keyboard entry). |
-| **match row (horizontal) → `Match/MatchRow`** | (missing) | ❌ **P1** | No `Match/MatchRow.html.twig`. Dashboard-upcoming + dashboard-evaluated + `matches/index` each hand-roll a near-duplicate `card-glass` flex row. Build one shared component (left-border state tint + state pill + optional dist strip); replace all 3. |
+| **match/tip card (vertical) → `.tip-card` 3-state** | `Guess/GuessSubmitForm.html.twig` | ✅ | DONE (next commit): steppers now use `.tip-inputs` grid + `.colon`; submit is the full-width DS `.btn-block.btn-primary-block`/`.btn-edit-block`. Live wiring (data-model/live-action) + locked/finished states preserved. (The `.tip-head`/`.tip-teams`/`.final-score`/`.result-banner` hero already existed on the detail pages.) |
+| **match row (horizontal) → `Match/MatchRow`** | `Match/MatchRow.html.twig` | ✅ | DONE (f0905fc): built shared component + `.tip-row*` @layer CSS; replaced all 3 hand-rolled rows. `:prop` typed/null-safe. |
 | pick distribution → `.dist-bar` | `Match/PickDistribution.html.twig` | ✅ | Free after lock. |
 | StatCard / Avatar / EmptyState | components | ✅ | |
 | **TeamFlag coin SVGs** | `TeamFlag.html.twig` | ⚠️ **P2** | Only `.flag.club` initials fallback; the curated country SVG set (CZE/SWE/FIN/CAN/…) is NOT shipped. Build `_flags` macro + name→code map per 02-components seed set. |
@@ -90,7 +90,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 |---|---|---|---|
 | dashboard PIN card | `portal/dashboard.html.twig` | ✅ | |
 | dashboard "Moje výsledky" stat cards + switcher | `portal/dashboard.html.twig` | ✅ | 5 stats, flame, decimal comma. |
-| dashboard "Tvé zápasy" tip rows | `portal/dashboard.html.twig` | ⚠️ **P1** | Bespoke flex card → migrate to `Match/MatchRow` (see C). |
+| dashboard "Tvé zápasy" tip rows | `portal/dashboard.html.twig` | ✅ | DONE (f0905fc): upcoming + evaluated now use `Match/MatchRow`. |
 | **dashboard mini-leaderboard** | `portal/dashboard.html.twig` | ❌ **P1** | Missing entirely (DS §D left col). Add compact top-N for `selected_group` + "· Ty" + flame, link to full žebříček. |
 | dashboard soutěž/turnaj discovery grids | `portal/dashboard.html.twig` | ✅ | Richer than DS. |
 | **žebříček you-strip** | `portal/leaderboard/index.html.twig` | ❌ **P1** | Missing "Tvoje pozice 7./42 · Body · Do top N" band. Add `.you-strip` `@layer` class + summary from `member_stats`. **Omit Δ "Změna".** |
@@ -98,7 +98,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | žebříček table cols + sticky TY | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P1** | See C (Trefa col + sticky `.me` + TY badge). |
 | žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "Najít hráče…" search. Add cheap client-side `.lb-search` filter (range/sort were demo-only — skip). |
 | žebříček gap-rows | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "… pozice 13-24 …" condensation. Low value at small scale — document acceptable or add. |
-| Zápasy chips Vše/Dnes/Tipovatelné/Ukončené (no Live) | `portal/matches/index.html.twig` | ✅ | Migrate rows to MatchRow (see C). |
+| Zápasy chips Vše/Dnes/Tipovatelné/Ukončené (no Live) | `portal/matches/index.html.twig` | ✅ | Rows now use `Match/MatchRow` (f0905fc). |
 | guess/detail + sport_match/detail hero (no live) | templates | ✅ | `isLive` folded to UZAMČENO; "Probíhá"→"Uzamčeno" relabel done (8b61588). |
 | pick distribution after lock | `guess/detail.html.twig` | ✅ | Free. |
 | per-match ranking | `guess/detail.html.twig` | ✅ | |
