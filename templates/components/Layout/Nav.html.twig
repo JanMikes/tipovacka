@@ -1,9 +1,9 @@
 {#
   Sticky glass top navigation. Two variants:
-   - app    (authenticated): Soutěže / Zápasy / Turnaje + Vytvořit soutěž CTA + avatar dropdown
+   - app    (authenticated): Soutěže / Zápasy / Žebříček + Vytvořit soutěž CTA + avatar dropdown
    - public (logged out):    Funkce / Ceník / Pro firmy / FAQ + Přihlásit + Vytvořit soutěž zdarma
-  NOTE (redesign): a top-level "Žebříček" needs a selected/primary soutěž; for now
-  the soutěž switcher lives in-page (leaderboard + dashboard), not in the nav.
+  „Žebříček" is soutěž-scoped: it points at the `portal_leaderboard` resolver, which
+  redirects to the user's primary soutěž leaderboard (or discovery if they're in none).
 #}
 {% props variant = null %}
 {% set is_app = variant is not null ? (variant == 'app') : (app.user is not null) %}
@@ -13,7 +13,7 @@
     ? [
         { label: 'Soutěže', path: 'portal_dashboard', match: 'portal_dashboard' },
         { label: 'Zápasy', path: 'portal_matches', match: 'portal_matches' },
-        { label: 'Turnaje', path: 'public_tournaments_list', match: 'public_tournament' },
+        { label: 'Žebříček', path: 'portal_leaderboard', match: 'portal_group_leaderboard' },
     ]
     : [
         { label: 'Funkce', path: 'app_features', match: 'app_features' },

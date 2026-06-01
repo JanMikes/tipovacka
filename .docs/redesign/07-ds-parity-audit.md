@@ -44,8 +44,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | `_wtnav.html`/`nav.css` `.wtnav` sticky glass | `Layout/Nav.html.twig` + app.css | ✅ | Exact port. |
 | brand gradient W + wordmark | `Layout/Nav.html.twig` | ✅ | `--grad-accent`, config `brand_name`. |
 | public links Funkce·Ceník·Pro firmy·FAQ + actions | `Layout/Nav.html.twig` | ✅ | Correct. |
-| **app links Soutěže·Zápasy·Žebříček** | `Layout/Nav.html.twig` L13-17 | ❌ **P1** | App shows **Turnaje** as 3rd, not **Žebříček**. Add `portal_leaderboard` resolver route → primary soutěž; replace nav link. |
-| "Vytvořit soutěž" CTA → create flow | `Layout/Nav.html.twig` L41 | ⚠️ **P1** | CTA → `public_tournaments_list`. Create needs a turnaj first; route to a portal turnaj-picker (or dashboard discovery), not the public marketing list. |
+| **app links Soutěže·Zápasy·Žebříček** | `Layout/Nav.html.twig` | ✅ | DONE (next commit): added `LeaderboardController` (`portal_leaderboard`, `/portal/zebricek`) — redirects to the user's primary soutěž leaderboard, or dashboard if none. Nav 3rd item Turnaje→Žebříček (active-state matches `portal_group_leaderboard`). Test: LeaderboardResolverFlowTest. |
+| "Vytvořit soutěž" CTA → create flow | `Layout/Nav.html.twig` | ✅ | KEPT → `public_tournaments_list` (the turnaj browser). Creating a soutěž requires picking a turnaj first (`/portal/turnaje/{id}/skupiny/novy`), so the turnaj list IS the create-soutěž entry point; discovery also lives on the Soutěže dashboard. Documented, not a divergence. |
 | active state white+600+underline | app.css `.primary a.active` | ✅ | |
 | avatar dropdown Profil/Admin/Odhlásit | `Layout/Nav.html.twig` | ✅ | |
 | mobile hamburger `mobile-nav` | `Layout/Nav.html.twig` + controller | ✅ | |
