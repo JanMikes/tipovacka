@@ -98,12 +98,15 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 > Tests: `SportMatchEntityTest` (construct/update/clear round), `BulkImportFlowTest`
 > (round column stored). `schema:validate` + `schema:update --dump-sql` clean.
 
-### 6. Per-match ranking ("Pořadí za zápas")
-- **DS shows:** on the single-match page, top scorers for that match.
-- **Exists:** `GuessEvaluation` per match within a group.
-- **Add:** `GetMatchRanking` query (evaluations filtered to one match+group,
-  sorted by points) → table on `portal/guess/detail.html.twig`.
-- **Effort: S–M.** **Test:** query test.
+### 6. Per-match ranking ("Pořadí za zápas") ✅ DONE
+> Implemented: `GetMatchRanking` query (`src/Query/GetMatchRanking/`) — evaluated
+> guesses for one match within a group, sorted by points (competition ranking,
+> same tiebreak as the leaderboard); rows carry the tip score so the page can show
+> a „Přesně" chip when it matches the result. Rendered on
+> `portal/guess/detail.html.twig` as a `.lb-table` section, gated on
+> `can_see_all_tips` **and** the match being finished (no evaluations otherwise).
+> Tests: `GetMatchRankingQueryTest` (finished match → 1 row rank 1, +3; scheduled
+> → empty) + `SportMatchGuessesFlowTest::testShowsPerMatchRankingForFinishedMatch`.
 
 ---
 

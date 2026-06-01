@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Form\GroupMatchDeadlineFormData;
 use App\Form\GroupMatchDeadlineFormType;
 use App\Query\GetMatchPickDistribution\GetMatchPickDistribution;
+use App\Query\GetMatchRanking\GetMatchRanking;
 use App\Query\QueryBus;
 use App\Repository\GroupMatchSettingRepository;
 use App\Repository\GroupRepository;
@@ -75,6 +76,15 @@ final class SportMatchGuessesController extends AbstractController
             ))
             : null;
 
+        // Per-match ranking ("Pořadí za zápas") needs evaluated guesses, so it only
+        // makes sense once the match is finished and others' tips are visible.
+        $matchRanking = ($canSeeAllTips && $sportMatch->isFinished)
+            ? $this->queryBus->handle(new GetMatchRanking(
+                groupId: $group->id,
+                sportMatchId: $sportMatch->id,
+            ))
+            : null;
+
         $memberRows = [];
 
         if ($isGroupManager) {
@@ -118,6 +128,7 @@ final class SportMatchGuessesController extends AbstractController
             'effective_deadline' => $effectiveDeadline,
             'can_see_all_tips' => $canSeeAllTips,
             'pick_distribution' => $pickDistribution,
+            'match_ranking' => $matchRanking,
             'deadline_form' => $deadlineForm,
             'current_user_id' => $currentUser->id,
         ]);

@@ -117,6 +117,53 @@
             />
         {% endif %}
 
+        {% if match_ranking is defined and match_ranking is not null and match_ranking.rows|length > 0 %}
+            <section class="card-glass p-5 sm:p-6">
+                <h2 class="eyebrow mb-4 flex items-center gap-1.5">
+                    <twig:ux:icon name="lucide:list-ordered" class="h-3.5 w-3.5" />
+                    Pořadí za zápas
+                </h2>
+                {% set me_id = app.user ? app.user.id.toRfc4122 : null %}
+                <div class="overflow-x-auto">
+                    <table class="lb-table">
+                        <thead class="lb-thead">
+                            <tr>
+                                <th class="w-12">Pozice</th>
+                                <th>Hráč</th>
+                                <th class="text-center">Tip</th>
+                                <th class="text-right">Body</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in match_ranking.rows %}
+                                {% set is_me = me_id and row.userId.toRfc4122 == me_id %}
+                                {% set is_exact = sport_match.isFinished and row.guessHome == sport_match.homeScore and row.guessAway == sport_match.awayScore %}
+                                <tr class="lb-tr{{ is_me ? ' me' }}">
+                                    <td><span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span></td>
+                                    <td>
+                                        <div class="flex items-center gap-3">
+                                            <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                            <span class="min-w-0">
+                                                <span class="block truncate text-sm font-bold text-white">{{ row.nickname }}{% if is_me %} <span class="text-accent-300">· Ty</span>{% endif %}</span>
+                                                {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="inline-flex items-center gap-1.5">
+                                            <span class="font-semibold text-white tabular-nums">{{ row.guessHome }}:{{ row.guessAway }}</span>
+                                            {% if is_exact %}<span class="pill pill-success"><twig:ux:icon name="lucide:check" class="h-3 w-3" />Přesně</span>{% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+
         <twig:Guess:MatchGuessesList
             :sportMatch="sport_match"
             groupId="{{ group.id.toRfc4122 }}"
