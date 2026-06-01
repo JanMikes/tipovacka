@@ -8,7 +8,10 @@
     {% set label_class = 'text-[11px] font-semibold uppercase tracking-[0.14em] text-white/50 mb-1.5' %}
 
     <div class="mb-6">
-        <h2 class="text-2xl font-bold tracking-tight text-white">
+        <span class="eyebrow">
+            {% if kind == kind_has_password %}Přihlášení{% elseif kind == kind_stub %}Dokončení registrace{% else %}Registrace{% endif %}
+        </span>
+        <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">
             {% if kind == kind_has_password %}
                 Přihlaste se a připojte
             {% elseif kind == kind_stub %}
@@ -34,7 +37,7 @@
                 <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-white/40">
                     <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
                 </span>
-                {{ form_widget(form.email, {attr: {class: input_class}}) }}
+                {{ form_widget(form.email, {attr: {class: input_class, disabled: this.emailLocked}}) }}
             </div>
             {{ form_errors(form.email) }}
         </div>

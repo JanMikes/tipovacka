@@ -48,13 +48,6 @@
     --color-accent-200: #b3d8ef;
     --color-accent-100: #dcecf8;
 
-    /* ---- cyan aliased to accent so legacy `*-cyan-*` utilities stay on-brand
-            during the screen-by-screen migration (remove once swept) ---- */
-    --color-cyan-100: #dcecf8;
-    --color-cyan-400: #65adde;
-    --color-cyan-500: #4699d0;
-    --color-cyan-600: #3786bf;
-
     /* ---- Status ---- */
     --color-win:   #3ed598; --color-win-2:  #24a978;
     --color-loss:  #ff5d7a; --color-loss-2: #c8324d;
