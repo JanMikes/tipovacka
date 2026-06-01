@@ -13,10 +13,9 @@ return App::config([
         'date' => [
             'timezone' => 'Europe/Prague',
         ],
-        // Brand name is config-driven for dual deployment: main -> wtips.cz ("Wtips"),
-        // the `tipovacka` branch can override APP_BRAND_NAME to keep "Tipovačka".
         'globals' => [
-            'brand_name' => '%env(APP_BRAND_NAME)%',
+            // Brand name. Hardcoded "Wtips" — the app is fully rebranded, no transition phase.
+            'brand_name' => 'Wtips',
             // Visual-only premium teaser flag (no commerce backend yet). Off by default.
             'premium_enabled' => '%env(bool:APP_PREMIUM_TEASER_ENABLED)%',
         ],

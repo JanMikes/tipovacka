@@ -1,6 +1,6 @@
 {
-  "name": "Tipovačka",
-  "short_name": "Tipovačka",
+  "name": "Wtips",
+  "short_name": "Wtips",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#0f1726",
+  "background_color": "#0f1726",
   "display": "standalone"
 }

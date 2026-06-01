@@ -1,4 +1,4 @@
-# Tipovačka
+# Wtips
 
 A web application where groups of people submit guesses on upcoming football
 match scores, earn points based on configurable per-tournament rules, and

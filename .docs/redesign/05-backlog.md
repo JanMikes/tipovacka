@@ -138,10 +138,24 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
   snapshot entity + a scheduled command, then a `Δ` column. **Effort: M.** Omit
   until there's somewhere to snapshot from.
 
-### 9. Brand assets: favicons + `og-default.png`
-- Still the old brand (binary). Regenerate from `assets/images/logo/logo-mark.svg`
-  (the gradient "W") → favicon set + a 1200×630 OG image; drop into `public/`.
-  `theme-color` + all text already rebranded. **Effort: S** (design/export).
+### 9. Brand assets: favicons + `og-default.png` ✅ DONE
+> Regenerated the whole icon/OG set from `assets/images/logo/logo-mark.svg`
+> (gradient "W") + `logo-wtips.svg` (wordmark) into `public/`: `favicon.svg`
+> (self-contained dark rounded badge + gradient W), `favicon-96x96.png`,
+> `favicon.ico` (16/32/48/64), `apple-touch-icon.png` (180, full-bleed),
+> `web-app-manifest-192/512` (full-bleed — OS applies the squircle mask),
+> `og-default.png` (1200×630) + `og-default-square.png` (1200×1200) on the dark
+> brand canvas with the wordmark + Czech tagline. `site.webmanifest` updated to
+> name "Wtips" + dark `theme/background_color` `#0f1726`. Reproducible via
+> `tools/brand/generate-brand-assets.sh` (macOS `sips` + ImageMagick 7; **`sips`
+> is the reliable SVG rasteriser — ImageMagick's built-in MSVG renderer mangles
+> the gradient and librsvg isn't installed**). Visually verified each output.
+> **Full rebrand finalised alongside:** dropped the `APP_BRAND_NAME` env var —
+> `brand_name` is now a hardcoded `'Wtips'` Twig global (`config/packages/twig.php`);
+> removed it from `.env`; `MAILER_FROM_NAME` → "Wtips"; README H1 → Wtips.
+> (Per user: no transition phase, the app is fully Wtips.)
+> **Follow-up (not blocking):** `MAILER_FROM_EMAIL` is still `noreply@tipovacka.cz`
+> — flip to `@wtips.cz` once SPF/DKIM/DMARC exist for wtips.cz (deliverability).
 
 ### 10. Profile / tip-history page (cross-group)
 - The member-breakdown is per-group. A true cross-group tip history needs a new

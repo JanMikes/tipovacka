@@ -89,7 +89,10 @@ ENVIRONMENT GOTCHAS (memory-pressured Docker VM):
   (`bin/console tailwind:build`).
 
 GIT: commit per feature directly to main (message: "Feature: <name>"), `git push origin main`
-after each green feature, no co-author footer. Brand stays config-driven (APP_BRAND_NAME).
+after each green feature, no co-author footer. Brand is hardcoded "Wtips" — `brand_name` is a
+literal Twig global in config/packages/twig.php (no APP_BRAND_NAME env var); full rebrand, no
+transition phase. Brand assets (favicons/og) regenerate via tools/brand/generate-brand-assets.sh
+(macOS `sips` is the reliable SVG→PNG rasteriser; ImageMagick's built-in MSVG mangles the gradient).
 
 When P1+buildable-P2 are done: run the FULL per-file suite to confirm green, update 05-backlog.md,
 and post a short summary of what shipped + what's stubbed/blocked.
