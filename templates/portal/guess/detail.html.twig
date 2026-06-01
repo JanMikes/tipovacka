@@ -107,6 +107,14 @@
             <twig:Guess:GuessSubmitForm :sportMatch="sport_match" groupId="{{ group.id.toRfc4122 }}" />
         </section>
 
+        {% if pick_distribution %}
+            <twig:Match:PickDistribution
+                :distribution="pick_distribution"
+                :homeTeam="sport_match.homeTeam"
+                :awayTeam="sport_match.awayTeam"
+            />
+        {% endif %}
+
         <twig:Guess:MatchGuessesList
             :sportMatch="sport_match"
             groupId="{{ group.id.toRfc4122 }}"

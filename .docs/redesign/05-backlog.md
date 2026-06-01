@@ -31,7 +31,10 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 - **Effort: M.** **Test:** extend `GetGroupLeaderboardQueryTest` with a fixture
   member who has 1 exact + 1 partial + 1 miss → assert the computed columns.
 
-### 2. Pick distribution (1 / X / 2) on the single-match page
+### 2. Pick distribution (1 / X / 2) on the single-match page ✅ DONE
+> Implemented: `GetMatchPickDistribution` query + `Match/PickDistribution` component,
+> wired into `SportMatchGuessesController`/`guess/detail.html.twig`, shown only when
+> `can_see_all_tips`. Test: `GetMatchPickDistributionQueryTest`.
 - **DS shows:** home-win / draw / away-win split with counts + % + `.dist-bar`.
 - **Exists:** `Guess` rows per (user, match, group). `.dist-bar` + a
   `PickDistribution` component slot are styled. NO query yet.
