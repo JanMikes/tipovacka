@@ -171,9 +171,12 @@ label.required::after {
         -webkit-text-fill-color: transparent; color: transparent;
     }
     /* Marketing/site headlines use the vertical DS recipe; the app/organizer-kit
-       headline uses the diagonal -alt recipe (DS sources differ — both preserved). */
-    .display-gradient { background: var(--grad-headline); }
-    .grad-headline { background: var(--grad-headline-alt); }
+       headline uses the diagonal -alt recipe (DS sources differ — both preserved).
+       Use the `background-image` longhand here: the `background` shorthand would
+       reset `background-clip` back to border-box and paint the gradient as a block
+       instead of clipping it to the text. */
+    .display-gradient { background-image: var(--grad-headline); }
+    .grad-headline { background-image: var(--grad-headline-alt); }
 
     /* ---- Glass / surfaces ---- */
     .glass {
