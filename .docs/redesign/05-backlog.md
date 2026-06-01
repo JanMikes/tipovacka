@@ -110,6 +110,18 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 
 ---
 
+### 7. Podium top-3 on the leaderboard page ✅ DONE
+> Implemented: `components/Leaderboard/Podium.html.twig` (anonymous component, an
+> internal `{% macro %}` per pod) rendering the existing `.podium`/`.pod` DS grid —
+> silver · gold (raised, larger avatar) · bronze — with medal label, Avatar (medal
+> gradient), name/@handle, big points + micro-stats (Přesné / Úspěšnost / Streak).
+> `GroupLeaderboardController` now fetches `GetGroupLeaderboard` once (also reused
+> for the winner banner) and passes the top-3 to the page **only when ≥3 players and
+> the top has > 0 points**. Rendered above the live leaderboard table. Tests:
+> `PodiumFlowTest` (renders with 3 players incl. a scorer; hidden with < 3).
+
+---
+
 ## P2 — Product/asset decisions or moderate backend
 
 ### 7. Premium teaser UI (visual only, feature-flagged)

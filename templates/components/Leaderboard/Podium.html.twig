@@ -1,0 +1,40 @@
+{#
+    Top-3 podium for the full leaderboard page. props:
+      rows : list of up to 3 LeaderboardRow (rank ascending: [0]=1st, [1]=2nd, [2]=3rd).
+    Renders the DS .podium grid: silver (left) · gold (center, raised) · bronze (right).
+    Micro-stats: Přesné / Úspěšnost / Streak. Numbers tabular.
+#}
+{% props rows %}
+
+{% macro pod(row, tone, size, raised) %}
+    {% set medal = {gold: '1. místo', silver: '2. místo', bronze: '3. místo'}[tone] %}
+    {% set rank = {gold: 1, silver: 2, bronze: 3}[tone] %}
+    {% set medal_color = {gold: 'text-[#f5cd54]', silver: 'text-[#cfd6e0]', bronze: 'text-[#d49460]'}[tone] %}
+    <div class="pod {{ tone }}{{ raised ? ' sm:-translate-y-3' : '' }}">
+        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.12em] {{ medal_color }}">{{ medal }}</div>
+        <div class="flex justify-center">
+            <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="{{ size }}" rank="{{ rank }}" />
+        </div>
+        <div class="mt-3 truncate text-sm font-bold text-white">{{ row.nickname }}</div>
+        {% if row.fullName %}<div class="truncate text-[11px] font-light text-white/50">{{ row.fullName }}</div>{% endif %}
+        <div class="mt-2 text-3xl font-black text-white tabular-nums">{{ row.totalPoints }}</div>
+        <div class="text-[11px] text-white/45">{{ row.totalPoints == 1 ? 'bod' : (row.totalPoints >= 2 and row.totalPoints <= 4 ? 'body' : 'bodů') }}</div>
+        <div class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-white/55">
+            <span title="Přesné tipy"><span class="font-semibold tabular-nums text-white/75">{{ row.exactCount }}</span> přesných</span>
+            <span title="Úspěšnost"><span class="font-semibold tabular-nums text-white/75">{{ row.accuracyPercent }}</span> %</span>
+            {% if row.streak > 0 %}
+                <span class="inline-flex items-center gap-1 text-win" title="Streak"><twig:ux:icon name="lucide:flame" class="h-3 w-3" />{{ row.streak }}</span>
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}
+
+{% import _self as podium %}
+
+{% if rows|length >= 3 %}
+    <div class="podium mb-8">
+        {{ podium.pod(rows[1], 'silver', 44, false) }}
+        {{ podium.pod(rows[0], 'gold', 56, true) }}
+        {{ podium.pod(rows[2], 'bronze', 44, false) }}
+    </div>
+{% endif %}

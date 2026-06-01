@@ -76,6 +76,10 @@
         </div>
     </header>
 
+    {% if podium_rows|length >= 3 %}
+        <twig:Leaderboard:Podium :rows="podium_rows" />
+    {% endif %}
+
     {{ component('Leaderboard:GroupLeaderboard', {group: group}) }}
 </div>
 {% endblock %}

@@ -38,9 +38,10 @@ final class GroupLeaderboardController extends AbstractController
         $user = $this->getUser();
         $myGroups = $this->queryBus->handle(new ListMyGroups(userId: $user->id));
 
+        $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
+
         $winner = null;
         if ($group->tournament->isFinished) {
-            $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;
@@ -50,10 +51,17 @@ final class GroupLeaderboardController extends AbstractController
             }
         }
 
+        // Top-3 podium — only meaningful once there are ≥3 players and someone has scored.
+        $podiumRows = [];
+        if (count($leaderboard->rows) >= 3 && $leaderboard->rows[0]->totalPoints > 0) {
+            $podiumRows = array_slice($leaderboard->rows, 0, 3);
+        }
+
         return $this->render('portal/leaderboard/index.html.twig', [
             'group' => $group,
             'winner' => $winner,
             'my_groups' => $myGroups,
+            'podium_rows' => $podiumRows,
         ]);
     }
 }
