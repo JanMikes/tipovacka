@@ -57,6 +57,7 @@ return App::config([
             ['path' => '^/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/turnaje', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/nastenka', 'roles' => 'ROLE_USER'],
+            ['path' => '^/zapasy', 'roles' => 'ROLE_USER'],
             ['path' => '^/portal', 'roles' => 'ROLE_USER'],
             ['path' => '^/pripojit', 'roles' => 'ROLE_USER'],
             ['path' => '^/prihlaseni', 'roles' => 'PUBLIC_ACCESS'],

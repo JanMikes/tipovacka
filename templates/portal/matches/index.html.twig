@@ -1,0 +1,125 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zápasy — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="bg-radial">
+<div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+
+    {# ───── Hero ───── #}
+    <header class="mb-8">
+        <p class="eyebrow mb-3">Zápasy</p>
+        <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">Vaše zápasy</h1>
+        <p class="mt-3 max-w-2xl text-white/60">Všechny zápasy napříč vašimi soutěžemi na jednom místě — tipnutelné i už odehrané.</p>
+    </header>
+
+    {# ───── Filtry ───── #}
+    <div class="mb-8 flex flex-wrap gap-2">
+        {% for key, label in filters %}
+            {% set is_active = key == active_filter %}
+            <a
+                href="{{ path('portal_matches') }}{{ key == 'vse' ? '' : '?filtr=' ~ key }}"
+                class="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors {{ is_active ? 'border-accent-500/50 bg-accent-500/15 text-accent-200' : 'border-white/10 bg-white/[0.04] text-white/60 hover:border-white/20 hover:text-white' }}"
+            >
+                {{ label }}
+                <span class="rounded-full px-1.5 py-0.5 text-xs font-bold tabular-nums {{ is_active ? 'bg-accent-500/25 text-accent-100' : 'bg-white/10 text-white/50' }}">{{ counts[key] }}</span>
+            </a>
+        {% endfor %}
+    </div>
+
+    {# ───── Seznam zápasů ───── #}
+    {% if matches|length == 0 %}
+        <div class="card-glass p-10 text-center">
+            <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                <twig:ux:icon name="lucide:calendar" class="h-7 w-7" />
+            </span>
+            <h3 class="text-lg font-semibold text-white">
+                {% if active_filter == 'vse' %}Žádné zápasy{% else %}V tomto filtru nejsou žádné zápasy{% endif %}
+            </h3>
+            <p class="mx-auto mt-2 max-w-md text-sm text-white/60">
+                {% if active_filter == 'vse' %}
+                    Jakmile se ve vašich soutěžích objeví zápasy, uvidíte je tady.
+                {% else %}
+                    Zkuste jiný filtr — třeba <a href="{{ path('portal_matches') }}" class="font-semibold text-accent-300 hover:text-accent-200">Vše</a>.
+                {% endif %}
+            </p>
+        </div>
+    {% else %}
+        <ul class="flex flex-col gap-3">
+            {% for m in matches %}
+                {% set is_tippable = m.isOpenForGuesses and m.kickoffAt >= date() %}
+                {% set is_locked = not m.isFinished and not m.isPostponed and not is_tippable %}
+                <li>
+                    <div class="card-glass flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5{% if m.isFinished %} border-l-2 border-l-accent-500/40{% elseif m.guessedGroupsCount > 0 and m.pendingGroupsCount == 0 %} border-l-2 border-l-win/40{% endif %}">
+                        {# datum a čas #}
+                        <div class="flex shrink-0 flex-col text-sm sm:w-20">
+                            <span class="font-semibold text-white tabular-nums">{{ m.kickoffAt|date('d. m.') }}</span>
+                            <span class="text-white/50 tabular-nums">{{ m.kickoffAt|date('H:i') }}</span>
+                        </div>
+
+                        {# týmy + skóre/vs #}
+                        <div class="flex min-w-0 flex-1 items-center gap-3">
+                            <div class="flex min-w-0 flex-1 items-center justify-end gap-2.5 text-right">
+                                <span class="truncate font-semibold text-white">{{ m.homeTeam }}</span>
+                                <twig:TeamFlag name="{{ m.homeTeam }}" size="36" />
+                            </div>
+                            {% if m.isFinished %}
+                                <span class="shrink-0 px-1 text-base font-black text-white tabular-nums">{{ m.homeScore }}:{{ m.awayScore }}</span>
+                            {% else %}
+                                <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-white/40">vs</span>
+                            {% endif %}
+                            <div class="flex min-w-0 flex-1 items-center gap-2.5">
+                                <twig:TeamFlag name="{{ m.awayTeam }}" size="36" />
+                                <span class="truncate font-semibold text-white">{{ m.awayTeam }}</span>
+                            </div>
+                        </div>
+
+                        {# stav + CTA #}
+                        <div class="flex shrink-0 flex-wrap items-center justify-between gap-2 sm:justify-end">
+                            {% if m.isFinished %}
+                                <span class="pill pill-done"><twig:ux:icon name="lucide:check" class="h-3 w-3" />Ukončeno</span>
+                            {% elseif m.isPostponed %}
+                                <span class="pill pill-warn"><twig:ux:icon name="lucide:triangle-alert" class="h-3 w-3" />Odloženo</span>
+                            {% elseif is_locked %}
+                                <span class="pill pill-locked"><twig:ux:icon name="lucide:lock" class="h-3 w-3" />Uzamčeno</span>
+                            {% else %}
+                                <span class="pill pill-soon"><span class="dot"></span>Brzy</span>
+                            {% endif %}
+
+                            {% if m.groupsCount > 0 and not m.isFinished %}
+                                {% if m.pendingGroupsCount > 0 and is_tippable %}
+                                    <span class="pill pill-soon">
+                                        <twig:ux:icon name="lucide:circle-alert" class="h-3 w-3" />
+                                        {% if m.groupsCount > 1 %}Chybí tip ({{ m.guessedGroupsCount }}/{{ m.groupsCount }}){% else %}Chybí tip{% endif %}
+                                    </span>
+                                {% elseif m.guessedGroupsCount > 0 %}
+                                    <span class="pill pill-tipped">
+                                        <twig:ux:icon name="lucide:check" class="h-3 w-3" />
+                                        {% if m.groupsCount > 1 %}Tip odeslán ({{ m.guessedGroupsCount }}/{{ m.groupsCount }}){% else %}Tip odeslán{% endif %}
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+
+                            <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}" class="btn {{ is_tippable ? 'btn-primary' : 'btn-ghost' }} btn-sm">
+                                {% if is_tippable %}
+                                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat
+                                {% else %}
+                                    Detail
+                                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if m.tournamentName or m.venue %}
+                        <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
+                            {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                        </p>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

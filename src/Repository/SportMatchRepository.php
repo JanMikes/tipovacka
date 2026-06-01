@@ -82,6 +82,58 @@ class SportMatchRepository
     }
 
     /**
+     * All non-deleted, non-cancelled matches across the tournaments of the soutěže
+     * (groups) the user is an active member of — any state (Scheduled / Live /
+     * Finished / Postponed). Powers the cross-soutěž "Zápasy" page. Ordered with
+     * still-upcoming matches first (soonest kickoff), then past matches (most
+     * recent first), so the next match to tip surfaces at the top.
+     *
+     * @return list<SportMatch>
+     */
+    public function listAllForUser(Uuid $userId, \DateTimeImmutable $now): array
+    {
+        $membershipSubquery = $this->entityManager->createQueryBuilder()
+            ->select('1')
+            ->from(Membership::class, 'ms')
+            ->innerJoin('ms.group', 'g')
+            ->where('ms.user = :userId')
+            ->andWhere('g.tournament = t.id')
+            ->andWhere('ms.leftAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->getDQL();
+
+        /** @var list<SportMatch> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('m', 't')
+            ->from(SportMatch::class, 'm')
+            ->innerJoin('m.tournament', 't')
+            ->where('m.state != :cancelled')
+            ->andWhere('m.deletedAt IS NULL')
+            ->andWhere('t.deletedAt IS NULL')
+            ->andWhere('EXISTS('.$membershipSubquery.')')
+            ->setParameter('cancelled', SportMatchState::Cancelled)
+            ->setParameter('userId', $userId)
+            ->orderBy('m.kickoffAt', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        // Split into upcoming (soonest first) and past (most recent first) so the
+        // next match to tip surfaces at the top while results read newest-first.
+        $upcoming = [];
+        $past = [];
+        foreach ($result as $match) {
+            if ($match->kickoffAt >= $now) {
+                $upcoming[] = $match;
+            } else {
+                $past[] = $match;
+            }
+        }
+
+        return array_merge($upcoming, array_reverse($past));
+    }
+
+    /**
      * @return list<SportMatch>
      */
     public function listUpcomingForUser(Uuid $userId, \DateTimeImmutable $now): array

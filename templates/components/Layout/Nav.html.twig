@@ -1,10 +1,9 @@
 {#
   Sticky glass top navigation. Two variants:
-   - app    (authenticated): Soutěže / Turnaje + Vytvořit soutěž CTA + avatar dropdown
-   - public (logged out):    Domů / Turnaje + Přihlásit + Vytvořit soutěž zdarma
-  NOTE (redesign): "Zápasy" (portal_matches) and a top-level "Žebříček" switcher
-  join the app nav in Phase 4 once those routes exist. Marketing links
-  (Funkce/Ceník/Pro firmy/FAQ) join the public nav in Phase 3.
+   - app    (authenticated): Soutěže / Zápasy / Turnaje + Vytvořit soutěž CTA + avatar dropdown
+   - public (logged out):    Funkce / Ceník / Pro firmy / FAQ + Přihlásit + Vytvořit soutěž zdarma
+  NOTE (redesign): a top-level "Žebříček" needs a selected/primary soutěž; for now
+  the soutěž switcher lives in-page (leaderboard + dashboard), not in the nav.
 #}
 {% props variant = null %}
 {% set is_app = variant is not null ? (variant == 'app') : (app.user is not null) %}
@@ -13,6 +12,7 @@
 {% set links = is_app
     ? [
         { label: 'Soutěže', path: 'portal_dashboard', match: 'portal_dashboard' },
+        { label: 'Zápasy', path: 'portal_matches', match: 'portal_matches' },
         { label: 'Turnaje', path: 'public_tournaments_list', match: 'public_tournament' },
     ]
     : [

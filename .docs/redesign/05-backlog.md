@@ -69,17 +69,19 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 > (`param="soutez"`). Tests: `SoutezSwitcherFlowTest` (lists groups + links resolve
 > + hidden for a single group).
 
-### 4. "Zápasy" page (cross-soutěž matches) + nav item
-- **DS shows:** a top-level Zápasy page — all my open/upcoming matches across
-  soutěže, filter chips (Vše/Dnes/Tipovatelné/Ukončené — no Live).
-- **Exists:** the dashboard already computes per-group upcoming matches + guess
-  status; generalize it.
-- **Add:** `App\Controller\Portal\MatchesController` (`portal_matches`) + a query
-  for the current user's matches across all memberships; `portal/matches/index.html.twig`
-  using the dashboard's match-row markup; add "Zápasy" to the app nav
-  (`components/Layout/Nav.html.twig`, between Soutěže and Žebříček).
-- **Effort: M.** **Test:** WebTestCase — page lists matches from ≥2 of the user's
-  groups; filter chips work (if server-side) or are inert links.
+### 4. "Zápasy" page (cross-soutěž matches) + nav item ✅ DONE
+> Implemented: `ListUserMatches` query (`src/Query/ListUserMatches/`) +
+> `SportMatchRepository::listAllForUser` (all non-cancelled, non-deleted matches
+> across the user's soutěže, any state; ordered upcoming-soonest-first then
+> past-newest-first). `Portal\MatchesController` at `/zapasy` (route
+> `portal_matches`) does **server-side** filtering — chips Vše / Dnes /
+> Tipovatelné / Ukončené (no Live; Live maps to "Uzamčeno") via `?filtr=<key>`,
+> with per-chip counts; "Dnes" uses Europe/Prague. `portal/matches/index.html.twig`
+> renders the rows (finished shows score, others a state pill + tip-status pill).
+> Added a `^/zapasy → ROLE_USER` access_control rule and a "Zápasy" nav item
+> (Soutěže · **Zápasy** · Turnaje). Test: `MatchesFlowTest` (anon redirect,
+> cross-soutěž aggregation, ukončené + tipovatelné filters).
+> **Note:** round/stage label on the rows lands with #5 (schema) below.
 
 ### 5. `SportMatch.round` / stage label
 - **DS shows:** tip-card header line 1 = round ("Skupina A", "Čtvrtfinále").
