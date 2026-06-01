@@ -29,7 +29,7 @@ jobs:
                 uses: docker/metadata-action@v5
                 with:
                     # list of Docker images to use as base name for tags
-                    images: ghcr.io/janmikes/tipovacka
+                    images: ghcr.io/janmikes/wtips
                     # generate Docker tags based on the following events/attributes
                     tags: |
                         type=ref,event=branch
@@ -66,7 +66,7 @@ jobs:
             cancel-in-progress: false
         environment:
             name: production
-            url: https://tipovacka.thedevs.cz
+            url: https://wtips.cz
         steps:
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
             -   name: Deploy to production
                 uses: appleboy/ssh-action@master
                 with:
-                    host: tipovacka.thedevs.cz
+                    host: ${{ secrets.DEPLOY_HOST }}
                     username: ${{ secrets.DEPLOY_USERNAME }}
                     key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-                    script: cd /deployment/tipovacka && ./deploy.sh
+                    script: cd /deployment/wtips && ./deploy.sh

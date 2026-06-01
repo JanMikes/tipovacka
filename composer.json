@@ -1,6 +1,6 @@
 {
     "type": "project",
-    "name": "tipovacka/web",
+    "name": "wtips/web",
     "description": "Symfony skeleton with CQRS, Doctrine, Tailwind and auth",
     "license": "proprietary",
     "minimum-stability": "stable",

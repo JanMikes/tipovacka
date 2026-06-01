@@ -31,7 +31,7 @@ services:
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
-            POSTGRES_DB: tipovacka
+            POSTGRES_DB: wtips
         ports:
             - "${POSTGRES_PORT:-5432}:5432"
         volumes:
