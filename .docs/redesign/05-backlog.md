@@ -124,11 +124,14 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 
 ## P2 — Product/asset decisions or moderate backend
 
-### 7. Premium teaser UI (visual only, feature-flagged)
-- The DS gates pick distribution behind a gold "PRÉMIUM" teaser
-  (`wtips:open-premium`). Until the commerce backend (P3) exists, P1#2 ships
-  distribution **free**. If a teaser is wanted as a marketing hook, build it
-  behind a feature flag with no real payment. **Effort: S** (frontend only).
+### 7b. Premium teaser UI (visual only, feature-flagged) ✅ DONE
+> Implemented: `components/PremiumTeaser.html.twig` (gold „PRÉMIUM připravujeme"
+> card — **no payments, no `wtips:open-premium` JS, no entitlements**). Gated by a
+> new twig global `premium_enabled` ← env `APP_PREMIUM_TEASER_ENABLED` (default
+> `0` in `.env`; flip to `1` to surface it). Rendered on the single-match page
+> below the tips list. Pick distribution stays **free** regardless. Test:
+> `PremiumTeaserFlowTest` (hidden by default; shown when the env flag is on).
+> The real paywall/pricing remains **deferred** (P3 — needs a payment provider).
 
 ### 8. Δ (rank change) column
 - Needs historical rank storage. **Add:** a lightweight periodic leaderboard-rank

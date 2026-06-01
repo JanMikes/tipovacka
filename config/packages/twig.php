@@ -17,6 +17,8 @@ return App::config([
         // the `tipovacka` branch can override APP_BRAND_NAME to keep "Tipovačka".
         'globals' => [
             'brand_name' => '%env(APP_BRAND_NAME)%',
+            // Visual-only premium teaser flag (no commerce backend yet). Off by default.
+            'premium_enabled' => '%env(bool:APP_PREMIUM_TEASER_ENABLED)%',
         ],
     ],
 ]);

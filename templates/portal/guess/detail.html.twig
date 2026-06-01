@@ -170,6 +170,10 @@
             :applyHiding="not can_see_all_tips"
         />
 
+        {% if premium_enabled %}
+            <twig:PremiumTeaser />
+        {% endif %}
+
         {% if deadline_form is not null %}
             <section class="card-glass p-5 sm:p-6">
                 <header class="mb-4 flex items-center gap-2.5">

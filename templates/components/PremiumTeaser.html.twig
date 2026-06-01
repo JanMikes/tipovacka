@@ -1,0 +1,23 @@
+{#
+    Visual-only "PRÉMIUM připravujeme" teaser. NO payments / entitlements — the
+    commerce backend is the deferred monetization phase. Render only behind the
+    `premium_enabled` flag (env APP_PREMIUM_TEASER_ENABLED), which is off by default.
+
+    props:
+      title : optional heading override
+      body  : optional body override
+#}
+{% props title = 'Prémiové funkce připravujeme', body = 'Brzy přidáme rozšířené statistiky, historii napříč soutěžemi a další vychytávky. Zatím si všechno užijete úplně zdarma.' %}
+
+<section class="relative overflow-hidden rounded-2xl border border-[#f5cd54]/30 bg-gradient-to-br from-[#f5cd54]/[0.12] to-transparent p-5 sm:p-6">
+    <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f5cd54]/40 bg-[#f5cd54]/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#f5cd54]">
+        <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
+        Prémium
+    </span>
+    <h3 class="mt-3 text-lg font-bold text-white">{{ title }}</h3>
+    <p class="mt-1.5 max-w-xl text-sm text-white/60">{{ body }}</p>
+    <p class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-[#f5cd54]/80">
+        <twig:ux:icon name="lucide:sparkles" class="h-3.5 w-3.5" />
+        Připravujeme — bez sázek, jen pro radost.
+    </p>
+</section>
