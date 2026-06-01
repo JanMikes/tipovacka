@@ -416,6 +416,18 @@ label.required::after {
     .lb-tr.me td:first-child { box-shadow: inset 2px 0 0 var(--color-accent-500); }
     /* „TY" badge on the current user's row (DS .lb-tr.me ::after) */
     .lb-ty { display: inline-block; flex-shrink: 0; font-size: 9px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: var(--grad-accent-2); color: #fff; }
+
+    /* ---- „Tvoje pozice" strip (DS zebricek .you-strip), above the podium ---- */
+    .you-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 18px 32px; padding: 18px 26px; border: 1px solid var(--border-accent); border-radius: 16px; background: linear-gradient(135deg, rgba(70,153,208,0.18) 0%, rgba(31,93,142,0.08) 100%); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 14px 40px rgba(0,0,0,0.30); }
+    .you-strip .ys-hero { display: flex; flex-direction: column; gap: 4px; }
+    .you-strip .lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent-300); }
+    .you-strip .pos { font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1; color: #fff; }
+    .you-strip .pos small { font-size: 14px; color: var(--fg-3); font-weight: 600; margin-left: 4px; }
+    .you-strip .ys-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.10); }
+    .you-strip .col { display: flex; flex-direction: column; gap: 2px; }
+    .you-strip .col .k { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+    .you-strip .col .v { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+    @media (max-width: 640px) { .you-strip .ys-divider { display: none; } }
     .lb-pos { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; color: #fff; }
     .lb-pos.rank-1 { color: #f5cd54; text-shadow: 0 0 14px rgba(245,205,84,0.45); }
     .lb-pos.rank-2 { color: #cfd6e0; text-shadow: 0 0 14px rgba(207,214,224,0.35); }

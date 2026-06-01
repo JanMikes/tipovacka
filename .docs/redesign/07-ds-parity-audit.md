@@ -93,7 +93,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | dashboard "Tvé zápasy" tip rows | `portal/dashboard.html.twig` | ✅ | DONE (f0905fc): upcoming + evaluated now use `Match/MatchRow`. |
 | **dashboard mini-leaderboard** | `portal/dashboard.html.twig` | ❌ **P1** | Missing entirely (DS §D left col). Add compact top-N for `selected_group` + "· Ty" + flame, link to full žebříček. |
 | dashboard soutěž/turnaj discovery grids | `portal/dashboard.html.twig` | ✅ | Richer than DS. |
-| **žebříček you-strip** | `portal/leaderboard/index.html.twig` | ❌ **P1** | Missing "Tvoje pozice 7./42 · Body · Do top N" band. Add `.you-strip` `@layer` class + summary from `member_stats`. **Omit Δ "Změna".** |
+| **žebříček you-strip** | `portal/leaderboard/index.html.twig` | ✅ | DONE (next commit): `.you-strip` band (DS) above the podium — Tvoje pozice (rank/total) · Body · Do top 5/Do top 3 gaps (computed in controller from the leaderboard) · „Tipnout další zápas". Δ „Změna" omitted per scope. |
 | žebříček podium-wrap | `portal/leaderboard/index.html.twig` | ✅ | |
 | žebříček table cols + sticky TY | `Leaderboard/GroupLeaderboard.html.twig` | ✅ | See C: TY badge added; Trefa is not a DS column; sticky-me deferred (inert without scroll container). |
 | žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "Najít hráče…" search. Add cheap client-side `.lb-search` filter (range/sort were demo-only — skip). |

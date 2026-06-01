@@ -57,11 +57,37 @@ final class GroupLeaderboardController extends AbstractController
             $podiumRows = array_slice($leaderboard->rows, 0, 3);
         }
 
+        // "Tvoje pozice" strip — the current user's row + point gaps to the top tiers
+        // (Δ rank-change is deferred, so it is intentionally omitted).
+        $meRow = null;
+        foreach ($leaderboard->rows as $row) {
+            if ($row->userId->equals($user->id)) {
+                $meRow = $row;
+
+                break;
+            }
+        }
+
+        $gapToTop3 = null;
+        $gapToTop5 = null;
+        if (null !== $meRow) {
+            if ($meRow->rank > 3 && count($leaderboard->rows) >= 3) {
+                $gapToTop3 = max(0, $leaderboard->rows[2]->totalPoints - $meRow->totalPoints);
+            }
+            if ($meRow->rank > 5 && count($leaderboard->rows) >= 5) {
+                $gapToTop5 = max(0, $leaderboard->rows[4]->totalPoints - $meRow->totalPoints);
+            }
+        }
+
         return $this->render('portal/leaderboard/index.html.twig', [
             'group' => $group,
             'winner' => $winner,
             'my_groups' => $myGroups,
             'podium_rows' => $podiumRows,
+            'me_row' => $meRow,
+            'player_count' => count($leaderboard->rows),
+            'gap_to_top3' => $gapToTop3,
+            'gap_to_top5' => $gapToTop5,
         ]);
     }
 }

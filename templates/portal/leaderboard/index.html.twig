@@ -76,6 +76,45 @@
         </div>
     </header>
 
+    {% if me_row is not null %}
+        <div class="you-strip mb-8">
+            <div class="ys-hero">
+                <span class="lbl">Tvoje pozice</span>
+                <span class="pos">{{ me_row.rank }}.<small>/ {{ player_count }}</small></span>
+            </div>
+            <div class="ys-divider"></div>
+            <div class="col">
+                <span class="k">Body</span>
+                <span class="v">{{ me_row.totalPoints }}</span>
+            </div>
+            {% if gap_to_top5 is not null or gap_to_top3 is not null %}
+                <div class="ys-divider"></div>
+                {% if gap_to_top5 is not null %}
+                    <div class="col">
+                        <span class="k">Do top 5</span>
+                        <span class="v text-accent-300">+{{ gap_to_top5 }} b</span>
+                    </div>
+                {% endif %}
+                {% if gap_to_top3 is not null %}
+                    <div class="col">
+                        <span class="k">Do top 3</span>
+                        <span class="v text-accent-300">+{{ gap_to_top3 }} b</span>
+                    </div>
+                {% endif %}
+            {% elseif me_row.rank <= 3 %}
+                <div class="ys-divider"></div>
+                <div class="col">
+                    <span class="k">Stav</span>
+                    <span class="v text-win">{{ me_row.rank == 1 ? 'Vedeš' : 'Top 3' }}</span>
+                </div>
+            {% endif %}
+            <a href="{{ path('portal_matches') }}" class="btn btn-ghost btn-sm ml-auto">
+                Tipnout další zápas
+                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+            </a>
+        </div>
+    {% endif %}
+
     {% if podium_rows|length >= 3 %}
         <twig:Leaderboard:Podium :rows="podium_rows" />
     {% endif %}
