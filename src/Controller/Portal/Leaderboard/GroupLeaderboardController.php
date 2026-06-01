@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Leaderboard;
 
+use App\Entity\User;
 use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
+use App\Query\ListMyGroups\ListMyGroups;
 use App\Query\QueryBus;
 use App\Repository\GroupRepository;
 use App\Voter\LeaderboardVoter;
@@ -32,6 +34,10 @@ final class GroupLeaderboardController extends AbstractController
         $group = $this->groupRepository->get(Uuid::fromString($groupId));
         $this->denyAccessUnlessGranted(LeaderboardVoter::VIEW, $group);
 
+        /** @var User $user */
+        $user = $this->getUser();
+        $myGroups = $this->queryBus->handle(new ListMyGroups(userId: $user->id));
+
         $winner = null;
         if ($group->tournament->isFinished) {
             $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
@@ -47,6 +53,7 @@ final class GroupLeaderboardController extends AbstractController
         return $this->render('portal/leaderboard/index.html.twig', [
             'group' => $group,
             'winner' => $winner,
+            'my_groups' => $myGroups,
         ]);
     }
 }

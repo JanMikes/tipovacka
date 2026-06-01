@@ -1,0 +1,55 @@
+{#
+    Server-side soutěž (Group) switcher. Renders a dropdown of the user's soutěže,
+    each option linking to the same route for the chosen group. No SPA — plain links.
+
+    props:
+      groups    : list<GroupListItem> (from ListMyGroups) — the user's soutěže
+      currentId : string|null — RFC4122 id of the active soutěž (defaults to the first group)
+      route     : string — route name to link to for each group
+      param     : string — the route/query param carrying the group id (default 'groupId').
+                  When `route` has a matching path placeholder it becomes a path segment;
+                  otherwise Symfony appends it as a query string (e.g. ?soutez=<id>).
+      label     : string — eyebrow label above the control
+#}
+{% props groups, currentId = null, route, param = 'groupId', label = 'Soutěž' %}
+
+{% set matched = groups|filter(g => g.groupId.toRfc4122 == currentId) %}
+{% set current = (matched|length > 0) ? matched|first : groups|first %}
+
+{% if groups|length > 0 and current is not null %}
+    <div class="min-w-0">
+        <span class="stat-lbl mb-1.5 block">{{ label }}</span>
+        {% if groups|length == 1 %}
+            <div class="inline-flex max-w-full items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2">
+                <twig:ux:icon name="lucide:users" class="h-4 w-4 shrink-0 text-accent-300" />
+                <span class="truncate text-sm font-semibold text-white">{{ current.groupName }}</span>
+            </div>
+        {% else %}
+            <details class="group relative">
+                <summary
+                    class="flex max-w-full cursor-pointer list-none items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:border-white/20 hover:bg-white/[0.07]"
+                    style="list-style:none"
+                >
+                    <twig:ux:icon name="lucide:users" class="h-4 w-4 shrink-0 text-accent-300" />
+                    <span class="truncate">{{ current.groupName }}</span>
+                    <twig:ux:icon name="lucide:chevron-down" class="h-4 w-4 shrink-0 text-white/50 transition-transform group-open:rotate-180" />
+                </summary>
+                <div class="absolute left-0 z-[60] mt-2 max-h-80 w-72 max-w-[calc(100vw-2rem)] overflow-auto rounded-xl border border-white/10 bg-surface-2 p-1.5 shadow-xl">
+                    {% for g in groups %}
+                        {% set is_active = g.groupId.toRfc4122 == current.groupId.toRfc4122 %}
+                        <a
+                            href="{{ path(route, {(param): g.groupId.toRfc4122}) }}"
+                            class="flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5 {{ is_active ? 'bg-white/[0.06]' : '' }}"
+                        >
+                            <twig:ux:icon name="lucide:{{ is_active ? 'circle-check' : 'users' }}" class="mt-0.5 h-4 w-4 shrink-0 {{ is_active ? 'text-accent-300' : 'text-white/40' }}" />
+                            <span class="min-w-0">
+                                <span class="block truncate font-semibold {{ is_active ? 'text-white' : 'text-white/80' }}">{{ g.groupName }}</span>
+                                <span class="block truncate text-xs text-white/45">{{ g.tournamentName }}</span>
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </details>
+        {% endif %}
+    </div>
+{% endif %}

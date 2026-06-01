@@ -53,7 +53,16 @@
             </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-end gap-3">
+            {% if my_groups|length > 1 %}
+                <twig:SoutezSwitcher
+                    :groups="my_groups"
+                    currentId="{{ group.id.toRfc4122 }}"
+                    route="portal_group_leaderboard"
+                    param="groupId"
+                    label="Žebříček soutěže"
+                />
+            {% endif %}
             <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                 <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />
                 Tabulka
