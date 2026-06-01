@@ -15,11 +15,42 @@ final class PremiumTeaserFlowTest extends WebTestCase
     private const string TEASER_MARKER = 'Prémiové funkce připravujeme';
     private const string ENV_FLAG = 'APP_PREMIUM_TEASER_ENABLED';
 
+    /** @var array{env: array{bool, string|null}, server: array{bool, string|null}, getenv: string|false} */
+    private array $flagSnapshot;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // These tests flip a process-global env var. Snapshot its exact state up front so
+        // tearDown can restore it — never leaking a set OR unset value into sibling tests
+        // (unsetting the .env baseline used to 500 every later test that boots Twig).
+        $this->flagSnapshot = [
+            'env' => [\array_key_exists(self::ENV_FLAG, $_ENV), $_ENV[self::ENV_FLAG] ?? null],
+            'server' => [\array_key_exists(self::ENV_FLAG, $_SERVER), $_SERVER[self::ENV_FLAG] ?? null],
+            'getenv' => getenv(self::ENV_FLAG),
+        ];
+    }
+
     protected function tearDown(): void
     {
-        // Never leak the flag into sibling tests.
-        unset($_SERVER[self::ENV_FLAG], $_ENV[self::ENV_FLAG]);
-        putenv(self::ENV_FLAG);
+        [$envSet, $envValue] = $this->flagSnapshot['env'];
+        if ($envSet) {
+            $_ENV[self::ENV_FLAG] = $envValue;
+        } else {
+            unset($_ENV[self::ENV_FLAG]);
+        }
+
+        [$serverSet, $serverValue] = $this->flagSnapshot['server'];
+        if ($serverSet) {
+            $_SERVER[self::ENV_FLAG] = $serverValue;
+        } else {
+            unset($_SERVER[self::ENV_FLAG]);
+        }
+
+        $getenv = $this->flagSnapshot['getenv'];
+        putenv(false === $getenv ? self::ENV_FLAG : self::ENV_FLAG.'='.$getenv);
+
         parent::tearDown();
     }
 
