@@ -96,8 +96,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | **žebříček you-strip** | `portal/leaderboard/index.html.twig` | ✅ | DONE (next commit): `.you-strip` band (DS) above the podium — Tvoje pozice (rank/total) · Body · Do top 5/Do top 3 gaps (computed in controller from the leaderboard) · „Tipnout další zápas". Δ „Změna" omitted per scope. |
 | žebříček podium-wrap | `portal/leaderboard/index.html.twig` | ✅ | |
 | žebříček table cols + sticky TY | `Leaderboard/GroupLeaderboard.html.twig` | ✅ | See C: TY badge added; Trefa is not a DS column; sticky-me deferred (inert without scroll container). |
-| žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "Najít hráče…" search. Add cheap client-side `.lb-search` filter (range/sort were demo-only — skip). |
-| žebříček gap-rows | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "… pozice 13-24 …" condensation. Low value at small scale — document acceptable or add. |
+| žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ✅ (documented) | Deferred-acceptable: the Live Component renders the full list (you find yourself via the highlighted TY row + the you-strip). A client-side `.lb-search` filter would fight the Live morph (resets on update) for marginal value at typical soutěž size. The DS range/sort controls were demo-only. |
+| žebříček gap-rows | `Leaderboard/GroupLeaderboard.html.twig` | ✅ (documented) | Deferred-acceptable: „… pozice 13–24 …" condensation only matters on very large boards; the full list renders fine at typical scale. No data loss. |
 | Zápasy chips Vše/Dnes/Tipovatelné/Ukončené (no Live) | `portal/matches/index.html.twig` | ✅ | Rows now use `Match/MatchRow` (f0905fc). |
 | guess/detail + sport_match/detail hero (no live) | templates | ✅ | `isLive` folded to UZAMČENO; "Probíhá"→"Uzamčeno" relabel done (8b61588). |
 | pick distribution after lock | `guess/detail.html.twig` | ✅ | Free. |
@@ -121,8 +121,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 
 | DS screen | App target | Status | Note / fix |
 |---|---|---|---|
-| PoolDetail shell | `portal/group/detail.html.twig` | ✅ | (Optional: "Hráč" role chip on owner row; inline top-N LB preview — both ⚠️ P3.) |
-| PoolDetail matchday tip-cards | `portal/group/detail.html.twig` "Moje tipy" | ⚠️ **P3** | Compact rows; optionally reuse `.tip-card`. |
+| PoolDetail shell | `portal/group/detail.html.twig` | ✅ | Documented-acceptable on the two optional DS touches: (1) owner "Hráč" role chip — the `Organizátor` crown badge already conveys role; a second "Hráč" pill on every owner row is redundant clutter. (2) inline top-N leaderboard preview — the app uses a `surface-accent` CTA to the full žebříček (one click; the full Podium+table live there) — a defensible IA choice, not a divergence. |
+| PoolDetail matchday tip-cards | `portal/group/detail.html.twig` "Moje tipy" | ✅ (documented) | The "Moje tipy" digest uses a compact list (intentionally denser than the full `.tip-card`/MatchRow used on the dashboard/Zápasy); it's a summary with a per-row detail link, functional + on-brand. Reusing MatchRow here would over-tall the digest. |
 | CreatePoolModal step1 (name+source) | `group/create` + `tournament/create_private` | ✅ | Split across real routes. |
 | **CreatePoolModal step2 `.variant-card` presets** | `portal/tournament/rule_configuration.html.twig` | ✅ | DONE (next commit): `Scoring/RuleFields` component with `.variant-card` presets + `.scoring-fields` rows, used by portal + admin. „+střelec" tile inert (🔮). |
 | CreatePoolModal step3 invite (chips + copy-field) | `group/detail` invites | ✅ | (b) DONE (next commit): PIN + invite link now use the DS `.copy-field` + a `copy` Stimulus controller (one-click „Zkopírováno"). (a) email **chip-input** = documented-acceptable: the existing single-email form + bulk textarea (`bulkInvitationForm`) are functionally equivalent; the chip UI is cosmetic polish, deferred (would need a sync-to-hidden-field Stimulus controller). |
