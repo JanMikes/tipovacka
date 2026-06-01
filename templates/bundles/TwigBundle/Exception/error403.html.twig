@@ -1,36 +1,30 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Přístup odepřen - Tipovačka{% endblock %}
+{% block title %}Přístup odepřen — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="min-h-screen flex items-center justify-center px-4 bg-gray-50">
-    <div class="card w-full max-w-md">
-        <div class="card-body text-center">
-            <div class="text-6xl mb-4">🚫</div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">403 - Přístup odepřen</h1>
-            <p class="text-gray-600 mb-6">
-                Nemáte oprávnění k přístupu na tuto stránku.
+    <div class="bg-radial flex flex-1 items-center justify-center px-4 py-16">
+        <div class="card-glass w-full max-w-md p-8 text-center">
+            <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-draw/30 bg-draw/15 text-draw">
+                <twig:ux:icon name="lucide:lock" class="h-7 w-7" />
+            </div>
+            <p class="eyebrow mb-2">Chyba 403</p>
+            <h1 class="text-2xl font-extrabold tracking-tight text-white">Přístup odepřen</h1>
+            <p class="mt-3 text-sm leading-relaxed text-white/60">
                 {% if is_granted('ROLE_USER') %}
-                    Tato oblast je pravděpodobně přístupná pouze administrátorům.
+                    K této stránce nemáte oprávnění — je nejspíš jen pro organizátory nebo administraci.
                 {% else %}
-                    Pro přístup k tomuto obsahu se prosím přihlaste.
+                    K tomuto obsahu se musíte nejdřív přihlásit.
                 {% endif %}
             </p>
-
-            <div class="flex justify-center gap-2 flex-wrap">
-                <a href="{{ path('app_home') }}" class="btn btn-primary">
-                    Zpět na úvodní stránku
-                </a>
+            <div class="mt-7 flex flex-wrap justify-center gap-2.5">
+                <a href="{{ path('app_home') }}" class="btn btn-primary btn-sm">Zpět na úvod</a>
                 {% if not is_granted('ROLE_USER') %}
-                <a href="{{ path('app_login') }}" class="btn btn-secondary">
-                    Přihlásit se
-                </a>
+                    <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm">Přihlásit se</a>
+                {% else %}
+                    <button type="button" onclick="history.back()" class="btn btn-ghost btn-sm">Zpět</button>
                 {% endif %}
-                <button onclick="history.back()" class="btn btn-ghost">
-                    Zpět
-                </button>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}

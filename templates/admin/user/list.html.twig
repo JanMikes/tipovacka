@@ -1,114 +1,123 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Uživatelé — Admin — Tipovačka{% endblock %}
+{% block title %}Uživatelé — Admin — {{ brand_name }}{% endblock %}
 
 {% block admin_breadcrumbs %}
-    <li aria-hidden="true" class="text-gray-300">/</li>
-    <li class="text-gray-700 font-medium" aria-current="page">Uživatelé</li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">Uživatelé</li>
 {% endblock %}
 
 {% block admin_title %}Uživatelé{% endblock %}
 {% block admin_subtitle %}Správa účtů, rolí a přístupu.{% endblock %}
 
 {% block admin_body %}
-<div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-5 md:p-6">
+<div class="card-glass p-5 md:p-6">
     {{ form_start(form, {attr: {class: 'space-y-4'}}) }}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                {{ form_label(form.search) }}
-                {{ form_widget(form.search) }}
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="field">
+                {{ form_label(form.search, null, {label_attr: {class: 'field-label'}}) }}
+                {{ form_widget(form.search, {attr: {class: 'input'}}) }}
             </div>
-            <div>
-                {{ form_label(form.verified) }}
+            <div class="field">
+                {{ form_label(form.verified, null, {label_attr: {class: 'field-label'}}) }}
                 {{ form_widget(form.verified) }}
             </div>
-            <div>
-                {{ form_label(form.active) }}
+            <div class="field">
+                {{ form_label(form.active, null, {label_attr: {class: 'field-label'}}) }}
                 {{ form_widget(form.active) }}
             </div>
         </div>
         <div>
-            <button type="submit" class="inline-flex items-center justify-center bg-navy-900 hover:bg-navy-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button type="submit" class="btn btn-primary">
+                <twig:ux:icon name="lucide:sliders-horizontal" class="h-4 w-4" />
                 Filtrovat
             </button>
         </div>
     {{ form_end(form) }}
 </div>
 
-<div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 overflow-hidden mt-6">
+<div class="card-glass mt-6 overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-navy-50/40 text-gray-600">
-                <tr>
-                    <th class="text-left px-4 py-3 font-semibold">E-mail</th>
-                    <th class="text-left px-4 py-3 font-semibold">Uživatel</th>
-                    <th class="text-left px-4 py-3 font-semibold">Role</th>
-                    <th class="text-left px-4 py-3 font-semibold">Stav</th>
-                    <th class="text-right px-4 py-3 font-semibold">Akce</th>
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
+                    <th class="px-4 py-3 text-left font-semibold">E-mail</th>
+                    <th class="px-4 py-3 text-left font-semibold">Uživatel</th>
+                    <th class="px-4 py-3 text-left font-semibold">Role</th>
+                    <th class="px-4 py-3 text-left font-semibold">Stav</th>
+                    <th class="px-4 py-3 text-right font-semibold">Akce</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-navy-100/70">
+            <tbody>
                 {% for user in users %}
-                    <tr class="{% if user.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-navy-50/40{% endif %}">
+                    <tr class="border-b border-white/[0.06] {% if user.isDeleted %}text-white/40{% else %}text-white/80 hover:bg-white/[0.03]{% endif %}">
                         <td class="px-4 py-3">
                             {% if user.email is not null %}
                                 {{ user.email }}
                             {% else %}
-                                <span class="text-gray-400 italic">— anonymní —</span>
+                                <span class="italic text-white/40">— anonymní —</span>
                             {% endif %}
-                            {% if user.isDeleted %} <span class="text-xs">(smazán)</span>{% endif %}
+                            {% if user.isDeleted %} <span class="text-xs text-white/40">(smazán)</span>{% endif %}
                         </td>
                         <td class="px-4 py-3">
-                            {% if user.nickname is not null %}
-                                {{ user.nickname }}
-                                {% if user.fullName %}<br><small class="text-xs font-normal text-gray-500">{{ user.fullName }}</small>{% endif %}
-                            {% elseif user.fullName %}
-                                {{ user.fullName }}
-                            {% else %}
-                                <span class="text-gray-400 italic">— anonymní —</span>
-                            {% endif %}
+                            <div class="flex items-center gap-3">
+                                <twig:Avatar name="{{ user.nickname ?? user.fullName ?? '?' }}" size="32" />
+                                <div class="min-w-0">
+                                    {% if user.nickname is not null %}
+                                        <span class="{{ user.isDeleted ? 'text-white/40' : 'text-white' }}">{{ user.nickname }}</span>
+                                        {% if user.fullName %}<br><small class="text-xs font-normal text-white/40">{{ user.fullName }}</small>{% endif %}
+                                    {% elseif user.fullName %}
+                                        <span class="{{ user.isDeleted ? 'text-white/40' : 'text-white' }}">{{ user.fullName }}</span>
+                                    {% else %}
+                                        <span class="italic text-white/40">— anonymní —</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                                {{ user.roles|join(', ') }}
-                            </span>
+                            <span class="badge badge-group">{{ user.roles|join(', ') }}</span>
                         </td>
                         <td class="px-4 py-3">
-                            {% if not user.isVerified %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">neověřený</span>
-                            {% endif %}
-                            {% if not user.isActive %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">zablokovaný</span>
-                            {% endif %}
-                            {% if user.isVerified and user.isActive %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">aktivní</span>
-                            {% endif %}
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                {% if not user.isVerified %}
+                                    <twig:Pill label="neověřený" variant="warn" />
+                                {% endif %}
+                                {% if not user.isActive %}
+                                    <twig:Pill label="zablokovaný" variant="locked" icon="lock" />
+                                {% endif %}
+                                {% if user.isVerified and user.isActive %}
+                                    <twig:Pill label="aktivní" variant="success" :dot="true" />
+                                {% endif %}
+                            </div>
                         </td>
                         <td class="px-4 py-3">
-                            <div class="flex items-center justify-end gap-3 whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-2 whitespace-nowrap">
                                 {% if user.email is not null %}
-                                    <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="text-cyan-500 hover:underline text-sm">Přihlásit se jako</a>
+                                    <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="btn btn-ghost btn-sm">
+                                        <twig:ux:icon name="lucide:log-in" class="h-3.5 w-3.5" />
+                                        Přihlásit se jako
+                                    </a>
                                 {% endif %}
                                 {% if user.isActive %}
                                     <form method="post" action="{{ path('admin_user_block', {id: user.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-title-value="Zablokovat uživatele"
-                                        data-confirm-message-value="Opravdu chceš uživatele {{ user.email ?? user.id.toRfc4122 }} zablokovat? Přestane se moct přihlásit."
+                                        data-confirm-message-value="Opravdu chcete uživatele {{ user.email ?? user.id.toRfc4122 }} zablokovat? Přestane se moct přihlásit."
                                         data-confirm-confirm-label-value="Ano, zablokovat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_user_block_' ~ user.id.toRfc4122) }}">
-                                        <button type="submit" class="text-red-600 hover:underline text-sm">Zablokovat</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">Zablokovat</button>
                                     </form>
                                 {% else %}
                                     <form method="post" action="{{ path('admin_user_unblock', {id: user.id.toRfc4122}) }}" class="inline">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_user_unblock_' ~ user.id.toRfc4122) }}">
-                                        <button type="submit" class="text-green-700 hover:underline text-sm">Odblokovat</button>
+                                        <button type="submit" class="btn btn-success btn-sm">Odblokovat</button>
                                     </form>
                                 {% endif %}
                             </div>
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5" class="px-4 py-8 text-center text-navy-900/60">Žádní uživatelé.</td></tr>
+                    <tr><td colspan="5" class="px-4 py-10 text-center text-white/50">Žádní uživatelé.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

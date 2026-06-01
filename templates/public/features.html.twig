@@ -1,0 +1,184 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Funkce — {{ brand_name }}{% endblock %}
+{% block meta_description %}Co {{ brand_name }} umí: živé body, vlastní bodování, pozvánky přes odkaz i PIN, žebříček s úspěšností a streaky. Bez sázek, jen pro radost a vychloubání.{% endblock %}
+
+{% block og_title %}Funkce — {{ brand_name }}{% endblock %}
+{% block og_description %}Živé body, vlastní bodování, pozvánky na pár kliků a žebříček naživo. {{ brand_name }} pro firmy, party i kámoše.{% endblock %}
+
+{% block body %}
+{# ───────── Hero ───────── #}
+<section class="hero-bg">
+    <div class="relative z-10 mx-auto max-w-[80rem] px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
+        <span class="eyebrow">Funkce</span>
+        <h1 class="mx-auto mt-4 max-w-3xl text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            <span class="grad-headline">Všechno, co tipovačka potřebuje.</span>
+            <br class="hidden sm:block">A nic navíc, co by vás brzdilo.
+        </h1>
+        <p class="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
+            {{ brand_name }} je tipovačka pro firmy, party a kámoše ze sportbaru. Žádné sázky, žádné kurzové fígle — jen vy, váš turnaj a kdo to nakonec vystihl nejlíp.
+        </p>
+        <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg w-full sm:w-auto">
+                Vytvořit soutěž zdarma
+                <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+            </a>
+            <a href="{{ path('app_pricing') }}" class="btn btn-ghost btn-lg w-full sm:w-auto">
+                Zobrazit ceník
+                <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+            </a>
+        </div>
+
+        {# Reassurance row #}
+        <ul class="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-white/60">
+            {% set reassure = [
+                'Bez sázek a peněz',
+                'Hotovo za 2 minuty',
+                '5 hráčů zdarma navždy',
+            ] %}
+            {% for item in reassure %}
+                <li class="inline-flex items-center gap-2">
+                    <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                    {{ item }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+{# ───────── Feature grid ───────── #}
+<section class="bg-radial">
+    <div class="mx-auto max-w-[80rem] px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div class="mx-auto max-w-2xl text-center">
+            <span class="eyebrow">Proč {{ brand_name }}</span>
+            <h2 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Postaveno na kámošské rivalitě</h2>
+            <p class="mt-4 text-lg text-white/70">
+                Šest věcí, kvůli kterým si {{ brand_name }} oblíbí celá kancelář i partička ze sportbaru.
+            </p>
+        </div>
+
+        <div class="mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {% set features = [
+                {
+                    icon: 'lucide:zap',
+                    badge: { label: 'Naživo', variant: 'live' },
+                    title: 'Živé body, živý žebříček',
+                    body: 'Body padají hráčům na účet ve chvíli, kdy padá gól. Žádné „zítra to dopočítáme“ — žebříček se hýbe v reálném čase.'
+                },
+                {
+                    icon: 'lucide:sliders-horizontal',
+                    badge: { label: 'Pravidla', variant: 'accent' },
+                    title: 'Vlastní bodování',
+                    body: 'Standardní 3/1/0, pavouk s váhou kola, nebo si nastavte body za přesné skóre. Pravidla vidí každý hráč dopředu.'
+                },
+                {
+                    icon: 'lucide:link',
+                    badge: { label: 'Pozvánky', variant: 'success' },
+                    title: 'Odkaz i PIN',
+                    body: 'Pošlete odkaz na Slack, Teams nebo do skupinového chatu. Kdo nechce klikat, připojí se osmimístným PINem. Účet vznikne jedním klikem.'
+                },
+                {
+                    icon: 'lucide:list-ordered',
+                    badge: { label: 'Žebříček', variant: 'warn' },
+                    title: 'Úspěšnost a streaky',
+                    body: 'Žebříček ukáže pozici, body, úspěšnost v procentech, počet přesných tipů i kdo má rozjetý streak. Top 3 dostanou zlato, stříbro a bronz.'
+                },
+                {
+                    icon: 'lucide:shield',
+                    badge: { label: 'Pro organizátory', variant: 'accent' },
+                    title: 'Tip za členy',
+                    body: 'Organizátor může tipovat za hráče, kteří účet mít nechtějí. Nikoho neztratíte — do soutěže zapojíte i kolegy, co do appky nepůjdou.'
+                },
+                {
+                    icon: 'lucide:smartphone',
+                    badge: { label: 'Kdekoli', variant: 'neutral' },
+                    title: 'Web i mobil',
+                    body: 'Funguje v prohlížeči i v telefonu. Žádná appka v App Store, žádná žádost o instalaci přes IT. Otevřete odkaz a tipujete.'
+                }
+            ] %}
+            {% for f in features %}
+                <article class="card-glass flex flex-col p-6">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="flex h-12 w-12 items-center justify-center rounded-xl border border-accent-500/40 bg-accent-500/10 text-accent-300">
+                            <twig:ux:icon name="{{ f.icon }}" class="h-6 w-6" />
+                        </span>
+                        {% if f.badge.variant == 'live' %}
+                            <twig:Pill label="{{ f.badge.label|upper }}" variant="live" dot />
+                        {% else %}
+                            <span class="pill pill-{{ f.badge.variant }}">{{ f.badge.label|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <h3 class="mt-5 text-lg font-semibold text-white">{{ f.title }}</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/70">{{ f.body }}</p>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# ───────── Highlight: bez sázek ───────── #}
+<section class="mx-auto max-w-[80rem] px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
+    <div class="grid items-center gap-6 lg:grid-cols-2">
+        <div class="card-glass flex flex-col gap-4 p-8">
+            <span class="eyebrow">Žádné sázky</span>
+            <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Bez sázek, žádné kurzy — jen tipování</h2>
+            <p class="text-white/70">
+                {{ brand_name }} nesází ani neoperuje s penězi. Co se „vyhraje“, je interní záležitost vás a vašich kolegů — oběd, pivo, nebo jen právo vychloubat se další měsíc.
+            </p>
+            <ul class="mt-2 space-y-3 text-sm text-white/80">
+                {% set perks = [
+                    'Žádné vklady ani výplaty',
+                    'Žádné kurzy ani marže',
+                    'Jen radost a vychloubání',
+                ] %}
+                {% for perk in perks %}
+                    <li class="flex items-center gap-2.5">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 shrink-0 text-win" />
+                        {{ perk }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            {% set stats = [
+                { val: '5', lbl: 'Hráčů zdarma', meta: 'navždy, bez časáku' },
+                { val: '0', lbl: 'Sázek', meta: 'jen pro radost' },
+                { val: '8', lbl: 'Znaků PIN', meta: 'připojení na klik' },
+                { val: '2', lbl: 'Minuty', meta: 'a soutěž běží' }
+            ] %}
+            {% for s in stats %}
+                <div class="stat">
+                    <div class="stat-lbl">{{ s.lbl }}</div>
+                    <div class="stat-val">{{ s.val }}</div>
+                    <div class="stat-meta">{{ s.meta }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# ───────── Final CTA ───────── #}
+<section class="mx-auto max-w-[80rem] px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
+    <div class="surface-accent px-6 py-12 text-center sm:px-12 sm:py-16">
+        <div class="flex justify-center">
+            <span class="pill pill-neutral">ZAČNĚTE ZDARMA</span>
+        </div>
+        <h2 class="mx-auto mt-5 max-w-2xl text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+            Pošlete kolegům odkaz a do hodiny máte celé patro v napětí.
+        </h2>
+        <p class="mx-auto mt-4 max-w-xl text-white/85">
+            Vytvořte si turnaj, nastavte bodování a tipuje se. První soutěž do 5 hráčů je na nás navždy.
+        </p>
+        <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a href="{{ path('app_register') }}" class="btn btn-light btn-lg w-full sm:w-auto">
+                Vytvořit soutěž
+                <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+            </a>
+            <a href="{{ path('app_pricing') }}" class="btn btn-clear btn-lg w-full sm:w-auto">
+                Kolik to stojí
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

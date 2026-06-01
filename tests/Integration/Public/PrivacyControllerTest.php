@@ -16,7 +16,7 @@ final class PrivacyControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Ochrana soukromí');
         self::assertSelectorTextContains('body', 'Komu data předáváme');
-        self::assertSelectorTextContains('body', 'Jak chráníme tvé heslo');
+        self::assertSelectorTextContains('body', 'Jak chráníme vaše heslo');
     }
 
     public function testFooterLinksToPrivacyPage(): void

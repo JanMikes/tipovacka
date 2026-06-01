@@ -1,48 +1,56 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Skóre zápasu — Tipovačka{% endblock %}
+{% block title %}Skóre zápasu — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
-        {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
-        {label: 'Výsledek'},
-    ]" />
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-navy-900">Výsledek zápasu</h1>
-        <p class="text-navy-900/60 mt-1">{{ sport_match.homeTeam }} vs. {{ sport_match.awayTeam }}</p>
-    </div>
+<div class="bg-radial">
+    <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <twig:Breadcrumbs :items="[
+            {label: 'Nástěnka', path: path('portal_dashboard')},
+            {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
+            {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
+            {label: 'Výsledek'},
+        ]" />
 
-    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8">
-        {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+        <header class="mb-8">
+            <p class="eyebrow mb-3">{{ sport_match.tournament.name }}</p>
+            <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">Výsledek zápasu</h1>
+            <p class="mt-2 text-sm text-white/60">{{ sport_match.homeTeam }} vs. {{ sport_match.awayTeam }}</p>
+        </header>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    {{ form_label(form.homeScore) }}
-                    {{ form_widget(form.homeScore, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg'}}) }}
-                    {{ form_errors(form.homeScore) }}
+        <div class="card-glass p-6 sm:p-8">
+            {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
+
+                <div class="grid grid-cols-[1fr_auto_1fr] items-start gap-4 text-center">
+                    <div class="field items-center">
+                        <twig:TeamFlag :name="sport_match.homeTeam" size="48" />
+                        {{ form_label(form.homeScore, sport_match.homeTeam, {label_attr: {class: 'field-label normal-case tracking-normal text-sm font-semibold text-white/80'}}) }}
+                        {{ form_widget(form.homeScore, {attr: {class: 'score-input mx-auto', style: 'width:80px;height:64px;font-size:30px'}}) }}
+                        {{ form_errors(form.homeScore) }}
+                    </div>
+
+                    <div class="flex h-full items-center pt-12 text-3xl font-black text-white/30">:</div>
+
+                    <div class="field items-center">
+                        <twig:TeamFlag :name="sport_match.awayTeam" size="48" />
+                        {{ form_label(form.awayScore, sport_match.awayTeam, {label_attr: {class: 'field-label normal-case tracking-normal text-sm font-semibold text-white/80'}}) }}
+                        {{ form_widget(form.awayScore, {attr: {class: 'score-input mx-auto', style: 'width:80px;height:64px;font-size:30px'}}) }}
+                        {{ form_errors(form.awayScore) }}
+                    </div>
                 </div>
 
-                <div>
-                    {{ form_label(form.awayScore) }}
-                    {{ form_widget(form.awayScore, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg'}}) }}
-                    {{ form_errors(form.awayScore) }}
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="btn btn-success">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                        Uložit skóre
+                    </button>
+                    <a href="{{ path('portal_sport_match_detail', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost">
+                        Zrušit
+                    </a>
                 </div>
-            </div>
 
-            <div class="flex gap-3">
-                <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-3 px-6 rounded-lg font-medium">
-                    Uložit skóre
-                </button>
-                <a href="{{ path('portal_sport_match_detail', {id: sport_match.id.toRfc4122}) }}"
-                   class="bg-navy-50 hover:bg-navy-100 text-navy-900 py-3 px-6 rounded-lg font-medium">
-                    Zrušit
-                </a>
-            </div>
-
-        {{ form_end(form) }}
+            {{ form_end(form) }}
+        </div>
     </div>
 </div>
 {% endblock %}

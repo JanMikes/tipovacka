@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tabulka — {{ group.name }} — Tipovačka{% endblock %}
+{% block title %}Tabulka — {{ group.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
 <div class="mx-auto w-full max-w-[min(100vw-2rem,120rem)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -14,41 +14,42 @@
 
     <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="flex items-center gap-2.5 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-                <twig:ux:icon name="lucide:table-2" class="h-7 w-7 text-cyan-500" />
-                Tabulka
+            <p class="eyebrow">Tipy a body</p>
+            <h1 class="mt-1 flex items-center gap-2.5 text-3xl font-black tracking-tight sm:text-4xl">
+                <twig:ux:icon name="lucide:table-2" class="h-7 w-7 text-accent-400" />
+                <span class="grad-headline">Tabulka</span>
             </h1>
-            <p class="mt-2 text-navy-900/70">
-                Skupina
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">{{ group.name }}</a>
+            <p class="mt-2 text-white/70">
+                Soutěž
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ group.name }}</a>
                 — tipy a body za každý zápas, řádek na hráče, sloupec na zápas.
             </p>
         </div>
 
-        <div class="flex items-center gap-3 text-xs text-navy-900/60">
-            <span class="font-semibold uppercase tracking-wider">Legenda</span>
-            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-500/25 ring-1 ring-cyan-500/40"></span>1. místo</span>
-            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-400/15 ring-1 ring-cyan-400/30"></span>2. místo</span>
-            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-cyan-200/50 ring-1 ring-cyan-200"></span>3. místo</span>
+        <div class="flex items-center gap-3 text-xs text-white/50">
+            <span class="font-bold uppercase tracking-[0.1em]">Legenda</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-accent-500/30 ring-1 ring-accent-400/50"></span>1. místo</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-accent-500/[0.18] ring-1 ring-accent-400/30"></span>2. místo</span>
+            <span class="inline-flex items-center gap-1.5"><span class="inline-block h-3 w-5 rounded bg-accent-500/10 ring-1 ring-accent-400/20"></span>3. místo</span>
         </div>
     </header>
 
     {% if matrix.matches|length == 0 or matrix.members|length == 0 %}
-        <section class="rounded-2xl bg-white p-10 text-center shadow-card ring-1 ring-navy-900/5">
-            <p class="text-sm text-navy-900/60">
+        <section class="card-glass p-10 text-center">
+            <p class="text-sm text-white/50">
                 {% if matrix.matches|length == 0 %}
                     V turnaji zatím nejsou žádné zápasy.
                 {% else %}
-                    Skupina zatím nemá žádné členy.
+                    Soutěž zatím nemá žádné hráče.
                 {% endif %}
             </p>
         </section>
     {% else %}
-        <div class="relative -mx-4 overflow-auto bg-white shadow-card ring-1 ring-navy-900/5 sm:mx-0 sm:rounded-2xl" style="max-height: calc(100vh - 12rem);">
+        <div class="relative -mx-4 overflow-auto bg-surface ring-1 ring-white/10 sm:mx-0 sm:rounded-2xl" style="max-height: calc(100vh - 12rem);">
             <table class="min-w-full border-separate border-spacing-0 text-sm">
                 <thead>
                     <tr>
-                        <th scope="col" class="sticky left-0 top-0 z-30 border-b border-r border-navy-100/70 bg-white px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-900/60 sm:px-4">
+                        <th scope="col" class="sticky left-0 top-0 z-30 border-b border-r border-white/10 bg-surface-2 px-2 py-3 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-white/50 sm:px-4">
                             <div class="flex min-w-[132px] items-center gap-2 sm:min-w-[200px] sm:gap-3">
                                 <span class="w-4 text-right sm:w-6">#</span>
                                 <span class="flex-1">Hráč</span>
@@ -58,26 +59,28 @@
                         {% for m in matrix.matches %}
                             {% set stateLabel = '' %}
                             {% if m.state.value == 'finished' %}{% set stateLabel = ' — odehráno ' ~ m.actualHomeScore ~ ':' ~ m.actualAwayScore %}
-                            {% elseif m.state.value == 'live' %}{% set stateLabel = ' — živě ' ~ m.actualHomeScore ~ ':' ~ m.actualAwayScore %}
+                            {% elseif m.state.value == 'live' %}{% set stateLabel = ' — uzamčeno' %}
                             {% elseif m.state.value == 'postponed' %}{% set stateLabel = ' — odloženo' %}
+                            {% elseif m.state.value == 'cancelled' %}{% set stateLabel = ' — zrušeno' %}
                             {% endif %}
-                            <th scope="col" class="sticky top-0 z-20 whitespace-nowrap border-b border-navy-100/70 bg-white px-2 py-2 text-center"
+                            <th scope="col" class="sticky top-0 z-20 whitespace-nowrap border-b border-white/10 bg-surface-2 px-2 py-2 text-center"
                                 title="{{ m.homeTeam }} – {{ m.awayTeam }} ({{ m.kickoffAt|date('d. m. Y H:i') }}){{ stateLabel }}">
-                                <div class="text-[11px] font-bold tracking-wider text-navy-900">
-                                    {{ m.homeTeam|slice(0, 3)|upper }}<span class="mx-0.5 text-navy-900/40">–</span>{{ m.awayTeam|slice(0, 3)|upper }}
+                                <div class="text-[11px] font-bold tracking-wider text-white">
+                                    {{ m.homeTeam|slice(0, 3)|upper }}<span class="mx-0.5 text-white/40">–</span>{{ m.awayTeam|slice(0, 3)|upper }}
                                 </div>
                                 <div class="mt-0.5 text-[10px] font-normal">
                                     {% if m.state.value == 'finished' %}
-                                        <span class="inline-block rounded bg-navy-50 px-1.5 py-0.5 tabular-nums text-navy-900">{{ m.actualHomeScore }}:{{ m.actualAwayScore }}</span>
+                                        <span class="inline-block rounded bg-white/5 px-1.5 py-0.5 tabular-nums text-white ring-1 ring-white/10">{{ m.actualHomeScore }}:{{ m.actualAwayScore }}</span>
                                     {% elseif m.state.value == 'live' %}
-                                        <span class="inline-flex items-center gap-1 rounded bg-orange-50 px-1.5 py-0.5 tabular-nums text-orange-700">
-                                            <span class="h-1 w-1 animate-pulse rounded-full bg-orange-500"></span>
-                                            {{ m.actualHomeScore }}:{{ m.actualAwayScore }}
+                                        <span class="inline-flex items-center gap-1 rounded bg-white/5 px-1.5 py-0.5 text-white/50 ring-1 ring-white/10">
+                                            <twig:ux:icon name="lucide:lock" class="h-2.5 w-2.5" />uzamčeno
                                         </span>
                                     {% elseif m.state.value == 'postponed' %}
-                                        <span class="text-yellow-600">odloženo</span>
+                                        <span class="text-draw">odloženo</span>
+                                    {% elseif m.state.value == 'cancelled' %}
+                                        <span class="text-loss">zrušeno</span>
                                     {% else %}
-                                        <span class="tabular-nums text-navy-900/40">{{ m.kickoffAt|date('d.m.') }}</span>
+                                        <span class="tabular-nums text-white/40">{{ m.kickoffAt|date('d.m.') }}</span>
                                     {% endif %}
                                 </div>
                             </th>
@@ -87,15 +90,15 @@
                 <tbody>
                     {% for member in matrix.members %}
                         <tr>
-                            <th scope="row" class="sticky left-0 z-10 border-b border-r border-navy-100/70 bg-white px-2 py-3 text-left sm:px-4">
+                            <th scope="row" class="sticky left-0 z-10 border-b border-r border-white/10 bg-surface-2 px-2 py-3 text-left sm:px-4">
                                 <div class="flex min-w-[132px] items-center gap-2 sm:min-w-[200px] sm:gap-3">
-                                    <span class="w-4 text-right text-xs font-semibold tabular-nums text-navy-900/50 sm:w-6">{{ member.rank }}.</span>
+                                    <span class="w-4 text-right text-xs font-bold tabular-nums {{ member.rank == 1 ? 'text-gold' : (member.rank == 2 ? 'text-silver' : (member.rank == 3 ? 'text-bronze' : 'text-white/50')) }} sm:w-6">{{ member.rank }}.</span>
                                     <a href="{{ path('portal_group_leaderboard_member', {groupId: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}"
-                                       class="min-w-0 flex-1 font-semibold text-navy-900 hover:text-cyan-600 hover:underline">
+                                       class="min-w-0 flex-1 font-bold text-white transition-colors hover:text-accent-300">
                                         <span class="block truncate">{{ member.nickname }}</span>
-                                        {% if member.fullName %}<small class="block truncate text-xs font-normal text-navy-900/60">{{ member.fullName }}</small>{% endif %}
+                                        {% if member.fullName %}<small class="block truncate text-xs font-light text-white/50">{{ member.fullName }}</small>{% endif %}
                                     </a>
-                                    <span class="tabular-nums font-bold text-navy-900">{{ member.totalPoints }}</span>
+                                    <span class="tabular-nums font-black text-white">{{ member.totalPoints }}</span>
                                 </div>
                             </th>
                             {% for m in matrix.matches %}
@@ -104,31 +107,31 @@
                                 {% set highlight = '' %}
                                 {% if cell is not null and cell.points is not null and cell.points > 0 %}
                                     {% if m.topScores[0] is defined and cell.points == m.topScores[0] %}
-                                        {% set highlight = 'bg-cyan-500/25' %}
+                                        {% set highlight = 'bg-accent-500/30' %}
                                     {% elseif m.topScores[1] is defined and cell.points == m.topScores[1] %}
-                                        {% set highlight = 'bg-cyan-400/15' %}
+                                        {% set highlight = 'bg-accent-500/[0.18]' %}
                                     {% elseif m.topScores[2] is defined and cell.points == m.topScores[2] %}
-                                        {% set highlight = 'bg-cyan-200/50' %}
+                                        {% set highlight = 'bg-accent-500/10' %}
                                     {% endif %}
                                 {% endif %}
-                                <td class="whitespace-nowrap border-b border-navy-100/70 px-2 py-2 text-center {{ highlight }}">
+                                <td class="whitespace-nowrap border-b border-white/[0.06] px-2 py-2 text-center {{ highlight }}">
                                     {% if cell is not null %}
                                         {% if cell.hidden %}
-                                            <span class="inline-flex items-center justify-center text-navy-900/40" title="Tip skrytý do uzávěrky">
+                                            <span class="inline-flex items-center justify-center text-white/40" title="Tip skrytý do uzávěrky">
                                                 <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
                                             </span>
                                         {% else %}
-                                            <div class="text-[11px] tabular-nums text-navy-900/60">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
-                                            <div class="mt-0.5 text-sm font-bold tabular-nums text-navy-900">
+                                            <div class="text-[11px] tabular-nums text-white/50">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
+                                            <div class="mt-0.5 text-sm font-black tabular-nums text-white">
                                                 {% if cell.points is null %}
-                                                    <span class="text-navy-900/30">—</span>
+                                                    <span class="text-white/30">—</span>
                                                 {% else %}
                                                     {{ cell.points }}
                                                 {% endif %}
                                             </div>
                                         {% endif %}
                                     {% else %}
-                                        <span class="text-navy-900/25">—</span>
+                                        <span class="text-white/25">—</span>
                                     {% endif %}
                                 </td>
                             {% endfor %}

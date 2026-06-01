@@ -1,0 +1,67 @@
+{#
+  Site footer. variant:
+   - marketing : 4-column dark footer (public pages)
+   - app       : single-row mini footer (authenticated pages)
+  NOTE (redesign): marketing links to Funkce/Ceník/Pro firmy/FAQ are added in
+  Phase 3 once those routes exist. For now only existing routes are linked.
+#}
+{% props variant = 'app' %}
+
+{% if variant == 'marketing' %}
+    <footer class="wtfoot">
+        <div class="mx-auto w-full max-w-[80rem] px-6 py-14">
+            <div class="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+                <div>
+                    <div class="flex items-center gap-2.5 text-white">
+                        <span class="brand-mark" aria-hidden="true">W</span>
+                        <span class="text-lg font-black tracking-tight">{{ brand_name }}</span>
+                    </div>
+                    <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
+                        Tipovací soutěže pro firmy, partičky i klubové komunity. Bez sázek, jen pro radost a vychloubání.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Produkt</h3>
+                    <ul class="mt-4 space-y-2 text-sm">
+                        <li><a href="{{ path('app_features') }}" class="text-white/70 transition-colors hover:text-white">Funkce</a></li>
+                        <li><a href="{{ path('app_pricing') }}" class="text-white/70 transition-colors hover:text-white">Ceník</a></li>
+                        <li><a href="{{ path('app_for_business') }}" class="text-white/70 transition-colors hover:text-white">Pro firmy</a></li>
+                        <li><a href="{{ path('public_tournaments_list') }}" class="text-white/70 transition-colors hover:text-white">Turnaje</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Účet</h3>
+                    <ul class="mt-4 space-y-2 text-sm">
+                        {% if not app.user %}
+                            <li><a href="{{ path('app_login') }}" class="text-white/70 transition-colors hover:text-white">Přihlášení</a></li>
+                            <li><a href="{{ path('app_register') }}" class="text-white/70 transition-colors hover:text-white">Registrace</a></li>
+                        {% else %}
+                            <li><a href="{{ path('portal_dashboard') }}" class="text-white/70 transition-colors hover:text-white">Nástěnka</a></li>
+                            <li><a href="{{ path('portal_profile_edit') }}" class="text-white/70 transition-colors hover:text-white">Profil</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Společnost</h3>
+                    <ul class="mt-4 space-y-2 text-sm">
+                        <li><a href="{{ path('app_faq') }}" class="text-white/70 transition-colors hover:text-white">Časté otázky</a></li>
+                        <li><a href="{{ path('app_privacy') }}" class="text-white/70 transition-colors hover:text-white">Ochrana soukromí</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-12 flex flex-col gap-1 border-t border-white/5 pt-6 text-xs text-white/40 sm:flex-row sm:justify-between">
+                <span>© {{ "now"|date("Y") }} {{ brand_name }}. Vše hraje, nic se nesází.</span>
+                <span>Vyrobeno v Praze.</span>
+            </div>
+        </div>
+    </footer>
+{% else %}
+    <footer class="app-foot">
+        <div class="mx-auto flex w-full max-w-[80rem] flex-col gap-2 px-4 py-8 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+            <span>© {{ "now"|date("Y") }} {{ brand_name }} · Tipuj s kámošema</span>
+            <span class="flex gap-4">
+                <a href="{{ path('app_privacy') }}" class="transition-colors hover:text-white">Ochrana soukromí</a>
+            </span>
+        </div>
+    </footer>
+{% endif %}

@@ -1,0 +1,10 @@
+{#
+  Status pill. variant: soon|tipped|done|locked|accent|success|warn|neutral|live
+  (live is marketing-decoration only). icon = lucide name (optional). dot = leading dot.
+#}
+{% props label, variant = 'neutral', icon = null, dot = false %}
+<span class="pill pill-{{ variant }}">
+    {% if dot %}<span class="dot"></span>{% endif %}
+    {% if icon %}<twig:ux:icon name="lucide:{{ icon }}" class="h-3 w-3" />{% endif %}
+    {{ label }}
+</span>

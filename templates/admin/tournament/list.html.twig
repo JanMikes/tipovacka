@@ -1,29 +1,27 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Turnaje — Admin — Tipovačka{% endblock %}
+{% block title %}Turnaje — Admin — {{ brand_name }}{% endblock %}
 
 {% block admin_breadcrumbs %}
-    <li aria-hidden="true" class="text-gray-300">/</li>
-    <li class="text-gray-700 font-medium" aria-current="page">Turnaje</li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="text-white/80 font-medium" aria-current="page">Turnaje</li>
 {% endblock %}
 
 {% block admin_title %}Turnaje{% endblock %}
 {% block admin_subtitle %}Přehled veřejných i soukromých turnajů.{% endblock %}
 {% block admin_actions %}
-    <a href="{{ path('admin_tournament_create') }}" class="inline-flex items-center gap-2 bg-navy-900 hover:bg-navy-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
+    <a href="{{ path('admin_tournament_create') }}" class="btn btn-primary btn-sm">
+        <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
         Nový turnaj
     </a>
 {% endblock %}
 
 {% block admin_body %}
-<div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 overflow-hidden">
+<div class="card-glass overflow-hidden p-0">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
-            <thead class="bg-navy-50/40 text-gray-600">
-                <tr>
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
                     <th class="text-left px-4 py-3 font-semibold">Název</th>
                     <th class="text-left px-4 py-3 font-semibold">Viditelnost</th>
                     <th class="text-left px-4 py-3 font-semibold">Sport</th>
@@ -33,54 +31,54 @@
                     <th class="text-right px-4 py-3 font-semibold">Akce</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-navy-100/70">
+            <tbody>
                 {% for tournament in tournaments %}
-                    <tr class="{% if tournament.isDeleted %}text-gray-400{% else %}text-gray-800 hover:bg-navy-50/40{% endif %}">
-                        <td class="px-4 py-3 font-medium">{{ tournament.name }}{% if tournament.isDeleted %} <span class="text-xs font-normal">(smazáno)</span>{% endif %}</td>
+                    <tr class="border-b border-white/[0.06] transition-colors {% if tournament.isDeleted %}text-white/40{% else %}text-white/80 hover:bg-white/[0.03]{% endif %}">
+                        <td class="px-4 py-3 font-medium text-white">{{ tournament.name }}{% if tournament.isDeleted %} <span class="text-xs font-normal text-white/40">(smazáno)</span>{% endif %}</td>
                         <td class="px-4 py-3">{{ tournament.visibility.label }}</td>
                         <td class="px-4 py-3">{{ tournament.sportCode }}</td>
                         <td class="px-4 py-3">{{ tournament.ownerNickname }}</td>
                         <td class="px-4 py-3">{{ tournament.groupCount }}</td>
                         <td class="px-4 py-3">
                             {% if tournament.isFinished %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">ukončen</span>
+                                <twig:Pill label="Ukončen" variant="done" />
                             {% else %}
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">aktivní</span>
+                                <twig:Pill label="Aktivní" variant="success" dot />
                             {% endif %}
                         </td>
                         <td class="px-4 py-3">
-                            <div class="flex items-center justify-end gap-3 whitespace-nowrap">
-                                <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm font-medium">Otevřít</a>
-                                <a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Upravit</a>
-                                <a href="{{ path('admin_tournament_rule_configuration', {id: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Pravidla</a>
-                                <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Zápasy</a>
-                                <a href="{{ path('admin_group_list', {tournament: tournament.id.toRfc4122}) }}" class="text-cyan-500 hover:underline text-sm">Skupiny</a>
+                            <div class="flex items-center justify-end gap-2 whitespace-nowrap">
+                                <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Otevřít</a>
+                                <a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
+                                <a href="{{ path('admin_tournament_rule_configuration', {id: tournament.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Pravidla</a>
+                                <a href="{{ path('admin_sport_match_list', {tournamentId: tournament.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Zápasy</a>
+                                <a href="{{ path('admin_group_list', {tournament: tournament.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Skupiny</a>
                                 {% if not tournament.isFinished and not tournament.isDeleted %}
                                     <form method="post" action="{{ path('admin_tournament_finish', {id: tournament.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-variant-value="warning"
                                         data-confirm-title-value="Ukončit turnaj"
-                                        data-confirm-message-value="Opravdu chceš turnaj „{{ tournament.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
+                                        data-confirm-message-value="Opravdu chcete turnaj „{{ tournament.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
                                         data-confirm-confirm-label-value="Ano, ukončit">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_tournament_finish_' ~ tournament.id.toRfc4122) }}">
-                                        <button type="submit" class="text-yellow-700 hover:underline text-sm">Ukončit</button>
+                                        <button type="submit" class="btn btn-ghost btn-sm text-win">Ukončit</button>
                                     </form>
                                 {% endif %}
                                 {% if not tournament.isDeleted %}
                                     <form method="post" action="{{ path('admin_tournament_delete', {id: tournament.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-title-value="Smazat turnaj"
-                                        data-confirm-message-value="Opravdu chceš turnaj „{{ tournament.name }}“ smazat? Společně s ním zmizí všechny zápasy, skupiny i tipy."
+                                        data-confirm-message-value="Opravdu chcete turnaj „{{ tournament.name }}“ smazat? Společně s ním zmizí všechny zápasy, skupiny i tipy."
                                         data-confirm-confirm-label-value="Ano, smazat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_tournament_delete_' ~ tournament.id.toRfc4122) }}">
-                                        <button type="submit" class="text-red-600 hover:underline text-sm">Smazat</button>
+                                        <button type="submit" class="btn btn-ghost btn-sm text-loss">Smazat</button>
                                     </form>
                                 {% endif %}
                             </div>
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-navy-900/60">Žádné turnaje.</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-white/50">Žádné turnaje.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

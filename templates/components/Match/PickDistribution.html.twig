@@ -1,0 +1,32 @@
+{#
+    1 / X / 2 pick distribution for a match within a soutěž.
+    props: distribution (MatchPickDistributionResult), homeTeam, awayTeam (optional labels)
+#}
+{% props distribution, homeTeam = null, awayTeam = null %}
+{% if distribution and distribution.total > 0 %}
+    <div class="card-glass p-5">
+        <div class="mb-3 flex items-center justify-between gap-3">
+            <p class="eyebrow">Rozložení tipů</p>
+            <span class="text-xs font-medium tabular-nums text-white/50">
+                {{ distribution.total }} {{ distribution.total == 1 ? 'tip' : (distribution.total <= 4 ? 'tipy' : 'tipů') }}
+            </span>
+        </div>
+        <div class="dist-pcts mb-2">
+            <span><span class="k1">1</span>{{ distribution.homeWinPercent }} %</span>
+            <span><span class="kx">X</span>{{ distribution.drawPercent }} %</span>
+            <span><span class="k2">2</span>{{ distribution.awayWinPercent }} %</span>
+        </div>
+        <div class="dist-bar">
+            {% if distribution.homeWinPercent > 0 %}<div class="b1" style="width: {{ distribution.homeWinPercent }}%"></div>{% endif %}
+            {% if distribution.drawPercent > 0 %}<div class="bx" style="width: {{ distribution.drawPercent }}%"></div>{% endif %}
+            {% if distribution.awayWinPercent > 0 %}<div class="b2" style="width: {{ distribution.awayWinPercent }}%"></div>{% endif %}
+        </div>
+        {% if homeTeam and awayTeam %}
+            <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
+                <span class="truncate">Výhra: {{ homeTeam }}</span>
+                <span>Remíza</span>
+                <span class="truncate">Výhra: {{ awayTeam }}</span>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

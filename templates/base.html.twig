@@ -3,31 +3,31 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Tipovačka{% endblock %}</title>
-        <meta name="description" content="{% block meta_description %}Tipovačka — tipuj výsledky fotbalových zápasů{% endblock %}">
+        <title>{% block title %}{{ brand_name }}{% endblock %}</title>
+        <meta name="description" content="{% block meta_description %}{{ brand_name }} — tipovací soutěže pro firmy, partičky i kámoše. Bez sázek, jen pro radost.{% endblock %}">
 
-        <meta property="og:site_name" content="Tipovačka">
+        <meta property="og:site_name" content="{{ brand_name }}">
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ app.request.uri }}">
-        <meta property="og:title" content="{% block og_title %}Tipovačka{% endblock %}">
-        <meta property="og:description" content="{% block og_description %}Tipovačka{% endblock %}">
+        <meta property="og:title" content="{% block og_title %}{{ brand_name }}{% endblock %}">
+        <meta property="og:description" content="{% block og_description %}{{ brand_name }}{% endblock %}">
         <meta property="og:image" content="{{ absolute_url(asset('og-default.png')) }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:locale" content="cs_CZ">
 
         <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="{% block twitter_title %}Tipovačka{% endblock %}">
-        <meta name="twitter:description" content="{% block twitter_description %}Tipovačka{% endblock %}">
+        <meta name="twitter:title" content="{% block twitter_title %}{{ brand_name }}{% endblock %}">
+        <meta name="twitter:description" content="{% block twitter_description %}{{ brand_name }}{% endblock %}">
         <meta name="twitter:image" content="{{ absolute_url(asset('og-default.png')) }}">
 
         <link rel="icon" type="image/png" href="{{ asset('favicon-96x96.png') }}" sizes="96x96">
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-        <meta name="apple-mobile-web-app-title" content="Tipovačka">
+        <meta name="apple-mobile-web-app-title" content="{{ brand_name }}">
         <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-        <meta name="theme-color" content="#081e44">
+        <meta name="theme-color" content="#0f1726">
 
         {% block stylesheets %}
             <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
@@ -37,143 +37,27 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body data-turbo="false" class="min-h-screen flex flex-col {% block body_class %}bg-navy-50/40{% endblock %} text-navy-900 antialiased">
+    <body data-turbo="false" class="min-h-screen flex flex-col antialiased {% block body_class %}{% endblock %}">
 
         {# ───────── Navigation ───────── #}
-        <header class="sticky top-0 z-40 bg-navy-900 text-white shadow-lg" data-controller="mobile-nav">
-            <div class="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 items-center justify-between">
-
-                    {# Logo #}
-                    <a href="{{ app.user ? path('portal_dashboard') : path('app_home') }}" class="group flex items-center gap-2.5 text-white font-bold text-lg tracking-tight" aria-label="Tipovačka — domovská stránka">
-                        <img
-                            src="{{ asset('images/logo/logo-icon.png') }}"
-                            alt=""
-                            class="h-8 w-8 rounded-md bg-white p-0.5 transition-transform group-hover:scale-105"
-                            width="32"
-                            height="32"
-                            loading="eager"
-                            decoding="async"
-                        >
-                        <span class="transition-colors group-hover:text-cyan-400">Tipovačka</span>
-                    </a>
-
-                    {# Desktop nav #}
-                    <nav class="hidden md:flex items-center gap-1">
-                        {% if app.user %}
-                            {% set nav_links = [
-                                { path: 'portal_dashboard',         label: 'Nástěnka' },
-                                { path: 'public_tournaments_list',  label: 'Turnaje'  },
-                                { path: 'portal_profile_edit',      label: 'Profil'   },
-                            ] %}
-                        {% else %}
-                            {% set nav_links = [
-                                { path: 'app_home',                 label: 'Domů'    },
-                                { path: 'public_tournaments_list',  label: 'Turnaje' },
-                            ] %}
-                        {% endif %}
-
-                        {% for link in nav_links %}
-                            {% set is_active = app.request.attributes.get('_route') == link.path %}
-                            <a href="{{ path(link.path) }}" class="{{ is_active ? 'text-white' : 'text-white/70 hover:text-white' }} relative px-3 py-2 text-sm font-medium transition-colors">
-                                {{ link.label }}
-                                {% if is_active %}
-                                    <span class="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-cyan-500"></span>
-                                {% endif %}
-                            </a>
-                        {% endfor %}
-
-                        {% if app.user and is_granted('ROLE_ADMIN') %}
-                            <a href="{{ path('admin_tournament_list') }}" class="ml-1 inline-flex items-center gap-1.5 rounded-md bg-white/5 px-3 py-1.5 text-sm font-medium text-cyan-400 transition-colors hover:bg-white/10">
-                                <twig:ux:icon name="lucide:shield-check" class="h-4 w-4" />
-                                Admin
-                            </a>
-                        {% endif %}
-
-                        <span class="mx-2 h-5 w-px bg-white/10"></span>
-
-                        {% if app.user %}
-                            <a href="{{ path('app_logout') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white">
-                                <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />
-                                Odhlásit se
-                            </a>
-                        {% else %}
-                            <a href="{{ path('app_login') }}" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white">
-                                <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
-                                Přihlásit se
-                            </a>
-                            <a href="{{ path('app_register') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-cyan-600">
-                                Registrace
-                                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                            </a>
-                        {% endif %}
-                    </nav>
-
-                    {# Mobile menu button #}
-                    <button
-                        data-action="mobile-nav#toggle"
-                        class="md:hidden rounded-lg p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                        aria-label="Otevřít menu"
-                        aria-expanded="false"
-                        data-mobile-nav-target="button"
-                    >
-                        <span data-mobile-nav-target="iconOpen">
-                            <twig:ux:icon name="lucide:menu" class="h-6 w-6" />
-                        </span>
-                        <span class="hidden" data-mobile-nav-target="iconClose">
-                            <twig:ux:icon name="lucide:x" class="h-6 w-6" />
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            {# Mobile menu #}
-            <div class="hidden border-t border-white/10 md:hidden" data-mobile-nav-target="menu">
-                <div class="space-y-1 px-4 py-3">
-                    {% if app.user %}
-                        <a href="{{ path('portal_dashboard') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Nástěnka</a>
-                        <a href="{{ path('public_tournaments_list') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Turnaje</a>
-                        <a href="{{ path('portal_profile_edit') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Profil</a>
-                        {% if is_granted('ROLE_ADMIN') %}
-                            <a href="{{ path('admin_tournament_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-cyan-400 hover:bg-white/10">
-                                <twig:ux:icon name="lucide:shield-check" class="h-4 w-4" />Admin
-                            </a>
-                        {% endif %}
-                        <a href="{{ path('app_logout') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">
-                            <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />Odhlásit se
-                        </a>
-                    {% else %}
-                        <a href="{{ path('app_home') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Domů</a>
-                        <a href="{{ path('public_tournaments_list') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">Turnaje</a>
-                        <a href="{{ path('app_login') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white">
-                            <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />Přihlásit se
-                        </a>
-                        <a href="{{ path('app_register') }}" class="mt-2 flex items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-600">
-                            Registrace
-                            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-        </header>
+        <twig:Layout:Nav />
 
         {# ───────── Main content ───────── #}
         <main class="flex flex-1 flex-col">
-            {# Flash messages #}
             {# `app.flashes` consumes the flash bag on each call, so capture once. #}
             {% set flash_messages = app.flashes %}
             {% set flash_config = {
-                'success': { icon: 'lucide:circle-check-big', classes: 'bg-green-50 border-green-400 text-green-800' },
-                'error':   { icon: 'lucide:circle-alert',     classes: 'bg-red-50 border-red-400 text-red-800' },
-                'warning': { icon: 'lucide:triangle-alert',   classes: 'bg-yellow-50 border-yellow-400 text-yellow-800' },
-                'info':    { icon: 'lucide:info',             classes: 'bg-blue-50 border-blue-400 text-blue-800' },
+                'success': { icon: 'lucide:circle-check-big', classes: 'border-win/40 bg-win/10 text-win' },
+                'error':   { icon: 'lucide:circle-alert',     classes: 'border-loss/40 bg-loss/10 text-loss' },
+                'warning': { icon: 'lucide:triangle-alert',   classes: 'border-draw/40 bg-draw/10 text-draw' },
+                'info':    { icon: 'lucide:info',             classes: 'border-accent/40 bg-accent/10 text-accent-300' },
             } %}
             {% if flash_messages|length %}
-                <div class="mx-auto w-full max-w-[88rem] px-4 pt-4 sm:px-6 lg:px-8">
+                <div class="mx-auto w-full max-w-[80rem] px-4 pt-4 sm:px-6 lg:px-8">
                     {% for type, messages in flash_messages %}
-                        {% set cfg = flash_config[type] ?? { icon: 'lucide:info', classes: 'bg-gray-50 border-gray-400 text-gray-800' } %}
+                        {% set cfg = flash_config[type] ?? { icon: 'lucide:info', classes: 'border-white/15 bg-white/5 text-white/80' } %}
                         {% for message in messages %}
-                            <div class="mb-3 flex items-start gap-3 rounded-r-lg border-l-4 px-4 py-3 {{ cfg.classes }}" role="alert">
+                            <div class="mb-3 flex items-start gap-3 rounded-xl border px-4 py-3 {{ cfg.classes }}" role="alert">
                                 <twig:ux:icon name="{{ cfg.icon }}" class="mt-0.5 h-5 w-5 shrink-0" />
                                 <div class="text-sm">{{ message }}</div>
                             </div>
@@ -186,45 +70,7 @@
         </main>
 
         {# ───────── Footer ───────── #}
-        <footer class="bg-navy-900 text-white/70">
-            <div class="mx-auto max-w-[88rem] px-4 py-12 sm:px-6 lg:px-8">
-                <div class="grid gap-10 md:grid-cols-3">
-                    <div>
-                        <div class="flex items-center gap-2.5 text-white">
-                            <img src="{{ asset('images/logo/logo-icon.png') }}" alt="" class="h-8 w-8 rounded-md bg-white p-0.5" width="32" height="32" loading="lazy">
-                            <span class="text-lg font-bold tracking-tight">Tipovačka</span>
-                        </div>
-                        <p class="mt-4 max-w-xs text-sm leading-relaxed">
-                            Tipuj fotbalové zápasy s kamarády v soukromé skupině. Zdarma, bez reklam, bez složitostí.
-                        </p>
-                    </div>
-
-                    <div>
-                        <h3 class="text-sm font-semibold uppercase tracking-wider text-white">Navigace</h3>
-                        <ul class="mt-4 space-y-2 text-sm">
-                            <li><a href="{{ path('app_home') }}" class="transition-colors hover:text-white">Domů</a></li>
-                            <li><a href="{{ path('public_tournaments_list') }}" class="transition-colors hover:text-white">Turnaje</a></li>
-                            {% if not app.user %}
-                                <li><a href="{{ path('app_login') }}" class="transition-colors hover:text-white">Přihlášení</a></li>
-                                <li><a href="{{ path('app_register') }}" class="transition-colors hover:text-white">Registrace</a></li>
-                            {% endif %}
-                            <li><a href="{{ path('app_privacy') }}" class="transition-colors hover:text-white">Ochrana soukromí</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 class="text-sm font-semibold uppercase tracking-wider text-white">O projektu</h3>
-                        <p class="mt-4 text-sm leading-relaxed">
-                            Připoj se k turnaji, založ skupinu s přáteli a bojuj o první místo v tabulce.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-10 border-t border-white/10 pt-6 text-center text-xs text-white/50">
-                    &copy; {{ "now"|date("Y") }} Tipovačka. Všechna práva vyhrazena.
-                </div>
-            </div>
-        </footer>
+        <twig:Layout:Footer variant="{{ app.user ? 'app' : 'marketing' }}" />
 
     </body>
 </html>

@@ -1,50 +1,76 @@
-<div{{ attributes.defaults({class: 'bg-white rounded-2xl shadow-lg p-6'}) }}>
-    <h2 class="text-lg font-semibold text-navy-900 mb-4">Žebříček</h2>
+{#
+    Wtips dark leaderboard (Live Component). rows: rank, userId, nickname, fullName,
+    totalPoints, isTieResolvedOverride. Highlights the current user's row.
+#}
+<div{{ attributes.defaults({class: 'card-glass p-6'}) }}>
+    <h2 class="mb-4 text-lg font-bold tracking-tight text-white">Žebříček</h2>
 
     {% if this.leaderboard.rows|length == 0 %}
-        {% if is_granted('group_manage_members', this.group) %}
-            <twig:EmptyState
-                illustration="leaderboard"
-                title="Tabulka je zatím prázdná"
-                body="Jakmile první člen zadá tip, objeví se tady žebříček."
-                ctaLabel="Pozvat kamarády"
-                ctaPath="{{ path('portal_group_detail', {id: this.group.id.toRfc4122}) }}"
-            />
-        {% else %}
-            <twig:EmptyState
-                illustration="leaderboard"
-                title="Tabulka je zatím prázdná"
-                body="Jakmile první člen zadá tip, objeví se tady žebříček."
-            />
-        {% endif %}
+        <div class="rounded-xl border border-white/10 bg-white/[0.03] p-8 text-center">
+            <p class="text-sm text-white/60">Tabulka je zatím prázdná. Jakmile první hráč zadá tip, objeví se tady žebříček.</p>
+            {% if is_granted('group_manage_members', this.group) %}
+                <a href="{{ path('portal_group_detail', {id: this.group.id.toRfc4122}) }}" class="btn btn-primary btn-sm mt-4">
+                    <twig:ux:icon name="lucide:users" class="h-4 w-4" />Pozvat hráče
+                </a>
+            {% endif %}
+        </div>
     {% else %}
-        <table class="w-full text-sm">
-            <thead>
-                <tr class="text-left text-gray-500 border-b border-gray-200">
-                    <th class="py-2 w-12">Pořadí</th>
-                    <th class="py-2">Hráč</th>
-                    <th class="py-2 text-right">Body</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in this.leaderboard.rows %}
-                    <tr class="border-b border-gray-100">
-                        <td class="py-2 font-semibold text-navy-900">
-                            {{ row.rank }}.{% if row.isTieResolvedOverride %} <span class="text-[10px] text-gray-500" title="Rozřazeno vlastníkem">(R)</span>{% endif %}
-                        </td>
-                        <td class="py-2">
-                            <a
-                                href="{{ path('portal_group_leaderboard_member', {groupId: this.group.id.toRfc4122, userId: row.userId.toRfc4122}) }}"
-                                class="text-cyan-500 hover:underline"
-                            >
-                                {{ row.nickname }}
-                                {% if row.fullName %}<br><small class="text-xs font-normal text-navy-900/60">{{ row.fullName }}</small>{% endif %}
-                            </a>
-                        </td>
-                        <td class="py-2 text-right font-semibold">{{ row.totalPoints }}</td>
+        {% set me_id = app.user ? app.user.id.toRfc4122 : null %}
+        <div class="overflow-x-auto">
+            <table class="lb-table">
+                <thead class="lb-thead">
+                    <tr>
+                        <th class="w-12">Pozice</th>
+                        <th>Hráč</th>
+                        <th class="hidden text-right sm:table-cell">Úspěšnost</th>
+                        <th class="hidden text-right sm:table-cell">Přesné</th>
+                        <th class="hidden text-right sm:table-cell">Streak</th>
+                        <th class="text-right">Body</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    {% for row in this.leaderboard.rows %}
+                        {% set is_me = me_id and row.userId.toRfc4122 == me_id %}
+                        <tr class="lb-tr{{ is_me ? ' me' }}">
+                            <td>
+                                <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
+                                {% if row.isTieResolvedOverride %}<span class="ml-1 text-[10px] text-white/40" title="Rozřazeno organizátorem">(R)</span>{% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ path('portal_group_leaderboard_member', {groupId: this.group.id.toRfc4122, userId: row.userId.toRfc4122}) }}"
+                                   class="flex items-center gap-3 hover:opacity-90">
+                                    <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-sm font-bold text-white">{{ row.nickname }}{% if is_me %} <span class="text-accent-300">· Ty</span>{% endif %}</span>
+                                        {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
+                                    </span>
+                                </a>
+                            </td>
+                            <td class="hidden sm:table-cell">
+                                {% if row.evaluatedCount > 0 %}
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="text-sm font-semibold tabular-nums text-white">{{ row.accuracyPercent }} %</span>
+                                        <span class="lb-acc-bar w-16"><i style="width: {{ row.accuracyPercent }}%"></i></span>
+                                    </div>
+                                {% else %}
+                                    <span class="block text-right text-white/30">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="hidden text-right sm:table-cell">
+                                <span class="text-sm font-semibold tabular-nums {{ row.exactCount > 0 ? 'text-win' : 'text-white/40' }}">{{ row.exactCount }}</span>
+                            </td>
+                            <td class="hidden text-right sm:table-cell">
+                                {% if row.streak > 0 %}
+                                    <span class="lb-streak inline-flex items-center gap-1"><twig:ux:icon name="lucide:flame" class="h-3.5 w-3.5" />{{ row.streak }}</span>
+                                {% else %}
+                                    <span class="text-white/30">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 </div>

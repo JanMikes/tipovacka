@@ -1,0 +1,91 @@
+{#
+  Sticky glass top navigation. Two variants:
+   - app    (authenticated): Soutěže / Turnaje + Vytvořit soutěž CTA + avatar dropdown
+   - public (logged out):    Domů / Turnaje + Přihlásit + Vytvořit soutěž zdarma
+  NOTE (redesign): "Zápasy" (portal_matches) and a top-level "Žebříček" switcher
+  join the app nav in Phase 4 once those routes exist. Marketing links
+  (Funkce/Ceník/Pro firmy/FAQ) join the public nav in Phase 3.
+#}
+{% props variant = null %}
+{% set is_app = variant is not null ? (variant == 'app') : (app.user is not null) %}
+{% set current = app.request.attributes.get('_route') %}
+
+{% set links = is_app
+    ? [
+        { label: 'Soutěže', path: 'portal_dashboard', match: 'portal_dashboard' },
+        { label: 'Turnaje', path: 'public_tournaments_list', match: 'public_tournament' },
+    ]
+    : [
+        { label: 'Funkce', path: 'app_features', match: 'app_features' },
+        { label: 'Ceník', path: 'app_pricing', match: 'app_pricing' },
+        { label: 'Pro firmy', path: 'app_for_business', match: 'app_for_business' },
+        { label: 'FAQ', path: 'app_faq', match: 'app_faq' },
+    ]
+%}
+
+<header class="wtnav" data-controller="mobile-nav">
+    <div class="bar">
+        <a class="brand" href="{{ is_app ? path('portal_dashboard') : path('app_home') }}" aria-label="{{ brand_name }}">
+            <span class="brand-mark" aria-hidden="true">W</span>
+            <span class="brand-name">{{ brand_name }}</span>
+        </a>
+
+        <nav class="primary">
+            {% for link in links %}
+                <a href="{{ path(link.path) }}"{{ current starts with link.match ? ' class="active"' }}>{{ link.label }}</a>
+            {% endfor %}
+        </nav>
+
+        <div class="actions">
+            {% if is_app %}
+                <a href="{{ path('public_tournaments_list') }}" class="btn btn-primary btn-sm">
+                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                    <span class="cta-label">Vytvořit soutěž</span>
+                </a>
+
+                <details class="relative">
+                    <summary class="avatar list-none" style="list-style:none">{{ app.user.nickname|default('?')|slice(0, 2)|upper }}</summary>
+                    <div class="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-surface-2 p-1.5 shadow-xl z-[60]">
+                        <a href="{{ path('portal_profile_edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
+                            <twig:ux:icon name="lucide:user" class="h-4 w-4" />Profil
+                        </a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('admin_tournament_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-accent-300 hover:bg-white/5 hover:text-white">
+                                <twig:ux:icon name="lucide:shield" class="h-4 w-4" />Administrace
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('app_logout') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
+                            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />Odhlásit se
+                        </a>
+                    </div>
+                </details>
+            {% else %}
+                <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm">Přihlásit se</a>
+                <a href="{{ path('app_register') }}" class="btn btn-primary btn-sm">
+                    <span class="cta-label">Vytvořit soutěž zdarma</span>
+                    <span class="md:hidden">Registrace</span>
+                </a>
+            {% endif %}
+
+            <button type="button" class="menu-btn icon-btn" data-action="mobile-nav#toggle" data-mobile-nav-target="button" aria-label="Menu" aria-expanded="false">
+                <span data-mobile-nav-target="iconOpen"><twig:ux:icon name="lucide:menu" class="h-5 w-5" /></span>
+                <span class="hidden" data-mobile-nav-target="iconClose"><twig:ux:icon name="lucide:x" class="h-5 w-5" /></span>
+            </button>
+        </div>
+    </div>
+
+    {# mobile dropdown panel #}
+    <div class="wt-mobile hidden" data-mobile-nav-target="menu">
+        {% for link in links %}
+            <a href="{{ path(link.path) }}"{{ current starts with link.match ? ' class="active"' }}>{{ link.label }}</a>
+        {% endfor %}
+        {% if is_app %}
+            <a href="{{ path('portal_profile_edit') }}">Profil</a>
+            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_tournament_list') }}">Administrace</a>{% endif %}
+            <a href="{{ path('app_logout') }}">Odhlásit se</a>
+        {% else %}
+            <a href="{{ path('app_login') }}">Přihlásit se</a>
+            <a href="{{ path('app_register') }}">Vytvořit soutěž zdarma</a>
+        {% endif %}
+    </div>
+</header>

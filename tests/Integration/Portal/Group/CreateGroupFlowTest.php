@@ -25,7 +25,7 @@ final class CreateGroupFlowTest extends WebTestCase
         $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_TOURNAMENT_ID.'/skupiny/novy');
         self::assertResponseIsSuccessful();
 
-        $client->submitForm('Vytvořit skupinu', [
+        $client->submitForm('Vytvořit soutěž', [
             'group_form[name]' => 'Další parta',
         ]);
 

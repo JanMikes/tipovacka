@@ -1,0 +1,9 @@
+{#
+    Initials avatar on a gradient. rank 1/2/3 -> medal gradients, else accent.
+    props: name, size (px), rank (1|2|3|null)
+#}
+{% props name = '?', size = 36, rank = null %}
+{% set parts = name|trim|split(' ')|filter(p => p|trim is not empty) %}
+{% set initials = parts|length > 1 ? (parts|first|slice(0, 1) ~ parts|last|slice(0, 1)) : name|trim|slice(0, 2) %}
+<span class="avatar{{ rank in [1, 2, 3, '1', '2', '3'] ? ' rank-' ~ rank }}"
+      style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size / 2.6)|round }}px">{{ initials|upper }}</span>

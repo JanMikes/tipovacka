@@ -1,0 +1,274 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Pro firmy — {{ brand_name }}{% endblock %}
+{% block meta_description %}Firemní tipovačka bez sázek a regulace. Zapojte tým, redakci nebo klubovou komunitu kolem turnaje — za pár minut a bez údržby.{% endblock %}
+{% block og_title %}Pro firmy — {{ brand_name }}{% endblock %}
+{% block og_description %}Tipovací soutěž pro firmy, redakce i klubové komunity. Bez sázek, bez regulace, bez údržby.{% endblock %}
+
+{% block body %}
+
+    {# ───────── Hero ───────── #}
+    <section class="bg-radial relative overflow-hidden">
+        <div class="hero-bg absolute inset-0" aria-hidden="true"></div>
+        <div class="relative mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+            <div class="max-w-3xl">
+                <p class="eyebrow mb-4">Pro firmy a partnery</p>
+                <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                    <span class="grad-headline">Zapojte celý tým kolem turnaje.</span>
+                    <span class="block text-white/80">Bez sázek, bez starostí.</span>
+                </h1>
+                <p class="mt-6 max-w-2xl text-lg leading-relaxed text-white/70">
+                    {{ brand_name }} je tipovací soutěž, kterou rozjedete za pár minut. Ideální pro firemní HR, mediální
+                    partnerství i klubovou komunitu. Žádné kurzy, žádné peníze, žádné regulatorní riziko — jen napětí,
+                    rivalita a důvod sledovat zápasy společně.
+                </p>
+                <div class="mt-8 flex flex-wrap items-center gap-3">
+                    <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg">
+                        Založit firemní soutěž
+                        <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5" />
+                    </a>
+                    <a href="mailto:kontakt@wtips.cz" class="btn btn-ghost btn-lg">
+                        <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
+                        Napište nám
+                    </a>
+                </div>
+
+                <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/60">
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Bez sázek a regulace
+                    </li>
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Hotovo za pár minut
+                    </li>
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Funguje na webu i mobilu
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    {# ───────── Use cases ───────── #}
+    <section class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div class="max-w-2xl">
+            <p class="eyebrow mb-3">Kde to dává smysl</p>
+            <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Tři způsoby, jak {{ brand_name }} využít</h2>
+            <p class="mt-3 text-white/60">
+                Stejný nástroj, tři různé publika. Vyberte si scénář, který sedne tomu vašemu.
+            </p>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {# Use case 1 #}
+            <article class="card-glass flex flex-col p-7">
+                <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                    <twig:ux:icon name="lucide:users" class="h-6 w-6" />
+                </span>
+                <h3 class="mt-5 text-xl font-bold text-white">Firemní tipovačka</h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Rozjeďte soutěž napříč kanceláří. Kolegové tipují MS, ligu nebo play-off, žebříček běží sám a
+                    u oběda i na Slacku je o čem mluvit. Skvělé tmelítko týmu, které nestojí nic navíc.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-white/55">
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Pozvánka přes odkaz nebo PIN
+                    </li>
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Žebříček napříč odděleními
+                    </li>
+                </ul>
+            </article>
+
+            {# Use case 2 #}
+            <article class="card-glass flex flex-col p-7">
+                <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                    <twig:ux:icon name="lucide:newspaper" class="h-6 w-6" />
+                </span>
+                <h3 class="mt-5 text-xl font-bold text-white">Mediální partner a redakce</h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Dejte čtenářům důvod se vracet. Tipovací soutěž k turnaji drží publikum u obsahu po celou dobu
+                    šampionátu — od skupin až po finále. Měřitelné zapojení bez sázkové licence.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-white/55">
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Sdílení jedním odkazem
+                    </li>
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Zapojení po celý turnaj
+                    </li>
+                </ul>
+            </article>
+
+            {# Use case 3 #}
+            <article class="card-glass flex flex-col p-7">
+                <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                    <twig:ux:icon name="lucide:trophy" class="h-6 w-6" />
+                </span>
+                <h3 class="mt-5 text-xl font-bold text-white">Klubová komunita</h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Sportovní klub, fanshop nebo fanouškovská parta — sjednoťte komunitu kolem tipování. Členové
+                    soupeří o čest, vy budujete vztah a sezona má najednou další rozměr.
+                </p>
+                <ul class="mt-5 space-y-2 text-sm text-white/55">
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Vlastní pravidla a bodování
+                    </li>
+                    <li class="inline-flex items-center gap-2">
+                        <twig:ux:icon name="lucide:check" class="h-4 w-4 text-win" />
+                        Komunita pohromadě
+                    </li>
+                </ul>
+            </article>
+        </div>
+    </section>
+
+    {# ───────── Value grid ───────── #}
+    <section class="border-y border-white/[0.06] bg-navy-900/40">
+        <div class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+            <div class="max-w-2xl">
+                <p class="eyebrow mb-3">Proč {{ brand_name }}</p>
+                <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Hodnota bez háčku</h2>
+                <p class="mt-3 text-white/60">
+                    Postaveno tak, aby zapojení rostlo a starostí ubývalo.
+                </p>
+            </div>
+
+            <div class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="card p-6">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                        <twig:ux:icon name="lucide:flame" class="h-5 w-5" />
+                    </span>
+                    <h3 class="mt-4 font-bold text-white">Zapojení týmu</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">
+                        Rivalita a živý žebříček vtáhnou i ty, co fotbal jindy neřeší. Důvod si psát a soupeřit každý den.
+                    </p>
+                </div>
+
+                <div class="card p-6">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                        <twig:ux:icon name="lucide:zap" class="h-5 w-5" />
+                    </span>
+                    <h3 class="mt-4 font-bold text-white">Nulová údržba</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">
+                        Rozpis zápasů i výsledky natáhneme za vás. Body se počítají samy, vy nemusíte hlídat nic.
+                    </p>
+                </div>
+
+                <div class="card p-6">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                        <twig:ux:icon name="lucide:shield" class="h-5 w-5" />
+                    </span>
+                    <h3 class="mt-4 font-bold text-white">Žádné sázky</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">
+                        {{ brand_name }} neoperuje s penězi ani kurzy. Žádná licence, žádné regulatorní riziko — jen pro radost.
+                    </p>
+                </div>
+
+                <div class="card p-6">
+                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                        <twig:ux:icon name="lucide:target" class="h-5 w-5" />
+                    </span>
+                    <h3 class="mt-4 font-bold text-white">Vlastní pravidla</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">
+                        Nastavte si bodování i skupiny tak, aby soutěž sedla vaší partě, redakci nebo klubu.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ───────── How it works for business ───────── #}
+    <section class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <div class="max-w-2xl">
+            <p class="eyebrow mb-3">Jak to funguje pro firmu</p>
+            <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Tři kroky a soutěž běží</h2>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div class="card-glass relative p-7">
+                <span class="text-sm font-extrabold tracking-widest text-accent-400">01</span>
+                <h3 class="mt-3 flex items-center gap-2 text-lg font-bold text-white">
+                    <twig:ux:icon name="lucide:circle-plus" class="h-5 w-5 text-accent-300" />
+                    Založte soutěž
+                </h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Vyberte turnaj — MS, liga, play-off. {{ brand_name }} automaticky natáhne rozpis zápasů a soupisky.
+                    Vy jen nastavíte název a pravidla.
+                </p>
+            </div>
+
+            <div class="card-glass relative p-7">
+                <span class="text-sm font-extrabold tracking-widest text-accent-400">02</span>
+                <h3 class="mt-3 flex items-center gap-2 text-lg font-bold text-white">
+                    <twig:ux:icon name="lucide:share-2" class="h-5 w-5 text-accent-300" />
+                    Pozvěte lidi
+                </h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Pošlete odkaz na Slack, Teams nebo do firemního chatu, případně rozdejte osmimístný PIN. Hráč
+                    klikne a tipuje, účet si vytvoří jedním klikem.
+                </p>
+            </div>
+
+            <div class="card-glass relative p-7">
+                <span class="text-sm font-extrabold tracking-widest text-accent-400">03</span>
+                <h3 class="mt-3 flex items-center gap-2 text-lg font-bold text-white">
+                    <twig:ux:icon name="lucide:list-ordered" class="h-5 w-5 text-accent-300" />
+                    Sledujte žebříček
+                </h3>
+                <p class="mt-3 text-sm leading-relaxed text-white/65">
+                    Výsledky se aktualizují, body padají automaticky. Žebříček ukáže, kdo vede a kdo to zase netrefil —
+                    a o tom to celé je.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    {# ───────── Contact / CTA ───────── #}
+    <section class="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div class="surface-accent relative overflow-hidden p-8 sm:p-12">
+            <div class="relative grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+                <div>
+                    <p class="eyebrow mb-3">Pojďme do toho</p>
+                    <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                        Rozjeďte soutěž pro svůj tým ještě dnes
+                    </h2>
+                    <p class="mt-4 max-w-xl text-white/70">
+                        Založte si soutěž zdarma, nebo nám napište — rádi pomůžeme s rozjezdem pro celou firmu,
+                        redakci i klub.
+                    </p>
+                    <div class="mt-7 flex flex-wrap items-center gap-3">
+                        <a href="{{ path('app_register') }}" class="btn btn-light btn-lg">
+                            Začít zdarma
+                            <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5" />
+                        </a>
+                        <a href="mailto:kontakt@wtips.cz" class="btn btn-clear btn-lg">
+                            <twig:ux:icon name="lucide:mail" class="h-5 w-5" />
+                            kontakt@wtips.cz
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-glass p-6">
+                    <p class="eyebrow mb-3">Napište nám</p>
+                    <h3 class="text-lg font-bold text-white">Máte větší tým nebo speciální přání?</h3>
+                    <p class="mt-2 text-sm leading-relaxed text-white/60">
+                        Ozvěte se a domluvíme se na nastavení, brandingu i pravidlech, která sednou právě vám.
+                    </p>
+                    <a href="mailto:kontakt@wtips.cz" class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent-300 hover:text-accent-400">
+                        <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
+                        kontakt@wtips.cz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock %}

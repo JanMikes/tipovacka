@@ -7,6 +7,8 @@ namespace App\Controller\Portal\Guess;
 use App\Entity\User;
 use App\Form\GroupMatchDeadlineFormData;
 use App\Form\GroupMatchDeadlineFormType;
+use App\Query\GetMatchPickDistribution\GetMatchPickDistribution;
+use App\Query\QueryBus;
 use App\Repository\GroupMatchSettingRepository;
 use App\Repository\GroupRepository;
 use App\Repository\GuessRepository;
@@ -39,6 +41,7 @@ final class SportMatchGuessesController extends AbstractController
         private readonly GroupMatchSettingRepository $groupMatchSettingRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
+        private readonly QueryBus $queryBus,
     ) {
     }
 
@@ -62,6 +65,15 @@ final class SportMatchGuessesController extends AbstractController
         $canSeeAllTips = $isGroupManager
             || !$group->hideOthersTipsBeforeDeadline
             || $now >= $effectiveDeadline;
+
+        // Pick distribution (1/X/2) is only shown once others' tips are visible
+        // (after the deadline, or when the group doesn't hide them).
+        $pickDistribution = $canSeeAllTips
+            ? $this->queryBus->handle(new GetMatchPickDistribution(
+                groupId: $group->id,
+                sportMatchId: $sportMatch->id,
+            ))
+            : null;
 
         $memberRows = [];
 
@@ -105,6 +117,7 @@ final class SportMatchGuessesController extends AbstractController
             'member_rows' => $memberRows,
             'effective_deadline' => $effectiveDeadline,
             'can_see_all_tips' => $canSeeAllTips,
+            'pick_distribution' => $pickDistribution,
             'deadline_form' => $deadlineForm,
             'current_user_id' => $currentUser->id,
         ]);

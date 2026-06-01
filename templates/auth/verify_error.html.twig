@@ -1,29 +1,31 @@
 {% extends 'auth/_layout.html.twig' %}
 
-{% block title %}Neplatný odkaz — Tipovačka{% endblock %}
+{% block title %}Neplatný odkaz — {{ brand_name }}{% endblock %}
 
-{% block auth_panel_tagline %}Odkaz nefunguje? Není to problém — pošleme ti nový.{% endblock %}
+{% block auth_panel_tagline %}Odkaz nefunguje? Není to problém — pošleme vám nový.{% endblock %}
 
 {% block auth_card %}
-<div class="rounded-2xl bg-white p-8 text-center shadow-card ring-1 ring-navy-900/5 sm:p-10">
-    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
-        <twig:ux:icon name="lucide:triangle-alert" class="h-8 w-8" />
+<div class="card-glass p-8 text-center sm:p-10">
+    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-loss/30 bg-loss/10 text-loss">
+        <twig:ux:icon name="lucide:triangle-alert" class="h-7 w-7" />
     </div>
 
-    <h1 class="mt-6 text-2xl font-bold tracking-tight text-navy-900">Odkaz je neplatný</h1>
-    <p class="mt-3 text-navy-900/60">
+    <span class="eyebrow mt-6 block">Neplatný odkaz</span>
+    <h1 class="mt-3 text-2xl font-bold tracking-tight text-white">Odkaz je neplatný</h1>
+    <p class="mt-3 text-sm text-white/60">
         {{ errorMessage ?? 'Ověřovací odkaz je neplatný nebo vypršel.' }}
     </p>
 
     {% if showResend is defined and showResend %}
-        <a href="{{ path('app_verify_email_pending') }}" class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700">
+        <a href="{{ path('app_verify_email_pending') }}" class="btn btn-primary mt-8 w-full">
             <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
             Vyžádat nový ověřovací e-mail
         </a>
     {% endif %}
 
-    <a href="{{ path('app_login') }}" class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline">
-        ← Zpět na přihlášení
+    <a href="{{ path('app_login') }}" class="btn btn-link mt-6 inline-flex items-center gap-1.5 text-sm">
+        <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+        Zpět na přihlášení
     </a>
 </div>
 {% endblock %}
