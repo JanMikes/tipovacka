@@ -41,7 +41,10 @@
                                    class="flex items-center gap-3 hover:opacity-90">
                                     <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
                                     <span class="min-w-0">
-                                        <span class="block truncate text-sm font-bold text-white">{{ row.nickname }}{% if is_me %} <span class="text-accent-300">· Ty</span>{% endif %}</span>
+                                        <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                            <span class="truncate">{{ row.nickname }}</span>
+                                            {% if is_me %}<span class="lb-ty">TY</span>{% endif %}
+                                        </span>
                                         {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
                                     </span>
                                 </a>

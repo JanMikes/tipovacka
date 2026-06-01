@@ -136,13 +136,18 @@ single-match page.
 
 ## Leaderboard components
 
-### `Leaderboard` (`Leaderboard/Table.html.twig`)
-Re-skin the existing **`Leaderboard:GroupLeaderboard`** Live Component template to
-the DS `.lb-table`. Columns: **Pozice · Hráč · Body · Úspěšnost · Přesné · Trefa
-· Streak** (drop Δ for now — deferred; see `04`). Rank 1–3 gold/silver/bronze +
-glow; `.lb-acc` = % + thin progress bar; `.lb-streak` = `lucide:flame` + n (no
-emoji); sticky/highlighted „TY" row (`.lb-tr.me`, blue border + „TY" badge);
-gap-rows („… pozice 13–24 …") for long boards.
+### `Leaderboard` (`components/Leaderboard/GroupLeaderboard.html.twig` — shipped)
+Re-skins the **`Leaderboard:GroupLeaderboard`** Live Component to the DS `.lb-table`.
+Columns: **Pozice · Hráč · Úspěšnost · Přesné · Streak · Body** — this matches the
+DS `zebricek.html` micro-stats (Přesné/Úspěšnost/Streak + Body). **There is NO
+„Trefa" column:** the DS surfaces partial hits only as the **gold `.result-tip`
+chip on individual tips** (organizer-kit matchday list), which is rendered by
+`Match/MatchRow` (`hitClass="partial"`), not as a leaderboard stat. Δ column also
+omitted (deferred). Rank 1–3 gold/silver/bronze + glow; `.lb-acc-bar` = % + thin
+progress bar; `.lb-streak` = `lucide:flame` + n (no emoji); highlighted „TY" row
+(`.lb-tr.me` accent border + the `.lb-ty` gradient badge). Sticky-me + gap-rows
+(„… pozice 13–24 …") are deferred (the component renders the full list with no
+vertical scroll container, so `position:sticky` would have no effect).
 
 ### `Podium` (`Leaderboard/Podium.html.twig`)
 Top-3 raised cards (2nd silver / 1st gold raised+enlarged / 3rd bronze): medal

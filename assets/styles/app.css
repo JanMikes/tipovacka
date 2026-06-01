@@ -414,6 +414,8 @@ label.required::after {
     .lb-tr td { padding: 12px; }
     .lb-tr.me { background: linear-gradient(90deg, rgba(70,153,208,0.10) 0%, transparent 100%); }
     .lb-tr.me td:first-child { box-shadow: inset 2px 0 0 var(--color-accent-500); }
+    /* „TY" badge on the current user's row (DS .lb-tr.me ::after) */
+    .lb-ty { display: inline-block; flex-shrink: 0; font-size: 9px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 5px; background: var(--grad-accent-2); color: #fff; }
     .lb-pos { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; color: #fff; }
     .lb-pos.rank-1 { color: #f5cd54; text-shadow: 0 0 14px rgba(245,205,84,0.45); }
     .lb-pos.rank-2 { color: #cfd6e0; text-shadow: 0 0 14px rgba(207,214,224,0.35); }

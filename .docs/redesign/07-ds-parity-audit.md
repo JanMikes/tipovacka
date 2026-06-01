@@ -75,7 +75,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | cards → `.card`/`.card-glass`/`.surface-accent` | app.css `@layer` | ✅ | |
 | inputs → form theme + `.score-input`/`.num-input` | form theme | ✅ | Steppers use native spinners (no ▲/▼ glyph) — acceptable. |
 | 8-box PIN → `.pin-inputs` | `_partials/join_by_pin_form.html.twig` + `pin_input_controller` | ✅ | Works; numeric (correct). `PinInput.html.twig` extraction = optional, **not** needed (single surface). |
-| **leaderboard → `.lb-table`** | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P1** | Missing **Trefa** (partial) column (`partialCount` exists in DTO); "· Ty" inline text not the `.me` **TY badge**; DS col order Body-after-name; `.me` row not `position:sticky`. |
+| **leaderboard → `.lb-table`** | `Leaderboard/GroupLeaderboard.html.twig` | ✅ | DONE (next commit) + RECONCILED: DS has **no Trefa column** (DS `zebricek` micro-stats = Přesné/Úspěšnost/Streak, which the app already matches; „trefa" = the gold `.result-tip` tip chip, rendered by MatchRow). Added the DS `.lb-ty` **TY badge** (was "· Ty"). Sticky-me deferred (no vertical scroll container → `position:sticky` is inert). |
 | podium → `.podium`/`.pod` | `Leaderboard/Podium.html.twig` | ✅ | |
 | **match/tip card (vertical) → `.tip-card` 3-state** | `Guess/GuessSubmitForm.html.twig` | ✅ | DONE (next commit): steppers now use `.tip-inputs` grid + `.colon`; submit is the full-width DS `.btn-block.btn-primary-block`/`.btn-edit-block`. Live wiring (data-model/live-action) + locked/finished states preserved. (The `.tip-head`/`.tip-teams`/`.final-score`/`.result-banner` hero already existed on the detail pages.) |
 | **match row (horizontal) → `Match/MatchRow`** | `Match/MatchRow.html.twig` | ✅ | DONE (f0905fc): built shared component + `.tip-row*` @layer CSS; replaced all 3 hand-rolled rows. `:prop` typed/null-safe. |
@@ -95,7 +95,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | dashboard soutěž/turnaj discovery grids | `portal/dashboard.html.twig` | ✅ | Richer than DS. |
 | **žebříček you-strip** | `portal/leaderboard/index.html.twig` | ❌ **P1** | Missing "Tvoje pozice 7./42 · Body · Do top N" band. Add `.you-strip` `@layer` class + summary from `member_stats`. **Omit Δ "Změna".** |
 | žebříček podium-wrap | `portal/leaderboard/index.html.twig` | ✅ | |
-| žebříček table cols + sticky TY | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P1** | See C (Trefa col + sticky `.me` + TY badge). |
+| žebříček table cols + sticky TY | `Leaderboard/GroupLeaderboard.html.twig` | ✅ | See C: TY badge added; Trefa is not a DS column; sticky-me deferred (inert without scroll container). |
 | žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "Najít hráče…" search. Add cheap client-side `.lb-search` filter (range/sort were demo-only — skip). |
 | žebříček gap-rows | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "… pozice 13-24 …" condensation. Low value at small scale — document acceptable or add. |
 | Zápasy chips Vše/Dnes/Tipovatelné/Ukončené (no Live) | `portal/matches/index.html.twig` | ✅ | Rows now use `Match/MatchRow` (f0905fc). |
