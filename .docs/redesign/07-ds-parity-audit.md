@@ -61,8 +61,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 |---|---|---|---|
 | navy/accent/status/fg/border/surface ramps | app.css `@theme` | ✅ | All hex match exactly. |
 | shadows/glows/motion/container/Montserrat | app.css `@theme` + `@font-face` | ✅ | Self-hosted woff2 300-900. |
-| **`--grad-headline`** (180deg #fff 0%,#fff 40%,#8ac3e8 100%) | app.css:97 | ❌ **P1** | App uses the **`-alt`** diagonal recipe as `--grad-headline`. Set `--grad-headline` to the canonical vertical DS value; (optionally keep alt as `--grad-headline-alt`). Affects every gradient headline. |
-| `--glass-border` rgba(255,255,255,.09) | app.css:90 | ⚠️ **P3** | App = .10 vs DS .09; unused by components. Trivial exactness fix. |
+| **`--grad-headline`** (180deg #fff 0%,#fff 40%,#8ac3e8 100%) | app.css | ✅ | FIXED: DS sources differ — `--grad-headline`=vertical (DS marketing, `.display-gradient`), added `--grad-headline-alt`=diagonal (DS organizer-kit, `.grad-headline`). Both tokens now exact; class rule split. |
+| `--glass-border` rgba(255,255,255,.09) | app.css | ✅ | FIXED: .10 → .09. |
 | `--fs-*/--fw-*/--r-*/--s-*` scale tokens | (Tailwind utilities) | ✅ | Expected Tailwind-v4 port omission — no drift in applied values. |
 
 ## C. Component catalog (`preview/components-*.html`)
@@ -99,7 +99,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | žebříček lb-toolbar (search) | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "Najít hráče…" search. Add cheap client-side `.lb-search` filter (range/sort were demo-only — skip). |
 | žebříček gap-rows | `Leaderboard/GroupLeaderboard.html.twig` | ⚠️ **P3** | No "… pozice 13-24 …" condensation. Low value at small scale — document acceptable or add. |
 | Zápasy chips Vše/Dnes/Tipovatelné/Ukončené (no Live) | `portal/matches/index.html.twig` | ✅ | Migrate rows to MatchRow (see C). |
-| guess/detail + sport_match/detail hero (no live) | templates | ✅ | `isLive` folded to UZAMČENO; relabel "Probíhá" → "Uzamčeno" for full no-live honesty (⚠️ trivial). |
+| guess/detail + sport_match/detail hero (no live) | templates | ✅ | `isLive` folded to UZAMČENO; "Probíhá"→"Uzamčeno" relabel done (8b61588). |
 | pick distribution after lock | `guess/detail.html.twig` | ✅ | Free. |
 | per-match ranking | `guess/detail.html.twig` | ✅ | |
 
@@ -114,7 +114,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | Funkce / Pro firmy / FAQ | `public/{features,for_business,faq}` | ✅ | |
 | **Ceník (3 plány)** | `public/pricing.html.twig` | ❌ **P1** | Promises a live paywall ("Vyzkoušet zdarma" on 99 Kč, "/ měsíc") + lists "Distribuce tipů" as paid. Reframe reference-only/„Připravujeme"; neutralize CTAs; drop "Distribuce tipů" (it's FREE). |
 | Soukromí | `public/privacy.html.twig` | ⚠️ **P1** | Lines 51,72 ASCII straight quotes → „…". |
-| public tournament list/detail | `public/tournaments_list`,`tournament_detail` | ⚠️ **P0** | **CUT-LEAK:** `tournament_detail.html.twig:204` renders real `Pill variant="live"` "Živě" in a product view. Collapse `'live'` → Naplánován/Uzamčeno. |
+| public tournament list/detail | `public/tournaments_list`,`tournament_detail` | ✅ | **CUT-LEAK FIXED** (8b61588): `'live'` → "Uzamčeno" locked. |
 | invitation landing | `invitation/landing.html.twig` + `Auth/InvitationForm` | ✅ | |
 
 ## F. Organizer kit (`ui_kits/organizer-webapp/`)
@@ -148,8 +148,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 ---
 
 ## ⛔ Cut-leak log (must stay absent)
-- `public/tournament_detail.html.twig:204` real `pill-live` "Živě" → **FIX (P0)**, collapse `'live'` state.
-- In-product `isLive` on `sport_match/detail` + `guess/detail` already fold to a non-live presentation (no pulse) — relabel "Probíhá"→"Uzamčeno" for clarity (⚠️ P1, not a true leak).
+- ✅ FIXED (8b61588): `public/tournament_detail` "Živě" + in-product "Probíhá" (sport_match/detail, group/detail, tournament/detail) all → "Uzamčeno" locked.
+- Marketing-decoration live pills kept (allowed): landing hero `home.html.twig`, auth rail `login.html.twig`, `features.html.twig` badge. Admin match list keeps "Probíhá" (staff tooling).
 - No OAuth/social buttons, no nav bell, no Výplaty, no Tweaks panel, no premium paywall backend anywhere. ✅
 
 ## 🔮 Reference-element tracker (STEP 3 — visual-only, inert, gated)

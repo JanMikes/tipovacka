@@ -87,14 +87,15 @@
 
     --glass-bg: rgba(255,255,255,0.04);
     --glass-bg-strong: rgba(255,255,255,0.07);
-    --glass-border: rgba(255,255,255,0.10);
+    --glass-border: rgba(255,255,255,0.09);
     --glass-border-hi: rgba(255,255,255,0.16);
     --glass-inner-hi: inset 0 1px 0 rgba(255,255,255,0.08);
 
     --grad-canvas: radial-gradient(120% 80% at 50% 0%, #18233f 0%, #0f1726 55%, #0a111e 100%);
     --grad-accent: linear-gradient(135deg, #65adde 0%, #4699d0 45%, #2a6e9e 100%);
     --grad-accent-2: linear-gradient(135deg, #4699d0 0%, #1f5d8e 100%);
-    --grad-headline: linear-gradient(100deg, #ffffff 0%, #b3d8ef 55%, #4699d0 100%);
+    --grad-headline: linear-gradient(180deg, #ffffff 0%, #ffffff 40%, #8ac3e8 100%);
+    --grad-headline-alt: linear-gradient(100deg, #ffffff 0%, #b3d8ef 55%, #4699d0 100%);
     --grad-win: linear-gradient(135deg, #3ed598 0%, #24a978 100%);
     --grad-loss: linear-gradient(135deg, #ff5d7a 0%, #c8324d 100%);
     --grad-glow-accent: radial-gradient(60% 80% at 50% 0%, rgba(70,153,208,0.35) 0%, rgba(70,153,208,0) 70%);
@@ -166,10 +167,13 @@ label.required::after {
         text-transform: uppercase; color: var(--color-accent-300);
     }
     .display-gradient, .grad-headline {
-        background: var(--grad-headline);
         -webkit-background-clip: text; background-clip: text;
         -webkit-text-fill-color: transparent; color: transparent;
     }
+    /* Marketing/site headlines use the vertical DS recipe; the app/organizer-kit
+       headline uses the diagonal -alt recipe (DS sources differ — both preserved). */
+    .display-gradient { background: var(--grad-headline); }
+    .grad-headline { background: var(--grad-headline-alt); }
 
     /* ---- Glass / surfaces ---- */
     .glass {
