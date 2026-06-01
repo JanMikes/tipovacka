@@ -7,11 +7,11 @@ permissions:
     deployments: write
     packages: write
 
+# NOTE: triggered on push (not workflow_run) on purpose. workflow_run is always
+# evaluated from the DEFAULT branch's workflow file, so a per-branch workflow_run
+# filter for this frozen branch would never fire. Push respects this branch's file.
 on:
-    workflow_run:
-        workflows: [Tests]
-        types:
-            - completed
+    push:
         branches:
             - tipovacka
 
@@ -19,7 +19,6 @@ jobs:
     docker:
         name: "Docker images"
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         steps:
             -   name: Checkout
                 uses: actions/checkout@v4
@@ -59,7 +58,6 @@ jobs:
 
     deploy:
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
         needs:
             - docker
         concurrency:
