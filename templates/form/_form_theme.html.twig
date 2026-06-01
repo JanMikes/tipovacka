@@ -9,7 +9,7 @@
 
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
-        <ul class="mt-1 space-y-0.5 text-sm text-red-600">
+        <ul class="mt-1 space-y-0.5 text-sm text-loss">
             {%- for error in errors -%}
                 <li>{{ error.message }}</li>
             {%- endfor -%}
@@ -20,13 +20,13 @@
 {%- block form_label -%}
     {%- if label is not same as(false) -%}
         {%- if 'checkbox' in block_prefixes or 'radio' in block_prefixes -%}
-            {%- set label_attr = label_attr|merge({class: label_attr.class|default('inline-block text-sm text-navy-900 ml-2 align-middle')}) -%}
+            {%- set label_attr = label_attr|merge({class: label_attr.class|default('inline-flex items-center text-sm text-white/80 ml-2 align-middle')}) -%}
             {# Option labels inside expanded choices inherit the child's `required`
                flag, which would trigger the shared `label.required::after` asterisk
                once per option. Only the parent field label should show it. #}
             {%- set required = false -%}
         {%- else -%}
-            {%- set label_attr = label_attr|merge({class: label_attr.class|default('block text-sm font-medium text-navy-900 mb-1.5')}) -%}
+            {%- set label_attr = label_attr|merge({class: label_attr.class|default('field-label mb-1.5 block')}) -%}
         {%- endif -%}
     {%- endif -%}
     {{- parent() -}}
@@ -81,7 +81,7 @@
 {%- block form_widget_simple -%}
     {%- set type = type|default('text') -%}
     {%- if type != 'hidden' -%}
-        {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+        {%- set attr = attr|merge({class: attr.class|default('input')}) -%}
         {%- if not valid -%}
             {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
         {%- endif -%}
@@ -90,7 +90,7 @@
 {%- endblock form_widget_simple -%}
 
 {%- block textarea_widget -%}
-    {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('input')}) -%}
     {%- if not valid -%}
         {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
     {%- endif -%}
@@ -98,7 +98,7 @@
 {%- endblock textarea_widget -%}
 
 {%- block choice_widget_collapsed -%}
-    {%- set attr = attr|merge({class: attr.class|default('w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition bg-white text-navy-900')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('input')}) -%}
     {%- if not valid -%}
         {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
     {%- endif -%}
@@ -106,16 +106,16 @@
 {%- endblock choice_widget_collapsed -%}
 
 {%- block checkbox_widget -%}
-    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500 focus:ring-offset-0')}) -%}
     {{- parent() -}}
 {%- endblock checkbox_widget -%}
 
 {%- block radio_widget -%}
-    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 border-navy-200 text-cyan-500 focus:ring-cyan-500')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 border-white/20 bg-inset text-accent-500 focus:ring-accent-500 focus:ring-offset-0')}) -%}
     {{- parent() -}}
 {%- endblock radio_widget -%}
 
 {%- block button_widget -%}
-    {%- set attr = attr|merge({class: attr.class|default('inline-flex items-center justify-center bg-navy-900 hover:bg-navy-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors')}) -%}
+    {%- set attr = attr|merge({class: attr.class|default('btn btn-primary')}) -%}
     {{- parent() -}}
 {%- endblock button_widget -%}

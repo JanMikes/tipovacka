@@ -3,198 +3,208 @@
 {% block title %}{{ sport_match.homeTeam }} vs {{ sport_match.awayTeam }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+<div class="bg-radial">
+    <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
-    <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
-        {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam},
-    ]" />
+        <twig:Breadcrumbs :items="[
+            {label: 'Nástěnka', path: path('portal_dashboard')},
+            {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
+            {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam},
+        ]" />
 
-    {# Hero card #}
-    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-navy-700 p-6 text-white shadow-card sm:p-8">
-        <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-500/15 blur-3xl"></div>
+        {# Hero card #}
+        <section class="card-glass relative overflow-hidden p-6 text-white sm:p-8">
+            <div class="tip-head">
+                <div class="tip-stage">
+                    <span class="round">{{ sport_match.tournament.name }}</span>
+                    <span class="when">{{ sport_match.kickoffAt|date('j. n. Y') }} · {{ sport_match.kickoffAt|date('H:i') }}</span>
+                </div>
 
-        <div class="relative flex flex-wrap items-start justify-between gap-3">
-            <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold
-                {% if sport_match.isScheduled %}bg-blue-500/20 text-blue-300
-                {% elseif sport_match.isLive %}bg-orange-500/20 text-orange-300 animate-pulse
-                {% elseif sport_match.isFinished %}bg-green-500/20 text-green-300
-                {% elseif sport_match.isPostponed %}bg-yellow-500/20 text-yellow-300
-                {% else %}bg-white/10 text-white{% endif %}">
-                {% if sport_match.isScheduled %}Naplánován
-                {% elseif sport_match.isLive %}Živě
-                {% elseif sport_match.isFinished %}Odehrán
-                {% elseif sport_match.isPostponed %}Odložen
-                {% else %}Zrušen{% endif %}
-            </span>
-            <span class="inline-flex items-center gap-1.5 text-sm text-white/75">
-                <twig:ux:icon name="lucide:clock" class="h-4 w-4" />
-                {{ sport_match.kickoffAt|date('d. m. Y H:i') }}
-            </span>
-        </div>
-
-        <div class="relative mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-center">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-white/50">Domácí</p>
-                <p class="mt-1 text-xl font-bold sm:text-2xl">{{ sport_match.homeTeam }}</p>
+                {% if sport_match.isFinished %}
+                    <twig:Pill label="Odehrán" variant="done" icon="check" />
+                {% elseif sport_match.isCancelled %}
+                    <twig:Pill label="Zrušen" variant="locked" icon="circle-x" />
+                {% elseif sport_match.isPostponed %}
+                    <twig:Pill label="Odložen" variant="warn" icon="triangle-alert" />
+                {% elseif sport_match.isLive %}
+                    <twig:Pill label="Probíhá" variant="locked" icon="lock" />
+                {% else %}
+                    <twig:Pill label="Naplánován" variant="soon" dot="true" />
+                {% endif %}
             </div>
-            {% if sport_match.isFinished %}
-                <p class="rounded-xl bg-white/10 px-4 py-2 text-3xl font-bold tabular-nums backdrop-blur sm:text-4xl">
-                    {{ sport_match.homeScore }} : {{ sport_match.awayScore }}
+
+            <div class="tip-teams mt-6">
+                <div class="tip-team">
+                    <twig:TeamFlag :name="sport_match.homeTeam" size="56" />
+                    <span class="name">{{ sport_match.homeTeam }}</span>
+                </div>
+
+                {% if sport_match.isFinished %}
+                    <div class="final-score text-white">
+                        <span class="sc">{{ sport_match.homeScore }}</span>
+                        <span class="sep">:</span>
+                        <span class="sc">{{ sport_match.awayScore }}</span>
+                    </div>
+                {% else %}
+                    <div class="tip-vs">vs</div>
+                {% endif %}
+
+                <div class="tip-team">
+                    <twig:TeamFlag :name="sport_match.awayTeam" size="56" />
+                    <span class="name">{{ sport_match.awayTeam }}</span>
+                </div>
+            </div>
+
+            {% if sport_match.venue %}
+                <p class="mt-6 inline-flex items-center gap-1.5 text-xs text-white/50">
+                    <twig:ux:icon name="lucide:building-2" class="h-3.5 w-3.5" />
+                    {{ sport_match.venue }}
                 </p>
-            {% else %}
-                <p class="text-sm font-semibold text-white/50">vs</p>
             {% endif %}
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-white/50">Hosté</p>
-                <p class="mt-1 text-xl font-bold sm:text-2xl">{{ sport_match.awayTeam }}</p>
-            </div>
-        </div>
+        </section>
 
-        {% if sport_match.venue %}
-            <p class="relative mt-6 flex items-center justify-center gap-1.5 text-sm text-white/70">
-                <twig:ux:icon name="lucide:info" class="h-4 w-4" />
-                {{ sport_match.venue }}
-            </p>
-        {% endif %}
-    </section>
+        {# Inline per-group guess cards #}
+        {% set my_groups = my_groups_for_tournament|default([]) %}
+        {% if my_groups|length > 0 %}
+            <section class="mt-8">
+                <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
+                        <twig:ux:icon name="lucide:target" class="h-5 w-5 text-accent-300" />
+                        Vaše tipy
+                        <span class="rounded-full bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_groups|length }}</span>
+                    </h2>
+                    <p class="text-xs text-white/50">Tipujte zvlášť za každou soutěž, ve které jste.</p>
+                </header>
 
-    {# Inline per-group guess cards #}
-    {% set my_groups = my_groups_for_tournament|default([]) %}
-    {% if my_groups|length > 0 %}
-        <section class="mt-8">
-            <header class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h2 class="flex items-center gap-2 text-xl font-semibold text-navy-900">
-                    <twig:ux:icon name="lucide:target" class="h-5 w-5 text-cyan-500" />
-                    Tvoje tipy
-                    <span class="rounded-full bg-navy-50 px-2.5 py-0.5 text-xs font-semibold text-navy-700">{{ my_groups|length }}</span>
-                </h2>
-                <p class="text-xs text-navy-900/60">Tipuj zvlášť za každou skupinu, ve které jsi.</p>
-            </header>
-
-            <ul class="grid grid-cols-1 gap-4 {% if my_groups|length > 1 %}md:grid-cols-2{% endif %}">
-                {% for g in my_groups %}
-                    <li class="relative">
-                        {% if not g.hasGuess %}
-                            <span
-                                class="absolute -top-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-yellow-400 px-3 py-1 text-xs font-semibold text-yellow-900 shadow-md ring-2 ring-white"
-                                title="Pro tuto skupinu chybí tvůj tip"
-                                aria-label="Chybí tip pro tuto skupinu"
-                            >
-                                <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4" />
-                                Nevyplněno
-                            </span>
-                        {% endif %}
-                        <article class="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card {% if not g.hasGuess %}ring-2 ring-yellow-400{% else %}ring-1 ring-navy-900/5{% endif %}">
-                            <header class="flex items-center justify-between gap-3 border-b border-navy-100/70 px-5 py-3">
-                                <div class="flex min-w-0 items-center gap-2">
-                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600">
-                                        <twig:ux:icon name="lucide:users" class="h-4 w-4" />
-                                    </span>
-                                    <a href="{{ path('portal_group_detail', {id: g.id.toRfc4122}) }}" class="truncate font-semibold text-navy-900 transition-colors hover:text-cyan-600">
-                                        {{ g.name }}
+                <ul class="grid grid-cols-1 gap-4 {% if my_groups|length > 1 %}md:grid-cols-2{% endif %}">
+                    {% for g in my_groups %}
+                        <li class="relative">
+                            {% if not g.hasGuess %}
+                                <span
+                                    class="absolute -top-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-accent-500 px-3 py-1 text-xs font-semibold text-white shadow-lg ring-2 ring-navy-900"
+                                    title="Pro tuto soutěž chybí váš tip"
+                                    aria-label="Chybí tip pro tuto soutěž"
+                                >
+                                    <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4" />
+                                    Nevyplněno
+                                </span>
+                            {% endif %}
+                            <article class="card-glass flex h-full flex-col overflow-hidden p-0 {% if not g.hasGuess %}ring-1 ring-accent-400/60{% endif %}">
+                                <header class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-3">
+                                    <div class="flex min-w-0 items-center gap-2">
+                                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-500/15 text-accent-300">
+                                            <twig:ux:icon name="lucide:users" class="h-4 w-4" />
+                                        </span>
+                                        <a href="{{ path('portal_group_detail', {id: g.id.toRfc4122}) }}" class="truncate font-semibold text-white transition-colors hover:text-accent-300">
+                                            {{ g.name }}
+                                        </a>
+                                    </div>
+                                    <a href="{{ path('portal_group_sport_match_guesses', {groupId: g.id.toRfc4122, sportMatchId: sport_match.id.toRfc4122}) }}" class="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent-300 transition-colors hover:text-accent-200" title="Zobrazit tipy členů soutěže">
+                                        Tipy členů
+                                        <twig:ux:icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
                                     </a>
+                                </header>
+
+                                <div class="flex-1 p-5">
+                                    <twig:Guess:GuessSubmitForm
+                                        id="guess-form-{{ g.id.toRfc4122 }}"
+                                        sportMatch="{{ sport_match }}"
+                                        groupId="{{ g.id.toRfc4122 }}"
+                                        class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"
+                                    />
                                 </div>
-                                <a href="{{ path('portal_group_sport_match_guesses', {groupId: g.id.toRfc4122, sportMatchId: sport_match.id.toRfc4122}) }}" class="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-cyan-600 hover:text-cyan-700" title="Zobrazit tipy členů skupiny">
-                                    Tipy členů
-                                    <twig:ux:icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
-                                </a>
-                            </header>
+                            </article>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
 
-                            <div class="flex-1 p-5">
-                                <twig:Guess:GuessSubmitForm
-                                    id="guess-form-{{ g.id.toRfc4122 }}"
-                                    sportMatch="{{ sport_match }}"
-                                    groupId="{{ g.id.toRfc4122 }}"
-                                    class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"
-                                />
+        {# Match management (admins only) #}
+        {% set can_edit   = is_granted('sport_match_edit', sport_match) %}
+        {% set can_score  = is_granted('sport_match_set_score', sport_match) %}
+        {% set can_cancel = is_granted('sport_match_cancel', sport_match) %}
+        {% set can_delete = is_granted('sport_match_delete', sport_match) %}
+
+        {% if can_edit or can_score or can_cancel or can_delete %}
+            <section class="card-glass mt-8 overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/[0.06] px-6 py-4">
+                    <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-accent-300" />
+                    <h2 class="text-lg font-semibold text-white">Správa zápasu</h2>
+                </header>
+                <div class="flex flex-wrap items-end gap-3 px-6 py-5">
+                    {% if can_edit %}
+                        <a href="{{ path('portal_sport_match_edit', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                            <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
+                        </a>
+                    {% endif %}
+
+                    {% if can_score %}
+                        <a href="{{ path('portal_sport_match_set_score', {id: sport_match.id.toRfc4122}) }}" class="btn btn-success btn-sm">
+                            <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                            {{ sport_match.isFinished ? 'Upravit skóre' : 'Zadat skóre' }}
+                        </a>
+                    {% endif %}
+
+                    {% if can_edit and (sport_match.isScheduled or sport_match.isPostponed) %}
+                        <form method="post" action="{{ path('portal_sport_match_postpone', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('sport_match_postpone_' ~ sport_match.id.toRfc4122) }}">
+                            <div class="field">
+                                <label class="field-label" for="postpone-kickoff-{{ sport_match.id.toRfc4122 }}">Nový termín</label>
+                                <input type="text" name="new_kickoff_at" id="postpone-kickoff-{{ sport_match.id.toRfc4122 }}" required
+                                       data-controller="datepicker" data-datepicker-mode-value="datetime"
+                                       class="input w-auto">
                             </div>
-                        </article>
-                    </li>
-                {% endfor %}
-            </ul>
-        </section>
-    {% endif %}
+                            <button type="submit" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:clock" class="h-4 w-4" />Odložit
+                            </button>
+                        </form>
+                    {% endif %}
 
-    {# Match management (admins only) #}
-    {% set can_edit   = is_granted('sport_match_edit', sport_match) %}
-    {% set can_score  = is_granted('sport_match_set_score', sport_match) %}
-    {% set can_cancel = is_granted('sport_match_cancel', sport_match) %}
-    {% set can_delete = is_granted('sport_match_delete', sport_match) %}
+                    {% if can_edit and sport_match.isPostponed %}
+                        <form method="post" action="{{ path('portal_sport_match_reschedule', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
+                            <input type="hidden" name="_token" value="{{ csrf_token('sport_match_reschedule_' ~ sport_match.id.toRfc4122) }}">
+                            <div class="field">
+                                <label class="field-label" for="reschedule-kickoff-{{ sport_match.id.toRfc4122 }}">Nový termín</label>
+                                <input type="text" name="new_kickoff_at" id="reschedule-kickoff-{{ sport_match.id.toRfc4122 }}" required
+                                       data-controller="datepicker" data-datepicker-mode-value="datetime"
+                                       class="input w-auto">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <twig:ux:icon name="lucide:calendar" class="h-4 w-4" />Přesunout zpět
+                            </button>
+                        </form>
+                    {% endif %}
 
-    {% if can_edit or can_score or can_cancel or can_delete %}
-        <section class="mt-8 rounded-2xl bg-white shadow-card ring-1 ring-navy-900/5">
-            <header class="flex items-center gap-2.5 border-b border-navy-100/70 px-6 py-4">
-                <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-cyan-500" />
-                <h2 class="text-lg font-semibold text-navy-900">Správa zápasu</h2>
-            </header>
-            <div class="flex flex-wrap gap-3 px-6 py-5">
-                {% if can_edit %}
-                    <a href="{{ path('portal_sport_match_edit', {id: sport_match.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-4 py-2 text-sm font-semibold text-navy-900 transition-colors hover:bg-navy-100">
-                        <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
-                    </a>
-                {% endif %}
+                    {% if can_cancel and not sport_match.isFinished and not sport_match.isCancelled %}
+                        <form method="post" action="{{ path('portal_sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Zrušit zápas"
+                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} zrušit? Tipy na něj nebudou bodovány."
+                            data-confirm-confirm-label-value="Ano, zrušit">
+                            <input type="hidden" name="_token" value="{{ csrf_token('sport_match_cancel_' ~ sport_match.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:circle-x" class="h-4 w-4" />Zrušit zápas
+                            </button>
+                        </form>
+                    {% endif %}
 
-                {% if can_score %}
-                    <a href="{{ path('portal_sport_match_set_score', {id: sport_match.id.toRfc4122}) }}" class="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700">
-                        <twig:ux:icon name="lucide:check" class="h-4 w-4" />
-                        {{ sport_match.isFinished ? 'Upravit skóre' : 'Zadat skóre' }}
-                    </a>
-                {% endif %}
-
-                {% if can_edit and (sport_match.isScheduled or sport_match.isPostponed) %}
-                    <form method="post" action="{{ path('portal_sport_match_postpone', {id: sport_match.id.toRfc4122}) }}" class="inline-flex items-center gap-2">
-                        <input type="hidden" name="_token" value="{{ csrf_token('sport_match_postpone_' ~ sport_match.id.toRfc4122) }}">
-                        <input type="text" name="new_kickoff_at" required
-                               data-controller="datepicker" data-datepicker-mode-value="datetime"
-                               class="rounded-lg border border-navy-100 px-3 py-1.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-600">
-                            <twig:ux:icon name="lucide:clock" class="h-4 w-4" />Odložit
-                        </button>
-                    </form>
-                {% endif %}
-
-                {% if can_edit and sport_match.isPostponed %}
-                    <form method="post" action="{{ path('portal_sport_match_reschedule', {id: sport_match.id.toRfc4122}) }}" class="inline-flex items-center gap-2">
-                        <input type="hidden" name="_token" value="{{ csrf_token('sport_match_reschedule_' ~ sport_match.id.toRfc4122) }}">
-                        <input type="text" name="new_kickoff_at" required
-                               data-controller="datepicker" data-datepicker-mode-value="datetime"
-                               class="rounded-lg border border-navy-100 px-3 py-1.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-cyan-500">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-600">
-                            <twig:ux:icon name="lucide:calendar" class="h-4 w-4" />Přesunout zpět
-                        </button>
-                    </form>
-                {% endif %}
-
-                {% if can_cancel and not sport_match.isFinished and not sport_match.isCancelled %}
-                    <form method="post" action="{{ path('portal_sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline"
-                        data-controller="confirm"
-                        data-confirm-variant-value="warning"
-                        data-confirm-title-value="Zrušit zápas"
-                        data-confirm-message-value="Opravdu chceš zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} zrušit? Tipy na něj nebudou bodovány."
-                        data-confirm-confirm-label-value="Ano, zrušit">
-                        <input type="hidden" name="_token" value="{{ csrf_token('sport_match_cancel_' ~ sport_match.id.toRfc4122) }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600">
-                            <twig:ux:icon name="lucide:circle-x" class="h-4 w-4" />Zrušit zápas
-                        </button>
-                    </form>
-                {% endif %}
-
-                {% if can_delete %}
-                    <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
-                        data-controller="confirm"
-                        data-confirm-title-value="Smazat zápas"
-                        data-confirm-message-value="Opravdu chceš zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} smazat? Všechny tipy na něj zmizí."
-                        data-confirm-confirm-label-value="Ano, smazat">
-                        <input type="hidden" name="_token" value="{{ csrf_token('sport_match_delete_' ~ sport_match.id.toRfc4122) }}">
-                        <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100">
-                            <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-        </section>
-    {% endif %}
+                    {% if can_delete %}
+                        <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                            data-controller="confirm"
+                            data-confirm-title-value="Smazat zápas"
+                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} smazat? Všechny tipy na něj zmizí."
+                            data-confirm-confirm-label-value="Ano, smazat">
+                            <input type="hidden" name="_token" value="{{ csrf_token('sport_match_delete_' ~ sport_match.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

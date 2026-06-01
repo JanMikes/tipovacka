@@ -1,85 +1,82 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Upravit skupinu — {{ brand_name }}{% endblock %}
+{% block title %}Upravit soutěž — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
         {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
-        {label: 'Upravit skupinu'},
+        {label: 'Upravit soutěž'},
     ]" />
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-navy-900">Upravit skupinu</h1>
-        <p class="text-navy-900/60 mt-1">{{ group.name }}</p>
-    </div>
 
-    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8">
-        {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+    <header class="mb-8 mt-2">
+        <span class="eyebrow">Nastavení soutěže</span>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Upravit soutěž</h1>
+        <p class="mt-2 text-sm leading-relaxed text-white/70">{{ group.name }}</p>
+    </header>
 
-            <div>
-                {{ form_label(form.name, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                {{ form_widget(form.name, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition'}}) }}
+    <div class="card-glass p-6 sm:p-8">
+        {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
+
+            <div class="field">
+                {{ form_label(form.name) }}
+                {{ form_widget(form.name, {attr: {class: 'input'}}) }}
                 {{ form_errors(form.name) }}
             </div>
 
-            <div>
-                {{ form_label(form.description, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                {{ form_widget(form.description, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition'}}) }}
+            <div class="field">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, {attr: {class: 'input'}}) }}
                 {{ form_errors(form.description) }}
             </div>
 
             <div>
                 <label class="flex items-start gap-3 {{ form.withPin.vars.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer' }}">
-                    {{ form_widget(form.withPin, {attr: {class: 'mt-0.5 h-5 w-5 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500'}}) }}
+                    {{ form_widget(form.withPin, {attr: {class: 'mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500'}}) }}
                     <span class="text-sm">
-                        <span class="block font-medium text-navy-900">{{ form.withPin.vars.label }}</span>
+                        <span class="block font-medium text-white">{{ form.withPin.vars.label }}</span>
                         {% if form.withPin.vars.help %}
-                            <span class="block text-xs text-navy-900/60 mt-1">{{ form.withPin.vars.help }}</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-white/50">{{ form.withPin.vars.help }}</span>
                         {% endif %}
                     </span>
                 </label>
                 {{ form_errors(form.withPin) }}
             </div>
 
-            <div class="border-t border-navy-100 pt-5 space-y-5">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-navy-900/50">Tipy a uzávěrka</h2>
+            <div class="space-y-5 border-t border-white/10 pt-6">
+                <span class="eyebrow">Tipy a uzávěrka</span>
 
                 <div>
-                    <label class="flex items-start gap-3 cursor-pointer">
-                        {{ form_widget(form.hideOthersTipsBeforeDeadline, {attr: {class: 'mt-0.5 h-5 w-5 rounded border-navy-200 text-cyan-500 focus:ring-cyan-500'}}) }}
+                    <label class="flex cursor-pointer items-start gap-3">
+                        {{ form_widget(form.hideOthersTipsBeforeDeadline, {attr: {class: 'mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500'}}) }}
                         <span class="text-sm">
-                            <span class="block font-medium text-navy-900">{{ form.hideOthersTipsBeforeDeadline.vars.label }}</span>
+                            <span class="block font-medium text-white">{{ form.hideOthersTipsBeforeDeadline.vars.label }}</span>
                             {% if form.hideOthersTipsBeforeDeadline.vars.help %}
-                                <span class="block text-xs text-navy-900/60 mt-1">{{ form.hideOthersTipsBeforeDeadline.vars.help }}</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">{{ form.hideOthersTipsBeforeDeadline.vars.help }}</span>
                             {% endif %}
                         </span>
                     </label>
                     {{ form_errors(form.hideOthersTipsBeforeDeadline) }}
                 </div>
 
-                <div>
-                    {{ form_label(form.tipsDeadline, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                    {{ form_widget(form.tipsDeadline, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition'}}) }}
+                <div class="field">
+                    {{ form_label(form.tipsDeadline) }}
+                    {{ form_widget(form.tipsDeadline, {attr: {class: 'input'}}) }}
                     {% if form.tipsDeadline.vars.help %}
-                        <p class="text-xs text-navy-900/60 mt-1">{{ form.tipsDeadline.vars.help }}</p>
+                        <p class="text-xs leading-relaxed text-white/50">{{ form.tipsDeadline.vars.help }}</p>
                     {% endif %}
                     {{ form_errors(form.tipsDeadline) }}
                 </div>
             </div>
 
-            <div class="flex gap-3">
-                <button
-                    type="submit"
-                    class="bg-navy-900 hover:bg-navy-700 text-white py-3 px-6 rounded-lg font-medium transition-colors"
-                >
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button type="submit" class="btn btn-primary">
+                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                     Uložit změny
                 </button>
 
-                <a
-                    href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}"
-                    class="bg-navy-50 hover:bg-navy-100 text-navy-900 py-3 px-6 rounded-lg font-medium transition-colors"
-                >
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>

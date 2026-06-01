@@ -3,35 +3,37 @@
 {% block title %}Přidat e-mail tipujícímu — {{ brand_name }}{% endblock %}
 
 {% block body %}
-<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
         {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
         {label: 'Přidat e-mail tipujícímu'},
     ]" />
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-navy-900">Přidat e-mail tipujícímu</h1>
-        <p class="text-navy-900/60 mt-1">Tipující: <strong>{{ target.displayName }}</strong></p>
-        <p class="text-sm text-navy-900/60 mt-2">
+
+    <header class="mb-8 mt-2">
+        <span class="eyebrow">{{ target.displayName }}</span>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Přidat e-mail tipujícímu</h1>
+        <p class="mt-2 text-sm leading-relaxed text-white/70">
             Po přidání e-mailu odešleme tipujícímu pozvánku na nastavení hesla. Odkaz platí 7 dní.
             Jakmile si heslo nastaví, bude se moct přihlásit a své tipy si dál spravovat sám.
         </p>
-    </div>
+    </header>
 
-    <div class="bg-white rounded-2xl shadow-card ring-1 ring-navy-900/5 p-8">
-        {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+    <div class="card-glass p-6 sm:p-8">
+        {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
 
-            <div>
-                {{ form_label(form.email, null, {label_attr: {class: 'block text-sm font-medium text-navy-900 mb-1.5'}}) }}
-                {{ form_widget(form.email, {attr: {class: 'w-full px-4 py-2.5 border border-navy-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent outline-none transition'}}) }}
+            <div class="field">
+                {{ form_label(form.email) }}
+                {{ form_widget(form.email, {attr: {class: 'input'}}) }}
                 {{ form_errors(form.email) }}
             </div>
 
-            <div class="flex gap-3 pt-2">
-                <button type="submit" class="bg-navy-900 hover:bg-navy-700 text-white py-3 px-6 rounded-lg font-medium transition-colors">
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button type="submit" class="btn btn-primary">
+                    <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
                     Odeslat pozvánku
                 </button>
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="bg-navy-50 hover:bg-navy-100 text-navy-900 py-3 px-6 rounded-lg font-medium transition-colors">
+                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>
