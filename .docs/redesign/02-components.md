@@ -78,7 +78,12 @@ quick-stats.
 `rank` 1/2/3 → medal gradients (gold/silver/bronze); else accent or a
 deterministic gradient by first-letter. Sizes 24/30/36/44.
 
-### `TeamFlag` (`TeamFlag.html.twig`)
+### `TeamFlag` (`TeamFlag.html.twig`) — **shipped (initials coin)**
+> STATUS: ships the robust **initials coin** (accent gradient) for free-text team
+> names. The curated national-flag SVG set below is **deferred** — the app's real
+> match data is club teams (free-text), so a nation→flag map doesn't apply and
+> would warrant a flag-icon library, not hand-written SVGs. No missing-flag fails.
+
 `{% props code, size = 44 %}`. Circular "coin" flag. Ship a curated set of inline
 SVG flags (clipPath circle, `viewBox 0 0 60 60`, `preserveAspectRatio slice`,
 **no shadow**, 1px translucent ring) keyed by 3-letter code, with a fallback

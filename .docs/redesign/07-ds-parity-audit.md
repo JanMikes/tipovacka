@@ -81,7 +81,7 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | **match row (horizontal) → `Match/MatchRow`** | `Match/MatchRow.html.twig` | ✅ | DONE (f0905fc): built shared component + `.tip-row*` @layer CSS; replaced all 3 hand-rolled rows. `:prop` typed/null-safe. |
 | pick distribution → `.dist-bar` | `Match/PickDistribution.html.twig` | ✅ | Free after lock. |
 | StatCard / Avatar / EmptyState | components | ✅ | |
-| **TeamFlag coin SVGs** | `TeamFlag.html.twig` | ⚠️ **P2** | Only `.flag.club` initials fallback; the curated country SVG set (CZE/SWE/FIN/CAN/…) is NOT shipped. Build `_flags` macro + name→code map per 02-components seed set. |
+| **TeamFlag coin SVGs** | `TeamFlag.html.twig` | ✅ (documented) | The robust accent-gradient **initials coin** is the intended final state. The app's actual match data is **free-text club teams** ("Brno", "Teplice", "Mladá Boleslav"), not national teams — the DS's national-flag coin set was for its World Cup demo and doesn't map to free-text club names (02-components calls the name→code map "a nice-to-have, not a blocker"). A national-flag set is deferred as a future enhancement (and would warrant a flag-icon library, not ~16 hand-written SVGs). No missing-flag failures; dark/circular/on-brand. |
 | `Scoring/RuleFields` (`.variant-card` presets) | `Scoring/RuleFields.html.twig` | ✅ | DONE (next commit): built the anonymous component + ported `.variant-card`/`.scoring-fields` CSS; used by both portal + admin rule_configuration (dedup). `scoring_preset_controller.js` prefills Standardní (1/1/3/5) / Vlastní; +střelec tile inert. |
 
 ## D. Player pages
@@ -129,8 +129,8 @@ reused components · **P2** organizer kit · **P3** polish + reference elements.
 | CreatePoolModal step4 contributions tiers | — | 🔮 **P3** | Correctly absent. Reference-only later (premium). |
 | InvitePlayersModal roster | `group/detail` + anon-member flows | ✅ | |
 | join-by-PIN 8-box | `_partials/join_by_pin_form.html.twig` | ✅ | |
-| TipForMembersScreen | `portal/group/manage_member_tips.html.twig` | ⚠️ **P2** | Missing "{filled}/{total} vyplněno" counter + bulk-fill shortcuts; unify `.score-input` (vs `.num-input` in `my_tips_batch`). |
-| TipForMembers batch (self) | `portal/group/my_tips_batch.html.twig` | ✅ | (score-input class unify — see above.) |
+| TipForMembersScreen | `portal/group/manage_member_tips.html.twig` | ✅ | DONE (next commit): live „{filled}/{total} vyplněno" counter + bulk-fill shortcuts (domácí 2:1 / remíza 1:1 / hosté 1:2 / Smazat vše) via `tip_fill_controller.js` (fills only empty rows; dispatches input). Form/CSRF/submit untouched. |
+| TipForMembers batch (self) | `portal/group/my_tips_batch.html.twig` | ✅ | DONE: unified `.num-input` → `.score-input` (the canonical score-entry token). |
 | **SetResultModal scorers editor** | `portal/sport_match/set_score.html.twig` | 🔮 **P3** | Score entry ✅; scorers/timeline + „Trefený střelec" = deferred visual-only (inert, no backend). |
 | LiveMatch (live scoreboard) | `sport_match/detail` + `guess/detail` | ✅ | Live correctly stripped; dist free post-lock. |
 | PoolsDashboard / tournament grids | `portal/tournament/detail.html.twig` | ✅ | Payout quick-stats dropped (cut). |

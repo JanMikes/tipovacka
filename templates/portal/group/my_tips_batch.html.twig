@@ -65,14 +65,14 @@
                                        name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
                                        min="0" max="99"
                                        value="{{ row.guess ? row.guess.homeScore : '' }}"
-                                       class="num-input"
+                                       class="score-input"
                                        aria-label="Domácí – {{ row.match.homeTeam }}">
                                 <span class="text-lg font-bold text-white/40">:</span>
                                 <input type="number"
                                        name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
                                        min="0" max="99"
                                        value="{{ row.guess ? row.guess.awayScore : '' }}"
-                                       class="num-input"
+                                       class="score-input"
                                        aria-label="Hosté – {{ row.match.awayTeam }}">
                             </div>
                         </li>

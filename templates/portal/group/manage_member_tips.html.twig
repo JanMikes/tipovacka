@@ -67,20 +67,45 @@
               action="{{ path('portal_group_guess_on_behalf_batch', {
                   groupId: group.id.toRfc4122,
                   memberId: selectedMember.id.toRfc4122,
-              }) }}">
+              }) }}"
+              data-controller="tip-fill">
             <input type="hidden" name="_token"
                    value="{{ csrf_token('guess_on_behalf_batch_' ~ group.id.toRfc4122 ~ '_' ~ selectedMember.id.toRfc4122) }}">
 
             <section class="card overflow-hidden p-0">
-                <header class="flex items-center gap-3 border-b border-white/[0.06] px-6 py-5">
-                    <twig:Avatar name="{{ selectedMember.displayName }}" size="40" />
-                    <div class="min-w-0">
-                        <h2 class="truncate text-lg font-bold text-white">
-                            Tipy pro {{ selectedMember.displayName }}
-                        </h2>
-                        <p class="mt-0.5 text-xs text-white/50">
-                            Vyplňte skóre u zápasů, které chcete uložit. Nevyplněné zápasy se přeskočí.
-                        </p>
+                <header class="border-b border-white/[0.06] px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <twig:Avatar name="{{ selectedMember.displayName }}" size="40" />
+                        <div class="min-w-0 flex-1">
+                            <h2 class="truncate text-lg font-bold text-white">
+                                Tipy pro {{ selectedMember.displayName }}
+                            </h2>
+                            <p class="mt-0.5 text-xs text-white/50">
+                                Vyplňte skóre u zápasů, které chcete uložit. Nevyplněné zápasy se přeskočí.
+                            </p>
+                        </div>
+                        <span class="shrink-0 text-xs font-semibold tabular-nums text-white/60"
+                              data-tip-fill-target="counter">0/{{ rows|length }} vyplněno</span>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <span class="mr-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white/40">Hromadně</span>
+                        <button type="button" class="btn btn-ghost btn-sm" data-action="tip-fill#fillHomeWin">
+                            <twig:ux:icon name="lucide:arrow-left" class="h-3.5 w-3.5" />
+                            Domácí 2:1
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" data-action="tip-fill#fillDraw">
+                            <twig:ux:icon name="lucide:equal" class="h-3.5 w-3.5" />
+                            Remíza 1:1
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" data-action="tip-fill#fillAwayWin">
+                            <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5" />
+                            Hosté 1:2
+                        </button>
+                        <button type="button" class="btn btn-ghost btn-sm" data-action="tip-fill#clearAll">
+                            <twig:ux:icon name="lucide:trash-2" class="h-3.5 w-3.5" />
+                            Smazat vše
+                        </button>
                     </div>
                 </header>
 
@@ -111,6 +136,8 @@
                                        min="0" max="99"
                                        value="{{ row.guess ? row.guess.homeScore : '' }}"
                                        class="score-input"
+                                       data-tip-fill-target="score"
+                                       data-match="{{ row.match.id.toRfc4122 }}"
                                        aria-label="Domácí – {{ row.match.homeTeam }}">
                                 <span class="text-lg font-bold text-white/40">:</span>
                                 <input type="number"
@@ -118,6 +145,8 @@
                                        min="0" max="99"
                                        value="{{ row.guess ? row.guess.awayScore : '' }}"
                                        class="score-input"
+                                       data-tip-fill-target="score"
+                                       data-match="{{ row.match.id.toRfc4122 }}"
                                        aria-label="Hosté – {{ row.match.awayTeam }}">
                             </div>
                         </li>
@@ -127,9 +156,8 @@
 
             <div class="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-navy-900/90 backdrop-blur-xl">
                 <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-                    <p class="hidden text-xs text-white/50 sm:block">
-                        {{ rows|length }} {{ rows|length == 1 ? 'zápas' : (rows|length < 5 ? 'zápasy' : 'zápasů') }}
-                    </p>
+                    <p class="hidden text-xs tabular-nums text-white/50 sm:block"
+                       data-tip-fill-target="counter">0/{{ rows|length }} vyplněno</p>
                     <button type="submit"
                             class="btn btn-primary w-full justify-center sm:w-auto">
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
