@@ -89,6 +89,60 @@
         </section>
     {% endif %}
 
+    {# ───── Mini žebříček vybrané soutěže ───── #}
+    {% if mini_leaderboard_rows|length >= 2 %}
+        <section class="mb-10">
+            <div class="card-glass overflow-hidden p-0">
+                <div class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
+                    <h2 class="flex items-center gap-2 text-base font-bold text-white">
+                        <twig:ux:icon name="lucide:trophy" class="h-5 w-5 text-accent-400" />
+                        Žebříček · {{ selected_group.groupName }}
+                    </h2>
+                    <a href="{{ path('portal_group_leaderboard', {groupId: selected_group.groupId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                        Celý žebříček
+                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    </a>
+                </div>
+                <div>
+                    {% for row in mini_leaderboard_rows %}
+                        {% set is_me = app.user and row.userId.equals(app.user.id) %}
+                        <div class="lb-row{{ is_me ? ' me' }}">
+                            <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
+                            <a href="{{ path('portal_group_leaderboard_member', {groupId: selected_group.groupId.toRfc4122, userId: row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                                <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="30" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                <span class="flex min-w-0 items-center gap-2">
+                                    <span class="truncate text-sm font-bold text-white">{{ row.nickname }}</span>
+                                    {% if is_me %}<span class="lb-ty">TY</span>{% endif %}
+                                </span>
+                            </a>
+                            <span class="text-right">
+                                {% if row.streak > 0 %}<span class="lb-streak inline-flex items-center gap-1"><twig:ux:icon name="lucide:flame" class="h-3.5 w-3.5" />{{ row.streak }}</span>{% endif %}
+                            </span>
+                            <span class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></span>
+                        </div>
+                    {% endfor %}
+                    {% if mini_me_row is not null %}
+                        <div class="border-t border-white/[0.06] py-1 text-center text-[11px] text-white/30">…</div>
+                        <div class="lb-row me">
+                            <span class="lb-pos">{{ mini_me_row.rank }}.</span>
+                            <a href="{{ path('portal_group_leaderboard_member', {groupId: selected_group.groupId.toRfc4122, userId: mini_me_row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                                <twig:Avatar name="{{ mini_me_row.fullName ?: mini_me_row.nickname }}" size="30" />
+                                <span class="flex min-w-0 items-center gap-2">
+                                    <span class="truncate text-sm font-bold text-white">{{ mini_me_row.nickname }}</span>
+                                    <span class="lb-ty">TY</span>
+                                </span>
+                            </a>
+                            <span class="text-right">
+                                {% if mini_me_row.streak > 0 %}<span class="lb-streak inline-flex items-center gap-1"><twig:ux:icon name="lucide:flame" class="h-3.5 w-3.5" />{{ mini_me_row.streak }}</span>{% endif %}
+                            </span>
+                            <span class="text-right"><span class="lb-pts">{{ mini_me_row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
     {# ───── Přehledové statistiky — pouze hodnoty odvozené z dostupných dat ───── #}
     <div class="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <twig:StatCard

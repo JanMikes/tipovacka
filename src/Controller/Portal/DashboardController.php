@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal;
 
 use App\Entity\User;
+use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
 use App\Query\GetMemberGroupStats\GetMemberGroupStats;
 use App\Query\ListDiscoverablePublicTournaments\ListDiscoverablePublicTournaments;
 use App\Query\ListMyGroups\ListMyGroups;
@@ -41,6 +42,8 @@ final class DashboardController extends AbstractController
         // unknown id falls back to that default, so other groups' stats never leak.
         $selectedGroup = null;
         $memberStats = null;
+        $miniLeaderboardRows = [];
+        $miniMeRow = null;
 
         if (count($myGroups) > 0) {
             $requestedGroupId = $request->query->get('soutez');
@@ -58,6 +61,21 @@ final class DashboardController extends AbstractController
                 userId: $user->id,
                 groupId: $selectedGroup->groupId,
             ));
+
+            // Mini-leaderboard for the selected soutěž: top 5 + the user's own row
+            // appended below if they're outside the top 5 (so they always see it).
+            $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $selectedGroup->groupId));
+            $miniLeaderboardRows = array_slice($leaderboard->rows, 0, 5);
+
+            foreach ($leaderboard->rows as $row) {
+                if ($row->userId->equals($user->id)) {
+                    if ($row->rank > 5) {
+                        $miniMeRow = $row;
+                    }
+
+                    break;
+                }
+            }
         }
 
         return $this->render('portal/dashboard.html.twig', [
@@ -68,6 +86,8 @@ final class DashboardController extends AbstractController
             'discoverable_tournaments' => $discoverableTournaments,
             'selected_group' => $selectedGroup,
             'member_stats' => $memberStats,
+            'mini_leaderboard_rows' => $miniLeaderboardRows,
+            'mini_me_row' => $miniMeRow,
         ]);
     }
 }
