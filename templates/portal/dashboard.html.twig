@@ -15,6 +15,80 @@
         <p class="mt-3 max-w-2xl text-white/60">Vaše soutěže, nadcházející zápasy a vyhodnocené tipy přehledně na jednom místě.</p>
     </header>
 
+    {# ───── Moje výsledky — osobní statistiky ve vybrané soutěži ───── #}
+    {% if member_stats is not null and selected_group is not null %}
+        <section class="mb-10">
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
+                        <twig:ux:icon name="lucide:activity" class="h-5 w-5 text-accent-300" />
+                        Moje výsledky
+                    </h2>
+                    <p class="mt-1.5 text-sm text-white/50">
+                        Vaše statistiky v soutěži <span class="font-semibold text-white/70">{{ selected_group.groupName }}</span>.
+                    </p>
+                </div>
+                {% if my_groups|length > 1 %}
+                    <twig:SoutezSwitcher
+                        :groups="my_groups"
+                        currentId="{{ selected_group.groupId.toRfc4122 }}"
+                        route="portal_dashboard"
+                        param="soutez"
+                        label="Zobrazená soutěž"
+                    />
+                {% endif %}
+            </div>
+
+            {% if member_stats.evaluatedCount == 0 %}
+                <div class="card-glass flex flex-col items-center gap-2 p-8 text-center sm:flex-row sm:items-center sm:gap-4 sm:text-left">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                        <twig:ux:icon name="lucide:hourglass" class="h-6 w-6" />
+                    </span>
+                    <div>
+                        <h3 class="text-base font-semibold text-white">Zatím bez výsledků</h3>
+                        <p class="mt-1 text-sm text-white/55">Jakmile se odehrají zápasy a vyhodnotí vaše tipy, uvidíte tu pořadí, úspěšnost, přesné tipy i streak.</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                    <twig:StatCard
+                        label="POŘADÍ"
+                        value="{{ member_stats.rank }}."
+                        meta="z {{ member_stats.totalMembers }} {{ member_stats.totalMembers == 1 ? 'hráče' : 'hráčů' }}"
+                        tone="accent"
+                        icon="medal"
+                    />
+                    <twig:StatCard
+                        label="BODY"
+                        value="{{ member_stats.totalPoints }}"
+                        meta="celkem v soutěži"
+                        icon="star"
+                    />
+                    <twig:StatCard
+                        label="ÚSPĚŠNOST"
+                        value="{{ member_stats.accuracyPercent }} %"
+                        meta="{{ member_stats.scoredCount }}/{{ member_stats.evaluatedCount }} bodujících tipů"
+                        icon="target"
+                    />
+                    <twig:StatCard
+                        label="PŘESNÉ"
+                        value="{{ member_stats.exactCount }}"
+                        meta="přesných tipů"
+                        tone="{{ member_stats.exactCount > 0 ? 'win' : null }}"
+                        icon="circle-check-big"
+                    />
+                    <twig:StatCard
+                        label="STREAK"
+                        value="{{ member_stats.streak }}"
+                        meta="tipů v řadě"
+                        tone="{{ member_stats.streak > 0 ? 'win' : null }}"
+                        icon="flame"
+                    />
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+
     {# ───── Přehledové statistiky — pouze hodnoty odvozené z dostupných dat ───── #}
     <div class="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <twig:StatCard

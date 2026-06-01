@@ -20,9 +20,12 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 > aggregates + a streak pass (trailing scoring run by kickoff); `LeaderboardRow`
 > gained `accuracyPercent/exactCount/partialCount/streak`; columns added to the
 > leaderboard component (hidden on mobile). Test asserts the fixture member's stats.
-> **Still TODO:** the player *dashboard*'s personal stat cards (rank/accuracy/streak
-> per soutěž) — needs a small per-user cross/single-group stats query feeding the
-> dashboard hero; the leaderboard columns are the main win and are done.
+> **Dashboard stat cards ✅ DONE** (see below): `GetMemberGroupStats` query
+> (`src/Query/GetMemberGroupStats/`) reuses `GetGroupLeaderboard` and picks the
+> current user's row; the dashboard renders a soutěž-scoped "Moje výsledky" section
+> (Pořadí / Body / Úspěšnost / Přesné / Streak) with the switcher + an empty-state
+> hint when the member has no evaluated tips. Tests: `GetMemberGroupStatsQueryTest`,
+> `DashboardStatsFlowTest`.
 
 ### 1b. (original combined item — see #1)
 - **DS shows:** leaderboard columns Úspěšnost / Přesné / Trefa / Streak; dashboard
@@ -56,17 +59,15 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 - **Effort: M.** **Test:** new query test — 3 guesses (1/X/2 mix) → assert
   buckets + percentages; controller test that bars are hidden before deadline.
 
-### 3. Soutěž switcher (dashboard / leaderboard)
-- **DS shows:** a `<select>`/menu to switch the active soutěž; stats/leaderboard
-  re-scope.
-- **Exists:** user's groups are queryable (dashboard lists `my_groups`); the
-  leaderboard is per-group via route param.
-- **Add:** a `components/SoutezSwitcher.html.twig` — a menu of the user's groups
-  that links to the same route for the chosen group (server-side nav, e.g.
-  `?soutez=<groupId>` or the existing per-group routes). Default to most-recent
-  membership; optionally persist last choice in session. No SPA.
-- **Effort: S–M.** **Test:** WebTestCase — switcher lists the user's groups and
-  links resolve.
+### 3. Soutěž switcher (dashboard / leaderboard) ✅ DONE
+> Implemented: `templates/components/SoutezSwitcher.html.twig` — a server-side
+> `<details>` dropdown of the user's soutěže; each option links to the same route
+> for the chosen group via `path(route, {(param): groupId})` (path segment when the
+> route has the placeholder, else a `?param=<id>` query string). Renders only with
+> ≥2 groups; defaults to the most recently joined membership. Wired into the
+> leaderboard header (`param="groupId"`) and the dashboard "Moje výsledky" section
+> (`param="soutez"`). Tests: `SoutezSwitcherFlowTest` (lists groups + links resolve
+> + hidden for a single group).
 
 ### 4. "Zápasy" page (cross-soutěž matches) + nav item
 - **DS shows:** a top-level Zápasy page — all my open/upcoming matches across

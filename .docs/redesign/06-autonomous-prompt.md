@@ -65,11 +65,17 @@ HARD RULES:
   icons via `ux:icons:import` before use). Czech vykání, sentence-case headings, decimal comma,
   „…" quotes, correct numerals. Preserve all Live-Component/Stimulus/CSRF/voter wiring on edits.
 
-VERIFICATION GATE — main deploys to wtips.cz, so ONLY push when green:
-`docker compose exec -T web composer quality` (phpstan L8 + cs:check + tests + migrations-up-to-date
-+ schema:validate) AND `bin/console lint:twig templates/`. Render-smoke authenticated pages from
-inside the container: `docker compose exec -T web curl -s -o /dev/null -w '%{http_code}'
-http://localhost/<path>` (host curl is sandbox-blocked).
+VERIFICATION GATE — main deploys to wtips.cz, so ONLY push when green. NOTE: in this
+repo `composer quality` is ONLY `phpstan + test:unit` (see composer.json) — it is NOT the
+full CI gate. The real gate (CI `.github/workflows/test.yml`, which gates the deploy) is:
+  - `docker compose exec -T web composer phpstan`           (PHPStan L8)
+  - `docker compose exec -T web composer cs:check`          (php-cs-fixer dry-run)
+  - `docker compose exec -T web vendor/bin/phpunit`         (ALL tests — but run PER FILE
+    locally; the full run OOMs the VM, see gotchas)
+  - `docker compose exec -T web bin/console lint:twig templates/`
+  - schema only, when you touched entities: `bin/console doctrine:schema:validate`
+Authenticated WebTestCase render-smokes (assertResponseIsSuccessful) cover page rendering;
+host curl is sandbox-blocked, and the test DB has no logged-in session for raw curl anyway.
 
 ENVIRONMENT GOTCHAS (memory-pressured Docker VM):
 - If the web container restart-loops, the dev DB `wtips` is missing:
