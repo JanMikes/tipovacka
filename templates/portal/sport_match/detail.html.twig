@@ -27,7 +27,8 @@
                 {% elseif sport_match.isPostponed %}
                     <twig:Pill label="Odložen" variant="warn" icon="triangle-alert" />
                 {% elseif sport_match.isLive %}
-                    <twig:Pill label="Probíhá" variant="locked" icon="lock" />
+                    {# No live state is surfaced (cut) — an in-progress match is simply locked. #}
+                    <twig:Pill label="Uzamčeno" variant="locked" icon="lock" />
                 {% else %}
                     <twig:Pill label="Naplánován" variant="soon" dot="true" />
                 {% endif %}

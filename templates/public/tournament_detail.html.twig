@@ -201,7 +201,8 @@
                                 {% if state == 'scheduled' %}
                                     <twig:Pill label="Naplánován" variant="accent" />
                                 {% elseif state == 'live' %}
-                                    <twig:Pill label="Živě" variant="live" dot />
+                                    {# Live match state is not surfaced as a product feature (cut) — an in-progress match reads as locked. #}
+                                    <twig:Pill label="Uzamčeno" variant="locked" icon="lock" />
                                 {% elseif state == 'finished' %}
                                     <twig:Pill label="Odehrán" variant="success" />
                                 {% elseif state == 'postponed' %}
