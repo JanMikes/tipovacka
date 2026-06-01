@@ -13,7 +13,7 @@ on:
         types:
             - completed
         branches:
-            - main
+            - tipovacka
 
 jobs:
     docker:
@@ -30,9 +30,10 @@ jobs:
                 with:
                     # list of Docker images to use as base name for tags
                     images: ghcr.io/janmikes/tipovacka
-                    # generate Docker tags based on the following events/attributes
+                    # Frozen "old version" branch: keep publishing the :main tag so the
+                    # untouched deployment/tipovacka (which pulls :main) keeps working.
                     tags: |
-                        type=ref,event=branch
+                        type=raw,value=main
                         type=sha
 
             -   name: Set up Docker Buildx
