@@ -83,15 +83,20 @@ hand-write); new icons → `ux:icons:import`; `composer quality` must stay green
 > cross-soutěž aggregation, ukončené + tipovatelné filters).
 > **Note:** round/stage label on the rows lands with #5 (schema) below.
 
-### 5. `SportMatch.round` / stage label
-- **DS shows:** tip-card header line 1 = round ("Skupina A", "Čtvrtfinále").
-- **Exists:** flat match list; the untracked `ms-hokej-2026-{qf,sf,final}.csv`
-  imply round data is imported as flat matches.
-- **Add:** nullable `?string $round` on `SportMatch` (+ a small `updateRound`/
-  constructor wiring), generate the migration, surface it in the create form +
-  CSV import (header column) + the tip-card header (fallback = tournament name).
-- **Effort: S** (one generated migration). **Test:** migrations-up-to-date +
-  schema:validate must stay green; an import test asserting round is stored.
+### 5. `SportMatch.round` / stage label ✅ DONE
+> Implemented: nullable `public private(set) ?string $round` on `SportMatch`
+> (declared next to `$venue`; threaded as an **optional last** constructor +
+> `updateDetails` param so the ~14 existing call sites compile unchanged).
+> Generated migration `Version20260601165752` (single `ALTER TABLE … ADD round`).
+> Surfaced end-to-end: create/edit form (`SportMatchFormData/Type` + form.twig),
+> CSV import (optional `Kolo (nepovinné)` column — backward compatible, older CSVs
+> without it still import; `SportMatchImporter` + `SportMatchImportRow` +
+> `SportMatchImportSession` store/consume + import preview table + template CSV),
+> and headers: match-detail hero `.round` (fallback = tournament name), Zápasy +
+> dashboard match-row meta lines. Fixtures set round on two matches (Čtvrtfinále /
+> Základní skupina). DTOs `UpcomingMatchItem` + `UserMatchItem` carry round.
+> Tests: `SportMatchEntityTest` (construct/update/clear round), `BulkImportFlowTest`
+> (round column stored). `schema:validate` + `schema:update --dump-sql` clean.
 
 ### 6. Per-match ranking ("Pořadí za zápas")
 - **DS shows:** on the single-match page, top scorers for that match.

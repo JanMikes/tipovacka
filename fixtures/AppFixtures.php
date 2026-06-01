@@ -333,6 +333,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: 'Generali Arena',
             createdAt: $now,
+            round: 'Čtvrtfinále',
         );
         $scheduledMatch->popEvents();
         $manager->persist($scheduledMatch);
@@ -358,6 +359,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             kickoffAt: new \DateTimeImmutable('2025-06-10 18:00:00 UTC'),
             venue: 'Ďolíček',
             createdAt: $now,
+            round: 'Základní skupina',
         );
         $finishedMatch->setFinalScore(2, 1, $now);
         $finishedMatch->popEvents();

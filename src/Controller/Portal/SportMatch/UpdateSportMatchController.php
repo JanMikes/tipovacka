@@ -51,6 +51,7 @@ final class UpdateSportMatchController extends AbstractController
                 awayTeam: $formData->awayTeam,
                 kickoffAt: $formData->kickoffAt,
                 venue: $formData->venue ?: null,
+                round: $formData->round ?: null,
             ));
 
             $this->addFlash('success', 'Zápas byl uložen.');

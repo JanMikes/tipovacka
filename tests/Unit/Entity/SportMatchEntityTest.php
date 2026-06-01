@@ -94,6 +94,40 @@ final class SportMatchEntityTest extends TestCase
         self::assertSame(SportMatchState::Scheduled, $match->state);
     }
 
+    public function testRoundDefaultsToNull(): void
+    {
+        self::assertNull($this->makeMatch()->round);
+    }
+
+    public function testConstructorStoresRound(): void
+    {
+        $match = new SportMatch(
+            id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+            tournament: $this->makeTournament(),
+            homeTeam: 'A',
+            awayTeam: 'B',
+            kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+            venue: 'Stadium',
+            createdAt: $this->now,
+            round: 'Čtvrtfinále',
+        );
+
+        self::assertSame('Čtvrtfinále', $match->round);
+    }
+
+    public function testUpdateDetailsSetsAndClearsRound(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->updateDetails('A', 'B', null, 'Stadium', $this->later, round: 'Semifinále');
+        self::assertSame('Semifinále', $match->round);
+
+        // updateDetails replaces round wholesale (like venue) — omitting it clears it.
+        $match->updateDetails('A', 'B', null, 'Stadium', $this->later);
+        self::assertNull($match->round);
+    }
+
     public function testUpdateDetailsAppliesOnlyNonNullFields(): void
     {
         $match = $this->makeMatch();

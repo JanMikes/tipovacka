@@ -43,6 +43,10 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     #[ORM\Column(length: 160, nullable: true)]
     public private(set) ?string $venue;
 
+    /** Round / stage label, e.g. „Skupina A", „Čtvrtfinále". Free text, optional. */
+    #[ORM\Column(length: 120, nullable: true)]
+    public private(set) ?string $round;
+
     #[ORM\Column(enumType: SportMatchState::class)]
     public private(set) SportMatchState $state;
 
@@ -92,11 +96,15 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         ?string $venue,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
+        // Appended (optional) so existing positional/named call sites keep compiling;
+        // the field itself is declared up top next to $venue.
+        ?string $round = null,
     ) {
         $this->homeTeam = $homeTeam;
         $this->awayTeam = $awayTeam;
         $this->kickoffAt = $kickoffAt;
         $this->venue = $venue;
+        $this->round = $round;
         $this->state = SportMatchState::Scheduled;
         $this->updatedAt = $this->createdAt;
 
@@ -116,6 +124,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         ?\DateTimeImmutable $kickoffAt,
         ?string $venue,
         \DateTimeImmutable $now,
+        ?string $round = null,
     ): void {
         if ($this->isCancelled || null !== $this->deletedAt) {
             throw SportMatchCannotBeEdited::create();
@@ -134,6 +143,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         }
 
         $this->venue = $venue;
+        $this->round = $round;
         $this->updatedAt = $now;
 
         $this->recordThat(new SportMatchUpdated(

@@ -68,6 +68,7 @@ final readonly class ListUserMatchesQuery
                     awayTeam: $m->awayTeam,
                     kickoffAt: $m->kickoffAt,
                     venue: $m->venue,
+                    round: $m->round,
                     isOpenForGuesses: $m->isOpenForGuesses,
                     isFinished: $m->isFinished,
                     isLive: $m->isLive,

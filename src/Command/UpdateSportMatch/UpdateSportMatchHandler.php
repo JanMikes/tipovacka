@@ -29,6 +29,7 @@ final readonly class UpdateSportMatchHandler
             kickoffAt: $command->kickoffAt,
             venue: $command->venue,
             now: $now,
+            round: $command->round,
         );
     }
 }

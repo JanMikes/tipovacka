@@ -12,6 +12,7 @@ final readonly class SportMatchImportRow
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
+        public ?string $round = null,
     ) {
     }
 }

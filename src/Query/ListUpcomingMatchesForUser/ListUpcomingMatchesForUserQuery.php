@@ -68,6 +68,7 @@ final readonly class ListUpcomingMatchesForUserQuery
                     awayTeam: $m->awayTeam,
                     kickoffAt: $m->kickoffAt,
                     venue: $m->venue,
+                    round: $m->round,
                     groupsCount: $groupsCount,
                     guessedGroupsCount: $guessedGroupsCount,
                     pendingGroupsCount: $groupsCount - $guessedGroupsCount,

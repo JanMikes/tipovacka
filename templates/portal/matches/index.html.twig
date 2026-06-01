@@ -111,9 +111,9 @@
                         </div>
                     </div>
 
-                    {% if m.tournamentName or m.venue %}
+                    {% if m.round or m.tournamentName or m.venue %}
                         <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                            {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                            {% if m.round %}<span class="font-semibold text-white/55">{{ m.round }}</span> · {% endif %}{{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
                         </p>
                     {% endif %}
                 </li>

@@ -26,8 +26,10 @@
     <section class="card-glass relative mb-6 overflow-hidden p-6 text-white sm:p-8">
         <div class="tip-head">
             <div class="tip-stage">
-                <span class="round">{{ sport_match.tournament.name }}</span>
-                <span class="when">{{ sport_match.kickoffAt|date('j. n. Y') }} · {{ sport_match.kickoffAt|date('H:i') }}</span>
+                <span class="round">{{ sport_match.round ?: sport_match.tournament.name }}</span>
+                <span class="when">
+                    {% if sport_match.round %}{{ sport_match.tournament.name }} · {% endif %}{{ sport_match.kickoffAt|date('j. n. Y') }} · {{ sport_match.kickoffAt|date('H:i') }}
+                </span>
             </div>
 
             {% if sport_match.isFinished %}

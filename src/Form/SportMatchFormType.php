@@ -41,6 +41,13 @@ final class SportMatchFormType extends AbstractType
             'required' => false,
             'attr' => ['placeholder' => 'Např. Generali Arena'],
         ]);
+
+        $builder->add('round', TextType::class, [
+            'label' => 'Kolo / fáze',
+            'required' => false,
+            'help' => 'Nepovinné. Např. „Skupina A", „Čtvrtfinále".',
+            'attr' => ['placeholder' => 'Např. Čtvrtfinále'],
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

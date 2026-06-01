@@ -32,6 +32,12 @@ final class SportMatchFormData
     )]
     public ?string $venue = null;
 
+    #[Assert\Length(
+        max: 120,
+        maxMessage: 'Označení kola nesmí být delší než {{ limit }} znaků.',
+    )]
+    public ?string $round = null;
+
     public static function fromSportMatch(SportMatch $sportMatch): self
     {
         $formData = new self();
@@ -39,6 +45,7 @@ final class SportMatchFormData
         $formData->awayTeam = $sportMatch->awayTeam;
         $formData->kickoffAt = $sportMatch->kickoffAt;
         $formData->venue = $sportMatch->venue;
+        $formData->round = $sportMatch->round;
 
         return $formData;
     }

@@ -20,6 +20,7 @@ final class SportMatchImporter
     public const string COLUMN_AWAY = 'Hosté';
     public const string COLUMN_KICKOFF = 'Začátek (YYYY-MM-DD HH:MM)';
     public const string COLUMN_VENUE = 'Místo (nepovinné)';
+    public const string COLUMN_ROUND = 'Kolo (nepovinné)';
 
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
@@ -58,6 +59,9 @@ final class SportMatchImporter
             $away = $this->normaliseString($row[$headerMap[self::COLUMN_AWAY]] ?? null);
             $kickoffRaw = $this->normaliseString($row[$headerMap[self::COLUMN_KICKOFF]] ?? null);
             $venueRaw = $this->normaliseString($row[$headerMap[self::COLUMN_VENUE]] ?? null);
+            $roundRaw = isset($headerMap[self::COLUMN_ROUND])
+                ? $this->normaliseString($row[$headerMap[self::COLUMN_ROUND]] ?? null)
+                : '';
 
             $rowErrors = [];
 
@@ -96,6 +100,15 @@ final class SportMatchImporter
                 }
             }
 
+            $round = null;
+            if ('' !== $roundRaw) {
+                if (mb_strlen($roundRaw) > 120) {
+                    $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_ROUND, 'Kolo je delší než 120 znaků.');
+                } else {
+                    $round = $roundRaw;
+                }
+            }
+
             if ([] !== $rowErrors) {
                 foreach ($rowErrors as $error) {
                     $errors[] = $error;
@@ -112,6 +125,7 @@ final class SportMatchImporter
                 awayTeam: $away,
                 kickoffAt: $kickoffAt,
                 venue: $venue,
+                round: $round,
             );
         }
 
@@ -135,6 +149,7 @@ final class SportMatchImporter
                 kickoffAt: $row->kickoffAt,
                 venue: $row->venue,
                 createdAt: $now,
+                round: $row->round,
             );
             $this->sportMatchRepository->save($sportMatch);
         }
@@ -144,8 +159,8 @@ final class SportMatchImporter
 
     public function generateTemplateCsv(): string
     {
-        $header = [self::COLUMN_HOME, self::COLUMN_AWAY, self::COLUMN_KICKOFF, self::COLUMN_VENUE];
-        $sample = ['Sparta Praha', 'Slavia Praha', '2026-05-10 18:00', 'Generali Arena'];
+        $header = [self::COLUMN_HOME, self::COLUMN_AWAY, self::COLUMN_KICKOFF, self::COLUMN_VENUE, self::COLUMN_ROUND];
+        $sample = ['Sparta Praha', 'Slavia Praha', '2026-05-10 18:00', 'Generali Arena', 'Čtvrtfinále'];
 
         $handle = fopen('php://temp', 'r+');
         if (false === $handle) {
@@ -205,6 +220,12 @@ final class SportMatchImporter
                 throw SportMatchImportFailed::withMessage(sprintf('Ve zdrojovém souboru chybí sloupec "%s".', $expected));
             }
             $map[$expected] = $columnIndex;
+        }
+
+        // Optional round/stage column — older templates (and CSVs without it) stay valid.
+        $roundIndex = array_search(self::COLUMN_ROUND, $normalised, true);
+        if (false !== $roundIndex) {
+            $map[self::COLUMN_ROUND] = $roundIndex;
         }
 
         return $map;

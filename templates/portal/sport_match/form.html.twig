@@ -58,6 +58,13 @@
                     {{ form_errors(form.venue) }}
                 </div>
 
+                <div class="field">
+                    {{ form_label(form.round, null, {label_attr: {class: 'field-label'}}) }}
+                    {{ form_widget(form.round, {attr: {class: 'input'}}) }}
+                    {% if form.round.vars.help %}<p class="text-xs text-white/50">{{ form.round.vars.help }}</p>{% endif %}
+                    {{ form_errors(form.round) }}
+                </div>
+
                 <div class="flex flex-wrap gap-3 pt-2">
                     <button type="submit" class="btn btn-primary">
                         <twig:ux:icon name="lucide:{{ mode == 'create' ? 'plus' : 'save' }}" class="h-4 w-4" />

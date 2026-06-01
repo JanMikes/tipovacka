@@ -29,6 +29,7 @@ final class SportMatchImportSession
                 'awayTeam' => $row->awayTeam,
                 'kickoffAt' => $row->kickoffAt->format(\DateTimeInterface::ATOM),
                 'venue' => $row->venue,
+                'round' => $row->round,
             ],
             $rows,
         );
@@ -69,6 +70,7 @@ final class SportMatchImportSession
                 awayTeam: (string) ($item['awayTeam'] ?? ''),
                 kickoffAt: $kickoff,
                 venue: isset($item['venue']) && is_string($item['venue']) ? $item['venue'] : null,
+                round: isset($item['round']) && is_string($item['round']) ? $item['round'] : null,
             );
         }
 
