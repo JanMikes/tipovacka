@@ -89,6 +89,17 @@ final class SportMatchImporterTest extends TestCase
         self::assertSame('Sparta Praha', $preview->validRows[0]->homeTeam);
         self::assertSame('Generali Arena', $preview->validRows[0]->venue);
         self::assertNull($preview->validRows[1]->venue);
+
+        // Times in the file are Czech local time and must be stored in UTC
+        // (18:00 CEST -> 16:00 UTC).
+        self::assertSame(
+            '2026-05-10 16:00',
+            $preview->validRows[0]->kickoffAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'),
+        );
+        self::assertSame(
+            '2026-05-11 18:00',
+            $preview->validRows[1]->kickoffAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'),
+        );
     }
 
     public function testPreviewSkipsEmptyRows(): void

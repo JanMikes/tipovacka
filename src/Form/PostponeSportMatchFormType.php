@@ -23,6 +23,9 @@ final class PostponeSportMatchFormType extends AbstractType
             'with_seconds' => false,
             'html5' => false,
             'format' => 'yyyy-MM-dd HH:mm',
+            // Stored in UTC, entered/displayed in Czech local time.
+            'model_timezone' => 'UTC',
+            'view_timezone' => 'Europe/Prague',
         ]);
     }
 

@@ -70,10 +70,13 @@ final class PostponeController extends AbstractController
             return null;
         }
 
+        // The submitted value is Czech local time; store it in UTC.
+        $localTimezone = new \DateTimeZone('Europe/Prague');
+
         foreach (['Y-m-d\TH:i', 'Y-m-d H:i', 'Y-m-d\TH:i:s'] as $format) {
-            $parsed = \DateTimeImmutable::createFromFormat($format, $raw);
+            $parsed = \DateTimeImmutable::createFromFormat($format, $raw, $localTimezone);
             if ($parsed instanceof \DateTimeImmutable) {
-                return $parsed;
+                return $parsed->setTimezone(new \DateTimeZone('UTC'));
             }
         }
 
