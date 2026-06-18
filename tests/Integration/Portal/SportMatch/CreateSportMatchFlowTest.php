@@ -44,6 +44,11 @@ final class CreateSportMatchFlowTest extends WebTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(SportMatch::class, $match);
+        // Entered as Czech local time (18:00 CEST), stored as UTC (16:00).
+        self::assertSame(
+            '2025-09-15 16:00',
+            $match->kickoffAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'),
+        );
     }
 
     public function testNonOwnerCannotCreateMatch(): void

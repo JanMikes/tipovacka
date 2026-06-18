@@ -62,6 +62,9 @@ final class GroupFormType extends AbstractType
             'html5' => false,
             'with_seconds' => false,
             'format' => 'yyyy-MM-dd HH:mm',
+            // Stored in UTC, entered/displayed in Czech local time.
+            'model_timezone' => 'UTC',
+            'view_timezone' => 'Europe/Prague',
             'help' => 'Uzávěrku lze nastavit i jednotlivě pro každý zápas. Pokud zde žádnou nezadáš a tipy ostatních jsou skryté, zveřejní se v okamžiku začátku zápasu.',
         ]);
 

@@ -268,10 +268,13 @@ final class SportMatchImporter
 
     private function parseKickoff(string $raw): ?\DateTimeImmutable
     {
+        // Times in the uploaded file are Czech local time; store them in UTC.
+        $localTimezone = new \DateTimeZone('Europe/Prague');
+
         foreach (['Y-m-d H:i', 'Y-m-d\TH:i', 'Y-m-d H:i:s'] as $format) {
-            $parsed = \DateTimeImmutable::createFromFormat($format, $raw);
+            $parsed = \DateTimeImmutable::createFromFormat($format, $raw, $localTimezone);
             if ($parsed instanceof \DateTimeImmutable) {
-                return $parsed;
+                return $parsed->setTimezone(new \DateTimeZone('UTC'));
             }
         }
 
