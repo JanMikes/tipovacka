@@ -55,7 +55,24 @@ return App::config([
                 '../src/Service/SportMatch/SportMatchImportPreview.php',
                 '../src/Service/Invitation/InvitationContext.php',
                 '../src/Service/Invitation/InvitationContextStatus.php',
+                '../src/Service/Payment/CheckoutSession.php',
+                '../src/Service/Payment/CheckoutSessionDetails.php',
+                '../src/Service/Payment/InvoiceDetails.php',
+                '../src/Service/Payment/WebhookEvent.php',
             ],
+        ],
+        'App\\Service\\Payment\\StripePaymentGateway' => [
+            'arguments' => [
+                '$secretKey' => '%env(STRIPE_SECRET_KEY)%',
+            ],
+        ],
+        'App\\Service\\Payment\\StripeWebhookParser' => [
+            'arguments' => [
+                '$webhookSecret' => '%env(STRIPE_WEBHOOK_SECRET)%',
+            ],
+        ],
+        'App\\Service\\Payment\\PaymentGateway' => [
+            'alias' => 'App\\Service\\Payment\\StripePaymentGateway',
         ],
         'App\\Validator\\' => [
             'resource' => '../src/Validator/',

@@ -49,6 +49,7 @@
                         <a href="{{ path('portal_profile_edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
                             <twig:ux:icon name="lucide:user" class="h-4 w-4" />Profil
                         </a>
+                        <twig:CreditBalance />
                         {% if is_granted('ROLE_ADMIN') %}
                             <a href="{{ path('admin_tournament_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-accent-300 hover:bg-white/5 hover:text-white">
                                 <twig:ux:icon name="lucide:shield" class="h-4 w-4" />Administrace
@@ -81,6 +82,7 @@
         {% endfor %}
         {% if is_app %}
             <a href="{{ path('portal_profile_edit') }}">Profil</a>
+            <a href="{{ path('portal_credits') }}"{{ current starts with 'portal_credits' ? ' class="active"' }}>Kredity</a>
             {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_tournament_list') }}">Administrace</a>{% endif %}
             <a href="{{ path('app_logout') }}">Odhlásit se</a>
         {% else %}

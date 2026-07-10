@@ -1,0 +1,6 @@
+{# Wallet balance chip for the nav — links to the credits page. #}
+<a href="{{ path('portal_credits') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
+    <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+    Kredity
+    <span class="ml-auto rounded-md bg-accent-500/15 px-1.5 py-0.5 font-mono text-xs font-semibold text-accent-300">{{ this.balance }}</span>
+</a>

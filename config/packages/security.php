@@ -53,6 +53,7 @@ return App::config([
         ],
         'access_control' => [
             ['path' => '^/-/health-check/liveness', 'roles' => 'PUBLIC_ACCESS'],
+            ['path' => '^/webhooks', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/skupiny/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/turnaje', 'roles' => 'PUBLIC_ACCESS'],

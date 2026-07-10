@@ -1,0 +1,131 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kredity — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: 'Kredity'},
+    ]" />
+
+    <header class="mb-8 mt-2">
+        <span class="eyebrow">Peněženka</span>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Kredity</h1>
+        <p class="mt-2 text-sm leading-relaxed text-white/70">1 kredit = 1 Kč. Kredity použijete na prémiové funkce.</p>
+    </header>
+
+    {% if pendingPurchases is not empty %}
+        <div class="surface-accent mb-6 rounded-xl p-4">
+            <div class="flex items-start gap-3">
+                <twig:ux:icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-accent-300" />
+                <div class="text-sm leading-relaxed text-white/80">
+                    <p class="font-semibold text-white">Zpracováváme platbu</p>
+                    {% for purchase in pendingPurchases %}
+                        <p>Nákup {{ purchase.credits }} kreditů z {{ purchase.createdAt|date('d. m. Y H:i') }} čeká na potvrzení platby. Kredity připíšeme automaticky.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+        <div class="space-y-6">
+            <div class="card-glass p-6">
+                <twig:StatCard label="Aktuální zůstatek" value="{{ wallet.balance }}" meta="kreditů" icon="wallet" tone="accent" />
+            </div>
+
+            <div class="card-glass p-6" data-controller="credit-amount">
+                <h2 class="text-lg font-bold tracking-tight text-white">Dobít kredity</h2>
+                <p class="mt-1 text-xs leading-relaxed text-white/50">Platba kartou přes Stripe, fakturu dostanete e-mailem. Minimum je 100 kreditů.</p>
+
+                {{ form_start(form, {attr: {class: 'mt-4 space-y-4', novalidate: 'novalidate'}}) }}
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for preset in [100, 250, 500, 1000] %}
+                            <button type="button"
+                                    class="btn btn-ghost btn-sm justify-center"
+                                    data-credit-amount-target="preset"
+                                    data-action="credit-amount#choose"
+                                    data-credit-amount-amount-param="{{ preset }}">
+                                {{ preset }}
+                            </button>
+                        {% endfor %}
+                    </div>
+
+                    <div class="field">
+                        {{ form_label(form.credits, 'Vlastní počet kreditů') }}
+                        {{ form_widget(form.credits, {attr: {
+                            class: 'input',
+                            'data-credit-amount-target': 'input',
+                            'data-action': 'input->credit-amount#sync',
+                        }}) }}
+                        {{ form_errors(form.credits) }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full justify-center">
+                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                        Zaplatit <span data-credit-amount-target="total"></span> Kč
+                    </button>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <div class="card-glass p-6">
+            <h2 class="text-lg font-bold tracking-tight text-white">Historie transakcí</h2>
+
+            {% if transactions is empty %}
+                <twig:EmptyState
+                    title="Zatím žádné transakce"
+                    body="Jakmile si dobijete kredity nebo vám je přidělí administrátor, uvidíte je tady."
+                />
+            {% else %}
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-white/10 text-left text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                                <th class="py-2 pr-4">Datum</th>
+                                <th class="py-2 pr-4">Popis</th>
+                                <th class="py-2 pr-4 text-right">Kredity</th>
+                                <th class="py-2 pr-4 text-right">Zůstatek</th>
+                                <th class="py-2 text-right">Faktura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                                <tr class="border-b border-white/5">
+                                    <td class="py-3 pr-4 whitespace-nowrap text-white/70">{{ tx.createdAt|date('d. m. Y H:i') }}</td>
+                                    <td class="py-3 pr-4">
+                                        <span class="font-medium text-white">{{ tx.type.label }}</span>
+                                        {% if tx.note %}
+                                            <p class="mt-0.5 text-xs leading-relaxed text-white/50">{{ tx.note }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 pr-4 text-right font-mono font-semibold {{ tx.amount > 0 ? 'text-win' : 'text-loss' }}">
+                                        {{ tx.amount > 0 ? '+' }}{{ tx.amount }}
+                                    </td>
+                                    <td class="py-3 pr-4 text-right font-mono text-white/70">{{ tx.balanceAfter }}</td>
+                                    <td class="py-3 text-right">
+                                        {% if tx.invoicePdfUrl %}
+                                            <a href="{{ tx.invoicePdfUrl }}" class="inline-flex items-center gap-1 text-accent-300 transition-colors hover:text-accent-200" title="Stáhnout fakturu (PDF)">
+                                                <twig:ux:icon name="lucide:download" class="h-4 w-4" />
+                                                PDF
+                                            </a>
+                                        {% elseif tx.invoiceUrl %}
+                                            <a href="{{ tx.invoiceUrl }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-accent-300 transition-colors hover:text-accent-200" title="Zobrazit fakturu">
+                                                <twig:ux:icon name="lucide:download" class="h-4 w-4" />
+                                                Faktura
+                                            </a>
+                                        {% else %}
+                                            <span class="text-white/30">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

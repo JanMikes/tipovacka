@@ -32,5 +32,14 @@ return App::config([
             'alias' => 'messenger.transport.async',
             'public' => true,
         ],
+        // Fake Stripe gateway: tests prime sessions/invoices instead of calling the API.
+        // StripeWebhookParser is intentionally NOT faked — webhook tests exercise real
+        // signature verification against STRIPE_WEBHOOK_SECRET from .env.test.
+        'App\\Tests\\Support\\FakePaymentGateway' => [
+            'tags' => [['name' => 'kernel.reset', 'method' => 'reset']],
+        ],
+        'App\\Service\\Payment\\PaymentGateway' => [
+            'alias' => 'App\\Tests\\Support\\FakePaymentGateway',
+        ],
     ],
 ]);

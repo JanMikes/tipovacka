@@ -21,6 +21,9 @@ return App::config([
             // flag degrades to false instead of throwing EnvNotFoundException — which would
             // otherwise 500 every page (Twig globals) and every Doctrine flush (Turbo listener).
             'premium_enabled' => '%env(bool:default::APP_PREMIUM_TEASER_ENABLED)%',
+            // Base URL for "open in Stripe dashboard" admin links — points at
+            // /test in sandbox environments, the bare dashboard in production.
+            'stripe_dashboard_url' => '%env(default::STRIPE_DASHBOARD_URL)%',
         ],
     ],
 ]);

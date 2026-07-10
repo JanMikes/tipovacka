@@ -1,0 +1,68 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Nákupy kreditů — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">Kredity</li>
+{% endblock %}
+
+{% block admin_title %}Nákupy kreditů{% endblock %}
+{% block admin_subtitle %}Stripe platby za kredity — posledních {{ purchases|length }} nákupů.{% endblock %}
+
+{% block admin_body %}
+<div class="card-glass overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
+                    <th class="px-4 py-3 text-left font-semibold">Datum</th>
+                    <th class="px-4 py-3 text-left font-semibold">Uživatel</th>
+                    <th class="px-4 py-3 text-right font-semibold">Kredity</th>
+                    <th class="px-4 py-3 text-right font-semibold">Částka</th>
+                    <th class="px-4 py-3 text-left font-semibold">Stav</th>
+                    <th class="px-4 py-3 text-right font-semibold">Odkazy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                    <tr class="border-b border-white/[0.06] text-white/80 hover:bg-white/[0.03]">
+                        <td class="px-4 py-3 whitespace-nowrap text-white/70">{{ purchase.createdAt|date('d. m. Y H:i') }}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-white">{{ purchase.userDisplayName }}</span>
+                            {% if purchase.userEmail %}<br><small class="text-xs text-white/40">{{ purchase.userEmail }}</small>{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right font-mono font-semibold text-white">{{ purchase.credits }}</td>
+                        <td class="px-4 py-3 text-right font-mono text-white/70">{{ (purchase.amountTotal / 100)|number_format(0, ',', ' ') }} {{ purchase.currency|upper }}</td>
+                        <td class="px-4 py-3">
+                            {% set variant = {pending: 'pending', completed: 'win', expired: 'draw', failed: 'loss'}[purchase.status.value] ?? 'points' %}
+                            <twig:Badge label="{{ purchase.status.label }}" variant="{{ variant }}" />
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center justify-end gap-2 whitespace-nowrap">
+                                {% if purchase.stripePaymentIntentId %}
+                                    <a href="{{ stripe_dashboard_url }}/payments/{{ purchase.stripePaymentIntentId }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+                                        Stripe
+                                    </a>
+                                {% endif %}
+                                {% if purchase.invoicePdfUrl %}
+                                    <a href="{{ purchase.invoicePdfUrl }}" class="btn btn-ghost btn-sm" title="Stáhnout fakturu (PDF)">
+                                        <twig:ux:icon name="lucide:download" class="h-3.5 w-3.5" />
+                                        Faktura
+                                    </a>
+                                {% endif %}
+                                <a href="{{ path('admin_user_credits', {id: purchase.userId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                                    <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
+                                    Peněženka
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="px-4 py-10 text-center text-white/50">Zatím žádné nákupy kreditů.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

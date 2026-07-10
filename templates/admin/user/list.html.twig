@@ -92,6 +92,12 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-2 whitespace-nowrap">
+                                {% if not user.isDeleted %}
+                                    <a href="{{ path('admin_user_credits', {id: user.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                                        <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
+                                        Kredity
+                                    </a>
+                                {% endif %}
                                 {% if user.email is not null %}
                                     <a href="{{ path('admin_user_list', {_switch_user: user.email}) }}" class="btn btn-ghost btn-sm">
                                         <twig:ux:icon name="lucide:log-in" class="h-3.5 w-3.5" />

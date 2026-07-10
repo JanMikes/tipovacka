@@ -101,6 +101,15 @@
             "ref": "12f504985eb24e3b20a9e41e0ec7e398798d18f0"
         }
     },
+    "stripe/stripe-php": {
+        "version": "20.3",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "19.0",
+            "ref": "d6829c693e3927a8972c7671d74a1a5c505712b0"
+        }
+    },
     "symfony/asset-mapper": {
         "version": "7.2",
         "recipe": {

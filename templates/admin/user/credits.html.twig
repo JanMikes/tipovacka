@@ -1,0 +1,89 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Kredity uživatele — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="flex items-center"><a href="{{ path('admin_user_list') }}" class="transition-colors hover:text-accent-300">Uživatelé</a></li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">Kredity</li>
+{% endblock %}
+
+{% block admin_title %}Kredity — {{ user.displayName }}{% endblock %}
+{% block admin_subtitle %}{{ user.email ?? '— anonymní účet —' }}{% endblock %}
+
+{% block admin_body %}
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+    <div class="space-y-6">
+        <div class="card-glass p-6">
+            <twig:StatCard label="Aktuální zůstatek" value="{{ wallet.balance }}" meta="kreditů" icon="wallet" tone="accent" />
+        </div>
+
+        <div class="card-glass p-6">
+            <h2 class="text-lg font-bold tracking-tight text-white">Upravit kredity</h2>
+            <p class="mt-1 text-xs leading-relaxed text-white/50">Úprava se uživateli zobrazí v historii transakcí včetně poznámky.</p>
+
+            {{ form_start(form, {attr: {class: 'mt-4 space-y-4', novalidate: 'novalidate'}}) }}
+                <div class="field">
+                    {{ form_label(form.amount) }}
+                    {{ form_widget(form.amount, {attr: {class: 'input'}}) }}
+                    {{ form_help(form.amount) }}
+                    {{ form_errors(form.amount) }}
+                </div>
+
+                <div class="field">
+                    {{ form_label(form.note) }}
+                    {{ form_widget(form.note, {attr: {class: 'input'}}) }}
+                    {{ form_help(form.note) }}
+                    {{ form_errors(form.note) }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full justify-center">
+                    <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                    Provést úpravu
+                </button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="card-glass p-6">
+        <h2 class="text-lg font-bold tracking-tight text-white">Historie transakcí</h2>
+
+        {% if transactions is empty %}
+            <p class="mt-4 py-8 text-center text-sm text-white/50">Uživatel zatím nemá žádné transakce.</p>
+        {% else %}
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10 text-left text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                            <th class="py-2 pr-4">Datum</th>
+                            <th class="py-2 pr-4">Popis</th>
+                            <th class="py-2 pr-4">Provedl</th>
+                            <th class="py-2 pr-4 text-right">Kredity</th>
+                            <th class="py-2 text-right">Zůstatek</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 pr-4 whitespace-nowrap text-white/70">{{ tx.createdAt|date('d. m. Y H:i') }}</td>
+                                <td class="py-3 pr-4">
+                                    <span class="font-medium text-white">{{ tx.type.label }}</span>
+                                    {% if tx.note %}
+                                        <p class="mt-0.5 text-xs leading-relaxed text-white/50">{{ tx.note }}</p>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 pr-4 text-white/70">{{ tx.performedByName ?? '—' }}</td>
+                                <td class="py-3 pr-4 text-right font-mono font-semibold {{ tx.amount > 0 ? 'text-win' : 'text-loss' }}">
+                                    {{ tx.amount > 0 ? '+' }}{{ tx.amount }}
+                                </td>
+                                <td class="py-3 text-right font-mono text-white/70">{{ tx.balanceAfter }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

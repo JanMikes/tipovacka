@@ -8,6 +8,7 @@ use App\Query\QueryBus;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 abstract class IntegrationTestCase extends KernelTestCase
@@ -40,5 +41,16 @@ abstract class IntegrationTestCase extends KernelTestCase
     {
         /* @var PredictableIdentityProvider */
         return self::getContainer()->get(PredictableIdentityProvider::class);
+    }
+
+    protected function paymentGateway(): FakePaymentGateway
+    {
+        /* @var FakePaymentGateway */
+        return self::getContainer()->get(FakePaymentGateway::class);
+    }
+
+    protected function firstWrappedException(HandlerFailedException $exception): ?\Throwable
+    {
+        return array_values($exception->getWrappedExceptions())[0] ?? null;
     }
 }

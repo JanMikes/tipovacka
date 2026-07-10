@@ -12,7 +12,8 @@
 {% set _nav = [
     {route: 'admin_tournament_list', label: 'Turnaje',   icon: 'lucide:trophy',   match: ['admin_tournament_list', 'admin_tournament_edit', 'admin_tournament_create', 'admin_tournament_rule_configuration', 'admin_sport_match_list']},
     {route: 'admin_group_list',      label: 'Skupiny',   icon: 'lucide:users',    match: ['admin_group_list']},
-    {route: 'admin_user_list',       label: 'Uživatelé', icon: 'lucide:user',     match: ['admin_user_list']},
+    {route: 'admin_user_list',       label: 'Uživatelé', icon: 'lucide:user',     match: ['admin_user_list', 'admin_user_credits']},
+    {route: 'admin_credit_purchases', label: 'Kredity',  icon: 'lucide:wallet',   match: ['admin_credit_purchases']},
     {route: 'admin_rule_list',       label: 'Pravidla',  icon: 'lucide:activity', match: ['admin_rule_list']},
 ] %}
 {% set _title = block('admin_title')|trim %}
