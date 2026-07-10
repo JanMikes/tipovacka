@@ -310,6 +310,11 @@ Hotwire Turbo is installed but **disabled globally** via `data-turbo="false"` on
 <a href="..." data-turbo="true">Link</a>
 ```
 
+### Assets (AssetMapper)
+
+- **Do NOT run `asset-map:compile` in your dev checkout** — that's a production build step. It writes frozen, digested copies of every asset into `public/assets/`, and since Caddy/FrankenPHP serves static files from `public/` directly, those stale copies get served *bypassing PHP entirely*. The result: CSS/JS look frozen at whenever you last compiled, and neither `cache:clear` nor restarting the container fixes it (they never touch the static files).
+- **If assets ever look frozen/broken, reset with:** `docker compose exec web rm -rf public/assets`. In dev, AssetMapper generates assets on the fly, so `public/assets/` should not exist (it's git-ignored). Tailwind rebuilds live via the `tailwind` container.
+
 ## Features
 
 Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`](.docs/features/). When adding a new reusable pattern (modal, widget, Stimulus controller), drop a brief doc there and link it below.
