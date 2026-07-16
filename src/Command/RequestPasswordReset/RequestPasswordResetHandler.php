@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Command\RequestPasswordReset;
 
 use App\Event\PasswordResetRequested;
+use App\Event\PasswordResetRequestedForUnregisteredEmail;
 use App\Repository\UserRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use SymfonyCasts\Bundle\ResetPassword\Exception\ResetPasswordExceptionInterface;
 use SymfonyCasts\Bundle\ResetPassword\ResetPasswordHelperInterface;
 
@@ -22,6 +24,7 @@ final readonly class RequestPasswordResetHandler
         #[Autowire(service: 'event.bus')]
         private MessageBusInterface $eventBus,
         private ClockInterface $clock,
+        private RateLimiterFactoryInterface $signUpInvitationLimiter,
     ) {
     }
 
@@ -29,8 +32,26 @@ final readonly class RequestPasswordResetHandler
     {
         $user = $this->userRepository->findByEmail($command->email);
 
-        // Silent return for non-existent, deleted, or blocked users — no enumeration
-        if (null === $user || $user->isDeleted() || !$user->isActive) {
+        // Unknown or deleted account — invite to sign up instead of staying silent.
+        // The web response is identical either way, so emails still can't be enumerated;
+        // only the mailbox owner learns whether the account exists.
+        if (null === $user || $user->isDeleted()) {
+            // The reset-password bundle throttles registered users; this guards the
+            // unregistered path so the form can't be used to spam arbitrary addresses.
+            if (!$this->signUpInvitationLimiter->create(mb_strtolower($command->email))->consume()->isAccepted()) {
+                return;
+            }
+
+            $this->eventBus->dispatch(new PasswordResetRequestedForUnregisteredEmail(
+                email: $command->email,
+                occurredOn: \DateTimeImmutable::createFromInterface($this->clock->now()),
+            ));
+
+            return;
+        }
+
+        // Blocked users get nothing — no enumeration
+        if (!$user->isActive) {
             return;
         }
 

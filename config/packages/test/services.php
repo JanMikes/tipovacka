@@ -12,6 +12,7 @@ return App::config([
         'App\\DataFixtures\\' => [
             'resource' => '../../../fixtures/',
         ],
+        'Symfony\\Component\\RateLimiter\\Storage\\InMemoryStorage' => null,
         'security.untracked_token_storage' => [
             'class' => TokenStorage::class,
             'public' => true,

@@ -25,6 +25,13 @@ return App::config([
                 'limit' => 10,
                 'interval' => '1 hour',
             ],
+            // Sign-up invitation sent when password reset is requested for an
+            // unregistered address - limited per email to prevent mail bombing
+            'sign_up_invitation' => [
+                'policy' => 'sliding_window',
+                'limit' => 2,
+                'interval' => '1 hour',
+            ],
         ],
     ],
 ]);
