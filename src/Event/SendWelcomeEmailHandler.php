@@ -36,7 +36,6 @@ final readonly class SendWelcomeEmailHandler
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to(new Address($user->email, $user->displayName))
             ->subject('Vítejte v Tipovačce!')
             ->htmlTemplate('emails/welcome.html.twig')

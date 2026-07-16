@@ -36,7 +36,6 @@ final readonly class SendJoinRequestApprovedEmailHandler
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to(new Address($request->user->email, $request->user->displayName))
             ->subject('Byl(a) jsi přijat(a) do skupiny na Tipovačce')
             ->htmlTemplate('emails/join_request_approved.html.twig')

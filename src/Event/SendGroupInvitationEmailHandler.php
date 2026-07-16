@@ -8,7 +8,6 @@ use App\Repository\GroupInvitationRepository;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[AsMessageHandler]
@@ -32,7 +31,6 @@ final readonly class SendGroupInvitationEmailHandler
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to($event->email)
             ->subject('Pozvánka do skupiny na Tipovačce')
             ->htmlTemplate('emails/group_invitation.html.twig')

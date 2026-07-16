@@ -52,7 +52,6 @@ final readonly class SendCreditPurchaseReceiptEmailHandler
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to(new Address($user->email, $user->displayName))
             ->subject(sprintf('Kredity připsány: +%d', $event->credits))
             ->htmlTemplate('emails/credit_purchase_receipt.html.twig')

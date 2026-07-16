@@ -59,7 +59,6 @@ final class ResendVerificationEmailController extends AbstractController
         );
 
         $email = (new TemplatedEmail())
-            ->from(new Address('noreply@tipovacka.cz', 'Tipovačka'))
             ->to(new Address($user->email, $user->displayName))
             ->subject('Ověřte prosím svou e-mailovou adresu')
             ->htmlTemplate('emails/verify_email.html.twig')
