@@ -58,9 +58,10 @@ Notes:
 Seeded by both the foundation migration (prod) and `AppFixtures` (dev/test — the test DB
 is built by `doctrine:schema:create`, which skips the migration's seed row).
 
-| Code       | Name   | UUID                                                          |
-|------------|--------|---------------------------------------------------------------|
-| `football` | Fotbal | `Sport::FOOTBALL_ID` = `01960000-0000-7000-8000-000000000001` |
+| Code       | Name   | UUID                                                          | Periods |
+|------------|--------|---------------------------------------------------------------|---------|
+| `football` | Fotbal | `Sport::FOOTBALL_ID` = `01960000-0000-7000-8000-000000000001` | 2 — poločas/poločasy |
+| `hockey`   | Hokej  | `Sport::HOCKEY_ID` = `01960000-0000-7000-8000-000000000002`   | 3 — třetina/třetiny |
 
 ## Match sources (`MatchSource`, table `match_sources`)
 
@@ -69,7 +70,7 @@ is built by `doctrine:schema:create`, which skips the migration's seed row).
 | `PUBLIC_SOURCE_*`  | `019aaaaa-0000-7000-8000-000000000001` | `Liga mistrů 2026/27` | curated | ADMIN         |
 | `PRIVATE_SOURCE_*` | `019aaaaa-0000-7000-8000-000000000002` | `Chlapi u piva`     | private   | VERIFIED_USER |
 
-Both use sport football, `description/startAt/endAt = null`, not finished, not deleted.
+Both use sport football, `description/startAt/endAt = null`, not completed, not deleted.
 (The constants keep the historical `PUBLIC_/PRIVATE_` prefixes; `PUBLIC_SOURCE` is the
 curated one.)
 
@@ -131,12 +132,31 @@ member), requested at `$now`, undecided.
 |------------------------------|----------------------------------------|-----------------|--------------------------------|---------------------|------------------------------|---------------|
 | `MATCH_SCHEDULED_ID`         | `019ddddd-0000-7000-8000-000000000001` | PUBLIC_SOURCE   | Sparta Praha vs Slavia Praha   | 2025-06-20 18:00    | scheduled                    | `Čtvrtfinále`, Generali Arena |
 | `MATCH_LIVE_ID`              | `019ddddd-0000-7000-8000-000000000002` | PUBLIC_SOURCE   | Viktoria Plzeň vs Baník Ostrava | 2025-06-15 11:00   | live (began at `$now`)       | — |
-| `MATCH_FINISHED_ID`          | `019ddddd-0000-7000-8000-000000000003` | PUBLIC_SOURCE   | Bohemians 1905 vs Jablonec     | 2025-06-10 18:00    | finished, **2:1**            | `Základní skupina`, Ďolíček |
+| `MATCH_FINISHED_ID`          | `019ddddd-0000-7000-8000-000000000003` | PUBLIC_SOURCE   | Bohemians 1905 vs Jablonec     | 2025-06-10 18:00    | finished, **2:1**, periods **(1:0, 1:1)**, no OT | `Základní skupina`, Ďolíček |
 | `MATCH_PRIVATE_SCHEDULED_ID` | `019ddddd-0000-7000-8000-000000000004` | PRIVATE_SOURCE  | Tygři vs Lvi                   | 2025-06-20 19:00    | scheduled                    | — |
 | `MATCH_PLAYOFF_ID`           | `019ddddd-0000-7000-8000-000000000005` | PUBLIC_SOURCE   | Real Madrid vs Barcelona       | 2025-06-22 18:00    | scheduled, **isPlayoff=true** | `Playoff` |
 
 `MATCH_PLAYOFF` is the only fixture match with `isPlayoff = true` — every other match
 defaults to `false`.
+
+## Players (`Player`, table `players`) — roster pool of PUBLIC_SOURCE
+
+| Constant                    | ID                                     | Team           | Name (`PLAYER_*_NAME`) |
+|-----------------------------|----------------------------------------|----------------|------------------------|
+| `PLAYER_HOME_SCORER_ONE_ID` | `019ddddd-0000-7000-8000-0000000000b1` | Bohemians 1905 | `Jan Novák`            |
+| `PLAYER_HOME_SCORER_TWO_ID` | `019ddddd-0000-7000-8000-0000000000b2` | Bohemians 1905 | `Petr Svoboda`         |
+| `PLAYER_AWAY_BOOKED_ID`     | `019ddddd-0000-7000-8000-0000000000b3` | Jablonec       | `Marek Doležal`        |
+
+## Match events (`MatchEvent`, table `match_events`) — timeline of MATCH_FINISHED
+
+| Constant                     | ID                                     | Type        | Side | Minute | Player                |
+|------------------------------|----------------------------------------|-------------|------|--------|-----------------------|
+| `MATCH_EVENT_GOAL_ONE_ID`    | `019ddddd-0000-7000-8000-0000000000c1` | goal        | home | 27     | PLAYER_HOME_SCORER_ONE |
+| `MATCH_EVENT_GOAL_TWO_ID`    | `019ddddd-0000-7000-8000-0000000000c2` | goal        | home | 63     | PLAYER_HOME_SCORER_TWO |
+| `MATCH_EVENT_YELLOW_CARD_ID` | `019ddddd-0000-7000-8000-0000000000c3` | yellow_card | away | 51     | PLAYER_AWAY_BOOKED     |
+
+Note the deliberate mismatch: the away goal of the 2:1 result has **no** scorer event —
+goal-count vs score consistency is a UI warning only, never enforced.
 
 ## Guess + evaluation
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Competition;
 use App\Entity\LeaderboardTieResolution;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -67,5 +68,23 @@ final class LeaderboardTieResolutionRepository
         foreach ($rows as $row) {
             $this->entityManager->remove($row);
         }
+    }
+
+    /**
+     * Manual tie ranks describe a frozen final standing. When a source reopens
+     * (more matches will be played), the resolutions of every competition
+     * attached to it are stale and must go. DQL DELETE executes immediately.
+     */
+    public function deleteForMatchSource(Uuid $matchSourceId): void
+    {
+        $this->entityManager->createQueryBuilder()
+            ->delete(LeaderboardTieResolution::class, 'r')
+            ->where(sprintf(
+                'r.competition IN (SELECT c.id FROM %s c WHERE c.matchSource = :matchSourceId)',
+                Competition::class,
+            ))
+            ->setParameter('matchSourceId', $matchSourceId)
+            ->getQuery()
+            ->execute();
     }
 }

@@ -160,7 +160,7 @@ final class CreditWalletTest extends TestCase
     {
         $matchSource = new MatchSource(
             id: Uuid::v7(),
-            sport: new Sport(Uuid::v7(), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::v7(), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Private,
             name: 'Turnaj',

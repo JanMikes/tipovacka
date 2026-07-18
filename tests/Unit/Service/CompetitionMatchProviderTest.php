@@ -164,7 +164,7 @@ final class CompetitionMatchProviderTest extends TestCase
     {
         $source = new MatchSource(
             id: Uuid::fromString($id),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $this->owner,
             kind: MatchSourceKind::Curated,
             name: 'Zdroj '.$id,

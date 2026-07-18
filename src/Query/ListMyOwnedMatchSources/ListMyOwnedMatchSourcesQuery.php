@@ -44,7 +44,7 @@ final readonly class ListMyOwnedMatchSourcesQuery
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,
                 endAt: $t->endAt,
-                finishedAt: $t->finishedAt,
+                completedAt: $t->completedAt,
             ),
             $matchSources,
         ));

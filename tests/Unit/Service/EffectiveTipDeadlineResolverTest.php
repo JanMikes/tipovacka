@@ -137,7 +137,7 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Private,
             name: 'T',
@@ -186,7 +186,7 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Private,
             name: 'T',

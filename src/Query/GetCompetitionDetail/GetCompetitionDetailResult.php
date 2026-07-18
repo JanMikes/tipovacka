@@ -15,7 +15,7 @@ final readonly class GetCompetitionDetailResult
         public Uuid $id,
         public Uuid $matchSourceId,
         public string $matchSourceName,
-        public bool $matchSourceIsFinished,
+        public bool $matchSourceIsCompleted,
         public Uuid $ownerId,
         public string $ownerNickname,
         public string $name,

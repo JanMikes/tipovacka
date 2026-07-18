@@ -19,6 +19,12 @@
         {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
 
             <div class="field">
+                {{ form_label(form.sport, null, {label_attr: {class: 'field-label'}}) }}
+                {{ form_widget(form.sport, {attr: {class: 'input'}}) }}
+                {{ form_errors(form.sport) }}
+            </div>
+
+            <div class="field">
                 {{ form_label(form.name, null, {label_attr: {class: 'field-label'}}) }}
                 {{ form_widget(form.name, {attr: {class: 'input'}}) }}
                 {{ form_errors(form.name) }}

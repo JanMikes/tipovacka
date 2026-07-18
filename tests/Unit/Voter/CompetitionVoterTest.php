@@ -77,7 +77,7 @@ final class CompetitionVoterTest extends TestCase
     {
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Private,
             name: 'Turnaj',
@@ -88,7 +88,7 @@ final class CompetitionVoterTest extends TestCase
         );
 
         if ($finished) {
-            $matchSource->markFinished($this->now);
+            $matchSource->markCompleted($this->now);
         }
 
         $matchSource->popEvents();
@@ -178,7 +178,7 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(1, $this->voter->vote($this->token($owner), $competition, [CompetitionVoter::EDIT]));
     }
 
-    public function testOwnerCannotEditWhenMatchSourceFinished(): void
+    public function testOwnerCannotEditWhenMatchSourceCompleted(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource($owner, finished: true);
@@ -205,7 +205,7 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::EDIT]));
     }
 
-    public function testOwnerCanDeleteEvenWhenMatchSourceFinished(): void
+    public function testOwnerCanDeleteEvenWhenMatchSourceCompleted(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource($owner, finished: true);
@@ -314,7 +314,7 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($other), $competition, [CompetitionVoter::INVITE_MEMBER]));
     }
 
-    public function testInviteBlockedWhenMatchSourceFinished(): void
+    public function testInviteBlockedWhenMatchSourceCompleted(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource($owner, finished: true);
@@ -371,7 +371,7 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::REQUEST_JOIN]));
     }
 
-    public function testRequestJoinDeniedWhenMatchSourceFinished(): void
+    public function testRequestJoinDeniedWhenMatchSourceCompleted(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $outsider = $this->makeUser(self::NON_OWNER_ID);
@@ -385,7 +385,7 @@ final class CompetitionVoterTest extends TestCase
     {
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Curated,
             name: 'Veřejný turnaj',
@@ -396,7 +396,7 @@ final class CompetitionVoterTest extends TestCase
         );
 
         if ($finished) {
-            $matchSource->markFinished($this->now);
+            $matchSource->markCompleted($this->now);
         }
 
         $matchSource->popEvents();

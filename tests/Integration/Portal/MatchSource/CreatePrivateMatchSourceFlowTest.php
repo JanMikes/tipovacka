@@ -47,6 +47,7 @@ final class CreatePrivateMatchSourceFlowTest extends WebTestCase
 
         $client->request('GET', '/portal/turnaje/vytvorit');
         $client->submitForm('Vytvořit zdroj zápasů', [
+            'match_source_form[sport]' => \App\Entity\Sport::FOOTBALL_ID,
             'match_source_form[name]' => 'Můj nový turnaj',
         ]);
 

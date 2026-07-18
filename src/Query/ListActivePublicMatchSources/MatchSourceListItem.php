@@ -17,7 +17,7 @@ final readonly class MatchSourceListItem
         public \DateTimeImmutable $createdAt,
         public ?\DateTimeImmutable $startAt,
         public ?\DateTimeImmutable $endAt,
-        public ?\DateTimeImmutable $finishedAt,
+        public ?\DateTimeImmutable $completedAt,
     ) {
     }
 }

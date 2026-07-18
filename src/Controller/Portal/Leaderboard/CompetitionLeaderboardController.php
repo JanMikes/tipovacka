@@ -41,7 +41,7 @@ final class CompetitionLeaderboardController extends AbstractController
         $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
 
         $winner = null;
-        if ($competition->matchSource->isFinished) {
+        if ($competition->matchSource->isCompleted) {
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;

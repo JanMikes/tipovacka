@@ -12,9 +12,11 @@
     ]" />
 
     {#
-        Hero state model (no live scoreboard — live is cut):
+        Hero state model:
         - scheduled + before deadline → BRZY (.pill-soon)
-        - live nebo po uzávěrce (a není dohráno) → UZAMČENO (.pill-locked)
+        - live nebo po uzávěrce (a není dohráno) → UZAMČENO (.pill-locked);
+          a known live score is shown in the hero (the timeline reveals the
+          goals anyway — hiding the score would be incoherent)
         - finished → UKONČENO (.pill-done) + final score
         - postponed → ODLOŽEN (.pill-warn)
         - cancelled → ZRUŠEN (.pill-locked)
@@ -68,7 +70,7 @@
                 <span class="name">{{ sport_match.homeTeam }}</span>
             </div>
 
-            {% if sport_match.isFinished %}
+            {% if sport_match.isFinished or (sport_match.isLive and sport_match.homeScore is not null) %}
                 <div class="final-score text-white">
                     <span class="sc">{{ sport_match.homeScore }}</span>
                     <span class="sep">:</span>
@@ -88,6 +90,12 @@
             <div class="result-banner mt-6">
                 <twig:ux:icon name="lucide:flag" class="h-4 w-4 shrink-0" />
                 Konečný výsledek <b>{{ sport_match.homeScore }} : {{ sport_match.awayScore }}</b>
+                {%- if sport_match.periodScores is not null %}
+                    <span class="text-white/60">({% for p in sport_match.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})</span>
+                {%- endif %}
+                {%- if sport_match.hasOvertimeScore %}
+                    <span class="text-white/60">po prodl. {{ sport_match.overtimeHomeScore }}:{{ sport_match.overtimeAwayScore }}</span>
+                {%- endif %}
             </div>
         {% endif %}
 
@@ -98,6 +106,11 @@
             </p>
         {% endif %}
     </section>
+
+    {# Match timeline (visible to everyone once events exist; cancelled matches show no live data) #}
+    {% if not sport_match.isCancelled %}
+        {% include 'portal/sport_match/_timeline.html.twig' with {sport_match: sport_match, match_events: match_events|default([])} only %}
+    {% endif %}
 
     <div class="space-y-4">
         {# Tip entry (live score-input block). The component owns its own state (open / tipped / locked / read-only). #}

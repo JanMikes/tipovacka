@@ -15,7 +15,7 @@ final readonly class AdminMatchSourceItem
         public MatchSourceKind $kind,
         public string $sportCode,
         public string $ownerNickname,
-        public bool $isFinished,
+        public bool $isCompleted,
         public bool $isDeleted,
         public int $competitionCount,
     ) {

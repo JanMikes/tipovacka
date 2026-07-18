@@ -13,14 +13,15 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<'match_source_view'|'match_source_edit'|'match_source_delete'|'match_source_finish'|'match_source_create_match'|'match_source_create_competition', MatchSource>
+ * @extends Voter<'match_source_view'|'match_source_edit'|'match_source_delete'|'match_source_complete'|'match_source_reopen'|'match_source_create_match'|'match_source_create_competition', MatchSource>
  */
 final class MatchSourceVoter extends Voter
 {
     public const string VIEW = 'match_source_view';
     public const string EDIT = 'match_source_edit';
     public const string DELETE = 'match_source_delete';
-    public const string FINISH = 'match_source_finish';
+    public const string COMPLETE = 'match_source_complete';
+    public const string REOPEN = 'match_source_reopen';
     public const string CREATE_MATCH = 'match_source_create_match';
     public const string CREATE_COMPETITION = 'match_source_create_competition';
 
@@ -31,7 +32,7 @@ final class MatchSourceVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH, self::CREATE_COMPETITION], true)
+        return in_array($attribute, [self::VIEW, self::EDIT, self::DELETE, self::COMPLETE, self::REOPEN, self::CREATE_MATCH, self::CREATE_COMPETITION], true)
             && $subject instanceof MatchSource;
     }
 
@@ -52,7 +53,9 @@ final class MatchSourceVoter extends Voter
                 || $isAdmin
                 || $isOwner
                 || $this->membershipRepository->hasActiveMembershipInMatchSource($currentUser->id, $subject->id),
-            self::EDIT, self::DELETE, self::FINISH, self::CREATE_MATCH => $isAdmin || ($isOwner && $subject->isActive),
+            self::EDIT, self::DELETE, self::COMPLETE, self::CREATE_MATCH => $isAdmin || ($isOwner && $subject->isActive),
+            // Reopen targets a completed (⇒ not active) source — owner keeps the right as long as it is not deleted.
+            self::REOPEN => $subject->isCompleted && ($isAdmin || ($isOwner && null === $subject->deletedAt)),
             self::CREATE_COMPETITION => $currentUser->isVerified
                 && $subject->isActive
                 && (

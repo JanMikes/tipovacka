@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Command\MarkMatchSourceFinished;
+namespace App\Event;
 
 use Symfony\Component\Uid\Uuid;
 
-final readonly class MarkMatchSourceFinishedCommand
+final readonly class MatchSourceReopened
 {
     public function __construct(
         public Uuid $matchSourceId,
+        public \DateTimeImmutable $occurredOn,
     ) {
     }
 }

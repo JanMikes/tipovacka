@@ -11,7 +11,7 @@ final readonly class CompetitionLeaderboardResult
      */
     public function __construct(
         public array $rows,
-        public bool $matchSourceFinished,
+        public bool $matchSourceCompleted,
     ) {
     }
 }

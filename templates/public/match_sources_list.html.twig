@@ -45,7 +45,7 @@
 
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {% for t in private_match_sources %}
-                    {% set is_finished = t.finishedAt is not null %}
+                    {% set is_finished = t.completedAt is not null %}
                     <li>
                         <a
                             href="{{ path('public_match_source_detail', {id: t.id.toRfc4122}) }}"
@@ -134,7 +134,7 @@
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {% for t in public_match_sources %}
-                    {% set is_finished = t.finishedAt is not null %}
+                    {% set is_finished = t.completedAt is not null %}
                     <li>
                         <a
                             href="{{ path('public_match_source_detail', {id: t.id.toRfc4122}) }}"

@@ -46,7 +46,7 @@ final class LeaderboardVoter extends Voter
 
         return match ($attribute) {
             self::VIEW => $isAdmin || $isMember,
-            self::RESOLVE_TIES => ($isAdmin || $isOwner) && $subject->matchSource->isFinished,
+            self::RESOLVE_TIES => ($isAdmin || $isOwner) && $subject->matchSource->isCompleted,
         };
     }
 }

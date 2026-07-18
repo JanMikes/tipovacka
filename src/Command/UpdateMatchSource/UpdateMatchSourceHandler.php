@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\UpdateMatchSource;
 
-use App\Exception\MatchSourceAlreadyFinished;
+use App\Exception\MatchSourceAlreadyCompleted;
 use App\Repository\MatchSourceRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -22,8 +22,8 @@ final readonly class UpdateMatchSourceHandler
     {
         $matchSource = $this->matchSourceRepository->get($command->matchSourceId);
 
-        if ($matchSource->isFinished) {
-            throw MatchSourceAlreadyFinished::withId($matchSource->id);
+        if ($matchSource->isCompleted) {
+            throw MatchSourceAlreadyCompleted::withId($matchSource->id);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());

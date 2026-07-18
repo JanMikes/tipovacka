@@ -8,7 +8,7 @@ use Symfony\Component\HttpKernel\Attribute\WithHttpStatus;
 use Symfony\Component\Uid\Uuid;
 
 #[WithHttpStatus(409)]
-final class MatchSourceAlreadyFinished extends \DomainException
+final class MatchSourceAlreadyCompleted extends \DomainException
 {
     public static function withId(Uuid $id): self
     {

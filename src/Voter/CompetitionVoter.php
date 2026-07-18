@@ -60,15 +60,15 @@ final class CompetitionVoter extends Voter
 
         return match ($attribute) {
             self::VIEW => $isAdmin || $isMember,
-            self::EDIT => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isFinished,
+            self::EDIT => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isCompleted,
             self::DELETE => $isAdmin || $isOwner,
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
-            self::JOIN => $currentUser->isVerified && !$subject->matchSource->isFinished && $subject->isNotDeleted,
+            self::JOIN => $currentUser->isVerified && !$subject->matchSource->isCompleted && $subject->isNotDeleted,
             self::LEAVE => $isMember && !$isOwner,
-            self::INVITE_MEMBER => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isFinished,
+            self::INVITE_MEMBER => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isCompleted,
             self::REQUEST_JOIN => $subject->matchSource->isCurated
                 && $subject->isNotDeleted
-                && !$subject->matchSource->isFinished
+                && !$subject->matchSource->isCompleted
                 && $currentUser->isVerified
                 && !$isMember,
         };

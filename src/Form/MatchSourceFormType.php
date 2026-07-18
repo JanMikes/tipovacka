@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Entity\Sport;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -18,6 +22,18 @@ final class MatchSourceFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Sport is chosen once at creation — it drives the period structure
+        // (poločasy / třetiny), so it cannot change on edit.
+        if (true === $options['with_sport']) {
+            $builder->add('sport', EntityType::class, [
+                'label' => 'Sport',
+                'class' => Sport::class,
+                'choice_label' => 'name',
+                'placeholder' => 'Vyberte sport…',
+                'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository->createQueryBuilder('s')->orderBy('s.name', 'ASC'),
+            ]);
+        }
+
         $builder->add('name', TextType::class, [
             'label' => 'Název zdroje zápasů',
             'attr' => [
@@ -66,6 +82,8 @@ final class MatchSourceFormType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => MatchSourceFormData::class,
+            'with_sport' => false,
         ]);
+        $resolver->setAllowedTypes('with_sport', 'bool');
     }
 }

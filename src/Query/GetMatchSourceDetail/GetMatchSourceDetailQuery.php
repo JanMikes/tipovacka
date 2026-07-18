@@ -47,7 +47,7 @@ final readonly class GetMatchSourceDetailQuery
             endAt: $matchSource->endAt,
             createdAt: $matchSource->createdAt,
             updatedAt: $matchSource->updatedAt,
-            finishedAt: $matchSource->finishedAt,
+            completedAt: $matchSource->completedAt,
         );
     }
 }

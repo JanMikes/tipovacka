@@ -41,6 +41,7 @@ final class CreateCuratedMatchSourceFlowTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Nový zdroj zápasů');
 
         $client->submitForm('Vytvořit zdroj zápasů', [
+            'match_source_form[sport]' => \App\Entity\Sport::FOOTBALL_ID,
             'match_source_form[name]' => 'Nová liga',
         ]);
 

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Command\MarkMatchSourceFinished;
+namespace App\Command\MarkMatchSourceCompleted;
 
 use App\Repository\MatchSourceRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-final readonly class MarkMatchSourceFinishedHandler
+final readonly class MarkMatchSourceCompletedHandler
 {
     public function __construct(
         private MatchSourceRepository $matchSourceRepository,
@@ -17,9 +17,9 @@ final readonly class MarkMatchSourceFinishedHandler
     ) {
     }
 
-    public function __invoke(MarkMatchSourceFinishedCommand $command): void
+    public function __invoke(MarkMatchSourceCompletedCommand $command): void
     {
         $matchSource = $this->matchSourceRepository->get($command->matchSourceId);
-        $matchSource->markFinished(\DateTimeImmutable::createFromInterface($this->clock->now()));
+        $matchSource->markCompleted(\DateTimeImmutable::createFromInterface($this->clock->now()));
     }
 }

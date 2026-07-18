@@ -25,7 +25,7 @@
                     {% else %}
                         <twig:Pill label="SOUKROMÝ" variant="neutral" />
                     {% endif %}
-                    {% if match_source.isFinished %}
+                    {% if match_source.isCompleted %}
                         <twig:Pill label="UKONČEN" variant="done" />
                     {% endif %}
                 </div>
@@ -111,8 +111,18 @@
                                     </div>
                                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
                                         <span class="truncate text-right font-medium text-white">{{ m.homeTeam }}</span>
-                                        {% if state == 'finished' %}
-                                            <span class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-sm font-bold tabular-nums text-white">{{ m.homeScore }} : {{ m.awayScore }}</span>
+                                        {% if state == 'finished' or (state == 'live' and m.homeScore is not null) %}
+                                            <span class="flex flex-col items-center gap-0.5">
+                                                <span class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-sm font-bold tabular-nums text-white">{{ m.homeScore }} : {{ m.awayScore }}</span>
+                                                {% if m.periodScores is not null or m.overtimeHomeScore is not null %}
+                                                    <span class="whitespace-nowrap text-[11px] tabular-nums text-white/45">
+                                                        {%- if m.periodScores is not null -%}
+                                                            ({% for p in m.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
+                                                        {%- endif -%}
+                                                        {%- if m.overtimeHomeScore is not null %} po prodl. {{ m.overtimeHomeScore }}:{{ m.overtimeAwayScore }}{% endif -%}
+                                                    </span>
+                                                {% endif %}
+                                            </span>
                                         {% else %}
                                             <span class="text-xs font-semibold text-white/40">vs</span>
                                         {% endif %}
@@ -183,27 +193,44 @@
 
         {# ───── Sidebar ───── #}
         <aside class="space-y-6 lg:col-span-4">
-            {% if is_granted('match_source_edit', match_source) %}
+            {# A completed source revokes EDIT for the owner, but the management box must stay reachable for the reopen toggle. #}
+            {% if is_granted('match_source_edit', match_source) or is_granted('match_source_reopen', match_source) %}
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
                         <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-accent-400" />
                         <h2 class="text-lg font-semibold text-white">Správa zdroje zápasů</h2>
                     </header>
                     <div class="space-y-2 px-6 py-5">
-                        <a href="{{ path('portal_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
-                            <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
-                        </a>
+                        {% if is_granted('match_source_edit', match_source) %}
+                            <a href="{{ path('portal_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
+                                <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
+                            </a>
+                        {% endif %}
 
-                        {% if is_granted('match_source_finish', match_source) %}
-                            <form method="post" action="{{ path('portal_match_source_finish', {id: match_source.id.toRfc4122}) }}"
+                        {% if is_granted('match_source_complete', match_source) %}
+                            <form method="post" action="{{ path('portal_match_source_complete', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Ukončit zdroj zápasů"
                                 data-confirm-message-value="Opravdu chcete zdroj zápasů ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
                                 data-confirm-confirm-label-value="Ano, ukončit">
-                                <input type="hidden" name="_token" value="{{ csrf_token('match_source_finish_' ~ match_source.id.toRfc4122) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('match_source_complete_' ~ match_source.id.toRfc4122) }}">
                                 <button type="submit" class="btn w-full justify-start border border-draw/30 bg-draw/10 text-draw hover:bg-draw/20">
                                     <twig:ux:icon name="lucide:award" class="h-4 w-4" />Ukončit zdroj zápasů
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        {% if is_granted('match_source_reopen', match_source) %}
+                            <form method="post" action="{{ path('portal_match_source_reopen', {id: match_source.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Znovu otevřít zdroj zápasů"
+                                data-confirm-message-value="Opravdu chcete zdroj zápasů znovu otevřít? Soutěže nad ním přestanou být považovány za ukončené."
+                                data-confirm-confirm-label-value="Ano, otevřít">
+                                <input type="hidden" name="_token" value="{{ csrf_token('match_source_reopen_' ~ match_source.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost w-full justify-start">
+                                    <twig:ux:icon name="lucide:rotate-ccw" class="h-4 w-4" />Znovu otevřít zdroj zápasů
                                 </button>
                             </form>
                         {% endif %}

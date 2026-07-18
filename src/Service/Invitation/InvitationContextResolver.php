@@ -38,7 +38,7 @@ final readonly class InvitationContextResolver
             $invitation->isRevoked => InvitationContextStatus::Revoked,
             $invitation->isAccepted => InvitationContextStatus::Accepted,
             $invitation->isExpiredAt($now) => InvitationContextStatus::Expired,
-            $invitation->competition->matchSource->isFinished => InvitationContextStatus::MatchSourceFinished,
+            $invitation->competition->matchSource->isCompleted => InvitationContextStatus::MatchSourceCompleted,
             default => InvitationContextStatus::Active,
         };
 
@@ -59,8 +59,8 @@ final readonly class InvitationContextResolver
     {
         $competition = $this->competitionRepository->getByShareableLinkToken($token);
 
-        $status = $competition->matchSource->isFinished
-            ? InvitationContextStatus::MatchSourceFinished
+        $status = $competition->matchSource->isCompleted
+            ? InvitationContextStatus::MatchSourceCompleted
             : InvitationContextStatus::Active;
 
         return new InvitationContext(

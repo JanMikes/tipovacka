@@ -31,12 +31,15 @@ final class CreatePrivateMatchSourceController extends AbstractController
         $user = $this->getUser();
 
         $formData = new MatchSourceFormData();
-        $form = $this->createForm(MatchSourceFormType::class, $formData);
+        $form = $this->createForm(MatchSourceFormType::class, $formData, ['with_sport' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            \assert(null !== $formData->sport);
+
             $envelope = $this->commandBus->dispatch(new CreatePrivateMatchSourceCommand(
                 ownerId: $user->id,
+                sportId: $formData->sport->id,
                 name: $formData->name,
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,

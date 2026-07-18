@@ -40,7 +40,7 @@
                     <span class="name">{{ sport_match.homeTeam }}</span>
                 </div>
 
-                {% if sport_match.isFinished %}
+                {% if sport_match.isFinished or (sport_match.isLive and sport_match.homeScore is not null) %}
                     <div class="final-score text-white">
                         <span class="sc">{{ sport_match.homeScore }}</span>
                         <span class="sep">:</span>
@@ -56,6 +56,15 @@
                 </div>
             </div>
 
+            {% if not sport_match.isCancelled and (sport_match.periodScores is not null or sport_match.hasOvertimeScore) %}
+                <p class="mt-3 text-center text-xs text-white/50">
+                    {%- if sport_match.periodScores is not null -%}
+                        ({% for p in sport_match.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
+                    {%- endif -%}
+                    {%- if sport_match.hasOvertimeScore %} po prodl. {{ sport_match.overtimeHomeScore }}:{{ sport_match.overtimeAwayScore }}{% endif -%}
+                </p>
+            {% endif %}
+
             {% if sport_match.venue %}
                 <p class="mt-6 inline-flex items-center gap-1.5 text-xs text-white/50">
                     <twig:ux:icon name="lucide:building-2" class="h-3.5 w-3.5" />
@@ -63,6 +72,11 @@
                 </p>
             {% endif %}
         </section>
+
+        {# Match timeline (visible to everyone once events exist; cancelled matches show no live data) #}
+        {% if not sport_match.isCancelled %}
+            {% include 'portal/sport_match/_timeline.html.twig' with {sport_match: sport_match, match_events: match_events|default([])} only %}
+        {% endif %}
 
         {# Inline per-competition guess cards #}
         {% set my_competitions = my_competitions_for_match_source|default([]) %}

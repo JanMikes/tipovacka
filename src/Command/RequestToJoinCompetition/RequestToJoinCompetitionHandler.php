@@ -39,7 +39,7 @@ final readonly class RequestToJoinCompetitionHandler
             throw JoinRequestNotAllowed::privateMatchSource();
         }
 
-        if ($competition->matchSource->isFinished) {
+        if ($competition->matchSource->isCompleted) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 

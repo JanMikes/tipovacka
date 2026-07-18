@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Controller\Admin\MatchSource;
+namespace App\Controller\Portal\MatchSource;
 
-use App\Command\MarkMatchSourceFinished\MarkMatchSourceFinishedCommand;
+use App\Command\ReopenMatchSource\ReopenMatchSourceCommand;
 use App\Repository\MatchSourceRepository;
 use App\Voter\MatchSourceVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,8 +15,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
-#[Route('/admin/turnaje/{id}/ukoncit', name: 'admin_match_source_finish', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
-final class AdminMarkFinishedController extends AbstractController
+#[Route('/portal/turnaje/{id}/obnovit', name: 'portal_match_source_reopen', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+final class ReopenMatchSourceController extends AbstractController
 {
     public function __construct(
         private readonly MatchSourceRepository $matchSourceRepository,
@@ -27,20 +27,20 @@ final class AdminMarkFinishedController extends AbstractController
     public function __invoke(Request $request, string $id): Response
     {
         $matchSource = $this->matchSourceRepository->get(Uuid::fromString($id));
-        $this->denyAccessUnlessGranted(MatchSourceVoter::FINISH, $matchSource);
+        $this->denyAccessUnlessGranted(MatchSourceVoter::REOPEN, $matchSource);
 
-        if (!$this->isCsrfTokenValid('admin_match_source_finish_'.$matchSource->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
+        if (!$this->isCsrfTokenValid('match_source_reopen_'.$matchSource->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('admin_match_source_list');
+            return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }
 
-        $this->commandBus->dispatch(new MarkMatchSourceFinishedCommand(
+        $this->commandBus->dispatch(new ReopenMatchSourceCommand(
             matchSourceId: $matchSource->id,
         ));
 
-        $this->addFlash('success', 'Zdroj zápasů byl ukončen.');
+        $this->addFlash('success', 'Zdroj zápasů byl znovu otevřen.');
 
-        return $this->redirectToRoute('admin_match_source_list');
+        return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
     }
 }

@@ -40,7 +40,7 @@
                         <td class="px-4 py-3">{{ match_source.ownerNickname }}</td>
                         <td class="px-4 py-3">{{ match_source.competitionCount }}</td>
                         <td class="px-4 py-3">
-                            {% if match_source.isFinished %}
+                            {% if match_source.isCompleted %}
                                 <twig:Pill label="Ukončen" variant="done" />
                             {% else %}
                                 <twig:Pill label="Aktivní" variant="success" dot />
@@ -52,14 +52,14 @@
                                 <a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
                                 <a href="{{ path('admin_sport_match_list', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Zápasy</a>
                                 <a href="{{ path('admin_competition_list', {match_source: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Soutěže</a>
-                                {% if not match_source.isFinished and not match_source.isDeleted %}
-                                    <form method="post" action="{{ path('admin_match_source_finish', {id: match_source.id.toRfc4122}) }}" class="inline"
+                                {% if not match_source.isCompleted and not match_source.isDeleted %}
+                                    <form method="post" action="{{ path('admin_match_source_complete', {id: match_source.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-variant-value="warning"
                                         data-confirm-title-value="Ukončit zdroj zápasů"
                                         data-confirm-message-value="Opravdu chcete zdroj zápasů „{{ match_source.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
                                         data-confirm-confirm-label-value="Ano, ukončit">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_match_source_finish_' ~ match_source.id.toRfc4122) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_match_source_complete_' ~ match_source.id.toRfc4122) }}">
                                         <button type="submit" class="btn btn-ghost btn-sm text-win">Ukončit</button>
                                     </form>
                                 {% endif %}

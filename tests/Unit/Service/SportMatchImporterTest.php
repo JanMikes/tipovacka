@@ -48,6 +48,9 @@ final class SportMatchImporterTest extends TestCase
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
 
         $matchSource = new MatchSource(

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Public;
 
-use App\Command\MarkMatchSourceFinished\MarkMatchSourceFinishedCommand;
+use App\Command\MarkMatchSourceCompleted\MarkMatchSourceCompletedCommand;
 use App\DataFixtures\AppFixtures;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -37,7 +37,7 @@ final class PublicMatchSourcesListFlowTest extends WebTestCase
 
         /** @var MessageBusInterface $commandBus */
         $commandBus = $container->get('test.command.bus');
-        $commandBus->dispatch(new MarkMatchSourceFinishedCommand(
+        $commandBus->dispatch(new MarkMatchSourceCompletedCommand(
             matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
         ));
 

@@ -1,0 +1,60 @@
+{#
+    „Průběh zápasu" — match event timeline, visible to everyone once events exist.
+
+    Expects:
+      - sport_match  (SportMatch)
+      - match_events (list of MatchEvent, ordered minute desc / nulls last)
+
+    Dot colors per event type: goal = win (green), yellow card = draw (gold),
+    red card = loss (red). Home events align left, away events right; the
+    sport-aware kickoff row („Výkop" / „Úvodní vhazování") closes the timeline
+    at the bottom.
+#}
+{% if match_events|length > 0 %}
+    <section class="card-glass mt-8 overflow-hidden p-0">
+        <header class="flex items-center gap-2.5 border-b border-white/[0.06] px-6 py-4">
+            <twig:ux:icon name="lucide:activity" class="h-5 w-5 text-accent-300" />
+            <h2 class="text-lg font-semibold text-white">Průběh zápasu</h2>
+        </header>
+
+        <ol id="match-timeline" class="px-6 py-5">
+            {% for e in match_events %}
+                {% set is_home = e.side.value == 'home' %}
+                {% set dot_class = e.type.value == 'goal' ? 'bg-win' : (e.type.value == 'yellow_card' ? 'bg-draw' : 'bg-loss') %}
+                <li class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-2 text-sm">
+                    <div class="min-w-0 text-right">
+                        {% if is_home %}
+                            {% if e.minute is not null %}<span class="mr-1.5 text-xs font-semibold tabular-nums text-white/50">{{ e.minute }}'</span>{% endif %}
+                            <span class="font-medium text-white">{{ e.player.name }}</span>
+                            {% if e.type.value == 'yellow_card' %}
+                                <span class="ml-1.5 inline-block h-3 w-2.5 -mb-px rounded-[2px] bg-draw" title="Žlutá karta"></span>
+                            {% elseif e.type.value == 'red_card' %}
+                                <span class="ml-1.5 inline-block h-3 w-2.5 -mb-px rounded-[2px] bg-loss" title="Červená karta"></span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <span aria-hidden="true" class="h-2.5 w-2.5 shrink-0 rounded-full {{ dot_class }}"></span>
+
+                    <div class="min-w-0 text-left">
+                        {% if not is_home %}
+                            {% if e.type.value == 'yellow_card' %}
+                                <span class="mr-1.5 inline-block h-3 w-2.5 -mb-px rounded-[2px] bg-draw" title="Žlutá karta"></span>
+                            {% elseif e.type.value == 'red_card' %}
+                                <span class="mr-1.5 inline-block h-3 w-2.5 -mb-px rounded-[2px] bg-loss" title="Červená karta"></span>
+                            {% endif %}
+                            <span class="font-medium text-white">{{ e.player.name }}</span>
+                            {% if e.minute is not null %}<span class="ml-1.5 text-xs font-semibold tabular-nums text-white/50">{{ e.minute }}'</span>{% endif %}
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+
+            <li class="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3 border-t border-white/[0.06] pt-3">
+                <div></div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-white/40">{{ sport_match.matchSource.sport.code == 'hockey' ? 'Úvodní vhazování' : 'Výkop' }}</span>
+                <div></div>
+            </li>
+        </ol>
+    </section>
+{% endif %}

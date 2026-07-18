@@ -6,6 +6,7 @@ namespace App\Controller\Portal\SportMatch;
 
 use App\Entity\User;
 use App\Repository\GuessRepository;
+use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
@@ -27,6 +28,7 @@ final class SportMatchDetailController extends AbstractController
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly MatchEventRepository $matchEventRepository,
         private readonly CompetitionMatchProvider $matchProvider,
     ) {
     }
@@ -59,6 +61,7 @@ final class SportMatchDetailController extends AbstractController
         return $this->render('portal/sport_match/detail.html.twig', [
             'sport_match' => $sportMatch,
             'my_competitions_for_match_source' => $myCompetitionsForMatchSource,
+            'match_events' => $this->matchEventRepository->listByMatch($sportMatch->id),
         ]);
     }
 }

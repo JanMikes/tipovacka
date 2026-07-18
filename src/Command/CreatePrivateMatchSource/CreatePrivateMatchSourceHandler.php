@@ -28,12 +28,12 @@ final readonly class CreatePrivateMatchSourceHandler
     public function __invoke(CreatePrivateMatchSourceCommand $command): MatchSource
     {
         $owner = $this->userRepository->get($command->ownerId);
-        $football = $this->sportRepository->getByCode('football');
+        $sport = $this->sportRepository->get($command->sportId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $matchSource = new MatchSource(
             id: $this->identity->next(),
-            sport: $football,
+            sport: $sport,
             owner: $owner,
             kind: MatchSourceKind::Private,
             name: $command->name,

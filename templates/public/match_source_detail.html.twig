@@ -28,7 +28,7 @@
                     {% else %}
                         <twig:Badge label="Soukromý" variant="competition" icon="lock" />
                     {% endif %}
-                    {% if match_source.isFinished %}
+                    {% if match_source.isCompleted %}
                         <twig:Pill label="Ukončen" variant="done" />
                     {% endif %}
                 </div>
@@ -140,7 +140,7 @@
                                                 </a>
                                             {% elseif has_pending_request %}
                                                 <twig:Pill label="Žádost čeká na schválení" variant="warn" icon="clock" />
-                                            {% elseif not match_source.isFinished and app.user.isVerified %}
+                                            {% elseif not match_source.isCompleted and app.user.isVerified %}
                                                 <form method="post" action="{{ path('portal_competition_request_join', {id: g.competitionId.toRfc4122}) }}" class="inline">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('competition_request_join_' ~ g.competitionId.toRfc4122) }}">
                                                     <button type="submit" class="btn btn-ghost btn-sm">
@@ -258,7 +258,7 @@
                     </dl>
                 </div>
 
-                {% if app.user and app.user.isVerified and not match_source.isFinished %}
+                {% if app.user and app.user.isVerified and not match_source.isCompleted %}
                     {{ include('_partials/join_by_pin_form.html.twig', { size: 'compact' }) }}
                 {% endif %}
 

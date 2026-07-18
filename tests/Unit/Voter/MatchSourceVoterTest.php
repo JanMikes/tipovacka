@@ -73,6 +73,9 @@ final class MatchSourceVoterTest extends TestCase
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
     }
 
@@ -95,7 +98,7 @@ final class MatchSourceVoterTest extends TestCase
         );
 
         if ($finished) {
-            $matchSource->markFinished($this->now);
+            $matchSource->markCompleted($this->now);
         }
 
         if ($deleted) {
@@ -250,7 +253,7 @@ final class MatchSourceVoterTest extends TestCase
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
-        $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::FINISH]);
+        $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::COMPLETE]);
 
         self::assertSame(1, $result);
     }

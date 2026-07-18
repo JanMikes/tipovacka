@@ -12,12 +12,15 @@ use App\Event\SportMatchCreated;
 use App\Event\SportMatchDeleted;
 use App\Event\SportMatchFinished;
 use App\Event\SportMatchLive;
+use App\Event\SportMatchLiveScoreChanged;
 use App\Event\SportMatchPostponed;
 use App\Event\SportMatchScoreUpdated;
 use App\Event\SportMatchUpdated;
 use App\Exception\InvalidScore;
 use App\Exception\SportMatchCannotBeEdited;
 use App\Exception\SportMatchInvalidTransition;
+use App\Value\PeriodScores;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
@@ -60,8 +63,36 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?int $awayScore = null;
 
+    /**
+     * Raw per-period [home, away] pairs; exposed through the $periodScores
+     * virtual property as a PeriodScores value object.
+     *
+     * @var list<array{int, int}>|null
+     */
+    #[ORM\Column(name: 'period_scores', type: Types::JSON, nullable: true)]
+    private ?array $periodScoresData = null;
+
+    /**
+     * Final score AFTER prolongation/shootout (home side). Settable only when the
+     * regular score is a draw; the regular score remains the primary result.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?int $overtimeHomeScore = null;
+
+    /** Final score AFTER prolongation/shootout (away side). See $overtimeHomeScore. */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?int $overtimeAwayScore = null;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
+
+    public ?PeriodScores $periodScores {
+        get => PeriodScores::fromNullableArray($this->periodScoresData);
+    }
+
+    public bool $hasOvertimeScore {
+        get => null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore;
+    }
 
     public bool $isScheduled {
         get => SportMatchState::Scheduled === $this->state;
@@ -176,8 +207,16 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         ));
     }
 
-    public function setFinalScore(int $homeScore, int $awayScore, \DateTimeImmutable $now): void
-    {
+    /**
+     * Live score update: allowed from Scheduled (transitions to Live implicitly)
+     * and Live. Records SportMatchLiveScoreChanged only — no evaluation trigger.
+     */
+    public function updateLiveScore(
+        int $homeScore,
+        int $awayScore,
+        ?PeriodScores $periodScores,
+        \DateTimeImmutable $now,
+    ): void {
         if ($homeScore < 0 || $awayScore < 0) {
             throw InvalidScore::negative();
         }
@@ -186,10 +225,90 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             throw SportMatchCannotBeEdited::create();
         }
 
+        if (!$this->isScheduled && !$this->isLive) {
+            throw SportMatchInvalidTransition::from($this->state, 'live_score');
+        }
+
+        // A live match may have only some periods played so far, never more than the sport allows.
+        $sport = $this->matchSource->sport;
+        if (null !== $periodScores && count($periodScores) > $sport->periodCount) {
+            throw InvalidScore::tooManyPeriods($sport->periodCount, $sport->periodLabelPlural);
+        }
+
+        $this->state = SportMatchState::Live;
+        $this->homeScore = $homeScore;
+        $this->awayScore = $awayScore;
+        $this->periodScoresData = $periodScores?->toArray();
+        $this->updatedAt = $now;
+
+        $this->recordThat(new SportMatchLiveScoreChanged(
+            sportMatchId: $this->id,
+            matchSourceId: $this->matchSource->id,
+            homeScore: $homeScore,
+            awayScore: $awayScore,
+            occurredOn: $now,
+        ));
+    }
+
+    public function setFinalScore(
+        int $homeScore,
+        int $awayScore,
+        ?PeriodScores $periodScores,
+        ?int $overtimeHomeScore,
+        ?int $overtimeAwayScore,
+        \DateTimeImmutable $now,
+    ): void {
+        if ($homeScore < 0 || $awayScore < 0) {
+            throw InvalidScore::negative();
+        }
+
+        if ($this->isCancelled || null !== $this->deletedAt) {
+            throw SportMatchCannotBeEdited::create();
+        }
+
+        if (null !== $periodScores) {
+            $sport = $this->matchSource->sport;
+
+            if (count($periodScores) !== $sport->periodCount) {
+                throw InvalidScore::periodCountMismatch($sport->periodCount, $sport->periodLabelPlural);
+            }
+
+            if ($periodScores->sumHome() !== $homeScore || $periodScores->sumAway() !== $awayScore) {
+                throw InvalidScore::periodSumMismatch();
+            }
+        }
+
+        if ((null === $overtimeHomeScore) !== (null === $overtimeAwayScore)) {
+            throw InvalidScore::overtimeIncomplete();
+        }
+
+        if (null !== $overtimeHomeScore && null !== $overtimeAwayScore) {
+            if ($overtimeHomeScore < 0 || $overtimeAwayScore < 0) {
+                throw InvalidScore::negative();
+            }
+
+            if ($homeScore !== $awayScore) {
+                throw InvalidScore::overtimeWithoutDraw();
+            }
+
+            // The overtime score is the FINAL result incl. prolongation/shootout:
+            // it must decide the match and can never undo regular-time goals.
+            if ($overtimeHomeScore === $overtimeAwayScore) {
+                throw InvalidScore::overtimeDraw();
+            }
+
+            if ($overtimeHomeScore < $homeScore || $overtimeAwayScore < $awayScore) {
+                throw InvalidScore::overtimeBelowRegular();
+            }
+        }
+
         $wasFinished = $this->isFinished;
 
         $this->homeScore = $homeScore;
         $this->awayScore = $awayScore;
+        $this->periodScoresData = $periodScores?->toArray();
+        $this->overtimeHomeScore = $overtimeHomeScore;
+        $this->overtimeAwayScore = $overtimeAwayScore;
         $this->state = SportMatchState::Finished;
         $this->updatedAt = $now;
 

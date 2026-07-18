@@ -66,6 +66,9 @@ final class SportMatchVoterTest extends TestCase
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
@@ -79,7 +82,7 @@ final class SportMatchVoterTest extends TestCase
             createdAt: $this->now,
         );
         if ($finished) {
-            $matchSource->markFinished($this->now);
+            $matchSource->markCompleted($this->now);
         }
         if ($deleted) {
             $matchSource->softDelete($this->now);

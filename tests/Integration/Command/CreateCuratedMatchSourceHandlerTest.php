@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Command;
 use App\Command\CreateCuratedMatchSource\CreateCuratedMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
+use App\Entity\Sport;
 use App\Enum\MatchSourceKind;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -17,6 +18,7 @@ final class CreateCuratedMatchSourceHandlerTest extends IntegrationTestCase
     {
         $this->commandBus()->dispatch(new CreateCuratedMatchSourceCommand(
             adminId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            sportId: Uuid::fromString(Sport::FOOTBALL_ID),
             name: 'Nový veřejný turnaj',
             description: 'Popis',
             startAt: null,
@@ -37,7 +39,7 @@ final class CreateCuratedMatchSourceHandlerTest extends IntegrationTestCase
         self::assertInstanceOf(MatchSource::class, $matchSource);
         self::assertSame(MatchSourceKind::Curated, $matchSource->kind);
         self::assertTrue($matchSource->isCurated);
-        self::assertFalse($matchSource->isFinished);
+        self::assertFalse($matchSource->isCompleted);
         self::assertFalse($matchSource->isDeleted());
         self::assertSame(AppFixtures::ADMIN_ID, $matchSource->owner->id->toRfc4122());
         self::assertSame('football', $matchSource->sport->code);

@@ -57,7 +57,7 @@ final readonly class ListMyAccessiblePrivateMatchSourcesQuery
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,
                 endAt: $t->endAt,
-                finishedAt: $t->finishedAt,
+                completedAt: $t->completedAt,
             ),
             $matchSources,
         ));

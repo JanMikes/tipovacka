@@ -15,6 +15,7 @@ use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\MatchSource;
+use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Query\GetCompetitionLeaderboard\CompetitionLeaderboardResult;
@@ -51,6 +52,7 @@ final class FullHappyPathTest extends IntegrationTestCase
         // 1) User A creates a private match source.
         $matchSourceId = $this->extractId($bus->dispatch(new CreatePrivateMatchSourceCommand(
             ownerId: $userA->id,
+            sportId: Uuid::fromString(Sport::FOOTBALL_ID),
             name: 'E2E Liga',
             description: null,
             startAt: null,

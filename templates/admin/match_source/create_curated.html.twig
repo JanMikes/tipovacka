@@ -22,6 +22,11 @@
 <div class="card-glass p-6 md:p-8 max-w-3xl">
     {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
         <div class="field">
+            {{ form_label(form.sport) }}
+            {{ form_widget(form.sport) }}
+            {{ form_errors(form.sport) }}
+        </div>
+        <div class="field">
             {{ form_label(form.name) }}
             {{ form_widget(form.name) }}
             {{ form_errors(form.name) }}

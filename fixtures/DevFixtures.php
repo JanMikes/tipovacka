@@ -123,7 +123,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             endAt: new \DateTimeImmutable('2024-07-14 23:59:59 UTC'),
             createdAt: new \DateTimeImmutable('2024-04-01 10:00:00 UTC'),
         );
-        $euro->markFinished(new \DateTimeImmutable('2024-07-15 12:00:00 UTC'));
+        $euro->markCompleted(new \DateTimeImmutable('2024-07-15 12:00:00 UTC'));
         $euro->popEvents();
         $manager->persist($euro);
 
@@ -444,7 +444,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         \DateTimeImmutable $now,
     ): SportMatch {
         $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
-        $match->setFinalScore($homeScore, $awayScore, $now);
+        $match->setFinalScore($homeScore, $awayScore, null, null, null, $now);
         $match->popEvents();
 
         return $match;

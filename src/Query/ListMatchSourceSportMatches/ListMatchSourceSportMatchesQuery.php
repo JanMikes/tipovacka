@@ -40,6 +40,9 @@ final readonly class ListMatchSourceSportMatchesQuery
                 state: $m->state,
                 homeScore: $m->homeScore,
                 awayScore: $m->awayScore,
+                periodScores: $m->periodScores,
+                overtimeHomeScore: $m->overtimeHomeScore,
+                overtimeAwayScore: $m->overtimeAwayScore,
             ),
             $matches,
         );

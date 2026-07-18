@@ -12,14 +12,19 @@ use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
+use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\MatchEventType;
+use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
 use App\Enum\UserRole;
+use App\Value\PeriodScores;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -100,6 +105,19 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
     public const string PENDING_JOIN_REQUEST_ID = '019ccccc-0000-7000-8000-000000000002';
 
+    /** Roster pool of the PUBLIC (curated) source — created for MATCH_FINISHED events. */
+    public const string PLAYER_HOME_SCORER_ONE_ID = '019ddddd-0000-7000-8000-0000000000b1';
+    public const string PLAYER_HOME_SCORER_ONE_NAME = 'Jan Novák';
+    public const string PLAYER_HOME_SCORER_TWO_ID = '019ddddd-0000-7000-8000-0000000000b2';
+    public const string PLAYER_HOME_SCORER_TWO_NAME = 'Petr Svoboda';
+    public const string PLAYER_AWAY_BOOKED_ID = '019ddddd-0000-7000-8000-0000000000b3';
+    public const string PLAYER_AWAY_BOOKED_NAME = 'Marek Doležal';
+
+    /** Timeline of MATCH_FINISHED (2:1): two home goals recorded + one away yellow card. */
+    public const string MATCH_EVENT_GOAL_ONE_ID = '019ddddd-0000-7000-8000-0000000000c1';
+    public const string MATCH_EVENT_GOAL_TWO_ID = '019ddddd-0000-7000-8000-0000000000c2';
+    public const string MATCH_EVENT_YELLOW_CARD_ID = '019ddddd-0000-7000-8000-0000000000c3';
+
     public const string MATCH_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000001';
     /** Scheduled playoff match in the PUBLIC (curated) source — kickoff 2025-06-22 18:00 UTC. */
     public const string MATCH_PLAYOFF_ID = '019ddddd-0000-7000-8000-000000000005';
@@ -140,13 +158,26 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     {
         $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
 
-        // Seed football Sport for tests/dev (migration seeds the same row in prod via SQL).
+        // Seed both Sports for tests/dev (migrations seed the same rows in prod via SQL).
         $football = new Sport(
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
         $manager->persist($football);
+
+        $hockey = new Sport(
+            id: Uuid::fromString(Sport::HOCKEY_ID),
+            code: 'hockey',
+            name: 'Hokej',
+            periodCount: 3,
+            periodLabelSingular: 'třetina',
+            periodLabelPlural: 'třetiny',
+        );
+        $manager->persist($hockey);
 
         $admin = new User(
             id: Uuid::fromString(self::ADMIN_ID),
@@ -395,9 +426,74 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             createdAt: $now,
             round: 'Základní skupina',
         );
-        $finishedMatch->setFinalScore(2, 1, $now);
+        $finishedMatch->setFinalScore(
+            homeScore: 2,
+            awayScore: 1,
+            periodScores: PeriodScores::fromArray([[1, 0], [1, 1]]),
+            overtimeHomeScore: null,
+            overtimeAwayScore: null,
+            now: $now,
+        );
         $finishedMatch->popEvents();
         $manager->persist($finishedMatch);
+
+        // Roster pool + timeline of the finished match (2:1 — both home goals
+        // recorded, the away goal intentionally without a scorer, plus one
+        // yellow card; goal-count vs score mismatch is allowed by design).
+        $homeScorerOne = new Player(
+            id: Uuid::fromString(self::PLAYER_HOME_SCORER_ONE_ID),
+            matchSource: $public,
+            teamName: $finishedMatch->homeTeam,
+            name: self::PLAYER_HOME_SCORER_ONE_NAME,
+            createdAt: $now,
+        );
+        $manager->persist($homeScorerOne);
+
+        $homeScorerTwo = new Player(
+            id: Uuid::fromString(self::PLAYER_HOME_SCORER_TWO_ID),
+            matchSource: $public,
+            teamName: $finishedMatch->homeTeam,
+            name: self::PLAYER_HOME_SCORER_TWO_NAME,
+            createdAt: $now,
+        );
+        $manager->persist($homeScorerTwo);
+
+        $awayBooked = new Player(
+            id: Uuid::fromString(self::PLAYER_AWAY_BOOKED_ID),
+            matchSource: $public,
+            teamName: $finishedMatch->awayTeam,
+            name: self::PLAYER_AWAY_BOOKED_NAME,
+            createdAt: $now,
+        );
+        $manager->persist($awayBooked);
+
+        $manager->persist(new MatchEvent(
+            id: Uuid::fromString(self::MATCH_EVENT_GOAL_ONE_ID),
+            sportMatch: $finishedMatch,
+            type: MatchEventType::Goal,
+            side: MatchSide::Home,
+            minute: 27,
+            player: $homeScorerOne,
+            createdAt: $now,
+        ));
+        $manager->persist(new MatchEvent(
+            id: Uuid::fromString(self::MATCH_EVENT_GOAL_TWO_ID),
+            sportMatch: $finishedMatch,
+            type: MatchEventType::Goal,
+            side: MatchSide::Home,
+            minute: 63,
+            player: $homeScorerTwo,
+            createdAt: $now,
+        ));
+        $manager->persist(new MatchEvent(
+            id: Uuid::fromString(self::MATCH_EVENT_YELLOW_CARD_ID),
+            sportMatch: $finishedMatch,
+            type: MatchEventType::YellowCard,
+            side: MatchSide::Away,
+            minute: 51,
+            player: $awayBooked,
+            createdAt: $now,
+        ));
 
         $privateScheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PRIVATE_SCHEDULED_ID),

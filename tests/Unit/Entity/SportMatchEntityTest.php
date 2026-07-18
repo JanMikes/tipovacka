@@ -16,12 +16,14 @@ use App\Event\SportMatchCreated;
 use App\Event\SportMatchDeleted;
 use App\Event\SportMatchFinished;
 use App\Event\SportMatchLive;
+use App\Event\SportMatchLiveScoreChanged;
 use App\Event\SportMatchPostponed;
 use App\Event\SportMatchScoreUpdated;
 use App\Event\SportMatchUpdated;
 use App\Exception\InvalidScore;
 use App\Exception\SportMatchCannotBeEdited;
 use App\Exception\SportMatchInvalidTransition;
+use App\Value\PeriodScores;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -51,6 +53,9 @@ final class SportMatchEntityTest extends TestCase
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
 
         $matchSource = new MatchSource(
@@ -227,7 +232,7 @@ final class SportMatchEntityTest extends TestCase
     public function testUpdateAllowedWhenFinished(): void
     {
         $match = $this->makeMatch();
-        $match->setFinalScore(1, 0, $this->now);
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
         $match->popEvents();
 
         $match->updateDetails('X', 'Y', null, null, $this->later);
@@ -266,7 +271,7 @@ final class SportMatchEntityTest extends TestCase
     public function testBeginLiveThrowsFromFinished(): void
     {
         $match = $this->makeMatch();
-        $match->setFinalScore(1, 0, $this->now);
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
 
         $this->expectException(SportMatchInvalidTransition::class);
         $match->beginLive($this->later);
@@ -286,7 +291,7 @@ final class SportMatchEntityTest extends TestCase
         $match = $this->makeMatch();
         $match->popEvents();
 
-        $match->setFinalScore(2, 1, $this->later);
+        $match->setFinalScore(2, 1, null, null, null, $this->later);
 
         self::assertTrue($match->isFinished);
         self::assertSame(2, $match->homeScore);
@@ -303,7 +308,7 @@ final class SportMatchEntityTest extends TestCase
         $match->beginLive($this->now);
         $match->popEvents();
 
-        $match->setFinalScore(3, 0, $this->later);
+        $match->setFinalScore(3, 0, null, null, null, $this->later);
 
         self::assertTrue($match->isFinished);
 
@@ -315,10 +320,10 @@ final class SportMatchEntityTest extends TestCase
     public function testReSettingScoreFiresScoreUpdatedEvent(): void
     {
         $match = $this->makeMatch();
-        $match->setFinalScore(1, 0, $this->now);
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
         $match->popEvents();
 
-        $match->setFinalScore(2, 2, $this->later);
+        $match->setFinalScore(2, 2, null, null, null, $this->later);
 
         self::assertSame(2, $match->homeScore);
         self::assertSame(2, $match->awayScore);
@@ -333,7 +338,7 @@ final class SportMatchEntityTest extends TestCase
         $match = $this->makeMatch();
 
         $this->expectException(InvalidScore::class);
-        $match->setFinalScore(-1, 0, $this->later);
+        $match->setFinalScore(-1, 0, null, null, null, $this->later);
     }
 
     public function testSetFinalScoreThrowsWhenCancelled(): void
@@ -342,7 +347,7 @@ final class SportMatchEntityTest extends TestCase
         $match->cancel($this->now);
 
         $this->expectException(SportMatchCannotBeEdited::class);
-        $match->setFinalScore(1, 1, $this->later);
+        $match->setFinalScore(1, 1, null, null, null, $this->later);
     }
 
     public function testPostponeFromScheduled(): void
@@ -375,7 +380,7 @@ final class SportMatchEntityTest extends TestCase
     public function testPostponeThrowsFromFinished(): void
     {
         $match = $this->makeMatch();
-        $match->setFinalScore(1, 0, $this->now);
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
 
         $this->expectException(SportMatchInvalidTransition::class);
         $match->postponeTo(new \DateTimeImmutable('2025-07-01 18:00'), $this->later);
@@ -442,7 +447,7 @@ final class SportMatchEntityTest extends TestCase
     public function testCancelThrowsWhenFinished(): void
     {
         $match = $this->makeMatch();
-        $match->setFinalScore(1, 0, $this->now);
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
 
         $this->expectException(SportMatchInvalidTransition::class);
         $match->cancel($this->later);
@@ -483,5 +488,206 @@ final class SportMatchEntityTest extends TestCase
         $match->softDelete($this->later);
 
         self::assertCount(0, $match->popEvents());
+    }
+
+    // ── S05: period scores ──────────────────────────────────────────────
+
+    public function testSetFinalScoreStoresPeriodScores(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->setFinalScore(2, 1, PeriodScores::fromArray([[1, 0], [1, 1]]), null, null, $this->now);
+
+        self::assertNotNull($match->periodScores);
+        self::assertSame([[1, 0], [1, 1]], $match->periodScores->toArray());
+        self::assertNull($match->overtimeHomeScore);
+        self::assertFalse($match->hasOvertimeScore);
+    }
+
+    public function testSetFinalScoreRejectsWrongPeriodCountForSport(): void
+    {
+        // Football has 2 periods — 3 pairs must be rejected.
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Zápas musí mít zadané skóre pro 2 poločasy.');
+        $match->setFinalScore(2, 1, PeriodScores::fromArray([[1, 0], [1, 1], [0, 0]]), null, null, $this->now);
+    }
+
+    public function testSetFinalScoreRejectsPeriodSumsNotMatchingFinalScore(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Součet gólů za jednotlivé části zápasu musí odpovídat konečnému skóre.');
+        $match->setFinalScore(2, 1, PeriodScores::fromArray([[1, 0], [0, 1]]), null, null, $this->now);
+    }
+
+    public function testCorrectionMayClearPeriodScores(): void
+    {
+        $match = $this->makeMatch();
+        $match->setFinalScore(2, 1, PeriodScores::fromArray([[1, 0], [1, 1]]), null, null, $this->now);
+        $match->popEvents();
+
+        $match->setFinalScore(2, 1, null, null, null, $this->later);
+
+        self::assertNull($match->periodScores);
+        $events = $match->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(SportMatchScoreUpdated::class, $events[0]);
+    }
+
+    // ── S05: overtime ───────────────────────────────────────────────────
+
+    public function testOvertimeStoredOnDraw(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->setFinalScore(2, 2, PeriodScores::fromArray([[1, 1], [1, 1]]), 3, 2, $this->now);
+
+        self::assertSame(2, $match->homeScore);
+        self::assertSame(2, $match->awayScore);
+        self::assertSame(3, $match->overtimeHomeScore);
+        self::assertSame(2, $match->overtimeAwayScore);
+        self::assertTrue($match->hasOvertimeScore);
+    }
+
+    public function testOvertimeRejectedWhenRegularScoreIsNotDraw(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Skóre po prodloužení lze zadat jen při remíze v základní hrací době.');
+        $match->setFinalScore(2, 1, null, 3, 1, $this->now);
+    }
+
+    public function testOvertimeRequiresBothValues(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Zadejte prosím obě hodnoty skóre po prodloužení.');
+        $match->setFinalScore(2, 2, null, 3, null, $this->now);
+    }
+
+    public function testOvertimeCannotBeADraw(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Skóre po prodloužení nemůže být remíza.');
+        $match->setFinalScore(2, 2, null, 3, 3, $this->now);
+    }
+
+    public function testOvertimeCannotBeBelowRegularScore(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Skóre po prodloužení nemůže být nižší než skóre v základní hrací době.');
+        $match->setFinalScore(2, 2, null, 3, 1, $this->now);
+    }
+
+    // ── S05: live score updates ─────────────────────────────────────────
+
+    public function testUpdateLiveScoreFromScheduledTransitionsToLiveAndRecordsOnlyLiveScoreChanged(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->updateLiveScore(1, 0, PeriodScores::fromArray([[1, 0]]), $this->now);
+
+        self::assertTrue($match->isLive);
+        self::assertSame(1, $match->homeScore);
+        self::assertSame(0, $match->awayScore);
+        self::assertNotNull($match->periodScores);
+        self::assertSame([[1, 0]], $match->periodScores->toArray());
+
+        $events = $match->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(SportMatchLiveScoreChanged::class, $events[0]);
+    }
+
+    public function testUpdateLiveScoreAllowedWhileLive(): void
+    {
+        $match = $this->makeMatch();
+        $match->beginLive($this->now);
+        $match->popEvents();
+
+        $match->updateLiveScore(2, 1, null, $this->later);
+
+        self::assertTrue($match->isLive);
+        self::assertSame(2, $match->homeScore);
+        self::assertSame(1, $match->awayScore);
+
+        $events = $match->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(SportMatchLiveScoreChanged::class, $events[0]);
+    }
+
+    public function testUpdateLiveScoreRejectedWhenFinished(): void
+    {
+        $match = $this->makeMatch();
+        $match->setFinalScore(1, 0, null, null, null, $this->now);
+
+        $this->expectException(SportMatchInvalidTransition::class);
+        $match->updateLiveScore(2, 0, null, $this->later);
+    }
+
+    public function testUpdateLiveScoreRejectedWhenPostponed(): void
+    {
+        $match = $this->makeMatch();
+        $match->postponeTo(new \DateTimeImmutable('2025-07-01 18:00:00 UTC'), $this->now);
+
+        $this->expectException(SportMatchInvalidTransition::class);
+        $match->updateLiveScore(1, 0, null, $this->later);
+    }
+
+    public function testUpdateLiveScoreRejectedWhenCancelled(): void
+    {
+        $match = $this->makeMatch();
+        $match->cancel($this->now);
+
+        $this->expectException(SportMatchCannotBeEdited::class);
+        $match->updateLiveScore(1, 0, null, $this->later);
+    }
+
+    public function testUpdateLiveScoreRejectedWhenDeleted(): void
+    {
+        $match = $this->makeMatch();
+        $match->softDelete($this->now);
+
+        $this->expectException(SportMatchCannotBeEdited::class);
+        $match->updateLiveScore(1, 0, null, $this->later);
+    }
+
+    public function testUpdateLiveScoreRejectsNegativeScore(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $match->updateLiveScore(-1, 0, null, $this->now);
+    }
+
+    public function testUpdateLiveScoreRejectsMorePeriodsThanSportAllows(): void
+    {
+        $match = $this->makeMatch();
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('Zápas nemůže mít více než 2 poločasy.');
+        $match->updateLiveScore(3, 0, PeriodScores::fromArray([[1, 0], [1, 0], [1, 0]]), $this->now);
+    }
+
+    public function testUpdateLiveScoreAllowsPartialPeriods(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->updateLiveScore(1, 1, PeriodScores::fromArray([[1, 1]]), $this->now);
+
+        self::assertNotNull($match->periodScores);
+        self::assertCount(1, $match->periodScores);
     }
 }

@@ -48,7 +48,7 @@ final class MatchSourceRepository
             ->select('t')
             ->from(MatchSource::class, 't')
             ->where('t.kind = :kind')
-            ->andWhere('t.finishedAt IS NULL')
+            ->andWhere('t.completedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
             ->setParameter('kind', \App\Enum\MatchSourceKind::Curated)
             ->orderBy('t.createdAt', 'DESC')

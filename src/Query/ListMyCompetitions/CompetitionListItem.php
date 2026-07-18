@@ -13,7 +13,7 @@ final readonly class CompetitionListItem
         public string $competitionName,
         public Uuid $matchSourceId,
         public string $matchSourceName,
-        public bool $matchSourceIsFinished,
+        public bool $matchSourceIsCompleted,
         public string $ownerNickname,
         public bool $isOwner,
         public \DateTimeImmutable $joinedAt,

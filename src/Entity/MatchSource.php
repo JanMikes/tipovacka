@@ -7,11 +7,12 @@ namespace App\Entity;
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
 use App\Enum\MatchSourceKind;
+use App\Event\MatchSourceCompleted;
 use App\Event\MatchSourceCreated;
 use App\Event\MatchSourceDeleted;
-use App\Event\MatchSourceFinished;
+use App\Event\MatchSourceReopened;
 use App\Event\MatchSourceUpdated;
-use App\Exception\MatchSourceAlreadyFinished;
+use App\Exception\MatchSourceAlreadyCompleted;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -19,7 +20,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'match_sources')]
-#[ORM\Index(columns: ['kind', 'finished_at', 'deleted_at'], name: 'IDX_match_sources_kind_active')]
+#[ORM\Index(columns: ['kind', 'completed_at', 'deleted_at'], name: 'IDX_match_sources_kind_active')]
 #[ORM\Index(columns: ['owner_id', 'kind', 'deleted_at'], name: 'IDX_match_sources_owner_kind')]
 class MatchSource implements EntityWithEvents, SoftDeletable
 {
@@ -42,18 +43,18 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     public private(set) \DateTimeImmutable $updatedAt;
 
     #[ORM\Column(nullable: true)]
-    public private(set) ?\DateTimeImmutable $finishedAt = null;
+    public private(set) ?\DateTimeImmutable $completedAt = null;
 
     public bool $isCurated {
         get => MatchSourceKind::Curated === $this->kind;
     }
 
-    public bool $isFinished {
-        get => null !== $this->finishedAt;
+    public bool $isCompleted {
+        get => null !== $this->completedAt;
     }
 
     public bool $isActive {
-        get => null === $this->finishedAt && null === $this->deletedAt;
+        get => null === $this->completedAt && null === $this->deletedAt;
     }
 
     public function __construct(
@@ -109,16 +110,35 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         ));
     }
 
-    public function markFinished(\DateTimeImmutable $now): void
+    public function markCompleted(\DateTimeImmutable $now): void
     {
-        if ($this->isFinished) {
-            throw MatchSourceAlreadyFinished::withId($this->id);
+        if ($this->isCompleted) {
+            throw MatchSourceAlreadyCompleted::withId($this->id);
         }
 
-        $this->finishedAt = $now;
+        $this->completedAt = $now;
         $this->updatedAt = $now;
 
-        $this->recordThat(new MatchSourceFinished(
+        $this->recordThat(new MatchSourceCompleted(
+            matchSourceId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Undo markCompleted() — e.g. when the „poslední zápas" checkbox was ticked
+     * by mistake or a playoff match was added later. No-op when not completed.
+     */
+    public function reopen(\DateTimeImmutable $now): void
+    {
+        if (!$this->isCompleted) {
+            return;
+        }
+
+        $this->completedAt = null;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new MatchSourceReopened(
             matchSourceId: $this->id,
             occurredOn: $now,
         ));

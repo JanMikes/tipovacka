@@ -31,7 +31,7 @@ final class GetCompetitionLeaderboardQueryTest extends IntegrationTestCase
         self::assertSame(3, $result->rows[0]->totalPoints);
         self::assertSame(1, $result->rows[0]->rank);
         self::assertFalse($result->rows[0]->isTieResolvedOverride);
-        self::assertFalse($result->matchSourceFinished);
+        self::assertFalse($result->matchSourceCompleted);
 
         // Stats: admin's single evaluated guess scored (correct outcome = 3 b, not exact).
         self::assertSame(1, $result->rows[0]->evaluatedCount);

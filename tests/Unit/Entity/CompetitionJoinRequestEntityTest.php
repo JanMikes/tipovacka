@@ -49,7 +49,7 @@ final class CompetitionJoinRequestEntityTest extends TestCase
 
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: $owner,
             kind: MatchSourceKind::Curated,
             name: 'Turnaj',

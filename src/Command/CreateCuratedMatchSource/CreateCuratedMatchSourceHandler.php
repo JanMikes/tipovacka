@@ -28,12 +28,12 @@ final readonly class CreateCuratedMatchSourceHandler
     public function __invoke(CreateCuratedMatchSourceCommand $command): MatchSource
     {
         $admin = $this->userRepository->get($command->adminId);
-        $football = $this->sportRepository->getByCode('football');
+        $sport = $this->sportRepository->get($command->sportId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $matchSource = new MatchSource(
             id: $this->identity->next(),
-            sport: $football,
+            sport: $sport,
             owner: $admin,
             kind: MatchSourceKind::Curated,
             name: $command->name,

@@ -47,7 +47,7 @@ final readonly class GetCompetitionDetailQuery
             id: $competition->id,
             matchSourceId: $competition->matchSource->id,
             matchSourceName: $competition->matchSource->name,
-            matchSourceIsFinished: $competition->matchSource->isFinished,
+            matchSourceIsCompleted: $competition->matchSource->isCompleted,
             ownerId: $competition->owner->id,
             ownerNickname: $competition->owner->displayName,
             name: $competition->name,

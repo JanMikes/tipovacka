@@ -10,6 +10,7 @@ final readonly class CreatePrivateMatchSourceCommand
 {
     public function __construct(
         public Uuid $ownerId,
+        public Uuid $sportId,
         public string $name,
         public ?string $description,
         public ?\DateTimeImmutable $startAt,

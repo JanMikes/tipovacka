@@ -28,7 +28,7 @@ final readonly class ListActivePublicMatchSourcesQuery
             ->from(MatchSource::class, 't')
             ->innerJoin('t.owner', 'o')
             ->where('t.kind = :kind')
-            ->andWhere('t.finishedAt IS NULL')
+            ->andWhere('t.completedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
             ->setParameter('kind', MatchSourceKind::Curated)
             ->orderBy('t.createdAt', 'DESC')
@@ -45,7 +45,7 @@ final readonly class ListActivePublicMatchSourcesQuery
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,
                 endAt: $t->endAt,
-                finishedAt: $t->finishedAt,
+                completedAt: $t->completedAt,
             ),
             $matchSources,
         ));

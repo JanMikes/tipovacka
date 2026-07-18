@@ -215,7 +215,7 @@
                                         {% if g.isOwner %}
                                             <twig:Badge label="Vlastník" variant="organizer" icon="crown" />
                                         {% endif %}
-                                        {% if g.matchSourceIsFinished %}
+                                        {% if g.matchSourceIsCompleted %}
                                             <twig:Pill label="Ukončen" variant="done" />
                                         {% endif %}
                                     </div>
@@ -277,7 +277,7 @@
                                         {% else %}
                                             <twig:Pill label="Veřejný" variant="accent" icon="globe" />
                                         {% endif %}
-                                        {% if t.finishedAt %}
+                                        {% if t.completedAt %}
                                             <twig:Pill label="Ukončen" variant="done" />
                                         {% endif %}
                                     </div>

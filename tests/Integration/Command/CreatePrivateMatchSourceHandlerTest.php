@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Command;
 use App\Command\CreatePrivateMatchSource\CreatePrivateMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
+use App\Entity\Sport;
 use App\Enum\MatchSourceKind;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -17,6 +18,7 @@ final class CreatePrivateMatchSourceHandlerTest extends IntegrationTestCase
     {
         $this->commandBus()->dispatch(new CreatePrivateMatchSourceCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            sportId: Uuid::fromString(Sport::FOOTBALL_ID),
             name: 'Soukromý pohár',
             description: null,
             startAt: null,

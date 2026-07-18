@@ -9,11 +9,12 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
+use App\Event\MatchSourceCompleted;
 use App\Event\MatchSourceCreated;
 use App\Event\MatchSourceDeleted;
-use App\Event\MatchSourceFinished;
+use App\Event\MatchSourceReopened;
 use App\Event\MatchSourceUpdated;
-use App\Exception\MatchSourceAlreadyFinished;
+use App\Exception\MatchSourceAlreadyCompleted;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -46,6 +47,9 @@ final class MatchSourceEntityTest extends TestCase
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
+            periodCount: 2,
+            periodLabelSingular: 'poločas',
+            periodLabelPlural: 'poločasy',
         );
     }
 
@@ -80,7 +84,7 @@ final class MatchSourceEntityTest extends TestCase
         $matchSource = $this->makeMatchSource();
 
         self::assertTrue($matchSource->isActive);
-        self::assertFalse($matchSource->isFinished);
+        self::assertFalse($matchSource->isCompleted);
         self::assertFalse($matchSource->isDeleted());
     }
 
@@ -119,31 +123,78 @@ final class MatchSourceEntityTest extends TestCase
         self::assertInstanceOf(MatchSourceUpdated::class, $events[0]);
     }
 
-    public function testMarkFinishedSetsFinishedAtAndRecordsEvent(): void
+    public function testMarkCompletedSetsCompletedAtAndRecordsEvent(): void
     {
         $matchSource = $this->makeMatchSource();
         $matchSource->popEvents();
 
         $finishAt = new \DateTimeImmutable('2025-06-17 10:00:00 UTC');
-        $matchSource->markFinished($finishAt);
+        $matchSource->markCompleted($finishAt);
 
-        self::assertTrue($matchSource->isFinished);
+        self::assertTrue($matchSource->isCompleted);
         self::assertFalse($matchSource->isActive);
-        self::assertSame($finishAt, $matchSource->finishedAt);
+        self::assertSame($finishAt, $matchSource->completedAt);
         self::assertSame($finishAt, $matchSource->updatedAt);
 
         $events = $matchSource->popEvents();
         self::assertCount(1, $events);
-        self::assertInstanceOf(MatchSourceFinished::class, $events[0]);
+        self::assertInstanceOf(MatchSourceCompleted::class, $events[0]);
     }
 
-    public function testMarkFinishedThrowsWhenAlreadyFinished(): void
+    public function testMarkCompletedThrowsWhenAlreadyCompleted(): void
     {
         $matchSource = $this->makeMatchSource();
-        $matchSource->markFinished($this->now);
+        $matchSource->markCompleted($this->now);
 
-        $this->expectException(MatchSourceAlreadyFinished::class);
-        $matchSource->markFinished($this->now);
+        $this->expectException(MatchSourceAlreadyCompleted::class);
+        $matchSource->markCompleted($this->now);
+    }
+
+    public function testReopenClearsCompletedAtAndRecordsEvent(): void
+    {
+        $matchSource = $this->makeMatchSource();
+        $matchSource->markCompleted($this->now);
+        $matchSource->popEvents();
+
+        $reopenAt = new \DateTimeImmutable('2025-06-18 10:00:00 UTC');
+        $matchSource->reopen($reopenAt);
+
+        self::assertFalse($matchSource->isCompleted);
+        self::assertTrue($matchSource->isActive);
+        self::assertNull($matchSource->completedAt);
+        self::assertSame($reopenAt, $matchSource->updatedAt);
+
+        $events = $matchSource->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(MatchSourceReopened::class, $events[0]);
+    }
+
+    public function testReopenIsNoOpWhenNotCompleted(): void
+    {
+        $matchSource = $this->makeMatchSource();
+        $matchSource->popEvents();
+        $updatedAt = $matchSource->updatedAt;
+
+        $matchSource->reopen($this->now);
+
+        self::assertFalse($matchSource->isCompleted);
+        self::assertSame($updatedAt, $matchSource->updatedAt);
+        self::assertCount(0, $matchSource->popEvents());
+    }
+
+    public function testCompletedSourceCanBeCompletedAgainAfterReopen(): void
+    {
+        $matchSource = $this->makeMatchSource();
+        $matchSource->markCompleted($this->now);
+        $matchSource->reopen($this->now);
+        $matchSource->popEvents();
+
+        $matchSource->markCompleted($this->now);
+
+        self::assertTrue($matchSource->isCompleted);
+        $events = $matchSource->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(MatchSourceCompleted::class, $events[0]);
     }
 
     public function testSoftDeleteMarksDeletedAndRecordsEvent(): void

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Query;
 
-use App\Command\MarkMatchSourceFinished\MarkMatchSourceFinishedCommand;
+use App\Command\MarkMatchSourceCompleted\MarkMatchSourceCompletedCommand;
 use App\Command\SoftDeleteMatchSource\SoftDeleteMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Query\ListActivePublicMatchSources\ListActivePublicMatchSources;
@@ -25,7 +25,7 @@ final class ListActivePublicMatchSourcesQueryTest extends IntegrationTestCase
     public function testExcludesFinishedMatchSources(): void
     {
         $publicId = Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID);
-        $this->commandBus()->dispatch(new MarkMatchSourceFinishedCommand(matchSourceId: $publicId));
+        $this->commandBus()->dispatch(new MarkMatchSourceCompletedCommand(matchSourceId: $publicId));
 
         $result = $this->queryBus()->handle(new ListActivePublicMatchSources());
 

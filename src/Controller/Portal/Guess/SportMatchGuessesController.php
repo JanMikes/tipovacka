@@ -14,6 +14,7 @@ use App\Query\QueryBus;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
+use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
@@ -41,6 +42,7 @@ final class SportMatchGuessesController extends AbstractController
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly MatchEventRepository $matchEventRepository,
         private readonly CompetitionMatchSettingRepository $competitionMatchSettingRepository,
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
@@ -131,6 +133,7 @@ final class SportMatchGuessesController extends AbstractController
         return $this->render('portal/guess/detail.html.twig', [
             'competition' => $competition,
             'sport_match' => $sportMatch,
+            'match_events' => $this->matchEventRepository->listByMatch($sportMatch->id),
             'member_rows' => $memberRows,
             'effective_deadline' => $effectiveDeadline,
             'can_see_all_tips' => $canSeeAllTips,

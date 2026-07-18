@@ -39,7 +39,7 @@ final class RuleTestFactory
     {
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
-            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
+            sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal', 2, 'poločas', 'poločasy'),
             owner: self::user(),
             kind: MatchSourceKind::Private,
             name: 'T',
@@ -89,7 +89,7 @@ final class RuleTestFactory
     public static function finishedMatch(int $home, int $away): SportMatch
     {
         $match = self::scheduledMatch();
-        $match->setFinalScore($home, $away, self::now());
+        $match->setFinalScore($home, $away, null, null, null, self::now());
         $match->popEvents();
 
         return $match;

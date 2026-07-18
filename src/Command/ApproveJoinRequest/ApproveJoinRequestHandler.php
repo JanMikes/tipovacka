@@ -31,7 +31,7 @@ final readonly class ApproveJoinRequestHandler
         $request = $this->joinRequestRepository->get($command->requestId);
         $approver = $this->userRepository->get($command->ownerId);
 
-        if ($request->competition->matchSource->isFinished) {
+        if ($request->competition->matchSource->isCompleted) {
             throw CannotJoinFinishedMatchSource::forCompetition($request->competition->id);
         }
 

@@ -32,7 +32,7 @@ final readonly class JoinCompetitionByLinkHandler
         $competition = $this->competitionRepository->getByShareableLinkToken($command->token);
         $user = $this->userRepository->get($command->userId);
 
-        if ($competition->matchSource->isFinished) {
+        if ($competition->matchSource->isCompleted) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 

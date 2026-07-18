@@ -11,7 +11,7 @@
         {label: 'Žebříček'},
     ]" />
 
-    {% if competition.matchSource.isFinished and winner is defined and winner is not null %}
+    {% if competition.matchSource.isCompleted and winner is defined and winner is not null %}
         <section class="surface-accent mb-8 p-6 sm:p-10">
             <picture>
                 <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">

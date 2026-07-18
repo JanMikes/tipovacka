@@ -43,7 +43,7 @@ final readonly class ListAdminMatchSourcesQuery
                 kind: $t->kind,
                 sportCode: $t->sport->code,
                 ownerNickname: $t->owner->displayName,
-                isFinished: $t->isFinished,
+                isCompleted: $t->isCompleted,
                 isDeleted: null !== $t->deletedAt,
                 competitionCount: $counts[$t->id->toRfc4122()] ?? 0,
             ),

@@ -22,7 +22,7 @@ final readonly class GetMatchSourceDetailResult
         public ?\DateTimeImmutable $endAt,
         public \DateTimeImmutable $createdAt,
         public \DateTimeImmutable $updatedAt,
-        public ?\DateTimeImmutable $finishedAt,
+        public ?\DateTimeImmutable $completedAt,
     ) {
     }
 }

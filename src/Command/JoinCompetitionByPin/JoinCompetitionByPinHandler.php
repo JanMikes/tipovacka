@@ -32,7 +32,7 @@ final readonly class JoinCompetitionByPinHandler
         $competition = $this->competitionRepository->getByPin($command->pin);
         $user = $this->userRepository->get($command->userId);
 
-        if ($competition->matchSource->isFinished) {
+        if ($competition->matchSource->isCompleted) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 
