@@ -50,7 +50,6 @@
                             <div class="flex items-center justify-end gap-2 whitespace-nowrap">
                                 <a href="{{ path('portal_match_source_detail', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Otevřít</a>
                                 <a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
-                                <a href="{{ path('admin_match_source_rule_configuration', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Pravidla</a>
                                 <a href="{{ path('admin_sport_match_list', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Zápasy</a>
                                 <a href="{{ path('admin_competition_list', {match_source: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Soutěže</a>
                                 {% if not match_source.isFinished and not match_source.isDeleted %}

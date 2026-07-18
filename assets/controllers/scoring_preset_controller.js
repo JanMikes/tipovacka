@@ -8,7 +8,10 @@ import { Controller } from '@hotwired/stimulus';
  *                   „+střelec" tile is `disabled` and carries no action/target.
  *   field target — one per points <input>, tagged with `data-rule="<identifier>"`.
  *
- * Standardní → sets the four real rules to 1 / 1 / 3 / 5 and marks itself active.
+ *   defaults value — { identifier: points } map rendered from the PHP rules'
+ *                    `defaultPoints` (single source of truth; no JS copy).
+ *
+ * Standardní → sets every rule to its default points and marks itself active.
  * Vlastní    → only marks itself active (fields stay as the user left them).
  *
  * Defensive: a missing field is skipped; an `input` event is dispatched after each
@@ -17,15 +20,12 @@ import { Controller } from '@hotwired/stimulus';
 export default class extends Controller {
     static targets = ['card', 'field'];
 
-    static STANDARD = {
-        correct_home_goals: 1,
-        correct_away_goals: 1,
-        correct_outcome: 3,
-        exact_score: 5,
+    static values = {
+        defaults: Object,
     };
 
     standard(event) {
-        Object.entries(this.constructor.STANDARD).forEach(([rule, value]) => {
+        Object.entries(this.defaultsValue).forEach(([rule, value]) => {
             this.setField(rule, value);
         });
         this.select(event.currentTarget);

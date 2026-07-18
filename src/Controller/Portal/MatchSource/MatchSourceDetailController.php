@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\MatchSource;
 
-use App\Query\GetMatchSourceRuleConfiguration\GetMatchSourceRuleConfiguration;
 use App\Query\ListCompetitionsForMatchSource\ListCompetitionsForMatchSource;
 use App\Query\ListMatchSourceSportMatches\ListMatchSourceSportMatches;
 use App\Query\QueryBus;
@@ -33,13 +32,11 @@ final class MatchSourceDetailController extends AbstractController
 
         $matches = $this->queryBus->handle(new ListMatchSourceSportMatches(matchSourceId: $matchSource->id));
         $competitions = $this->queryBus->handle(new ListCompetitionsForMatchSource(matchSourceId: $matchSource->id));
-        $ruleConfiguration = $this->queryBus->handle(new GetMatchSourceRuleConfiguration(matchSourceId: $matchSource->id));
 
         return $this->render('portal/match_source/detail.html.twig', [
             'match_source' => $matchSource,
             'sport_matches' => $matches,
             'competitions' => $competitions,
-            'rule_items' => $ruleConfiguration->items,
         ]);
     }
 }

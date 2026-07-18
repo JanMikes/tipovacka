@@ -11,6 +11,7 @@ use App\Entity\SportMatch;
 use App\Repository\CompetitionRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
+use App\Rule\ExactScoreRule;
 use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -75,7 +76,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->andWhere('rp.points > 0')
             ->groupBy('g.user')
             ->setParameter('competitionId', $competition->id)
-            ->setParameter('exactId', 'exact_score');
+            ->setParameter('exactId', ExactScoreRule::IDENTIFIER);
         $this->matchProvider->applyCompetitionMatchFilter($exactQb, 'm', $competition);
 
         /** @var list<array{userId: string, exact: int}> $exactAggregates */

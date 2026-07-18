@@ -10,7 +10,6 @@ use App\Enum\MatchSourceKind;
 use App\Event\MatchSourceCreated;
 use App\Event\MatchSourceDeleted;
 use App\Event\MatchSourceFinished;
-use App\Event\MatchSourceRulesChanged;
 use App\Event\MatchSourceUpdated;
 use App\Exception\MatchSourceAlreadyFinished;
 use Doctrine\DBAL\Types\Types;
@@ -121,17 +120,6 @@ class MatchSource implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new MatchSourceFinished(
             matchSourceId: $this->id,
-            occurredOn: $now,
-        ));
-    }
-
-    public function recordRulesChanged(User $editor, \DateTimeImmutable $now): void
-    {
-        $this->updatedAt = $now;
-
-        $this->recordThat(new MatchSourceRulesChanged(
-            matchSourceId: $this->id,
-            changedByUserId: $editor->id,
             occurredOn: $now,
         ));
     }

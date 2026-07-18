@@ -12,7 +12,7 @@ use App\Form\SendInvitationFormData;
 use App\Form\SendInvitationFormType;
 use App\Query\GetCompetitionDetail\GetCompetitionDetail;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
-use App\Query\GetMatchSourceRuleConfiguration\GetMatchSourceRuleConfiguration;
+use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
 use App\Query\GetMyGuessesInMatchSource\GetMyGuessesInMatchSource;
 use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForCompetition;
 use App\Query\ListPendingJoinRequestsForCompetition\ListPendingJoinRequestsForCompetition;
@@ -100,8 +100,8 @@ final class CompetitionDetailController extends AbstractController
             ])
             : null;
 
-        $ruleConfiguration = $this->queryBus->handle(new GetMatchSourceRuleConfiguration(
-            matchSourceId: $competition->matchSource->id,
+        $ruleConfiguration = $this->queryBus->handle(new GetCompetitionRuleConfiguration(
+            competitionId: $competition->id,
         ));
 
         return $this->render('portal/competition/detail.html.twig', [

@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Guess;
 use App\Exception\GuessNotFound;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -14,6 +15,7 @@ class GuessRepository
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly CompetitionMatchProvider $matchProvider,
     ) {
     }
 
@@ -130,26 +132,55 @@ class GuessRepository
     }
 
     /**
+     * Active guesses of the competition whose match is finished AND currently
+     * belongs to the competition ({@see CompetitionMatchProvider} — subset
+     * selections may have changed since the guess was submitted).
+     *
      * @return list<Guess>
      */
-    public function findActiveForFinishedMatchesInMatchSource(Uuid $matchSourceId): array
+    public function findActiveForFinishedMatchesInCompetition(Uuid $competitionId): array
     {
-        /** @var list<Guess> $result */
-        $result = $this->entityManager->createQueryBuilder()
+        $qb = $this->entityManager->createQueryBuilder()
             ->select('g', 'm')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->where('m.matchSource = :matchSourceId')
+            ->where('g.competition = :competitionId')
             ->andWhere('m.state = :finished')
-            ->andWhere('m.deletedAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
-            ->setParameter('matchSourceId', $matchSourceId)
+            ->setParameter('competitionId', $competitionId)
             ->setParameter('finished', \App\Enum\SportMatchState::Finished)
-            ->orderBy('g.id', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('g.id', 'ASC');
+
+        $this->matchProvider->applyCompetitionMatchFilter($qb, 'm', $competitionId);
+
+        /** @var list<Guess> $result */
+        $result = $qb->getQuery()->getResult();
 
         return $result;
+    }
+
+    /**
+     * Cheap COUNT variant of {@see findActiveForFinishedMatchesInCompetition} —
+     * "would a recalculation of this competition produce any evaluations?".
+     */
+    public function countActiveForFinishedMatchesInCompetition(Uuid $competitionId): int
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('COUNT(g.id)')
+            ->from(Guess::class, 'g')
+            ->innerJoin('g.sportMatch', 'm')
+            ->where('g.competition = :competitionId')
+            ->andWhere('m.state = :finished')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('competitionId', $competitionId)
+            ->setParameter('finished', \App\Enum\SportMatchState::Finished);
+
+        $this->matchProvider->applyCompetitionMatchFilter($qb, 'm', $competitionId);
+
+        /** @var int $count */
+        $count = $qb->getQuery()->getSingleScalarResult();
+
+        return $count;
     }
 
     /**

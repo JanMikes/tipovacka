@@ -258,8 +258,6 @@
                     </dl>
                 </div>
 
-                {{ include('_partials/match_source_rules.html.twig', { items: rule_items }) }}
-
                 {% if app.user and app.user.isVerified and not match_source.isFinished %}
                     {{ include('_partials/join_by_pin_form.html.twig', { size: 'compact' }) }}
                 {% endif %}

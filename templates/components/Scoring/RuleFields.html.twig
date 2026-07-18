@@ -7,19 +7,23 @@
           (enabled toggle + points num-input + errors), driven by the real
           Symfony form fields in `form.rules`.
 
-    Glossary: scoring rules live at the zdroj zápasů (MatchSource) level.
+    Glossary: scoring rules live at the soutěž (Competition) level.
     The „+střelec" preset / „Trefený střelec" field is DEFERRED (🔮): its tile is
     rendered inert (disabled, „Připravujeme") and adds NO field and submits nothing.
 
-    props:
+    Class-based component (src/Twig/Components/Scoring/RuleFields.php):
       form        Symfony form view that exposes `.rules` (compound, keyed by rule identifier)
       presetable  bool — render the preset `.variant-card` row (default true)
 
+    The „Standardní" preset values come from PHP `Rule::$defaultPoints`, rendered
+    into the `data-scoring-preset-defaults-value` attribute below — the Stimulus
+    controller has no hardcoded copy of them.
+
     The component only restructures markup; CSRF/_errors stay on the surrounding <form>.
 #}
-{% props form, presetable = true %}
 
-{# Per-rule DS copy keyed by the fixed rule identifiers (CLAUDE: src/Rule/*). #}
+{# Per-rule DS copy keyed by the fixed rule identifiers (CLAUDE: src/Rule/*).
+   Missing keys fall back to the PHP rule labels via the form field label. #}
 {% set rule_copy = {
     correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
     correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
@@ -27,7 +31,8 @@
     exact_score:        { label: 'Přesný tip výsledku',       sub: 'Trefená obě skóre současně' },
 } %}
 
-<div data-controller="scoring-preset">
+<div data-controller="scoring-preset"
+     data-scoring-preset-defaults-value="{{ this.defaultPoints|json_encode }}">
     {% if presetable %}
         <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button type="button"

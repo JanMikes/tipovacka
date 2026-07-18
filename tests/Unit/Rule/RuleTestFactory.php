@@ -53,6 +53,23 @@ final class RuleTestFactory
         return $matchSource;
     }
 
+    public static function competition(): Competition
+    {
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: self::matchSource(),
+            owner: self::user(),
+            name: 'G',
+            description: null,
+            pin: null,
+            shareableLinkToken: null,
+            createdAt: self::now(),
+        );
+        $competition->popEvents();
+
+        return $competition;
+    }
+
     public static function scheduledMatch(): SportMatch
     {
         $match = new SportMatch(

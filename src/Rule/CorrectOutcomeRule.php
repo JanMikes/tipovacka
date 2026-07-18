@@ -10,13 +10,17 @@ use App\Entity\SportMatch;
 #[AsRule]
 final class CorrectOutcomeRule implements Rule
 {
-    public string $identifier { get => 'correct_outcome'; }
+    public const string IDENTIFIER = 'correct_outcome';
+
+    public string $identifier { get => self::IDENTIFIER; }
 
     public string $label { get => 'Správný tip výsledku'; }
 
     public string $description { get => 'Uhádnutá výhra domácích / remíza / výhra hostů.'; }
 
     public int $defaultPoints { get => 3; }
+
+    public bool $enabledByDefault { get => true; }
 
     public function evaluate(Guess $guess, SportMatch $match): int
     {

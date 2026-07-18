@@ -60,6 +60,8 @@ final class RuleRegistryTest extends TestCase
 
             public int $defaultPoints { get => 1; }
 
+            public bool $enabledByDefault { get => true; }
+
             public function evaluate(Guess $guess, SportMatch $match): int
             {
                 return 0;

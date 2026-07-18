@@ -10,13 +10,17 @@ use App\Entity\SportMatch;
 #[AsRule]
 final class CorrectAwayGoalsRule implements Rule
 {
-    public string $identifier { get => 'correct_away_goals'; }
+    public const string IDENTIFIER = 'correct_away_goals';
+
+    public string $identifier { get => self::IDENTIFIER; }
 
     public string $label { get => 'Počet gólů hosté'; }
 
     public string $description { get => 'Uhádnutý počet gólů hostujícího týmu.'; }
 
     public int $defaultPoints { get => 1; }
+
+    public bool $enabledByDefault { get => true; }
 
     public function evaluate(Guess $guess, SportMatch $match): int
     {

@@ -146,22 +146,27 @@ defaults to `false`.
 | `FIXTURE_GUESS_EVALUATION_ID`       | `019eeeee-0000-7000-8000-000000000002` | Evaluation of that guess, evaluated at `$now` |
 | `FIXTURE_GUESS_EVAL_RULE_POINTS_ID` | `019eeeee-0000-7000-8000-000000000003` | Single rule-points row: `correct_outcome` → **3 points** (both picked home win; exact score missed) |
 
-## Rule configurations (`MatchSourceRuleConfiguration`)
+## Rule configurations (`CompetitionRuleConfiguration`)
 
-Both match sources get the four default rules, all enabled:
+All three competitions get the four default rules, all enabled (rules are
+per-competition since S04 — sources own no rules):
 
-| Constant                          | Source         | Rule identifier      | Points |
-|-----------------------------------|----------------|----------------------|--------|
-| `PUBLIC_RULE_EXACT_SCORE_ID`      | PUBLIC_SOURCE  | `exact_score`        | 5 |
-| `PUBLIC_RULE_CORRECT_OUTCOME_ID`  | PUBLIC_SOURCE  | `correct_outcome`    | 3 |
-| `PUBLIC_RULE_CORRECT_HOME_GOALS_ID` | PUBLIC_SOURCE | `correct_home_goals` | 1 |
-| `PUBLIC_RULE_CORRECT_AWAY_GOALS_ID` | PUBLIC_SOURCE | `correct_away_goals` | 1 |
-| `PRIVATE_RULE_EXACT_SCORE_ID`     | PRIVATE_SOURCE | `exact_score`        | 5 |
-| `PRIVATE_RULE_CORRECT_OUTCOME_ID` | PRIVATE_SOURCE | `correct_outcome`    | 3 |
-| `PRIVATE_RULE_CORRECT_HOME_GOALS_ID` | PRIVATE_SOURCE | `correct_home_goals` | 1 |
-| `PRIVATE_RULE_CORRECT_AWAY_GOALS_ID` | PRIVATE_SOURCE | `correct_away_goals` | 1 |
+| Constant                                          | Competition          | Rule identifier      | Points |
+|---------------------------------------------------|----------------------|----------------------|--------|
+| `VERIFIED_COMPETITION_RULE_EXACT_SCORE_ID`        | VERIFIED_COMPETITION | `exact_score`        | 5 |
+| `VERIFIED_COMPETITION_RULE_CORRECT_OUTCOME_ID`    | VERIFIED_COMPETITION | `correct_outcome`    | 3 |
+| `VERIFIED_COMPETITION_RULE_CORRECT_HOME_GOALS_ID` | VERIFIED_COMPETITION | `correct_home_goals` | 1 |
+| `VERIFIED_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID` | VERIFIED_COMPETITION | `correct_away_goals` | 1 |
+| `PUBLIC_COMPETITION_RULE_EXACT_SCORE_ID`          | PUBLIC_COMPETITION   | `exact_score`        | 5 |
+| `PUBLIC_COMPETITION_RULE_CORRECT_OUTCOME_ID`      | PUBLIC_COMPETITION   | `correct_outcome`    | 3 |
+| `PUBLIC_COMPETITION_RULE_CORRECT_HOME_GOALS_ID`   | PUBLIC_COMPETITION   | `correct_home_goals` | 1 |
+| `PUBLIC_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID`   | PUBLIC_COMPETITION   | `correct_away_goals` | 1 |
+| `SUBSET_COMPETITION_RULE_EXACT_SCORE_ID`          | SUBSET_COMPETITION   | `exact_score`        | 5 |
+| `SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID`      | SUBSET_COMPETITION   | `correct_outcome`    | 3 |
+| `SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID`   | SUBSET_COMPETITION   | `correct_home_goals` | 1 |
+| `SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID`   | SUBSET_COMPETITION   | `correct_away_goals` | 1 |
 
-UUIDs are `019fffff-0000-7000-8000-00000000000X` with X = 1–8 in the table's order.
+UUIDs are `019fffff-0000-7000-8000-0000000000XX` with XX = 01–12 in the table's order.
 
 ## Tie resolution
 

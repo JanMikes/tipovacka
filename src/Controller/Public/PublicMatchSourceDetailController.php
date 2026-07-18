@@ -6,7 +6,6 @@ namespace App\Controller\Public;
 
 use App\Entity\User;
 use App\Exception\MatchSourceNotFound;
-use App\Query\GetMatchSourceRuleConfiguration\GetMatchSourceRuleConfiguration;
 use App\Query\ListCompetitionsForMatchSource\ListCompetitionsForMatchSource;
 use App\Query\ListMatchSourceSportMatches\ListMatchSourceSportMatches;
 use App\Query\ListMyOpenJoinRequests\ListMyOpenJoinRequests;
@@ -45,7 +44,6 @@ final class PublicMatchSourceDetailController extends AbstractController
 
         $competitions = $this->queryBus->handle(new ListCompetitionsForMatchSource(matchSourceId: $matchSource->id));
         $matches = $this->queryBus->handle(new ListMatchSourceSportMatches(matchSourceId: $matchSource->id));
-        $ruleConfiguration = $this->queryBus->handle(new GetMatchSourceRuleConfiguration(matchSourceId: $matchSource->id));
 
         $user = $this->getUser();
         $memberCompetitionIds = [];
@@ -68,7 +66,6 @@ final class PublicMatchSourceDetailController extends AbstractController
             'sport_matches' => $matches,
             'member_competition_ids' => $memberCompetitionIds,
             'pending_request_competition_ids' => $pendingRequestCompetitionIds,
-            'rule_items' => $ruleConfiguration->items,
         ]);
     }
 }

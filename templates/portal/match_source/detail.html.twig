@@ -183,8 +183,6 @@
 
         {# ───── Sidebar ───── #}
         <aside class="space-y-6 lg:col-span-4">
-            {{ include('_partials/match_source_rules.html.twig', { items: rule_items }) }}
-
             {% if is_granted('match_source_edit', match_source) %}
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
@@ -194,9 +192,6 @@
                     <div class="space-y-2 px-6 py-5">
                         <a href="{{ path('portal_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
-                        </a>
-                        <a href="{{ path('portal_match_source_rule_configuration', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
-                            <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla
                         </a>
 
                         {% if is_granted('match_source_finish', match_source) %}

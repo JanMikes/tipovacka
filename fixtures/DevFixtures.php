@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\MatchSource;
-use App\Entity\MatchSourceRuleConfiguration;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -155,10 +155,6 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $firma->popEvents();
         $manager->persist($firma);
 
-        foreach ([$euro, $fortuna, $firma] as $matchSource) {
-            $this->provisionDefaultRules($manager, $matchSource, $now);
-        }
-
         // -- Competitions -------------------------------------------------------
         $eurofans = $this->createCompetition(
             $manager,
@@ -233,6 +229,10 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             linkToken: str_repeat('k', 48),
             createdAt: new \DateTimeImmutable('2025-06-05 18:00:00 UTC'),
         );
+
+        foreach ([$eurofans, $vsChtCompetition, $prahaCompetition, $firmaA, $firmaB, $kamosiCompetition] as $competition) {
+            $this->provisionDefaultRules($manager, $competition, $now);
+        }
 
         // -- Memberships --------------------------------------------------
         // Eurofans (finished match source) — admin + 8 users.
@@ -367,7 +367,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function provisionDefaultRules(
         ObjectManager $manager,
-        MatchSource $matchSource,
+        Competition $competition,
         \DateTimeImmutable $now,
     ): void {
         foreach ([
@@ -376,9 +376,9 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             ['correct_home_goals', 1],
             ['correct_away_goals', 1],
         ] as [$identifier, $points]) {
-            $manager->persist(new MatchSourceRuleConfiguration(
+            $manager->persist(new CompetitionRuleConfiguration(
                 id: Uuid::v7(),
-                matchSource: $matchSource,
+                competition: $competition,
                 ruleIdentifier: $identifier,
                 enabled: true,
                 points: $points,

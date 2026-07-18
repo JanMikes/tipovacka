@@ -8,11 +8,11 @@ use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionJoinRequest;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\MatchSource;
-use App\Entity\MatchSourceRuleConfiguration;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -115,15 +115,19 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
     public const string FIXTURE_TIE_RESOLUTION_ID = '019eeeee-0000-7000-8000-000000000004';
 
-    /** Fixed UUIDs for the 8 rule configurations (4 per match source, 2 match sources). */
-    public const string PUBLIC_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000001';
-    public const string PUBLIC_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000002';
-    public const string PUBLIC_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000003';
-    public const string PUBLIC_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000004';
-    public const string PRIVATE_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000005';
-    public const string PRIVATE_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000006';
-    public const string PRIVATE_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000007';
-    public const string PRIVATE_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000008';
+    /** Fixed UUIDs for the 12 rule configurations (4 per competition, 3 competitions). */
+    public const string VERIFIED_COMPETITION_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000001';
+    public const string VERIFIED_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000002';
+    public const string VERIFIED_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000003';
+    public const string VERIFIED_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000004';
+    public const string PUBLIC_COMPETITION_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000005';
+    public const string PUBLIC_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000006';
+    public const string PUBLIC_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000007';
+    public const string PUBLIC_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000008';
+    public const string SUBSET_COMPETITION_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000009';
+    public const string SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000010';
+    public const string SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000011';
+    public const string SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000012';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -459,21 +463,25 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $adminGuess->popEvents();
         $manager->persist($adminGuess);
 
-        // Stage 7: rule configurations for both match_sources (defaults).
+        // S04: rule configurations per competition (defaults, all enabled).
         foreach ([
-            [self::PUBLIC_RULE_EXACT_SCORE_ID, $public, 'exact_score', 5],
-            [self::PUBLIC_RULE_CORRECT_OUTCOME_ID, $public, 'correct_outcome', 3],
-            [self::PUBLIC_RULE_CORRECT_HOME_GOALS_ID, $public, 'correct_home_goals', 1],
-            [self::PUBLIC_RULE_CORRECT_AWAY_GOALS_ID, $public, 'correct_away_goals', 1],
-            [self::PRIVATE_RULE_EXACT_SCORE_ID, $private, 'exact_score', 5],
-            [self::PRIVATE_RULE_CORRECT_OUTCOME_ID, $private, 'correct_outcome', 3],
-            [self::PRIVATE_RULE_CORRECT_HOME_GOALS_ID, $private, 'correct_home_goals', 1],
-            [self::PRIVATE_RULE_CORRECT_AWAY_GOALS_ID, $private, 'correct_away_goals', 1],
+            [self::VERIFIED_COMPETITION_RULE_EXACT_SCORE_ID, $verifiedCompetition, 'exact_score', 5],
+            [self::VERIFIED_COMPETITION_RULE_CORRECT_OUTCOME_ID, $verifiedCompetition, 'correct_outcome', 3],
+            [self::VERIFIED_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $verifiedCompetition, 'correct_home_goals', 1],
+            [self::VERIFIED_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $verifiedCompetition, 'correct_away_goals', 1],
+            [self::PUBLIC_COMPETITION_RULE_EXACT_SCORE_ID, $publicCompetition, 'exact_score', 5],
+            [self::PUBLIC_COMPETITION_RULE_CORRECT_OUTCOME_ID, $publicCompetition, 'correct_outcome', 3],
+            [self::PUBLIC_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $publicCompetition, 'correct_home_goals', 1],
+            [self::PUBLIC_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $publicCompetition, 'correct_away_goals', 1],
+            [self::SUBSET_COMPETITION_RULE_EXACT_SCORE_ID, $subsetCompetition, 'exact_score', 5],
+            [self::SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID, $subsetCompetition, 'correct_outcome', 3],
+            [self::SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $subsetCompetition, 'correct_home_goals', 1],
+            [self::SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $subsetCompetition, 'correct_away_goals', 1],
         ] as $row) {
-            [$id, $matchSource, $identifier, $points] = $row;
-            $configuration = new MatchSourceRuleConfiguration(
+            [$id, $competition, $identifier, $points] = $row;
+            $configuration = new CompetitionRuleConfiguration(
                 id: Uuid::fromString($id),
-                matchSource: $matchSource,
+                competition: $competition,
                 ruleIdentifier: $identifier,
                 enabled: true,
                 points: $points,

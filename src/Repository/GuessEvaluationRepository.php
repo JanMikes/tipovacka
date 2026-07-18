@@ -72,16 +72,15 @@ final class GuessEvaluationRepository
         }
     }
 
-    public function countForMatchSource(Uuid $matchSourceId): int
+    public function countForCompetition(Uuid $competitionId): int
     {
         /** @var int $count */
         $count = $this->entityManager->createQueryBuilder()
             ->select('COUNT(e.id)')
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
-            ->innerJoin('g.sportMatch', 'm')
-            ->where('m.matchSource = :matchSourceId')
-            ->setParameter('matchSourceId', $matchSourceId)
+            ->where('g.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -89,35 +88,19 @@ final class GuessEvaluationRepository
     }
 
     /**
-     * @return list<GuessEvaluation>
+     * Deletes every evaluation belonging to the competition's guesses. A guess is
+     * competition-scoped, so no match filtering is needed (and stale evaluations of
+     * matches later removed from a subset selection get cleaned up too).
      */
-    public function listForMatchSource(Uuid $matchSourceId): array
-    {
-        /** @var list<GuessEvaluation> $result */
-        $result = $this->entityManager->createQueryBuilder()
-            ->select('e', 'rp', 'g')
-            ->from(GuessEvaluation::class, 'e')
-            ->innerJoin('e.guess', 'g')
-            ->innerJoin('g.sportMatch', 'm')
-            ->leftJoin('e.rulePoints', 'rp')
-            ->where('m.matchSource = :matchSourceId')
-            ->setParameter('matchSourceId', $matchSourceId)
-            ->getQuery()
-            ->getResult();
-
-        return $result;
-    }
-
-    public function deleteAllForMatchSource(Uuid $matchSourceId): void
+    public function deleteAllForCompetition(Uuid $competitionId): void
     {
         /** @var list<GuessEvaluation> $evaluations */
         $evaluations = $this->entityManager->createQueryBuilder()
             ->select('e')
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
-            ->innerJoin('g.sportMatch', 'm')
-            ->where('m.matchSource = :matchSourceId')
-            ->setParameter('matchSourceId', $matchSourceId)
+            ->where('g.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getResult();
 

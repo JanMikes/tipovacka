@@ -10,13 +10,17 @@ use App\Entity\SportMatch;
 #[AsRule]
 final class ExactScoreRule implements Rule
 {
-    public string $identifier { get => 'exact_score'; }
+    public const string IDENTIFIER = 'exact_score';
+
+    public string $identifier { get => self::IDENTIFIER; }
 
     public string $label { get => 'Přesný výsledek'; }
 
     public string $description { get => 'Uhádnuté přesné skóre zápasu.'; }
 
     public int $defaultPoints { get => 5; }
+
+    public bool $enabledByDefault { get => true; }
 
     public function evaluate(Guess $guess, SportMatch $match): int
     {

@@ -12,6 +12,7 @@ use App\Event\CompetitionDeleted;
 use App\Event\CompetitionMatchSelectionChanged;
 use App\Event\CompetitionPinRegenerated;
 use App\Event\CompetitionPinRevoked;
+use App\Event\CompetitionRulesChanged;
 use App\Event\CompetitionShareableLinkRegenerated;
 use App\Event\CompetitionShareableLinkRevoked;
 use App\Event\CompetitionUpdated;
@@ -128,6 +129,17 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->updatedAt = $now;
 
         $this->recordThat(new CompetitionMatchSelectionChanged(
+            competitionId: $this->id,
+            changedByUserId: $editor->id,
+            occurredOn: $now,
+        ));
+    }
+
+    public function recordRulesChanged(User $editor, \DateTimeImmutable $now): void
+    {
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CompetitionRulesChanged(
             competitionId: $this->id,
             changedByUserId: $editor->id,
             occurredOn: $now,

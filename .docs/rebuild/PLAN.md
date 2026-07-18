@@ -116,9 +116,9 @@ disabled for global competitions; rejoining a paid global competition charges th
 |---|---|---|---|
 | S01 | Domain rename (MatchSource / Competition) | done | 22ee7c4 |
 | S02 | Source kinds & competition–match linkage | done | 598337c |
-| S03 | Credit spending core (debit/refund API) | done | (this commit) |
-| S04 | Rules per competition | in-progress | |
-| S05 | Sports & match result model (periods, OT, events, roster, live) | todo | |
+| S03 | Credit spending core (debit/refund API) | done | 00a5729 |
+| S04 | Rules per competition | done | (this commit) |
+| S05 | Sports & match result model (periods, OT, events, roster, live) | in-progress | |
 | S06 | Guess extensions & new scoring rules | todo | |
 | S07 | Tip locking model | todo | |
 | S08 | Create-competition wizard | todo | |

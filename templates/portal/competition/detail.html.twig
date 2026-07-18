@@ -341,7 +341,7 @@
                 </section>
             {% endif %}
 
-            {{ include('_partials/match_source_rules.html.twig', { items: rule_items }) }}
+            {{ include('_partials/competition_rules.html.twig', { items: rule_items }) }}
 
             {# Invites (PIN + shareable link) #}
             {% if is_granted('competition_manage_members', competition) %}
@@ -471,6 +471,9 @@
                     {% if is_granted('competition_edit', competition) %}
                         <a href="{{ path('portal_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit soutěž
+                        </a>
+                        <a href="{{ path('portal_competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla bodování
                         </a>
                         {% if competition.selectionMode.value == 'subset' %}
                             <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
