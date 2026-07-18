@@ -2,6 +2,27 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## Domain & business context (read before touching domain behavior)
+
+- **[`.docs/DOMAIN.md`](.docs/DOMAIN.md)** — the authoritative business/domain decision
+  record (glossary, business rules with rationale, dated decision log). When a business
+  decision is made or changed in a session, **update that file** (section + decision log).
+- **[`.docs/rebuild/PLAN.md`](.docs/rebuild/PLAN.md)** — status board + orchestration
+  protocol of the 2026-07 domain rebuild; per-stage specs in `.docs/rebuild/stages/`.
+
+Must-know invariants (details in DOMAIN.md):
+
+- **soutěž = `Competition`** (users' central unit), **zdroj zápasů = `MatchSource`**
+  (`curated` admin-managed / `private` hidden internal of a from-scratch competition).
+  Conflating these is the classic mistake.
+- **1 credit = 1 Kč.** All prices are constants in one config class — never literal numbers.
+- **Premium XOR boosts** per competition via the single `monetization` column.
+- Tips lock at competition start; matches added later get their own deadlines;
+  „Měnit tip" entitlement = until 1 h before the day's first match.
+- Rules/points are configured **per competition**, matches/results live on the source.
+- Never the word „sázka"; no gambling mechanics, no payouts; entry fees are burned credits.
+- Stack reality: PHP 8.5, Symfony 8.0, PostgreSQL 17 (older docs may claim less).
+
 ## Commands for Development
 
 All commands must be run inside Docker:
@@ -326,5 +347,6 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - `tests/Unit/` - Domain logic (no database, fast)
 - `tests/Integration/` - Repository/controller tests (uses DAMA DoctrineTestBundle)
 - **MockClock**: Tests use fixed time `2025-06-15 12:00:00 UTC` - never use `new \DateTimeImmutable()` (without argument)
-- **Fixtures**: Prefer using fixture data over creating test data dynamically. See [.claude/FIXTURES.md](.claude/FIXTURES.md) for reference constants and available test data
+- **Fixtures**: Prefer using fixture data over creating test data dynamically. See [.docs/FIXTURES.md](.docs/FIXTURES.md) for reference constants and available test data
+- **Full suite**: never run all of `tests/` in one phpunit process inside Docker — it OOMs (exit 137). Run `tests/Unit` + `tests/Integration/<subdir>` chunks.
 
