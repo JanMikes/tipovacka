@@ -125,7 +125,7 @@ final class EmailVerificationFlowTest extends WebTestCase
 
         // Repoint the existing pending invitation at the unverified user's email.
         $em->getConnection()->executeStatement(
-            'UPDATE group_invitations SET email = :email WHERE id = :id',
+            'UPDATE competition_invitations SET email = :email WHERE id = :id',
             ['email' => AppFixtures::UNVERIFIED_USER_EMAIL, 'id' => AppFixtures::PENDING_INVITATION_ID],
         );
         $em->clear();
@@ -136,7 +136,7 @@ final class EmailVerificationFlowTest extends WebTestCase
         );
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
 
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID);
+        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
 
         $em->clear();
         $reloaded = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));

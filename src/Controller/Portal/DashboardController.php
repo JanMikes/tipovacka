@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Controller\Portal;
 
 use App\Entity\User;
-use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
-use App\Query\GetMemberGroupStats\GetMemberGroupStats;
-use App\Query\ListDiscoverablePublicTournaments\ListDiscoverablePublicTournaments;
-use App\Query\ListMyGroups\ListMyGroups;
-use App\Query\ListMyOwnedTournaments\ListMyOwnedTournaments;
+use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
+use App\Query\GetMemberCompetitionStats\GetMemberCompetitionStats;
+use App\Query\ListDiscoverablePublicMatchSources\ListDiscoverablePublicMatchSources;
+use App\Query\ListMyCompetitions\ListMyCompetitions;
+use App\Query\ListMyOwnedMatchSources\ListMyOwnedMatchSources;
 use App\Query\ListRecentEvaluatedGuessesForUser\ListRecentEvaluatedGuessesForUser;
 use App\Query\ListUpcomingMatchesForUser\ListUpcomingMatchesForUser;
 use App\Query\QueryBus;
@@ -31,40 +31,40 @@ final class DashboardController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $myGroups = $this->queryBus->handle(new ListMyGroups(userId: $user->id));
-        $myOwnedTournaments = $this->queryBus->handle(new ListMyOwnedTournaments(ownerId: $user->id));
+        $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(userId: $user->id));
+        $myOwnedMatchSources = $this->queryBus->handle(new ListMyOwnedMatchSources(ownerId: $user->id));
         $upcomingMatches = $this->queryBus->handle(new ListUpcomingMatchesForUser(userId: $user->id));
         $evaluatedGuesses = $this->queryBus->handle(new ListRecentEvaluatedGuessesForUser(userId: $user->id));
-        $discoverableTournaments = $this->queryBus->handle(new ListDiscoverablePublicTournaments(userId: $user->id));
+        $discoverableMatchSources = $this->queryBus->handle(new ListDiscoverablePublicMatchSources(userId: $user->id));
 
         // Personal stat cards are scoped to the selected soutěž. The switcher passes
-        // ?soutez=<groupId>; default to the most recently joined group. A foreign or
-        // unknown id falls back to that default, so other groups' stats never leak.
-        $selectedGroup = null;
+        // ?soutez=<competitionId>; default to the most recently joined competition. A foreign or
+        // unknown id falls back to that default, so other competitions' stats never leak.
+        $selectedCompetition = null;
         $memberStats = null;
         $miniLeaderboardRows = [];
         $miniMeRow = null;
 
-        if (count($myGroups) > 0) {
-            $requestedGroupId = $request->query->get('soutez');
-            $selectedGroup = $myGroups[0];
+        if (count($myCompetitions) > 0) {
+            $requestedCompetitionId = $request->query->get('soutez');
+            $selectedCompetition = $myCompetitions[0];
 
-            foreach ($myGroups as $group) {
-                if ($group->groupId->toRfc4122() === $requestedGroupId) {
-                    $selectedGroup = $group;
+            foreach ($myCompetitions as $competition) {
+                if ($competition->competitionId->toRfc4122() === $requestedCompetitionId) {
+                    $selectedCompetition = $competition;
 
                     break;
                 }
             }
 
-            $memberStats = $this->queryBus->handle(new GetMemberGroupStats(
+            $memberStats = $this->queryBus->handle(new GetMemberCompetitionStats(
                 userId: $user->id,
-                groupId: $selectedGroup->groupId,
+                competitionId: $selectedCompetition->competitionId,
             ));
 
             // Mini-leaderboard for the selected soutěž: top 5 + the user's own row
             // appended below if they're outside the top 5 (so they always see it).
-            $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $selectedGroup->groupId));
+            $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $selectedCompetition->competitionId));
             $miniLeaderboardRows = array_slice($leaderboard->rows, 0, 5);
 
             foreach ($leaderboard->rows as $row) {
@@ -79,12 +79,12 @@ final class DashboardController extends AbstractController
         }
 
         return $this->render('portal/dashboard.html.twig', [
-            'my_groups' => $myGroups,
-            'my_owned_tournaments' => $myOwnedTournaments,
+            'my_competitions' => $myCompetitions,
+            'my_owned_match_sources' => $myOwnedMatchSources,
             'upcoming_matches' => $upcomingMatches,
             'evaluated_guesses' => $evaluatedGuesses,
-            'discoverable_tournaments' => $discoverableTournaments,
-            'selected_group' => $selectedGroup,
+            'discoverable_match_sources' => $discoverableMatchSources,
+            'selected_competition' => $selectedCompetition,
             'member_stats' => $memberStats,
             'mini_leaderboard_rows' => $miniLeaderboardRows,
             'mini_me_row' => $miniMeRow,

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
-use App\Command\JoinGroupByPin\JoinGroupByPinCommand;
+use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
 use App\Command\RemoveMember\RemoveMemberCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Membership;
@@ -21,14 +21,14 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
     {
         $user = $this->createVerifiedUser();
 
-        $this->commandBus()->dispatch(new JoinGroupByPinCommand(
+        $this->commandBus()->dispatch(new JoinCompetitionByPinCommand(
             userId: $user->id,
-            pin: AppFixtures::VERIFIED_GROUP_PIN,
+            pin: AppFixtures::VERIFIED_COMPETITION_PIN,
         ));
 
         $this->commandBus()->dispatch(new RemoveMemberCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             targetUserId: $user->id,
         ));
 
@@ -39,9 +39,9 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
             ->select('m')
             ->from(Membership::class, 'm')
             ->where('m.user = :userId')
-            ->andWhere('m.group = :groupId')
+            ->andWhere('m.competition = :competitionId')
             ->setParameter('userId', $user->id)
-            ->setParameter('groupId', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->setParameter('competitionId', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->getQuery()
             ->getResult();
 
@@ -51,10 +51,10 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
 
     public function testAnonymousMemberIsSoftDeletedWhenLastMembershipEnds(): void
     {
-        // Anonymous fixture is a member of VERIFIED_GROUP only.
+        // Anonymous fixture is a member of VERIFIED_COMPETITION only.
         $this->commandBus()->dispatch(new RemoveMemberCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             targetUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
         ));
 
@@ -70,14 +70,14 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
     {
         $user = $this->createVerifiedUser();
 
-        $this->commandBus()->dispatch(new JoinGroupByPinCommand(
+        $this->commandBus()->dispatch(new JoinCompetitionByPinCommand(
             userId: $user->id,
-            pin: AppFixtures::VERIFIED_GROUP_PIN,
+            pin: AppFixtures::VERIFIED_COMPETITION_PIN,
         ));
 
         $this->commandBus()->dispatch(new RemoveMemberCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             targetUserId: $user->id,
         ));
 
@@ -96,7 +96,7 @@ final class RemoveMemberHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new RemoveMemberCommand(
                 ownerId: Uuid::fromString(AppFixtures::ADMIN_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 targetUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             ));
         } catch (HandlerFailedException $e) {

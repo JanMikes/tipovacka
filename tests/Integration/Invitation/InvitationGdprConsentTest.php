@@ -21,7 +21,7 @@ final class InvitationGdprConsentTest extends WebTestCase
     public function testShareableLinkLandingRendersConsentCheckboxForNewEmail(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/skupiny/pozvanka/'.AppFixtures::VERIFIED_GROUP_LINK_TOKEN);
+        $client->request('GET', '/souteze/pozvanka/'.AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="invitation_form[gdprConsent]"]');
@@ -33,7 +33,7 @@ final class InvitationGdprConsentTest extends WebTestCase
         $client = static::createClient();
         $component = $this->createLiveComponent('Auth:InvitationForm', [
             'kind' => InvitationKind::ShareableLink->value,
-            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+            'token' => AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN,
         ], $client);
 
         $this->expectException(UnprocessableEntityHttpException::class);
@@ -121,7 +121,7 @@ final class InvitationGdprConsentTest extends WebTestCase
 
         $component = $this->createLiveComponent('Auth:InvitationForm', [
             'kind' => InvitationKind::ShareableLink->value,
-            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+            'token' => AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN,
         ], $client);
 
         $rendered = (string) $component

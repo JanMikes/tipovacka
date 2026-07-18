@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Guess;
 
 use App\Entity\User;
-use App\Form\GroupMatchDeadlineFormData;
-use App\Form\GroupMatchDeadlineFormType;
+use App\Form\CompetitionMatchDeadlineFormData;
+use App\Form\CompetitionMatchDeadlineFormType;
 use App\Query\GetMatchPickDistribution\GetMatchPickDistribution;
 use App\Query\GetMatchRanking\GetMatchRanking;
 use App\Query\QueryBus;
-use App\Repository\GroupMatchSettingRepository;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionMatchSettingRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\EffectiveTipDeadlineResolver;
-use App\Voter\GroupVoter;
+use App\Voter\CompetitionVoter;
 use App\Voter\GuessVoter;
 use App\Voter\GuessVotingContext;
 use App\Voter\SportMatchVoter;
@@ -28,50 +28,50 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/skupiny/{groupId}/zapasy/{sportMatchId}',
-    name: 'portal_group_sport_match_guesses',
-    requirements: ['groupId' => Requirement::UUID, 'sportMatchId' => Requirement::UUID],
+    '/portal/souteze/{competitionId}/zapasy/{sportMatchId}',
+    name: 'portal_competition_sport_match_guesses',
+    requirements: ['competitionId' => Requirement::UUID, 'sportMatchId' => Requirement::UUID],
 )]
 final class SportMatchGuessesController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRepository $groupRepository,
+        private readonly CompetitionRepository $competitionRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
-        private readonly GroupMatchSettingRepository $groupMatchSettingRepository,
+        private readonly CompetitionMatchSettingRepository $competitionMatchSettingRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
         private readonly QueryBus $queryBus,
     ) {
     }
 
-    public function __invoke(string $groupId, string $sportMatchId): Response
+    public function __invoke(string $competitionId, string $sportMatchId): Response
     {
         /** @var User $currentUser */
         $currentUser = $this->getUser();
 
-        $group = $this->groupRepository->get(Uuid::fromString($groupId));
+        $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
         $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($sportMatchId));
 
-        $this->denyAccessUnlessGranted(GroupVoter::VIEW, $group);
+        $this->denyAccessUnlessGranted(CompetitionVoter::VIEW, $competition);
         $this->denyAccessUnlessGranted(SportMatchVoter::VIEW, $sportMatch);
 
-        $context = new GuessVotingContext(sportMatch: $sportMatch, groupId: $group->id);
+        $context = new GuessVotingContext(sportMatch: $sportMatch, competitionId: $competition->id);
         $this->denyAccessUnlessGranted(GuessVoter::VIEW, $context);
 
-        $isGroupManager = $this->isGranted(GroupVoter::MANAGE_MEMBERS, $group);
-        $effectiveDeadline = $this->deadlineResolver->resolve($group, $sportMatch);
+        $isCompetitionManager = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
+        $effectiveDeadline = $this->deadlineResolver->resolve($competition, $sportMatch);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $canSeeAllTips = $isGroupManager
-            || !$group->hideOthersTipsBeforeDeadline
+        $canSeeAllTips = $isCompetitionManager
+            || !$competition->hideOthersTipsBeforeDeadline
             || $now >= $effectiveDeadline;
 
         // Pick distribution (1/X/2) is only shown once others' tips are visible
-        // (after the deadline, or when the group doesn't hide them).
+        // (after the deadline, or when the competition doesn't hide them).
         $pickDistribution = $canSeeAllTips
             ? $this->queryBus->handle(new GetMatchPickDistribution(
-                groupId: $group->id,
+                competitionId: $competition->id,
                 sportMatchId: $sportMatch->id,
             ))
             : null;
@@ -80,20 +80,20 @@ final class SportMatchGuessesController extends AbstractController
         // makes sense once the match is finished and others' tips are visible.
         $matchRanking = ($canSeeAllTips && $sportMatch->isFinished)
             ? $this->queryBus->handle(new GetMatchRanking(
-                groupId: $group->id,
+                competitionId: $competition->id,
                 sportMatchId: $sportMatch->id,
             ))
             : null;
 
         $memberRows = [];
 
-        if ($isGroupManager) {
-            $memberships = $this->membershipRepository->findActiveByGroup($group->id);
+        if ($isCompetitionManager) {
+            $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
             foreach ($memberships as $membership) {
-                $guess = $this->guessRepository->findActiveByUserMatchGroup(
+                $guess = $this->guessRepository->findActiveByUserMatchCompetition(
                     $membership->user->id,
                     $sportMatch->id,
-                    $group->id,
+                    $competition->id,
                 );
                 $memberRows[] = [
                     'user' => $membership->user,
@@ -104,17 +104,17 @@ final class SportMatchGuessesController extends AbstractController
 
         $deadlineForm = null;
 
-        if ($this->isGranted(GroupVoter::EDIT, $group)) {
-            $existingSetting = $this->groupMatchSettingRepository->findByGroupAndMatch(
-                $group->id,
+        if ($this->isGranted(CompetitionVoter::EDIT, $competition)) {
+            $existingSetting = $this->competitionMatchSettingRepository->findByCompetitionAndMatch(
+                $competition->id,
                 $sportMatch->id,
             );
             $deadlineForm = $this->createForm(
-                GroupMatchDeadlineFormType::class,
-                GroupMatchDeadlineFormData::fromSetting($existingSetting),
+                CompetitionMatchDeadlineFormType::class,
+                CompetitionMatchDeadlineFormData::fromSetting($existingSetting),
                 [
-                    'action' => $this->generateUrl('portal_group_sport_match_set_deadline', [
-                        'groupId' => $group->id->toRfc4122(),
+                    'action' => $this->generateUrl('portal_competition_sport_match_set_deadline', [
+                        'competitionId' => $competition->id->toRfc4122(),
                         'sportMatchId' => $sportMatch->id->toRfc4122(),
                     ]),
                 ],
@@ -122,7 +122,7 @@ final class SportMatchGuessesController extends AbstractController
         }
 
         return $this->render('portal/guess/detail.html.twig', [
-            'group' => $group,
+            'competition' => $competition,
             'sport_match' => $sportMatch,
             'member_rows' => $memberRows,
             'effective_deadline' => $effectiveDeadline,

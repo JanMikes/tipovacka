@@ -16,7 +16,7 @@
     </header>
 
     {# ───── Moje výsledky — osobní statistiky ve vybrané soutěži ───── #}
-    {% if member_stats is not null and selected_group is not null %}
+    {% if member_stats is not null and selected_competition is not null %}
         <section class="mb-10">
             <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
                 <div>
@@ -25,13 +25,13 @@
                         Moje výsledky
                     </h2>
                     <p class="mt-1.5 text-sm text-white/50">
-                        Vaše statistiky v soutěži <span class="font-semibold text-white/70">{{ selected_group.groupName }}</span>.
+                        Vaše statistiky v soutěži <span class="font-semibold text-white/70">{{ selected_competition.competitionName }}</span>.
                     </p>
                 </div>
-                {% if my_groups|length > 1 %}
+                {% if my_competitions|length > 1 %}
                     <twig:SoutezSwitcher
-                        :groups="my_groups"
-                        currentId="{{ selected_group.groupId.toRfc4122 }}"
+                        :competitions="my_competitions"
+                        currentId="{{ selected_competition.competitionId.toRfc4122 }}"
                         route="portal_dashboard"
                         param="soutez"
                         label="Zobrazená soutěž"
@@ -96,9 +96,9 @@
                 <div class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
                     <h2 class="flex items-center gap-2 text-base font-bold text-white">
                         <twig:ux:icon name="lucide:trophy" class="h-5 w-5 text-accent-400" />
-                        Žebříček · {{ selected_group.groupName }}
+                        Žebříček · {{ selected_competition.competitionName }}
                     </h2>
-                    <a href="{{ path('portal_group_leaderboard', {groupId: selected_group.groupId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                    <a href="{{ path('portal_competition_leaderboard', {competitionId: selected_competition.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                         Celý žebříček
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>
@@ -108,7 +108,7 @@
                         {% set is_me = app.user and row.userId.equals(app.user.id) %}
                         <div class="lb-row{{ is_me ? ' me' }}">
                             <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
-                            <a href="{{ path('portal_group_leaderboard_member', {groupId: selected_group.groupId.toRfc4122, userId: row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                            <a href="{{ path('portal_competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
                                 <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="30" rank="{{ row.rank <= 3 ? row.rank : null }}" />
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ row.nickname }}</span>
@@ -125,7 +125,7 @@
                         <div class="border-t border-white/[0.06] py-1 text-center text-[11px] text-white/30">…</div>
                         <div class="lb-row me">
                             <span class="lb-pos">{{ mini_me_row.rank }}.</span>
-                            <a href="{{ path('portal_group_leaderboard_member', {groupId: selected_group.groupId.toRfc4122, userId: mini_me_row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                            <a href="{{ path('portal_competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: mini_me_row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
                                 <twig:Avatar name="{{ mini_me_row.fullName ?: mini_me_row.nickname }}" size="30" />
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ mini_me_row.nickname }}</span>
@@ -147,8 +147,8 @@
     <div class="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <twig:StatCard
             label="MOJE SOUTĚŽE"
-            value="{{ my_groups|length }}"
-            meta="{{ my_groups|length == 1 ? '1 soutěž' : (my_groups|length >= 2 and my_groups|length <= 4 ? my_groups|length ~ ' soutěže' : my_groups|length ~ ' soutěží') }}, ve kterých hrajete"
+            value="{{ my_competitions|length }}"
+            meta="{{ my_competitions|length == 1 ? '1 soutěž' : (my_competitions|length >= 2 and my_competitions|length <= 4 ? my_competitions|length ~ ' soutěže' : my_competitions|length ~ ' soutěží') }}, ve kterých hrajete"
             tone="accent"
             icon="users"
         />
@@ -168,7 +168,7 @@
 
     {# Primární CTA: připojení k soutěži přes PIN. Sbalí se, pokud už nějaké soutěže má. #}
     <div class="mb-12">
-        {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: my_groups|length > 0 }) }}
+        {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: my_competitions|length > 0 }) }}
     </div>
 
     {# ───── Moje soutěže ───── #}
@@ -178,32 +178,32 @@
                 <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
                     <twig:ux:icon name="lucide:users" class="h-5 w-5 text-accent-300" />
                     Moje soutěže
-                    {% if my_groups|length > 0 %}
-                        <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_groups|length }}</span>
+                    {% if my_competitions|length > 0 %}
+                        <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_competitions|length }}</span>
                     {% endif %}
                 </h2>
-                <p class="mt-1.5 text-sm text-white/50">Soutěže, ve kterých tipujete se svojí skupinou.</p>
+                <p class="mt-1.5 text-sm text-white/50">Soutěže, ve kterých tipujete s přáteli.</p>
             </div>
         </div>
 
-        {% if my_groups|length == 0 %}
+        {% if my_competitions|length == 0 %}
             <div class="card-glass p-10 text-center">
                 <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
                     <twig:ux:icon name="lucide:trophy" class="h-7 w-7" />
                 </span>
                 <h3 class="text-lg font-semibold text-white">Zatím nehrajete v žádné soutěži</h3>
                 <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Projděte si nabídku turnajů — přidejte se k veřejnému, nebo si založte vlastní soukromý.</p>
-                <a href="{{ path('public_tournaments_list') }}" class="btn btn-primary btn-sm mt-6">
+                <a href="{{ path('public_match_sources_list') }}" class="btn btn-primary btn-sm mt-6">
                     <twig:ux:icon name="lucide:search" class="h-4 w-4" />
                     Procházet turnaje
                 </a>
             </div>
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {% for g in my_groups %}
+                {% for g in my_competitions %}
                     <li>
                         <a
-                            href="{{ path('portal_group_detail', {id: g.groupId.toRfc4122}) }}"
+                            href="{{ path('portal_competition_detail', {id: g.competitionId.toRfc4122}) }}"
                             class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
                         >
                             <div>
@@ -215,7 +215,7 @@
                                         {% if g.isOwner %}
                                             <twig:Badge label="Vlastník" variant="organizer" icon="crown" />
                                         {% endif %}
-                                        {% if g.tournamentIsFinished %}
+                                        {% if g.matchSourceIsFinished %}
                                             <twig:Pill label="Ukončen" variant="done" />
                                         {% endif %}
                                     </div>
@@ -223,12 +223,12 @@
 
                                 <h3 class="flex items-center gap-1.5 text-lg font-semibold leading-tight text-white transition-colors group-hover:text-accent-300">
                                     <twig:ux:icon name="lucide:trophy" class="h-4 w-4 shrink-0 text-white/40" />
-                                    {{ g.tournamentName }}
+                                    {{ g.matchSourceName }}
                                 </h3>
 
                                 <p class="mt-2 flex items-center gap-1.5 text-sm text-white/50">
                                     <twig:ux:icon name="lucide:layout-grid" class="h-4 w-4 text-white/40" />
-                                    {{ g.groupName }}
+                                    {{ g.competitionName }}
                                 </p>
                             </div>
 
@@ -244,25 +244,25 @@
     </section>
 
     {# ───── Moje turnaje — turnaje vlastněné uživatelem ───── #}
-    {% if my_owned_tournaments|length > 0 %}
+    {% if my_owned_match_sources|length > 0 %}
         <section class="mb-14">
             <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
                         <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-accent-300" />
                         Moje turnaje
-                        <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_owned_tournaments|length }}</span>
+                        <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_owned_match_sources|length }}</span>
                     </h2>
                     <p class="mt-1.5 text-sm text-white/50">Turnaje, které jste založili a spravujete.</p>
                 </div>
             </div>
 
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {% for t in my_owned_tournaments %}
+                {% for t in my_owned_match_sources %}
                     {% set is_private = t.visibility.value == 'private' %}
                     <li>
                         <a
-                            href="{{ path('portal_tournament_detail', {id: t.id.toRfc4122}) }}"
+                            href="{{ path('portal_match_source_detail', {id: t.id.toRfc4122}) }}"
                             class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
                         >
                             <div>
@@ -336,7 +336,7 @@
             <ul class="flex flex-col gap-3">
                 {% for m in upcoming_matches %}
                     {# stavová pilulka: chybí tip → „soon", vše natipováno → „tipped" #}
-                    {% set is_tipped = m.groupsCount > 0 and m.pendingGroupsCount == 0 %}
+                    {% set is_tipped = m.competitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
                     <li data-reveal-target="item" class="{% if loop.index0 >= upcoming_visible %}hidden{% endif %}">
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
@@ -344,18 +344,18 @@
                             :kickoffAt="m.kickoffAt"
                             :round="m.round"
                             :state="is_tipped ? 'tipped' : 'open'"
-                            :pillVariant="m.pendingGroupsCount > 0 ? 'soon' : (is_tipped ? 'tipped' : null)"
-                            :pillIcon="m.pendingGroupsCount > 0 ? 'circle-alert' : (is_tipped ? 'check' : null)"
-                            :pillLabel="m.pendingGroupsCount > 0
-                                ? (m.groupsCount > 1 ? 'Chybí tip v ' ~ m.pendingGroupsCount ~ ' z ' ~ m.groupsCount ~ ' skupin' : 'Chybí tip')
-                                : (is_tipped ? (m.groupsCount > 1 ? 'Tip odeslán (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Tip odeslán') : null)"
+                            :pillVariant="m.pendingCompetitionsCount > 0 ? 'soon' : (is_tipped ? 'tipped' : null)"
+                            :pillIcon="m.pendingCompetitionsCount > 0 ? 'circle-alert' : (is_tipped ? 'check' : null)"
+                            :pillLabel="m.pendingCompetitionsCount > 0
+                                ? (m.competitionsCount > 1 ? 'Chybí tip v ' ~ m.pendingCompetitionsCount ~ ' z ' ~ m.competitionsCount ~ ' soutěží' : 'Chybí tip')
+                                : (is_tipped ? (m.competitionsCount > 1 ? 'Tip odeslán (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Tip odeslán') : null)"
                             :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
                             detailLabel="Tipovat"
                         />
 
-                        {% if m.tournamentName or m.venue %}
+                        {% if m.matchSourceName or m.venue %}
                             <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                                {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                                {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
                             </p>
                         {% endif %}
                     </li>
@@ -413,7 +413,7 @@
                                 :homeTeam="g.homeTeam"
                                 :awayTeam="g.awayTeam"
                                 :kickoffAt="g.kickoffAt"
-                                :round="g.groupName"
+                                :round="g.competitionName"
                                 state="finished"
                                 :pillVariant="is_exact ? 'success' : null"
                                 :pillIcon="is_exact ? 'check' : null"
@@ -426,7 +426,7 @@
                                 :hitClass="hit_class"
                                 :detailUrl="path('portal_sport_match_detail', {id: g.sportMatchId.toRfc4122})"
                             />
-                            <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">{{ g.tournamentName }}</p>
+                            <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">{{ g.matchSourceName }}</p>
                         </li>
                     {% endfor %}
                 </ul>
@@ -459,7 +459,7 @@
             </div>
         </div>
 
-        {% if discoverable_tournaments|length == 0 %}
+        {% if discoverable_match_sources|length == 0 %}
             <div class="card-glass p-10 text-center">
                 <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
                     <twig:ux:icon name="lucide:search" class="h-7 w-7" />
@@ -469,10 +469,10 @@
             </div>
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {% for t in discoverable_tournaments %}
+                {% for t in discoverable_match_sources %}
                     <li>
                         <a
-                            href="{{ path('public_tournament_detail', {id: t.tournamentId.toRfc4122}) }}"
+                            href="{{ path('public_match_source_detail', {id: t.matchSourceId.toRfc4122}) }}"
                             class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
                         >
                             <div>
@@ -485,7 +485,7 @@
                                 <div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-white/50">
                                     <span class="flex items-center gap-1.5">
                                         <twig:ux:icon name="lucide:layout-grid" class="h-4 w-4 text-white/40" />
-                                        {{ t.groupCount }} {% if t.groupCount == 1 %}skupina{% elseif t.groupCount >= 2 and t.groupCount <= 4 %}skupiny{% else %}skupin{% endif %}
+                                        {{ t.competitionCount }} {% if t.competitionCount == 1 %}soutěž{% elseif t.competitionCount >= 2 and t.competitionCount <= 4 %}soutěže{% else %}soutěží{% endif %}
                                     </span>
                                     <span class="flex items-center gap-1.5">
                                         <twig:ux:icon name="lucide:users" class="h-4 w-4 text-white/40" />

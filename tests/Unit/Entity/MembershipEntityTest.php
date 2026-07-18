@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
+use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
-use App\Event\MemberJoinedGroup;
-use App\Event\MemberLeftGroup;
+use App\Enum\MatchSourceVisibility;
+use App\Event\MemberJoinedCompetition;
+use App\Event\MemberLeftCompetition;
 use App\Event\MemberRemoved;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -40,34 +40,34 @@ final class MembershipEntityTest extends TestCase
         return $user;
     }
 
-    private function makeGroup(User $owner): Group
+    private function makeCompetition(User $owner): Competition
     {
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        $group = new Group(
-            id: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            tournament: $tournament,
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $matchSource,
             owner: $owner,
-            name: 'Skupina',
+            name: 'Soutěž',
             description: null,
             pin: null,
             shareableLinkToken: null,
             createdAt: $this->now,
         );
-        $group->popEvents();
+        $competition->popEvents();
 
-        return $group;
+        return $competition;
     }
 
     private function makeMembership(?User $user = null): Membership
@@ -76,7 +76,7 @@ final class MembershipEntityTest extends TestCase
 
         return new Membership(
             id: Uuid::fromString('01933333-0000-7000-8000-0000000000aa'),
-            group: $this->makeGroup($owner),
+            competition: $this->makeCompetition($owner),
             user: $user ?? $owner,
             joinedAt: $this->now,
         );
@@ -88,7 +88,7 @@ final class MembershipEntityTest extends TestCase
 
         $events = $membership->popEvents();
         self::assertCount(1, $events);
-        self::assertInstanceOf(MemberJoinedGroup::class, $events[0]);
+        self::assertInstanceOf(MemberJoinedCompetition::class, $events[0]);
         self::assertTrue($membership->isActive);
     }
 
@@ -105,7 +105,7 @@ final class MembershipEntityTest extends TestCase
 
         $events = $membership->popEvents();
         self::assertCount(1, $events);
-        self::assertInstanceOf(MemberLeftGroup::class, $events[0]);
+        self::assertInstanceOf(MemberLeftCompetition::class, $events[0]);
     }
 
     public function testLeaveIsIdempotent(): void
@@ -128,34 +128,34 @@ final class MembershipEntityTest extends TestCase
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $target = $this->makeUser('01933333-0000-7000-8000-000000000011');
 
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        $group = new Group(
-            id: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            tournament: $tournament,
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $matchSource,
             owner: $owner,
-            name: 'Skupina',
+            name: 'Soutěž',
             description: null,
             pin: null,
             shareableLinkToken: null,
             createdAt: $this->now,
         );
-        $group->popEvents();
+        $competition->popEvents();
 
         $membership = new Membership(
             id: Uuid::fromString('01933333-0000-7000-8000-0000000000aa'),
-            group: $group,
+            competition: $competition,
             user: $target,
             joinedAt: $this->now,
         );

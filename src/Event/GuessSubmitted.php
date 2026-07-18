@@ -12,7 +12,7 @@ final readonly class GuessSubmitted
         public Uuid $guessId,
         public Uuid $userId,
         public Uuid $sportMatchId,
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public int $homeScore,
         public int $awayScore,
         public \DateTimeImmutable $occurredOn,

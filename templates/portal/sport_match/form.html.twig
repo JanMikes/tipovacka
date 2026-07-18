@@ -8,20 +8,20 @@
         {% if mode == 'create' %}
             <twig:Breadcrumbs :items="[
                 {label: 'Nástěnka', path: path('portal_dashboard')},
-                {label: tournament.name, path: path('portal_tournament_detail', {id: tournament.id.toRfc4122})},
+                {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
                 {label: 'Nový zápas'},
             ]" />
         {% else %}
             <twig:Breadcrumbs :items="[
                 {label: 'Nástěnka', path: path('portal_dashboard')},
-                {label: tournament.name, path: path('portal_tournament_detail', {id: tournament.id.toRfc4122})},
+                {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
                 {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
                 {label: 'Upravit zápas'},
             ]" />
         {% endif %}
 
         <header class="mb-8">
-            <p class="eyebrow mb-3">{{ tournament.name }}</p>
+            <p class="eyebrow mb-3">{{ match_source.name }}</p>
             <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
                 {{ mode == 'create' ? 'Nový zápas' : 'Upravit zápas' }}
             </h1>
@@ -29,7 +29,7 @@
 
         <div class="card-glass p-6 sm:p-8">
             {% set action = mode == 'create'
-                ? path('portal_sport_match_create', {tournamentId: tournament.id.toRfc4122})
+                ? path('portal_sport_match_create', {matchSourceId: match_source.id.toRfc4122})
                 : path('portal_sport_match_edit', {id: sport_match.id.toRfc4122}) %}
 
             {{ form_start(form, {action: action, attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
@@ -70,7 +70,7 @@
                         <twig:ux:icon name="lucide:{{ mode == 'create' ? 'plus' : 'save' }}" class="h-4 w-4" />
                         {{ mode == 'create' ? 'Vytvořit zápas' : 'Uložit změny' }}
                     </button>
-                    <a href="{{ path('portal_tournament_detail', {id: tournament.id.toRfc4122}) }}" class="btn btn-ghost">
+                    <a href="{{ path('portal_match_source_detail', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost">
                         Zrušit
                     </a>
                 </div>

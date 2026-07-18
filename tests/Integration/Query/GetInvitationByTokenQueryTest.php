@@ -21,8 +21,8 @@ final class GetInvitationByTokenQueryTest extends IntegrationTestCase
             now: $now,
         ));
 
-        self::assertSame(AppFixtures::PUBLIC_GROUP_NAME, $result->groupName);
-        self::assertSame(AppFixtures::PUBLIC_TOURNAMENT_NAME, $result->tournamentName);
+        self::assertSame(AppFixtures::PUBLIC_COMPETITION_NAME, $result->competitionName);
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, $result->matchSourceName);
         self::assertSame(AppFixtures::ADMIN_NICKNAME, $result->inviterNickname);
         self::assertFalse($result->isAccepted);
         self::assertFalse($result->isRevoked);

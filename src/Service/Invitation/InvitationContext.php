@@ -12,9 +12,9 @@ final readonly class InvitationContext
     public function __construct(
         public InvitationKind $kind,
         public string $token,
-        public Uuid $groupId,
-        public string $groupName,
-        public string $tournamentName,
+        public Uuid $competitionId,
+        public string $competitionName,
+        public string $matchSourceName,
         public ?string $inviterNickname,
         public ?string $presetEmail,
         public InvitationContextStatus $status,

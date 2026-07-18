@@ -10,9 +10,9 @@ final readonly class MyJoinRequestItem
 {
     public function __construct(
         public Uuid $requestId,
-        public Uuid $groupId,
-        public string $groupName,
-        public string $tournamentName,
+        public Uuid $competitionId,
+        public string $competitionName,
+        public string $matchSourceName,
         public \DateTimeImmutable $requestedAt,
     ) {
     }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Entity\TournamentRuleConfiguration;
-use App\Repository\TournamentRuleConfigurationRepository;
+use App\Entity\MatchSourceRuleConfiguration;
+use App\Repository\MatchSourceRuleConfigurationRepository;
 use App\Rule\CorrectAwayGoalsRule;
 use App\Rule\CorrectHomeGoalsRule;
 use App\Rule\CorrectOutcomeRule;
@@ -110,14 +110,14 @@ final class GuessEvaluatorTest extends TestCase
             new CorrectAwayGoalsRule(),
         ]);
 
-        $repo = $this->createStub(TournamentRuleConfigurationRepository::class);
+        $repo = $this->createStub(MatchSourceRuleConfigurationRepository::class);
 
-        $tournament = RuleTestFactory::tournament();
+        $matchSource = RuleTestFactory::matchSource();
         $configurations = [];
         foreach ($enabledRulePoints as $identifier => $points) {
-            $configurations[$identifier] = new TournamentRuleConfiguration(
+            $configurations[$identifier] = new MatchSourceRuleConfiguration(
                 id: Uuid::v7(),
-                tournament: $tournament,
+                matchSource: $matchSource,
                 ruleIdentifier: $identifier,
                 enabled: true,
                 points: $points,
@@ -125,7 +125,7 @@ final class GuessEvaluatorTest extends TestCase
             );
         }
 
-        $repo->method('getEnabledForTournament')->willReturn($configurations);
+        $repo->method('getEnabledForMatchSource')->willReturn($configurations);
 
         $identity = $this->createStub(ProvideIdentity::class);
         $identity->method('next')->willReturnCallback(fn () => Uuid::v7());

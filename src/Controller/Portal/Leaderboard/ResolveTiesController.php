@@ -8,10 +8,10 @@ use App\Command\ResolveLeaderboardTies\ResolveLeaderboardTiesCommand;
 use App\Entity\User;
 use App\Form\ResolveTiesFormData;
 use App\Form\ResolveTiesFormType;
-use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
-use App\Query\GetGroupLeaderboard\LeaderboardRow;
+use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
+use App\Query\GetCompetitionLeaderboard\LeaderboardRow;
 use App\Query\QueryBus;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Voter\LeaderboardVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,28 +22,28 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/skupiny/{groupId}/zebricek/shoda',
-    name: 'portal_group_leaderboard_resolve_ties',
-    requirements: ['groupId' => Requirement::UUID],
+    '/portal/souteze/{competitionId}/zebricek/shoda',
+    name: 'portal_competition_leaderboard_resolve_ties',
+    requirements: ['competitionId' => Requirement::UUID],
 )]
 final class ResolveTiesController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRepository $groupRepository,
+        private readonly CompetitionRepository $competitionRepository,
         private readonly QueryBus $queryBus,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
 
-    public function __invoke(Request $request, string $groupId): Response
+    public function __invoke(Request $request, string $competitionId): Response
     {
-        $group = $this->groupRepository->get(Uuid::fromString($groupId));
-        $this->denyAccessUnlessGranted(LeaderboardVoter::RESOLVE_TIES, $group);
+        $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
+        $this->denyAccessUnlessGranted(LeaderboardVoter::RESOLVE_TIES, $competition);
 
         /** @var User $user */
         $user = $this->getUser();
 
-        $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
+        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
 
         $tiedGroups = $this->groupByTies($leaderboard->rows);
 
@@ -58,21 +58,21 @@ final class ResolveTiesController extends AbstractController
             );
 
             $this->commandBus->dispatch(new ResolveLeaderboardTiesCommand(
-                groupId: $group->id,
+                competitionId: $competition->id,
                 resolverId: $user->id,
                 orderedUserIds: $orderedUuids,
             ));
 
             $this->addFlash('success', 'Rozřazení bylo uloženo.');
 
-            return $this->redirectToRoute('portal_group_leaderboard', [
-                'groupId' => $group->id->toRfc4122(),
+            return $this->redirectToRoute('portal_competition_leaderboard', [
+                'competitionId' => $competition->id->toRfc4122(),
             ]);
         }
 
         return $this->render('portal/leaderboard/resolve_ties.html.twig', [
             'form' => $form,
-            'group' => $group,
+            'competition' => $competition,
             'tiedGroups' => $tiedGroups,
             'leaderboard' => $leaderboard,
         ]);

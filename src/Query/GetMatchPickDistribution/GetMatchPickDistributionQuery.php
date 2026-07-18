@@ -27,10 +27,10 @@ final readonly class GetMatchPickDistributionQuery
                 'COUNT(g.id) AS total',
             )
             ->from(Guess::class, 'g')
-            ->where('g.group = :groupId')
+            ->where('g.competition = :competitionId')
             ->andWhere('g.sportMatch = :matchId')
             ->andWhere('g.deletedAt IS NULL')
-            ->setParameter('groupId', $query->groupId)
+            ->setParameter('competitionId', $query->competitionId)
             ->setParameter('matchId', $query->sportMatchId)
             ->getQuery()
             ->getSingleResult();

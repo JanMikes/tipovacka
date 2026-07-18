@@ -11,6 +11,6 @@ final class GuessAlreadyExists extends \DomainException
 {
     public static function create(): self
     {
-        return new self('Na tento zápas jsi už v této skupině tipoval(a).');
+        return new self('Na tento zápas jsi už v této soutěži tipoval(a).');
     }
 }

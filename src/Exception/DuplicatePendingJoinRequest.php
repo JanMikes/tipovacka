@@ -10,8 +10,8 @@ use Symfony\Component\Uid\Uuid;
 #[WithHttpStatus(409)]
 final class DuplicatePendingJoinRequest extends \DomainException
 {
-    public static function forGroup(Uuid $groupId): self
+    public static function forCompetition(Uuid $competitionId): self
     {
-        return new self(sprintf('Pro skupinu "%s" již máš otevřenou žádost.', $groupId->toRfc4122()));
+        return new self(sprintf('Pro soutěž "%s" již máš otevřenou žádost.', $competitionId->toRfc4122()));
     }
 }

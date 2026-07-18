@@ -19,16 +19,16 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
 {
     public function testOwnerCanSubmitGuessForActiveMember(): void
     {
-        // Add the unverified user as a member of the verified group (private tournament, verified user owns it).
+        // Add the unverified user as a member of the verified competition (private match source, verified user owns it).
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::UNVERIFIED_USER_ID,
         );
 
         $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
@@ -58,7 +58,7 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
         $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             targetUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 3,
             awayScore: 2,
@@ -85,9 +85,9 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
 
     public function testNonOwnerNonAdminCannotSubmitOnBehalf(): void
     {
-        // Second verified user joins the public group as a regular member.
+        // Second verified user joins the public competition as a regular member.
         $this->addActiveMembership(
-            groupId: AppFixtures::PUBLIC_GROUP_ID,
+            competitionId: AppFixtures::PUBLIC_COMPETITION_ID,
             userId: AppFixtures::SECOND_VERIFIED_USER_ID,
         );
 
@@ -97,7 +97,7 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
             $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
                 actingUserId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
                 targetUserId: Uuid::fromString(AppFixtures::ADMIN_ID),
-                groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -117,7 +117,7 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
             $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
                 actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
                 targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -132,14 +132,14 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
     public function testFailsOnDuplicate(): void
     {
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::UNVERIFIED_USER_ID,
         );
 
         $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
@@ -151,7 +151,7 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
             $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
                 actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
                 targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 3,
                 awayScore: 0,
@@ -166,15 +166,15 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
     public function testAdminCanSubmitOnBehalfOfAnyMember(): void
     {
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::UNVERIFIED_USER_ID,
         );
 
-        // Admin is not the owner of the verified (private) group; verified user is.
+        // Admin is not the owner of the verified (private) competition; verified user is.
         $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::ADMIN_ID),
             targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 4,
             awayScore: 2,
@@ -196,18 +196,18 @@ final class SubmitGuessOnBehalfHandlerTest extends IntegrationTestCase
         self::assertSame(4, $guess->homeScore);
     }
 
-    private function addActiveMembership(string $groupId, string $userId): void
+    private function addActiveMembership(string $competitionId, string $userId): void
     {
         $em = $this->entityManager();
 
-        $group = $em->find(\App\Entity\Group::class, Uuid::fromString($groupId));
+        $competition = $em->find(\App\Entity\Competition::class, Uuid::fromString($competitionId));
         $user = $em->find(\App\Entity\User::class, Uuid::fromString($userId));
 
-        \assert(null !== $group && null !== $user);
+        \assert(null !== $competition && null !== $user);
 
         $membership = new Membership(
             id: Uuid::v7(),
-            group: $group,
+            competition: $competition,
             user: $user,
             joinedAt: \DateTimeImmutable::createFromInterface($this->clock()->now()),
         );

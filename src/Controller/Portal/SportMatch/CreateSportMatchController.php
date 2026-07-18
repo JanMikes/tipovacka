@@ -9,7 +9,7 @@ use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Form\SportMatchFormData;
 use App\Form\SportMatchFormType;
-use App\Repository\TournamentRepository;
+use App\Repository\MatchSourceRepository;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,25 +22,25 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/turnaje/{tournamentId}/zapasy/novy',
+    '/portal/turnaje/{matchSourceId}/zapasy/novy',
     name: 'portal_sport_match_create',
-    requirements: ['tournamentId' => Requirement::UUID],
+    requirements: ['matchSourceId' => Requirement::UUID],
 )]
 final class CreateSportMatchController extends AbstractController
 {
     public function __construct(
-        private readonly TournamentRepository $tournamentRepository,
+        private readonly MatchSourceRepository $matchSourceRepository,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
 
-    public function __invoke(Request $request, string $tournamentId): Response
+    public function __invoke(Request $request, string $matchSourceId): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $tournament = $this->tournamentRepository->get(Uuid::fromString($tournamentId));
-        $this->denyAccessUnlessGranted(SportMatchVoter::CREATE, $tournament);
+        $matchSource = $this->matchSourceRepository->get(Uuid::fromString($matchSourceId));
+        $this->denyAccessUnlessGranted(SportMatchVoter::CREATE, $matchSource);
 
         $formData = new SportMatchFormData();
         $form = $this->createForm(SportMatchFormType::class, $formData);
@@ -50,7 +50,7 @@ final class CreateSportMatchController extends AbstractController
             \assert($formData->kickoffAt instanceof \DateTimeImmutable);
 
             $envelope = $this->commandBus->dispatch(new CreateSportMatchCommand(
-                tournamentId: $tournament->id,
+                matchSourceId: $matchSource->id,
                 editorId: $user->id,
                 homeTeam: $formData->homeTeam,
                 awayTeam: $formData->awayTeam,
@@ -68,7 +68,7 @@ final class CreateSportMatchController extends AbstractController
 
         return $this->render('portal/sport_match/form.html.twig', [
             'form' => $form,
-            'tournament' => $tournament,
+            'match_source' => $matchSource,
             'mode' => 'create',
         ]);
     }

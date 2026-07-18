@@ -8,7 +8,7 @@ use App\Entity\Membership;
 use App\Entity\User;
 use App\Enum\UserRole;
 use App\Exception\NicknameAlreadyTaken;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -20,7 +20,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 final readonly class CreateAnonymousMemberHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
         private ProvideIdentity $identity,
@@ -30,13 +30,13 @@ final readonly class CreateAnonymousMemberHandler
 
     public function __invoke(CreateAnonymousMemberCommand $command): User
     {
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
         $actor = $this->userRepository->get($command->actorId);
 
         $isAdmin = in_array(UserRole::ADMIN->value, $actor->getRoles(), true);
 
-        if (!$isAdmin && !$actor->id->equals($group->owner->id)) {
-            throw new AccessDeniedException('Pouze vlastník skupiny nebo administrátor může přidávat tipující bez e-mailu.');
+        if (!$isAdmin && !$actor->id->equals($competition->owner->id)) {
+            throw new AccessDeniedException('Pouze vlastník soutěže nebo administrátor může přidávat tipující bez e-mailu.');
         }
 
         $nickname = null !== $command->nickname && '' !== trim($command->nickname)
@@ -68,7 +68,7 @@ final readonly class CreateAnonymousMemberHandler
 
         $this->membershipRepository->save(new Membership(
             id: $this->identity->next(),
-            group: $group,
+            competition: $competition,
             user: $user,
             joinedAt: $now,
         ));

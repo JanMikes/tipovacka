@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Voter;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use App\Enum\UserRole;
 use App\Repository\MembershipRepository;
 use App\Voter\LeaderboardVoter;
@@ -38,8 +38,8 @@ final class LeaderboardVoterTest extends TestCase
 
         $repository = $this->createStub(MembershipRepository::class);
         $repository->method('hasActiveMembership')
-            ->willReturnCallback(function (Uuid $userId, Uuid $groupId): bool {
-                return $this->membershipLookup[$userId->toRfc4122().'|'.$groupId->toRfc4122()] ?? false;
+            ->willReturnCallback(function (Uuid $userId, Uuid $competitionId): bool {
+                return $this->membershipLookup[$userId->toRfc4122().'|'.$competitionId->toRfc4122()] ?? false;
             });
 
         $this->voter = new LeaderboardVoter($repository);
@@ -48,89 +48,89 @@ final class LeaderboardVoterTest extends TestCase
     public function testAnonymousDenied(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $group = $this->makeGroup($owner);
+        $competition = $this->makeCompetition($owner);
 
-        self::assertSame(-1, $this->voter->vote(new NullToken(), $group, [LeaderboardVoter::VIEW]));
-        self::assertSame(-1, $this->voter->vote(new NullToken(), $group, [LeaderboardVoter::RESOLVE_TIES]));
+        self::assertSame(-1, $this->voter->vote(new NullToken(), $competition, [LeaderboardVoter::VIEW]));
+        self::assertSame(-1, $this->voter->vote(new NullToken(), $competition, [LeaderboardVoter::RESOLVE_TIES]));
     }
 
     public function testMemberCanView(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::MEMBER_ID);
-        $group = $this->makeGroup($owner);
-        $this->markAsMember($member, $group);
+        $competition = $this->makeCompetition($owner);
+        $this->markAsMember($member, $competition);
 
-        self::assertSame(1, $this->voter->vote($this->token($member), $group, [LeaderboardVoter::VIEW]));
+        self::assertSame(1, $this->voter->vote($this->token($member), $competition, [LeaderboardVoter::VIEW]));
     }
 
     public function testOwnerCanView(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $group = $this->makeGroup($owner);
+        $competition = $this->makeCompetition($owner);
 
-        self::assertSame(1, $this->voter->vote($this->token($owner), $group, [LeaderboardVoter::VIEW]));
+        self::assertSame(1, $this->voter->vote($this->token($owner), $competition, [LeaderboardVoter::VIEW]));
     }
 
     public function testAdminCanView(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $group = $this->makeGroup($owner);
+        $competition = $this->makeCompetition($owner);
 
-        self::assertSame(1, $this->voter->vote($this->token($admin), $group, [LeaderboardVoter::VIEW]));
+        self::assertSame(1, $this->voter->vote($this->token($admin), $competition, [LeaderboardVoter::VIEW]));
     }
 
     public function testNonMemberCannotView(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $other = $this->makeUser(self::NON_MEMBER_ID);
-        $group = $this->makeGroup($owner);
+        $competition = $this->makeCompetition($owner);
 
-        self::assertSame(-1, $this->voter->vote($this->token($other), $group, [LeaderboardVoter::VIEW]));
+        self::assertSame(-1, $this->voter->vote($this->token($other), $competition, [LeaderboardVoter::VIEW]));
     }
 
-    public function testOwnerCannotResolveTiesWhileTournamentActive(): void
+    public function testOwnerCannotResolveTiesWhileMatchSourceActive(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $group = $this->makeGroup($owner);
+        $competition = $this->makeCompetition($owner);
 
-        self::assertSame(-1, $this->voter->vote($this->token($owner), $group, [LeaderboardVoter::RESOLVE_TIES]));
+        self::assertSame(-1, $this->voter->vote($this->token($owner), $competition, [LeaderboardVoter::RESOLVE_TIES]));
     }
 
     public function testOwnerCanResolveTiesOnceFinished(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament($owner, finished: true);
-        $group = $this->makeGroup($owner, $tournament);
+        $matchSource = $this->makeMatchSource($owner, finished: true);
+        $competition = $this->makeCompetition($owner, $matchSource);
 
-        self::assertSame(1, $this->voter->vote($this->token($owner), $group, [LeaderboardVoter::RESOLVE_TIES]));
+        self::assertSame(1, $this->voter->vote($this->token($owner), $competition, [LeaderboardVoter::RESOLVE_TIES]));
     }
 
     public function testNonOwnerMemberCannotResolveTies(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::MEMBER_ID);
-        $tournament = $this->makeTournament($owner, finished: true);
-        $group = $this->makeGroup($owner, $tournament);
-        $this->markAsMember($member, $group);
+        $matchSource = $this->makeMatchSource($owner, finished: true);
+        $competition = $this->makeCompetition($owner, $matchSource);
+        $this->markAsMember($member, $competition);
 
-        self::assertSame(-1, $this->voter->vote($this->token($member), $group, [LeaderboardVoter::RESOLVE_TIES]));
+        self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [LeaderboardVoter::RESOLVE_TIES]));
     }
 
     public function testAdminCanResolveTiesOnceFinished(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $tournament = $this->makeTournament($owner, finished: true);
-        $group = $this->makeGroup($owner, $tournament);
+        $matchSource = $this->makeMatchSource($owner, finished: true);
+        $competition = $this->makeCompetition($owner, $matchSource);
 
-        self::assertSame(1, $this->voter->vote($this->token($admin), $group, [LeaderboardVoter::RESOLVE_TIES]));
+        self::assertSame(1, $this->voter->vote($this->token($admin), $competition, [LeaderboardVoter::RESOLVE_TIES]));
     }
 
-    private function markAsMember(User $user, Group $group): void
+    private function markAsMember(User $user, Competition $competition): void
     {
-        $this->membershipLookup[$user->id->toRfc4122().'|'.$group->id->toRfc4122()] = true;
+        $this->membershipLookup[$user->id->toRfc4122().'|'.$competition->id->toRfc4122()] = true;
     }
 
     private function makeUser(string $id, bool $isAdmin = false): User
@@ -153,13 +153,13 @@ final class LeaderboardVoterTest extends TestCase
         return $user;
     }
 
-    private function makeTournament(User $owner, bool $finished = false): Tournament
+    private function makeMatchSource(User $owner, bool $finished = false): MatchSource
     {
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
@@ -168,32 +168,32 @@ final class LeaderboardVoterTest extends TestCase
         );
 
         if ($finished) {
-            $tournament->markFinished($this->now);
+            $matchSource->markFinished($this->now);
         }
 
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        return $tournament;
+        return $matchSource;
     }
 
-    private function makeGroup(User $owner, ?Tournament $tournament = null): Group
+    private function makeCompetition(User $owner, ?MatchSource $matchSource = null): Competition
     {
-        $tournament ??= $this->makeTournament($owner);
+        $matchSource ??= $this->makeMatchSource($owner);
 
-        $group = new Group(
-            id: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            tournament: $tournament,
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $matchSource,
             owner: $owner,
-            name: 'Skupina',
+            name: 'Soutěž',
             description: null,
             pin: null,
             shareableLinkToken: null,
             createdAt: $this->now,
         );
 
-        $group->popEvents();
+        $competition->popEvents();
 
-        return $group;
+        return $competition;
     }
 
     private function token(User $user): UsernamePasswordToken

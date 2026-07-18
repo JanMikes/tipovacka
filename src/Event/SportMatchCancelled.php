@@ -10,7 +10,7 @@ final readonly class SportMatchCancelled
 {
     public function __construct(
         public Uuid $sportMatchId,
-        public Uuid $tournamentId,
+        public Uuid $matchSourceId,
         public \DateTimeImmutable $occurredOn,
     ) {
     }

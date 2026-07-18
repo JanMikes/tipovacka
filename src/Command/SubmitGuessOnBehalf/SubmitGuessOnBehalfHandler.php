@@ -10,7 +10,7 @@ use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
 use App\Exception\NotAMember;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
@@ -27,7 +27,7 @@ final readonly class SubmitGuessOnBehalfHandler
     public function __construct(
         private GuessRepository $guessRepository,
         private SportMatchRepository $sportMatchRepository,
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
         private EffectiveTipDeadlineResolver $deadlineResolver,
@@ -43,36 +43,36 @@ final readonly class SubmitGuessOnBehalfHandler
         }
 
         $actingUser = $this->userRepository->get($command->actingUserId);
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
 
         $isAdmin = in_array(UserRole::ADMIN->value, $actingUser->getRoles(), true);
 
-        if (!$isAdmin && !$actingUser->id->equals($group->owner->id)) {
-            throw new AccessDeniedException('Only the group owner or an admin can tip on behalf of a member.');
+        if (!$isAdmin && !$actingUser->id->equals($competition->owner->id)) {
+            throw new AccessDeniedException('Only the competition owner or an admin can tip on behalf of a member.');
         }
 
         $targetUser = $this->userRepository->get($command->targetUserId);
         $sportMatch = $this->sportMatchRepository->get($command->sportMatchId);
 
-        if (!$this->membershipRepository->hasActiveMembership($targetUser->id, $group->id)) {
-            throw NotAMember::of($group->id);
+        if (!$this->membershipRepository->hasActiveMembership($targetUser->id, $competition->id)) {
+            throw NotAMember::of($competition->id);
         }
 
-        if (!$sportMatch->tournament->id->equals($group->tournament->id)) {
-            throw NotAMember::of($group->id);
+        if (!$sportMatch->matchSource->id->equals($competition->matchSource->id)) {
+            throw NotAMember::of($competition->id);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($group, $sportMatch);
+        $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
 
         if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();
         }
 
-        $existing = $this->guessRepository->findActiveByUserMatchGroup(
+        $existing = $this->guessRepository->findActiveByUserMatchCompetition(
             $targetUser->id,
             $sportMatch->id,
-            $group->id,
+            $competition->id,
         );
 
         if (null !== $existing) {
@@ -83,7 +83,7 @@ final readonly class SubmitGuessOnBehalfHandler
             id: $this->identity->next(),
             user: $targetUser,
             sportMatch: $sportMatch,
-            group: $group,
+            competition: $competition,
             homeScore: $command->homeScore,
             awayScore: $command->awayScore,
             submittedAt: $now,

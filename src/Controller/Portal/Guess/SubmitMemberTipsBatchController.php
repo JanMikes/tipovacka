@@ -11,11 +11,11 @@ use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
 use App\Exception\NotAMember;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
-use App\Voter\GroupVoter;
+use App\Voter\CompetitionVoter;
 use App\Voter\GuessOnBehalfContext;
 use App\Voter\GuessVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,10 +28,10 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/skupiny/{groupId}/spravovat-tipy/{memberId}',
-    name: 'portal_group_guess_on_behalf_batch',
+    '/portal/souteze/{competitionId}/spravovat-tipy/{memberId}',
+    name: 'portal_competition_guess_on_behalf_batch',
     requirements: [
-        'groupId' => Requirement::UUID,
+        'competitionId' => Requirement::UUID,
         'memberId' => Requirement::UUID,
     ],
     methods: ['POST'],
@@ -39,7 +39,7 @@ use Symfony\Component\Uid\Uuid;
 final class SubmitMemberTipsBatchController extends AbstractController
 {
     public function __construct(
-        private readonly GroupRepository $groupRepository,
+        private readonly CompetitionRepository $competitionRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly UserRepository $userRepository,
         private readonly GuessRepository $guessRepository,
@@ -47,16 +47,16 @@ final class SubmitMemberTipsBatchController extends AbstractController
     ) {
     }
 
-    public function __invoke(Request $request, string $groupId, string $memberId): Response
+    public function __invoke(Request $request, string $competitionId, string $memberId): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $group = $this->groupRepository->get(Uuid::fromString($groupId));
-        $this->denyAccessUnlessGranted(GroupVoter::MANAGE_MEMBERS, $group);
+        $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
+        $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
 
         $csrfToken = $request->request->get('_token');
-        $expectedToken = sprintf('guess_on_behalf_batch_%s_%s', $groupId, $memberId);
+        $expectedToken = sprintf('guess_on_behalf_batch_%s_%s', $competitionId, $memberId);
 
         if (!\is_string($csrfToken) || !$this->isCsrfTokenValid($expectedToken, $csrfToken)) {
             throw $this->createAccessDeniedException('Invalid CSRF token.');
@@ -104,10 +104,10 @@ final class SubmitMemberTipsBatchController extends AbstractController
             $homeScore = (int) $homeRaw;
             $awayScore = (int) $awayRaw;
 
-            $existing = $this->guessRepository->findActiveByUserMatchGroup(
+            $existing = $this->guessRepository->findActiveByUserMatchCompetition(
                 $member->id,
                 $sportMatch->id,
-                $group->id,
+                $competition->id,
             );
 
             if (null !== $existing
@@ -119,13 +119,13 @@ final class SubmitMemberTipsBatchController extends AbstractController
 
             try {
                 if (null === $existing) {
-                    $context = new GuessOnBehalfContext($group, $sportMatch, $member);
+                    $context = new GuessOnBehalfContext($competition, $sportMatch, $member);
                     $this->denyAccessUnlessGranted(GuessVoter::SUBMIT_ON_BEHALF, $context);
 
                     $this->commandBus->dispatch(new SubmitGuessOnBehalfCommand(
                         actingUserId: $user->id,
                         targetUserId: $member->id,
-                        groupId: $group->id,
+                        competitionId: $competition->id,
                         sportMatchId: $sportMatch->id,
                         homeScore: $homeScore,
                         awayScore: $awayScore,
@@ -169,8 +169,8 @@ final class SubmitMemberTipsBatchController extends AbstractController
             $this->addFlash('info', 'Nebyly provedeny žádné změny.');
         }
 
-        return $this->redirectToRoute('portal_group_manage_member_tips', [
-            'id' => $group->id->toRfc4122(),
+        return $this->redirectToRoute('portal_competition_manage_member_tips', [
+            'id' => $competition->id->toRfc4122(),
             'member' => $member->id->toRfc4122(),
         ]);
     }

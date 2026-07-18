@@ -49,8 +49,8 @@
             {% for m in matches %}
                 {% set is_tippable = m.isOpenForGuesses and m.kickoffAt >= date() %}
                 {% set is_locked = not m.isFinished and not m.isPostponed and not is_tippable %}
-                {% set is_tipped = m.guessedGroupsCount > 0 and m.pendingGroupsCount == 0 %}
-                {% set has_pending = m.groupsCount > 0 and m.pendingGroupsCount > 0 and is_tippable %}
+                {% set is_tipped = m.guessedCompetitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
+                {% set has_pending = m.competitionsCount > 0 and m.pendingCompetitionsCount > 0 and is_tippable %}
                 {#
                     Stav → clean enum (live je CUT, probíhající zápas čteme jako „Uzamčeno"):
                       finished | locked (vč. live/uzávěrka) | tipped (vše natipováno) | open (tipnutelný)
@@ -64,10 +64,10 @@
                     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
                 {% elseif has_pending %}
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
-                    {% set pill_label = m.groupsCount > 1 ? 'Chybí tip (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Chybí tip' %}
+                    {% set pill_label = m.competitionsCount > 1 ? 'Chybí tip (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Chybí tip' %}
                 {% elseif is_tipped %}
                     {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_dot = false %}
-                    {% set pill_label = m.groupsCount > 1 ? 'Tip odeslán (' ~ m.guessedGroupsCount ~ '/' ~ m.groupsCount ~ ')' : 'Tip odeslán' %}
+                    {% set pill_label = m.competitionsCount > 1 ? 'Tip odeslán (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Tip odeslán' %}
                 {% else %}
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
                 {% endif %}
@@ -88,9 +88,9 @@
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
                     />
 
-                    {% if m.tournamentName or m.venue %}
+                    {% if m.matchSourceName or m.venue %}
                         <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                            {{ m.tournamentName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+                            {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
                         </p>
                     {% endif %}
                 </li>

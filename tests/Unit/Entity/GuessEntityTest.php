@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Guess;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use App\Event\GuessSubmitted;
 use App\Event\GuessUpdated;
 use App\Event\GuessVoided;
@@ -44,29 +44,29 @@ final class GuessEntityTest extends TestCase
         return $user;
     }
 
-    private function makeTournament(User $owner): Tournament
+    private function makeMatchSource(User $owner): MatchSource
     {
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        return $tournament;
+        return $matchSource;
     }
 
-    private function makeGroup(User $owner, Tournament $tournament): Group
+    private function makeCompetition(User $owner, MatchSource $matchSource): Competition
     {
-        $group = new Group(
-            id: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            tournament: $tournament,
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $matchSource,
             owner: $owner,
             name: 'G',
             description: null,
@@ -74,16 +74,16 @@ final class GuessEntityTest extends TestCase
             shareableLinkToken: null,
             createdAt: $this->now,
         );
-        $group->popEvents();
+        $competition->popEvents();
 
-        return $group;
+        return $competition;
     }
 
-    private function makeMatch(Tournament $tournament): SportMatch
+    private function makeMatch(MatchSource $matchSource): SportMatch
     {
         $m = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            tournament: $tournament,
+            matchSource: $matchSource,
             homeTeam: 'A',
             awayTeam: 'B',
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00'),
@@ -98,15 +98,15 @@ final class GuessEntityTest extends TestCase
     private function makeGuess(int $home = 2, int $away = 1): Guess
     {
         $user = $this->makeUser();
-        $tournament = $this->makeTournament($user);
-        $group = $this->makeGroup($user, $tournament);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource($user);
+        $competition = $this->makeCompetition($user, $matchSource);
+        $match = $this->makeMatch($matchSource);
 
         return new Guess(
             id: Uuid::fromString(AppFixtures::FIXTURE_GUESS_ID),
             user: $user,
             sportMatch: $match,
-            group: $group,
+            competition: $competition,
             homeScore: $home,
             awayScore: $away,
             submittedAt: $this->now,

@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 final readonly class GetMemberLeaderboardBreakdown implements QueryMessage
 {
     public function __construct(
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $userId,
     ) {
     }

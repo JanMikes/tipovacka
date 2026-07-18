@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Leaderboard;
 
 use App\Entity\User;
-use App\Query\ListMyGroups\ListMyGroups;
+use App\Query\ListMyCompetitions\ListMyCompetitions;
 use App\Query\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,14 +29,14 @@ final class LeaderboardController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $myGroups = $this->queryBus->handle(new ListMyGroups(userId: $user->id));
+        $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(userId: $user->id));
 
-        if (0 === count($myGroups)) {
+        if (0 === count($myCompetitions)) {
             return $this->redirectToRoute('portal_dashboard');
         }
 
-        return $this->redirectToRoute('portal_group_leaderboard', [
-            'groupId' => $myGroups[0]->groupId->toRfc4122(),
+        return $this->redirectToRoute('portal_competition_leaderboard', [
+            'competitionId' => $myCompetitions[0]->competitionId->toRfc4122(),
         ]);
     }
 }

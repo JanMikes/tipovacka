@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Portal;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Membership;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -29,17 +29,17 @@ final class MatchesFlowTest extends WebTestCase
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
         $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
 
-        // Verified owns VERIFIED_GROUP (private tournament → match "Tygři vs Lvi").
-        // Add them to PUBLIC_GROUP (public tournament → "Bohemians 1905" etc.) so the
-        // page must aggregate matches across two soutěže / tournaments.
+        // Verified owns VERIFIED_COMPETITION (private match source → match "Tygři vs Lvi").
+        // Add them to PUBLIC_COMPETITION (public match source → "Bohemians 1905" etc.) so the
+        // page must aggregate matches across two soutěže / match sources.
         $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
         self::assertNotNull($verified);
-        $publicGroup = $em->find(Group::class, Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID));
-        self::assertNotNull($publicGroup);
+        $publicCompetition = $em->find(Competition::class, Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertNotNull($publicCompetition);
 
         $membership = new Membership(
             id: Uuid::v7(),
-            group: $publicGroup,
+            competition: $publicCompetition,
             user: $verified,
             joinedAt: $now,
         );
@@ -55,9 +55,9 @@ final class MatchesFlowTest extends WebTestCase
 
         $body = $client->getResponse()->getContent();
         self::assertIsString($body);
-        // Private-tournament match…
+        // Private-match source match…
         self::assertStringContainsString('Tygři', $body);
-        // …and public-tournament match.
+        // …and public-match source match.
         self::assertStringContainsString('Bohemians 1905', $body);
     }
 
@@ -67,7 +67,7 @@ final class MatchesFlowTest extends WebTestCase
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
 
-        // Admin (PUBLIC_GROUP) has a finished match (Bohemians) and a scheduled one (Sparta).
+        // Admin (PUBLIC_COMPETITION) has a finished match (Bohemians) and a scheduled one (Sparta).
         $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($admin);
         $client->loginUser($admin);

@@ -24,7 +24,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'sport_matches')]
-#[ORM\Index(columns: ['tournament_id', 'kickoff_at', 'deleted_at'], name: 'IDX_sport_matches_tournament_kickoff')]
+#[ORM\Index(columns: ['match_source_id', 'kickoff_at', 'deleted_at'], name: 'IDX_sport_matches_match_source_kickoff')]
 #[ORM\Index(columns: ['state', 'kickoff_at', 'deleted_at'], name: 'IDX_sport_matches_state_kickoff')]
 class SportMatch implements EntityWithEvents, SoftDeletable
 {
@@ -87,9 +87,9 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
         private(set) Uuid $id,
-        #[ORM\ManyToOne(targetEntity: Tournament::class)]
-        #[ORM\JoinColumn(name: 'tournament_id', referencedColumnName: 'id', nullable: false)]
-        private(set) Tournament $tournament,
+        #[ORM\ManyToOne(targetEntity: MatchSource::class)]
+        #[ORM\JoinColumn(name: 'match_source_id', referencedColumnName: 'id', nullable: false)]
+        private(set) MatchSource $matchSource,
         string $homeTeam,
         string $awayTeam,
         \DateTimeImmutable $kickoffAt,
@@ -110,7 +110,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new SportMatchCreated(
             sportMatchId: $this->id,
-            tournamentId: $this->tournament->id,
+            matchSourceId: $this->matchSource->id,
             homeTeam: $this->homeTeam,
             awayTeam: $this->awayTeam,
             kickoffAt: $this->kickoffAt,
@@ -187,7 +187,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         if ($wasFinished) {
             $this->recordThat(new SportMatchScoreUpdated(
                 sportMatchId: $this->id,
-                tournamentId: $this->tournament->id,
+                matchSourceId: $this->matchSource->id,
                 homeScore: $homeScore,
                 awayScore: $awayScore,
                 occurredOn: $now,
@@ -198,7 +198,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new SportMatchFinished(
             sportMatchId: $this->id,
-            tournamentId: $this->tournament->id,
+            matchSourceId: $this->matchSource->id,
             homeScore: $homeScore,
             awayScore: $awayScore,
             occurredOn: $now,
@@ -253,7 +253,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new SportMatchCancelled(
             sportMatchId: $this->id,
-            tournamentId: $this->tournament->id,
+            matchSourceId: $this->matchSource->id,
             occurredOn: $now,
         ));
     }
@@ -269,7 +269,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new SportMatchDeleted(
             sportMatchId: $this->id,
-            tournamentId: $this->tournament->id,
+            matchSourceId: $this->matchSource->id,
             occurredOn: $now,
         ));
     }

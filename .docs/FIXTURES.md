@@ -1,39 +1,151 @@
 # Test Fixtures Reference
 
-All fixture data is defined as class constants on `App\DataFixtures\AppFixtures`.
-Import the class in tests: `use App\DataFixtures\AppFixtures;`
+All test fixture data is defined as class constants on `App\DataFixtures\AppFixtures`.
+Fixtures live in `fixtures/` (namespace `App\DataFixtures`, autoloaded from `fixtures/`),
+NOT in `src/`. Import in tests: `use App\DataFixtures\AppFixtures;`
+
+- `AppFixtures` runs for both fixture groups `test` and `dev` (`tests/bootstrap.php` loads
+  group `test`). `DevFixtures` (group `dev` only, depends on `AppFixtures`) adds extra
+  dev-browsing data and is never loaded in tests.
+- Every entity is created with hardcoded UUIDs via `Uuid::fromString()` — fixtures never
+  consume `ProvideIdentity::next()`.
+- All timestamps use `$now = 2025-06-15 12:00:00 UTC`, matching the MockClock fixed time
+  used in all tests (never call `new \DateTimeImmutable()` without argument in tests).
+- `tests/bootstrap.php` builds the schema with `doctrine:schema:create` (not migrations)
+  and caches the database (`tests/.database.cache`) keyed by a hash of `migrations/` +
+  `fixtures/`; changing either rebuilds automatically. DAMA DoctrineTestBundle wraps each
+  test in a transaction, so the fixture baseline is always intact.
+
+## Identity provider (tests)
+
+`App\Tests\Support\PredictableIdentityProvider` (replaces `RandomIdentityProvider` in the
+test env) returns UUIDs from a fixed pool `01933333-0000-7000-8000-0000000000XX`
+(XX = 01…30), resetting between tests via `kernel.reset`.
+
+- `FIXTURE_RESERVED_COUNT = 5`: indices 0–4 (UUIDs `…0001`–`…0005`) are reserved for the
+  five fixture users below, which are persisted with those exact IDs. The provider starts
+  at index 5, so the **first `next()` call in a test returns `…0006`** — avoiding unique
+  constraint collisions with fixture rows.
+- The pool has 30 entries; exhausting it throws (`Exhausted all predefined UUIDs`).
 
 ## Users
 
-| Constant prefix     | Email                       | Nickname         | Password   | Verified | Active | Deleted |
-|---------------------|-----------------------------|------------------|------------|----------|--------|---------|
-| `ADMIN_*`           | admin@tipovacka.test        | admin            | `password` | yes      | yes    | no      |
-| `VERIFIED_USER_*`   | user@tipovacka.test         | tipovac          | `password` | yes      | yes    | no      |
-| `UNVERIFIED_USER_*` | unverified@tipovacka.test   | novy_uzivatel    | `password` | no       | yes    | no      |
-| `DELETED_USER_*`    | deleted@tipovacka.test      | smazany          | `password` | yes      | yes    | yes     |
+Password for all users: `AppFixtures::DEFAULT_PASSWORD` = `password`.
 
-### UUIDs
+| Constant prefix          | ID (`…_ID`)                            | Email                        | Nickname        | Role  | Verified | Deleted |
+|--------------------------|----------------------------------------|------------------------------|-----------------|-------|----------|---------|
+| `ADMIN_*`                | `01933333-0000-7000-8000-000000000001` | admin@tipovacka.test         | `admin`         | admin | yes      | no      |
+| `VERIFIED_USER_*`        | `01933333-0000-7000-8000-000000000002` | user@tipovacka.test          | `tipovac`       | user  | yes      | no      |
+| `SECOND_VERIFIED_USER_*` | `01933333-0000-7000-8000-000000000099` | other@tipovacka.test         | `druhy_tipovac` | user  | yes      | no      |
+| `UNVERIFIED_USER_*`      | `01933333-0000-7000-8000-000000000003` | unverified@tipovacka.test    | `novy_uzivatel` | user  | no       | no      |
+| `DELETED_USER_*`         | `01933333-0000-7000-8000-000000000004` | deleted@tipovacka.test       | `smazany`       | user  | yes      | yes     |
+| `ANONYMOUS_USER_*`       | `01933333-0000-7000-8000-000000000005` | — (no email, no password)    | — (no nickname) | user  | no       | no      |
 
-- `AppFixtures::ADMIN_ID` = `01933333-0000-7000-8000-000000000001`
-- `AppFixtures::VERIFIED_USER_ID` = `01933333-0000-7000-8000-000000000002`
-- `AppFixtures::UNVERIFIED_USER_ID` = `01933333-0000-7000-8000-000000000003`
-- `AppFixtures::DELETED_USER_ID` = `01933333-0000-7000-8000-000000000004`
+Notes:
 
-These match indices 0–3 of `PredictableIdentityProvider::PREDEFINED_UUIDS`.
+- **`SECOND_VERIFIED_USER_ID` quirk**: its ID ends in `…0099`, deliberately OUTSIDE the
+  predictable provider's pool (`…0001`–`…0030`), so it can never collide with IDs handed
+  out by `next()`. It is a plain verified user with no memberships — ideal as an
+  "outsider" / second participant.
+- `DELETED_USER` was soft-deleted at `2025-06-16 09:00:00 UTC` (one day after `$now`).
+- `ANONYMOUS_USER` has no email/password/nickname; profile name is
+  `ANONYMOUS_USER_FIRST_NAME` = `František`, `ANONYMOUS_USER_LAST_NAME` = `Novák`.
+  It is a member of VERIFIED_COMPETITION (see memberships) so managers can practise
+  tipping on behalf of someone else.
 
-## Sports
+## Sport
 
-Seeded by both the foundation migration (prod) and `AppFixtures` (dev/test). Tests use `doctrine:schema:create`, which skips migrations — fixtures guarantee the row is present.
+Seeded by both the foundation migration (prod) and `AppFixtures` (dev/test — the test DB
+is built by `doctrine:schema:create`, which skips the migration's seed row).
 
-| Code       | Name   | UUID                                       |
-|------------|--------|--------------------------------------------|
-| `football` | Fotbal | `01960000-0000-7000-8000-000000000001`     |
+| Code       | Name   | UUID                                                          |
+|------------|--------|---------------------------------------------------------------|
+| `football` | Fotbal | `Sport::FOOTBALL_ID` = `01960000-0000-7000-8000-000000000001` |
 
-Reference: `App\Entity\Sport::FOOTBALL_ID`
+## Match sources (`MatchSource`, table `match_sources`)
 
-## Notes
+| Constant prefix    | ID                                     | Name                | Visibility | Owner         |
+|--------------------|----------------------------------------|---------------------|------------|---------------|
+| `PUBLIC_SOURCE_*`  | `019aaaaa-0000-7000-8000-000000000001` | `Liga mistrů 2026/27` | public   | ADMIN         |
+| `PRIVATE_SOURCE_*` | `019aaaaa-0000-7000-8000-000000000002` | `Chlapi u piva`     | private    | VERIFIED_USER |
 
-- MockClock fixed at `2025-06-15 12:00:00 UTC` in all tests.
-- Fixture users created with `createdAt = 2025-06-15 12:00:00 UTC`.
-- DAMA DoctrineTestBundle wraps each test in a transaction; fixture baseline is always present.
-- Fixture UUIDs are hardcoded (not consumed via `ProvideIdentity::next()`), so tests start from index 0 of the predictable provider uncontested.
+Both use sport football, `description/startAt/endAt = null`, not finished, not deleted.
+
+## Competitions (`Competition`, table `competitions`)
+
+| Constant prefix          | ID                                     | Name           | Match source   | Owner         | PIN        | Shareable link token |
+|--------------------------|----------------------------------------|----------------|----------------|---------------|------------|----------------------|
+| `VERIFIED_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000001` | `Kámoši u piva` | PRIVATE_SOURCE | VERIFIED_USER | `12345678` (`VERIFIED_COMPETITION_PIN`) | `VERIFIED_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000119bbbbb0000700b1` |
+| `PUBLIC_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000002` | `Admin liga`   | PUBLIC_SOURCE  | ADMIN         | none (`null`) | `PUBLIC_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000219bbbbb0000700b2` |
+
+## Memberships
+
+| Constant                                   | ID                                     | Competition          | User           |
+|--------------------------------------------|----------------------------------------|----------------------|----------------|
+| `VERIFIED_COMPETITION_OWNER_MEMBERSHIP_ID` | `019bbbbb-0000-7000-8000-00000000aa01` | VERIFIED_COMPETITION | VERIFIED_USER  |
+| `ANONYMOUS_MEMBERSHIP_ID`                  | `019bbbbb-0000-7000-8000-00000000aa03` | VERIFIED_COMPETITION | ANONYMOUS_USER |
+| `PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa02` | PUBLIC_COMPETITION   | ADMIN          |
+
+Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION
+(a pending join request exists instead), ADMIN is NOT a member of VERIFIED_COMPETITION,
+SECOND_VERIFIED_USER has no memberships at all.
+
+## Competition invitation (`CompetitionInvitation`)
+
+| Constant                   | Value                                  |
+|----------------------------|----------------------------------------|
+| `PENDING_INVITATION_ID`    | `019ccccc-0000-7000-8000-000000000001` |
+| `PENDING_INVITATION_TOKEN` | `abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789` |
+| `PENDING_INVITATION_EMAIL` | `outsider@tipovacka.test` (not a registered user) |
+
+Invitation to PUBLIC_COMPETITION, invited by ADMIN, created at `$now`, expires
+`$now + 7 days`, not accepted, not revoked.
+
+## Competition join request (`CompetitionJoinRequest`)
+
+| Constant                 | Value                                  |
+|--------------------------|----------------------------------------|
+| `PENDING_JOIN_REQUEST_ID` | `019ccccc-0000-7000-8000-000000000002` |
+
+VERIFIED_USER requesting to join PUBLIC_COMPETITION (valid because they are not a
+member), requested at `$now`, undecided.
+
+## Sport matches (`SportMatch`)
+
+| Constant                     | ID                                     | Source          | Teams                          | Kickoff (UTC)       | State / score                | Round / venue |
+|------------------------------|----------------------------------------|-----------------|--------------------------------|---------------------|------------------------------|---------------|
+| `MATCH_SCHEDULED_ID`         | `019ddddd-0000-7000-8000-000000000001` | PUBLIC_SOURCE   | Sparta Praha vs Slavia Praha   | 2025-06-20 18:00    | scheduled                    | `Čtvrtfinále`, Generali Arena |
+| `MATCH_LIVE_ID`              | `019ddddd-0000-7000-8000-000000000002` | PUBLIC_SOURCE   | Viktoria Plzeň vs Baník Ostrava | 2025-06-15 11:00   | live (began at `$now`)       | — |
+| `MATCH_FINISHED_ID`          | `019ddddd-0000-7000-8000-000000000003` | PUBLIC_SOURCE   | Bohemians 1905 vs Jablonec     | 2025-06-10 18:00    | finished, **2:1**            | `Základní skupina`, Ďolíček |
+| `MATCH_PRIVATE_SCHEDULED_ID` | `019ddddd-0000-7000-8000-000000000004` | PRIVATE_SOURCE  | Tygři vs Lvi                   | 2025-06-20 19:00    | scheduled                    | — |
+
+## Guess + evaluation
+
+| Constant                            | ID                                     | What |
+|-------------------------------------|----------------------------------------|------|
+| `FIXTURE_GUESS_ID`                  | `019eeeee-0000-7000-8000-000000000001` | ADMIN's guess **3:0** on MATCH_FINISHED (actual 2:1) in PUBLIC_COMPETITION, submitted at `$now` |
+| `FIXTURE_GUESS_EVALUATION_ID`       | `019eeeee-0000-7000-8000-000000000002` | Evaluation of that guess, evaluated at `$now` |
+| `FIXTURE_GUESS_EVAL_RULE_POINTS_ID` | `019eeeee-0000-7000-8000-000000000003` | Single rule-points row: `correct_outcome` → **3 points** (both picked home win; exact score missed) |
+
+## Rule configurations (`MatchSourceRuleConfiguration`)
+
+Both match sources get the four default rules, all enabled:
+
+| Constant                          | Source         | Rule identifier      | Points |
+|-----------------------------------|----------------|----------------------|--------|
+| `PUBLIC_RULE_EXACT_SCORE_ID`      | PUBLIC_SOURCE  | `exact_score`        | 5 |
+| `PUBLIC_RULE_CORRECT_OUTCOME_ID`  | PUBLIC_SOURCE  | `correct_outcome`    | 3 |
+| `PUBLIC_RULE_CORRECT_HOME_GOALS_ID` | PUBLIC_SOURCE | `correct_home_goals` | 1 |
+| `PUBLIC_RULE_CORRECT_AWAY_GOALS_ID` | PUBLIC_SOURCE | `correct_away_goals` | 1 |
+| `PRIVATE_RULE_EXACT_SCORE_ID`     | PRIVATE_SOURCE | `exact_score`        | 5 |
+| `PRIVATE_RULE_CORRECT_OUTCOME_ID` | PRIVATE_SOURCE | `correct_outcome`    | 3 |
+| `PRIVATE_RULE_CORRECT_HOME_GOALS_ID` | PRIVATE_SOURCE | `correct_home_goals` | 1 |
+| `PRIVATE_RULE_CORRECT_AWAY_GOALS_ID` | PRIVATE_SOURCE | `correct_away_goals` | 1 |
+
+UUIDs are `019fffff-0000-7000-8000-00000000000X` with X = 1–8 in the table's order.
+
+## Tie resolution
+
+`FIXTURE_TIE_RESOLUTION_ID` = `019eeeee-0000-7000-8000-000000000004` is a **reserved
+constant only** — `AppFixtures::load()` does not persist any `LeaderboardTieResolution`
+row. Use it as a stable ID when a test needs to create one.

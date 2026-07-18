@@ -21,7 +21,7 @@ final class SportMatchCancelledVoidsAndClearsEvaluationsTest extends Integration
         // then cancel it.
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 0,
             awayScore: 0,
@@ -68,7 +68,7 @@ final class SportMatchCancelledVoidsAndClearsEvaluationsTest extends Integration
         // removal path by creating a fresh scheduled match, guessing on it, and cancelling.
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 1,
             awayScore: 1,

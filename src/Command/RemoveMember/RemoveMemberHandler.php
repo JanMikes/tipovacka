@@ -6,7 +6,7 @@ namespace App\Command\RemoveMember;
 
 use App\Exception\CannotLeaveAsOwner;
 use App\Exception\NotAMember;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -15,7 +15,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class RemoveMemberHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private ClockInterface $clock,
     ) {
@@ -23,16 +23,16 @@ final readonly class RemoveMemberHandler
 
     public function __invoke(RemoveMemberCommand $command): void
     {
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
 
-        if ($group->owner->id->equals($command->targetUserId)) {
-            throw CannotLeaveAsOwner::of($group->id);
+        if ($competition->owner->id->equals($command->targetUserId)) {
+            throw CannotLeaveAsOwner::of($competition->id);
         }
 
-        $membership = $this->membershipRepository->findActiveMembership($command->targetUserId, $group->id);
+        $membership = $this->membershipRepository->findActiveMembership($command->targetUserId, $competition->id);
 
         if (null === $membership) {
-            throw NotAMember::of($group->id);
+            throw NotAMember::of($competition->id);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
@@ -49,7 +49,7 @@ final readonly class RemoveMemberHandler
             now: $now,
         );
 
-        // An anonymous user only exists to participate in the group(s) their manager
+        // An anonymous user only exists to participate in the competition(s) their manager
         // added them to. Once they're no longer a member anywhere, tidy up the User
         // record so they don't linger as unreachable orphans.
         if ($user->isAnonymous && $isLastMembership) {

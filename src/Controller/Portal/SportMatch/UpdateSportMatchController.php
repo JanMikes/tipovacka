@@ -61,7 +61,7 @@ final class UpdateSportMatchController extends AbstractController
 
         return $this->render('portal/sport_match/form.html.twig', [
             'form' => $form,
-            'tournament' => $sportMatch->tournament,
+            'match_source' => $sportMatch->matchSource,
             'sport_match' => $sportMatch,
             'mode' => 'edit',
         ]);

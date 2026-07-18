@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Voter;
 
+use App\Entity\MatchSource;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
 use App\Enum\UserRole;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -16,11 +16,11 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 /**
  * SportMatch authorization voter.
  *
- * - CREATE takes a Tournament subject (to authorize adding a match to it).
- * - Other attributes take a SportMatch subject and delegate ownership checks via its tournament.
- * - VIEW delegates to TournamentVoter::VIEW on the underlying tournament.
+ * - CREATE takes a MatchSource subject (to authorize adding a match to it).
+ * - Other attributes take a SportMatch subject and delegate ownership checks via its match source.
+ * - VIEW delegates to MatchSourceVoter::VIEW on the underlying match source.
  *
- * @extends Voter<'sport_match_view'|'sport_match_create'|'sport_match_edit'|'sport_match_set_score'|'sport_match_cancel'|'sport_match_delete', SportMatch|Tournament>
+ * @extends Voter<'sport_match_view'|'sport_match_create'|'sport_match_edit'|'sport_match_set_score'|'sport_match_cancel'|'sport_match_delete', SportMatch|MatchSource>
  */
 final class SportMatchVoter extends Voter
 {
@@ -43,7 +43,7 @@ final class SportMatchVoter extends Voter
         }
 
         if (self::CREATE === $attribute) {
-            return $subject instanceof Tournament;
+            return $subject instanceof MatchSource;
         }
 
         return $subject instanceof SportMatch;
@@ -56,7 +56,7 @@ final class SportMatchVoter extends Voter
         if (self::VIEW === $attribute) {
             \assert($subject instanceof SportMatch);
 
-            return $this->security->isGranted(TournamentVoter::VIEW, $subject->tournament);
+            return $this->security->isGranted(MatchSourceVoter::VIEW, $subject->matchSource);
         }
 
         if (!$currentUser instanceof User) {
@@ -66,7 +66,7 @@ final class SportMatchVoter extends Voter
         $isAdmin = in_array(UserRole::ADMIN->value, $currentUser->getRoles(), true);
 
         if (self::CREATE === $attribute) {
-            \assert($subject instanceof Tournament);
+            \assert($subject instanceof MatchSource);
 
             if (!$subject->isActive) {
                 return $isAdmin;
@@ -78,17 +78,17 @@ final class SportMatchVoter extends Voter
         }
 
         \assert($subject instanceof SportMatch);
-        $tournament = $subject->tournament;
-        $isOwner = $currentUser->id->equals($tournament->owner->id);
+        $matchSource = $subject->matchSource;
+        $isOwner = $currentUser->id->equals($matchSource->owner->id);
 
         if (self::EDIT === $attribute) {
             if ($subject->isCancelled || null !== $subject->deletedAt) {
                 return false;
             }
 
-            return $isAdmin || ($isOwner && $tournament->isActive);
+            return $isAdmin || ($isOwner && $matchSource->isActive);
         }
 
-        return $isAdmin || ($isOwner && $tournament->isActive);
+        return $isAdmin || ($isOwner && $matchSource->isActive);
     }
 }

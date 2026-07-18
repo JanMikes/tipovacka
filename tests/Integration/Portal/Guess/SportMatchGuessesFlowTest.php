@@ -23,7 +23,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -40,7 +40,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseStatusCodeSame(403);
@@ -57,7 +57,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -75,7 +75,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
         );
 
         self::assertResponseIsSuccessful();

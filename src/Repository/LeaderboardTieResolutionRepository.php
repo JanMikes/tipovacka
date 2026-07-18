@@ -23,15 +23,15 @@ final class LeaderboardTieResolutionRepository
     /**
      * @return array<string, LeaderboardTieResolution>
      */
-    public function findForGroup(Uuid $groupId): array
+    public function findForCompetition(Uuid $competitionId): array
     {
         /** @var list<LeaderboardTieResolution> $rows */
         $rows = $this->entityManager->createQueryBuilder()
             ->select('r', 'u')
             ->from(LeaderboardTieResolution::class, 'r')
             ->innerJoin('r.user', 'u')
-            ->where('r.group = :groupId')
-            ->setParameter('groupId', $groupId)
+            ->where('r.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getResult();
 
@@ -47,7 +47,7 @@ final class LeaderboardTieResolutionRepository
     /**
      * @param list<Uuid> $userIds
      */
-    public function deleteForGroupAndUsers(Uuid $groupId, array $userIds): void
+    public function deleteForCompetitionAndUsers(Uuid $competitionId, array $userIds): void
     {
         if ([] === $userIds) {
             return;
@@ -57,9 +57,9 @@ final class LeaderboardTieResolutionRepository
         $rows = $this->entityManager->createQueryBuilder()
             ->select('r')
             ->from(LeaderboardTieResolution::class, 'r')
-            ->where('r.group = :groupId')
+            ->where('r.competition = :competitionId')
             ->andWhere('r.user IN (:userIds)')
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->setParameter('userIds', $userIds)
             ->getQuery()
             ->getResult();

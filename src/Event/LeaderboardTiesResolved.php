@@ -9,7 +9,7 @@ use Symfony\Component\Uid\Uuid;
 final readonly class LeaderboardTiesResolved
 {
     public function __construct(
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public \DateTimeImmutable $occurredOn,
     ) {
     }

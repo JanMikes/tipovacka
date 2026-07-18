@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\RejectJoinRequest;
 
-use App\Repository\GroupJoinRequestRepository;
+use App\Repository\CompetitionJoinRequestRepository;
 use App\Repository\UserRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class RejectJoinRequestHandler
 {
     public function __construct(
-        private GroupJoinRequestRepository $joinRequestRepository,
+        private CompetitionJoinRequestRepository $joinRequestRepository,
         private UserRepository $userRepository,
         private ClockInterface $clock,
     ) {

@@ -7,7 +7,7 @@
 {% set size = size|default('large') %}
 {% set redirect_to = app.request.requestUri %}
 
-<form method="post" action="{{ path('portal_group_join_by_pin_quick') }}"
+<form method="post" action="{{ path('portal_competition_join_by_pin_quick') }}"
       data-controller="pin-input"
       class="pin-card relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-accent-500/10 to-navy-900/40 p-4 backdrop-blur sm:p-5">
     <input type="hidden" name="_token" value="{{ csrf_token('join_by_pin_quick') }}">

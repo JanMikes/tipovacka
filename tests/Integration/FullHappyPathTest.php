@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration;
 
-use App\Command\CreateGroup\CreateGroupCommand;
-use App\Command\CreatePrivateTournament\CreatePrivateTournamentCommand;
+use App\Command\CreateCompetition\CreateCompetitionCommand;
+use App\Command\CreatePrivateMatchSource\CreatePrivateMatchSourceCommand;
 use App\Command\CreateSportMatch\CreateSportMatchCommand;
-use App\Command\JoinGroupByPin\JoinGroupByPinCommand;
+use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
 use App\Command\SetSportMatchFinalScore\SetSportMatchFinalScoreCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
+use App\Entity\MatchSource;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
-use App\Query\GetGroupLeaderboard\GroupLeaderboardResult;
+use App\Query\GetCompetitionLeaderboard\CompetitionLeaderboardResult;
+use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -27,7 +27,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * End-to-end happy-path test covering the full Tipovačka flow:
- *   user A → private tournament → group with PIN → user B joins via PIN →
+ *   user A → private match source → competition with PIN → user B joins via PIN →
  *   user A adds a match → both submit guesses → user A sets final score →
  *   leaderboard reflects correct points.
  *
@@ -38,7 +38,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class FullHappyPathTest extends IntegrationTestCase
 {
-    public function testRegisterTournamentGroupJoinGuessScoreLeaderboard(): void
+    public function testRegisterMatchSourceCompetitionJoinGuessScoreLeaderboard(): void
     {
         $em = $this->entityManager();
         $bus = $this->commandBus();
@@ -48,38 +48,38 @@ final class FullHappyPathTest extends IntegrationTestCase
         $userB = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($userB);
 
-        // 1) User A creates a private tournament.
-        $tournamentId = $this->extractId($bus->dispatch(new CreatePrivateTournamentCommand(
+        // 1) User A creates a private match source.
+        $matchSourceId = $this->extractId($bus->dispatch(new CreatePrivateMatchSourceCommand(
             ownerId: $userA->id,
             name: 'E2E Liga',
             description: null,
             startAt: null,
             endAt: null,
-        )), Tournament::class);
+        )), MatchSource::class);
 
-        // 2) User A creates a group (with PIN) in that tournament — auto-membership for owner.
-        $groupId = $this->extractId($bus->dispatch(new CreateGroupCommand(
+        // 2) User A creates a competition (with PIN) in that match source — auto-membership for owner.
+        $competitionId = $this->extractId($bus->dispatch(new CreateCompetitionCommand(
             ownerId: $userA->id,
-            tournamentId: $tournamentId,
-            name: 'E2E Skupina',
+            matchSourceId: $matchSourceId,
+            name: 'E2E Soutěž',
             description: null,
             withPin: true,
-        )), Group::class);
+        )), Competition::class);
 
         $em->clear();
-        $group = $em->find(Group::class, $groupId);
-        self::assertNotNull($group);
-        self::assertNotNull($group->pin);
+        $competition = $em->find(Competition::class, $competitionId);
+        self::assertNotNull($competition);
+        self::assertNotNull($competition->pin);
 
         // 3) User B joins via PIN.
-        $bus->dispatch(new JoinGroupByPinCommand(
+        $bus->dispatch(new JoinCompetitionByPinCommand(
             userId: $userB->id,
-            pin: $group->pin,
+            pin: $competition->pin,
         ));
 
         // 4) User A adds a scheduled match.
         $matchId = $this->extractId($bus->dispatch(new CreateSportMatchCommand(
-            tournamentId: $tournamentId,
+            matchSourceId: $matchSourceId,
             editorId: $userA->id,
             homeTeam: 'E2E Home',
             awayTeam: 'E2E Away',
@@ -90,14 +90,14 @@ final class FullHappyPathTest extends IntegrationTestCase
         // 5) Both users submit guesses (A: exact 2:1; B: correct outcome 3:0).
         $bus->dispatch(new SubmitGuessCommand(
             userId: $userA->id,
-            groupId: $groupId,
+            competitionId: $competitionId,
             sportMatchId: $matchId,
             homeScore: 2,
             awayScore: 1,
         ));
         $bus->dispatch(new SubmitGuessCommand(
             userId: $userB->id,
-            groupId: $groupId,
+            competitionId: $competitionId,
             sportMatchId: $matchId,
             homeScore: 3,
             awayScore: 0,
@@ -153,8 +153,8 @@ final class FullHappyPathTest extends IntegrationTestCase
         self::assertSame(3, $evalB->totalPoints);
 
         // 8) Leaderboard reflects correct ordering.
-        /** @var GroupLeaderboardResult $leaderboard */
-        $leaderboard = $this->queryBus()->handle(new GetGroupLeaderboard(groupId: $groupId));
+        /** @var CompetitionLeaderboardResult $leaderboard */
+        $leaderboard = $this->queryBus()->handle(new GetCompetitionLeaderboard(competitionId: $competitionId));
 
         self::assertCount(2, $leaderboard->rows);
         self::assertSame(10, $leaderboard->rows[0]->totalPoints);

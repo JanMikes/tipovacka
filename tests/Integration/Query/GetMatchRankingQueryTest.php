@@ -13,9 +13,9 @@ final class GetMatchRankingQueryTest extends IntegrationTestCase
 {
     public function testRankingForFinishedMatch(): void
     {
-        // Fixture: admin tipped 3:0 on the finished match in PUBLIC_GROUP → +3 points.
+        // Fixture: admin tipped 3:0 on the finished match in PUBLIC_COMPETITION → +3 points.
         $result = $this->queryBus()->handle(new GetMatchRanking(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
         ));
 
@@ -34,7 +34,7 @@ final class GetMatchRankingQueryTest extends IntegrationTestCase
     {
         // The scheduled match has no evaluated guesses.
         $result = $this->queryBus()->handle(new GetMatchRanking(
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
         ));
 

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\MatchSource;
+use App\Entity\MatchSourceRuleConfiguration;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
-use App\Entity\TournamentRuleConfiguration;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -24,8 +24,8 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Dev-only fixtures loaded via `composer db:fixtures` (group=dev).
- * Adds 25 extra users, 3 extra tournaments (finished, in-progress public, private active),
- * multiple groups per tournament, cross-group memberships, matches and evaluated guesses
+ * Adds 25 extra users, 3 extra match_sources (finished, in-progress public, private active),
+ * multiple competitions per match source, cross-competition memberships, matches and evaluated guesses
  * so the UI can be exercised with realistic volume.
  *
  * Not loaded in the test suite (tests request group=test).
@@ -111,12 +111,12 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $users[8]->deactivate($now);
         $users[8]->popEvents();
 
-        // -- Tournaments (3 new) ------------------------------------------
-        $euro = new Tournament(
+        // -- MatchSources (3 new) ------------------------------------------
+        $euro = new MatchSource(
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000003'),
             sport: $football,
             owner: $users[1],
-            visibility: TournamentVisibility::Public,
+            visibility: MatchSourceVisibility::Public,
             name: 'Euro 2024',
             description: 'Fotbalové mistrovství Evropy 2024 v Německu — tipovačka mezi kamarády.',
             startAt: new \DateTimeImmutable('2024-06-14 00:00:00 UTC'),
@@ -127,11 +127,11 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $euro->popEvents();
         $manager->persist($euro);
 
-        $fortuna = new Tournament(
+        $fortuna = new MatchSource(
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000004'),
             sport: $football,
             owner: $verified,
-            visibility: TournamentVisibility::Public,
+            visibility: MatchSourceVisibility::Public,
             name: 'Fortuna Liga 2025/26',
             description: 'Česká první fotbalová liga — celoroční tipovačka.',
             startAt: new \DateTimeImmutable('2025-07-18 00:00:00 UTC'),
@@ -141,11 +141,11 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $fortuna->popEvents();
         $manager->persist($fortuna);
 
-        $firma = new Tournament(
+        $firma = new MatchSource(
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000005'),
             sport: $football,
             owner: $users[17],
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'Firemní liga',
             description: 'Soukromá tipovačka pro kolegy z práce.',
             startAt: new \DateTimeImmutable('2025-06-01 00:00:00 UTC'),
@@ -156,15 +156,15 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $firma->popEvents();
         $manager->persist($firma);
 
-        foreach ([$euro, $fortuna, $firma] as $tournament) {
-            $this->provisionDefaultRules($manager, $tournament, $now);
+        foreach ([$euro, $fortuna, $firma] as $matchSource) {
+            $this->provisionDefaultRules($manager, $matchSource, $now);
         }
 
-        // -- Groups -------------------------------------------------------
-        $eurofans = $this->createGroup(
+        // -- Competitions -------------------------------------------------------
+        $eurofans = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000003',
-            tournament: $euro,
+            matchSource: $euro,
             owner: $users[1],
             name: 'Eurofans',
             description: 'Tipujeme Euro, po každém zápase bago.',
@@ -173,10 +173,10 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             createdAt: new \DateTimeImmutable('2024-04-02 10:00:00 UTC'),
         );
 
-        $vsChtGroup = $this->createGroup(
+        $vsChtCompetition = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000004',
-            tournament: $fortuna,
+            matchSource: $fortuna,
             owner: $verified,
             name: 'VŠCHT tipovačka',
             description: 'Bývalí spolužáci z VŠCHT.',
@@ -185,22 +185,22 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             createdAt: new \DateTimeImmutable('2025-06-02 10:00:00 UTC'),
         );
 
-        $prahaGroup = $this->createGroup(
+        $prahaCompetition = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000005',
-            tournament: $fortuna,
+            matchSource: $fortuna,
             owner: $users[14],
             name: 'Pražský pivní klub',
-            description: 'Druhá skupina ve stejném turnaji — Fortuna Liga.',
+            description: 'Druhá soutěž ve stejném turnaji — Fortuna Liga.',
             pin: '10000002',
             linkToken: str_repeat('p', 48),
             createdAt: new \DateTimeImmutable('2025-06-03 12:00:00 UTC'),
         );
 
-        $firmaA = $this->createGroup(
+        $firmaA = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000006',
-            tournament: $firma,
+            matchSource: $firma,
             owner: $users[17],
             name: 'Dev tým',
             description: 'Programátoři proti sobě.',
@@ -209,48 +209,50 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             createdAt: new \DateTimeImmutable('2025-05-21 09:00:00 UTC'),
         );
 
-        $firmaB = $this->createGroup(
+        $firmaB = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000007',
-            tournament: $firma,
+            matchSource: $firma,
             owner: $users[22],
             name: 'Management',
-            description: 'Druhá skupina — vedení firmy, stejný turnaj.',
+            description: 'Druhá soutěž — vedení firmy, stejný turnaj.',
             pin: '20000002',
             linkToken: str_repeat('m', 48),
             createdAt: new \DateTimeImmutable('2025-05-22 09:00:00 UTC'),
         );
 
-        $kamosiGroup = $this->createGroup(
+        /** @var MatchSource $publicSource */
+        $publicSource = $manager->find(MatchSource::class, Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
+        $kamosiCompetition = $this->createCompetition(
             $manager,
             id: '019bbbbb-0000-7000-8000-000000000008',
-            tournament: $manager->find(Tournament::class, Uuid::fromString(AppFixtures::PUBLIC_TOURNAMENT_ID)),
+            matchSource: $publicSource,
             owner: $users[24],
             name: 'Kamarádi ze střední',
-            description: 'Druhá skupina v Lize mistrů.',
+            description: 'Druhá soutěž v Lize mistrů.',
             pin: '30000001',
             linkToken: str_repeat('k', 48),
             createdAt: new \DateTimeImmutable('2025-06-05 18:00:00 UTC'),
         );
 
         // -- Memberships --------------------------------------------------
-        // Eurofans (finished tournament) — admin + 8 users.
+        // Eurofans (finished match source) — admin + 8 users.
         $this->addMembers($manager, $eurofans, [$admin, $users[1], $users[2], $users[3], $users[4], $users[5], $users[6], $users[7]], $now);
 
-        // VŠCHT — verified + 5 users. User 9 overlaps with Praha group (same tournament).
-        $this->addMembers($manager, $vsChtGroup, [$verified, $users[1], $users[9], $users[10], $users[11], $users[12], $users[13]], $now);
+        // VŠCHT — verified + 5 users. User 9 overlaps with Praha competition (same match source).
+        $this->addMembers($manager, $vsChtCompetition, [$verified, $users[1], $users[9], $users[10], $users[11], $users[12], $users[13]], $now);
 
-        // Praha — user 1 and user 9 overlap with VŠCHT (same tournament, different group).
-        $this->addMembers($manager, $prahaGroup, [$users[14], $users[1], $users[9], $users[15], $users[16]], $now);
+        // Praha — user 1 and user 9 overlap with VŠCHT (same match source, different competition).
+        $this->addMembers($manager, $prahaCompetition, [$users[14], $users[1], $users[9], $users[15], $users[16]], $now);
 
         // Firma A (private) — u17 owner + 4 users.
         $this->addMembers($manager, $firmaA, [$users[17], $users[18], $users[19], $users[20], $users[21]], $now);
 
-        // Firma B — u17 overlaps with Firma A (same private tournament).
+        // Firma B — u17 overlaps with Firma A (same private match source).
         $this->addMembers($manager, $firmaB, [$users[22], $users[17], $users[23]], $now);
 
-        // Second group inside the existing PUBLIC tournament.
-        $this->addMembers($manager, $kamosiGroup, [$users[24], $users[25], $users[1]], $now);
+        // Second competition inside the existing PUBLIC match source.
+        $this->addMembers($manager, $kamosiCompetition, [$users[24], $users[25], $users[1]], $now);
 
         // -- Matches ------------------------------------------------------
         // Euro 2024 — all finished.
@@ -276,7 +278,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $fortunaUpcoming2 = $this->scheduledMatch($manager, $fortuna, 'ddbb0105', 'Teplice', 'Liberec', $today->modify('+5 days')->setTime(15, 0)->format('Y-m-d H:i:s'), null);
         $this->scheduledMatch($manager, $fortuna, 'ddbb0106', 'Hradec Králové', 'Zlín', $today->modify('+10 days')->setTime(17, 30)->format('Y-m-d H:i:s'), 'Malšovická aréna');
 
-        // Private tournament — mostly scheduled, one finished.
+        // Private match source — mostly scheduled, one finished.
         $this->scheduledMatch($manager, $firma, 'ddcc0101', 'Tygři', 'Lvi', $today->modify('+3 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
         $this->scheduledMatch($manager, $firma, 'ddcc0102', 'Orli', 'Medvědi', $today->modify('+14 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
         $firmaFinished = $this->finishedMatch($manager, $firma, 'ddcc0103', 'Kohouti', 'Vlci', '2025-06-08 17:00:00', null, 1, 0, $now);
@@ -304,11 +306,11 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         foreach ($fortunaFinished as $matchIndex => $match) {
             foreach ($vsChtMembers as $memberIndex => $member) {
                 [$gh, $ga] = $guessPattern[($memberIndex + $matchIndex) % count($guessPattern)];
-                $this->createEvaluatedGuess($manager, $member, $match, $vsChtGroup, $gh, $ga, $now);
+                $this->createEvaluatedGuess($manager, $member, $match, $vsChtCompetition, $gh, $ga, $now);
             }
             foreach ($prahaMembers as $memberIndex => $member) {
                 [$gh, $ga] = $guessPattern[($memberIndex + $matchIndex + 3) % count($guessPattern)];
-                $this->createEvaluatedGuess($manager, $member, $match, $prahaGroup, $gh, $ga, $now);
+                $this->createEvaluatedGuess($manager, $member, $match, $prahaCompetition, $gh, $ga, $now);
             }
         }
 
@@ -316,14 +318,14 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         // so the dashboard surfaces an "awaiting result" state (honza = users[1] tips too).
         foreach ([$verified, $users[1], $users[10], $users[11]] as $memberIndex => $member) {
             [$gh, $ga] = $guessPattern[$memberIndex % count($guessPattern)];
-            $this->createEvaluatedGuess($manager, $member, $fortunaUpcoming1, $vsChtGroup, $gh, $ga, $now);
+            $this->createEvaluatedGuess($manager, $member, $fortunaUpcoming1, $vsChtCompetition, $gh, $ga, $now);
         }
 
-        // Honza also tips on the second upcoming Fortuna match via the Praha group,
-        // so both his groups show activity on upcoming fixtures.
-        $this->createEvaluatedGuess($manager, $users[1], $fortunaUpcoming2, $prahaGroup, 1, 2, $now);
+        // Honza also tips on the second upcoming Fortuna match via the Praha competition,
+        // so both his competitions show activity on upcoming fixtures.
+        $this->createEvaluatedGuess($manager, $users[1], $fortunaUpcoming2, $prahaCompetition, 1, 2, $now);
 
-        // Firma tournaments — one finished match, both groups tip on it.
+        // Firma match sources — one finished match, both competitions tip on it.
         foreach ([$users[17], $users[18], $users[19], $users[20], $users[21]] as $memberIndex => $member) {
             [$gh, $ga] = $guessPattern[$memberIndex % count($guessPattern)];
             $this->createEvaluatedGuess($manager, $member, $firmaFinished, $firmaA, $gh, $ga, $now);
@@ -366,7 +368,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function provisionDefaultRules(
         ObjectManager $manager,
-        Tournament $tournament,
+        MatchSource $matchSource,
         \DateTimeImmutable $now,
     ): void {
         foreach ([
@@ -375,9 +377,9 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             ['correct_home_goals', 1],
             ['correct_away_goals', 1],
         ] as [$identifier, $points]) {
-            $manager->persist(new TournamentRuleConfiguration(
+            $manager->persist(new MatchSourceRuleConfiguration(
                 id: Uuid::v7(),
-                tournament: $tournament,
+                matchSource: $matchSource,
                 ruleIdentifier: $identifier,
                 enabled: true,
                 points: $points,
@@ -386,20 +388,20 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         }
     }
 
-    private function createGroup(
+    private function createCompetition(
         ObjectManager $manager,
         string $id,
-        Tournament $tournament,
+        MatchSource $matchSource,
         User $owner,
         string $name,
         ?string $description,
         ?string $pin,
         ?string $linkToken,
         \DateTimeImmutable $createdAt,
-    ): Group {
-        $group = new Group(
+    ): Competition {
+        $competition = new Competition(
             id: Uuid::fromString($id),
-            tournament: $tournament,
+            matchSource: $matchSource,
             owner: $owner,
             name: $name,
             description: $description,
@@ -407,21 +409,21 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             shareableLinkToken: $linkToken,
             createdAt: $createdAt,
         );
-        $group->popEvents();
-        $manager->persist($group);
+        $competition->popEvents();
+        $manager->persist($competition);
 
-        return $group;
+        return $competition;
     }
 
     /**
      * @param list<User> $members
      */
-    private function addMembers(ObjectManager $manager, Group $group, array $members, \DateTimeImmutable $now): void
+    private function addMembers(ObjectManager $manager, Competition $competition, array $members, \DateTimeImmutable $now): void
     {
         foreach ($members as $user) {
             $membership = new Membership(
                 id: Uuid::v7(),
-                group: $group,
+                competition: $competition,
                 user: $user,
                 joinedAt: $now,
             );
@@ -432,7 +434,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function finishedMatch(
         ObjectManager $manager,
-        Tournament $tournament,
+        MatchSource $matchSource,
         string $idSuffix,
         string $homeTeam,
         string $awayTeam,
@@ -442,7 +444,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         int $awayScore,
         \DateTimeImmutable $now,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $tournament, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
         $match->setFinalScore($homeScore, $awayScore, $now);
         $match->popEvents();
 
@@ -451,7 +453,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function liveMatch(
         ObjectManager $manager,
-        Tournament $tournament,
+        MatchSource $matchSource,
         string $idSuffix,
         string $homeTeam,
         string $awayTeam,
@@ -459,7 +461,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         ?string $venue,
         \DateTimeImmutable $now,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $tournament, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
         $match->beginLive($now);
         $match->popEvents();
 
@@ -468,14 +470,14 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function scheduledMatch(
         ObjectManager $manager,
-        Tournament $tournament,
+        MatchSource $matchSource,
         string $idSuffix,
         string $homeTeam,
         string $awayTeam,
         string $kickoff,
         ?string $venue,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $tournament, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
         $match->popEvents();
 
         return $match;
@@ -483,7 +485,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     private function baseMatch(
         ObjectManager $manager,
-        Tournament $tournament,
+        MatchSource $matchSource,
         string $idSuffix,
         string $homeTeam,
         string $awayTeam,
@@ -492,7 +494,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     ): SportMatch {
         $match = new SportMatch(
             id: Uuid::fromString('019ddddd-0000-7000-8000-'.str_pad($idSuffix, 12, '0', STR_PAD_LEFT)),
-            tournament: $tournament,
+            matchSource: $matchSource,
             homeTeam: $homeTeam,
             awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable($kickoff, new \DateTimeZone('UTC')),
@@ -508,7 +510,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         ObjectManager $manager,
         User $user,
         SportMatch $match,
-        Group $group,
+        Competition $competition,
         int $homeScore,
         int $awayScore,
         \DateTimeImmutable $now,
@@ -523,7 +525,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             id: Uuid::v7(),
             user: $user,
             sportMatch: $match,
-            group: $group,
+            competition: $competition,
             homeScore: $homeScore,
             awayScore: $awayScore,
             submittedAt: $submittedAt,

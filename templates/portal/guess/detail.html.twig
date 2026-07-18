@@ -7,7 +7,7 @@
 
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
         {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam},
     ]" />
 
@@ -26,9 +26,9 @@
     <section class="card-glass relative mb-6 overflow-hidden p-6 text-white sm:p-8">
         <div class="tip-head">
             <div class="tip-stage">
-                <span class="round">{{ sport_match.round ?: sport_match.tournament.name }}</span>
+                <span class="round">{{ sport_match.round ?: sport_match.matchSource.name }}</span>
                 <span class="when">
-                    {% if sport_match.round %}{{ sport_match.tournament.name }} · {% endif %}{{ sport_match.kickoffAt|date('j. n. Y') }} · {{ sport_match.kickoffAt|date('H:i') }}
+                    {% if sport_match.round %}{{ sport_match.matchSource.name }} · {% endif %}{{ sport_match.kickoffAt|date('j. n. Y') }} · {{ sport_match.kickoffAt|date('H:i') }}
                 </span>
             </div>
 
@@ -106,7 +106,7 @@
                 <twig:ux:icon name="lucide:target" class="h-3.5 w-3.5" />
                 Váš tip
             </h2>
-            <twig:Guess:GuessSubmitForm :sportMatch="sport_match" groupId="{{ group.id.toRfc4122 }}" />
+            <twig:Guess:GuessSubmitForm :sportMatch="sport_match" competitionId="{{ competition.id.toRfc4122 }}" />
         </section>
 
         {% if pick_distribution %}
@@ -166,7 +166,7 @@
 
         <twig:Guess:MatchGuessesList
             :sportMatch="sport_match"
-            groupId="{{ group.id.toRfc4122 }}"
+            competitionId="{{ competition.id.toRfc4122 }}"
             :applyHiding="not can_see_all_tips"
         />
 
@@ -197,7 +197,7 @@
             </section>
         {% endif %}
 
-        {% if is_granted('group_manage_members', group) and member_rows|length > 0 %}
+        {% if is_granted('competition_manage_members', competition) and member_rows|length > 0 %}
             <section class="card-glass overflow-hidden p-0">
                 <header class="border-b border-white/[0.06] px-5 py-4 sm:px-6">
                     <div class="flex items-center gap-2.5">
@@ -221,14 +221,14 @@
                             </div>
 
                             <form method="post"
-                                  action="{{ path('portal_group_guess_on_behalf', {
-                                      groupId: group.id.toRfc4122,
+                                  action="{{ path('portal_competition_guess_on_behalf', {
+                                      competitionId: competition.id.toRfc4122,
                                       sportMatchId: sport_match.id.toRfc4122,
                                       memberId: row.user.id.toRfc4122,
                                   }) }}"
                                   class="flex items-center gap-2">
                                 <input type="hidden" name="_token"
-                                       value="{{ csrf_token('guess_on_behalf_' ~ group.id.toRfc4122 ~ '_' ~ sport_match.id.toRfc4122 ~ '_' ~ row.user.id.toRfc4122) }}">
+                                       value="{{ csrf_token('guess_on_behalf_' ~ competition.id.toRfc4122 ~ '_' ~ sport_match.id.toRfc4122 ~ '_' ~ row.user.id.toRfc4122) }}">
                                 <input type="number" name="homeScore" min="0" max="99" required
                                        value="{{ row.guess ? row.guess.homeScore : '' }}"
                                        {% if not can_edit %}disabled{% endif %}

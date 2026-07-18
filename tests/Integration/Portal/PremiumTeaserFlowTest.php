@@ -61,7 +61,7 @@ final class PremiumTeaserFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -81,7 +81,7 @@ final class PremiumTeaserFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseIsSuccessful();

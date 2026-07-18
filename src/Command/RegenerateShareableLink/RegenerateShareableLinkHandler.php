@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command\RegenerateShareableLink;
 
-use App\Repository\GroupRepository;
-use App\Service\Group\ShareableLinkTokenGenerator;
+use App\Repository\CompetitionRepository;
+use App\Service\Competition\ShareableLinkTokenGenerator;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class RegenerateShareableLinkHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private ShareableLinkTokenGenerator $tokenGenerator,
         private ClockInterface $clock,
     ) {
@@ -21,8 +21,8 @@ final readonly class RegenerateShareableLinkHandler
 
     public function __invoke(RegenerateShareableLinkCommand $command): void
     {
-        $group = $this->groupRepository->get($command->groupId);
-        $group->setShareableLinkToken(
+        $competition = $this->competitionRepository->get($command->competitionId);
+        $competition->setShareableLinkToken(
             $this->tokenGenerator->generate(),
             \DateTimeImmutable::createFromInterface($this->clock->now()),
         );

@@ -29,7 +29,7 @@ class GuessRepository
             ->from(Guess::class, 'g')
             ->innerJoin('g.user', 'u')
             ->innerJoin('g.sportMatch', 'm')
-            ->innerJoin('g.group', 'gr')
+            ->innerJoin('g.competition', 'gr')
             ->where('g.id = :id')
             ->setParameter('id', $id)
             ->getQuery()
@@ -41,21 +41,21 @@ class GuessRepository
         return $this->find($id) ?? throw GuessNotFound::withId($id);
     }
 
-    public function findActiveByUserMatchGroup(Uuid $userId, Uuid $sportMatchId, Uuid $groupId): ?Guess
+    public function findActiveByUserMatchCompetition(Uuid $userId, Uuid $sportMatchId, Uuid $competitionId): ?Guess
     {
         return $this->entityManager->createQueryBuilder()
             ->select('g', 'u', 'm', 'gr')
             ->from(Guess::class, 'g')
             ->innerJoin('g.user', 'u')
             ->innerJoin('g.sportMatch', 'm')
-            ->innerJoin('g.group', 'gr')
+            ->innerJoin('g.competition', 'gr')
             ->where('g.user = :userId')
             ->andWhere('g.sportMatch = :sportMatchId')
-            ->andWhere('g.group = :groupId')
+            ->andWhere('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
             ->setParameter('sportMatchId', $sportMatchId)
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getOneOrNullResult();
     }
@@ -63,17 +63,17 @@ class GuessRepository
     /**
      * @return list<Guess>
      */
-    public function listActiveByGroupAndMatch(Uuid $groupId, Uuid $sportMatchId): array
+    public function listActiveByCompetitionAndMatch(Uuid $competitionId, Uuid $sportMatchId): array
     {
         /** @var list<Guess> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('g', 'u')
             ->from(Guess::class, 'g')
             ->innerJoin('g.user', 'u')
-            ->where('g.group = :groupId')
+            ->where('g.competition = :competitionId')
             ->andWhere('g.sportMatch = :sportMatchId')
             ->andWhere('g.deletedAt IS NULL')
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->setParameter('sportMatchId', $sportMatchId)
             ->orderBy('g.submittedAt', 'ASC')
             ->addOrderBy('g.id', 'ASC')
@@ -86,21 +86,21 @@ class GuessRepository
     /**
      * @return list<Guess>
      */
-    public function listActiveByUserInTournament(Uuid $userId, Uuid $tournamentId, Uuid $groupId): array
+    public function listActiveByUserInMatchSource(Uuid $userId, Uuid $matchSourceId, Uuid $competitionId): array
     {
         /** @var list<Guess> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('g', 'm')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->innerJoin('m.tournament', 't')
+            ->innerJoin('m.matchSource', 't')
             ->where('g.user = :userId')
-            ->andWhere('g.group = :groupId')
-            ->andWhere('t.id = :tournamentId')
+            ->andWhere('g.competition = :competitionId')
+            ->andWhere('t.id = :matchSourceId')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('groupId', $groupId)
-            ->setParameter('tournamentId', $tournamentId)
+            ->setParameter('competitionId', $competitionId)
+            ->setParameter('matchSourceId', $matchSourceId)
             ->orderBy('m.kickoffAt', 'ASC')
             ->addOrderBy('m.id', 'ASC')
             ->getQuery()
@@ -132,18 +132,18 @@ class GuessRepository
     /**
      * @return list<Guess>
      */
-    public function findActiveForFinishedMatchesInTournament(Uuid $tournamentId): array
+    public function findActiveForFinishedMatchesInMatchSource(Uuid $matchSourceId): array
     {
         /** @var list<Guess> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('g', 'm')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->where('m.tournament = :tournamentId')
+            ->where('m.matchSource = :matchSourceId')
             ->andWhere('m.state = :finished')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
-            ->setParameter('tournamentId', $tournamentId)
+            ->setParameter('matchSourceId', $matchSourceId)
             ->setParameter('finished', \App\Enum\SportMatchState::Finished)
             ->orderBy('g.id', 'ASC')
             ->getQuery()

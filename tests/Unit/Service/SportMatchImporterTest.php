@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -33,7 +33,7 @@ final class SportMatchImporterTest extends TestCase
         $this->importer = new SportMatchImporter($repo, $identity);
     }
 
-    private function makeTournament(): Tournament
+    private function makeMatchSource(): MatchSource
     {
         $owner = new User(
             id: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -50,20 +50,20 @@ final class SportMatchImporterTest extends TestCase
             name: 'Fotbal',
         );
 
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        return $tournament;
+        return $matchSource;
     }
 
     private function uploadedFileWithContent(string $content, string $extension = 'csv'): UploadedFile
@@ -82,7 +82,7 @@ final class SportMatchImporterTest extends TestCase
 
         $file = $this->uploadedFileWithContent($csv);
 
-        $preview = $this->importer->preview($file, $this->makeTournament(), $this->now);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
 
         self::assertCount(2, $preview->validRows);
         self::assertCount(0, $preview->errors);
@@ -110,7 +110,7 @@ final class SportMatchImporterTest extends TestCase
             ."C,D,2026-05-11 18:00,\n";
 
         $file = $this->uploadedFileWithContent($csv);
-        $preview = $this->importer->preview($file, $this->makeTournament(), $this->now);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
 
         self::assertCount(2, $preview->validRows);
         self::assertCount(0, $preview->errors);
@@ -122,7 +122,7 @@ final class SportMatchImporterTest extends TestCase
             ."A,B,not-a-date,\n";
 
         $file = $this->uploadedFileWithContent($csv);
-        $preview = $this->importer->preview($file, $this->makeTournament(), $this->now);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
 
         self::assertCount(0, $preview->validRows);
         self::assertCount(1, $preview->errors);
@@ -135,7 +135,7 @@ final class SportMatchImporterTest extends TestCase
             .",B,2026-05-10 18:00,\n";
 
         $file = $this->uploadedFileWithContent($csv);
-        $preview = $this->importer->preview($file, $this->makeTournament(), $this->now);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
 
         self::assertCount(0, $preview->validRows);
         self::assertGreaterThanOrEqual(1, count($preview->errors));
@@ -148,7 +148,7 @@ final class SportMatchImporterTest extends TestCase
         $file = $this->uploadedFileWithContent($csv);
 
         $this->expectException(SportMatchImportFailed::class);
-        $this->importer->preview($file, $this->makeTournament(), $this->now);
+        $this->importer->preview($file, $this->makeMatchSource(), $this->now);
     }
 
     public function testGenerateTemplateCsvContainsHeaders(): void

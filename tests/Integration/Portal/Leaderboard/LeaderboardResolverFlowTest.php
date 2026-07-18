@@ -27,7 +27,7 @@ final class LeaderboardResolverFlowTest extends WebTestCase
         self::assertResponseStatusCodeSame(302);
         $location = $client->getResponse()->headers->get('Location');
         self::assertIsString($location);
-        self::assertMatchesRegularExpression('#/portal/skupiny/[0-9a-f-]+/zebricek$#', $location);
+        self::assertMatchesRegularExpression('#/portal/souteze/[0-9a-f-]+/zebricek$#', $location);
     }
 
     public function testRedirectsUserWithNoSoutezToDashboard(): void

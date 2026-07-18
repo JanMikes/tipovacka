@@ -10,8 +10,8 @@ use Symfony\Component\Uid\Uuid;
 #[WithHttpStatus(403)]
 final class NotAMember extends \DomainException
 {
-    public static function of(Uuid $groupId): self
+    public static function of(Uuid $competitionId): self
     {
-        return new self(sprintf('Nejsi členem skupiny "%s".', $groupId->toRfc4122()));
+        return new self(sprintf('Nejsi členem soutěže "%s".', $competitionId->toRfc4122()));
     }
 }

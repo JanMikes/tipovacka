@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 final class InvitationIntentSession
 {
-    private const string KEY = 'group_invitation_intent_token';
+    private const string KEY = 'competition_invitation_intent_token';
 
     public function __construct(
         private readonly RequestStack $requestStack,

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Command\PromoteAnonymousMember;
 
-use App\Entity\GroupInvitation;
+use App\Entity\CompetitionInvitation;
 use App\Enum\UserRole;
 use App\Exception\UserAlreadyExists;
 use App\Exception\UserAlreadyPromoted;
-use App\Repository\GroupInvitationRepository;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionInvitationRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
-use App\Service\Group\InvitationTokenGenerator;
+use App\Service\Competition\InvitationTokenGenerator;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -22,30 +22,30 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 final readonly class PromoteAnonymousMemberHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
-        private GroupInvitationRepository $invitationRepository,
+        private CompetitionInvitationRepository $invitationRepository,
         private InvitationTokenGenerator $tokenGenerator,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
     }
 
-    public function __invoke(PromoteAnonymousMemberCommand $command): GroupInvitation
+    public function __invoke(PromoteAnonymousMemberCommand $command): CompetitionInvitation
     {
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
         $actor = $this->userRepository->get($command->actorId);
         $target = $this->userRepository->get($command->userId);
 
         $isAdmin = in_array(UserRole::ADMIN->value, $actor->getRoles(), true);
 
-        if (!$isAdmin && !$actor->id->equals($group->owner->id)) {
-            throw new AccessDeniedException('Pouze vlastník skupiny nebo administrátor může přidat e-mail tipujícímu.');
+        if (!$isAdmin && !$actor->id->equals($competition->owner->id)) {
+            throw new AccessDeniedException('Pouze vlastník soutěže nebo administrátor může přidat e-mail tipujícímu.');
         }
 
-        if (!$this->membershipRepository->hasActiveMembership($target->id, $group->id)) {
-            throw new AccessDeniedException('Tipující není členem této skupiny.');
+        if (!$this->membershipRepository->hasActiveMembership($target->id, $competition->id)) {
+            throw new AccessDeniedException('Tipující není členem této soutěže.');
         }
 
         if (!$target->isAnonymous) {
@@ -62,9 +62,9 @@ final readonly class PromoteAnonymousMemberHandler
 
         $target->assignEmail($normalisedEmail, $now);
 
-        $invitation = new GroupInvitation(
+        $invitation = new CompetitionInvitation(
             id: $this->identity->next(),
-            group: $group,
+            competition: $competition,
             inviter: $actor,
             email: $normalisedEmail,
             token: $this->tokenGenerator->generate(),

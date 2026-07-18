@@ -35,19 +35,19 @@ final class SportMatchDetailController extends AbstractController
         $this->denyAccessUnlessGranted(SportMatchVoter::VIEW, $sportMatch);
 
         $user = $this->getUser();
-        $myGroupsForTournament = [];
+        $myCompetitionsForMatchSource = [];
 
         if ($user instanceof User) {
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
-                if ($membership->group->tournament->id->equals($sportMatch->tournament->id)) {
-                    $guess = $this->guessRepository->findActiveByUserMatchGroup(
+                if ($membership->competition->matchSource->id->equals($sportMatch->matchSource->id)) {
+                    $guess = $this->guessRepository->findActiveByUserMatchCompetition(
                         $user->id,
                         $sportMatch->id,
-                        $membership->group->id,
+                        $membership->competition->id,
                     );
-                    $myGroupsForTournament[] = [
-                        'id' => $membership->group->id,
-                        'name' => $membership->group->name,
+                    $myCompetitionsForMatchSource[] = [
+                        'id' => $membership->competition->id,
+                        'name' => $membership->competition->name,
                         'hasGuess' => null !== $guess,
                     ];
                 }
@@ -56,7 +56,7 @@ final class SportMatchDetailController extends AbstractController
 
         return $this->render('portal/sport_match/detail.html.twig', [
             'sport_match' => $sportMatch,
-            'my_groups_for_tournament' => $myGroupsForTournament,
+            'my_competitions_for_match_source' => $myCompetitionsForMatchSource,
         ]);
     }
 }

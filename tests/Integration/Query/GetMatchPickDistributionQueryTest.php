@@ -13,9 +13,9 @@ final class GetMatchPickDistributionQueryTest extends IntegrationTestCase
 {
     public function testDistributionBucketsTheSingleHomeWinGuess(): void
     {
-        // Fixture: the public group has one guess on the finished match — admin 3:0 (home win).
+        // Fixture: the public competition has one guess on the finished match — admin 3:0 (home win).
         $result = $this->queryBus()->handle(new GetMatchPickDistribution(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
         ));
 
@@ -31,7 +31,7 @@ final class GetMatchPickDistributionQueryTest extends IntegrationTestCase
     public function testEmptyDistributionWhenNoGuesses(): void
     {
         $result = $this->queryBus()->handle(new GetMatchPickDistribution(
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
         ));
 

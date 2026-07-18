@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Voter;
 
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\User;
 use App\Enum\UserRole;
 use App\Repository\MembershipRepository;
@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<'leaderboard_view'|'leaderboard_resolve_ties', Group>
+ * @extends Voter<'leaderboard_view'|'leaderboard_resolve_ties', Competition>
  */
 final class LeaderboardVoter extends Voter
 {
@@ -28,12 +28,12 @@ final class LeaderboardVoter extends Voter
     protected function supports(string $attribute, mixed $subject): bool
     {
         return in_array($attribute, [self::VIEW, self::RESOLVE_TIES], true)
-            && $subject instanceof Group;
+            && $subject instanceof Competition;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
-        /** @var Group $subject */
+        /** @var Competition $subject */
         $user = $token->getUser();
 
         if (!$user instanceof User) {
@@ -46,7 +46,7 @@ final class LeaderboardVoter extends Voter
 
         return match ($attribute) {
             self::VIEW => $isAdmin || $isMember,
-            self::RESOLVE_TIES => ($isAdmin || $isOwner) && $subject->tournament->isFinished,
+            self::RESOLVE_TIES => ($isAdmin || $isOwner) && $subject->matchSource->isFinished,
         };
     }
 }

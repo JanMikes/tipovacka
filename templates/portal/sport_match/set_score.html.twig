@@ -7,13 +7,13 @@
     <div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <twig:Breadcrumbs :items="[
             {label: 'Nástěnka', path: path('portal_dashboard')},
-            {label: sport_match.tournament.name, path: path('portal_tournament_detail', {id: sport_match.tournament.id.toRfc4122})},
+            {label: sport_match.matchSource.name, path: path('portal_match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
             {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
             {label: 'Výsledek'},
         ]" />
 
         <header class="mb-8">
-            <p class="eyebrow mb-3">{{ sport_match.tournament.name }}</p>
+            <p class="eyebrow mb-3">{{ sport_match.matchSource.name }}</p>
             <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">Výsledek zápasu</h1>
             <p class="mt-2 text-sm text-white/60">{{ sport_match.homeTeam }} vs. {{ sport_match.awayTeam }}</p>
         </header>

@@ -10,8 +10,8 @@ final readonly class UserMatchItem
 {
     public function __construct(
         public Uuid $id,
-        public Uuid $tournamentId,
-        public string $tournamentName,
+        public Uuid $matchSourceId,
+        public string $matchSourceName,
         public string $homeTeam,
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,
@@ -23,9 +23,9 @@ final readonly class UserMatchItem
         public bool $isPostponed,
         public ?int $homeScore,
         public ?int $awayScore,
-        public int $groupsCount,
-        public int $guessedGroupsCount,
-        public int $pendingGroupsCount,
+        public int $competitionsCount,
+        public int $guessedCompetitionsCount,
+        public int $pendingCompetitionsCount,
     ) {
     }
 }

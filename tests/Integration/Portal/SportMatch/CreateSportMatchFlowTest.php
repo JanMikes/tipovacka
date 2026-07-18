@@ -22,7 +22,7 @@ final class CreateSportMatchFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_TOURNAMENT_ID.'/zapasy/novy');
+        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/zapasy/novy');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Vytvořit zápas', [
@@ -64,7 +64,7 @@ final class CreateSportMatchFlowTest extends WebTestCase
 
         $client->loginUser($user);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_TOURNAMENT_ID.'/zapasy/novy');
+        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/zapasy/novy');
         self::assertResponseStatusCodeSame(403);
     }
 }

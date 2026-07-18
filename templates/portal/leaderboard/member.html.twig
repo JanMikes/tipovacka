@@ -7,8 +7,8 @@
 
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
-        {label: 'Žebříček', path: path('portal_group_leaderboard', {groupId: group.id.toRfc4122})},
+        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Žebříček', path: path('portal_competition_leaderboard', {competitionId: competition.id.toRfc4122})},
         {label: breakdown.nickname},
     ]" />
 

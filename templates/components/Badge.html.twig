@@ -1,9 +1,9 @@
 {#
-  Icon + label badge. variant: win|loss|draw|pending|group|organizer|points.
+  Icon + label badge. variant: win|loss|draw|pending|competition|organizer|points.
   icon overrides the default Lucide icon for the variant.
 #}
 {% props label, variant = 'points', icon = null %}
-{% set default_icons = { win: 'check', loss: 'x', draw: 'equal', pending: 'clock', group: 'layout-grid', organizer: 'shield', points: 'trophy' } %}
+{% set default_icons = { win: 'check', loss: 'x', draw: 'equal', pending: 'clock', competition: 'layout-grid', organizer: 'shield', points: 'trophy' } %}
 {% set resolved_icon = icon ?? default_icons[variant]|default(null) %}
 <span class="badge badge-{{ variant }}">
     {% if resolved_icon %}<twig:ux:icon name="lucide:{{ resolved_icon }}" />{% endif %}

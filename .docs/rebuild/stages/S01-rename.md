@@ -71,3 +71,18 @@ Hand-written rename migration (documented exception to the generated-only rule):
 - [ ] `grep -ri "tournament\|\bGroup\b\|user_groups\|skupin" src/ templates/ config/ tests/ fixtures/ assets/` → only legitimate leftovers (historic migrations, `user_groups` in old migrations, generic words). No PHP symbol, route name, table, or template path contains Tournament/Group semantics.
 - [ ] Full quality gate green; `doctrine:schema:validate` clean; fresh `db:reset` works.
 - [ ] App manually equivalent: dashboard, competition detail, tipping, leaderboard, admin lists all render (flow tests are the proxy).
+
+## As-built notes (2026-07-18)
+
+- Kept explicit `#[ORM\Table(name: 'competitions')]` — the naming strategy would default
+  to singular `competition`; explicit plural matches house convention (spec premise wrong).
+- **Waived** (per Honza's "no BC worries, no real users" instruction): no legacy redirect
+  for the public shareable-link slug change `/skupiny/pozvanka/{token}` →
+  `/souteze/pozvanka/{token}` (previously distributed links 404), and session
+  join/invitation intent keys renamed without fallback (in-flight intents across the
+  deploy are dropped).
+- Review fixes applied on top of the mechanical rename: reverted two football
+  group-stage copy overreaches (home.html.twig „Skupina C", for_business „od skupin až
+  po finále"), reworded three degenerate sentences (dashboard, match_sources_list,
+  for_business doubled „soutěž"), completed the Badge `variant="group"`→`"competition"`
+  + `.badge-group`→`.badge-competition` rename, synced `.docs/features/confirm-modal.md`.

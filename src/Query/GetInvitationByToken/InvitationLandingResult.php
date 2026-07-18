@@ -8,8 +8,8 @@ final readonly class InvitationLandingResult
 {
     public function __construct(
         public string $token,
-        public string $groupName,
-        public string $tournamentName,
+        public string $competitionName,
+        public string $matchSourceName,
         public string $inviterNickname,
         public bool $isExpired,
         public bool $isAccepted,

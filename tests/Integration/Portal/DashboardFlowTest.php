@@ -37,7 +37,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Objev další turnaje');
     }
 
-    public function testUserSeesOwnGroups(): void
+    public function testUserSeesOwnCompetitions(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -49,10 +49,10 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', AppFixtures::VERIFIED_GROUP_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
     }
 
-    public function testUserSeesDiscoverablePublicTournaments(): void
+    public function testUserSeesDiscoverablePublicMatchSources(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -64,10 +64,10 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_TOURNAMENT_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_SOURCE_NAME);
     }
 
-    public function testAdminDoesNotSeeOwnPublicTournamentInDiscovery(): void
+    public function testAdminDoesNotSeeOwnPublicMatchSourceInDiscovery(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -79,12 +79,12 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        // Admin is already a member of PUBLIC_GROUP, so it should appear in "Moje skupiny"
+        // Admin is already a member of PUBLIC_COMPETITION, so it should appear in "Moje soutěže"
         // but NOT in "Objevte další turnaje".
-        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_GROUP_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_COMPETITION_NAME);
     }
 
-    public function testUserSeesOwnedTournamentInMojeTurnaje(): void
+    public function testUserSeesOwnedMatchSourceInMojeTurnaje(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -96,9 +96,9 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        // The verified user owns PRIVATE_TOURNAMENT — it must be reachable from
-        // the dashboard regardless of group membership.
+        // The verified user owns PRIVATE_SOURCE — it must be reachable from
+        // the dashboard regardless of competition membership.
         self::assertSelectorTextContains('body', 'Moje turnaje');
-        self::assertSelectorTextContains('body', AppFixtures::PRIVATE_TOURNAMENT_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::PRIVATE_SOURCE_NAME);
     }
 }

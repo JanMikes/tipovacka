@@ -10,7 +10,7 @@ final readonly class MemberRemoved
 {
     public function __construct(
         public Uuid $membershipId,
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $userId,
         public Uuid $removedByUserId,
         public \DateTimeImmutable $occurredOn,

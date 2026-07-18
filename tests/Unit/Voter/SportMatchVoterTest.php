@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Voter;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use App\Enum\UserRole;
+use App\Voter\MatchSourceVoter;
 use App\Voter\SportMatchVoter;
-use App\Voter\TournamentVoter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
@@ -35,7 +35,7 @@ final class SportMatchVoterTest extends TestCase
         $security = $this->createStub(Security::class);
         $security->method('isGranted')
             ->willReturnCallback(function (string $attribute): bool {
-                return TournamentVoter::VIEW === $attribute && $this->viewAllowed;
+                return MatchSourceVoter::VIEW === $attribute && $this->viewAllowed;
             });
 
         $this->voter = new SportMatchVoter($security);
@@ -60,18 +60,18 @@ final class SportMatchVoterTest extends TestCase
         return $user;
     }
 
-    private function makeTournament(?User $owner = null, bool $finished = false, bool $deleted = false): Tournament
+    private function makeMatchSource(?User $owner = null, bool $finished = false, bool $deleted = false): MatchSource
     {
         $sport = new Sport(
             id: Uuid::fromString(Sport::FOOTBALL_ID),
             code: 'football',
             name: 'Fotbal',
         );
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner ?? $this->makeUser(AppFixtures::VERIFIED_USER_ID),
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
@@ -79,21 +79,21 @@ final class SportMatchVoterTest extends TestCase
             createdAt: $this->now,
         );
         if ($finished) {
-            $tournament->markFinished($this->now);
+            $matchSource->markFinished($this->now);
         }
         if ($deleted) {
-            $tournament->softDelete($this->now);
+            $matchSource->softDelete($this->now);
         }
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        return $tournament;
+        return $matchSource;
     }
 
-    private function makeMatch(Tournament $tournament, bool $cancelled = false, bool $deleted = false): SportMatch
+    private function makeMatch(MatchSource $matchSource, bool $cancelled = false, bool $deleted = false): SportMatch
     {
         $m = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            tournament: $tournament,
+            matchSource: $matchSource,
             homeTeam: 'A',
             awayTeam: 'B',
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00'),
@@ -116,10 +116,10 @@ final class SportMatchVoterTest extends TestCase
         return new UsernamePasswordToken($user, 'main', $user->getRoles());
     }
 
-    public function testViewDelegatesToTournamentVoterGranted(): void
+    public function testViewDelegatesToMatchSourceVoterGranted(): void
     {
-        $tournament = $this->makeTournament();
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource();
+        $match = $this->makeMatch($matchSource);
         $this->viewAllowed = true;
 
         $result = $this->voter->vote(new NullToken(), $match, [SportMatchVoter::VIEW]);
@@ -127,10 +127,10 @@ final class SportMatchVoterTest extends TestCase
         self::assertSame(1, $result);
     }
 
-    public function testViewDelegatesToTournamentVoterDenied(): void
+    public function testViewDelegatesToMatchSourceVoterDenied(): void
     {
-        $tournament = $this->makeTournament();
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource();
+        $match = $this->makeMatch($matchSource);
         $this->viewAllowed = false;
 
         $result = $this->voter->vote(new NullToken(), $match, [SportMatchVoter::VIEW]);
@@ -138,12 +138,12 @@ final class SportMatchVoterTest extends TestCase
         self::assertSame(-1, $result);
     }
 
-    public function testOwnerCanCreateOnActiveTournament(): void
+    public function testOwnerCanCreateOnActiveMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
+        $matchSource = $this->makeMatchSource(owner: $owner);
 
-        $result = $this->voter->vote($this->token($owner), $tournament, [SportMatchVoter::CREATE]);
+        $result = $this->voter->vote($this->token($owner), $matchSource, [SportMatchVoter::CREATE]);
 
         self::assertSame(1, $result);
     }
@@ -152,9 +152,9 @@ final class SportMatchVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $tournament = $this->makeTournament(owner: $owner);
+        $matchSource = $this->makeMatchSource(owner: $owner);
 
-        $result = $this->voter->vote($this->token($admin), $tournament, [SportMatchVoter::CREATE]);
+        $result = $this->voter->vote($this->token($admin), $matchSource, [SportMatchVoter::CREATE]);
 
         self::assertSame(1, $result);
     }
@@ -163,29 +163,29 @@ final class SportMatchVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $other = $this->makeUser(self::NON_OWNER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
+        $matchSource = $this->makeMatchSource(owner: $owner);
 
-        $result = $this->voter->vote($this->token($other), $tournament, [SportMatchVoter::CREATE]);
+        $result = $this->voter->vote($this->token($other), $matchSource, [SportMatchVoter::CREATE]);
 
         self::assertSame(-1, $result);
     }
 
-    public function testOwnerCannotCreateOnFinishedTournament(): void
+    public function testOwnerCannotCreateOnFinishedMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner, finished: true);
+        $matchSource = $this->makeMatchSource(owner: $owner, finished: true);
 
-        $result = $this->voter->vote($this->token($owner), $tournament, [SportMatchVoter::CREATE]);
+        $result = $this->voter->vote($this->token($owner), $matchSource, [SportMatchVoter::CREATE]);
 
         self::assertSame(-1, $result);
     }
 
-    public function testAdminCanCreateOnFinishedTournament(): void
+    public function testAdminCanCreateOnFinishedMatchSource(): void
     {
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $tournament = $this->makeTournament(finished: true);
+        $matchSource = $this->makeMatchSource(finished: true);
 
-        $result = $this->voter->vote($this->token($admin), $tournament, [SportMatchVoter::CREATE]);
+        $result = $this->voter->vote($this->token($admin), $matchSource, [SportMatchVoter::CREATE]);
 
         self::assertSame(1, $result);
     }
@@ -193,8 +193,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCanEditMatch(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::EDIT]);
 
@@ -204,8 +204,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCannotEditCancelledMatch(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament, cancelled: true);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource, cancelled: true);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::EDIT]);
 
@@ -215,8 +215,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCannotEditSoftDeletedMatch(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament, deleted: true);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource, deleted: true);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::EDIT]);
 
@@ -227,8 +227,8 @@ final class SportMatchVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $other = $this->makeUser(self::NON_OWNER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote($this->token($other), $match, [SportMatchVoter::EDIT]);
 
@@ -238,8 +238,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCanSetScore(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::SET_SCORE]);
 
@@ -249,8 +249,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCanCancel(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::CANCEL]);
 
@@ -260,8 +260,8 @@ final class SportMatchVoterTest extends TestCase
     public function testOwnerCanDelete(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $tournament = $this->makeTournament(owner: $owner);
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource(owner: $owner);
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote($this->token($owner), $match, [SportMatchVoter::DELETE]);
 
@@ -270,8 +270,8 @@ final class SportMatchVoterTest extends TestCase
 
     public function testAnonymousCannotEdit(): void
     {
-        $tournament = $this->makeTournament();
-        $match = $this->makeMatch($tournament);
+        $matchSource = $this->makeMatchSource();
+        $match = $this->makeMatch($matchSource);
 
         $result = $this->voter->vote(new NullToken(), $match, [SportMatchVoter::EDIT]);
 

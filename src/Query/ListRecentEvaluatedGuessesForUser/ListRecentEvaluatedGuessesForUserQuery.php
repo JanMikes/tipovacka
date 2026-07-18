@@ -28,8 +28,8 @@ final readonly class ListRecentEvaluatedGuessesForUserQuery
             ->select('g AS guess, e.totalPoints AS totalPoints')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->innerJoin('m.tournament', 't')
-            ->innerJoin('g.group', 'gr')
+            ->innerJoin('m.matchSource', 't')
+            ->innerJoin('g.competition', 'gr')
             ->innerJoin(GuessEvaluation::class, 'e', 'WITH', 'e.guess = g.id')
             ->where('g.user = :userId')
             ->andWhere('g.deletedAt IS NULL')
@@ -52,10 +52,10 @@ final readonly class ListRecentEvaluatedGuessesForUserQuery
 
                 return new EvaluatedGuessItem(
                     sportMatchId: $guess->sportMatch->id,
-                    tournamentId: $guess->sportMatch->tournament->id,
-                    tournamentName: $guess->sportMatch->tournament->name,
-                    groupId: $guess->group->id,
-                    groupName: $guess->group->name,
+                    matchSourceId: $guess->sportMatch->matchSource->id,
+                    matchSourceName: $guess->sportMatch->matchSource->name,
+                    competitionId: $guess->competition->id,
+                    competitionName: $guess->competition->name,
                     homeTeam: $guess->sportMatch->homeTeam,
                     awayTeam: $guess->sportMatch->awayTeam,
                     kickoffAt: $guess->sportMatch->kickoffAt,

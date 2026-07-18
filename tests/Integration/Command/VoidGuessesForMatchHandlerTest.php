@@ -17,7 +17,7 @@ final class VoidGuessesForMatchHandlerTest extends IntegrationTestCase
     {
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 1,
             awayScore: 1,

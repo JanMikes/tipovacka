@@ -9,7 +9,7 @@ use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\SportMatch;
 use App\Exception\RuleNotRegistered;
-use App\Repository\TournamentRuleConfigurationRepository;
+use App\Repository\MatchSourceRuleConfigurationRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Identity\ProvideIdentity;
 
@@ -17,7 +17,7 @@ final readonly class GuessEvaluator
 {
     public function __construct(
         private RuleRegistry $ruleRegistry,
-        private TournamentRuleConfigurationRepository $configurationRepository,
+        private MatchSourceRuleConfigurationRepository $configurationRepository,
         private ProvideIdentity $identity,
     ) {
     }
@@ -34,7 +34,7 @@ final readonly class GuessEvaluator
             return null;
         }
 
-        $configurations = $this->configurationRepository->getEnabledForTournament($match->tournament->id);
+        $configurations = $this->configurationRepository->getEnabledForMatchSource($match->matchSource->id);
 
         $evaluation = new GuessEvaluation(
             id: $this->identity->next(),

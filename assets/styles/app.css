@@ -3,7 +3,7 @@
 @import "../vendor/tom-select/dist/css/tom-select.min.css";
 
 /* ==========================================================================
-   Wtips design system — dark, glassy, tournament energy.
+   Wtips design system — dark, glassy, match-day energy.
    Tokens ported from ~/www/wtips-design-system. See .docs/redesign/01-foundation.md
    ========================================================================== */
 
@@ -306,7 +306,7 @@ label.required::after {
     .badge-loss      { background: rgba(255,93,122,0.12); border: 1px solid rgba(255,93,122,0.35); color: #ff8ea1; }
     .badge-draw      { background: rgba(180,196,224,0.10); border: 1px solid rgba(180,196,224,0.32); color: #c4cddd; }
     .badge-pending   { background: rgba(245,181,68,0.12); border: 1px solid rgba(245,181,68,0.35); color: #f5b544; }
-    .badge-group     { background: rgba(70,153,208,0.14); border: 1px solid rgba(70,153,208,0.45); color: #8ac3e8; }
+    .badge-competition     { background: rgba(70,153,208,0.14); border: 1px solid rgba(70,153,208,0.45); color: #8ac3e8; }
     .badge-organizer { background: var(--grad-accent); border: 1px solid rgba(255,255,255,0.14); color: #fff; box-shadow: 0 4px 12px rgba(70,153,208,0.3); }
     .badge-points    { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
 

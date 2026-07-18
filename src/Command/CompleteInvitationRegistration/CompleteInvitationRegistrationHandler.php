@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Command\CompleteInvitationRegistration;
 
-use App\Entity\GroupInvitation;
+use App\Entity\CompetitionInvitation;
 use App\Entity\Membership;
 use App\Exception\InvitationAlreadyRegistered;
 use App\Exception\UserNotFound;
-use App\Repository\GroupInvitationRepository;
+use App\Repository\CompetitionInvitationRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -20,7 +20,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 final readonly class CompleteInvitationRegistrationHandler
 {
     public function __construct(
-        private GroupInvitationRepository $invitationRepository,
+        private CompetitionInvitationRepository $invitationRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
         private UserPasswordHasherInterface $passwordHasher,
@@ -29,7 +29,7 @@ final readonly class CompleteInvitationRegistrationHandler
     ) {
     }
 
-    public function __invoke(CompleteInvitationRegistrationCommand $command): GroupInvitation
+    public function __invoke(CompleteInvitationRegistrationCommand $command): CompetitionInvitation
     {
         $invitation = $this->invitationRepository->getByToken($command->token);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
@@ -50,10 +50,10 @@ final readonly class CompleteInvitationRegistrationHandler
 
         $invitation->accept($user->id, $now);
 
-        if (!$this->membershipRepository->hasActiveMembership($user->id, $invitation->group->id)) {
+        if (!$this->membershipRepository->hasActiveMembership($user->id, $invitation->competition->id)) {
             $membership = new Membership(
                 id: $this->identity->next(),
-                group: $invitation->group,
+                competition: $invitation->competition,
                 user: $user,
                 joinedAt: $now,
             );

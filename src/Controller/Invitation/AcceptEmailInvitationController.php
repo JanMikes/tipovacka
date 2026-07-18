@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(
     '/pozvanka/{token}',
-    name: 'group_accept_invitation',
+    name: 'competition_accept_invitation',
     requirements: ['token' => '[a-f0-9]{64}'],
     methods: ['GET'],
 )]

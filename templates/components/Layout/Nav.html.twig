@@ -13,7 +13,7 @@
     ? [
         { label: 'Soutěže', path: 'portal_dashboard', match: 'portal_dashboard' },
         { label: 'Zápasy', path: 'portal_matches', match: 'portal_matches' },
-        { label: 'Žebříček', path: 'portal_leaderboard', match: 'portal_group_leaderboard' },
+        { label: 'Žebříček', path: 'portal_leaderboard', match: 'portal_competition_leaderboard' },
     ]
     : [
         { label: 'Funkce', path: 'app_features', match: 'app_features' },
@@ -38,7 +38,7 @@
 
         <div class="actions">
             {% if is_app %}
-                <a href="{{ path('public_tournaments_list') }}" class="btn btn-primary btn-sm">
+                <a href="{{ path('public_match_sources_list') }}" class="btn btn-primary btn-sm">
                     <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
                     <span class="cta-label">Vytvořit soutěž</span>
                 </a>
@@ -51,7 +51,7 @@
                         </a>
                         <twig:CreditBalance />
                         {% if is_granted('ROLE_ADMIN') %}
-                            <a href="{{ path('admin_tournament_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-accent-300 hover:bg-white/5 hover:text-white">
+                            <a href="{{ path('admin_match_source_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-accent-300 hover:bg-white/5 hover:text-white">
                                 <twig:ux:icon name="lucide:shield" class="h-4 w-4" />Administrace
                             </a>
                         {% endif %}
@@ -83,7 +83,7 @@
         {% if is_app %}
             <a href="{{ path('portal_profile_edit') }}">Profil</a>
             <a href="{{ path('portal_credits') }}"{{ current starts with 'portal_credits' ? ' class="active"' }}>Kredity</a>
-            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_tournament_list') }}">Administrace</a>{% endif %}
+            {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_match_source_list') }}">Administrace</a>{% endif %}
             <a href="{{ path('app_logout') }}">Odhlásit se</a>
         {% else %}
             <a href="{{ path('app_login') }}">Přihlásit se</a>

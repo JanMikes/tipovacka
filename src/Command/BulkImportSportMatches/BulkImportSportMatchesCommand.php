@@ -13,7 +13,7 @@ final readonly class BulkImportSportMatchesCommand
      * @param list<SportMatchImportRow> $rows
      */
     public function __construct(
-        public Uuid $tournamentId,
+        public Uuid $matchSourceId,
         public Uuid $editorId,
         public array $rows,
     ) {

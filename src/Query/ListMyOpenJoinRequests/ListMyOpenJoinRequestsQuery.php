@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Query\ListMyOpenJoinRequests;
 
-use App\Entity\GroupJoinRequest;
-use App\Repository\GroupJoinRequestRepository;
+use App\Entity\CompetitionJoinRequest;
+use App\Repository\CompetitionJoinRequestRepository;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class ListMyOpenJoinRequestsQuery
 {
     public function __construct(
-        private GroupJoinRequestRepository $joinRequestRepository,
+        private CompetitionJoinRequestRepository $joinRequestRepository,
     ) {
     }
 
@@ -24,11 +24,11 @@ final readonly class ListMyOpenJoinRequestsQuery
         $requests = $this->joinRequestRepository->findPendingByUser($query->userId);
 
         return array_map(
-            static fn (GroupJoinRequest $r): MyJoinRequestItem => new MyJoinRequestItem(
+            static fn (CompetitionJoinRequest $r): MyJoinRequestItem => new MyJoinRequestItem(
                 requestId: $r->id,
-                groupId: $r->group->id,
-                groupName: $r->group->name,
-                tournamentName: $r->group->tournament->name,
+                competitionId: $r->competition->id,
+                competitionName: $r->competition->name,
+                matchSourceName: $r->competition->matchSource->name,
                 requestedAt: $r->requestedAt,
             ),
             $requests,

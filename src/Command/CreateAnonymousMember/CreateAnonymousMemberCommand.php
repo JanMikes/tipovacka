@@ -9,7 +9,7 @@ use Symfony\Component\Uid\Uuid;
 final readonly class CreateAnonymousMemberCommand
 {
     public function __construct(
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $actorId,
         public string $firstName,
         public string $lastName,

@@ -11,8 +11,8 @@ final readonly class SportMatchDetailResult
 {
     public function __construct(
         public Uuid $id,
-        public Uuid $tournamentId,
-        public string $tournamentName,
+        public Uuid $matchSourceId,
+        public string $matchSourceName,
         public string $homeTeam,
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,

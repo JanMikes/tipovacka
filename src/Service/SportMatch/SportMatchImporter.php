@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\SportMatch;
 
+use App\Entity\MatchSource;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -28,9 +28,9 @@ final class SportMatchImporter
     ) {
     }
 
-    public function preview(UploadedFile $file, Tournament $tournament, \DateTimeImmutable $now): SportMatchImportPreview
+    public function preview(UploadedFile $file, MatchSource $matchSource, \DateTimeImmutable $now): SportMatchImportPreview
     {
-        unset($tournament, $now); // unused here; kept for signature/stability
+        unset($matchSource, $now); // unused here; kept for signature/stability
 
         $spreadsheet = $this->loadSpreadsheet($file);
         $sheet = $spreadsheet->getActiveSheet();
@@ -138,12 +138,12 @@ final class SportMatchImporter
     /**
      * @param list<SportMatchImportRow> $rows
      */
-    public function commit(Tournament $tournament, array $rows, \DateTimeImmutable $now): int
+    public function commit(MatchSource $matchSource, array $rows, \DateTimeImmutable $now): int
     {
         foreach ($rows as $row) {
             $sportMatch = new SportMatch(
                 id: $this->identity->next(),
-                tournament: $tournament,
+                matchSource: $matchSource,
                 homeTeam: $row->homeTeam,
                 awayTeam: $row->awayTeam,
                 kickoffAt: $row->kickoffAt,

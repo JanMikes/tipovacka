@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Invitation;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\GroupInvitation;
+use App\Entity\CompetitionInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
 use App\Enum\InvitationKind;
@@ -29,7 +29,7 @@ final class EmailInvitationLandingTest extends WebTestCase
         $client->request('GET', self::EMAIL_TOKEN_URL);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_GROUP_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_COMPETITION_NAME);
         // Live component mounted with locked email pre-filled.
         self::assertSelectorExists('input[name="invitation_form[email]"][disabled]');
         self::assertInputValueSame('invitation_form[email]', AppFixtures::PENDING_INVITATION_EMAIL);
@@ -50,7 +50,7 @@ final class EmailInvitationLandingTest extends WebTestCase
         $em = $this->em($client);
 
         $em->getConnection()->executeStatement(
-            'UPDATE group_invitations SET expires_at = :past WHERE id = :id',
+            'UPDATE competition_invitations SET expires_at = :past WHERE id = :id',
             ['past' => '2024-01-01 00:00:00', 'id' => AppFixtures::PENDING_INVITATION_ID],
         );
 
@@ -66,7 +66,7 @@ final class EmailInvitationLandingTest extends WebTestCase
         $em = $this->em($client);
 
         $em->getConnection()->executeStatement(
-            'UPDATE group_invitations SET revoked_at = :now WHERE id = :id',
+            'UPDATE competition_invitations SET revoked_at = :now WHERE id = :id',
             ['now' => '2025-06-15 11:00:00', 'id' => AppFixtures::PENDING_INVITATION_ID],
         );
 
@@ -82,7 +82,7 @@ final class EmailInvitationLandingTest extends WebTestCase
         $em = $this->em($client);
 
         $em->getConnection()->executeStatement(
-            'UPDATE group_invitations SET accepted_at = :now WHERE id = :id',
+            'UPDATE competition_invitations SET accepted_at = :now WHERE id = :id',
             ['now' => '2025-06-15 11:00:00', 'id' => AppFixtures::PENDING_INVITATION_ID],
         );
 
@@ -92,7 +92,7 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertSelectorTextContains('body', 'už byla přijata');
     }
 
-    public function testRegisterThroughEmailInviteAutoVerifiesAndJoinsGroup(): void
+    public function testRegisterThroughEmailInviteAutoVerifiesAndJoinsCompetition(): void
     {
         $client = static::createClient();
         $component = $this->createInvitationFormComponent($client);
@@ -105,7 +105,7 @@ final class EmailInvitationLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID, $response->headers->get('Location'));
+        self::assertSame('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
 
         $em = $this->em($client);
         $em->clear();
@@ -121,16 +121,16 @@ final class EmailInvitationLandingTest extends WebTestCase
         self::assertSame('Jan', $user->firstName);
         self::assertSame('Novák', $user->lastName);
 
-        $invitation = $em->find(GroupInvitation::class, Uuid::fromString(AppFixtures::PENDING_INVITATION_ID));
+        $invitation = $em->find(CompetitionInvitation::class, Uuid::fromString(AppFixtures::PENDING_INVITATION_ID));
         self::assertNotNull($invitation);
         self::assertTrue($invitation->isAccepted);
 
         $memberships = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
-            ->andWhere('m.group = :g')
+            ->andWhere('m.competition = :g')
             ->setParameter('u', $user->id)
-            ->setParameter('g', Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID))
+            ->setParameter('g', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
             ->getQuery()->getResult();
 
         self::assertCount(1, $memberships);
@@ -226,7 +226,7 @@ final class EmailInvitationLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID, $response->headers->get('Location'));
+        self::assertSame('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
     }
 
     public function testCompleteRegistrationWithEmptyPasswordRejected(): void
@@ -284,7 +284,7 @@ final class EmailInvitationLandingTest extends WebTestCase
 
         $client->request('GET', self::EMAIL_TOKEN_URL);
 
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::PUBLIC_GROUP_ID);
+        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
     }
 
     public function testAuthenticatedDifferentEmailShowsMismatchPrompt(): void

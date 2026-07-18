@@ -10,7 +10,7 @@ final readonly class RevokeShareableLinkCommand
 {
     public function __construct(
         public Uuid $ownerId,
-        public Uuid $groupId,
+        public Uuid $competitionId,
     ) {
     }
 }

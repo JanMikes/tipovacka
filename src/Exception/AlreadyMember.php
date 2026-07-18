@@ -10,8 +10,8 @@ use Symfony\Component\Uid\Uuid;
 #[WithHttpStatus(409)]
 final class AlreadyMember extends \DomainException
 {
-    public static function in(Uuid $groupId): self
+    public static function in(Uuid $competitionId): self
     {
-        return new self(sprintf('Již jsi členem skupiny "%s".', $groupId->toRfc4122()));
+        return new self(sprintf('Již jsi členem soutěže "%s".', $competitionId->toRfc4122()));
     }
 }

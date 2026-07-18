@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Service\Security;
 
-use App\Command\AcceptGroupInvitation\AcceptGroupInvitationCommand;
-use App\Command\JoinGroupByLink\JoinGroupByLinkCommand;
-use App\Entity\GroupInvitation;
+use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
+use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
+use App\Entity\CompetitionInvitation;
 use App\Entity\User;
 use App\Exception\AlreadyMember;
-use App\Exception\CannotJoinFinishedTournament;
-use App\Exception\GroupInvitationAlreadyAccepted;
-use App\Exception\GroupInvitationAlreadyRevoked;
-use App\Exception\GroupInvitationExpired;
+use App\Exception\CannotJoinFinishedMatchSource;
+use App\Exception\CompetitionInvitationAlreadyAccepted;
+use App\Exception\CompetitionInvitationAlreadyRevoked;
+use App\Exception\CompetitionInvitationExpired;
 use App\Exception\InvalidInvitationToken;
 use App\Exception\InvalidShareableLink;
-use App\Service\Group\GroupJoinIntentSession;
+use App\Service\Competition\CompetitionJoinIntentSession;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -30,7 +30,7 @@ final class LoginSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly RequestStack $requestStack,
-        private readonly GroupJoinIntentSession $joinIntent,
+        private readonly CompetitionJoinIntentSession $joinIntent,
         private readonly InvitationIntentSession $invitationIntent,
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -91,33 +91,33 @@ final class LoginSubscriber implements EventSubscriberInterface
         }
 
         try {
-            $this->commandBus->dispatch(new JoinGroupByLinkCommand(
+            $this->commandBus->dispatch(new JoinCompetitionByLinkCommand(
                 userId: $user->id,
                 token: $pendingLinkToken,
             ));
 
-            $flashBag?->add('success', 'Byl(a) jsi přidán(a) do skupiny.');
+            $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže.');
         } catch (HandlerFailedException $handlerFailed) {
             $inner = $handlerFailed->getPrevious();
 
             if (
                 !($inner instanceof InvalidShareableLink)
                 && !($inner instanceof AlreadyMember)
-                && !($inner instanceof CannotJoinFinishedTournament)
+                && !($inner instanceof CannotJoinFinishedMatchSource)
             ) {
                 throw $handlerFailed;
             }
 
             if ($inner instanceof AlreadyMember) {
-                $flashBag?->add('info', 'Ve skupině již jsi.');
+                $flashBag?->add('info', 'V soutěži již jsi.');
             } else {
-                $flashBag?->add('warning', 'Pozvánku do skupiny se nepodařilo uplatnit.');
+                $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
             }
-        } catch (InvalidShareableLink|AlreadyMember|CannotJoinFinishedTournament $e) {
+        } catch (InvalidShareableLink|AlreadyMember|CannotJoinFinishedMatchSource $e) {
             if ($e instanceof AlreadyMember) {
-                $flashBag?->add('info', 'Ve skupině již jsi.');
+                $flashBag?->add('info', 'V soutěži již jsi.');
             } else {
-                $flashBag?->add('warning', 'Pozvánku do skupiny se nepodařilo uplatnit.');
+                $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
             }
         }
 
@@ -133,7 +133,7 @@ final class LoginSubscriber implements EventSubscriberInterface
         ?\Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface $flashBag,
     ): void {
         try {
-            $envelope = $this->commandBus->dispatch(new AcceptGroupInvitationCommand(
+            $envelope = $this->commandBus->dispatch(new AcceptCompetitionInvitationCommand(
                 userId: $user->id,
                 token: $token,
             ));
@@ -141,10 +141,10 @@ final class LoginSubscriber implements EventSubscriberInterface
             $stamp = $envelope->last(HandledStamp::class);
             $invitation = null !== $stamp ? $stamp->getResult() : null;
 
-            if ($invitation instanceof GroupInvitation) {
-                $flashBag?->add('success', 'Byl(a) jsi přidán(a) do skupiny přes pozvánku.');
+            if ($invitation instanceof CompetitionInvitation) {
+                $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže přes pozvánku.');
                 $event->setResponse(new RedirectResponse(
-                    $this->urlGenerator->generate('portal_group_detail', ['id' => $invitation->group->id->toRfc4122()])
+                    $this->urlGenerator->generate('portal_competition_detail', ['id' => $invitation->competition->id->toRfc4122()])
                 ));
 
                 return;
@@ -154,22 +154,22 @@ final class LoginSubscriber implements EventSubscriberInterface
 
             if (
                 !($inner instanceof InvalidInvitationToken)
-                && !($inner instanceof GroupInvitationExpired)
-                && !($inner instanceof GroupInvitationAlreadyAccepted)
-                && !($inner instanceof GroupInvitationAlreadyRevoked)
+                && !($inner instanceof CompetitionInvitationExpired)
+                && !($inner instanceof CompetitionInvitationAlreadyAccepted)
+                && !($inner instanceof CompetitionInvitationAlreadyRevoked)
                 && !($inner instanceof AlreadyMember)
             ) {
                 throw $handlerFailed;
             }
 
             if ($inner instanceof AlreadyMember) {
-                $flashBag?->add('info', 'Ve skupině již jsi.');
+                $flashBag?->add('info', 'V soutěži již jsi.');
             } else {
                 $flashBag?->add('warning', 'Pozvánku se nepodařilo uplatnit.');
             }
-        } catch (InvalidInvitationToken|GroupInvitationExpired|GroupInvitationAlreadyAccepted|GroupInvitationAlreadyRevoked|AlreadyMember $e) {
+        } catch (InvalidInvitationToken|CompetitionInvitationExpired|CompetitionInvitationAlreadyAccepted|CompetitionInvitationAlreadyRevoked|AlreadyMember $e) {
             if ($e instanceof AlreadyMember) {
-                $flashBag?->add('info', 'Ve skupině již jsi.');
+                $flashBag?->add('info', 'V soutěži již jsi.');
             } else {
                 $flashBag?->add('warning', 'Pozvánku se nepodařilo uplatnit.');
             }

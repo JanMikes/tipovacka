@@ -38,32 +38,32 @@ final readonly class ListUserMatchesQuery
             return [];
         }
 
-        $tournamentIds = [];
+        $matchSourceIds = [];
         $matchIds = [];
 
         foreach ($matches as $m) {
-            $tournamentIds[$m->tournament->id->toRfc4122()] = $m->tournament->id;
+            $matchSourceIds[$m->matchSource->id->toRfc4122()] = $m->matchSource->id;
             $matchIds[] = $m->id;
         }
 
-        $groupsByTournament = $this->loadUserGroupsByTournament($query->userId, array_values($tournamentIds));
-        $guessedGroupsByMatch = $this->loadGuessedGroupsByMatch($query->userId, $matchIds);
+        $competitionsByMatchSource = $this->loadUserCompetitionsByMatchSource($query->userId, array_values($matchSourceIds));
+        $guessedCompetitionsByMatch = $this->loadGuessedCompetitionsByMatch($query->userId, $matchIds);
 
         return array_map(
-            static function ($m) use ($groupsByTournament, $guessedGroupsByMatch): UserMatchItem {
-                $tournamentKey = $m->tournament->id->toRfc4122();
+            static function ($m) use ($competitionsByMatchSource, $guessedCompetitionsByMatch): UserMatchItem {
+                $matchSourceKey = $m->matchSource->id->toRfc4122();
                 $matchKey = $m->id->toRfc4122();
 
-                $groupIds = $groupsByTournament[$tournamentKey] ?? [];
-                $guessedGroupIds = $guessedGroupsByMatch[$matchKey] ?? [];
+                $competitionIds = $competitionsByMatchSource[$matchSourceKey] ?? [];
+                $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
 
-                $groupsCount = count($groupIds);
-                $guessedGroupsCount = count(array_intersect($groupIds, $guessedGroupIds));
+                $competitionsCount = count($competitionIds);
+                $guessedCompetitionsCount = count(array_intersect($competitionIds, $guessedCompetitionIds));
 
                 return new UserMatchItem(
                     id: $m->id,
-                    tournamentId: $m->tournament->id,
-                    tournamentName: $m->tournament->name,
+                    matchSourceId: $m->matchSource->id,
+                    matchSourceName: $m->matchSource->name,
                     homeTeam: $m->homeTeam,
                     awayTeam: $m->awayTeam,
                     kickoffAt: $m->kickoffAt,
@@ -75,9 +75,9 @@ final readonly class ListUserMatchesQuery
                     isPostponed: $m->isPostponed,
                     homeScore: $m->homeScore,
                     awayScore: $m->awayScore,
-                    groupsCount: $groupsCount,
-                    guessedGroupsCount: $guessedGroupsCount,
-                    pendingGroupsCount: $groupsCount - $guessedGroupsCount,
+                    competitionsCount: $competitionsCount,
+                    guessedCompetitionsCount: $guessedCompetitionsCount,
+                    pendingCompetitionsCount: $competitionsCount - $guessedCompetitionsCount,
                 );
             },
             $matches,
@@ -85,54 +85,54 @@ final readonly class ListUserMatchesQuery
     }
 
     /**
-     * @param list<Uuid> $tournamentIds
+     * @param list<Uuid> $matchSourceIds
      *
-     * @return array<string, list<string>> keyed by tournament UUID → list of group UUIDs
+     * @return array<string, list<string>> keyed by match source UUID → list of competition UUIDs
      */
-    private function loadUserGroupsByTournament(Uuid $userId, array $tournamentIds): array
+    private function loadUserCompetitionsByMatchSource(Uuid $userId, array $matchSourceIds): array
     {
-        if (0 === count($tournamentIds)) {
+        if (0 === count($matchSourceIds)) {
             return [];
         }
 
-        /** @var list<array{tournamentId: string, groupId: string}> $rows */
+        /** @var list<array{matchSourceId: string, competitionId: string}> $rows */
         $rows = $this->entityManager->createQueryBuilder()
-            ->select('t.id AS tournamentId, g.id AS groupId')
+            ->select('t.id AS matchSourceId, g.id AS competitionId')
             ->from(Membership::class, 'm')
-            ->innerJoin('m.group', 'g')
-            ->innerJoin('g.tournament', 't')
+            ->innerJoin('m.competition', 'g')
+            ->innerJoin('g.matchSource', 't')
             ->where('m.user = :userId')
-            ->andWhere('t.id IN (:tournamentIds)')
+            ->andWhere('t.id IN (:matchSourceIds)')
             ->andWhere('m.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('tournamentIds', $tournamentIds)
+            ->setParameter('matchSourceIds', $matchSourceIds)
             ->getQuery()
             ->getArrayResult();
 
-        $byTournament = [];
+        $byMatchSource = [];
         foreach ($rows as $row) {
-            $tournamentKey = (string) $row['tournamentId'];
-            $byTournament[$tournamentKey][] = (string) $row['groupId'];
+            $matchSourceKey = (string) $row['matchSourceId'];
+            $byMatchSource[$matchSourceKey][] = (string) $row['competitionId'];
         }
 
-        return $byTournament;
+        return $byMatchSource;
     }
 
     /**
      * @param list<Uuid> $matchIds
      *
-     * @return array<string, list<string>> keyed by sport match UUID → list of group UUIDs where user has guessed
+     * @return array<string, list<string>> keyed by sport match UUID → list of competition UUIDs where user has guessed
      */
-    private function loadGuessedGroupsByMatch(Uuid $userId, array $matchIds): array
+    private function loadGuessedCompetitionsByMatch(Uuid $userId, array $matchIds): array
     {
         if (0 === count($matchIds)) {
             return [];
         }
 
-        /** @var list<array{sportMatchId: string, groupId: string}> $rows */
+        /** @var list<array{sportMatchId: string, competitionId: string}> $rows */
         $rows = $this->entityManager->createQueryBuilder()
-            ->select('IDENTITY(g.sportMatch) AS sportMatchId, IDENTITY(g.group) AS groupId')
+            ->select('IDENTITY(g.sportMatch) AS sportMatchId, IDENTITY(g.competition) AS competitionId')
             ->from(Guess::class, 'g')
             ->where('g.user = :userId')
             ->andWhere('g.sportMatch IN (:matchIds)')
@@ -145,7 +145,7 @@ final readonly class ListUserMatchesQuery
         $byMatch = [];
         foreach ($rows as $row) {
             $matchKey = (string) $row['sportMatchId'];
-            $byMatch[$matchKey][] = (string) $row['groupId'];
+            $byMatch[$matchKey][] = (string) $row['competitionId'];
         }
 
         return $byMatch;

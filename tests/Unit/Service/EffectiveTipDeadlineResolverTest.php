@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
-use App\Entity\GroupMatchSetting;
+use App\Entity\Competition;
+use App\Entity\CompetitionMatchSetting;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
-use App\Repository\GroupMatchSettingRepository;
+use App\Enum\MatchSourceVisibility;
+use App\Repository\CompetitionMatchSettingRepository;
 use App\Service\EffectiveTipDeadlineResolver;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -28,81 +28,81 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
     public function testResolveFallsBackToKickoffWhenNoOverrides(): void
     {
-        $group = $this->makeGroup(tipsDeadline: null);
+        $competition = $this->makeCompetition(tipsDeadline: null);
         $match = $this->makeMatch(kickoff: '2025-06-20 18:00');
 
-        $repo = $this->createStub(GroupMatchSettingRepository::class);
-        $repo->method('findByGroupAndMatch')->willReturn(null);
+        $repo = $this->createStub(CompetitionMatchSettingRepository::class);
+        $repo->method('findByCompetitionAndMatch')->willReturn(null);
 
         $resolver = new EffectiveTipDeadlineResolver($repo);
 
         self::assertEquals(
             new \DateTimeImmutable('2025-06-20 18:00'),
-            $resolver->resolve($group, $match),
+            $resolver->resolve($competition, $match),
         );
     }
 
-    public function testResolveUsesGroupDefaultWhenNoOverride(): void
+    public function testResolveUsesCompetitionDefaultWhenNoOverride(): void
     {
-        $group = $this->makeGroup(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
+        $competition = $this->makeCompetition(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
         $match = $this->makeMatch(kickoff: '2025-06-20 18:00');
 
-        $repo = $this->createStub(GroupMatchSettingRepository::class);
-        $repo->method('findByGroupAndMatch')->willReturn(null);
+        $repo = $this->createStub(CompetitionMatchSettingRepository::class);
+        $repo->method('findByCompetitionAndMatch')->willReturn(null);
 
         $resolver = new EffectiveTipDeadlineResolver($repo);
 
         self::assertEquals(
             new \DateTimeImmutable('2025-06-19 09:00'),
-            $resolver->resolve($group, $match),
+            $resolver->resolve($competition, $match),
         );
     }
 
-    public function testResolveOverrideWinsOverGroupDefault(): void
+    public function testResolveOverrideWinsOverCompetitionDefault(): void
     {
-        $group = $this->makeGroup(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
+        $competition = $this->makeCompetition(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
         $match = $this->makeMatch(kickoff: '2025-06-20 18:00');
 
-        $override = new GroupMatchSetting(
+        $override = new CompetitionMatchSetting(
             id: Uuid::v7(),
-            group: $group,
+            competition: $competition,
             sportMatch: $match,
             deadline: new \DateTimeImmutable('2025-06-20 17:30'),
             createdAt: $this->now,
         );
 
-        $repo = $this->createStub(GroupMatchSettingRepository::class);
-        $repo->method('findByGroupAndMatch')->willReturn($override);
+        $repo = $this->createStub(CompetitionMatchSettingRepository::class);
+        $repo->method('findByCompetitionAndMatch')->willReturn($override);
 
         $resolver = new EffectiveTipDeadlineResolver($repo);
 
         self::assertEquals(
             new \DateTimeImmutable('2025-06-20 17:30'),
-            $resolver->resolve($group, $match),
+            $resolver->resolve($competition, $match),
         );
     }
 
     public function testResolveManyAppliesPerMatchOverrides(): void
     {
-        $group = $this->makeGroup(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
+        $competition = $this->makeCompetition(tipsDeadline: new \DateTimeImmutable('2025-06-19 09:00'));
         $matchA = $this->makeMatch(kickoff: '2025-06-20 18:00', id: '01933333-0000-7000-8000-000000000a01');
         $matchB = $this->makeMatch(kickoff: '2025-06-21 18:00', id: '01933333-0000-7000-8000-000000000a02');
 
-        $overrideA = new GroupMatchSetting(
+        $overrideA = new CompetitionMatchSetting(
             id: Uuid::v7(),
-            group: $group,
+            competition: $competition,
             sportMatch: $matchA,
             deadline: new \DateTimeImmutable('2025-06-20 17:30'),
             createdAt: $this->now,
         );
 
-        $repo = $this->createStub(GroupMatchSettingRepository::class);
-        $repo->method('findByGroupAndMatches')->willReturn([
+        $repo = $this->createStub(CompetitionMatchSettingRepository::class);
+        $repo->method('findByCompetitionAndMatches')->willReturn([
             $matchA->id->toRfc4122() => $overrideA,
         ]);
 
         $resolver = new EffectiveTipDeadlineResolver($repo);
-        $deadlines = $resolver->resolveMany($group, [$matchA, $matchB]);
+        $deadlines = $resolver->resolveMany($competition, [$matchA, $matchB]);
 
         self::assertEquals(
             new \DateTimeImmutable('2025-06-20 17:30'),
@@ -116,15 +116,15 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
     public function testResolveManyEmptyMatchesReturnsEmptyArray(): void
     {
-        $group = $this->makeGroup(tipsDeadline: null);
-        $repo = $this->createStub(GroupMatchSettingRepository::class);
+        $competition = $this->makeCompetition(tipsDeadline: null);
+        $repo = $this->createStub(CompetitionMatchSettingRepository::class);
 
         $resolver = new EffectiveTipDeadlineResolver($repo);
 
-        self::assertSame([], $resolver->resolveMany($group, []));
+        self::assertSame([], $resolver->resolveMany($competition, []));
     }
 
-    private function makeGroup(?\DateTimeImmutable $tipsDeadline): Group
+    private function makeCompetition(?\DateTimeImmutable $tipsDeadline): Competition
     {
         $owner = new User(
             id: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -135,22 +135,22 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         );
         $owner->popEvents();
 
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        $group = new Group(
-            id: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            tournament: $tournament,
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $matchSource,
             owner: $owner,
             name: 'G',
             description: null,
@@ -158,19 +158,19 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
             shareableLinkToken: null,
             createdAt: $this->now,
         );
-        $group->popEvents();
+        $competition->popEvents();
 
         if (null !== $tipsDeadline) {
-            $group->updateDetails(
-                name: $group->name,
-                description: $group->description,
-                hideOthersTipsBeforeDeadline: $group->hideOthersTipsBeforeDeadline,
+            $competition->updateDetails(
+                name: $competition->name,
+                description: $competition->description,
+                hideOthersTipsBeforeDeadline: $competition->hideOthersTipsBeforeDeadline,
                 tipsDeadline: $tipsDeadline,
                 now: $this->now,
             );
         }
 
-        return $group;
+        return $competition;
     }
 
     private function makeMatch(string $kickoff, string $id = AppFixtures::MATCH_SCHEDULED_ID): SportMatch
@@ -184,22 +184,22 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         );
         $owner->popEvents();
 
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
         $m = new SportMatch(
             id: Uuid::fromString($id),
-            tournament: $tournament,
+            matchSource: $matchSource,
             homeTeam: 'A',
             awayTeam: 'B',
             kickoffAt: new \DateTimeImmutable($kickoff),

@@ -33,7 +33,7 @@ final class BulkImportFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/turnaje/'.AppFixtures::PUBLIC_TOURNAMENT_ID.'/zapasy/import',
+            '/portal/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID.'/zapasy/import',
         );
         self::assertResponseIsSuccessful();
 
@@ -75,7 +75,7 @@ final class BulkImportFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/turnaje/'.AppFixtures::PUBLIC_TOURNAMENT_ID.'/zapasy/import',
+            '/portal/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID.'/zapasy/import',
         );
         $client->submitForm('Nahrát a zobrazit náhled', [
             'import_sport_matches_form[file]' => $file,
@@ -118,7 +118,7 @@ final class BulkImportFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/turnaje/'.AppFixtures::PUBLIC_TOURNAMENT_ID.'/zapasy/import',
+            '/portal/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID.'/zapasy/import',
         );
         $client->submitForm('Nahrát a zobrazit náhled', [
             'import_sport_matches_form[file]' => $file,

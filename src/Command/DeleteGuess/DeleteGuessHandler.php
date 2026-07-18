@@ -34,7 +34,7 @@ final readonly class DeleteGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($guess->group, $guess->sportMatch);
+        $deadline = $this->deadlineResolver->resolve($guess->competition, $guess->sportMatch);
 
         if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();

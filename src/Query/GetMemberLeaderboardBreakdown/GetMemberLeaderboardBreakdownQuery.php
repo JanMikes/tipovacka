@@ -7,7 +7,7 @@ namespace App\Query\GetMemberLeaderboardBreakdown;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessEvaluationRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,7 +17,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class GetMemberLeaderboardBreakdownQuery
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private GuessEvaluationRepository $evaluationRepository,
         private EntityManagerInterface $entityManager,
@@ -26,17 +26,17 @@ final readonly class GetMemberLeaderboardBreakdownQuery
 
     public function __invoke(GetMemberLeaderboardBreakdown $query): MemberBreakdownResult
     {
-        $group = $this->groupRepository->get($query->groupId);
+        $competition = $this->competitionRepository->get($query->competitionId);
         $user = $this->userRepository->get($query->userId);
 
         /** @var list<SportMatch> $matches */
         $matches = $this->entityManager->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.tournament = :tournamentId')
+            ->where('m.matchSource = :matchSourceId')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.state = :finished')
-            ->setParameter('tournamentId', $group->tournament->id)
+            ->setParameter('matchSourceId', $competition->matchSource->id)
             ->setParameter('finished', SportMatchState::Finished)
             ->orderBy('m.kickoffAt', 'ASC')
             ->addOrderBy('m.id', 'ASC')
@@ -49,12 +49,12 @@ final readonly class GetMemberLeaderboardBreakdownQuery
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
             ->where('g.user = :userId')
-            ->andWhere('g.group = :groupId')
+            ->andWhere('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
             ->andWhere('m.state = :finished')
             ->andWhere('m.deletedAt IS NULL')
             ->setParameter('userId', $user->id)
-            ->setParameter('groupId', $group->id)
+            ->setParameter('competitionId', $competition->id)
             ->setParameter('finished', SportMatchState::Finished)
             ->getQuery()
             ->getResult();

@@ -20,7 +20,7 @@ final class ShareableLinkLandingTest extends WebTestCase
 {
     use InteractsWithLiveComponents;
 
-    private const string LINK_URL = '/skupiny/pozvanka/'.AppFixtures::VERIFIED_GROUP_LINK_TOKEN;
+    private const string LINK_URL = '/souteze/pozvanka/'.AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN;
 
     public function testAnonymousSeesLandingWithEditableEmailField(): void
     {
@@ -28,7 +28,7 @@ final class ShareableLinkLandingTest extends WebTestCase
         $client->request('GET', self::LINK_URL);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', AppFixtures::VERIFIED_GROUP_NAME);
+        self::assertSelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
         self::assertSelectorExists('input[name="invitation_form[email]"]');
         self::assertSelectorNotExists('input[name="invitation_form[email]"][disabled]');
     }
@@ -36,7 +36,7 @@ final class ShareableLinkLandingTest extends WebTestCase
     public function testInvalidTokenReturns404(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/skupiny/pozvanka/'.str_repeat('0', 48));
+        $client->request('GET', '/souteze/pozvanka/'.str_repeat('0', 48));
 
         self::assertResponseStatusCodeSame(404);
         self::assertSelectorTextContains('body', 'Pozvánka nenalezena');
@@ -73,7 +73,7 @@ final class ShareableLinkLandingTest extends WebTestCase
         self::assertStringContainsString('invitation_form[passwordConfirm]', $rendered);
     }
 
-    public function testLoginFlowJoinsShareableGroup(): void
+    public function testLoginFlowJoinsShareableCompetition(): void
     {
         $client = static::createClient();
         $em = $this->em($client);
@@ -92,15 +92,15 @@ final class ShareableLinkLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID, $response->headers->get('Location'));
+        self::assertSame('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
-            ->andWhere('m.group = :g')
+            ->andWhere('m.competition = :g')
             ->setParameter('u', $admin->id)
-            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->getQuery()->getResult();
 
         self::assertCount(1, $memberships);
@@ -154,9 +154,9 @@ final class ShareableLinkLandingTest extends WebTestCase
         $memberships = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
-            ->andWhere('m.group = :g')
+            ->andWhere('m.competition = :g')
             ->setParameter('u', $user->id)
-            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->getQuery()->getResult();
 
         self::assertCount(0, $memberships);
@@ -214,7 +214,7 @@ final class ShareableLinkLandingTest extends WebTestCase
         $client->loginUser($user);
         $client->request('GET', self::LINK_URL);
 
-        self::assertResponseRedirects('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID);
+        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
     }
 
     /**
@@ -224,7 +224,7 @@ final class ShareableLinkLandingTest extends WebTestCase
     {
         return $this->createLiveComponent('Auth:InvitationForm', [
             'kind' => InvitationKind::ShareableLink->value,
-            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+            'token' => AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN,
         ], $client);
     }
 

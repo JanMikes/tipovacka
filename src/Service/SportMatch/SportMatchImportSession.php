@@ -19,7 +19,7 @@ final class SportMatchImportSession
     /**
      * @param list<SportMatchImportRow> $rows
      */
-    public function store(Uuid $tournamentId, array $rows): void
+    public function store(Uuid $matchSourceId, array $rows): void
     {
         $session = $this->requestStack->getSession();
         $serialisable = array_map(
@@ -34,17 +34,17 @@ final class SportMatchImportSession
             $rows,
         );
 
-        $session->set($this->key($tournamentId), $serialisable);
+        $session->set($this->key($matchSourceId), $serialisable);
     }
 
     /**
      * @return list<SportMatchImportRow>
      */
-    public function consume(Uuid $tournamentId): array
+    public function consume(Uuid $matchSourceId): array
     {
         $session = $this->requestStack->getSession();
-        $raw = $session->get($this->key($tournamentId));
-        $session->remove($this->key($tournamentId));
+        $raw = $session->get($this->key($matchSourceId));
+        $session->remove($this->key($matchSourceId));
 
         if (!is_array($raw)) {
             return [];
@@ -77,13 +77,13 @@ final class SportMatchImportSession
         return $rows;
     }
 
-    public function clear(Uuid $tournamentId): void
+    public function clear(Uuid $matchSourceId): void
     {
-        $this->requestStack->getSession()->remove($this->key($tournamentId));
+        $this->requestStack->getSession()->remove($this->key($matchSourceId));
     }
 
-    private function key(Uuid $tournamentId): string
+    private function key(Uuid $matchSourceId): string
     {
-        return self::KEY_PREFIX.$tournamentId->toRfc4122();
+        return self::KEY_PREFIX.$matchSourceId->toRfc4122();
     }
 }

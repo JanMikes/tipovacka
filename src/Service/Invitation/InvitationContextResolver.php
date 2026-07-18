@@ -7,20 +7,20 @@ namespace App\Service\Invitation;
 use App\Enum\InvitationKind;
 use App\Exception\InvalidInvitationToken;
 use App\Exception\InvalidShareableLink;
-use App\Repository\GroupInvitationRepository;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionInvitationRepository;
+use App\Repository\CompetitionRepository;
 
 final readonly class InvitationContextResolver
 {
     public function __construct(
-        private GroupInvitationRepository $invitationRepository,
-        private GroupRepository $groupRepository,
+        private CompetitionInvitationRepository $invitationRepository,
+        private CompetitionRepository $competitionRepository,
     ) {
     }
 
     /**
      * @throws InvalidInvitationToken when an email-kind token has no matching invitation
-     * @throws InvalidShareableLink   when a shareable-link-kind token has no matching group
+     * @throws InvalidShareableLink   when a shareable-link-kind token has no matching competition
      */
     public function resolve(InvitationKind $kind, string $token, \DateTimeImmutable $now): InvitationContext
     {
@@ -38,16 +38,16 @@ final readonly class InvitationContextResolver
             $invitation->isRevoked => InvitationContextStatus::Revoked,
             $invitation->isAccepted => InvitationContextStatus::Accepted,
             $invitation->isExpiredAt($now) => InvitationContextStatus::Expired,
-            $invitation->group->tournament->isFinished => InvitationContextStatus::TournamentFinished,
+            $invitation->competition->matchSource->isFinished => InvitationContextStatus::MatchSourceFinished,
             default => InvitationContextStatus::Active,
         };
 
         return new InvitationContext(
             kind: InvitationKind::Email,
             token: $token,
-            groupId: $invitation->group->id,
-            groupName: $invitation->group->name,
-            tournamentName: $invitation->group->tournament->name,
+            competitionId: $invitation->competition->id,
+            competitionName: $invitation->competition->name,
+            matchSourceName: $invitation->competition->matchSource->name,
             inviterNickname: $invitation->inviter->nickname,
             presetEmail: $invitation->email,
             status: $status,
@@ -57,19 +57,19 @@ final readonly class InvitationContextResolver
 
     private function resolveShareableLink(string $token, \DateTimeImmutable $now): InvitationContext
     {
-        $group = $this->groupRepository->getByShareableLinkToken($token);
+        $competition = $this->competitionRepository->getByShareableLinkToken($token);
 
-        $status = $group->tournament->isFinished
-            ? InvitationContextStatus::TournamentFinished
+        $status = $competition->matchSource->isFinished
+            ? InvitationContextStatus::MatchSourceFinished
             : InvitationContextStatus::Active;
 
         return new InvitationContext(
             kind: InvitationKind::ShareableLink,
             token: $token,
-            groupId: $group->id,
-            groupName: $group->name,
-            tournamentName: $group->tournament->name,
-            inviterNickname: $group->owner->nickname,
+            competitionId: $competition->id,
+            competitionName: $competition->name,
+            matchSourceName: $competition->matchSource->name,
+            inviterNickname: $competition->owner->nickname,
             presetEmail: null,
             status: $status,
             expiresAt: null,

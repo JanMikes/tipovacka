@@ -6,8 +6,8 @@ namespace App\Command\ApproveJoinRequest;
 
 use App\Entity\Membership;
 use App\Event\JoinRequestApproved;
-use App\Exception\CannotJoinFinishedTournament;
-use App\Repository\GroupJoinRequestRepository;
+use App\Exception\CannotJoinFinishedMatchSource;
+use App\Repository\CompetitionJoinRequestRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class ApproveJoinRequestHandler
 {
     public function __construct(
-        private GroupJoinRequestRepository $joinRequestRepository,
+        private CompetitionJoinRequestRepository $joinRequestRepository,
         private MembershipRepository $membershipRepository,
         private UserRepository $userRepository,
         private ProvideIdentity $identity,
@@ -31,8 +31,8 @@ final readonly class ApproveJoinRequestHandler
         $request = $this->joinRequestRepository->get($command->requestId);
         $approver = $this->userRepository->get($command->ownerId);
 
-        if ($request->group->tournament->isFinished) {
-            throw CannotJoinFinishedTournament::forGroup($request->group->id);
+        if ($request->competition->matchSource->isFinished) {
+            throw CannotJoinFinishedMatchSource::forCompetition($request->competition->id);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
@@ -41,10 +41,10 @@ final readonly class ApproveJoinRequestHandler
 
         $membershipId = $this->identity->next();
 
-        if (!$this->membershipRepository->hasActiveMembership($request->user->id, $request->group->id)) {
+        if (!$this->membershipRepository->hasActiveMembership($request->user->id, $request->competition->id)) {
             $membership = new Membership(
                 id: $membershipId,
-                group: $request->group,
+                competition: $request->competition,
                 user: $request->user,
                 joinedAt: $now,
             );
@@ -55,7 +55,7 @@ final readonly class ApproveJoinRequestHandler
         $request->recordThat(new JoinRequestApproved(
             requestId: $request->id,
             membershipId: $membershipId,
-            groupId: $request->group->id,
+            competitionId: $request->competition->id,
             userId: $request->user->id,
             occurredOn: $now,
         ));

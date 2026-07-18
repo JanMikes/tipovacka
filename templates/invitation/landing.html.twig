@@ -1,12 +1,12 @@
 {% extends 'auth/_layout.html.twig' %}
 
-{% set group_name = context ? context.groupName : null %}
+{% set competition_name = context ? context.competitionName : null %}
 
-{% block title %}{{ group_name ? 'Pozvánka do ' ~ group_name : 'Pozvánka' }} — {{ brand_name }}{% endblock %}
+{% block title %}{{ competition_name ? 'Pozvánka do ' ~ competition_name : 'Pozvánka' }} — {{ brand_name }}{% endblock %}
 
 {% block auth_panel_tagline %}
-    {% if group_name %}
-        Za pár kliků přijmete pozvánku do skupiny {{ group_name }} a začínáte tipovat.
+    {% if competition_name %}
+        Za pár kliků přijmete pozvánku do soutěže {{ competition_name }} a začínáte tipovat.
     {% else %}
         Přijměte pozvánku a začněte tipovat s partičkou.
     {% endif %}
@@ -63,14 +63,14 @@
             </a>
         </div>
 
-    {% elseif step == 'tournament_finished' %}
+    {% elseif step == 'match_source_finished' %}
         <div class="text-center">
             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/70">
                 <twig:ux:icon name="lucide:lock" class="h-8 w-8" />
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Turnaj už skončil</h2>
-            <p class="mt-3 text-white/60">Turnaj této skupiny je už ukončen, připojit se nejde.</p>
+            <p class="mt-3 text-white/60">Turnaj této soutěže je už ukončen, připojit se nejde.</p>
         </div>
 
     {% elseif step == 'email_mismatch' %}
@@ -98,9 +98,9 @@
                 <twig:ux:icon name="lucide:users" class="h-5 w-5" />
             </span>
             <div class="text-sm leading-relaxed text-white/70">
-                Pozvánka do skupiny <strong class="font-semibold text-white">{{ context.groupName }}</strong>
-                {% if context.tournamentName %}
-                    v turnaji <strong class="font-semibold text-white">{{ context.tournamentName }}</strong>
+                Pozvánka do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>
+                {% if context.matchSourceName %}
+                    v turnaji <strong class="font-semibold text-white">{{ context.matchSourceName }}</strong>
                 {% endif %}
                 {% if context.inviterNickname %}
                     od <strong class="font-semibold text-white">{{ context.inviterNickname }}</strong>

@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace App\Service;
 
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\SportMatch;
-use App\Repository\GroupMatchSettingRepository;
+use App\Repository\CompetitionMatchSettingRepository;
 
 final readonly class EffectiveTipDeadlineResolver
 {
     public function __construct(
-        private GroupMatchSettingRepository $overrideRepository,
+        private CompetitionMatchSettingRepository $overrideRepository,
     ) {
     }
 
-    public function resolve(Group $group, SportMatch $sportMatch): \DateTimeImmutable
+    public function resolve(Competition $competition, SportMatch $sportMatch): \DateTimeImmutable
     {
-        $override = $this->overrideRepository->findByGroupAndMatch($group->id, $sportMatch->id);
+        $override = $this->overrideRepository->findByCompetitionAndMatch($competition->id, $sportMatch->id);
 
         if (null !== $override) {
             return $override->deadline;
         }
 
-        return $group->tipsDeadline ?? $sportMatch->kickoffAt;
+        return $competition->tipsDeadline ?? $sportMatch->kickoffAt;
     }
 
     /**
@@ -31,14 +31,14 @@ final readonly class EffectiveTipDeadlineResolver
      *
      * @return array<string, \DateTimeImmutable> keyed by sport match id RFC4122
      */
-    public function resolveMany(Group $group, array $matches): array
+    public function resolveMany(Competition $competition, array $matches): array
     {
         if ([] === $matches) {
             return [];
         }
 
         $matchIds = array_map(static fn (SportMatch $m) => $m->id, $matches);
-        $overrides = $this->overrideRepository->findByGroupAndMatches($group->id, $matchIds);
+        $overrides = $this->overrideRepository->findByCompetitionAndMatches($competition->id, $matchIds);
 
         $result = [];
 
@@ -49,7 +49,7 @@ final readonly class EffectiveTipDeadlineResolver
             if (null !== $override) {
                 $result[$key] = $override->deadline;
             } else {
-                $result[$key] = $group->tipsDeadline ?? $match->kickoffAt;
+                $result[$key] = $competition->tipsDeadline ?? $match->kickoffAt;
             }
         }
 

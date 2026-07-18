@@ -8,9 +8,9 @@ use App\Entity\LeaderboardTieResolution;
 use App\Enum\UserRole;
 use App\Event\LeaderboardTiesResolved;
 use App\Exception\LeaderboardTieResolutionInvalid;
-use App\Query\GetGroupLeaderboard\GetGroupLeaderboard;
+use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\QueryBus;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\UserRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -25,7 +25,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 final readonly class ResolveLeaderboardTiesHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private LeaderboardTieResolutionRepository $resolutionRepository,
         private QueryBus $queryBus,
@@ -43,17 +43,17 @@ final readonly class ResolveLeaderboardTiesHandler
             throw LeaderboardTieResolutionInvalid::notTied();
         }
 
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
         $resolver = $this->userRepository->get($command->resolverId);
 
         $isAdmin = in_array(UserRole::ADMIN->value, $resolver->getRoles(), true);
-        $isOwner = $resolver->id->equals($group->owner->id);
+        $isOwner = $resolver->id->equals($competition->owner->id);
 
         if (!$isAdmin && !$isOwner) {
-            throw new AccessDeniedException('Pouze vlastník skupiny nebo administrátor může rozřazení uložit.');
+            throw new AccessDeniedException('Pouze vlastník soutěže nebo administrátor může rozřazení uložit.');
         }
 
-        $leaderboard = $this->queryBus->handle(new GetGroupLeaderboard(groupId: $group->id));
+        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
 
         $pointsByUser = [];
 
@@ -85,7 +85,7 @@ final readonly class ResolveLeaderboardTiesHandler
             }
         }
 
-        $this->resolutionRepository->deleteForGroupAndUsers($group->id, $command->orderedUserIds);
+        $this->resolutionRepository->deleteForCompetitionAndUsers($competition->id, $command->orderedUserIds);
         $this->entityManager->flush();
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
@@ -95,7 +95,7 @@ final readonly class ResolveLeaderboardTiesHandler
 
             $resolution = new LeaderboardTieResolution(
                 id: $this->identity->next(),
-                group: $group,
+                competition: $competition,
                 user: $user,
                 rank: $baseRank + $index,
                 resolvedAt: $now,
@@ -106,7 +106,7 @@ final readonly class ResolveLeaderboardTiesHandler
         }
 
         $this->eventBus->dispatch(new LeaderboardTiesResolved(
-            groupId: $group->id,
+            competitionId: $competition->id,
             occurredOn: $now,
         ));
     }

@@ -20,14 +20,14 @@ final class UpdateGuessOnBehalfHandlerTest extends IntegrationTestCase
     public function testOwnerCanUpdateMemberGuess(): void
     {
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::UNVERIFIED_USER_ID,
         );
 
         $envelope = $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 1,
             awayScore: 1,
@@ -55,18 +55,18 @@ final class UpdateGuessOnBehalfHandlerTest extends IntegrationTestCase
     public function testNonOwnerCannotUpdateMemberGuess(): void
     {
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::UNVERIFIED_USER_ID,
         );
         $this->addActiveMembership(
-            groupId: AppFixtures::VERIFIED_GROUP_ID,
+            competitionId: AppFixtures::VERIFIED_COMPETITION_ID,
             userId: AppFixtures::SECOND_VERIFIED_USER_ID,
         );
 
         $envelope = $this->commandBus()->dispatch(new SubmitGuessOnBehalfCommand(
             actingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             targetUserId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 1,
             awayScore: 1,
@@ -90,18 +90,18 @@ final class UpdateGuessOnBehalfHandlerTest extends IntegrationTestCase
         }
     }
 
-    private function addActiveMembership(string $groupId, string $userId): void
+    private function addActiveMembership(string $competitionId, string $userId): void
     {
         $em = $this->entityManager();
 
-        $group = $em->find(\App\Entity\Group::class, Uuid::fromString($groupId));
+        $competition = $em->find(\App\Entity\Competition::class, Uuid::fromString($competitionId));
         $user = $em->find(\App\Entity\User::class, Uuid::fromString($userId));
 
-        \assert(null !== $group && null !== $user);
+        \assert(null !== $competition && null !== $user);
 
         $membership = new Membership(
             id: Uuid::v7(),
-            group: $group,
+            competition: $competition,
             user: $user,
             joinedAt: \DateTimeImmutable::createFromInterface($this->clock()->now()),
         );

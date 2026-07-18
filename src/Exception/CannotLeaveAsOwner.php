@@ -10,8 +10,8 @@ use Symfony\Component\Uid\Uuid;
 #[WithHttpStatus(409)]
 final class CannotLeaveAsOwner extends \DomainException
 {
-    public static function of(Uuid $groupId): self
+    public static function of(Uuid $competitionId): self
     {
-        return new self(sprintf('Vlastník nemůže opustit vlastní skupinu "%s".', $groupId->toRfc4122()));
+        return new self(sprintf('Vlastník nemůže opustit vlastní soutěž "%s".', $competitionId->toRfc4122()));
     }
 }

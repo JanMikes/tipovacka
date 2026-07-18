@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Voter;
 
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\UserRole;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Service\EffectiveTipDeadlineResolver;
@@ -21,10 +21,10 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 /**
  * Authorization voter for Guess actions.
  *
- * SUBMIT and VIEW require a GuessVotingContext subject (SportMatch + groupId),
- * because a "submit" decision is specific to the group under which the user
+ * SUBMIT and VIEW require a GuessVotingContext subject (SportMatch + competitionId),
+ * because a "submit" decision is specific to the competition under which the user
  * is tipping. UPDATE takes an existing Guess and checks ownership + match state.
- * SUBMIT_ON_BEHALF / UPDATE_ON_BEHALF let a group owner (or admin) fill or edit
+ * SUBMIT_ON_BEHALF / UPDATE_ON_BEHALF let a competition owner (or admin) fill or edit
  * a guess for another active member (e.g. a proxy player who never logs in).
  *
  * @extends Voter<'guess_submit'|'guess_update'|'guess_view'|'guess_submit_on_behalf'|'guess_update_on_behalf', Guess|GuessVotingContext|GuessOnBehalfContext>
@@ -40,7 +40,7 @@ final class GuessVoter extends Voter
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
-        private readonly GroupRepository $groupRepository,
+        private readonly CompetitionRepository $competitionRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
     ) {
@@ -71,7 +71,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
                 return false;
             }
 
@@ -81,11 +81,11 @@ final class GuessVoter extends Voter
         if (self::UPDATE_ON_BEHALF === $attribute) {
             \assert($subject instanceof Guess);
 
-            if (!$this->isGroupManager($currentUser, $subject->group->owner->id)) {
+            if (!$this->isCompetitionManager($currentUser, $subject->competition->owner->id)) {
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
                 return false;
             }
 
@@ -95,26 +95,26 @@ final class GuessVoter extends Voter
         if (self::SUBMIT_ON_BEHALF === $attribute) {
             \assert($subject instanceof GuessOnBehalfContext);
 
-            if (!$this->isGroupManager($currentUser, $subject->group->owner->id)) {
+            if (!$this->isCompetitionManager($currentUser, $subject->competition->owner->id)) {
                 return false;
             }
 
-            if (!$this->membershipRepository->hasActiveMembership($subject->targetUser->id, $subject->group->id)) {
+            if (!$this->membershipRepository->hasActiveMembership($subject->targetUser->id, $subject->competition->id)) {
                 return false;
             }
 
-            if (!$subject->sportMatch->tournament->id->equals($subject->group->tournament->id)) {
+            if (!$subject->sportMatch->matchSource->id->equals($subject->competition->matchSource->id)) {
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->group, $subject->sportMatch)) {
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
                 return false;
             }
 
-            $existing = $this->guessRepository->findActiveByUserMatchGroup(
+            $existing = $this->guessRepository->findActiveByUserMatchCompetition(
                 $subject->targetUser->id,
                 $subject->sportMatch->id,
-                $subject->group->id,
+                $subject->competition->id,
             );
 
             return null === $existing;
@@ -122,7 +122,7 @@ final class GuessVoter extends Voter
 
         \assert($subject instanceof GuessVotingContext);
 
-        $isMember = $this->membershipRepository->hasActiveMembership($currentUser->id, $subject->groupId);
+        $isMember = $this->membershipRepository->hasActiveMembership($currentUser->id, $subject->competitionId);
 
         if (!$isMember) {
             return false;
@@ -132,39 +132,39 @@ final class GuessVoter extends Voter
             return true;
         }
 
-        // SUBMIT: the match must belong to the same tournament as the group,
+        // SUBMIT: the match must belong to the same match source as the competition,
         // must still be open for guesses, must be before the effective deadline
-        // (per-match override → group default → kickoff), and the user must not
-        // already have an active guess for this (user, match, group) triple.
+        // (per-match override → competition default → kickoff), and the user must not
+        // already have an active guess for this (user, match, competition) triple.
         $sportMatch = $subject->sportMatch;
-        $group = $this->groupRepository->get($subject->groupId);
+        $competition = $this->competitionRepository->get($subject->competitionId);
 
-        if (!$this->isWithinDeadline($group, $sportMatch)) {
+        if (!$this->isWithinDeadline($competition, $sportMatch)) {
             return false;
         }
 
-        $existing = $this->guessRepository->findActiveByUserMatchGroup(
+        $existing = $this->guessRepository->findActiveByUserMatchCompetition(
             $currentUser->id,
             $sportMatch->id,
-            $subject->groupId,
+            $subject->competitionId,
         );
 
         return null === $existing;
     }
 
-    private function isWithinDeadline(Group $group, SportMatch $sportMatch): bool
+    private function isWithinDeadline(Competition $competition, SportMatch $sportMatch): bool
     {
         if (!$sportMatch->isOpenForGuesses) {
             return false;
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($group, $sportMatch);
+        $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
 
         return $now < $deadline;
     }
 
-    private function isGroupManager(User $currentUser, \Symfony\Component\Uid\Uuid $ownerId): bool
+    private function isCompetitionManager(User $currentUser, \Symfony\Component\Uid\Uuid $ownerId): bool
     {
         if (in_array(UserRole::ADMIN->value, $currentUser->getRoles(), true)) {
             return true;

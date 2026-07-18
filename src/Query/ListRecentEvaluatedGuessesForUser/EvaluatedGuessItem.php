@@ -10,10 +10,10 @@ final readonly class EvaluatedGuessItem
 {
     public function __construct(
         public Uuid $sportMatchId,
-        public Uuid $tournamentId,
-        public string $tournamentName,
-        public Uuid $groupId,
-        public string $groupName,
+        public Uuid $matchSourceId,
+        public string $matchSourceName,
+        public Uuid $competitionId,
+        public string $competitionName,
         public string $homeTeam,
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,

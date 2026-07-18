@@ -10,7 +10,7 @@ final readonly class SubmitGuessCommand
 {
     public function __construct(
         public Uuid $userId,
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $sportMatchId,
         public int $homeScore,
         public int $awayScore,

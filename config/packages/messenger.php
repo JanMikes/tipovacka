@@ -52,7 +52,7 @@ return App::config([
                 'Symfony\\Component\\Mailer\\Messenger\\SendEmailMessage' => 'async',
                 'Symfony\\Component\\Notifier\\Message\\ChatMessage' => 'async',
                 'Symfony\\Component\\Notifier\\Message\\SmsMessage' => 'async',
-                'App\\Command\\RecalculateTournamentPoints\\RecalculateTournamentPointsCommand' => 'async',
+                'App\\Command\\RecalculateMatchSourcePoints\\RecalculateMatchSourcePointsCommand' => 'async',
             ],
         ],
     ],

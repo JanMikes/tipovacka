@@ -1,6 +1,6 @@
 {#
     Wtips dark score-input block for a single match guess (Live Component).
-    Props (via `this`): sportMatch, groupId, isLocked, existingGuess, hasExistingGuess.
+    Props (via `this`): sportMatch, competitionId, isLocked, existingGuess, hasExistingGuess.
     Writable models: homeScore, awayScore. Caller can override the wrapper via class="...".
 #}
 <div{{ attributes.defaults({class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
@@ -36,14 +36,14 @@
         <form data-action="live#action:prevent" data-live-action-param="submit">
             <div class="tip-inputs">
                 <div class="text-center">
-                    <label class="field-label mb-1.5 block" for="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}">
+                    <label class="field-label mb-1.5 block" for="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}">
                         {{ this.sportMatch.homeTeam }}
                     </label>
                     <input
                         type="number"
                         min="0"
                         max="99"
-                        id="guess_home_{{ this.sportMatch.id }}_{{ this.groupId }}"
+                        id="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}"
                         data-model="homeScore"
                         value="{{ homeScore ?? '' }}"
                         class="score-input"
@@ -56,14 +56,14 @@
                 <span class="colon">:</span>
 
                 <div class="text-center">
-                    <label class="field-label mb-1.5 block" for="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}">
+                    <label class="field-label mb-1.5 block" for="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}">
                         {{ this.sportMatch.awayTeam }}
                     </label>
                     <input
                         type="number"
                         min="0"
                         max="99"
-                        id="guess_away_{{ this.sportMatch.id }}_{{ this.groupId }}"
+                        id="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}"
                         data-model="awayScore"
                         value="{{ awayScore ?? '' }}"
                         class="score-input"

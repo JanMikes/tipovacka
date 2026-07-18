@@ -15,10 +15,10 @@ final class SportMatchFinishedEvaluatesGuessesTest extends IntegrationTestCase
 {
     public function testFinishingMatchEvaluatesActiveGuesses(): void
     {
-        // Submit a guess on the scheduled match in PRIVATE_TOURNAMENT.
+        // Submit a guess on the scheduled match in PRIVATE_SOURCE.
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,

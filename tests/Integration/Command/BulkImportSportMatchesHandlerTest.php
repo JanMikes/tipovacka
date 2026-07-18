@@ -15,7 +15,7 @@ final class BulkImportSportMatchesHandlerTest extends IntegrationTestCase
 {
     public function testImportsMultipleMatches(): void
     {
-        $tournamentId = Uuid::fromString(AppFixtures::PUBLIC_TOURNAMENT_ID);
+        $matchSourceId = Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID);
 
         $rows = [
             new SportMatchImportRow(2, 'Liberec', 'Slovácko', new \DateTimeImmutable('2025-09-01 18:00'), 'U Nisy'),
@@ -23,7 +23,7 @@ final class BulkImportSportMatchesHandlerTest extends IntegrationTestCase
         ];
 
         $this->commandBus()->dispatch(new BulkImportSportMatchesCommand(
-            tournamentId: $tournamentId,
+            matchSourceId: $matchSourceId,
             editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
             rows: $rows,
         ));

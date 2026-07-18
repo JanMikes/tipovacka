@@ -6,8 +6,8 @@ namespace App\Twig\Components\Guess;
 
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Query\GetGuessesForMatchInGroup\GetGuessesForMatchInGroup;
-use App\Query\GetGuessesForMatchInGroup\GuessesForMatchInGroupResult;
+use App\Query\GetGuessesForMatchInCompetition\GetGuessesForMatchInCompetition;
+use App\Query\GetGuessesForMatchInCompetition\GuessesForMatchInCompetitionResult;
 use App\Query\QueryBus;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Uid\Uuid;
@@ -24,7 +24,7 @@ final class MatchGuessesList
     public SportMatch $sportMatch;
 
     #[LiveProp]
-    public string $groupId = '';
+    public string $competitionId = '';
 
     #[LiveProp]
     public bool $applyHiding = false;
@@ -35,13 +35,13 @@ final class MatchGuessesList
     ) {
     }
 
-    public GuessesForMatchInGroupResult $guesses {
+    public GuessesForMatchInCompetitionResult $guesses {
         get {
             $user = $this->security->getUser();
             $viewerId = $user instanceof User ? $user->id : Uuid::v7();
 
-            return $this->queryBus->handle(new GetGuessesForMatchInGroup(
-                groupId: Uuid::fromString($this->groupId),
+            return $this->queryBus->handle(new GetGuessesForMatchInCompetition(
+                competitionId: Uuid::fromString($this->competitionId),
                 sportMatchId: $this->sportMatch->id,
                 viewerId: $viewerId,
                 applyHiding: $this->applyHiding,

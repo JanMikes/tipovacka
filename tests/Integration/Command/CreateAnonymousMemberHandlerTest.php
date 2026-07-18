@@ -20,7 +20,7 @@ final class CreateAnonymousMemberHandlerTest extends IntegrationTestCase
     public function testOwnerCreatesAnonymousMember(): void
     {
         $envelope = $this->commandBus()->dispatch(new CreateAnonymousMemberCommand(
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             actorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             firstName: 'Pepa',
             lastName: 'Tipa',
@@ -50,7 +50,7 @@ final class CreateAnonymousMemberHandlerTest extends IntegrationTestCase
         $membership = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :uid')->setParameter('uid', $user->id)
-            ->andWhere('m.group = :gid')->setParameter('gid', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->andWhere('m.competition = :gid')->setParameter('gid', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->andWhere('m.leftAt IS NULL')
             ->getQuery()->getOneOrNullResult();
         self::assertInstanceOf(Membership::class, $membership);
@@ -58,10 +58,10 @@ final class CreateAnonymousMemberHandlerTest extends IntegrationTestCase
 
     public function testNonOwnerNonAdminIsRejected(): void
     {
-        // UNVERIFIED_USER is neither admin nor the owner of VERIFIED_GROUP.
+        // UNVERIFIED_USER is neither admin nor the owner of VERIFIED_COMPETITION.
         try {
             $this->commandBus()->dispatch(new CreateAnonymousMemberCommand(
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 actorId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
                 firstName: 'Intruder',
                 lastName: 'X',
@@ -77,7 +77,7 @@ final class CreateAnonymousMemberHandlerTest extends IntegrationTestCase
     {
         try {
             $this->commandBus()->dispatch(new CreateAnonymousMemberCommand(
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 actorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
                 firstName: 'Pepa',
                 lastName: 'Tipa',
@@ -92,7 +92,7 @@ final class CreateAnonymousMemberHandlerTest extends IntegrationTestCase
     public function testProvidedNicknameTakesPrecedenceInDisplayName(): void
     {
         $envelope = $this->commandBus()->dispatch(new CreateAnonymousMemberCommand(
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             actorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             firstName: 'Karel',
             lastName: 'Zlý',

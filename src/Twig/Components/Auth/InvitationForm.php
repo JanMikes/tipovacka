@@ -8,9 +8,9 @@ use App\Command\CompleteInvitationRegistration\CompleteInvitationRegistrationCom
 use App\Command\RegisterUser\RegisterUserCommand;
 use App\Entity\User;
 use App\Enum\InvitationKind;
-use App\Exception\GroupInvitationAlreadyAccepted;
-use App\Exception\GroupInvitationAlreadyRevoked;
-use App\Exception\GroupInvitationExpired;
+use App\Exception\CompetitionInvitationAlreadyAccepted;
+use App\Exception\CompetitionInvitationAlreadyRevoked;
+use App\Exception\CompetitionInvitationExpired;
 use App\Exception\InvitationAlreadyRegistered;
 use App\Exception\NicknameAlreadyTaken;
 use App\Exception\UserAlreadyExists;
@@ -174,14 +174,14 @@ final class InvitationForm extends AbstractController
         if (InvitationKind::Email === $this->context->kind) {
             $this->security->login($user);
 
-            return $this->acceptanceService->joinGroupAsUser($this->context, $user);
+            return $this->acceptanceService->joinCompetitionAsUser($this->context, $user);
         }
 
         // Shareable-link: the new user is unverified; remember the intent so LoginSubscriber
         // completes the join after they verify their email.
         $this->acceptanceService->rememberIntent($this->context);
         $this->security->login($user);
-        $this->acceptanceService->flash('success', 'Registrace proběhla úspěšně. Potvrď e-mail, ať tě přidáme do skupiny.');
+        $this->acceptanceService->flash('success', 'Registrace proběhla úspěšně. Potvrď e-mail, ať tě přidáme do soutěže.');
 
         return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
     }
@@ -225,7 +225,7 @@ final class InvitationForm extends AbstractController
 
         $this->security->login($user);
 
-        return $this->acceptanceService->joinGroupAsUser($this->context, $user);
+        return $this->acceptanceService->joinCompetitionAsUser($this->context, $user);
     }
 
     private function handleCompleteRegistration(InvitationFormData $data): ?Response
@@ -241,9 +241,9 @@ final class InvitationForm extends AbstractController
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
 
-            if ($previous instanceof GroupInvitationExpired
-                || $previous instanceof GroupInvitationAlreadyAccepted
-                || $previous instanceof GroupInvitationAlreadyRevoked
+            if ($previous instanceof CompetitionInvitationExpired
+                || $previous instanceof CompetitionInvitationAlreadyAccepted
+                || $previous instanceof CompetitionInvitationAlreadyRevoked
             ) {
                 return $this->acceptanceService->renderStatus($this->acceptanceService->refreshContext($this->context));
             }
@@ -263,11 +263,11 @@ final class InvitationForm extends AbstractController
         \assert($user instanceof User, 'User with invitation email must exist after completing registration.');
 
         $this->security->login($user);
-        $this->acceptanceService->flash('success', 'Registrace dokončena, vítej ve skupině!');
+        $this->acceptanceService->flash('success', 'Registrace dokončena, vítej v soutěži!');
 
         return new RedirectResponse($this->urlGenerator->generate(
-            'portal_group_detail',
-            ['id' => $this->context->groupId->toRfc4122()],
+            'portal_competition_detail',
+            ['id' => $this->context->competitionId->toRfc4122()],
         ));
     }
 

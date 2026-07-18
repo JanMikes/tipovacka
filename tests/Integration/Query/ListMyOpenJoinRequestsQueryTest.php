@@ -18,8 +18,8 @@ final class ListMyOpenJoinRequestsQueryTest extends IntegrationTestCase
         ));
 
         self::assertCount(1, $result);
-        self::assertSame(AppFixtures::PUBLIC_GROUP_NAME, $result[0]->groupName);
-        self::assertSame(AppFixtures::PUBLIC_TOURNAMENT_NAME, $result[0]->tournamentName);
+        self::assertSame(AppFixtures::PUBLIC_COMPETITION_NAME, $result[0]->competitionName);
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, $result[0]->matchSourceName);
     }
 
     public function testEmptyForUserWithoutRequests(): void

@@ -22,7 +22,7 @@ final readonly class GetSportMatchDetailQuery
         $sportMatch = $this->entityManager->createQueryBuilder()
             ->select('m', 't')
             ->from(SportMatch::class, 'm')
-            ->innerJoin('m.tournament', 't')
+            ->innerJoin('m.matchSource', 't')
             ->where('m.id = :id')
             ->andWhere('m.deletedAt IS NULL')
             ->setParameter('id', $query->sportMatchId)
@@ -35,8 +35,8 @@ final readonly class GetSportMatchDetailQuery
 
         return new SportMatchDetailResult(
             id: $sportMatch->id,
-            tournamentId: $sportMatch->tournament->id,
-            tournamentName: $sportMatch->tournament->name,
+            matchSourceId: $sportMatch->matchSource->id,
+            matchSourceName: $sportMatch->matchSource->name,
             homeTeam: $sportMatch->homeTeam,
             awayTeam: $sportMatch->awayTeam,
             kickoffAt: $sportMatch->kickoffAt,

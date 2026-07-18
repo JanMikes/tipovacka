@@ -1,4 +1,4 @@
-{# @var illustration string 'leaderboard'|'tournaments'|'matches'|'search' #}
+{# @var illustration string 'leaderboard'|'match_sources'|'matches'|'search' #}
 {# @var title string #}
 {# @var body string #}
 {# @var ctaLabel string|null #}
@@ -8,7 +8,7 @@
 
 {% props illustration = null, title, body, ctaLabel = null, ctaPath = null, secondaryLabel = null, secondaryPath = null %}
 
-{% set icon = { leaderboard: 'trophy', tournaments: 'trophy', matches: 'calendar', search: 'search' }[illustration] ?? 'sparkles' %}
+{% set icon = { leaderboard: 'trophy', match_sources: 'trophy', matches: 'calendar', search: 'search' }[illustration] ?? 'sparkles' %}
 
 <div{{ attributes.defaults({class: 'mx-auto flex max-w-md flex-col items-center py-14 text-center'}) }}>
     <span class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-accent-300">

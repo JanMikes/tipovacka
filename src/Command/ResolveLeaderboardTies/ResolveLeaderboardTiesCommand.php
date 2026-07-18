@@ -12,7 +12,7 @@ final readonly class ResolveLeaderboardTiesCommand
      * @param list<Uuid> $orderedUserIds
      */
     public function __construct(
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $resolverId,
         public array $orderedUserIds,
     ) {

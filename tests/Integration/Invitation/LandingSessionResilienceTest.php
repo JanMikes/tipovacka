@@ -33,7 +33,7 @@ final class LandingSessionResilienceTest extends WebTestCase
         // No prior request, no session state — submit straight against the freshly-mounted component.
         $component = $this->createLiveComponent('Auth:InvitationForm', [
             'kind' => InvitationKind::ShareableLink->value,
-            'token' => AppFixtures::VERIFIED_GROUP_LINK_TOKEN,
+            'token' => AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN,
         ], $client);
 
         $response = $component->submitForm([
@@ -44,15 +44,15 @@ final class LandingSessionResilienceTest extends WebTestCase
         ], 'submit')->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/skupiny/'.AppFixtures::VERIFIED_GROUP_ID, $response->headers->get('Location'));
+        self::assertSame('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
-            ->andWhere('m.group = :g')
+            ->andWhere('m.competition = :g')
             ->setParameter('u', $admin->id)
-            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->getQuery()->getResult();
 
         self::assertCount(1, $memberships);

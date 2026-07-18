@@ -20,32 +20,32 @@ class MembershipRepository
         $this->entityManager->persist($membership);
     }
 
-    public function findActiveMembership(Uuid $userId, Uuid $groupId): ?Membership
+    public function findActiveMembership(Uuid $userId, Uuid $competitionId): ?Membership
     {
         return $this->entityManager->createQueryBuilder()
             ->select('m', 'g', 'u')
             ->from(Membership::class, 'm')
-            ->innerJoin('m.group', 'g')
+            ->innerJoin('m.competition', 'g')
             ->innerJoin('m.user', 'u')
             ->where('m.user = :userId')
-            ->andWhere('m.group = :groupId')
+            ->andWhere('m.competition = :competitionId')
             ->andWhere('m.leftAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
-    public function hasActiveMembership(Uuid $userId, Uuid $groupId): bool
+    public function hasActiveMembership(Uuid $userId, Uuid $competitionId): bool
     {
         $result = $this->entityManager->createQueryBuilder()
             ->select('1')
             ->from(Membership::class, 'm')
             ->where('m.user = :userId')
-            ->andWhere('m.group = :groupId')
+            ->andWhere('m.competition = :competitionId')
             ->andWhere('m.leftAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -53,18 +53,18 @@ class MembershipRepository
         return null !== $result;
     }
 
-    public function hasActiveMembershipInTournament(Uuid $userId, Uuid $tournamentId): bool
+    public function hasActiveMembershipInMatchSource(Uuid $userId, Uuid $matchSourceId): bool
     {
         $result = $this->entityManager->createQueryBuilder()
             ->select('1')
             ->from(Membership::class, 'm')
-            ->innerJoin('m.group', 'g')
+            ->innerJoin('m.competition', 'g')
             ->where('m.user = :userId')
-            ->andWhere('g.tournament = :tournamentId')
+            ->andWhere('g.matchSource = :matchSourceId')
             ->andWhere('m.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('tournamentId', $tournamentId)
+            ->setParameter('matchSourceId', $matchSourceId)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -75,16 +75,16 @@ class MembershipRepository
     /**
      * @return list<Membership>
      */
-    public function findActiveByGroup(Uuid $groupId): array
+    public function findActiveByCompetition(Uuid $competitionId): array
     {
         /** @var list<Membership> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('m', 'u')
             ->from(Membership::class, 'm')
             ->innerJoin('m.user', 'u')
-            ->where('m.group = :groupId')
+            ->where('m.competition = :competitionId')
             ->andWhere('m.leftAt IS NULL')
-            ->setParameter('groupId', $groupId)
+            ->setParameter('competitionId', $competitionId)
             ->orderBy('m.joinedAt', 'ASC')
             ->addOrderBy('m.id', 'ASC')
             ->getQuery()
@@ -102,8 +102,8 @@ class MembershipRepository
         $result = $this->entityManager->createQueryBuilder()
             ->select('m', 'g', 't', 'o')
             ->from(Membership::class, 'm')
-            ->innerJoin('m.group', 'g')
-            ->innerJoin('g.tournament', 't')
+            ->innerJoin('m.competition', 'g')
+            ->innerJoin('g.matchSource', 't')
             ->innerJoin('g.owner', 'o')
             ->where('m.user = :userId')
             ->andWhere('m.leftAt IS NULL')

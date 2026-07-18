@@ -9,7 +9,7 @@ use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
 use App\Exception\NotAMember;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
@@ -25,7 +25,7 @@ final readonly class SubmitGuessHandler
     public function __construct(
         private GuessRepository $guessRepository,
         private SportMatchRepository $sportMatchRepository,
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
         private EffectiveTipDeadlineResolver $deadlineResolver,
@@ -41,28 +41,28 @@ final readonly class SubmitGuessHandler
         }
 
         $user = $this->userRepository->get($command->userId);
-        $group = $this->groupRepository->get($command->groupId);
+        $competition = $this->competitionRepository->get($command->competitionId);
         $sportMatch = $this->sportMatchRepository->get($command->sportMatchId);
 
-        if (!$this->membershipRepository->hasActiveMembership($user->id, $group->id)) {
-            throw NotAMember::of($group->id);
+        if (!$this->membershipRepository->hasActiveMembership($user->id, $competition->id)) {
+            throw NotAMember::of($competition->id);
         }
 
-        if (!$sportMatch->tournament->id->equals($group->tournament->id)) {
-            throw NotAMember::of($group->id);
+        if (!$sportMatch->matchSource->id->equals($competition->matchSource->id)) {
+            throw NotAMember::of($competition->id);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($group, $sportMatch);
+        $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
 
         if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();
         }
 
-        $existing = $this->guessRepository->findActiveByUserMatchGroup(
+        $existing = $this->guessRepository->findActiveByUserMatchCompetition(
             $user->id,
             $sportMatch->id,
-            $group->id,
+            $competition->id,
         );
 
         if (null !== $existing) {
@@ -73,7 +73,7 @@ final readonly class SubmitGuessHandler
             id: $this->identity->next(),
             user: $user,
             sportMatch: $sportMatch,
-            group: $group,
+            competition: $competition,
             homeScore: $command->homeScore,
             awayScore: $command->awayScore,
             submittedAt: $now,

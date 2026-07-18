@@ -1,6 +1,6 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Zápasy — {{ tournament.name }} — Admin{% endblock %}
+{% block title %}Zápasy — {{ match_source.name }} — Admin{% endblock %}
 
 {% set _state_pills = {
     'scheduled': {label: 'Naplánován', variant: 'soon'},
@@ -12,25 +12,25 @@
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_tournament_list') }}" class="transition-colors hover:text-accent-300">Turnaje</a></li>
+    <li><a href="{{ path('admin_match_source_list') }}" class="transition-colors hover:text-accent-300">Turnaje</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_tournament_edit', {id: tournament.id.toRfc4122}) }}" class="transition-colors hover:text-accent-300">{{ tournament.name }}</a></li>
+    <li><a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="transition-colors hover:text-accent-300">{{ match_source.name }}</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
     <li class="font-medium text-white/80" aria-current="page">Zápasy</li>
 {% endblock %}
 
 {% block admin_title %}Zápasy{% endblock %}
-{% block admin_subtitle %}{{ tournament.name }}{% endblock %}
+{% block admin_subtitle %}{{ match_source.name }}{% endblock %}
 {% block admin_actions %}
-    <a href="{{ path('admin_tournament_list') }}" class="btn btn-ghost btn-sm">
+    <a href="{{ path('admin_match_source_list') }}" class="btn btn-ghost btn-sm">
         <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
         Zpět
     </a>
-    <a href="{{ path('portal_sport_match_create', {tournamentId: tournament.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+    <a href="{{ path('portal_sport_match_create', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
         <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
         Nový zápas
     </a>
-    <a href="{{ path('portal_sport_match_import', {tournamentId: tournament.id.toRfc4122}) }}" class="btn btn-success btn-sm">
+    <a href="{{ path('portal_sport_match_import', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-success btn-sm">
         <twig:ux:icon name="lucide:table-2" class="h-4 w-4" />
         Nahrát z Excelu/CSV
     </a>

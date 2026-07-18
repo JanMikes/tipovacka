@@ -9,13 +9,13 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Carrier DTO for Guess authorization decisions that need both a SportMatch
- * and the Group scope (membership) under which the guess is being performed.
+ * and the Competition scope (membership) under which the guess is being performed.
  */
 final readonly class GuessVotingContext
 {
     public function __construct(
         public SportMatch $sportMatch,
-        public Uuid $groupId,
+        public Uuid $competitionId,
     ) {
     }
 }

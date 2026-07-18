@@ -7,12 +7,12 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <twig:Breadcrumbs :items="[
             {label: 'Nástěnka', path: path('portal_dashboard')},
-            {label: tournament.name, path: path('portal_tournament_detail', {id: tournament.id.toRfc4122})},
+            {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
             {label: 'Import zápasů'},
         ]" />
 
         <header class="mb-8">
-            <p class="eyebrow mb-3">{{ tournament.name }}</p>
+            <p class="eyebrow mb-3">{{ match_source.name }}</p>
             <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">Import zápasů z Excelu nebo CSV</h1>
         </header>
 
@@ -92,10 +92,10 @@
 
                     {% if preview.errors|length == 0 %}
                         <form method="post"
-                              action="{{ path('portal_sport_match_import_commit', {tournamentId: tournament.id.toRfc4122}) }}"
+                              action="{{ path('portal_sport_match_import_commit', {matchSourceId: match_source.id.toRfc4122}) }}"
                               class="mt-6">
                             <input type="hidden" name="_token"
-                                   value="{{ csrf_token('sport_match_import_commit_' ~ tournament.id.toRfc4122) }}">
+                                   value="{{ csrf_token('sport_match_import_commit_' ~ match_source.id.toRfc4122) }}">
                             <button type="submit" class="btn btn-success">
                                 <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                                 Potvrdit import ({{ preview.validRows|length }} zápasů)

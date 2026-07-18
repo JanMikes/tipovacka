@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\BulkImportSportMatches;
 
-use App\Repository\TournamentRepository;
+use App\Repository\MatchSourceRepository;
 use App\Service\SportMatch\SportMatchImporter;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class BulkImportSportMatchesHandler
 {
     public function __construct(
-        private TournamentRepository $tournamentRepository,
+        private MatchSourceRepository $matchSourceRepository,
         private SportMatchImporter $importer,
         private ClockInterface $clock,
     ) {
@@ -21,11 +21,11 @@ final readonly class BulkImportSportMatchesHandler
 
     public function __invoke(BulkImportSportMatchesCommand $command): int
     {
-        $tournament = $this->tournamentRepository->get($command->tournamentId);
+        $matchSource = $this->matchSourceRepository->get($command->matchSourceId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         return $this->importer->commit(
-            tournament: $tournament,
+            matchSource: $matchSource,
             rows: $command->rows,
             now: $now,
         );

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\RevokeShareableLink;
 
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -12,14 +12,14 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class RevokeShareableLinkHandler
 {
     public function __construct(
-        private GroupRepository $groupRepository,
+        private CompetitionRepository $competitionRepository,
         private ClockInterface $clock,
     ) {
     }
 
     public function __invoke(RevokeShareableLinkCommand $command): void
     {
-        $group = $this->groupRepository->get($command->groupId);
-        $group->revokeShareableLinkToken(\DateTimeImmutable::createFromInterface($this->clock->now()));
+        $competition = $this->competitionRepository->get($command->competitionId);
+        $competition->revokeShareableLinkToken(\DateTimeImmutable::createFromInterface($this->clock->now()));
     }
 }

@@ -1,17 +1,17 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Žebříček — {{ group.name }} — {{ brand_name }}{% endblock %}
+{% block title %}Žebříček — {{ competition.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
 <div class="bg-radial mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
+        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
         {label: 'Žebříček'},
     ]" />
 
-    {% if group.tournament.isFinished and winner is defined and winner is not null %}
+    {% if competition.matchSource.isFinished and winner is defined and winner is not null %}
         <section class="surface-accent mb-8 p-6 sm:p-10">
             <picture>
                 <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">
@@ -33,7 +33,7 @@
                     Gratulujeme, {{ winner.nickname }}!
                 </h2>
                 <p class="mt-3 text-base text-white/80 sm:text-lg">
-                    {{ winner.nickname }} vyhrává turnaj <strong class="font-bold text-white">{{ group.tournament.name }}</strong>
+                    {{ winner.nickname }} vyhrává turnaj <strong class="font-bold text-white">{{ competition.matchSource.name }}</strong>
                     s {{ winner.totalPoints }} {{ winner.totalPoints == 1 ? 'bodem' : 'body' }}.
                 </p>
             </div>
@@ -49,26 +49,26 @@
             </h1>
             <p class="mt-2 text-white/70">
                 Soutěž
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ group.name }}</a>
+                <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
             </p>
         </div>
 
         <div class="flex flex-wrap items-end gap-3">
-            {% if my_groups|length > 1 %}
+            {% if my_competitions|length > 1 %}
                 <twig:SoutezSwitcher
-                    :groups="my_groups"
-                    currentId="{{ group.id.toRfc4122 }}"
-                    route="portal_group_leaderboard"
-                    param="groupId"
+                    :competitions="my_competitions"
+                    currentId="{{ competition.id.toRfc4122 }}"
+                    route="portal_competition_leaderboard"
+                    param="competitionId"
                     label="Žebříček soutěže"
                 />
             {% endif %}
-            <a href="{{ path('portal_group_leaderboard_matrix', {groupId: group.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+            <a href="{{ path('portal_competition_leaderboard_matrix', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                 <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />
                 Tabulka
             </a>
-            {% if is_granted('leaderboard_resolve_ties', group) %}
-                <a href="{{ path('portal_group_leaderboard_resolve_ties', {groupId: group.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+            {% if is_granted('leaderboard_resolve_ties', competition) %}
+                <a href="{{ path('portal_competition_leaderboard_resolve_ties', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                     <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
                     Rozřadit shody
                 </a>
@@ -119,6 +119,6 @@
         <twig:Leaderboard:Podium :rows="podium_rows" />
     {% endif %}
 
-    {{ component('Leaderboard:GroupLeaderboard', {group: group}) }}
+    {{ component('Leaderboard:CompetitionLeaderboard', {competition: competition}) }}
 </div>
 {% endblock %}

@@ -36,7 +36,7 @@ final class SoftDeleteController extends AbstractController
         $user = $this->getUser();
 
         $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($id));
-        $tournamentId = $sportMatch->tournament->id->toRfc4122();
+        $matchSourceId = $sportMatch->matchSource->id->toRfc4122();
         $this->denyAccessUnlessGranted(SportMatchVoter::DELETE, $sportMatch);
 
         if (!$this->isCsrfTokenValid('sport_match_delete_'.$sportMatch->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
@@ -52,6 +52,6 @@ final class SoftDeleteController extends AbstractController
 
         $this->addFlash('success', 'Zápas byl smazán.');
 
-        return $this->redirectToRoute('portal_tournament_detail', ['id' => $tournamentId]);
+        return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSourceId]);
     }
 }

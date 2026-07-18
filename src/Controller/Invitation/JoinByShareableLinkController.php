@@ -16,8 +16,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route(
-    '/skupiny/pozvanka/{token}',
-    name: 'group_join_by_link',
+    '/souteze/pozvanka/{token}',
+    name: 'competition_join_by_link',
     requirements: ['token' => '[a-f0-9]{48}'],
     methods: ['GET'],
 )]

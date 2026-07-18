@@ -8,7 +8,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class JoinByPinFormData
 {
-    #[Assert\NotBlank(message: 'Zadejte prosím PIN skupiny.')]
+    #[Assert\NotBlank(message: 'Zadejte prosím PIN soutěže.')]
     #[Assert\Regex(
         pattern: '/^\d{8}$/',
         message: 'PIN musí mít přesně 8 číslic.',

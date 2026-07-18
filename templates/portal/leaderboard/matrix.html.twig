@@ -1,14 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tabulka — {{ group.name }} — {{ brand_name }}{% endblock %}
+{% block title %}Tabulka — {{ competition.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
 <div class="mx-auto w-full max-w-[min(100vw-2rem,120rem)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: group.name, path: path('portal_group_detail', {id: group.id.toRfc4122})},
-        {label: 'Žebříček', path: path('portal_group_leaderboard', {groupId: group.id.toRfc4122})},
+        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Žebříček', path: path('portal_competition_leaderboard', {competitionId: competition.id.toRfc4122})},
         {label: 'Tabulka'},
     ]" />
 
@@ -21,7 +21,7 @@
             </h1>
             <p class="mt-2 text-white/70">
                 Soutěž
-                <a href="{{ path('portal_group_detail', {id: group.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ group.name }}</a>
+                <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
                 — tipy a body za každý zápas, řádek na hráče, sloupec na zápas.
             </p>
         </div>
@@ -93,7 +93,7 @@
                             <th scope="row" class="sticky left-0 z-10 border-b border-r border-white/10 bg-surface-2 px-2 py-3 text-left sm:px-4">
                                 <div class="flex min-w-[132px] items-center gap-2 sm:min-w-[200px] sm:gap-3">
                                     <span class="w-4 text-right text-xs font-bold tabular-nums {{ member.rank == 1 ? 'text-gold' : (member.rank == 2 ? 'text-silver' : (member.rank == 3 ? 'text-bronze' : 'text-white/50')) }} sm:w-6">{{ member.rank }}.</span>
-                                    <a href="{{ path('portal_group_leaderboard_member', {groupId: group.id.toRfc4122, userId: member.userId.toRfc4122}) }}"
+                                    <a href="{{ path('portal_competition_leaderboard_member', {competitionId: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}"
                                        class="min-w-0 flex-1 font-bold text-white transition-colors hover:text-accent-300">
                                         <span class="block truncate">{{ member.nickname }}</span>
                                         {% if member.fullName %}<small class="block truncate text-xs font-light text-white/50">{{ member.fullName }}</small>{% endif %}

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Entity;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
 use App\Entity\User;
+use App\Enum\MatchSourceVisibility;
 use App\Enum\SportMatchState;
-use App\Enum\TournamentVisibility;
 use App\Event\SportMatchCancelled;
 use App\Event\SportMatchCreated;
 use App\Event\SportMatchDeleted;
@@ -36,7 +36,7 @@ final class SportMatchEntityTest extends TestCase
         $this->later = new \DateTimeImmutable('2025-06-16 12:00:00 UTC');
     }
 
-    private function makeTournament(): Tournament
+    private function makeMatchSource(): MatchSource
     {
         $owner = new User(
             id: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -53,27 +53,27 @@ final class SportMatchEntityTest extends TestCase
             name: 'Fotbal',
         );
 
-        $tournament = new Tournament(
-            id: Uuid::fromString(AppFixtures::PRIVATE_TOURNAMENT_ID),
+        $matchSource = new MatchSource(
+            id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner,
-            visibility: TournamentVisibility::Private,
+            visibility: MatchSourceVisibility::Private,
             name: 'T',
             description: null,
             startAt: null,
             endAt: null,
             createdAt: $this->now,
         );
-        $tournament->popEvents();
+        $matchSource->popEvents();
 
-        return $tournament;
+        return $matchSource;
     }
 
     private function makeMatch(): SportMatch
     {
         return new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            tournament: $this->makeTournament(),
+            matchSource: $this->makeMatchSource(),
             homeTeam: 'A',
             awayTeam: 'B',
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
@@ -103,7 +103,7 @@ final class SportMatchEntityTest extends TestCase
     {
         $match = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            tournament: $this->makeTournament(),
+            matchSource: $this->makeMatchSource(),
             homeTeam: 'A',
             awayTeam: 'B',
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),

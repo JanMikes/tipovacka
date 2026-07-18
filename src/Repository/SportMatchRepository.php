@@ -28,7 +28,7 @@ class SportMatchRepository
         return $this->entityManager->createQueryBuilder()
             ->select('m', 't', 'o', 's')
             ->from(SportMatch::class, 'm')
-            ->innerJoin('m.tournament', 't')
+            ->innerJoin('m.matchSource', 't')
             ->innerJoin('t.owner', 'o')
             ->innerJoin('t.sport', 's')
             ->where('m.id = :id')
@@ -45,8 +45,8 @@ class SportMatchRepository
     /**
      * @return list<SportMatch>
      */
-    public function listByTournament(
-        Uuid $tournamentId,
+    public function listByMatchSource(
+        Uuid $matchSourceId,
         ?SportMatchState $state = null,
         ?\DateTimeImmutable $from = null,
         ?\DateTimeImmutable $to = null,
@@ -54,9 +54,9 @@ class SportMatchRepository
         $qb = $this->entityManager->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.tournament = :tournamentId')
+            ->where('m.matchSource = :matchSourceId')
             ->andWhere('m.deletedAt IS NULL')
-            ->setParameter('tournamentId', $tournamentId)
+            ->setParameter('matchSourceId', $matchSourceId)
             ->orderBy('m.kickoffAt', 'ASC')
             ->addOrderBy('m.id', 'ASC');
 
@@ -82,8 +82,8 @@ class SportMatchRepository
     }
 
     /**
-     * All non-deleted, non-cancelled matches across the tournaments of the soutěže
-     * (groups) the user is an active member of — any state (Scheduled / Live /
+     * All non-deleted, non-cancelled matches across the match_sources of the soutěže
+     * (competitions) the user is an active member of — any state (Scheduled / Live /
      * Finished / Postponed). Powers the cross-soutěž "Zápasy" page. Ordered with
      * still-upcoming matches first (soonest kickoff), then past matches (most
      * recent first), so the next match to tip surfaces at the top.
@@ -95,9 +95,9 @@ class SportMatchRepository
         $membershipSubquery = $this->entityManager->createQueryBuilder()
             ->select('1')
             ->from(Membership::class, 'ms')
-            ->innerJoin('ms.group', 'g')
+            ->innerJoin('ms.competition', 'g')
             ->where('ms.user = :userId')
-            ->andWhere('g.tournament = t.id')
+            ->andWhere('g.matchSource = t.id')
             ->andWhere('ms.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->getDQL();
@@ -106,7 +106,7 @@ class SportMatchRepository
         $result = $this->entityManager->createQueryBuilder()
             ->select('m', 't')
             ->from(SportMatch::class, 'm')
-            ->innerJoin('m.tournament', 't')
+            ->innerJoin('m.matchSource', 't')
             ->where('m.state != :cancelled')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
@@ -141,9 +141,9 @@ class SportMatchRepository
         $membershipSubquery = $this->entityManager->createQueryBuilder()
             ->select('1')
             ->from(Membership::class, 'ms')
-            ->innerJoin('ms.group', 'g')
+            ->innerJoin('ms.competition', 'g')
             ->where('ms.user = :userId')
-            ->andWhere('g.tournament = t.id')
+            ->andWhere('g.matchSource = t.id')
             ->andWhere('ms.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->getDQL();
@@ -152,7 +152,7 @@ class SportMatchRepository
         $result = $this->entityManager->createQueryBuilder()
             ->select('m', 't')
             ->from(SportMatch::class, 'm')
-            ->innerJoin('m.tournament', 't')
+            ->innerJoin('m.matchSource', 't')
             ->where('m.state = :state')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.kickoffAt >= :now')

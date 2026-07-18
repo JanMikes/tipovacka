@@ -10,5 +10,5 @@ enum InvitationContextStatus: string
     case Expired = 'expired';
     case Revoked = 'revoked';
     case Accepted = 'accepted';
-    case TournamentFinished = 'tournament_finished';
+    case MatchSourceFinished = 'match_source_finished';
 }

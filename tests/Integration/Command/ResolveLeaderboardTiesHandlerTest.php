@@ -6,7 +6,7 @@ namespace App\Tests\Integration\Command;
 
 use App\Command\ResolveLeaderboardTies\ResolveLeaderboardTiesCommand;
 use App\DataFixtures\AppFixtures;
-use App\Entity\Group;
+use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
@@ -26,7 +26,7 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
         $this->seedSecondMemberWithMatchingPoints();
 
         $this->commandBus()->dispatch(new ResolveLeaderboardTiesCommand(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             resolverId: Uuid::fromString(AppFixtures::ADMIN_ID),
             orderedUserIds: [
                 Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -42,8 +42,8 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
             ->select('r', 'u')
             ->from(LeaderboardTieResolution::class, 'r')
             ->innerJoin('r.user', 'u')
-            ->where('r.group = :groupId')
-            ->setParameter('groupId', Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID))
+            ->where('r.competition = :competitionId')
+            ->setParameter('competitionId', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
             ->orderBy('r.rank', 'ASC')
             ->getQuery()
             ->getResult();
@@ -61,7 +61,7 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
 
         try {
             $this->commandBus()->dispatch(new ResolveLeaderboardTiesCommand(
-                groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
                 resolverId: Uuid::fromString(AppFixtures::ADMIN_ID),
                 orderedUserIds: [
                     Uuid::fromString(AppFixtures::ADMIN_ID),
@@ -81,7 +81,7 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
         $this->seedSecondMemberWithMatchingPoints();
 
         $this->commandBus()->dispatch(new ResolveLeaderboardTiesCommand(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             resolverId: Uuid::fromString(AppFixtures::ADMIN_ID),
             orderedUserIds: [
                 Uuid::fromString(AppFixtures::ADMIN_ID),
@@ -90,7 +90,7 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
         ));
 
         $this->commandBus()->dispatch(new ResolveLeaderboardTiesCommand(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             resolverId: Uuid::fromString(AppFixtures::ADMIN_ID),
             orderedUserIds: [
                 Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -106,8 +106,8 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
             ->select('r', 'u')
             ->from(LeaderboardTieResolution::class, 'r')
             ->innerJoin('r.user', 'u')
-            ->where('r.group = :groupId')
-            ->setParameter('groupId', Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID))
+            ->where('r.competition = :competitionId')
+            ->setParameter('competitionId', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
             ->orderBy('r.rank', 'ASC')
             ->getQuery()
             ->getResult();
@@ -125,15 +125,15 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
         $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
         self::assertNotNull($verified);
 
-        $publicGroup = $em->find(Group::class, Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID));
-        self::assertNotNull($publicGroup);
+        $publicCompetition = $em->find(Competition::class, Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertNotNull($publicCompetition);
 
         $finishedMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_FINISHED_ID));
         self::assertNotNull($finishedMatch);
 
         $membership = new Membership(
             id: Uuid::v7(),
-            group: $publicGroup,
+            competition: $publicCompetition,
             user: $verified,
             joinedAt: $now,
         );
@@ -144,7 +144,7 @@ final class ResolveLeaderboardTiesHandlerTest extends IntegrationTestCase
             id: Uuid::v7(),
             user: $verified,
             sportMatch: $finishedMatch,
-            group: $publicGroup,
+            competition: $publicCompetition,
             homeScore: 4,
             awayScore: 2,
             submittedAt: $now,

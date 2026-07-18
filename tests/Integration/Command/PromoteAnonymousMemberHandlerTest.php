@@ -6,7 +6,7 @@ namespace App\Tests\Integration\Command;
 
 use App\Command\PromoteAnonymousMember\PromoteAnonymousMemberCommand;
 use App\DataFixtures\AppFixtures;
-use App\Entity\GroupInvitation;
+use App\Entity\CompetitionInvitation;
 use App\Entity\User;
 use App\Exception\UserAlreadyExists;
 use App\Exception\UserAlreadyPromoted;
@@ -22,7 +22,7 @@ final class PromoteAnonymousMemberHandlerTest extends IntegrationTestCase
     {
         $envelope = $this->commandBus()->dispatch(new PromoteAnonymousMemberCommand(
             userId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             actorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             email: '  FrantA@example.COM  ',
         ));
@@ -30,7 +30,7 @@ final class PromoteAnonymousMemberHandlerTest extends IntegrationTestCase
         $stamp = $envelope->last(HandledStamp::class);
         self::assertNotNull($stamp);
         $invitation = $stamp->getResult();
-        self::assertInstanceOf(GroupInvitation::class, $invitation);
+        self::assertInstanceOf(CompetitionInvitation::class, $invitation);
         self::assertSame('franta@example.com', $invitation->email);
 
         $em = $this->entityManager();
@@ -49,7 +49,7 @@ final class PromoteAnonymousMemberHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new PromoteAnonymousMemberCommand(
                 userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 actorId: Uuid::fromString(AppFixtures::ADMIN_ID),
                 email: 'new@example.com',
             ));
@@ -64,7 +64,7 @@ final class PromoteAnonymousMemberHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new PromoteAnonymousMemberCommand(
                 userId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 actorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
                 email: AppFixtures::ADMIN_EMAIL,
             ));
@@ -79,7 +79,7 @@ final class PromoteAnonymousMemberHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new PromoteAnonymousMemberCommand(
                 userId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 actorId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
                 email: 'new@example.com',
             ));

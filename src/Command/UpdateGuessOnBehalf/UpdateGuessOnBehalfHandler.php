@@ -38,8 +38,8 @@ final readonly class UpdateGuessOnBehalfHandler
 
         $isAdmin = in_array(UserRole::ADMIN->value, $actingUser->getRoles(), true);
 
-        if (!$isAdmin && !$actingUser->id->equals($guess->group->owner->id)) {
-            throw new AccessDeniedException('Only the group owner or an admin can edit a member\'s guess.');
+        if (!$isAdmin && !$actingUser->id->equals($guess->competition->owner->id)) {
+            throw new AccessDeniedException('Only the competition owner or an admin can edit a member\'s guess.');
         }
 
         if (null !== $guess->deletedAt) {
@@ -47,7 +47,7 @@ final readonly class UpdateGuessOnBehalfHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($guess->group, $guess->sportMatch);
+        $deadline = $this->deadlineResolver->resolve($guess->competition, $guess->sportMatch);
 
         if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
             throw GuessDeadlinePassed::create();

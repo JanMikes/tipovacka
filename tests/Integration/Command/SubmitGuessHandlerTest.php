@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
-use App\Command\SetGroupMatchDeadline\SetGroupMatchDeadlineCommand;
+use App\Command\SetCompetitionMatchDeadline\SetCompetitionMatchDeadlineCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
-use App\Command\UpdateGroup\UpdateGroupCommand;
+use App\Command\UpdateCompetition\UpdateCompetitionCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Guess;
 use App\Exception\GuessAlreadyExists;
@@ -23,7 +23,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
     {
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
@@ -55,7 +55,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -69,12 +69,12 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
 
     public function testFailsOnDuplicateGuess(): void
     {
-        // Fixture already has admin guessing on MATCH_FINISHED_ID in PUBLIC_GROUP.
+        // Fixture already has admin guessing on MATCH_FINISHED_ID in PUBLIC_COMPETITION.
         // But MATCH_FINISHED_ID is finished — so instead let's create a fresh guess,
         // then try again.
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
@@ -85,7 +85,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 3,
                 awayScore: 2,
@@ -105,7 +105,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::ADMIN_ID),
-                groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_LIVE_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -117,13 +117,13 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         }
     }
 
-    public function testRejectsWhenGroupDefaultDeadlinePassed(): void
+    public function testRejectsWhenCompetitionDefaultDeadlinePassed(): void
     {
-        // Now is fixed at 2025-06-15 12:00 UTC; set group deadline a day earlier.
-        $this->commandBus()->dispatch(new UpdateGroupCommand(
+        // Now is fixed at 2025-06-15 12:00 UTC; set competition deadline a day earlier.
+        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            name: AppFixtures::VERIFIED_GROUP_NAME,
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            name: AppFixtures::VERIFIED_COMPETITION_NAME,
             description: null,
             hideOthersTipsBeforeDeadline: false,
             tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00:00'),
@@ -134,7 +134,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -148,9 +148,9 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
 
     public function testRejectsWhenPerMatchOverrideDeadlinePassed(): void
     {
-        $this->commandBus()->dispatch(new SetGroupMatchDeadlineCommand(
+        $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             deadline: new \DateTimeImmutable('2025-06-14 09:00:00'),
         ));
@@ -160,7 +160,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: 1,
                 awayScore: 0,
@@ -172,27 +172,27 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         }
     }
 
-    public function testOverridePushesDeadlinePastNowEvenIfGroupDefaultPassed(): void
+    public function testOverridePushesDeadlinePastNowEvenIfCompetitionDefaultPassed(): void
     {
-        // Group default in past, override pushes deadline to the future (still ≤ kickoff).
-        $this->commandBus()->dispatch(new UpdateGroupCommand(
+        // Competition default in past, override pushes deadline to the future (still ≤ kickoff).
+        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
-            name: AppFixtures::VERIFIED_GROUP_NAME,
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            name: AppFixtures::VERIFIED_COMPETITION_NAME,
             description: null,
             hideOthersTipsBeforeDeadline: false,
             tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00:00'),
         ));
-        $this->commandBus()->dispatch(new SetGroupMatchDeadlineCommand(
+        $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             deadline: new \DateTimeImmutable('2025-06-20 17:30:00'),
         ));
 
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
@@ -221,7 +221,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-                groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
                 sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
                 homeScore: -1,
                 awayScore: 0,

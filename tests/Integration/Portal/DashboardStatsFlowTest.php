@@ -35,7 +35,7 @@ final class DashboardStatsFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        // The verified user belongs to VERIFIED_GROUP, which has no evaluated tips.
+        // The verified user belongs to VERIFIED_COMPETITION, which has no evaluated tips.
         $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
         self::assertNotNull($verified);
         $client->loginUser($verified);

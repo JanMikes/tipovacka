@@ -10,7 +10,7 @@ final readonly class SportMatchCreated
 {
     public function __construct(
         public Uuid $sportMatchId,
-        public Uuid $tournamentId,
+        public Uuid $matchSourceId,
         public string $homeTeam,
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,

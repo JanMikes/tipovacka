@@ -72,7 +72,7 @@ final class GuessEvaluationRepository
         }
     }
 
-    public function countForTournament(Uuid $tournamentId): int
+    public function countForMatchSource(Uuid $matchSourceId): int
     {
         /** @var int $count */
         $count = $this->entityManager->createQueryBuilder()
@@ -80,8 +80,8 @@ final class GuessEvaluationRepository
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->where('m.tournament = :tournamentId')
-            ->setParameter('tournamentId', $tournamentId)
+            ->where('m.matchSource = :matchSourceId')
+            ->setParameter('matchSourceId', $matchSourceId)
             ->getQuery()
             ->getSingleScalarResult();
 
@@ -91,7 +91,7 @@ final class GuessEvaluationRepository
     /**
      * @return list<GuessEvaluation>
      */
-    public function listForTournament(Uuid $tournamentId): array
+    public function listForMatchSource(Uuid $matchSourceId): array
     {
         /** @var list<GuessEvaluation> $result */
         $result = $this->entityManager->createQueryBuilder()
@@ -100,15 +100,15 @@ final class GuessEvaluationRepository
             ->innerJoin('e.guess', 'g')
             ->innerJoin('g.sportMatch', 'm')
             ->leftJoin('e.rulePoints', 'rp')
-            ->where('m.tournament = :tournamentId')
-            ->setParameter('tournamentId', $tournamentId)
+            ->where('m.matchSource = :matchSourceId')
+            ->setParameter('matchSourceId', $matchSourceId)
             ->getQuery()
             ->getResult();
 
         return $result;
     }
 
-    public function deleteAllForTournament(Uuid $tournamentId): void
+    public function deleteAllForMatchSource(Uuid $matchSourceId): void
     {
         /** @var list<GuessEvaluation> $evaluations */
         $evaluations = $this->entityManager->createQueryBuilder()
@@ -116,8 +116,8 @@ final class GuessEvaluationRepository
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
             ->innerJoin('g.sportMatch', 'm')
-            ->where('m.tournament = :tournamentId')
-            ->setParameter('tournamentId', $tournamentId)
+            ->where('m.matchSource = :matchSourceId')
+            ->setParameter('matchSourceId', $matchSourceId)
             ->getQuery()
             ->getResult();
 

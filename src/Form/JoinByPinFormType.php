@@ -17,7 +17,7 @@ final class JoinByPinFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('pin', TextType::class, [
-            'label' => 'PIN skupiny (8 číslic)',
+            'label' => 'PIN soutěže (8 číslic)',
             'attr' => [
                 'placeholder' => '12345678',
                 'inputmode' => 'numeric',

@@ -14,7 +14,7 @@ final class GetMemberLeaderboardBreakdownQueryTest extends IntegrationTestCase
     public function testAdminBreakdownReturnsFinishedMatchesWithEvaluation(): void
     {
         $result = $this->queryBus()->handle(new GetMemberLeaderboardBreakdown(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             userId: Uuid::fromString(AppFixtures::ADMIN_ID),
         ));
 
@@ -36,7 +36,7 @@ final class GetMemberLeaderboardBreakdownQueryTest extends IntegrationTestCase
     public function testUserWithoutGuessStillSeesFinishedMatchesAsEmpty(): void
     {
         $result = $this->queryBus()->handle(new GetMemberLeaderboardBreakdown(
-            groupId: Uuid::fromString(AppFixtures::PUBLIC_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
             userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
         ));
 

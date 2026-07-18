@@ -16,9 +16,9 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'guesses')]
-#[ORM\Index(columns: ['sport_match_id', 'group_id', 'deleted_at'], name: 'IDX_guesses_match_group')]
-#[ORM\Index(columns: ['user_id', 'group_id', 'deleted_at'], name: 'IDX_guesses_user_group')]
-#[ORM\UniqueConstraint(name: 'UIDX_guesses_active', columns: ['user_id', 'sport_match_id', 'group_id'], options: ['where' => '(deleted_at IS NULL)'])]
+#[ORM\Index(columns: ['sport_match_id', 'competition_id', 'deleted_at'], name: 'IDX_guesses_match_competition')]
+#[ORM\Index(columns: ['user_id', 'competition_id', 'deleted_at'], name: 'IDX_guesses_user_competition')]
+#[ORM\UniqueConstraint(name: 'UIDX_guesses_active', columns: ['user_id', 'sport_match_id', 'competition_id'], options: ['where' => '(deleted_at IS NULL)'])]
 class Guess implements EntityWithEvents, SoftDeletable
 {
     use HasEvents;
@@ -47,9 +47,9 @@ class Guess implements EntityWithEvents, SoftDeletable
         #[ORM\ManyToOne(targetEntity: SportMatch::class)]
         #[ORM\JoinColumn(name: 'sport_match_id', referencedColumnName: 'id', nullable: false)]
         private(set) SportMatch $sportMatch,
-        #[ORM\ManyToOne(targetEntity: Group::class)]
-        #[ORM\JoinColumn(name: 'group_id', referencedColumnName: 'id', nullable: false)]
-        private(set) Group $group,
+        #[ORM\ManyToOne(targetEntity: Competition::class)]
+        #[ORM\JoinColumn(name: 'competition_id', referencedColumnName: 'id', nullable: false)]
+        private(set) Competition $competition,
         int $homeScore,
         int $awayScore,
         #[ORM\Column]
@@ -69,7 +69,7 @@ class Guess implements EntityWithEvents, SoftDeletable
             guessId: $this->id,
             userId: $this->user->id,
             sportMatchId: $this->sportMatch->id,
-            groupId: $this->group->id,
+            competitionId: $this->competition->id,
             homeScore: $this->homeScore,
             awayScore: $this->awayScore,
             occurredOn: $this->submittedAt,

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Query\GetInvitationByToken;
 
-use App\Repository\GroupInvitationRepository;
+use App\Repository\CompetitionInvitationRepository;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class GetInvitationByTokenQuery
 {
     public function __construct(
-        private GroupInvitationRepository $invitationRepository,
+        private CompetitionInvitationRepository $invitationRepository,
     ) {
     }
 
@@ -21,8 +21,8 @@ final readonly class GetInvitationByTokenQuery
 
         return new InvitationLandingResult(
             token: $invitation->token,
-            groupName: $invitation->group->name,
-            tournamentName: $invitation->group->tournament->name,
+            competitionName: $invitation->competition->name,
+            matchSourceName: $invitation->competition->matchSource->name,
             inviterNickname: $invitation->inviter->displayName,
             isExpired: $invitation->isExpiredAt($query->now),
             isAccepted: $invitation->isAccepted,

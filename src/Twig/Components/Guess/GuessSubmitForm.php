@@ -10,7 +10,7 @@ use App\Command\UpdateGuess\UpdateGuessCommand;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Repository\GroupRepository;
+use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
@@ -39,7 +39,7 @@ final class GuessSubmitForm
     public SportMatch $sportMatch;
 
     #[LiveProp]
-    public string $groupId = '';
+    public string $competitionId = '';
 
     #[LiveProp(writable: true)]
     #[Assert\GreaterThanOrEqual(0)]
@@ -60,7 +60,7 @@ final class GuessSubmitForm
     public function __construct(
         private readonly Security $security,
         private readonly GuessRepository $guessRepository,
-        private readonly GroupRepository $groupRepository,
+        private readonly CompetitionRepository $competitionRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
         #[Autowire(service: 'command.bus')]
@@ -90,8 +90,8 @@ final class GuessSubmitForm
             }
 
             $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-            $group = $this->groupRepository->get(Uuid::fromString($this->groupId));
-            $deadline = $this->deadlineResolver->resolve($group, $this->sportMatch);
+            $competition = $this->competitionRepository->get(Uuid::fromString($this->competitionId));
+            $deadline = $this->deadlineResolver->resolve($competition, $this->sportMatch);
 
             return $now >= $deadline;
         }
@@ -109,10 +109,10 @@ final class GuessSubmitForm
             return null;
         }
 
-        return $this->guessRepository->findActiveByUserMatchGroup(
+        return $this->guessRepository->findActiveByUserMatchCompetition(
             $user->id,
             $this->sportMatch->id,
-            Uuid::fromString($this->groupId),
+            Uuid::fromString($this->competitionId),
         );
     }
 
@@ -157,7 +157,7 @@ final class GuessSubmitForm
             if (null === $existing) {
                 $this->dispatchCommand(new SubmitGuessCommand(
                     userId: $user->id,
-                    groupId: Uuid::fromString($this->groupId),
+                    competitionId: Uuid::fromString($this->competitionId),
                     sportMatchId: $this->sportMatch->id,
                     homeScore: $homeScore,
                     awayScore: $awayScore,

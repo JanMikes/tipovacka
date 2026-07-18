@@ -10,7 +10,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'leaderboard_tie_resolutions')]
-#[ORM\UniqueConstraint(name: 'UIDX_tie_resolution', columns: ['group_id', 'user_id'])]
+#[ORM\UniqueConstraint(name: 'UIDX_tie_resolution', columns: ['competition_id', 'user_id'])]
 class LeaderboardTieResolution
 {
     #[ORM\Column]
@@ -20,9 +20,9 @@ class LeaderboardTieResolution
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
         private(set) Uuid $id,
-        #[ORM\ManyToOne(targetEntity: Group::class)]
-        #[ORM\JoinColumn(name: 'group_id', referencedColumnName: 'id', nullable: false)]
-        private(set) Group $group,
+        #[ORM\ManyToOne(targetEntity: Competition::class)]
+        #[ORM\JoinColumn(name: 'competition_id', referencedColumnName: 'id', nullable: false)]
+        private(set) Competition $competition,
         #[ORM\ManyToOne(targetEntity: User::class)]
         #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false)]
         private(set) User $user,

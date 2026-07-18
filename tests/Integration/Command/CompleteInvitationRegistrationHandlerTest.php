@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Command;
 
 use App\Command\CompleteInvitationRegistration\CompleteInvitationRegistrationCommand;
-use App\Command\SendBulkGroupInvitations\SendBulkGroupInvitationsCommand;
+use App\Command\SendBulkCompetitionInvitations\SendBulkCompetitionInvitationsCommand;
 use App\DataFixtures\AppFixtures;
-use App\Entity\GroupInvitation;
+use App\Entity\CompetitionInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
 use App\Exception\InvitationAlreadyRegistered;
@@ -17,11 +17,11 @@ use Symfony\Component\Uid\Uuid;
 
 final class CompleteInvitationRegistrationHandlerTest extends IntegrationTestCase
 {
-    public function testSetsPasswordMarksVerifiedAndJoinsGroup(): void
+    public function testSetsPasswordMarksVerifiedAndJoinsCompetition(): void
     {
-        $this->commandBus()->dispatch(new SendBulkGroupInvitationsCommand(
+        $this->commandBus()->dispatch(new SendBulkCompetitionInvitationsCommand(
             inviterId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             rawEmails: 'fresh@example.com',
         ));
 
@@ -46,16 +46,16 @@ final class CompleteInvitationRegistrationHandlerTest extends IntegrationTestCas
         $membership = $em->createQueryBuilder()
             ->select('m')->from(Membership::class, 'm')
             ->where('m.user = :u')
-            ->andWhere('m.group = :g')
+            ->andWhere('m.competition = :g')
             ->andWhere('m.leftAt IS NULL')
             ->setParameter('u', $user->id)
-            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID))
+            ->setParameter('g', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
             ->getQuery()->getOneOrNullResult();
         self::assertInstanceOf(Membership::class, $membership);
 
-        /** @var GroupInvitation $invitation */
+        /** @var CompetitionInvitation $invitation */
         $invitation = $em->createQueryBuilder()
-            ->select('i')->from(GroupInvitation::class, 'i')
+            ->select('i')->from(CompetitionInvitation::class, 'i')
             ->where('i.token = :t')->setParameter('t', $token)
             ->getQuery()->getOneOrNullResult();
         self::assertTrue($invitation->isAccepted);
@@ -63,9 +63,9 @@ final class CompleteInvitationRegistrationHandlerTest extends IntegrationTestCas
 
     public function testRejectsWhenUserAlreadyHasPassword(): void
     {
-        $this->commandBus()->dispatch(new SendBulkGroupInvitationsCommand(
+        $this->commandBus()->dispatch(new SendBulkCompetitionInvitationsCommand(
             inviterId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            groupId: Uuid::fromString(AppFixtures::VERIFIED_GROUP_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             rawEmails: AppFixtures::UNVERIFIED_USER_EMAIL, // already has password from fixtures
         ));
 
@@ -89,7 +89,7 @@ final class CompleteInvitationRegistrationHandlerTest extends IntegrationTestCas
     {
         $invitation = $this->entityManager()
             ->createQueryBuilder()
-            ->select('i')->from(GroupInvitation::class, 'i')
+            ->select('i')->from(CompetitionInvitation::class, 'i')
             ->where('i.email = :e')
             ->andWhere('i.acceptedAt IS NULL')
             ->andWhere('i.revokedAt IS NULL')
@@ -99,7 +99,7 @@ final class CompleteInvitationRegistrationHandlerTest extends IntegrationTestCas
             ->getQuery()
             ->getOneOrNullResult();
 
-        \assert($invitation instanceof GroupInvitation);
+        \assert($invitation instanceof CompetitionInvitation);
 
         return $invitation->token;
     }

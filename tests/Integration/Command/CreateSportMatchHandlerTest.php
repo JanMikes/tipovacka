@@ -18,7 +18,7 @@ final class CreateSportMatchHandlerTest extends IntegrationTestCase
         $kickoff = new \DateTimeImmutable('2025-09-10 18:00:00 UTC');
 
         $this->commandBus()->dispatch(new CreateSportMatchCommand(
-            tournamentId: Uuid::fromString(AppFixtures::PUBLIC_TOURNAMENT_ID),
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
             homeTeam: 'Teplice',
             awayTeam: 'Mladá Boleslav',

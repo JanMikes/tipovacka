@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
-use App\Entity\Group;
-use App\Entity\GroupInvitation;
-use App\Entity\GroupJoinRequest;
+use App\Entity\Competition;
+use App\Entity\CompetitionInvitation;
+use App\Entity\CompetitionJoinRequest;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\MatchSource;
+use App\Entity\MatchSourceRuleConfiguration;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
-use App\Entity\Tournament;
-use App\Entity\TournamentRuleConfiguration;
 use App\Entity\User;
-use App\Enum\TournamentVisibility;
+use App\Enum\MatchSourceVisibility;
 use App\Enum\UserRole;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
@@ -61,23 +61,23 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string ANONYMOUS_USER_FIRST_NAME = 'František';
     public const string ANONYMOUS_USER_LAST_NAME = 'Novák';
 
-    public const string PUBLIC_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000001';
-    public const string PUBLIC_TOURNAMENT_NAME = 'Liga mistrů 2026/27';
+    public const string PUBLIC_SOURCE_ID = '019aaaaa-0000-7000-8000-000000000001';
+    public const string PUBLIC_SOURCE_NAME = 'Liga mistrů 2026/27';
 
-    public const string PRIVATE_TOURNAMENT_ID = '019aaaaa-0000-7000-8000-000000000002';
-    public const string PRIVATE_TOURNAMENT_NAME = 'Chlapi u piva';
+    public const string PRIVATE_SOURCE_ID = '019aaaaa-0000-7000-8000-000000000002';
+    public const string PRIVATE_SOURCE_NAME = 'Chlapi u piva';
 
-    public const string VERIFIED_GROUP_ID = '019bbbbb-0000-7000-8000-000000000001';
-    public const string VERIFIED_GROUP_NAME = 'Kámoši u piva';
-    public const string VERIFIED_GROUP_PIN = '12345678';
-    public const string VERIFIED_GROUP_LINK_TOKEN = '019bbbbb00007000800000000000000119bbbbb0000700b1';
+    public const string VERIFIED_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000001';
+    public const string VERIFIED_COMPETITION_NAME = 'Kámoši u piva';
+    public const string VERIFIED_COMPETITION_PIN = '12345678';
+    public const string VERIFIED_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000119bbbbb0000700b1';
 
-    public const string PUBLIC_GROUP_ID = '019bbbbb-0000-7000-8000-000000000002';
-    public const string PUBLIC_GROUP_NAME = 'Admin liga';
-    public const string PUBLIC_GROUP_LINK_TOKEN = '019bbbbb00007000800000000000000219bbbbb0000700b2';
+    public const string PUBLIC_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000002';
+    public const string PUBLIC_COMPETITION_NAME = 'Admin liga';
+    public const string PUBLIC_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000219bbbbb0000700b2';
 
-    public const string VERIFIED_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
-    public const string PUBLIC_GROUP_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
+    public const string VERIFIED_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
+    public const string PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
     public const string ANONYMOUS_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa03';
 
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
@@ -99,7 +99,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
     public const string FIXTURE_TIE_RESOLUTION_ID = '019eeeee-0000-7000-8000-000000000004';
 
-    /** Fixed UUIDs for the 8 rule configurations (4 per tournament, 2 tournaments). */
+    /** Fixed UUIDs for the 8 rule configurations (4 per match source, 2 match sources). */
     public const string PUBLIC_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000001';
     public const string PUBLIC_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000002';
     public const string PUBLIC_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000003';
@@ -204,12 +204,12 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $deleted->popEvents();
         $manager->persist($deleted);
 
-        $public = new Tournament(
-            id: Uuid::fromString(self::PUBLIC_TOURNAMENT_ID),
+        $public = new MatchSource(
+            id: Uuid::fromString(self::PUBLIC_SOURCE_ID),
             sport: $football,
             owner: $admin,
-            visibility: TournamentVisibility::Public,
-            name: self::PUBLIC_TOURNAMENT_NAME,
+            visibility: MatchSourceVisibility::Public,
+            name: self::PUBLIC_SOURCE_NAME,
             description: null,
             startAt: null,
             endAt: null,
@@ -218,12 +218,12 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $public->popEvents();
         $manager->persist($public);
 
-        $private = new Tournament(
-            id: Uuid::fromString(self::PRIVATE_TOURNAMENT_ID),
+        $private = new MatchSource(
+            id: Uuid::fromString(self::PRIVATE_SOURCE_ID),
             sport: $football,
             owner: $verified,
-            visibility: TournamentVisibility::Private,
-            name: self::PRIVATE_TOURNAMENT_NAME,
+            visibility: MatchSourceVisibility::Private,
+            name: self::PRIVATE_SOURCE_NAME,
             description: null,
             startAt: null,
             endAt: null,
@@ -232,29 +232,29 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $private->popEvents();
         $manager->persist($private);
 
-        $verifiedGroup = new Group(
-            id: Uuid::fromString(self::VERIFIED_GROUP_ID),
-            tournament: $private,
+        $verifiedCompetition = new Competition(
+            id: Uuid::fromString(self::VERIFIED_COMPETITION_ID),
+            matchSource: $private,
             owner: $verified,
-            name: self::VERIFIED_GROUP_NAME,
+            name: self::VERIFIED_COMPETITION_NAME,
             description: null,
-            pin: self::VERIFIED_GROUP_PIN,
-            shareableLinkToken: self::VERIFIED_GROUP_LINK_TOKEN,
+            pin: self::VERIFIED_COMPETITION_PIN,
+            shareableLinkToken: self::VERIFIED_COMPETITION_LINK_TOKEN,
             createdAt: $now,
         );
-        $verifiedGroup->popEvents();
-        $manager->persist($verifiedGroup);
+        $verifiedCompetition->popEvents();
+        $manager->persist($verifiedCompetition);
 
         $verifiedOwnerMembership = new Membership(
-            id: Uuid::fromString(self::VERIFIED_GROUP_OWNER_MEMBERSHIP_ID),
-            group: $verifiedGroup,
+            id: Uuid::fromString(self::VERIFIED_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $verifiedCompetition,
             user: $verified,
             joinedAt: $now,
         );
         $verifiedOwnerMembership->popEvents();
         $manager->persist($verifiedOwnerMembership);
 
-        // Anonymous member added by the verified user (group owner) so managers
+        // Anonymous member added by the verified user (competition owner) so managers
         // can practise submitting guesses on someone else's behalf.
         $anonymous = new User(
             id: Uuid::fromString(self::ANONYMOUS_USER_ID),
@@ -274,38 +274,38 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $anonymousMembership = new Membership(
             id: Uuid::fromString(self::ANONYMOUS_MEMBERSHIP_ID),
-            group: $verifiedGroup,
+            competition: $verifiedCompetition,
             user: $anonymous,
             joinedAt: $now,
         );
         $anonymousMembership->popEvents();
         $manager->persist($anonymousMembership);
 
-        $publicGroup = new Group(
-            id: Uuid::fromString(self::PUBLIC_GROUP_ID),
-            tournament: $public,
+        $publicCompetition = new Competition(
+            id: Uuid::fromString(self::PUBLIC_COMPETITION_ID),
+            matchSource: $public,
             owner: $admin,
-            name: self::PUBLIC_GROUP_NAME,
+            name: self::PUBLIC_COMPETITION_NAME,
             description: null,
             pin: null,
-            shareableLinkToken: self::PUBLIC_GROUP_LINK_TOKEN,
+            shareableLinkToken: self::PUBLIC_COMPETITION_LINK_TOKEN,
             createdAt: $now,
         );
-        $publicGroup->popEvents();
-        $manager->persist($publicGroup);
+        $publicCompetition->popEvents();
+        $manager->persist($publicCompetition);
 
         $publicOwnerMembership = new Membership(
-            id: Uuid::fromString(self::PUBLIC_GROUP_OWNER_MEMBERSHIP_ID),
-            group: $publicGroup,
+            id: Uuid::fromString(self::PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $publicCompetition,
             user: $admin,
             joinedAt: $now,
         );
         $publicOwnerMembership->popEvents();
         $manager->persist($publicOwnerMembership);
 
-        $pendingInvitation = new GroupInvitation(
+        $pendingInvitation = new CompetitionInvitation(
             id: Uuid::fromString(self::PENDING_INVITATION_ID),
-            group: $publicGroup,
+            competition: $publicCompetition,
             inviter: $admin,
             email: self::PENDING_INVITATION_EMAIL,
             token: self::PENDING_INVITATION_TOKEN,
@@ -315,10 +315,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $pendingInvitation->popEvents();
         $manager->persist($pendingInvitation);
 
-        // Verified user is not a member of PUBLIC_GROUP, so a pending join request is valid.
-        $pendingJoinRequest = new GroupJoinRequest(
+        // Verified user is not a member of PUBLIC_COMPETITION, so a pending join request is valid.
+        $pendingJoinRequest = new CompetitionJoinRequest(
             id: Uuid::fromString(self::PENDING_JOIN_REQUEST_ID),
-            group: $publicGroup,
+            competition: $publicCompetition,
             user: $verified,
             requestedAt: $now,
         );
@@ -327,7 +327,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $scheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_SCHEDULED_ID),
-            tournament: $public,
+            matchSource: $public,
             homeTeam: 'Sparta Praha',
             awayTeam: 'Slavia Praha',
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
@@ -340,7 +340,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $liveMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_LIVE_ID),
-            tournament: $public,
+            matchSource: $public,
             homeTeam: 'Viktoria Plzeň',
             awayTeam: 'Baník Ostrava',
             kickoffAt: new \DateTimeImmutable('2025-06-15 11:00:00 UTC'),
@@ -353,7 +353,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $finishedMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_FINISHED_ID),
-            tournament: $public,
+            matchSource: $public,
             homeTeam: 'Bohemians 1905',
             awayTeam: 'Jablonec',
             kickoffAt: new \DateTimeImmutable('2025-06-10 18:00:00 UTC'),
@@ -367,7 +367,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $privateScheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PRIVATE_SCHEDULED_ID),
-            tournament: $private,
+            matchSource: $private,
             homeTeam: 'Tygři',
             awayTeam: 'Lvi',
             kickoffAt: new \DateTimeImmutable('2025-06-20 19:00:00 UTC'),
@@ -377,13 +377,13 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $privateScheduledMatch->popEvents();
         $manager->persist($privateScheduledMatch);
 
-        // Admin is a member of PUBLIC_GROUP (owner) and tipped 3:0 on the finished
+        // Admin is a member of PUBLIC_COMPETITION (owner) and tipped 3:0 on the finished
         // MATCH_FINISHED (actual 2:1). Useful baseline for Stage 7 evaluation.
         $adminGuess = new Guess(
             id: Uuid::fromString(self::FIXTURE_GUESS_ID),
             user: $admin,
             sportMatch: $finishedMatch,
-            group: $publicGroup,
+            competition: $publicCompetition,
             homeScore: 3,
             awayScore: 0,
             submittedAt: $now,
@@ -391,7 +391,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $adminGuess->popEvents();
         $manager->persist($adminGuess);
 
-        // Stage 7: rule configurations for both tournaments (defaults).
+        // Stage 7: rule configurations for both match_sources (defaults).
         foreach ([
             [self::PUBLIC_RULE_EXACT_SCORE_ID, $public, 'exact_score', 5],
             [self::PUBLIC_RULE_CORRECT_OUTCOME_ID, $public, 'correct_outcome', 3],
@@ -402,10 +402,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             [self::PRIVATE_RULE_CORRECT_HOME_GOALS_ID, $private, 'correct_home_goals', 1],
             [self::PRIVATE_RULE_CORRECT_AWAY_GOALS_ID, $private, 'correct_away_goals', 1],
         ] as $row) {
-            [$id, $tournament, $identifier, $points] = $row;
-            $configuration = new TournamentRuleConfiguration(
+            [$id, $matchSource, $identifier, $points] = $row;
+            $configuration = new MatchSourceRuleConfiguration(
                 id: Uuid::fromString($id),
-                tournament: $tournament,
+                matchSource: $matchSource,
                 ruleIdentifier: $identifier,
                 enabled: true,
                 points: $points,

@@ -10,7 +10,7 @@ final readonly class PromoteAnonymousMemberCommand
 {
     public function __construct(
         public Uuid $userId,
-        public Uuid $groupId,
+        public Uuid $competitionId,
         public Uuid $actorId,
         public string $email,
     ) {

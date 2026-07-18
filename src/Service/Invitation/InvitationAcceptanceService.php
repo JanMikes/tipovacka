@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service\Invitation;
 
-use App\Command\AcceptGroupInvitation\AcceptGroupInvitationCommand;
-use App\Command\JoinGroupByLink\JoinGroupByLinkCommand;
+use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
+use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\Entity\User;
 use App\Enum\InvitationKind;
 use App\Exception\AlreadyMember;
-use App\Exception\CannotJoinFinishedTournament;
-use App\Exception\GroupInvitationAlreadyAccepted;
-use App\Exception\GroupInvitationAlreadyRevoked;
-use App\Exception\GroupInvitationExpired;
-use App\Service\Group\GroupJoinIntentSession;
+use App\Exception\CannotJoinFinishedMatchSource;
+use App\Exception\CompetitionInvitationAlreadyAccepted;
+use App\Exception\CompetitionInvitationAlreadyRevoked;
+use App\Exception\CompetitionInvitationExpired;
+use App\Service\Competition\CompetitionJoinIntentSession;
 use App\Service\Security\InvitationIntentSession;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -38,7 +38,7 @@ final readonly class InvitationAcceptanceService
         private RequestStack $requestStack,
         private ClockInterface $clock,
         private InvitationIntentSession $invitationIntent,
-        private GroupJoinIntentSession $joinIntent,
+        private CompetitionJoinIntentSession $joinIntent,
         private Environment $twig,
         #[Autowire(service: 'command.bus')]
         private MessageBusInterface $commandBus,
@@ -63,7 +63,7 @@ final readonly class InvitationAcceptanceService
         }
 
         // Email-kind invitations targeted at the user's own address verify the account
-        // implicitly when accepted (see AcceptGroupInvitationHandler), so don't block
+        // implicitly when accepted (see AcceptCompetitionInvitationHandler), so don't block
         // unverified users at the gate. Shareable-link invitations carry no such proof.
         if (!$currentUser->isVerified && InvitationKind::Email !== $context->kind) {
             $this->rememberIntent($context);
@@ -72,35 +72,35 @@ final readonly class InvitationAcceptanceService
             return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
         }
 
-        return $this->joinGroupAsUser($context, $currentUser);
+        return $this->joinCompetitionAsUser($context, $currentUser);
     }
 
     /**
      * Dispatches the join command appropriate for the kind, mapping known business
      * exceptions into flash + appropriate redirects.
      */
-    public function joinGroupAsUser(InvitationContext $context, User $user): Response
+    public function joinCompetitionAsUser(InvitationContext $context, User $user): Response
     {
         try {
             $command = InvitationKind::Email === $context->kind
-                ? new AcceptGroupInvitationCommand(userId: $user->id, token: $context->token)
-                : new JoinGroupByLinkCommand(userId: $user->id, token: $context->token);
+                ? new AcceptCompetitionInvitationCommand(userId: $user->id, token: $context->token)
+                : new JoinCompetitionByLinkCommand(userId: $user->id, token: $context->token);
 
             $this->commandBus->dispatch($command);
 
-            $this->flash('success', 'Byl(a) jsi přidán(a) do skupiny.');
+            $this->flash('success', 'Byl(a) jsi přidán(a) do soutěže.');
         } catch (HandlerFailedException $handlerFailed) {
             $inner = $handlerFailed->getPrevious();
 
             if ($inner instanceof AlreadyMember) {
-                $this->flash('info', 'Ve skupině již jsi.');
-            } elseif ($inner instanceof CannotJoinFinishedTournament) {
-                $this->flash('warning', 'Turnaj této skupiny je již ukončen.');
+                $this->flash('info', 'V soutěži již jsi.');
+            } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
+                $this->flash('warning', 'Turnaj této soutěže je již ukončen.');
 
                 return new RedirectResponse($this->urlGenerator->generate('portal_dashboard'));
-            } elseif ($inner instanceof GroupInvitationExpired
-                || $inner instanceof GroupInvitationAlreadyAccepted
-                || $inner instanceof GroupInvitationAlreadyRevoked
+            } elseif ($inner instanceof CompetitionInvitationExpired
+                || $inner instanceof CompetitionInvitationAlreadyAccepted
+                || $inner instanceof CompetitionInvitationAlreadyRevoked
             ) {
                 return $this->renderStatus($this->refreshContext($context));
             } else {
@@ -109,8 +109,8 @@ final readonly class InvitationAcceptanceService
         }
 
         return new RedirectResponse($this->urlGenerator->generate(
-            'portal_group_detail',
-            ['id' => $context->groupId->toRfc4122()],
+            'portal_competition_detail',
+            ['id' => $context->competitionId->toRfc4122()],
         ));
     }
 
