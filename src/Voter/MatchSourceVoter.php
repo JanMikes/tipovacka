@@ -41,14 +41,14 @@ final class MatchSourceVoter extends Voter
         $currentUser = $token->getUser();
 
         if (!$currentUser instanceof User) {
-            return self::VIEW === $attribute && $subject->isPublic;
+            return self::VIEW === $attribute && $subject->isCurated;
         }
 
         $isAdmin = in_array(UserRole::ADMIN->value, $currentUser->getRoles(), true);
         $isOwner = $currentUser->id->equals($subject->owner->id);
 
         return match ($attribute) {
-            self::VIEW => $subject->isPublic
+            self::VIEW => $subject->isCurated
                 || $isAdmin
                 || $isOwner
                 || $this->membershipRepository->hasActiveMembershipInMatchSource($currentUser->id, $subject->id),
@@ -58,7 +58,7 @@ final class MatchSourceVoter extends Voter
                 && (
                     $isAdmin
                     || $isOwner
-                    || $subject->isPublic
+                    || $subject->isCurated
                     || $this->membershipRepository->hasActiveMembershipInMatchSource($currentUser->id, $subject->id)
                 ),
         };

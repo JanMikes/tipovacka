@@ -266,6 +266,80 @@ final class GetCompetitionLeaderboardQueryTest extends IntegrationTestCase
         self::assertTrue($result->rows[1]->isTieResolvedOverride);
     }
 
+    public function testSubsetLeaderboardCountsOnlySelectedMatches(): void
+    {
+        $em = $this->entityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $secondVerified = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($secondVerified);
+
+        $subsetCompetition = $em->find(Competition::class, Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID));
+        self::assertNotNull($subsetCompetition);
+
+        $finishedMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_FINISHED_ID));
+        self::assertNotNull($finishedMatch);
+
+        $liveMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_LIVE_ID));
+        self::assertNotNull($liveMatch);
+
+        // Evaluated guess on a SELECTED match (MATCH_FINISHED) — must count.
+        $selectedGuess = new Guess(
+            id: Uuid::v7(),
+            user: $secondVerified,
+            sportMatch: $finishedMatch,
+            competition: $subsetCompetition,
+            homeScore: 1,
+            awayScore: 0,
+            submittedAt: $now,
+        );
+        $selectedGuess->popEvents();
+        $em->persist($selectedGuess);
+
+        $selectedEvaluation = new GuessEvaluation(id: Uuid::v7(), guess: $selectedGuess, evaluatedAt: $now);
+        $selectedEvaluation->addRulePoints(new GuessEvaluationRulePoints(
+            id: Uuid::v7(),
+            evaluation: $selectedEvaluation,
+            ruleIdentifier: 'correct_outcome',
+            points: 3,
+        ));
+        $em->persist($selectedEvaluation);
+
+        // Evaluated guess on a NOT-selected match (MATCH_LIVE) — must be ignored.
+        $excludedGuess = new Guess(
+            id: Uuid::v7(),
+            user: $secondVerified,
+            sportMatch: $liveMatch,
+            competition: $subsetCompetition,
+            homeScore: 5,
+            awayScore: 0,
+            submittedAt: $now,
+        );
+        $excludedGuess->popEvents();
+        $em->persist($excludedGuess);
+
+        $excludedEvaluation = new GuessEvaluation(id: Uuid::v7(), guess: $excludedGuess, evaluatedAt: $now);
+        $excludedEvaluation->addRulePoints(new GuessEvaluationRulePoints(
+            id: Uuid::v7(),
+            evaluation: $excludedEvaluation,
+            ruleIdentifier: 'exact_score',
+            points: 5,
+        ));
+        $em->persist($excludedEvaluation);
+
+        $em->flush();
+
+        $result = $this->queryBus()->handle(new GetCompetitionLeaderboard(
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+        ));
+
+        self::assertCount(1, $result->rows);
+        self::assertSame(AppFixtures::SECOND_VERIFIED_USER_NICKNAME, $result->rows[0]->nickname);
+        self::assertSame(3, $result->rows[0]->totalPoints, 'Only the selected match counts.');
+        self::assertSame(1, $result->rows[0]->evaluatedCount);
+        self::assertSame(0, $result->rows[0]->exactCount, 'Exact hit on the unselected match must not count.');
+    }
+
     public function testMemberWithoutGuessesHasZeroPoints(): void
     {
         $em = $this->entityManager();

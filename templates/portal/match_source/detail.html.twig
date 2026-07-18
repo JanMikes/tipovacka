@@ -20,7 +20,7 @@
             </span>
             <div class="min-w-0 flex-1">
                 <div class="mb-2 flex flex-wrap items-center gap-2">
-                    {% if match_source.isPublic %}
+                    {% if match_source.isCurated %}
                         <twig:Pill label="VEŘEJNÝ" variant="accent" />
                     {% else %}
                         <twig:Pill label="SOUKROMÝ" variant="neutral" />
@@ -52,7 +52,6 @@
     </section>
 
     {% set canCreateCompetition = is_granted('match_source_create_competition', match_source) %}
-    {% set canUsePinGate = not canCreateCompetition and app.user and app.user.isVerified and match_source.isActive and match_source.hasCreationPin %}
 
     <div class="mt-8 grid gap-6 lg:grid-cols-12">
 
@@ -119,17 +118,22 @@
                                         {% endif %}
                                         <span class="truncate font-medium text-white">{{ m.awayTeam }}</span>
                                     </div>
-                                    {% if state == 'scheduled' %}
-                                        <span class="pill pill-soon shrink-0">Naplánován</span>
-                                    {% elseif state == 'live' %}
-                                        <span class="pill pill-locked shrink-0">Uzamčeno</span>
-                                    {% elseif state == 'finished' %}
-                                        <span class="pill pill-done shrink-0">Odehrán</span>
-                                    {% elseif state == 'postponed' %}
-                                        <span class="pill pill-warn shrink-0">Odložen</span>
-                                    {% else %}
-                                        <span class="pill pill-locked shrink-0">Zrušen</span>
-                                    {% endif %}
+                                    <span class="flex shrink-0 items-center gap-1.5">
+                                        {% if m.isPlayoff %}
+                                            <span class="pill shrink-0">Playoff</span>
+                                        {% endif %}
+                                        {% if state == 'scheduled' %}
+                                            <span class="pill pill-soon shrink-0">Naplánován</span>
+                                        {% elseif state == 'live' %}
+                                            <span class="pill pill-locked shrink-0">Uzamčeno</span>
+                                        {% elseif state == 'finished' %}
+                                            <span class="pill pill-done shrink-0">Odehrán</span>
+                                        {% elseif state == 'postponed' %}
+                                            <span class="pill pill-warn shrink-0">Odložen</span>
+                                        {% else %}
+                                            <span class="pill pill-locked shrink-0">Zrušen</span>
+                                        {% endif %}
+                                    </span>
                                 </a>
                             </li>
                         {% endfor %}
@@ -147,16 +151,16 @@
                             <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ competitions|length }}</span>
                         {% endif %}
                     </div>
-                    {% if canCreateCompetition or canUsePinGate %}
-                        <a href="{{ path('portal_competition_create', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+                    {% if canCreateCompetition %}
+                        <a href="{{ path('portal_competition_create', {zdroj: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                             <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
-                            {% if canUsePinGate %}Založit s PINem{% else %}Založit soutěž{% endif %}
+                            Založit soutěž
                         </a>
                     {% endif %}
                 </header>
 
                 {% if competitions|length == 0 %}
-                    <p class="px-6 py-10 text-center text-sm text-white/50">V tomto turnaji zatím nejsou žádné soutěže.</p>
+                    <p class="px-6 py-10 text-center text-sm text-white/50">U tohoto zdroje zápasů zatím nejsou žádné soutěže.</p>
                 {% else %}
                     <ul class="divide-y divide-white/[0.06]">
                         {% for g in competitions %}
@@ -185,7 +189,7 @@
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
                         <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-accent-400" />
-                        <h2 class="text-lg font-semibold text-white">Správa turnaje</h2>
+                        <h2 class="text-lg font-semibold text-white">Správa zdroje zápasů</h2>
                     </header>
                     <div class="space-y-2 px-6 py-5">
                         <a href="{{ path('portal_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
@@ -199,12 +203,12 @@
                             <form method="post" action="{{ path('portal_match_source_finish', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
-                                data-confirm-title-value="Ukončit turnaj"
-                                data-confirm-message-value="Opravdu chcete turnaj ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
+                                data-confirm-title-value="Ukončit zdroj zápasů"
+                                data-confirm-message-value="Opravdu chcete zdroj zápasů ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
                                 data-confirm-confirm-label-value="Ano, ukončit">
                                 <input type="hidden" name="_token" value="{{ csrf_token('match_source_finish_' ~ match_source.id.toRfc4122) }}">
                                 <button type="submit" class="btn w-full justify-start border border-draw/30 bg-draw/10 text-draw hover:bg-draw/20">
-                                    <twig:ux:icon name="lucide:award" class="h-4 w-4" />Ukončit turnaj
+                                    <twig:ux:icon name="lucide:award" class="h-4 w-4" />Ukončit zdroj zápasů
                                 </button>
                             </form>
                         {% endif %}
@@ -212,12 +216,12 @@
                         {% if is_granted('match_source_delete', match_source) %}
                             <form method="post" action="{{ path('portal_match_source_delete', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
-                                data-confirm-title-value="Smazat turnaj"
-                                data-confirm-message-value="Opravdu chcete turnaj „{{ match_source.name }}“ smazat? Společně s ním zmizí všechny zápasy, soutěže i tipy."
+                                data-confirm-title-value="Smazat zdroj zápasů"
+                                data-confirm-message-value="Opravdu chcete zdroj zápasů „{{ match_source.name }}“ smazat? Společně s ním zmizí všechny zápasy, soutěže i tipy."
                                 data-confirm-confirm-label-value="Ano, smazat">
                                 <input type="hidden" name="_token" value="{{ csrf_token('match_source_delete_' ~ match_source.id.toRfc4122) }}">
                                 <button type="submit" class="btn btn-danger w-full justify-start">
-                                    <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat turnaj
+                                    <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat zdroj zápasů
                                 </button>
                             </form>
                         {% endif %}

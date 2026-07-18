@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\GetMatchRanking;
 
 use App\Entity\GuessEvaluation;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -12,25 +13,28 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class GetMatchRankingQuery
 {
     public function __construct(
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
     ) {
     }
 
     public function __invoke(GetMatchRanking $query): MatchRankingResult
     {
-        /** @var list<GuessEvaluation> $evaluations */
-        $evaluations = $this->entityManager->createQueryBuilder()
+        $evaluationsQb = $this->entityManager->createQueryBuilder()
             ->select('e', 'g', 'u')
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
             ->innerJoin('g.user', 'u')
+            ->innerJoin('g.sportMatch', 'm')
             ->where('g.competition = :competitionId')
             ->andWhere('g.sportMatch = :matchId')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('competitionId', $query->competitionId)
-            ->setParameter('matchId', $query->sportMatchId)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('matchId', $query->sportMatchId);
+        $this->matchProvider->applyCompetitionMatchFilter($evaluationsQb, 'm', $query->competitionId);
+
+        /** @var list<GuessEvaluation> $evaluations */
+        $evaluations = $evaluationsQb->getQuery()->getResult();
 
         $baseRows = [];
 

@@ -14,6 +14,7 @@ final readonly class SportMatchCreated
         public string $homeTeam,
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,
+        public bool $isPlayoff,
         public \DateTimeImmutable $occurredOn,
     ) {
     }

@@ -39,7 +39,7 @@ final class MarkMatchSourceFinishedController extends AbstractController
             matchSourceId: $matchSource->id,
         ));
 
-        $this->addFlash('success', 'Turnaj byl ukončen.');
+        $this->addFlash('success', 'Zdroj zápasů byl ukončen.');
 
         return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
     }

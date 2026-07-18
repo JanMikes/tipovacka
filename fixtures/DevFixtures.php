@@ -14,7 +14,7 @@ use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -116,7 +116,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000003'),
             sport: $football,
             owner: $users[1],
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: 'Euro 2024',
             description: 'Fotbalové mistrovství Evropy 2024 v Německu — tipovačka mezi kamarády.',
             startAt: new \DateTimeImmutable('2024-06-14 00:00:00 UTC'),
@@ -131,7 +131,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000004'),
             sport: $football,
             owner: $verified,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: 'Fortuna Liga 2025/26',
             description: 'Česká první fotbalová liga — celoroční tipovačka.',
             startAt: new \DateTimeImmutable('2025-07-18 00:00:00 UTC'),
@@ -145,13 +145,12 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             id: Uuid::fromString('019aaaaa-0000-7000-8000-000000000005'),
             sport: $football,
             owner: $users[17],
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'Firemní liga',
             description: 'Soukromá tipovačka pro kolegy z práce.',
             startAt: new \DateTimeImmutable('2025-06-01 00:00:00 UTC'),
             endAt: new \DateTimeImmutable('2025-12-31 23:59:59 UTC'),
             createdAt: new \DateTimeImmutable('2025-05-20 14:30:00 UTC'),
-            creationPin: '42424242',
         );
         $firma->popEvents();
         $manager->persist($firma);

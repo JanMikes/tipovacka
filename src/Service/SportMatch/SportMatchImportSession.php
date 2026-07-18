@@ -30,6 +30,7 @@ final class SportMatchImportSession
                 'kickoffAt' => $row->kickoffAt->format(\DateTimeInterface::ATOM),
                 'venue' => $row->venue,
                 'round' => $row->round,
+                'isPlayoff' => $row->isPlayoff,
             ],
             $rows,
         );
@@ -71,6 +72,7 @@ final class SportMatchImportSession
                 kickoffAt: $kickoff,
                 venue: isset($item['venue']) && is_string($item['venue']) ? $item['venue'] : null,
                 round: isset($item['round']) && is_string($item['round']) ? $item['round'] : null,
+                isPlayoff: (bool) ($item['isPlayoff'] ?? false),
             );
         }
 

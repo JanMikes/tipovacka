@@ -32,9 +32,7 @@ final class UpdateMatchSourceController extends AbstractController
         $this->denyAccessUnlessGranted(MatchSourceVoter::EDIT, $matchSource);
 
         $formData = MatchSourceFormData::fromMatchSource($matchSource);
-        $withCreationPin = !$matchSource->isPublic;
         $form = $this->createForm(MatchSourceFormType::class, $formData, [
-            'with_creation_pin' => $withCreationPin,
         ]);
         $form->handleRequest($request);
 
@@ -45,11 +43,9 @@ final class UpdateMatchSourceController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
-                updateCreationPin: $withCreationPin,
-                creationPin: $formData->creationPin ?: null,
             ));
 
-            $this->addFlash('success', 'Turnaj byl uložen.');
+            $this->addFlash('success', 'Zdroj zápasů byl uložen.');
 
             return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }

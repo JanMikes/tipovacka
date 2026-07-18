@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Command\CreatePrivateMatchSource;
 
 use App\Entity\MatchSource;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportRepository;
 use App\Repository\UserRepository;
@@ -35,13 +35,12 @@ final readonly class CreatePrivateMatchSourceHandler
             id: $this->identity->next(),
             sport: $football,
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: $command->name,
             description: $command->description,
             startAt: $command->startAt,
             endAt: $command->endAt,
             createdAt: $now,
-            creationPin: $command->creationPin,
         );
 
         $this->matchSourceRepository->save($matchSource);

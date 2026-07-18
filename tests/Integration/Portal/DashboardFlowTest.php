@@ -34,7 +34,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Moje soutěže');
         self::assertSelectorTextContains('body', 'Nadcházející zápasy');
-        self::assertSelectorTextContains('body', 'Objev další turnaje');
+        self::assertSelectorTextContains('body', 'Objev další zdroje zápasů');
     }
 
     public function testUserSeesOwnCompetitions(): void
@@ -98,7 +98,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         // The verified user owns PRIVATE_SOURCE — it must be reachable from
         // the dashboard regardless of competition membership.
-        self::assertSelectorTextContains('body', 'Moje turnaje');
+        self::assertSelectorTextContains('body', 'Moje zdroje zápasů');
         self::assertSelectorTextContains('body', AppFixtures::PRIVATE_SOURCE_NAME);
     }
 }

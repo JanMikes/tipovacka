@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionJoinRequest;
+use App\Entity\CompetitionMatchSelection;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
@@ -16,7 +17,8 @@ use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\MatchSourceKind;
 use App\Enum\UserRole;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
@@ -76,9 +78,21 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string PUBLIC_COMPETITION_NAME = 'Admin liga';
     public const string PUBLIC_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000219bbbbb0000700b2';
 
+    /**
+     * Subset-mode competition over the PUBLIC (curated) source, owned by the
+     * SECOND verified user. Selected matches: MATCH_SCHEDULED + MATCH_FINISHED.
+     * NOT selected: MATCH_LIVE and MATCH_PLAYOFF (⇒ MatchNotInCompetition).
+     */
+    public const string SUBSET_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000033';
+    public const string SUBSET_COMPETITION_NAME = 'Vybrané zápasy party';
+    public const string SUBSET_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000319bbbbb0000700b3';
+    public const string SUBSET_SELECTION_SCHEDULED_ID = '019bbbbb-0000-7000-8000-00000000bb01';
+    public const string SUBSET_SELECTION_FINISHED_ID = '019bbbbb-0000-7000-8000-00000000bb02';
+
     public const string VERIFIED_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa01';
     public const string PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa02';
     public const string ANONYMOUS_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa03';
+    public const string SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa04';
 
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
     public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
@@ -87,6 +101,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string PENDING_JOIN_REQUEST_ID = '019ccccc-0000-7000-8000-000000000002';
 
     public const string MATCH_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000001';
+    /** Scheduled playoff match in the PUBLIC (curated) source — kickoff 2025-06-22 18:00 UTC. */
+    public const string MATCH_PLAYOFF_ID = '019ddddd-0000-7000-8000-000000000005';
     public const string MATCH_LIVE_ID = '019ddddd-0000-7000-8000-000000000002';
     public const string MATCH_FINISHED_ID = '019ddddd-0000-7000-8000-000000000003';
     public const string MATCH_PRIVATE_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000004';
@@ -208,7 +224,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             id: Uuid::fromString(self::PUBLIC_SOURCE_ID),
             sport: $football,
             owner: $admin,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: self::PUBLIC_SOURCE_NAME,
             description: null,
             startAt: null,
@@ -222,7 +238,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             id: Uuid::fromString(self::PRIVATE_SOURCE_ID),
             sport: $football,
             owner: $verified,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: self::PRIVATE_SOURCE_NAME,
             description: null,
             startAt: null,
@@ -325,6 +341,20 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $pendingJoinRequest->popEvents();
         $manager->persist($pendingJoinRequest);
 
+        $playoffMatch = new SportMatch(
+            id: Uuid::fromString(self::MATCH_PLAYOFF_ID),
+            matchSource: $public,
+            homeTeam: 'Real Madrid',
+            awayTeam: 'Barcelona',
+            kickoffAt: new \DateTimeImmutable('2025-06-22 18:00:00 UTC'),
+            venue: null,
+            createdAt: $now,
+            round: 'Playoff',
+            isPlayoff: true,
+        );
+        $playoffMatch->popEvents();
+        $manager->persist($playoffMatch);
+
         $scheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_SCHEDULED_ID),
             matchSource: $public,
@@ -376,6 +406,44 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         );
         $privateScheduledMatch->popEvents();
         $manager->persist($privateScheduledMatch);
+
+        // Subset-mode competition (owner: second verified user) over the public source.
+        // Only MATCH_SCHEDULED + MATCH_FINISHED are selected.
+        $subsetCompetition = new Competition(
+            id: Uuid::fromString(self::SUBSET_COMPETITION_ID),
+            matchSource: $public,
+            owner: $secondVerified,
+            name: self::SUBSET_COMPETITION_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: self::SUBSET_COMPETITION_LINK_TOKEN,
+            createdAt: $now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+        );
+        $subsetCompetition->popEvents();
+        $manager->persist($subsetCompetition);
+
+        $subsetOwnerMembership = new Membership(
+            id: Uuid::fromString(self::SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $subsetCompetition,
+            user: $secondVerified,
+            joinedAt: $now,
+        );
+        $subsetOwnerMembership->popEvents();
+        $manager->persist($subsetOwnerMembership);
+
+        $manager->persist(new CompetitionMatchSelection(
+            id: Uuid::fromString(self::SUBSET_SELECTION_SCHEDULED_ID),
+            competition: $subsetCompetition,
+            sportMatch: $scheduledMatch,
+            addedAt: $now,
+        ));
+        $manager->persist(new CompetitionMatchSelection(
+            id: Uuid::fromString(self::SUBSET_SELECTION_FINISHED_ID),
+            competition: $subsetCompetition,
+            sportMatch: $finishedMatch,
+            addedAt: $now,
+        ));
 
         // Admin is a member of PUBLIC_COMPETITION (owner) and tipped 3:0 on the finished
         // MATCH_FINISHED (actual 2:1). Useful baseline for Stage 7 evaluation.

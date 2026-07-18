@@ -11,7 +11,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
 use App\Enum\JoinRequestDecision;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Event\JoinRequestCreated;
 use App\Event\JoinRequestRejected;
 use App\Exception\CompetitionJoinRequestAlreadyDecided;
@@ -51,7 +51,7 @@ final class CompetitionJoinRequestEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: 'Turnaj',
             description: null,
             startAt: null,

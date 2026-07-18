@@ -8,12 +8,14 @@ use App\Entity\Guess;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
+use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
@@ -28,6 +30,7 @@ final readonly class SubmitGuessHandler
         private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private MembershipRepository $membershipRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EffectiveTipDeadlineResolver $deadlineResolver,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
@@ -48,8 +51,8 @@ final readonly class SubmitGuessHandler
             throw NotAMember::of($competition->id);
         }
 
-        if (!$sportMatch->matchSource->id->equals($competition->matchSource->id)) {
-            throw NotAMember::of($competition->id);
+        if (!$this->matchProvider->includes($competition, $sportMatch)) {
+            throw MatchNotInCompetition::create();
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());

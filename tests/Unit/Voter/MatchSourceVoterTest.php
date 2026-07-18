@@ -8,7 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Enum\UserRole;
 use App\Repository\MembershipRepository;
 use App\Voter\MatchSourceVoter;
@@ -77,7 +77,7 @@ final class MatchSourceVoterTest extends TestCase
     }
 
     private function makeMatchSource(
-        MatchSourceVisibility $visibility,
+        MatchSourceKind $kind,
         ?User $owner = null,
         bool $finished = false,
         bool $deleted = false,
@@ -86,7 +86,7 @@ final class MatchSourceVoterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $this->makeSport(),
             owner: $owner ?? $this->makeUser(AppFixtures::VERIFIED_USER_ID),
-            visibility: $visibility,
+            kind: $kind,
             name: 'Test',
             description: null,
             startAt: null,
@@ -114,7 +114,7 @@ final class MatchSourceVoterTest extends TestCase
 
     public function testAnonymousCanViewPublicMatchSource(): void
     {
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated);
         $result = $this->voter->vote(new NullToken(), $matchSource, [MatchSourceVoter::VIEW]);
 
         self::assertSame(1, $result);
@@ -122,7 +122,7 @@ final class MatchSourceVoterTest extends TestCase
 
     public function testAnonymousCannotViewPrivateMatchSource(): void
     {
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private);
         $result = $this->voter->vote(new NullToken(), $matchSource, [MatchSourceVoter::VIEW]);
 
         self::assertSame(-1, $result);
@@ -131,7 +131,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCanViewPrivateMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::VIEW]);
 
@@ -142,7 +142,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $other = $this->makeUser(self::NON_OWNER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($other), $matchSource, [MatchSourceVoter::VIEW]);
 
@@ -153,7 +153,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($admin), $matchSource, [MatchSourceVoter::VIEW]);
 
@@ -164,7 +164,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
         $user = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated, $owner);
 
         $result = $this->voter->vote($this->token($user), $matchSource, [MatchSourceVoter::VIEW]);
 
@@ -175,7 +175,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::NON_OWNER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
         $this->markAsMember($member, $matchSource);
 
         $result = $this->voter->vote($this->token($member), $matchSource, [MatchSourceVoter::VIEW]);
@@ -186,7 +186,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCanEditActiveMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::EDIT]);
 
@@ -196,7 +196,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCannotEditFinishedMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner, finished: true);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner, finished: true);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::EDIT]);
 
@@ -206,7 +206,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCannotEditDeletedMatchSource(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner, deleted: true);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner, deleted: true);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::EDIT]);
 
@@ -217,7 +217,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public, $owner, finished: true);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated, $owner, finished: true);
 
         $result = $this->voter->vote($this->token($admin), $matchSource, [MatchSourceVoter::EDIT]);
 
@@ -228,7 +228,7 @@ final class MatchSourceVoterTest extends TestCase
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $other = $this->makeUser(self::NON_OWNER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated, $owner);
 
         $result = $this->voter->vote($this->token($other), $matchSource, [MatchSourceVoter::EDIT]);
 
@@ -238,7 +238,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCanDeleteActive(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::DELETE]);
 
@@ -248,7 +248,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCanFinishActive(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::FINISH]);
 
@@ -258,7 +258,7 @@ final class MatchSourceVoterTest extends TestCase
     public function testOwnerCanCreateMatchOnActive(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($owner), $matchSource, [MatchSourceVoter::CREATE_MATCH]);
 
@@ -267,7 +267,7 @@ final class MatchSourceVoterTest extends TestCase
 
     public function testAnonymousDeniedOnEdit(): void
     {
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated);
         $result = $this->voter->vote(new NullToken(), $matchSource, [MatchSourceVoter::EDIT]);
 
         self::assertSame(-1, $result);
@@ -278,7 +278,7 @@ final class MatchSourceVoterTest extends TestCase
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::NON_OWNER_ID);
         $member->markAsVerified($this->now);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
         $this->markAsMember($member, $matchSource);
 
         $result = $this->voter->vote($this->token($member), $matchSource, [MatchSourceVoter::CREATE_COMPETITION]);
@@ -291,7 +291,7 @@ final class MatchSourceVoterTest extends TestCase
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $stranger = $this->makeUser(self::NON_OWNER_ID);
         $stranger->markAsVerified($this->now);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Private, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Private, $owner);
 
         $result = $this->voter->vote($this->token($stranger), $matchSource, [MatchSourceVoter::CREATE_COMPETITION]);
 
@@ -303,7 +303,7 @@ final class MatchSourceVoterTest extends TestCase
         $owner = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
         $user = $this->makeUser(self::NON_OWNER_ID);
         $user->markAsVerified($this->now);
-        $matchSource = $this->makeMatchSource(MatchSourceVisibility::Public, $owner);
+        $matchSource = $this->makeMatchSource(MatchSourceKind::Curated, $owner);
 
         $result = $this->voter->vote($this->token($user), $matchSource, [MatchSourceVoter::CREATE_COMPETITION]);
 

@@ -16,6 +16,7 @@ final readonly class UpdateSportMatchCommand
         public ?\DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round = null,
+        public bool $isPlayoff = false,
     ) {
     }
 }

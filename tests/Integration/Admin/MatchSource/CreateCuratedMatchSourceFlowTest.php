@@ -7,12 +7,12 @@ namespace App\Tests\Integration\Admin\MatchSource;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
-final class CreatePublicMatchSourceFlowTest extends WebTestCase
+final class CreateCuratedMatchSourceFlowTest extends WebTestCase
 {
     public function testNonAdminCannotAccessCreatePage(): void
     {
@@ -27,7 +27,7 @@ final class CreatePublicMatchSourceFlowTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testAdminCanCreatePublicMatchSource(): void
+    public function testAdminCanCreateCuratedMatchSource(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -38,9 +38,9 @@ final class CreatePublicMatchSourceFlowTest extends WebTestCase
 
         $client->request('GET', '/admin/turnaje/vytvorit');
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Nový veřejný turnaj');
+        self::assertSelectorTextContains('h1', 'Nový zdroj zápasů');
 
-        $client->submitForm('Vytvořit turnaj', [
+        $client->submitForm('Vytvořit zdroj zápasů', [
             'match_source_form[name]' => 'Nová liga',
         ]);
 
@@ -56,7 +56,7 @@ final class CreatePublicMatchSourceFlowTest extends WebTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(MatchSource::class, $matchSource);
-        self::assertSame(MatchSourceVisibility::Public, $matchSource->visibility);
+        self::assertSame(MatchSourceKind::Curated, $matchSource->kind);
         self::assertSame(AppFixtures::ADMIN_ID, $matchSource->owner->id->toRfc4122());
     }
 }

@@ -39,7 +39,7 @@ final readonly class ListMyOwnedMatchSourcesQuery
             static fn (MatchSource $t): MatchSourceListItem => new MatchSourceListItem(
                 id: $t->id,
                 name: $t->name,
-                visibility: $t->visibility,
+                kind: $t->kind,
                 ownerNickname: $t->owner->displayName,
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,

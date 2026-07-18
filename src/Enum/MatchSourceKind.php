@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Enum;
 
-enum MatchSourceVisibility: string
+enum MatchSourceKind: string
 {
-    case Public = 'public';
+    case Curated = 'curated';
     case Private = 'private';
 
     public function label(): string
     {
         return match ($this) {
-            self::Public => 'Veřejný',
+            self::Curated => 'Kurátorovaný',
             self::Private => 'Soukromý',
         };
     }

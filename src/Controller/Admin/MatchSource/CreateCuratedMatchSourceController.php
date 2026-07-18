@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin\MatchSource;
 
-use App\Command\CreatePublicMatchSource\CreatePublicMatchSourceCommand;
+use App\Command\CreateCuratedMatchSource\CreateCuratedMatchSourceCommand;
 use App\Entity\MatchSource;
 use App\Entity\User;
 use App\Form\MatchSourceFormData;
@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/admin/turnaje/vytvorit', name: 'admin_match_source_create')]
-final class CreatePublicMatchSourceController extends AbstractController
+final class CreateCuratedMatchSourceController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $commandBus,
@@ -35,7 +35,7 @@ final class CreatePublicMatchSourceController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $envelope = $this->commandBus->dispatch(new CreatePublicMatchSourceCommand(
+            $envelope = $this->commandBus->dispatch(new CreateCuratedMatchSourceCommand(
                 adminId: $admin->id,
                 name: $formData->name,
                 description: $formData->description ?: null,
@@ -45,12 +45,12 @@ final class CreatePublicMatchSourceController extends AbstractController
 
             $matchSource = $this->extractMatchSource($envelope);
 
-            $this->addFlash('success', 'Veřejný turnaj byl vytvořen.');
+            $this->addFlash('success', 'Zdroj zápasů byl vytvořen.');
 
             return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }
 
-        return $this->render('admin/match_source/create_public.html.twig', [
+        return $this->render('admin/match_source/create_curated.html.twig', [
             'form' => $form,
         ]);
     }

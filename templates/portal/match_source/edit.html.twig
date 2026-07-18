@@ -1,18 +1,18 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Upravit turnaj — {{ brand_name }}{% endblock %}
+{% block title %}Upravit zdroj zápasů — {{ brand_name }}{% endblock %}
 
 {% block body %}
 <div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
         {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
-        {label: 'Upravit turnaj'},
+        {label: 'Upravit zdroj zápasů'},
     ]" />
 
     <header class="mb-8 mt-2">
-        <span class="eyebrow">Správa turnaje</span>
-        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Upravit turnaj</h1>
+        <span class="eyebrow">Správa zdroje zápasů</span>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Upravit zdroj zápasů</h1>
         <p class="mt-2 text-sm leading-relaxed text-white/70">{{ match_source.name }}</p>
     </header>
 
@@ -44,17 +44,6 @@
                     {{ form_errors(form.endAt) }}
                 </div>
             </div>
-
-            {% if form.creationPin is defined %}
-                <div class="field">
-                    {{ form_label(form.creationPin, null, {label_attr: {class: 'field-label'}}) }}
-                    {{ form_widget(form.creationPin, {attr: {class: 'input font-mono uppercase tracking-wider'}}) }}
-                    {% if form.creationPin.vars.help %}
-                        <p class="mt-1 text-xs text-white/50">{{ form.creationPin.vars.help }}</p>
-                    {% endif %}
-                    {{ form_errors(form.creationPin) }}
-                </div>
-            {% endif %}
 
             <div class="flex flex-wrap gap-3">
                 <button type="submit" class="btn btn-primary">

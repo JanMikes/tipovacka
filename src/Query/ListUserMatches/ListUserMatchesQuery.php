@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Query\ListUserMatches;
 
+use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\Membership;
+use App\Entity\SportMatch;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -17,6 +20,7 @@ final readonly class ListUserMatchesQuery
 {
     public function __construct(
         private SportMatchRepository $sportMatchRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
     ) {
@@ -49,45 +53,72 @@ final readonly class ListUserMatchesQuery
         $competitionsByMatchSource = $this->loadUserCompetitionsByMatchSource($query->userId, array_values($matchSourceIds));
         $guessedCompetitionsByMatch = $this->loadGuessedCompetitionsByMatch($query->userId, $matchIds);
 
-        return array_map(
-            static function ($m) use ($competitionsByMatchSource, $guessedCompetitionsByMatch): UserMatchItem {
-                $matchSourceKey = $m->matchSource->id->toRfc4122();
-                $matchKey = $m->id->toRfc4122();
+        $items = [];
 
-                $competitionIds = $competitionsByMatchSource[$matchSourceKey] ?? [];
-                $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
+        foreach ($matches as $m) {
+            $matchSourceKey = $m->matchSource->id->toRfc4122();
+            $matchKey = $m->id->toRfc4122();
 
-                $competitionsCount = count($competitionIds);
-                $guessedCompetitionsCount = count(array_intersect($competitionIds, $guessedCompetitionIds));
+            $competitionIds = $this->includingCompetitionIds($competitionsByMatchSource[$matchSourceKey] ?? [], $m);
 
-                return new UserMatchItem(
-                    id: $m->id,
-                    matchSourceId: $m->matchSource->id,
-                    matchSourceName: $m->matchSource->name,
-                    homeTeam: $m->homeTeam,
-                    awayTeam: $m->awayTeam,
-                    kickoffAt: $m->kickoffAt,
-                    venue: $m->venue,
-                    round: $m->round,
-                    isOpenForGuesses: $m->isOpenForGuesses,
-                    isFinished: $m->isFinished,
-                    isLive: $m->isLive,
-                    isPostponed: $m->isPostponed,
-                    homeScore: $m->homeScore,
-                    awayScore: $m->awayScore,
-                    competitionsCount: $competitionsCount,
-                    guessedCompetitionsCount: $guessedCompetitionsCount,
-                    pendingCompetitionsCount: $competitionsCount - $guessedCompetitionsCount,
-                );
-            },
-            $matches,
-        );
+            // A match that belongs to none of the user's competitions
+            // (subset-excluded, playoff-excluded) is not theirs to tip.
+            if (0 === count($competitionIds)) {
+                continue;
+            }
+
+            $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
+
+            $competitionsCount = count($competitionIds);
+            $guessedCompetitionsCount = count(array_intersect($competitionIds, $guessedCompetitionIds));
+
+            $items[] = new UserMatchItem(
+                id: $m->id,
+                matchSourceId: $m->matchSource->id,
+                matchSourceName: $m->matchSource->name,
+                homeTeam: $m->homeTeam,
+                awayTeam: $m->awayTeam,
+                kickoffAt: $m->kickoffAt,
+                venue: $m->venue,
+                round: $m->round,
+                isPlayoff: $m->isPlayoff,
+                isOpenForGuesses: $m->isOpenForGuesses,
+                isFinished: $m->isFinished,
+                isLive: $m->isLive,
+                isPostponed: $m->isPostponed,
+                homeScore: $m->homeScore,
+                awayScore: $m->awayScore,
+                competitionsCount: $competitionsCount,
+                guessedCompetitionsCount: $guessedCompetitionsCount,
+                pendingCompetitionsCount: $competitionsCount - $guessedCompetitionsCount,
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param list<Competition> $competitions
+     *
+     * @return list<string> UUIDs of the competitions that include the match
+     */
+    private function includingCompetitionIds(array $competitions, SportMatch $match): array
+    {
+        $ids = [];
+
+        foreach ($competitions as $competition) {
+            if ($this->matchProvider->includes($competition, $match)) {
+                $ids[] = $competition->id->toRfc4122();
+            }
+        }
+
+        return $ids;
     }
 
     /**
      * @param list<Uuid> $matchSourceIds
      *
-     * @return array<string, list<string>> keyed by match source UUID → list of competition UUIDs
+     * @return array<string, list<Competition>> keyed by match source UUID → the user's active competitions
      */
     private function loadUserCompetitionsByMatchSource(Uuid $userId, array $matchSourceIds): array
     {
@@ -95,25 +126,23 @@ final readonly class ListUserMatchesQuery
             return [];
         }
 
-        /** @var list<array{matchSourceId: string, competitionId: string}> $rows */
-        $rows = $this->entityManager->createQueryBuilder()
-            ->select('t.id AS matchSourceId, g.id AS competitionId')
+        /** @var list<Competition> $competitions */
+        $competitions = $this->entityManager->createQueryBuilder()
+            ->select('g')
             ->from(Membership::class, 'm')
-            ->innerJoin('m.competition', 'g')
-            ->innerJoin('g.matchSource', 't')
+            ->innerJoin(Competition::class, 'g', 'WITH', 'g.id = m.competition')
             ->where('m.user = :userId')
-            ->andWhere('t.id IN (:matchSourceIds)')
+            ->andWhere('g.matchSource IN (:matchSourceIds)')
             ->andWhere('m.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
             ->setParameter('matchSourceIds', $matchSourceIds)
             ->getQuery()
-            ->getArrayResult();
+            ->getResult();
 
         $byMatchSource = [];
-        foreach ($rows as $row) {
-            $matchSourceKey = (string) $row['matchSourceId'];
-            $byMatchSource[$matchSourceKey][] = (string) $row['competitionId'];
+        foreach ($competitions as $competition) {
+            $byMatchSource[$competition->matchSource->id->toRfc4122()][] = $competition;
         }
 
         return $byMatchSource;

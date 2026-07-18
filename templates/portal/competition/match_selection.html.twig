@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Výběr zápasů — {{ competition.name }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <twig:Breadcrumbs :items="[
+        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Výběr zápasů'},
+    ]" />
+
+    <header class="mb-8 mt-2">
+        <span class="eyebrow">{{ competition.name }}</span>
+        <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Výběr zápasů</h1>
+        <p class="mt-2 text-sm leading-relaxed text-white/70">
+            Zaškrtnuté zápasy se v soutěži tipují a počítají do žebříčku. Odebrané zápasy se přestanou
+            počítat — už zadané tipy se nemažou, jen se na ně nebere ohled.
+        </p>
+    </header>
+
+    <div class="card-glass p-6 sm:p-8" data-controller="competition-matches">
+        <form method="post" action="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="space-y-4">
+            <input type="hidden" name="_token" value="{{ csrf_token('competition_match_selection_' ~ competition.id.toRfc4122) }}">
+
+            {% if groups is empty %}
+                <p class="rounded-xl border border-white/10 bg-inset px-4 py-3 text-sm text-white/60">
+                    Zdroj zápasů zatím žádné zápasy nemá.
+                </p>
+            {% else %}
+                {% for group, rows in groups %}
+                    <div class="rounded-xl border border-white/10 bg-inset p-4" data-group-block>
+                        <div class="mb-2 flex items-center justify-between gap-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-white/50">{{ group }}</span>
+                            <button type="button" class="btn btn-ghost btn-sm" data-action="competition-matches#toggleGroup">
+                                Vybrat vše
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">
+                            {% for row in rows %}
+                                <label class="flex cursor-pointer items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        name="matches[]"
+                                        value="{{ row.match.id.toRfc4122 }}"
+                                        {{ row.checked ? 'checked' }}
+                                        class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                    >
+                                    <span class="text-sm text-white/80">
+                                        {{ row.match.homeTeam }} – {{ row.match.awayTeam }}
+                                        <span class="text-white/40">({{ row.match.kickoffAt|date('j. n. Y H:i') }})</span>
+                                    </span>
+                                    {% if row.match.isPlayoff %}
+                                        <twig:Pill label="Playoff" variant="neutral" />
+                                    {% endif %}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="flex flex-wrap gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary">
+                        <twig:ux:icon name="lucide:save" class="h-4 w-4" />
+                        Uložit výběr
+                    </button>
+                    <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                        Zpět na soutěž
+                    </a>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

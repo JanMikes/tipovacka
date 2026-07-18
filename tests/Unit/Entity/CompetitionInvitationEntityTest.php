@@ -10,7 +10,7 @@ use App\Entity\CompetitionInvitation;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Event\CompetitionInvitationAccepted;
 use App\Event\CompetitionInvitationRevoked;
 use App\Event\CompetitionInvitationSent;
@@ -53,7 +53,7 @@ final class CompetitionInvitationEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: 'Turnaj',
             description: null,
             startAt: null,

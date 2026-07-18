@@ -58,7 +58,7 @@ final class JoinByPinController extends AbstractController
                 } elseif ($inner instanceof AlreadyMember) {
                     $form->get('pin')->addError(new \Symfony\Component\Form\FormError('V soutěži již jsi.'));
                 } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                    $form->get('pin')->addError(new \Symfony\Component\Form\FormError('Turnaj této soutěže je již ukončen.'));
+                    $form->get('pin')->addError(new \Symfony\Component\Form\FormError('Zdroj zápasů této soutěže je již ukončen.'));
                 } else {
                     throw $handlerFailed;
                 }

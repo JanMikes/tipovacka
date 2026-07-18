@@ -95,7 +95,7 @@ final readonly class InvitationAcceptanceService
             if ($inner instanceof AlreadyMember) {
                 $this->flash('info', 'V soutěži již jsi.');
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                $this->flash('warning', 'Turnaj této soutěže je již ukončen.');
+                $this->flash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
 
                 return new RedirectResponse($this->urlGenerator->generate('portal_dashboard'));
             } elseif ($inner instanceof CompetitionInvitationExpired

@@ -69,8 +69,8 @@
                 <twig:ux:icon name="lucide:lock" class="h-8 w-8" />
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
-            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Turnaj už skončil</h2>
-            <p class="mt-3 text-white/60">Turnaj této soutěže je už ukončen, připojit se nejde.</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Zdroj zápasů už skončil</h2>
+            <p class="mt-3 text-white/60">Zdroj zápasů této soutěže je už ukončen, připojit se nejde.</p>
         </div>
 
     {% elseif step == 'email_mismatch' %}
@@ -100,7 +100,7 @@
             <div class="text-sm leading-relaxed text-white/70">
                 Pozvánka do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>
                 {% if context.matchSourceName %}
-                    v turnaji <strong class="font-semibold text-white">{{ context.matchSourceName }}</strong>
+                    ve zdroji zápasů <strong class="font-semibold text-white">{{ context.matchSourceName }}</strong>
                 {% endif %}
                 {% if context.inviterNickname %}
                     od <strong class="font-semibold text-white">{{ context.inviterNickname }}</strong>

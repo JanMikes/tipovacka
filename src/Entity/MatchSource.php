@@ -6,7 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Event\MatchSourceCreated;
 use App\Event\MatchSourceDeleted;
 use App\Event\MatchSourceFinished;
@@ -20,8 +20,8 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'match_sources')]
-#[ORM\Index(columns: ['visibility', 'finished_at', 'deleted_at'], name: 'IDX_match_sources_public_active')]
-#[ORM\Index(columns: ['owner_id', 'visibility', 'deleted_at'], name: 'IDX_match_sources_owner_visibility')]
+#[ORM\Index(columns: ['kind', 'finished_at', 'deleted_at'], name: 'IDX_match_sources_kind_active')]
+#[ORM\Index(columns: ['owner_id', 'kind', 'deleted_at'], name: 'IDX_match_sources_owner_kind')]
 class MatchSource implements EntityWithEvents, SoftDeletable
 {
     use HasEvents;
@@ -45,15 +45,8 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $finishedAt = null;
 
-    #[ORM\Column(length: 8, nullable: true)]
-    public private(set) ?string $creationPin = null;
-
-    public bool $isPublic {
-        get => MatchSourceVisibility::Public === $this->visibility;
-    }
-
-    public bool $hasCreationPin {
-        get => null !== $this->creationPin && '' !== $this->creationPin;
+    public bool $isCurated {
+        get => MatchSourceKind::Curated === $this->kind;
     }
 
     public bool $isFinished {
@@ -74,27 +67,25 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         #[ORM\ManyToOne(targetEntity: User::class)]
         #[ORM\JoinColumn(name: 'owner_id', referencedColumnName: 'id', nullable: false)]
         private(set) User $owner,
-        #[ORM\Column(enumType: MatchSourceVisibility::class)]
-        private(set) MatchSourceVisibility $visibility,
+        #[ORM\Column(enumType: MatchSourceKind::class)]
+        private(set) MatchSourceKind $kind,
         string $name,
         ?string $description,
         ?\DateTimeImmutable $startAt,
         ?\DateTimeImmutable $endAt,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
-        ?string $creationPin = null,
     ) {
         $this->name = $name;
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
-        $this->creationPin = '' !== $creationPin ? $creationPin : null;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new MatchSourceCreated(
             matchSourceId: $this->id,
             ownerId: $this->owner->id,
-            visibility: $this->visibility,
+            kind: $this->kind,
             name: $this->name,
             occurredOn: $this->createdAt,
         ));
@@ -111,23 +102,6 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
-        $this->updatedAt = $now;
-
-        $this->recordThat(new MatchSourceUpdated(
-            matchSourceId: $this->id,
-            occurredOn: $now,
-        ));
-    }
-
-    public function setCreationPin(?string $pin, \DateTimeImmutable $now): void
-    {
-        $normalized = null === $pin || '' === $pin ? null : $pin;
-
-        if ($normalized === $this->creationPin) {
-            return;
-        }
-
-        $this->creationPin = $normalized;
         $this->updatedAt = $now;
 
         $this->recordThat(new MatchSourceUpdated(

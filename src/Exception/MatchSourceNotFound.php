@@ -12,6 +12,6 @@ final class MatchSourceNotFound extends \RuntimeException
 {
     public static function withId(Uuid $id): self
     {
-        return new self(sprintf('Turnaj s ID "%s" nebyl nalezen.', $id->toRfc4122()));
+        return new self(sprintf('Zdroj zápasů s ID "%s" nebyl nalezen.', $id->toRfc4122()));
     }
 }

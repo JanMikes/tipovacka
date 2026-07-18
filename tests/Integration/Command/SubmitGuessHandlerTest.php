@@ -12,6 +12,7 @@ use App\Entity\Guess;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
+use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -212,6 +213,84 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(Guess::class, $guess);
+    }
+
+    public function testRejectsMatchOutsideSubsetSelection(): void
+    {
+        // MATCH_PLAYOFF is scheduled + tippable, but the subset competition
+        // only selected MATCH_SCHEDULED + MATCH_FINISHED.
+        $this->expectException(HandlerFailedException::class);
+
+        try {
+            $this->commandBus()->dispatch(new SubmitGuessCommand(
+                userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+                competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+                sportMatchId: Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+                homeScore: 1,
+                awayScore: 0,
+            ));
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(MatchNotInCompetition::class, $e->getPrevious());
+
+            throw $e;
+        }
+    }
+
+    public function testAcceptsSelectedMatchInSubsetCompetition(): void
+    {
+        $this->commandBus()->dispatch(new SubmitGuessCommand(
+            userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+            homeScore: 2,
+            awayScore: 2,
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $guess = $em->createQueryBuilder()
+            ->select('g')
+            ->from(Guess::class, 'g')
+            ->where('g.user = :u')
+            ->andWhere('g.sportMatch = :m')
+            ->andWhere('g.competition = :c')
+            ->setParameter('u', Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID))
+            ->setParameter('m', Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID))
+            ->setParameter('c', Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID))
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(Guess::class, $guess);
+    }
+
+    public function testRejectsPlayoffMatchWhenCompetitionExcludesPlayoff(): void
+    {
+        // Flip PUBLIC_COMPETITION (mode All) to includePlayoff = false directly —
+        // there is no dedicated command yet (S08 wizard territory).
+        $em = $this->entityManager();
+        $connection = $em->getConnection();
+        $connection->executeStatement(
+            'UPDATE competitions SET include_playoff = false WHERE id = :id',
+            ['id' => AppFixtures::PUBLIC_COMPETITION_ID],
+        );
+        $em->clear();
+
+        $this->expectException(HandlerFailedException::class);
+
+        try {
+            $this->commandBus()->dispatch(new SubmitGuessCommand(
+                userId: Uuid::fromString(AppFixtures::ADMIN_ID),
+                competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
+                sportMatchId: Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+                homeScore: 1,
+                awayScore: 0,
+            ));
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(MatchNotInCompetition::class, $e->getPrevious());
+
+            throw $e;
+        }
     }
 
     public function testRejectsNegativeScores(): void

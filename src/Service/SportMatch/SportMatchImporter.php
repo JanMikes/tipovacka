@@ -21,6 +21,7 @@ final class SportMatchImporter
     public const string COLUMN_KICKOFF = 'Začátek (YYYY-MM-DD HH:MM)';
     public const string COLUMN_VENUE = 'Místo (nepovinné)';
     public const string COLUMN_ROUND = 'Kolo (nepovinné)';
+    public const string COLUMN_PLAYOFF = 'Playoff (nepovinné)';
 
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
@@ -61,6 +62,9 @@ final class SportMatchImporter
             $venueRaw = $this->normaliseString($row[$headerMap[self::COLUMN_VENUE]] ?? null);
             $roundRaw = isset($headerMap[self::COLUMN_ROUND])
                 ? $this->normaliseString($row[$headerMap[self::COLUMN_ROUND]] ?? null)
+                : '';
+            $playoffRaw = isset($headerMap[self::COLUMN_PLAYOFF])
+                ? $this->normaliseString($row[$headerMap[self::COLUMN_PLAYOFF]] ?? null)
                 : '';
 
             $rowErrors = [];
@@ -109,6 +113,20 @@ final class SportMatchImporter
                 }
             }
 
+            $isPlayoff = false;
+            if ('' !== $playoffRaw) {
+                $parsedPlayoff = $this->parsePlayoff($playoffRaw);
+                if (null === $parsedPlayoff) {
+                    $rowErrors[] = new SportMatchImportError(
+                        $rowNumber,
+                        self::COLUMN_PLAYOFF,
+                        sprintf('Neplatná hodnota "%s". Očekáváno ano/ne (případně 1/0), nebo prázdné pole.', $playoffRaw),
+                    );
+                } else {
+                    $isPlayoff = $parsedPlayoff;
+                }
+            }
+
             if ([] !== $rowErrors) {
                 foreach ($rowErrors as $error) {
                     $errors[] = $error;
@@ -126,6 +144,7 @@ final class SportMatchImporter
                 kickoffAt: $kickoffAt,
                 venue: $venue,
                 round: $round,
+                isPlayoff: $isPlayoff,
             );
         }
 
@@ -150,6 +169,7 @@ final class SportMatchImporter
                 venue: $row->venue,
                 createdAt: $now,
                 round: $row->round,
+                isPlayoff: $row->isPlayoff,
             );
             $this->sportMatchRepository->save($sportMatch);
         }
@@ -159,8 +179,8 @@ final class SportMatchImporter
 
     public function generateTemplateCsv(): string
     {
-        $header = [self::COLUMN_HOME, self::COLUMN_AWAY, self::COLUMN_KICKOFF, self::COLUMN_VENUE, self::COLUMN_ROUND];
-        $sample = ['Sparta Praha', 'Slavia Praha', '2026-05-10 18:00', 'Generali Arena', 'Čtvrtfinále'];
+        $header = [self::COLUMN_HOME, self::COLUMN_AWAY, self::COLUMN_KICKOFF, self::COLUMN_VENUE, self::COLUMN_ROUND, self::COLUMN_PLAYOFF];
+        $sample = ['Sparta Praha', 'Slavia Praha', '2026-05-10 18:00', 'Generali Arena', 'Čtvrtfinále', 'ne'];
 
         $handle = fopen('php://temp', 'r+');
         if (false === $handle) {
@@ -222,10 +242,12 @@ final class SportMatchImporter
             $map[$expected] = $columnIndex;
         }
 
-        // Optional round/stage column — older templates (and CSVs without it) stay valid.
-        $roundIndex = array_search(self::COLUMN_ROUND, $normalised, true);
-        if (false !== $roundIndex) {
-            $map[self::COLUMN_ROUND] = $roundIndex;
+        // Optional columns — older templates (and CSVs without them) stay valid.
+        foreach ([self::COLUMN_ROUND, self::COLUMN_PLAYOFF] as $optional) {
+            $optionalIndex = array_search($optional, $normalised, true);
+            if (false !== $optionalIndex) {
+                $map[$optional] = $optionalIndex;
+            }
         }
 
         return $map;
@@ -264,6 +286,15 @@ final class SportMatchImporter
         }
 
         return '';
+    }
+
+    private function parsePlayoff(string $raw): ?bool
+    {
+        return match (mb_strtolower($raw)) {
+            'ano', '1', 'true' => true,
+            'ne', '0', 'false' => false,
+            default => null,
+        };
     }
 
     private function parseKickoff(string $raw): ?\DateTimeImmutable

@@ -1,18 +1,18 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Turnaje — Admin — {{ brand_name }}{% endblock %}
+{% block title %}Zdroje zápasů — Admin — {{ brand_name }}{% endblock %}
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li class="text-white/80 font-medium" aria-current="page">Turnaje</li>
+    <li class="text-white/80 font-medium" aria-current="page">Zdroje zápasů</li>
 {% endblock %}
 
-{% block admin_title %}Turnaje{% endblock %}
-{% block admin_subtitle %}Přehled veřejných i soukromých turnajů.{% endblock %}
+{% block admin_title %}Zdroje zápasů{% endblock %}
+{% block admin_subtitle %}Přehled kurátorovaných i soukromých zdrojů zápasů.{% endblock %}
 {% block admin_actions %}
     <a href="{{ path('admin_match_source_create') }}" class="btn btn-primary btn-sm">
         <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
-        Nový turnaj
+        Nový zdroj zápasů
     </a>
 {% endblock %}
 
@@ -23,7 +23,7 @@
             <thead>
                 <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
                     <th class="text-left px-4 py-3 font-semibold">Název</th>
-                    <th class="text-left px-4 py-3 font-semibold">Viditelnost</th>
+                    <th class="text-left px-4 py-3 font-semibold">Typ</th>
                     <th class="text-left px-4 py-3 font-semibold">Sport</th>
                     <th class="text-left px-4 py-3 font-semibold">Vlastník</th>
                     <th class="text-left px-4 py-3 font-semibold">Soutěže</th>
@@ -35,7 +35,7 @@
                 {% for match_source in match_sources %}
                     <tr class="border-b border-white/[0.06] transition-colors {% if match_source.isDeleted %}text-white/40{% else %}text-white/80 hover:bg-white/[0.03]{% endif %}">
                         <td class="px-4 py-3 font-medium text-white">{{ match_source.name }}{% if match_source.isDeleted %} <span class="text-xs font-normal text-white/40">(smazáno)</span>{% endif %}</td>
-                        <td class="px-4 py-3">{{ match_source.visibility.label }}</td>
+                        <td class="px-4 py-3">{{ match_source.kind.label }}</td>
                         <td class="px-4 py-3">{{ match_source.sportCode }}</td>
                         <td class="px-4 py-3">{{ match_source.ownerNickname }}</td>
                         <td class="px-4 py-3">{{ match_source.competitionCount }}</td>
@@ -57,8 +57,8 @@
                                     <form method="post" action="{{ path('admin_match_source_finish', {id: match_source.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-variant-value="warning"
-                                        data-confirm-title-value="Ukončit turnaj"
-                                        data-confirm-message-value="Opravdu chcete turnaj „{{ match_source.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
+                                        data-confirm-title-value="Ukončit zdroj zápasů"
+                                        data-confirm-message-value="Opravdu chcete zdroj zápasů „{{ match_source.name }}“ ukončit? Další tipy už nepůjde zadávat a výsledek žebříčku bude finální."
                                         data-confirm-confirm-label-value="Ano, ukončit">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_match_source_finish_' ~ match_source.id.toRfc4122) }}">
                                         <button type="submit" class="btn btn-ghost btn-sm text-win">Ukončit</button>
@@ -67,8 +67,8 @@
                                 {% if not match_source.isDeleted %}
                                     <form method="post" action="{{ path('admin_match_source_delete', {id: match_source.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
-                                        data-confirm-title-value="Smazat turnaj"
-                                        data-confirm-message-value="Opravdu chcete turnaj „{{ match_source.name }}“ smazat? Společně s ním zmizí všechny zápasy, soutěže i tipy."
+                                        data-confirm-title-value="Smazat zdroj zápasů"
+                                        data-confirm-message-value="Opravdu chcete zdroj zápasů „{{ match_source.name }}“ smazat? Společně s ním zmizí všechny zápasy, soutěže i tipy."
                                         data-confirm-confirm-label-value="Ano, smazat">
                                         <input type="hidden" name="_token" value="{{ csrf_token('admin_match_source_delete_' ~ match_source.id.toRfc4122) }}">
                                         <button type="submit" class="btn btn-ghost btn-sm text-loss">Smazat</button>
@@ -78,7 +78,7 @@
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="7" class="px-4 py-8 text-center text-white/50">Žádné turnaje.</td></tr>
+                    <tr><td colspan="7" class="px-4 py-8 text-center text-white/50">Žádné zdroje zápasů.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

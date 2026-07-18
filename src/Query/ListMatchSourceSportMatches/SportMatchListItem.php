@@ -16,6 +16,8 @@ final readonly class SportMatchListItem
         public string $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
+        public ?string $round,
+        public bool $isPlayoff,
         public SportMatchState $state,
         public ?int $homeScore,
         public ?int $awayScore,

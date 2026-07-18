@@ -8,15 +8,16 @@ use App\Command\DeleteGuess\DeleteGuessCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\Command\UpdateGuess\UpdateGuessCommand;
 use App\Entity\User;
-use App\Enum\SportMatchState;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessNotFound;
 use App\Exception\InvalidGuessScore;
+use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
@@ -41,6 +42,7 @@ final class MyTipsBatchController extends AbstractController
         private readonly CompetitionRepository $competitionRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly MessageBusInterface $commandBus,
         private readonly ClockInterface $clock,
@@ -205,6 +207,7 @@ final class MyTipsBatchController extends AbstractController
             || $inner instanceof GuessAlreadyExists
             || $inner instanceof GuessNotFound
             || $inner instanceof NotAMember
+            || $inner instanceof MatchNotInCompetition
         ) {
             $errors[] = sprintf('%s: %s', $label, $inner->getMessage());
 
@@ -219,11 +222,7 @@ final class MyTipsBatchController extends AbstractController
      */
     private function buildRows(\App\Entity\Competition $competition, Uuid $userId, \DateTimeImmutable $now): array
     {
-        $allMatches = $this->sportMatchRepository->listByMatchSource(
-            $competition->matchSource->id,
-            SportMatchState::Scheduled,
-            $now,
-        );
+        $allMatches = $this->matchProvider->matchesFor($competition);
         $candidateMatches = array_values(array_filter(
             $allMatches,
             static fn ($m) => $m->isOpenForGuesses && $m->kickoffAt > $now,

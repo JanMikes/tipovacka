@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\ListAdminMatchSources;
 
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class AdminMatchSourceItem
@@ -12,7 +12,7 @@ final readonly class AdminMatchSourceItem
     public function __construct(
         public Uuid $id,
         public string $name,
-        public MatchSourceVisibility $visibility,
+        public MatchSourceKind $kind,
         public string $sportCode,
         public string $ownerNickname,
         public bool $isFinished,

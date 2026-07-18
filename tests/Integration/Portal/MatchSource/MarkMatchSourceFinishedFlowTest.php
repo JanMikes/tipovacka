@@ -26,7 +26,7 @@ final class MarkMatchSourceFinishedFlowTest extends WebTestCase
         $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
 
-        $client->submitForm('Ukončit turnaj');
+        $client->submitForm('Ukončit zdroj zápasů');
 
         self::assertResponseRedirects('/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
 

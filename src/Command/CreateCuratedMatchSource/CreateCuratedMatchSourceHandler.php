@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Command\CreatePublicMatchSource;
+namespace App\Command\CreateCuratedMatchSource;
 
 use App\Entity\MatchSource;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportRepository;
 use App\Repository\UserRepository;
@@ -14,7 +14,7 @@ use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
-final readonly class CreatePublicMatchSourceHandler
+final readonly class CreateCuratedMatchSourceHandler
 {
     public function __construct(
         private MatchSourceRepository $matchSourceRepository,
@@ -25,7 +25,7 @@ final readonly class CreatePublicMatchSourceHandler
     ) {
     }
 
-    public function __invoke(CreatePublicMatchSourceCommand $command): MatchSource
+    public function __invoke(CreateCuratedMatchSourceCommand $command): MatchSource
     {
         $admin = $this->userRepository->get($command->adminId);
         $football = $this->sportRepository->getByCode('football');
@@ -35,7 +35,7 @@ final readonly class CreatePublicMatchSourceHandler
             id: $this->identity->next(),
             sport: $football,
             owner: $admin,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: $command->name,
             description: $command->description,
             startAt: $command->startAt,

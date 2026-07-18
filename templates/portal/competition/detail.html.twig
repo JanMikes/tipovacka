@@ -16,7 +16,7 @@
         <div class="flex flex-wrap items-center gap-3">
             <h1 class="text-3xl font-black tracking-tight text-white sm:text-4xl">{{ detail.name }}</h1>
             {% if detail.matchSourceIsFinished %}
-                <twig:Pill label="Turnaj ukončen" variant="done" />
+                <twig:Pill label="Zdroj zápasů ukončen" variant="done" />
             {% endif %}
         </div>
         <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
@@ -188,7 +188,7 @@
             {% endif %}
 
             {# Pending join requests (public match_sources only) #}
-            {% if is_granted('competition_manage_members', competition) and competition.matchSource.isPublic %}
+            {% if is_granted('competition_manage_members', competition) and competition.matchSource.isCurated %}
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
                         <twig:ux:icon name="lucide:log-in" class="h-5 w-5 text-accent-400" />
@@ -472,6 +472,11 @@
                         <a href="{{ path('portal_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit soutěž
                         </a>
+                        {% if competition.selectionMode.value == 'subset' %}
+                            <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
+                            </a>
+                        {% endif %}
                     {% endif %}
 
                     {% if isMember and not detail.matchSourceIsFinished %}

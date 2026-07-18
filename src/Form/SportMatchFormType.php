@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -50,6 +51,12 @@ final class SportMatchFormType extends AbstractType
             'required' => false,
             'help' => 'Nepovinné. Např. „Skupina A", „Čtvrtfinále".',
             'attr' => ['placeholder' => 'Např. Čtvrtfinále'],
+        ]);
+
+        $builder->add('isPlayoff', CheckboxType::class, [
+            'label' => 'Playoff zápas',
+            'required' => false,
+            'help' => 'Soutěže si mohou zvolit, zda playoff zápasy zahrnou.',
         ]);
     }
 

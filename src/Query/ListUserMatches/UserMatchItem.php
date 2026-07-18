@@ -17,6 +17,7 @@ final readonly class UserMatchItem
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round,
+        public bool $isPlayoff,
         public bool $isOpenForGuesses,
         public bool $isFinished,
         public bool $isLive,

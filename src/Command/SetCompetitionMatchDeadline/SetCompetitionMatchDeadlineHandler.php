@@ -6,9 +6,11 @@ namespace App\Command\SetCompetitionMatchDeadline;
 
 use App\Entity\CompetitionMatchSetting;
 use App\Exception\CompetitionMatchDeadlineAfterKickoff;
+use App\Exception\MatchNotInCompetition;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,6 +22,7 @@ final readonly class SetCompetitionMatchDeadlineHandler
         private CompetitionRepository $competitionRepository,
         private SportMatchRepository $sportMatchRepository,
         private CompetitionMatchSettingRepository $settingRepository,
+        private CompetitionMatchProvider $matchProvider,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -29,6 +32,11 @@ final readonly class SetCompetitionMatchDeadlineHandler
     {
         $competition = $this->competitionRepository->get($command->competitionId);
         $sportMatch = $this->sportMatchRepository->get($command->sportMatchId);
+
+        if (!$this->matchProvider->includes($competition, $sportMatch)) {
+            throw MatchNotInCompetition::create();
+        }
+
         $existing = $this->settingRepository->findByCompetitionAndMatch($competition->id, $sportMatch->id);
 
         if (null === $command->deadline) {

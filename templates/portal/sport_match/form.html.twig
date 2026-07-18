@@ -65,6 +65,19 @@
                     {{ form_errors(form.round) }}
                 </div>
 
+                <div>
+                    <label class="flex cursor-pointer items-start gap-3">
+                        {{ form_widget(form.isPlayoff, {attr: {class: 'mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500'}}) }}
+                        <span class="text-sm">
+                            <span class="block font-medium text-white">{{ form.isPlayoff.vars.label }}</span>
+                            {% if form.isPlayoff.vars.help %}
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">{{ form.isPlayoff.vars.help }}</span>
+                            {% endif %}
+                        </span>
+                    </label>
+                    {{ form_errors(form.isPlayoff) }}
+                </div>
+
                 <div class="flex flex-wrap gap-3 pt-2">
                     <button type="submit" class="btn btn-primary">
                         <twig:ux:icon name="lucide:{{ mode == 'create' ? 'plus' : 'save' }}" class="h-4 w-4" />

@@ -8,7 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -54,7 +54,7 @@ final class SportMatchImporterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'T',
             description: null,
             startAt: null,
@@ -151,6 +151,52 @@ final class SportMatchImporterTest extends TestCase
         $this->importer->preview($file, $this->makeMatchSource(), $this->now);
     }
 
+    public function testPreviewParsesOptionalPlayoffColumn(): void
+    {
+        $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné),Playoff (nepovinné)\n"
+            ."A,B,2026-05-10 18:00,,ano\n"
+            ."C,D,2026-05-11 18:00,,ne\n"
+            ."E,F,2026-05-12 18:00,,1\n"
+            ."G,H,2026-05-13 18:00,,0\n"
+            ."I,J,2026-05-14 18:00,,\n";
+
+        $file = $this->uploadedFileWithContent($csv);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
+
+        self::assertCount(5, $preview->validRows);
+        self::assertCount(0, $preview->errors);
+        self::assertTrue($preview->validRows[0]->isPlayoff);
+        self::assertFalse($preview->validRows[1]->isPlayoff);
+        self::assertTrue($preview->validRows[2]->isPlayoff);
+        self::assertFalse($preview->validRows[3]->isPlayoff);
+        self::assertFalse($preview->validRows[4]->isPlayoff);
+    }
+
+    public function testPreviewWithoutPlayoffColumnDefaultsToFalse(): void
+    {
+        $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné)\n"
+            ."A,B,2026-05-10 18:00,\n";
+
+        $file = $this->uploadedFileWithContent($csv);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
+
+        self::assertCount(1, $preview->validRows);
+        self::assertFalse($preview->validRows[0]->isPlayoff);
+    }
+
+    public function testPreviewReportsInvalidPlayoffValueAsError(): void
+    {
+        $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné),Playoff (nepovinné)\n"
+            ."A,B,2026-05-10 18:00,,mozna\n";
+
+        $file = $this->uploadedFileWithContent($csv);
+        $preview = $this->importer->preview($file, $this->makeMatchSource(), $this->now);
+
+        self::assertCount(0, $preview->validRows);
+        self::assertCount(1, $preview->errors);
+        self::assertSame('Playoff (nepovinné)', $preview->errors[0]->column);
+    }
+
     public function testGenerateTemplateCsvContainsHeaders(): void
     {
         $content = $this->importer->generateTemplateCsv();
@@ -159,5 +205,6 @@ final class SportMatchImporterTest extends TestCase
         self::assertStringContainsString('Hosté', $content);
         self::assertStringContainsString('Začátek', $content);
         self::assertStringContainsString('Místo', $content);
+        self::assertStringContainsString('Playoff (nepovinné)', $content);
     }
 }

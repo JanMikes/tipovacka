@@ -10,6 +10,7 @@
       awayTeam     string        — hostující tým
       kickoffAt    \DateTimeImmutable|null — výkop (formát „1. 6." + „20:15", Europe/Prague)
       round        string|null   — kolo / fáze (např. „Osmifinále")
+      isPlayoff    bool          — zobrazí malou pilulku „Playoff" vedle kola
       state        string        — open | tipped | locked | finished (odvozeno na call-site)
       pillVariant  string|null   — varianta stavové pilulky (Pill component)
       pillLabel    string|null   — text stavové pilulky
@@ -30,6 +31,7 @@
     detailUrl,
     kickoffAt = null,
     round = null,
+    isPlayoff = false,
     state = 'open',
     pillVariant = null,
     pillLabel = null,
@@ -52,6 +54,7 @@
             <span class="time">{{ kickoffAt|date('H:i') }}</span>
         {% endif %}
         {% if round %}<span class="round">{{ round }}</span>{% endif %}
+        {% if isPlayoff %}<span class="pill">Playoff</span>{% endif %}
     </div>
 
     {# stavová pilulka #}

@@ -6,7 +6,7 @@ namespace App\Query\ListMyAccessiblePrivateMatchSources;
 
 use App\Entity\MatchSource;
 use App\Entity\Membership;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Query\ListActivePublicMatchSources\MatchSourceListItem;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -38,10 +38,10 @@ final readonly class ListMyAccessiblePrivateMatchSourcesQuery
             ->select('t', 'o')
             ->from(MatchSource::class, 't')
             ->innerJoin('t.owner', 'o')
-            ->where('t.visibility = :visibility')
+            ->where('t.kind = :kind')
             ->andWhere('t.deletedAt IS NULL')
             ->andWhere(sprintf('(t.owner = :userId OR t.id IN (%s))', $membershipSubquery))
-            ->setParameter('visibility', MatchSourceVisibility::Private)
+            ->setParameter('kind', MatchSourceKind::Private)
             ->setParameter('userId', $query->userId)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')
@@ -52,7 +52,7 @@ final readonly class ListMyAccessiblePrivateMatchSourcesQuery
             static fn (MatchSource $t): MatchSourceListItem => new MatchSourceListItem(
                 id: $t->id,
                 name: $t->name,
-                visibility: $t->visibility,
+                kind: $t->kind,
                 ownerNickname: $t->owner->displayName,
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,

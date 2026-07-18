@@ -18,7 +18,8 @@ final class ListMatchSourceSportMatchesQueryTest extends IntegrationTestCase
             matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
         ));
 
-        self::assertCount(3, $result);
+        // scheduled + live + finished + playoff fixture matches
+        self::assertCount(4, $result);
     }
 
     public function testFiltersByState(): void

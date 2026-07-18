@@ -7,7 +7,7 @@ namespace App\Tests\Integration\Command;
 use App\Command\CreatePrivateMatchSource\CreatePrivateMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -35,8 +35,8 @@ final class CreatePrivateMatchSourceHandlerTest extends IntegrationTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(MatchSource::class, $matchSource);
-        self::assertSame(MatchSourceVisibility::Private, $matchSource->visibility);
-        self::assertFalse($matchSource->isPublic);
+        self::assertSame(MatchSourceKind::Private, $matchSource->kind);
+        self::assertFalse($matchSource->isCurated);
         self::assertSame(AppFixtures::VERIFIED_USER_ID, $matchSource->owner->id->toRfc4122());
     }
 }

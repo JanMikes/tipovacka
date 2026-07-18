@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Competition;
+use App\Enum\CompetitionMatchSelectionMode;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class CompetitionFormData
@@ -20,11 +21,19 @@ final class CompetitionFormData
 
     public bool $withPin = false;
 
-    public ?string $matchSourceCreationPin = null;
-
     public bool $hideOthersTipsBeforeDeadline = false;
 
     public ?\DateTimeImmutable $tipsDeadline = null;
+
+    /** Selected match source UUID (create form only). */
+    public ?string $matchSourceId = null;
+
+    public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All;
+
+    public bool $includePlayoff = true;
+
+    /** @var list<string> selected sport match UUIDs (Subset mode, create form only) */
+    public array $selectedMatchIds = [];
 
     public static function fromCompetition(Competition $competition): self
     {
@@ -34,6 +43,9 @@ final class CompetitionFormData
         $formData->withPin = null !== $competition->pin;
         $formData->hideOthersTipsBeforeDeadline = $competition->hideOthersTipsBeforeDeadline;
         $formData->tipsDeadline = $competition->tipsDeadline;
+        $formData->matchSourceId = $competition->matchSource->id->toRfc4122();
+        $formData->selectionMode = $competition->selectionMode;
+        $formData->includePlayoff = $competition->includePlayoff;
 
         return $formData;
     }

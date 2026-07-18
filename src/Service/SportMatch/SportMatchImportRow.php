@@ -13,6 +13,7 @@ final readonly class SportMatchImportRow
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round = null,
+        public bool $isPlayoff = false,
     ) {
     }
 }

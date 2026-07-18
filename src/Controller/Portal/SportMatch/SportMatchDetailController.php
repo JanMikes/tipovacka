@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,6 +27,7 @@ final class SportMatchDetailController extends AbstractController
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly CompetitionMatchProvider $matchProvider,
     ) {
     }
 
@@ -39,7 +41,7 @@ final class SportMatchDetailController extends AbstractController
 
         if ($user instanceof User) {
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
-                if ($membership->competition->matchSource->id->equals($sportMatch->matchSource->id)) {
+                if ($this->matchProvider->includes($membership->competition, $sportMatch)) {
                     $guess = $this->guessRepository->findActiveByUserMatchCompetition(
                         $user->id,
                         $sportMatch->id,

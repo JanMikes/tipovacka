@@ -42,15 +42,15 @@ final class MatchSourceRepository
     /**
      * @return MatchSource[]
      */
-    public function findActivePublic(): array
+    public function findActiveCurated(): array
     {
         return $this->entityManager->createQueryBuilder()
             ->select('t')
             ->from(MatchSource::class, 't')
-            ->where('t.visibility = :visibility')
+            ->where('t.kind = :kind')
             ->andWhere('t.finishedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
-            ->setParameter('visibility', \App\Enum\MatchSourceVisibility::Public)
+            ->setParameter('kind', \App\Enum\MatchSourceKind::Curated)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')
             ->getQuery()
@@ -66,10 +66,10 @@ final class MatchSourceRepository
             ->select('t')
             ->from(MatchSource::class, 't')
             ->where('t.owner = :ownerId')
-            ->andWhere('t.visibility = :visibility')
+            ->andWhere('t.kind = :kind')
             ->andWhere('t.deletedAt IS NULL')
             ->setParameter('ownerId', $ownerId)
-            ->setParameter('visibility', \App\Enum\MatchSourceVisibility::Private)
+            ->setParameter('kind', \App\Enum\MatchSourceKind::Private)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')
             ->getQuery()

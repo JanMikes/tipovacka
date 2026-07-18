@@ -20,7 +20,7 @@
             <p class="text-sm text-white/70 mb-4">
                 Soubor musí obsahovat sloupce: <strong class="font-semibold text-white">Domácí</strong>, <strong class="font-semibold text-white">Hosté</strong>,
                 <strong class="font-semibold text-white">Začátek (YYYY-MM-DD HH:MM)</strong>, <strong class="font-semibold text-white">Místo (nepovinné)</strong>.
-                Volitelně i <strong class="font-semibold text-white">Kolo (nepovinné)</strong> — např. „Skupina A", „Čtvrtfinále".
+                Volitelně i <strong class="font-semibold text-white">Kolo (nepovinné)</strong> — např. „Skupina A", „Čtvrtfinále" — a <strong class="font-semibold text-white">Playoff (nepovinné)</strong> s hodnotou ano/ne.
             </p>
             <a href="{{ path('portal_sport_match_template_download') }}" class="btn-link inline-flex items-center gap-1.5 text-sm">
                 <twig:ux:icon name="lucide:download" class="h-4 w-4" />
@@ -73,6 +73,7 @@
                                     <th class="py-2.5 px-3 text-left font-semibold">Začátek</th>
                                     <th class="py-2.5 px-3 text-left font-semibold">Místo</th>
                                     <th class="py-2.5 px-3 text-left font-semibold">Kolo</th>
+                                    <th class="py-2.5 px-3 text-left font-semibold">Playoff</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -84,6 +85,7 @@
                                         <td class="py-2.5 px-3 tabular-nums">{{ row.kickoffAt|date('j. n. Y H:i') }}</td>
                                         <td class="py-2.5 px-3">{{ row.venue ?: '—' }}</td>
                                         <td class="py-2.5 px-3">{{ row.round ?: '—' }}</td>
+                                        <td class="py-2.5 px-3">{{ row.isPlayoff ? 'ano' : 'ne' }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

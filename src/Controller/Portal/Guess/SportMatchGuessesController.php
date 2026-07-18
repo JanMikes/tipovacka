@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Guess;
 
 use App\Entity\User;
+use App\Exception\MatchNotInCompetition;
 use App\Form\CompetitionMatchDeadlineFormData;
 use App\Form\CompetitionMatchDeadlineFormType;
 use App\Query\GetMatchPickDistribution\GetMatchPickDistribution;
@@ -15,6 +16,7 @@ use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use App\Voter\GuessVoter;
@@ -40,6 +42,7 @@ final class SportMatchGuessesController extends AbstractController
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
         private readonly CompetitionMatchSettingRepository $competitionMatchSettingRepository,
+        private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
         private readonly QueryBus $queryBus,
@@ -56,6 +59,10 @@ final class SportMatchGuessesController extends AbstractController
 
         $this->denyAccessUnlessGranted(CompetitionVoter::VIEW, $competition);
         $this->denyAccessUnlessGranted(SportMatchVoter::VIEW, $sportMatch);
+
+        if (!$this->matchProvider->includes($competition, $sportMatch)) {
+            throw MatchNotInCompetition::create();
+        }
 
         $context = new GuessVotingContext(sportMatch: $sportMatch, competitionId: $competition->id);
         $this->denyAccessUnlessGranted(GuessVoter::VIEW, $context);

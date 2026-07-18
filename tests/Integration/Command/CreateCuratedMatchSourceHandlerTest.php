@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
-use App\Command\CreatePublicMatchSource\CreatePublicMatchSourceCommand;
+use App\Command\CreateCuratedMatchSource\CreateCuratedMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
 
-final class CreatePublicMatchSourceHandlerTest extends IntegrationTestCase
+final class CreateCuratedMatchSourceHandlerTest extends IntegrationTestCase
 {
     public function testCreatesPublicMatchSource(): void
     {
-        $this->commandBus()->dispatch(new CreatePublicMatchSourceCommand(
+        $this->commandBus()->dispatch(new CreateCuratedMatchSourceCommand(
             adminId: Uuid::fromString(AppFixtures::ADMIN_ID),
             name: 'Nový veřejný turnaj',
             description: 'Popis',
@@ -35,8 +35,8 @@ final class CreatePublicMatchSourceHandlerTest extends IntegrationTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(MatchSource::class, $matchSource);
-        self::assertSame(MatchSourceVisibility::Public, $matchSource->visibility);
-        self::assertTrue($matchSource->isPublic);
+        self::assertSame(MatchSourceKind::Curated, $matchSource->kind);
+        self::assertTrue($matchSource->isCurated);
         self::assertFalse($matchSource->isFinished);
         self::assertFalse($matchSource->isDeleted());
         self::assertSame(AppFixtures::ADMIN_ID, $matchSource->owner->id->toRfc4122());

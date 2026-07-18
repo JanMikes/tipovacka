@@ -10,7 +10,7 @@ use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Event\MemberJoinedCompetition;
 use App\Event\MemberLeftCompetition;
 use App\Event\MemberRemoved;
@@ -46,7 +46,7 @@ final class MembershipEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
@@ -132,7 +132,7 @@ final class MembershipEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,

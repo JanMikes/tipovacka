@@ -9,9 +9,11 @@ use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\MatchSourceKind;
 use App\Event\CompetitionCreated;
 use App\Event\CompetitionDeleted;
+use App\Event\CompetitionMatchSelectionChanged;
 use App\Event\CompetitionPinRegenerated;
 use App\Event\CompetitionPinRevoked;
 use App\Event\CompetitionShareableLinkRegenerated;
@@ -49,7 +51,7 @@ final class CompetitionEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
@@ -101,6 +103,58 @@ final class CompetitionEntityTest extends TestCase
 
         self::assertFalse($competition->hideOthersTipsBeforeDeadline);
         self::assertNull($competition->tipsDeadline);
+    }
+
+    public function testSelectionDefaultsOnFreshCompetition(): void
+    {
+        $competition = $this->makeCompetition();
+
+        self::assertSame(CompetitionMatchSelectionMode::All, $competition->selectionMode);
+        self::assertTrue($competition->includePlayoff);
+    }
+
+    public function testConstructorHonorsSelectionAndTipSettings(): void
+    {
+        $owner = $this->makeOwner();
+        $deadline = new \DateTimeImmutable('2025-06-20 10:00:00 UTC');
+
+        $competition = new Competition(
+            id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            matchSource: $this->makeMatchSource($owner),
+            owner: $owner,
+            name: 'Soutěž',
+            description: null,
+            pin: null,
+            shareableLinkToken: 'token-x',
+            createdAt: $this->now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+            includePlayoff: false,
+            hideOthersTipsBeforeDeadline: true,
+            tipsDeadline: $deadline,
+        );
+
+        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
+        self::assertFalse($competition->includePlayoff);
+        self::assertTrue($competition->hideOthersTipsBeforeDeadline);
+        self::assertSame($deadline, $competition->tipsDeadline);
+    }
+
+    public function testRecordMatchSelectionChangedRecordsEventAndTouchesUpdatedAt(): void
+    {
+        $competition = $this->makeCompetition();
+        $editor = $competition->owner;
+        $competition->popEvents();
+
+        $later = new \DateTimeImmutable('2025-06-16 12:00:00 UTC');
+        $competition->recordMatchSelectionChanged($editor, $later);
+
+        self::assertSame($later, $competition->updatedAt);
+
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(CompetitionMatchSelectionChanged::class, $events[0]);
+        self::assertSame($competition->id, $events[0]->competitionId);
+        self::assertSame($editor->id, $events[0]->changedByUserId);
     }
 
     public function testUpdateDetailsRecordsEvent(): void

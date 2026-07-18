@@ -11,7 +11,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Symfony\Component\Uid\Uuid;
 
 final class RuleTestFactory
@@ -41,7 +41,7 @@ final class RuleTestFactory
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: self::user(),
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'T',
             description: null,
             startAt: null,

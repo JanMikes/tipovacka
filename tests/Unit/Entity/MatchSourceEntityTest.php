@@ -8,7 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Event\MatchSourceCreated;
 use App\Event\MatchSourceDeleted;
 use App\Event\MatchSourceFinished;
@@ -49,13 +49,13 @@ final class MatchSourceEntityTest extends TestCase
         );
     }
 
-    private function makeMatchSource(MatchSourceVisibility $visibility = MatchSourceVisibility::Private): MatchSource
+    private function makeMatchSource(MatchSourceKind $kind = MatchSourceKind::Private): MatchSource
     {
         return new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $this->makeSport(),
             owner: $this->makeOwner(),
-            visibility: $visibility,
+            kind: $kind,
             name: 'Test Turnaj',
             description: null,
             startAt: null,
@@ -72,7 +72,7 @@ final class MatchSourceEntityTest extends TestCase
         self::assertCount(1, $events);
         self::assertInstanceOf(MatchSourceCreated::class, $events[0]);
         self::assertSame($matchSource->id, $events[0]->matchSourceId);
-        self::assertSame(MatchSourceVisibility::Private, $events[0]->visibility);
+        self::assertSame(MatchSourceKind::Private, $events[0]->kind);
     }
 
     public function testIsActiveWhenFreshlyCreated(): void
@@ -84,13 +84,15 @@ final class MatchSourceEntityTest extends TestCase
         self::assertFalse($matchSource->isDeleted());
     }
 
-    public function testIsPublicReflectsVisibility(): void
+    public function testIsCuratedReflectsKind(): void
     {
-        $public = $this->makeMatchSource(MatchSourceVisibility::Public);
-        $private = $this->makeMatchSource(MatchSourceVisibility::Private);
+        $curated = $this->makeMatchSource(MatchSourceKind::Curated);
+        $private = $this->makeMatchSource(MatchSourceKind::Private);
 
-        self::assertTrue($public->isPublic);
-        self::assertFalse($private->isPublic);
+        self::assertTrue($curated->isCurated);
+        self::assertFalse($private->isCurated);
+        self::assertSame('curated', $curated->kind->value);
+        self::assertSame('private', $private->kind->value);
     }
 
     public function testUpdateDetailsRecordsEventAndUpdatesFields(): void

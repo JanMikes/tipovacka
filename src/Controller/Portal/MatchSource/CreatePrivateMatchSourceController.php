@@ -31,9 +31,7 @@ final class CreatePrivateMatchSourceController extends AbstractController
         $user = $this->getUser();
 
         $formData = new MatchSourceFormData();
-        $form = $this->createForm(MatchSourceFormType::class, $formData, [
-            'with_creation_pin' => true,
-        ]);
+        $form = $this->createForm(MatchSourceFormType::class, $formData);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -43,12 +41,11 @@ final class CreatePrivateMatchSourceController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
-                creationPin: $formData->creationPin ?: null,
             ));
 
             $matchSource = $this->extractMatchSource($envelope);
 
-            $this->addFlash('success', 'Turnaj byl vytvořen.');
+            $this->addFlash('success', 'Zdroj zápasů byl vytvořen.');
 
             return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }

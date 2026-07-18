@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Query;
 
 use App\DataFixtures\AppFixtures;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Query\GetMatchSourceDetail\GetMatchSourceDetail;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -20,7 +20,7 @@ final class GetMatchSourceDetailQueryTest extends IntegrationTestCase
         ));
 
         self::assertSame(AppFixtures::PRIVATE_SOURCE_NAME, $result->name);
-        self::assertSame(MatchSourceVisibility::Private, $result->visibility);
+        self::assertSame(MatchSourceKind::Private, $result->kind);
         self::assertSame(AppFixtures::VERIFIED_USER_NICKNAME, $result->ownerNickname);
         self::assertSame('football', $result->sportCode);
         self::assertSame('Fotbal', $result->sportName);

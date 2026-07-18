@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Competition;
 
-use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
-use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,9 +28,9 @@ final class ManageMemberTipsController extends AbstractController
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly MembershipRepository $membershipRepository,
-        private readonly SportMatchRepository $sportMatchRepository,
         private readonly GuessRepository $guessRepository,
         private readonly UserRepository $userRepository,
+        private readonly CompetitionMatchProvider $matchProvider,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -61,11 +60,7 @@ final class ManageMemberTipsController extends AbstractController
             if ($isMember) {
                 $selectedMember = $candidate;
 
-                $allMatches = $this->sportMatchRepository->listByMatchSource(
-                    $competition->matchSource->id,
-                    SportMatchState::Scheduled,
-                    $now,
-                );
+                $allMatches = $this->matchProvider->matchesFor($competition);
                 $openMatches = array_values(array_filter(
                     $allMatches,
                     static fn ($m) => $m->isOpenForGuesses && $m->kickoffAt > $now,

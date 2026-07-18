@@ -11,6 +11,7 @@ use App\Entity\SportMatch;
 use App\Repository\CompetitionRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -21,6 +22,7 @@ final readonly class GetCompetitionLeaderboardQuery
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private LeaderboardTieResolutionRepository $resolutionRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -30,8 +32,7 @@ final readonly class GetCompetitionLeaderboardQuery
         $competition = $this->competitionRepository->get($query->competitionId);
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
 
-        /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
-        $aggregates = $this->entityManager->createQueryBuilder()
+        $aggregatesQb = $this->entityManager->createQueryBuilder()
             ->select(
                 'IDENTITY(g.user) AS userId',
                 'SUM(e.totalPoints) AS points',
@@ -40,12 +41,15 @@ final readonly class GetCompetitionLeaderboardQuery
             )
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
+            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.id = g.sportMatch')
             ->where('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
             ->groupBy('g.user')
-            ->setParameter('competitionId', $competition->id)
-            ->getQuery()
-            ->getArrayResult();
+            ->setParameter('competitionId', $competition->id);
+        $this->matchProvider->applyCompetitionMatchFilter($aggregatesQb, 'm', $competition);
+
+        /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
+        $aggregates = $aggregatesQb->getQuery()->getArrayResult();
 
         $pointsByUser = [];
         $evaluatedByUser = [];
@@ -59,21 +63,23 @@ final readonly class GetCompetitionLeaderboardQuery
 
         // Exact-score hits per user (separate query so the rule-points join does not
         // multiply the totalPoints SUM above).
-        /** @var list<array{userId: string, exact: int}> $exactAggregates */
-        $exactAggregates = $this->entityManager->createQueryBuilder()
+        $exactQb = $this->entityManager->createQueryBuilder()
             ->select('IDENTITY(g.user) AS userId', 'COUNT(rp.id) AS exact')
             ->from(GuessEvaluationRulePoints::class, 'rp')
             ->innerJoin(GuessEvaluation::class, 'e', 'WITH', 'e.id = rp.evaluation')
             ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
+            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.id = g.sportMatch')
             ->where('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
             ->andWhere('rp.ruleIdentifier = :exactId')
             ->andWhere('rp.points > 0')
             ->groupBy('g.user')
             ->setParameter('competitionId', $competition->id)
-            ->setParameter('exactId', 'exact_score')
-            ->getQuery()
-            ->getArrayResult();
+            ->setParameter('exactId', 'exact_score');
+        $this->matchProvider->applyCompetitionMatchFilter($exactQb, 'm', $competition);
+
+        /** @var list<array{userId: string, exact: int}> $exactAggregates */
+        $exactAggregates = $exactQb->getQuery()->getArrayResult();
 
         $exactByUser = [];
 
@@ -82,8 +88,7 @@ final readonly class GetCompetitionLeaderboardQuery
         }
 
         // Current scoring streak: trailing run of non-zero evaluations by match kickoff (newest first).
-        /** @var list<array{userId: string, points: int}> $streakRows */
-        $streakRows = $this->entityManager->createQueryBuilder()
+        $streakQb = $this->entityManager->createQueryBuilder()
             ->select('IDENTITY(g.user) AS userId', 'e.totalPoints AS points')
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin(Guess::class, 'g', 'WITH', 'g.id = e.guess')
@@ -92,9 +97,11 @@ final readonly class GetCompetitionLeaderboardQuery
             ->andWhere('g.deletedAt IS NULL')
             ->orderBy('g.user', 'ASC')
             ->addOrderBy('m.kickoffAt', 'DESC')
-            ->setParameter('competitionId', $competition->id)
-            ->getQuery()
-            ->getArrayResult();
+            ->setParameter('competitionId', $competition->id);
+        $this->matchProvider->applyCompetitionMatchFilter($streakQb, 'm', $competition);
+
+        /** @var list<array{userId: string, points: int}> $streakRows */
+        $streakRows = $streakQb->getQuery()->getArrayResult();
 
         $streakByUser = [];
         $streakClosed = [];

@@ -7,6 +7,7 @@ namespace App\Query\ListRecentEvaluatedGuessesForUser;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Enum\SportMatchState;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -14,6 +15,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 final readonly class ListRecentEvaluatedGuessesForUserQuery
 {
     public function __construct(
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -23,8 +25,7 @@ final readonly class ListRecentEvaluatedGuessesForUserQuery
      */
     public function __invoke(ListRecentEvaluatedGuessesForUser $query): array
     {
-        /** @var list<array{guess: Guess, totalPoints: int}> $rows */
-        $rows = $this->entityManager->createQueryBuilder()
+        $rowsQb = $this->entityManager->createQueryBuilder()
             ->select('g AS guess, e.totalPoints AS totalPoints')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
@@ -40,9 +41,11 @@ final readonly class ListRecentEvaluatedGuessesForUserQuery
             ->setParameter('userId', $query->userId)
             ->setParameter('finished', SportMatchState::Finished)
             ->orderBy('m.kickoffAt', 'DESC')
-            ->addOrderBy('m.id', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('m.id', 'DESC');
+        $this->matchProvider->applyRowLevelCompetitionMatchFilter($rowsQb, 'm', 'gr');
+
+        /** @var list<array{guess: Guess, totalPoints: int}> $rows */
+        $rows = $rowsQb->getQuery()->getResult();
 
         return array_map(
             static function (array $row): EvaluatedGuessItem {

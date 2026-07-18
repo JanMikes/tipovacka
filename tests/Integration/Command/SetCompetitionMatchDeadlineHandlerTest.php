@@ -8,6 +8,7 @@ use App\Command\SetCompetitionMatchDeadline\SetCompetitionMatchDeadlineCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\CompetitionMatchSetting;
 use App\Exception\CompetitionMatchDeadlineAfterKickoff;
+use App\Exception\MatchNotInCompetition;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -24,7 +25,7 @@ final class SetCompetitionMatchDeadlineHandlerTest extends IntegrationTestCase
     public function testCreatesOverrideWhenNoneExists(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
         $deadline = new \DateTimeImmutable('2025-06-20 17:00:00');
 
         $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
@@ -45,7 +46,7 @@ final class SetCompetitionMatchDeadlineHandlerTest extends IntegrationTestCase
     public function testUpdatesExistingOverride(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
 
         $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -73,7 +74,7 @@ final class SetCompetitionMatchDeadlineHandlerTest extends IntegrationTestCase
     public function testRemovesOverrideWhenDeadlineIsNull(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
 
         $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -98,7 +99,7 @@ final class SetCompetitionMatchDeadlineHandlerTest extends IntegrationTestCase
     public function testNullDeadlineWithoutExistingOverrideIsNoOp(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
 
         $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -111,12 +112,35 @@ final class SetCompetitionMatchDeadlineHandlerTest extends IntegrationTestCase
         self::assertNull($repo->findByCompetitionAndMatch($competitionId, $matchId));
     }
 
+    public function testRejectsMatchNotInCompetition(): void
+    {
+        // MATCH_PLAYOFF is not among the subset competition's selected matches.
+        $competitionId = Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID);
+
+        try {
+            $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
+                editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+                competitionId: $competitionId,
+                sportMatchId: $matchId,
+                deadline: new \DateTimeImmutable('2025-06-22 17:00:00'),
+            ));
+            self::fail('Expected MatchNotInCompetition to be thrown.');
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(MatchNotInCompetition::class, $e->getPrevious());
+        }
+
+        $this->entityManager()->clear();
+
+        self::assertNull($this->settingRepository()->findByCompetitionAndMatch($competitionId, $matchId));
+    }
+
     public function testRejectsDeadlineAfterKickoff(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
-        // MATCH_SCHEDULED_ID kickoff is 2025-06-20 18:00 UTC.
-        $tooLate = new \DateTimeImmutable('2025-06-20 18:00:01');
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
+        // MATCH_PRIVATE_SCHEDULED_ID kickoff is 2025-06-20 19:00 UTC.
+        $tooLate = new \DateTimeImmutable('2025-06-20 19:00:01');
 
         try {
             $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(

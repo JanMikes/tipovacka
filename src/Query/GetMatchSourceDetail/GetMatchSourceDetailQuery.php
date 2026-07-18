@@ -38,7 +38,7 @@ final readonly class GetMatchSourceDetailQuery
             id: $matchSource->id,
             name: $matchSource->name,
             description: $matchSource->description,
-            visibility: $matchSource->visibility,
+            kind: $matchSource->kind,
             sportCode: $matchSource->sport->code,
             sportName: $matchSource->sport->name,
             ownerId: $matchSource->owner->id,

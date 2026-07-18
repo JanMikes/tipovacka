@@ -45,8 +45,8 @@ Notes:
 
 - **`SECOND_VERIFIED_USER_ID` quirk**: its ID ends in `…0099`, deliberately OUTSIDE the
   predictable provider's pool (`…0001`–`…0030`), so it can never collide with IDs handed
-  out by `next()`. It is a plain verified user with no memberships — ideal as an
-  "outsider" / second participant.
+  out by `next()`. Since S02 it owns (and is the sole member of) `SUBSET_COMPETITION`;
+  it remains an outsider for every other competition.
 - `DELETED_USER` was soft-deleted at `2025-06-16 09:00:00 UTC` (one day after `$now`).
 - `ANONYMOUS_USER` has no email/password/nickname; profile name is
   `ANONYMOUS_USER_FIRST_NAME` = `František`, `ANONYMOUS_USER_LAST_NAME` = `Novák`.
@@ -64,12 +64,14 @@ is built by `doctrine:schema:create`, which skips the migration's seed row).
 
 ## Match sources (`MatchSource`, table `match_sources`)
 
-| Constant prefix    | ID                                     | Name                | Visibility | Owner         |
-|--------------------|----------------------------------------|---------------------|------------|---------------|
-| `PUBLIC_SOURCE_*`  | `019aaaaa-0000-7000-8000-000000000001` | `Liga mistrů 2026/27` | public   | ADMIN         |
-| `PRIVATE_SOURCE_*` | `019aaaaa-0000-7000-8000-000000000002` | `Chlapi u piva`     | private    | VERIFIED_USER |
+| Constant prefix    | ID                                     | Name                | Kind      | Owner         |
+|--------------------|----------------------------------------|---------------------|-----------|---------------|
+| `PUBLIC_SOURCE_*`  | `019aaaaa-0000-7000-8000-000000000001` | `Liga mistrů 2026/27` | curated | ADMIN         |
+| `PRIVATE_SOURCE_*` | `019aaaaa-0000-7000-8000-000000000002` | `Chlapi u piva`     | private   | VERIFIED_USER |
 
 Both use sport football, `description/startAt/endAt = null`, not finished, not deleted.
+(The constants keep the historical `PUBLIC_/PRIVATE_` prefixes; `PUBLIC_SOURCE` is the
+curated one.)
 
 ## Competitions (`Competition`, table `competitions`)
 
@@ -77,6 +79,18 @@ Both use sport football, `description/startAt/endAt = null`, not finished, not d
 |--------------------------|----------------------------------------|----------------|----------------|---------------|------------|----------------------|
 | `VERIFIED_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000001` | `Kámoši u piva` | PRIVATE_SOURCE | VERIFIED_USER | `12345678` (`VERIFIED_COMPETITION_PIN`) | `VERIFIED_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000119bbbbb0000700b1` |
 | `PUBLIC_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000002` | `Admin liga`   | PUBLIC_SOURCE  | ADMIN         | none (`null`) | `PUBLIC_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000219bbbbb0000700b2` |
+| `SUBSET_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000033` | `Vybrané zápasy party` | PUBLIC_SOURCE | SECOND_VERIFIED_USER | none (`null`) | `SUBSET_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000319bbbbb0000700b3` |
+
+Selection mode: VERIFIED_COMPETITION and PUBLIC_COMPETITION are mode `all` with
+`includePlayoff = true` (defaults). **`SUBSET_COMPETITION` is mode `subset`** with
+exactly two `CompetitionMatchSelection` rows:
+
+| Constant                        | ID                                     | Selected match     |
+|---------------------------------|----------------------------------------|--------------------|
+| `SUBSET_SELECTION_SCHEDULED_ID` | `019bbbbb-0000-7000-8000-00000000bb01` | `MATCH_SCHEDULED`  |
+| `SUBSET_SELECTION_FINISHED_ID`  | `019bbbbb-0000-7000-8000-00000000bb02` | `MATCH_FINISHED`   |
+
+NOT selected (⇒ `MatchNotInCompetition` when tipped there): `MATCH_LIVE`, `MATCH_PLAYOFF`.
 
 ## Memberships
 
@@ -85,10 +99,11 @@ Both use sport football, `description/startAt/endAt = null`, not finished, not d
 | `VERIFIED_COMPETITION_OWNER_MEMBERSHIP_ID` | `019bbbbb-0000-7000-8000-00000000aa01` | VERIFIED_COMPETITION | VERIFIED_USER  |
 | `ANONYMOUS_MEMBERSHIP_ID`                  | `019bbbbb-0000-7000-8000-00000000aa03` | VERIFIED_COMPETITION | ANONYMOUS_USER |
 | `PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa02` | PUBLIC_COMPETITION   | ADMIN          |
+| `SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa04` | SUBSET_COMPETITION   | SECOND_VERIFIED_USER |
 
 Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION
 (a pending join request exists instead), ADMIN is NOT a member of VERIFIED_COMPETITION,
-SECOND_VERIFIED_USER has no memberships at all.
+SECOND_VERIFIED_USER's only membership is SUBSET_COMPETITION (which they own).
 
 ## Competition invitation (`CompetitionInvitation`)
 
@@ -118,6 +133,10 @@ member), requested at `$now`, undecided.
 | `MATCH_LIVE_ID`              | `019ddddd-0000-7000-8000-000000000002` | PUBLIC_SOURCE   | Viktoria Plzeň vs Baník Ostrava | 2025-06-15 11:00   | live (began at `$now`)       | — |
 | `MATCH_FINISHED_ID`          | `019ddddd-0000-7000-8000-000000000003` | PUBLIC_SOURCE   | Bohemians 1905 vs Jablonec     | 2025-06-10 18:00    | finished, **2:1**            | `Základní skupina`, Ďolíček |
 | `MATCH_PRIVATE_SCHEDULED_ID` | `019ddddd-0000-7000-8000-000000000004` | PRIVATE_SOURCE  | Tygři vs Lvi                   | 2025-06-20 19:00    | scheduled                    | — |
+| `MATCH_PLAYOFF_ID`           | `019ddddd-0000-7000-8000-000000000005` | PUBLIC_SOURCE   | Real Madrid vs Barcelona       | 2025-06-22 18:00    | scheduled, **isPlayoff=true** | `Playoff` |
+
+`MATCH_PLAYOFF` is the only fixture match with `isPlayoff = true` — every other match
+defaults to `false`.
 
 ## Guess + evaluation
 

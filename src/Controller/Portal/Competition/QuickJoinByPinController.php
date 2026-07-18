@@ -67,7 +67,7 @@ final class QuickJoinByPinController extends AbstractController
             } elseif ($inner instanceof AlreadyMember) {
                 $this->addFlash('error', 'V soutěži už jsi.');
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                $this->addFlash('error', 'Turnaj této soutěže je již ukončen.');
+                $this->addFlash('error', 'Zdroj zápasů této soutěže je již ukončen.');
             } else {
                 throw $handlerFailed;
             }

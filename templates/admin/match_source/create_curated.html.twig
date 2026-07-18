@@ -1,20 +1,20 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Nový veřejný turnaj — Admin — {{ brand_name }}{% endblock %}
+{% block title %}Nový zdroj zápasů — Admin — {{ brand_name }}{% endblock %}
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Turnaje</a></li>
+    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Zdroje zápasů</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li class="text-white/80 font-medium" aria-current="page">Nový veřejný turnaj</li>
+    <li class="text-white/80 font-medium" aria-current="page">Nový zdroj zápasů</li>
 {% endblock %}
 
-{% block admin_title %}Nový veřejný turnaj{% endblock %}
-{% block admin_subtitle %}Veřejné turnaje jsou viditelné všem uživatelům.{% endblock %}
+{% block admin_title %}Nový zdroj zápasů{% endblock %}
+{% block admin_subtitle %}Kurátorované zdroje zápasů může použít každý uživatel pro svou soutěž.{% endblock %}
 {% block admin_actions %}
     <a href="{{ path('admin_match_source_list') }}" class="btn btn-ghost btn-sm">
         <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
-        Zpět na turnaje
+        Zpět na zdroje zápasů
     </a>
 {% endblock %}
 
@@ -45,7 +45,7 @@
         </div>
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary">
-                Vytvořit turnaj
+                Vytvořit zdroj zápasů
             </button>
             <a href="{{ path('admin_match_source_list') }}" class="btn btn-ghost">
                 Zrušit

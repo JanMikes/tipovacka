@@ -4,7 +4,7 @@
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Turnaje</a></li>
+    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Zdroje zápasů</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
     <li><a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="hover:text-accent-300 transition-colors">{{ match_source.name }}</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
@@ -12,11 +12,11 @@
 {% endblock %}
 
 {% block admin_title %}Pravidla bodování{% endblock %}
-{% block admin_subtitle %}Turnaj: {{ match_source.name }}{% endblock %}
+{% block admin_subtitle %}Zdroj zápasů: {{ match_source.name }}{% endblock %}
 {% block admin_actions %}
     <a href="{{ path('admin_match_source_list') }}" class="btn btn-ghost btn-sm">
         <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
-        Zpět na turnaje
+        Zpět na zdroje zápasů
     </a>
 {% endblock %}
 

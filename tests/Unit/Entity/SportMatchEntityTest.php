@@ -9,7 +9,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Enum\SportMatchState;
 use App\Event\SportMatchCancelled;
 use App\Event\SportMatchCreated;
@@ -57,7 +57,7 @@ final class SportMatchEntityTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'T',
             description: null,
             startAt: null,
@@ -126,6 +126,51 @@ final class SportMatchEntityTest extends TestCase
         // updateDetails replaces round wholesale (like venue) — omitting it clears it.
         $match->updateDetails('A', 'B', null, 'Stadium', $this->later);
         self::assertNull($match->round);
+    }
+
+    public function testIsPlayoffDefaultsToFalse(): void
+    {
+        $match = $this->makeMatch();
+
+        self::assertFalse($match->isPlayoff);
+
+        $events = $match->popEvents();
+        self::assertInstanceOf(SportMatchCreated::class, $events[0]);
+        self::assertFalse($events[0]->isPlayoff);
+    }
+
+    public function testConstructorStoresIsPlayoffAndCarriesItInEvent(): void
+    {
+        $match = new SportMatch(
+            id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+            matchSource: $this->makeMatchSource(),
+            homeTeam: 'A',
+            awayTeam: 'B',
+            kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+            venue: 'Stadium',
+            createdAt: $this->now,
+            round: 'Playoff',
+            isPlayoff: true,
+        );
+
+        self::assertTrue($match->isPlayoff);
+
+        $events = $match->popEvents();
+        self::assertInstanceOf(SportMatchCreated::class, $events[0]);
+        self::assertTrue($events[0]->isPlayoff);
+    }
+
+    public function testUpdateDetailsSetsAndClearsIsPlayoff(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        $match->updateDetails('A', 'B', null, 'Stadium', $this->later, isPlayoff: true);
+        self::assertTrue($match->isPlayoff);
+
+        // Like round/venue, isPlayoff is replaced wholesale — omitting it resets it.
+        $match->updateDetails('A', 'B', null, 'Stadium', $this->later);
+        self::assertFalse($match->isPlayoff);
     }
 
     public function testUpdateDetailsAppliesOnlyNonNullFields(): void

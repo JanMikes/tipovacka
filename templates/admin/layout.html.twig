@@ -10,7 +10,7 @@
 {% block body %}
 {% set _route = app.request.attributes.get('_route') %}
 {% set _nav = [
-    {route: 'admin_match_source_list', label: 'Turnaje',   icon: 'lucide:trophy',   match: ['admin_match_source_list', 'admin_match_source_edit', 'admin_match_source_create', 'admin_match_source_rule_configuration', 'admin_sport_match_list']},
+    {route: 'admin_match_source_list', label: 'Zdroje zápasů',   icon: 'lucide:trophy',   match: ['admin_match_source_list', 'admin_match_source_edit', 'admin_match_source_create', 'admin_match_source_rule_configuration', 'admin_sport_match_list']},
     {route: 'admin_competition_list',      label: 'Soutěže',   icon: 'lucide:users',    match: ['admin_competition_list']},
     {route: 'admin_user_list',       label: 'Uživatelé', icon: 'lucide:user',     match: ['admin_user_list', 'admin_user_credits']},
     {route: 'admin_credit_purchases', label: 'Kredity',  icon: 'lucide:wallet',   match: ['admin_credit_purchases']},
@@ -43,7 +43,7 @@
                     <a href="{{ path('admin_match_source_create') }}"
                        class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-accent-300 transition-colors hover:bg-white/5 hover:text-accent-200">
                         <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
-                        Nový veřejný turnaj
+                        Nový zdroj zápasů
                     </a>
                 </div>
             </div>

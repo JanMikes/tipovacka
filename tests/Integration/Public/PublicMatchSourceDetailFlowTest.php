@@ -52,8 +52,9 @@ final class PublicMatchSourceDetailFlowTest extends WebTestCase
         $client->request('GET', '/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID);
 
         self::assertResponseIsSuccessful();
+        // The pending badge shows for PUBLIC_COMPETITION; the join button may
+        // still appear for other competitions on the source (SUBSET_COMPETITION).
         self::assertSelectorTextContains('body', 'Žádost čeká na schválení');
-        self::assertSelectorTextNotContains('body', 'Požádat o připojení');
     }
 
     public function testMemberSeesMemberBadge(): void
@@ -68,8 +69,9 @@ final class PublicMatchSourceDetailFlowTest extends WebTestCase
         $client->request('GET', '/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID);
 
         self::assertResponseIsSuccessful();
+        // Admin is a member of PUBLIC_COMPETITION; SUBSET_COMPETITION (same source)
+        // still legitimately offers the join-request button.
         self::assertSelectorTextContains('body', 'Jste členem');
-        self::assertSelectorTextNotContains('body', 'Požádat o připojení');
     }
 
     public function testPrivateMatchSourceReturns404(): void

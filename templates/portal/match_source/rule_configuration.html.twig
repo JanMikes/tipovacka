@@ -11,7 +11,7 @@
     ]" />
 
     <header class="mb-8 mt-2">
-        <span class="eyebrow">Správa turnaje</span>
+        <span class="eyebrow">Správa zdroje zápasů</span>
         <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Pravidla bodování</h1>
         <p class="mt-2 text-sm leading-relaxed text-white/70">{{ match_source.name }}</p>
     </header>
@@ -36,7 +36,7 @@
             Uložit pravidla
         </button>
         <a href="{{ path('portal_match_source_detail', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost">
-            Zpět na turnaj
+            Zpět na zdroj zápasů
         </a>
     </div>
 

@@ -9,7 +9,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Enum\UserRole;
 use App\Voter\MatchSourceVoter;
 use App\Voter\SportMatchVoter;
@@ -71,7 +71,7 @@ final class SportMatchVoterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: $sport,
             owner: $owner ?? $this->makeUser(AppFixtures::VERIFIED_USER_ID),
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'T',
             description: null,
             startAt: null,

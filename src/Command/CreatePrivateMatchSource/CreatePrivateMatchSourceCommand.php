@@ -14,7 +14,6 @@ final readonly class CreatePrivateMatchSourceCommand
         public ?string $description,
         public ?\DateTimeImmutable $startAt,
         public ?\DateTimeImmutable $endAt,
-        public ?string $creationPin = null,
     ) {
     }
 }

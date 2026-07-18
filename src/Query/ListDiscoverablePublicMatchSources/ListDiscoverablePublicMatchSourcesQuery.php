@@ -7,7 +7,7 @@ namespace App\Query\ListDiscoverablePublicMatchSources;
 use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -39,12 +39,12 @@ final readonly class ListDiscoverablePublicMatchSourcesQuery
         $matchSources = $this->entityManager->createQueryBuilder()
             ->select('t')
             ->from(MatchSource::class, 't')
-            ->where('t.visibility = :visibility')
+            ->where('t.kind = :kind')
             ->andWhere('t.finishedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
             ->andWhere('t.owner != :userId')
             ->andWhere(sprintf('t.id NOT IN (%s)', $membershipSubquery))
-            ->setParameter('visibility', MatchSourceVisibility::Public)
+            ->setParameter('kind', MatchSourceKind::Curated)
             ->setParameter('userId', $query->userId)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')

@@ -61,7 +61,7 @@ final class AdminRuleConfigurationController extends AbstractController
                 changes: $changes,
             ));
 
-            $this->addFlash('success', 'Pravidla turnaje byla uložena.');
+            $this->addFlash('success', 'Pravidla zdroje zápasů byla uložena.');
 
             return $this->redirectToRoute('admin_match_source_rule_configuration', [
                 'id' => $matchSource->id->toRfc4122(),

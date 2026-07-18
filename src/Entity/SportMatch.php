@@ -47,6 +47,10 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     #[ORM\Column(length: 120, nullable: true)]
     public private(set) ?string $round;
 
+    /** Playoff matches can be excluded per competition (`Competition::$includePlayoff`). */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $isPlayoff = false;
+
     #[ORM\Column(enumType: SportMatchState::class)]
     public private(set) SportMatchState $state;
 
@@ -97,14 +101,16 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
         // Appended (optional) so existing positional/named call sites keep compiling;
-        // the field itself is declared up top next to $venue.
+        // the fields themselves are declared up top next to $venue.
         ?string $round = null,
+        bool $isPlayoff = false,
     ) {
         $this->homeTeam = $homeTeam;
         $this->awayTeam = $awayTeam;
         $this->kickoffAt = $kickoffAt;
         $this->venue = $venue;
         $this->round = $round;
+        $this->isPlayoff = $isPlayoff;
         $this->state = SportMatchState::Scheduled;
         $this->updatedAt = $this->createdAt;
 
@@ -114,6 +120,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             homeTeam: $this->homeTeam,
             awayTeam: $this->awayTeam,
             kickoffAt: $this->kickoffAt,
+            isPlayoff: $this->isPlayoff,
             occurredOn: $this->createdAt,
         ));
     }
@@ -125,6 +132,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         ?string $venue,
         \DateTimeImmutable $now,
         ?string $round = null,
+        bool $isPlayoff = false,
     ): void {
         if ($this->isCancelled || null !== $this->deletedAt) {
             throw SportMatchCannotBeEdited::create();
@@ -144,6 +152,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
         $this->venue = $venue;
         $this->round = $round;
+        $this->isPlayoff = $isPlayoff;
         $this->updatedAt = $now;
 
         $this->recordThat(new SportMatchUpdated(

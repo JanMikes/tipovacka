@@ -10,6 +10,7 @@ use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessEvaluationRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -20,6 +21,7 @@ final readonly class GetMemberLeaderboardBreakdownQuery
         private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private GuessEvaluationRepository $evaluationRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -29,22 +31,19 @@ final readonly class GetMemberLeaderboardBreakdownQuery
         $competition = $this->competitionRepository->get($query->competitionId);
         $user = $this->userRepository->get($query->userId);
 
-        /** @var list<SportMatch> $matches */
-        $matches = $this->entityManager->createQueryBuilder()
+        $matchesQb = $this->entityManager->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.matchSource = :matchSourceId')
-            ->andWhere('m.deletedAt IS NULL')
-            ->andWhere('m.state = :finished')
-            ->setParameter('matchSourceId', $competition->matchSource->id)
+            ->where('m.state = :finished')
             ->setParameter('finished', SportMatchState::Finished)
             ->orderBy('m.kickoffAt', 'ASC')
-            ->addOrderBy('m.id', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('m.id', 'ASC');
+        $this->matchProvider->applyCompetitionMatchFilter($matchesQb, 'm', $competition);
 
-        /** @var list<Guess> $guesses */
-        $guesses = $this->entityManager->createQueryBuilder()
+        /** @var list<SportMatch> $matches */
+        $matches = $matchesQb->getQuery()->getResult();
+
+        $guessesQb = $this->entityManager->createQueryBuilder()
             ->select('g')
             ->from(Guess::class, 'g')
             ->innerJoin('g.sportMatch', 'm')
@@ -52,12 +51,13 @@ final readonly class GetMemberLeaderboardBreakdownQuery
             ->andWhere('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
             ->andWhere('m.state = :finished')
-            ->andWhere('m.deletedAt IS NULL')
             ->setParameter('userId', $user->id)
             ->setParameter('competitionId', $competition->id)
-            ->setParameter('finished', SportMatchState::Finished)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('finished', SportMatchState::Finished);
+        $this->matchProvider->applyCompetitionMatchFilter($guessesQb, 'm', $competition);
+
+        /** @var list<Guess> $guesses */
+        $guesses = $guessesQb->getQuery()->getResult();
 
         $guessesByMatch = [];
 

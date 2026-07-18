@@ -69,7 +69,7 @@ final class CompetitionDetailController extends AbstractController
             ))
             : [];
 
-        $pendingJoinRequests = ($canManage && $competition->matchSource->isPublic)
+        $pendingJoinRequests = ($canManage && $competition->matchSource->isCurated)
             ? $this->queryBus->handle(new ListPendingJoinRequestsForCompetition(
                 competitionId: $competition->id,
             ))

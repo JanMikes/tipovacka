@@ -39,7 +39,7 @@ final class AdminDeleteMatchSourceController extends AbstractController
             matchSourceId: $matchSource->id,
         ));
 
-        $this->addFlash('success', 'Turnaj byl smazán.');
+        $this->addFlash('success', 'Zdroj zápasů byl smazán.');
 
         return $this->redirectToRoute('admin_match_source_list');
     }

@@ -6,8 +6,10 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
+use App\Enum\CompetitionMatchSelectionMode;
 use App\Event\CompetitionCreated;
 use App\Event\CompetitionDeleted;
+use App\Event\CompetitionMatchSelectionChanged;
 use App\Event\CompetitionPinRegenerated;
 use App\Event\CompetitionPinRevoked;
 use App\Event\CompetitionShareableLinkRegenerated;
@@ -47,6 +49,14 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $tipsDeadline = null;
 
+    /** All ⇒ every source match belongs here; Subset ⇒ only `CompetitionMatchSelection` rows. */
+    #[ORM\Column(enumType: CompetitionMatchSelectionMode::class, options: ['default' => CompetitionMatchSelectionMode::All->value])]
+    public private(set) CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All;
+
+    /** Only meaningful in All mode — Subset selections always win over this flag. */
+    #[ORM\Column(options: ['default' => true])]
+    public private(set) bool $includePlayoff = true;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -70,11 +80,19 @@ class Competition implements EntityWithEvents, SoftDeletable
         ?string $shareableLinkToken,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
+        CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
+        bool $includePlayoff = true,
+        bool $hideOthersTipsBeforeDeadline = false,
+        ?\DateTimeImmutable $tipsDeadline = null,
     ) {
         $this->name = $name;
         $this->description = $description;
         $this->pin = $pin;
         $this->shareableLinkToken = $shareableLinkToken;
+        $this->selectionMode = $selectionMode;
+        $this->includePlayoff = $includePlayoff;
+        $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
+        $this->tipsDeadline = $tipsDeadline;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new CompetitionCreated(
@@ -101,6 +119,17 @@ class Competition implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new CompetitionUpdated(
             competitionId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    public function recordMatchSelectionChanged(User $editor, \DateTimeImmutable $now): void
+    {
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CompetitionMatchSelectionChanged(
+            competitionId: $this->id,
+            changedByUserId: $editor->id,
             occurredOn: $now,
         ));
     }

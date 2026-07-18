@@ -35,9 +35,5 @@ final readonly class UpdateMatchSourceHandler
             endAt: $command->endAt,
             now: $now,
         );
-
-        if ($command->updateCreationPin) {
-            $matchSource->setCreationPin($command->creationPin, $now);
-        }
     }
 }

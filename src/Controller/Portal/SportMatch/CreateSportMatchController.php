@@ -57,6 +57,7 @@ final class CreateSportMatchController extends AbstractController
                 kickoffAt: $formData->kickoffAt,
                 venue: $formData->venue ?: null,
                 round: $formData->round ?: null,
+                isPlayoff: $formData->isPlayoff,
             ));
 
             $sportMatch = $this->extractSportMatch($envelope);

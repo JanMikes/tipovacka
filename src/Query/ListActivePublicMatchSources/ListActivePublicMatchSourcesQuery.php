@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Query\ListActivePublicMatchSources;
 
 use App\Entity\MatchSource;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -27,10 +27,10 @@ final readonly class ListActivePublicMatchSourcesQuery
             ->select('t', 'o')
             ->from(MatchSource::class, 't')
             ->innerJoin('t.owner', 'o')
-            ->where('t.visibility = :visibility')
+            ->where('t.kind = :kind')
             ->andWhere('t.finishedAt IS NULL')
             ->andWhere('t.deletedAt IS NULL')
-            ->setParameter('visibility', MatchSourceVisibility::Public)
+            ->setParameter('kind', MatchSourceKind::Curated)
             ->orderBy('t.createdAt', 'DESC')
             ->addOrderBy('t.id', 'DESC')
             ->getQuery()
@@ -40,7 +40,7 @@ final readonly class ListActivePublicMatchSourcesQuery
             static fn (MatchSource $t): MatchSourceListItem => new MatchSourceListItem(
                 id: $t->id,
                 name: $t->name,
-                visibility: $t->visibility,
+                kind: $t->kind,
                 ownerNickname: $t->owner->displayName,
                 createdAt: $t->createdAt,
                 startAt: $t->startAt,

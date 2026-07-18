@@ -9,8 +9,10 @@ use App\Enum\UserRole;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessNotFound;
 use App\Exception\InvalidGuessScore;
+use App\Exception\MatchNotInCompetition;
 use App\Repository\GuessRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -22,6 +24,7 @@ final readonly class UpdateGuessOnBehalfHandler
     public function __construct(
         private GuessRepository $guessRepository,
         private UserRepository $userRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EffectiveTipDeadlineResolver $deadlineResolver,
         private ClockInterface $clock,
     ) {
@@ -44,6 +47,10 @@ final readonly class UpdateGuessOnBehalfHandler
 
         if (null !== $guess->deletedAt) {
             throw GuessNotFound::withId($command->guessId);
+        }
+
+        if (!$this->matchProvider->includes($guess->competition, $guess->sportMatch)) {
+            throw MatchNotInCompetition::create();
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());

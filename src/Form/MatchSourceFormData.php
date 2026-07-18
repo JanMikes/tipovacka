@@ -9,10 +9,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class MatchSourceFormData
 {
-    #[Assert\NotBlank(message: 'Zadejte prosím název turnaje.')]
+    #[Assert\NotBlank(message: 'Zadejte prosím název zdroje zápasů.')]
     #[Assert\Length(
         max: 160,
-        maxMessage: 'Název turnaje nesmí být delší než {{ limit }} znaků.',
+        maxMessage: 'Název zdroje zápasů nesmí být delší než {{ limit }} znaků.',
     )]
     public string $name = '';
 
@@ -22,18 +22,6 @@ final class MatchSourceFormData
 
     public ?\DateTimeImmutable $endAt = null;
 
-    #[Assert\Length(
-        min: 4,
-        max: 8,
-        minMessage: 'PIN musí mít alespoň {{ limit }} znaky.',
-        maxMessage: 'PIN nesmí být delší než {{ limit }} znaků.',
-    )]
-    #[Assert\Regex(
-        pattern: '/^[A-Za-z0-9]+$/',
-        message: 'PIN smí obsahovat jen písmena a číslice.',
-    )]
-    public ?string $creationPin = null;
-
     public static function fromMatchSource(MatchSource $matchSource): self
     {
         $formData = new self();
@@ -41,7 +29,6 @@ final class MatchSourceFormData
         $formData->description = $matchSource->description;
         $formData->startAt = $matchSource->startAt;
         $formData->endAt = $matchSource->endAt;
-        $formData->creationPin = $matchSource->creationPin;
 
         return $formData;
     }

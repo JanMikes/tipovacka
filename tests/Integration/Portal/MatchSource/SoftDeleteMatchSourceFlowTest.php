@@ -25,7 +25,7 @@ final class SoftDeleteMatchSourceFlowTest extends WebTestCase
         $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
 
-        $client->submitForm('Smazat turnaj');
+        $client->submitForm('Smazat zdroj zápasů');
 
         self::assertResponseRedirects('/nastenka');
 

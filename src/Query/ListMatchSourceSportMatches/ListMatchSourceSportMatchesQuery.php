@@ -35,6 +35,8 @@ final readonly class ListMatchSourceSportMatchesQuery
                 awayTeam: $m->awayTeam,
                 kickoffAt: $m->kickoffAt,
                 venue: $m->venue,
+                round: $m->round,
+                isPlayoff: $m->isPlayoff,
                 state: $m->state,
                 homeScore: $m->homeScore,
                 awayScore: $m->awayScore,

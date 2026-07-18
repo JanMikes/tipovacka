@@ -36,6 +36,7 @@ final readonly class CreateSportMatchHandler
             venue: $command->venue,
             createdAt: $now,
             round: $command->round,
+            isPlayoff: $command->isPlayoff,
         );
 
         $this->sportMatchRepository->save($sportMatch);

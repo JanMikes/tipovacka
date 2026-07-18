@@ -7,7 +7,7 @@ namespace App\Tests\Integration\Portal\MatchSource;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -33,7 +33,7 @@ final class CreatePrivateMatchSourceFlowTest extends WebTestCase
 
         $client->request('GET', '/portal/turnaje/vytvorit');
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h1', 'Nový soukromý turnaj');
+        self::assertSelectorTextContains('h1', 'Nový zdroj zápasů');
     }
 
     public function testVerifiedUserCanCreatePrivateMatchSource(): void
@@ -46,7 +46,7 @@ final class CreatePrivateMatchSourceFlowTest extends WebTestCase
         $client->loginUser($user);
 
         $client->request('GET', '/portal/turnaje/vytvorit');
-        $client->submitForm('Vytvořit turnaj', [
+        $client->submitForm('Vytvořit zdroj zápasů', [
             'match_source_form[name]' => 'Můj nový turnaj',
         ]);
 
@@ -63,7 +63,7 @@ final class CreatePrivateMatchSourceFlowTest extends WebTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(MatchSource::class, $matchSource);
-        self::assertSame(MatchSourceVisibility::Private, $matchSource->visibility);
+        self::assertSame(MatchSourceKind::Private, $matchSource->kind);
         self::assertSame(AppFixtures::VERIFIED_USER_ID, $matchSource->owner->id->toRfc4122());
     }
 }

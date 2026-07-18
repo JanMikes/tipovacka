@@ -40,7 +40,7 @@ final readonly class ListAdminMatchSourcesQuery
             static fn (MatchSource $t): AdminMatchSourceItem => new AdminMatchSourceItem(
                 id: $t->id,
                 name: $t->name,
-                visibility: $t->visibility,
+                kind: $t->kind,
                 sportCode: $t->sport->code,
                 ownerNickname: $t->owner->displayName,
                 isFinished: $t->isFinished,

@@ -62,7 +62,7 @@ final class ApproveJoinRequestController extends AbstractController
             if ($inner instanceof CompetitionJoinRequestAlreadyDecided) {
                 $this->addFlash('info', 'O žádosti již bylo rozhodnuto.');
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                $this->addFlash('warning', 'Turnaj této soutěže je již ukončen.');
+                $this->addFlash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
             } else {
                 throw $handlerFailed;
             }

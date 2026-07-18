@@ -66,7 +66,7 @@ final class CompetitionVoter extends Voter
             self::JOIN => $currentUser->isVerified && !$subject->matchSource->isFinished && $subject->isNotDeleted,
             self::LEAVE => $isMember && !$isOwner,
             self::INVITE_MEMBER => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isFinished,
-            self::REQUEST_JOIN => $subject->matchSource->isPublic
+            self::REQUEST_JOIN => $subject->matchSource->isCurated
                 && $subject->isNotDeleted
                 && !$subject->matchSource->isFinished
                 && $currentUser->isVerified

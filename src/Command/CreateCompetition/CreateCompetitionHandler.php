@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Command\CreateCompetition;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionMatchSelection;
 use App\Entity\Membership;
+use App\Enum\CompetitionMatchSelectionMode;
+use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\MatchSourceRepository;
 use App\Repository\MembershipRepository;
+use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
@@ -23,6 +27,8 @@ final readonly class CreateCompetitionHandler
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private MatchSourceRepository $matchSourceRepository,
+        private SportMatchRepository $sportMatchRepository,
+        private CompetitionMatchSelectionRepository $selectionRepository,
         private UserRepository $userRepository,
         private ProvideIdentity $identity,
         private PinGenerator $pinGenerator,
@@ -46,9 +52,31 @@ final readonly class CreateCompetitionHandler
             pin: $command->withPin ? $this->pinGenerator->generate() : null,
             shareableLinkToken: $this->linkTokenGenerator->generate(),
             createdAt: $now,
+            selectionMode: $command->selectionMode,
+            includePlayoff: $command->includePlayoff,
+            hideOthersTipsBeforeDeadline: $command->hideOthersTipsBeforeDeadline,
+            tipsDeadline: $command->tipsDeadline,
         );
 
         $this->competitionRepository->save($competition);
+
+        if (CompetitionMatchSelectionMode::Subset === $command->selectionMode) {
+            foreach ($command->selectedMatchIds as $sportMatchId) {
+                $sportMatch = $this->sportMatchRepository->get($sportMatchId);
+
+                // Defensive: only matches of the chosen source can be selected.
+                if (!$sportMatch->matchSource->id->equals($matchSource->id) || null !== $sportMatch->deletedAt) {
+                    continue;
+                }
+
+                $this->selectionRepository->save(new CompetitionMatchSelection(
+                    id: $this->identity->next(),
+                    competition: $competition,
+                    sportMatch: $sportMatch,
+                    addedAt: $now,
+                ));
+            }
+        }
 
         $membership = new Membership(
             id: $this->identity->next(),

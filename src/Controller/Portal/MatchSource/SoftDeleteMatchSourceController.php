@@ -39,7 +39,7 @@ final class SoftDeleteMatchSourceController extends AbstractController
             matchSourceId: $matchSource->id,
         ));
 
-        $this->addFlash('success', 'Turnaj byl smazán.');
+        $this->addFlash('success', 'Zdroj zápasů byl smazán.');
 
         return $this->redirectToRoute('portal_dashboard');
     }

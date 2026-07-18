@@ -11,7 +11,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
@@ -144,7 +144,7 @@ final class GuessVoterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'T',
             description: null,
             startAt: null,

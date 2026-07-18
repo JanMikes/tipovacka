@@ -66,7 +66,7 @@ final class RequestJoinController extends AbstractController
             if ($inner instanceof AlreadyMember) {
                 $this->addFlash('info', 'V soutěži již jsi.');
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                $this->addFlash('warning', 'Turnaj této soutěže je již ukončen.');
+                $this->addFlash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
             } elseif ($inner instanceof DuplicatePendingJoinRequest) {
                 $this->addFlash('info', 'Žádost o připojení již čeká na vyřízení.');
             } else {

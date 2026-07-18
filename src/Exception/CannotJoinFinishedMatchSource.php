@@ -12,6 +12,6 @@ final class CannotJoinFinishedMatchSource extends \DomainException
 {
     public static function forCompetition(Uuid $competitionId): self
     {
-        return new self(sprintf('Nelze se připojit k soutěži "%s" — turnaj je již ukončen.', $competitionId->toRfc4122()));
+        return new self(sprintf('Nelze se připojit k soutěži "%s" — zdroj zápasů je již ukončen.', $competitionId->toRfc4122()));
     }
 }

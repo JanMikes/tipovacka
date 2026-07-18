@@ -17,6 +17,7 @@ final readonly class UpcomingMatchItem
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round,
+        public bool $isPlayoff,
         public int $competitionsCount,
         public int $guessedCompetitionsCount,
         public int $pendingCompetitionsCount,

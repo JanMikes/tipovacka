@@ -46,6 +46,24 @@ final class SportMatchGuessesFlowTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testMatchOutsideSubsetSelectionIsConflict(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        // MATCH_PLAYOFF is not among the subset competition's selected matches.
+        $client->request(
+            'GET',
+            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_PLAYOFF_ID,
+        );
+
+        self::assertResponseStatusCodeSame(409);
+    }
+
     public function testShowsFixtureGuessForFinishedMatch(): void
     {
         $client = static::createClient();

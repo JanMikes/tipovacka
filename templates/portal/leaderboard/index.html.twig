@@ -18,7 +18,7 @@
                 <source media="(min-width: 768px)" srcset="{{ asset('images/winner/winner-wide.png') }}">
                 <img
                     src="{{ asset('images/winner/winner-wide.png') }}"
-                    alt="Oslavná ilustrace vítěze turnaje"
+                    alt="Oslavná ilustrace vítěze soutěže"
                     class="mx-auto w-full max-w-2xl"
                     loading="lazy"
                     decoding="async"
@@ -33,7 +33,7 @@
                     Gratulujeme, {{ winner.nickname }}!
                 </h2>
                 <p class="mt-3 text-base text-white/80 sm:text-lg">
-                    {{ winner.nickname }} vyhrává turnaj <strong class="font-bold text-white">{{ competition.matchSource.name }}</strong>
+                    {{ winner.nickname }} vyhrává soutěž <strong class="font-bold text-white">{{ competition.name }}</strong>
                     s {{ winner.totalPoints }} {{ winner.totalPoints == 1 ? 'bodem' : 'body' }}.
                 </p>
             </div>

@@ -192,10 +192,10 @@
                     <twig:ux:icon name="lucide:trophy" class="h-7 w-7" />
                 </span>
                 <h3 class="text-lg font-semibold text-white">Zatím nehrajete v žádné soutěži</h3>
-                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Projděte si nabídku turnajů — přidejte se k veřejnému, nebo si založte vlastní soukromý.</p>
-                <a href="{{ path('public_match_sources_list') }}" class="btn btn-primary btn-sm mt-6">
-                    <twig:ux:icon name="lucide:search" class="h-4 w-4" />
-                    Procházet turnaje
+                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Založte si vlastní soutěž, nebo se přidejte k některé přes PIN či pozvánku.</p>
+                <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm mt-6">
+                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                    Vytvořit soutěž
                 </a>
             </div>
         {% else %}
@@ -243,23 +243,23 @@
         {% endif %}
     </section>
 
-    {# ───── Moje turnaje — turnaje vlastněné uživatelem ───── #}
+    {# ───── Moje zdroje zápasů — zdroje vlastněné uživatelem ───── #}
     {% if my_owned_match_sources|length > 0 %}
         <section class="mb-14">
             <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
                         <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-accent-300" />
-                        Moje turnaje
+                        Moje zdroje zápasů
                         <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_owned_match_sources|length }}</span>
                     </h2>
-                    <p class="mt-1.5 text-sm text-white/50">Turnaje, které jste založili a spravujete.</p>
+                    <p class="mt-1.5 text-sm text-white/50">Zdroje zápasů, které jste založili a spravujete.</p>
                 </div>
             </div>
 
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {% for t in my_owned_match_sources %}
-                    {% set is_private = t.visibility.value == 'private' %}
+                    {% set is_private = t.kind.value == 'private' %}
                     <li>
                         <a
                             href="{{ path('portal_match_source_detail', {id: t.id.toRfc4122}) }}"
@@ -298,7 +298,7 @@
                             </div>
 
                             <div class="mt-5 flex items-center justify-end text-sm font-semibold text-accent-300">
-                                Spravovat turnaj
+                                Spravovat zdroj zápasů
                                 <twig:ux:icon name="lucide:arrow-right" class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                             </div>
                         </a>
@@ -343,6 +343,7 @@
                             :awayTeam="m.awayTeam"
                             :kickoffAt="m.kickoffAt"
                             :round="m.round"
+                            :isPlayoff="m.isPlayoff"
                             :state="is_tipped ? 'tipped' : 'open'"
                             :pillVariant="m.pendingCompetitionsCount > 0 ? 'soon' : (is_tipped ? 'tipped' : null)"
                             :pillIcon="m.pendingCompetitionsCount > 0 ? 'circle-alert' : (is_tipped ? 'check' : null)"
@@ -447,15 +448,15 @@
         {% endif %}
     </section>
 
-    {# ───── Objev další turnaje ───── #}
+    {# ───── Objev další zdroje zápasů ───── #}
     <section>
         <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
                 <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
                     <twig:ux:icon name="lucide:globe" class="h-5 w-5 text-accent-300" />
-                    Objev další turnaje
+                    Objev další zdroje zápasů
                 </h2>
-                <p class="mt-1.5 text-sm text-white/50">Veřejné turnaje, do kterých se můžete přidat.</p>
+                <p class="mt-1.5 text-sm text-white/50">Veřejné zdroje zápasů, ve kterých se můžete přidat do soutěže.</p>
             </div>
         </div>
 
@@ -464,8 +465,8 @@
                 <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
                     <twig:ux:icon name="lucide:search" class="h-7 w-7" />
                 </span>
-                <h3 class="text-lg font-semibold text-white">Žádné další dostupné turnaje</h3>
-                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné další veřejné turnaje k objevení.</p>
+                <h3 class="text-lg font-semibold text-white">Žádné další dostupné zdroje zápasů</h3>
+                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné další veřejné zdroje zápasů k objevení.</p>
             </div>
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -506,7 +507,7 @@
                             </div>
 
                             <div class="mt-5 flex items-center justify-end text-sm font-semibold text-accent-300">
-                                Zobrazit turnaj
+                                Zobrazit zdroj zápasů
                                 <twig:ux:icon name="lucide:arrow-right" class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                             </div>
                         </a>

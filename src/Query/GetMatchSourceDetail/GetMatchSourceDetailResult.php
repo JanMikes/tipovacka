@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\GetMatchSourceDetail;
 
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class GetMatchSourceDetailResult
@@ -13,7 +13,7 @@ final readonly class GetMatchSourceDetailResult
         public Uuid $id,
         public string $name,
         public ?string $description,
-        public MatchSourceVisibility $visibility,
+        public MatchSourceKind $kind,
         public string $sportCode,
         public string $sportName,
         public Uuid $ownerId,

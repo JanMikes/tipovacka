@@ -1,20 +1,20 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Upravit turnaj — Admin — {{ brand_name }}{% endblock %}
+{% block title %}Upravit zdroj zápasů — Admin — {{ brand_name }}{% endblock %}
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Turnaje</a></li>
+    <li><a href="{{ path('admin_match_source_list') }}" class="hover:text-accent-300 transition-colors">Zdroje zápasů</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
     <li class="text-white/80 font-medium" aria-current="page">Upravit</li>
 {% endblock %}
 
-{% block admin_title %}Upravit turnaj{% endblock %}
+{% block admin_title %}Upravit zdroj zápasů{% endblock %}
 {% block admin_subtitle %}{{ match_source.name }}{% endblock %}
 {% block admin_actions %}
     <a href="{{ path('admin_match_source_list') }}" class="btn btn-ghost btn-sm">
         <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
-        Zpět na turnaje
+        Zpět na zdroje zápasů
     </a>
 {% endblock %}
 
@@ -43,14 +43,6 @@
                 {{ form_errors(form.endAt) }}
             </div>
         </div>
-        {% if form.creationPin is defined %}
-            <div class="field">
-                {{ form_label(form.creationPin) }}
-                {{ form_widget(form.creationPin) }}
-                {{ form_help(form.creationPin) }}
-                {{ form_errors(form.creationPin) }}
-            </div>
-        {% endif %}
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary">
                 Uložit změny

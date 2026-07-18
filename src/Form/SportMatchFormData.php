@@ -38,6 +38,8 @@ final class SportMatchFormData
     )]
     public ?string $round = null;
 
+    public bool $isPlayoff = false;
+
     public static function fromSportMatch(SportMatch $sportMatch): self
     {
         $formData = new self();
@@ -46,6 +48,7 @@ final class SportMatchFormData
         $formData->kickoffAt = $sportMatch->kickoffAt;
         $formData->venue = $sportMatch->venue;
         $formData->round = $sportMatch->round;
+        $formData->isPlayoff = $sportMatch->isPlayoff;
 
         return $formData;
     }

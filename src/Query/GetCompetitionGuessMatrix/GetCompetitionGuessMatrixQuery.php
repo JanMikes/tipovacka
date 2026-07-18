@@ -10,6 +10,7 @@ use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -21,6 +22,7 @@ final readonly class GetCompetitionGuessMatrixQuery
     public function __construct(
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
+        private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
         private EffectiveTipDeadlineResolver $deadlineResolver,
         private ClockInterface $clock,
@@ -34,22 +36,19 @@ final readonly class GetCompetitionGuessMatrixQuery
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $requestingUserKey = $query->requestingUserId->toRfc4122();
 
-        /** @var list<SportMatch> $matches */
-        $matches = $this->entityManager->createQueryBuilder()
+        $matchesQb = $this->entityManager->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.matchSource = :matchSourceId')
-            ->andWhere('m.deletedAt IS NULL')
-            ->andWhere('m.state != :cancelled')
-            ->setParameter('matchSourceId', $competition->matchSource->id)
+            ->where('m.state != :cancelled')
             ->setParameter('cancelled', SportMatchState::Cancelled)
             ->orderBy('m.kickoffAt', 'ASC')
-            ->addOrderBy('m.id', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->addOrderBy('m.id', 'ASC');
+        $this->matchProvider->applyCompetitionMatchFilter($matchesQb, 'm', $competition);
 
-        /** @var list<array{userId: string, sportMatchId: string, homeScore: int, awayScore: int, totalPoints: int|null}> $guessRows */
-        $guessRows = $this->entityManager->createQueryBuilder()
+        /** @var list<SportMatch> $matches */
+        $matches = $matchesQb->getQuery()->getResult();
+
+        $guessRowsQb = $this->entityManager->createQueryBuilder()
             ->select(
                 'IDENTITY(g.user) AS userId',
                 'IDENTITY(g.sportMatch) AS sportMatchId',
@@ -62,12 +61,13 @@ final readonly class GetCompetitionGuessMatrixQuery
             ->leftJoin(GuessEvaluation::class, 'e', 'WITH', 'e.guess = g.id')
             ->where('g.competition = :competitionId')
             ->andWhere('g.deletedAt IS NULL')
-            ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.state != :cancelled')
             ->setParameter('competitionId', $competition->id)
-            ->setParameter('cancelled', SportMatchState::Cancelled)
-            ->getQuery()
-            ->getArrayResult();
+            ->setParameter('cancelled', SportMatchState::Cancelled);
+        $this->matchProvider->applyCompetitionMatchFilter($guessRowsQb, 'm', $competition);
+
+        /** @var list<array{userId: string, sportMatchId: string, homeScore: int, awayScore: int, totalPoints: int|null}> $guessRows */
+        $guessRows = $guessRowsQb->getQuery()->getArrayResult();
 
         $deadlineByMatchKey = $this->deadlineResolver->resolveMany($competition, $matches);
 

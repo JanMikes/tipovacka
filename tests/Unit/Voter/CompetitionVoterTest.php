@@ -9,7 +9,7 @@ use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
-use App\Enum\MatchSourceVisibility;
+use App\Enum\MatchSourceKind;
 use App\Enum\UserRole;
 use App\Repository\MembershipRepository;
 use App\Voter\CompetitionVoter;
@@ -79,7 +79,7 @@ final class CompetitionVoterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Private,
+            kind: MatchSourceKind::Private,
             name: 'Turnaj',
             description: null,
             startAt: null,
@@ -387,7 +387,7 @@ final class CompetitionVoterTest extends TestCase
             id: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             sport: new Sport(Uuid::fromString(Sport::FOOTBALL_ID), 'football', 'Fotbal'),
             owner: $owner,
-            visibility: MatchSourceVisibility::Public,
+            kind: MatchSourceKind::Curated,
             name: 'Veřejný turnaj',
             description: null,
             startAt: null,

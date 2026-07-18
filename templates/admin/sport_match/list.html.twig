@@ -12,7 +12,7 @@
 
 {% block admin_breadcrumbs %}
     <li aria-hidden="true" class="text-white/30">/</li>
-    <li><a href="{{ path('admin_match_source_list') }}" class="transition-colors hover:text-accent-300">Turnaje</a></li>
+    <li><a href="{{ path('admin_match_source_list') }}" class="transition-colors hover:text-accent-300">Zdroje zápasů</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
     <li><a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="transition-colors hover:text-accent-300">{{ match_source.name }}</a></li>
     <li aria-hidden="true" class="text-white/30">/</li>
@@ -57,8 +57,13 @@
                         <td class="px-4 py-3">{{ match.kickoffAt|date('d. m. Y H:i') }}</td>
                         <td class="px-4 py-3">{{ match.venue ?? '—' }}</td>
                         <td class="px-4 py-3">
-                            {% set _pill = _state_pills[match.state.value] ?? {label: match.state.value, variant: 'neutral'} %}
-                            <twig:Pill label="{{ _pill.label }}" variant="{{ _pill.variant }}" />
+                            <span class="flex items-center gap-1.5">
+                                {% set _pill = _state_pills[match.state.value] ?? {label: match.state.value, variant: 'neutral'} %}
+                                <twig:Pill label="{{ _pill.label }}" variant="{{ _pill.variant }}" />
+                                {% if match.isPlayoff %}
+                                    <twig:Pill label="Playoff" variant="neutral" />
+                                {% endif %}
+                            </span>
                         </td>
                         <td class="px-4 py-3">
                             {% if match.homeScore is not null and match.awayScore is not null %}

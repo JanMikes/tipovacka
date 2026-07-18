@@ -7,6 +7,7 @@ namespace App\Controller\Portal\Competition;
 use App\Command\SetCompetitionMatchDeadline\SetCompetitionMatchDeadlineCommand;
 use App\Entity\User;
 use App\Exception\CompetitionMatchDeadlineAfterKickoff;
+use App\Exception\MatchNotInCompetition;
 use App\Form\CompetitionMatchDeadlineFormData;
 use App\Form\CompetitionMatchDeadlineFormType;
 use App\Repository\CompetitionRepository;
@@ -71,7 +72,7 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
 
-            if ($previous instanceof CompetitionMatchDeadlineAfterKickoff) {
+            if ($previous instanceof CompetitionMatchDeadlineAfterKickoff || $previous instanceof MatchNotInCompetition) {
                 $this->addFlash('error', $previous->getMessage());
 
                 return $redirect;

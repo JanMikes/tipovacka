@@ -24,8 +24,9 @@ final class ListDiscoverablePublicMatchSourcesQueryTest extends IntegrationTestC
         self::assertCount(1, $result);
         self::assertSame(AppFixtures::PUBLIC_SOURCE_ID, $result[0]->matchSourceId->toRfc4122());
         self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, $result[0]->name);
-        self::assertSame(1, $result[0]->competitionCount);
-        self::assertSame(1, $result[0]->memberCount);
+        // PUBLIC_COMPETITION (admin) + SUBSET_COMPETITION (second verified user).
+        self::assertSame(2, $result[0]->competitionCount);
+        self::assertSame(2, $result[0]->memberCount);
     }
 
     public function testExcludesMatchSourcesWhereUserIsMember(): void

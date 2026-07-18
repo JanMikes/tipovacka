@@ -18,9 +18,12 @@ final class ListUpcomingMatchesForUserQueryTest extends IntegrationTestCase
             userId: Uuid::fromString(AppFixtures::ADMIN_ID),
         ));
 
-        // MockClock is at 2025-06-15 12:00 UTC, scheduled fixture is 2025-06-20 18:00 UTC
-        self::assertCount(1, $result);
+        // MockClock is at 2025-06-15 12:00 UTC; upcoming scheduled fixtures are
+        // MATCH_SCHEDULED (2025-06-20) and MATCH_PLAYOFF (2025-06-22) — the admin's
+        // PUBLIC_COMPETITION is mode All with includePlayoff, so both belong.
+        self::assertCount(2, $result);
         self::assertSame('Sparta Praha', $result[0]->homeTeam);
+        self::assertSame('Real Madrid', $result[1]->homeTeam);
         self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, $result[0]->matchSourceName);
     }
 

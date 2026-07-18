@@ -19,7 +19,7 @@ final class MatchSourceFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('name', TextType::class, [
-            'label' => 'Název turnaje',
+            'label' => 'Název zdroje zápasů',
             'attr' => [
                 'placeholder' => 'Např. Liga mistrů 2026/27',
             ],
@@ -29,7 +29,7 @@ final class MatchSourceFormType extends AbstractType
             'label' => 'Popis',
             'required' => false,
             'attr' => [
-                'placeholder' => 'Stručný popis turnaje…',
+                'placeholder' => 'Stručný popis zdroje zápasů…',
                 'rows' => 4,
             ],
         ]);
@@ -60,25 +60,12 @@ final class MatchSourceFormType extends AbstractType
             'view_timezone' => 'Europe/Prague',
         ]);
 
-        if (true === $options['with_creation_pin']) {
-            $builder->add('creationPin', TextType::class, [
-                'label' => 'PIN pro vytváření soutěží',
-                'required' => false,
-                'help' => 'Kdokoliv s tímto PINem bude moci v tomto soukromém turnaji založit novou soutěž. Nech prázdné, pokud chceš zakládání omezit jen na sebe.',
-                'attr' => [
-                    'placeholder' => 'Např. SKUP2026',
-                    'maxlength' => 8,
-                ],
-            ]);
-        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => MatchSourceFormData::class,
-            'with_creation_pin' => false,
         ]);
-        $resolver->setAllowedTypes('with_creation_pin', 'bool');
     }
 }

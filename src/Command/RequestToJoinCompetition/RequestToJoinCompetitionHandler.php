@@ -35,7 +35,7 @@ final readonly class RequestToJoinCompetitionHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $user = $this->userRepository->get($command->userId);
 
-        if (!$competition->matchSource->isPublic) {
+        if (!$competition->matchSource->isCurated) {
             throw JoinRequestNotAllowed::privateMatchSource();
         }
 

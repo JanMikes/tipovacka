@@ -30,6 +30,7 @@ final readonly class UpdateSportMatchHandler
             venue: $command->venue,
             now: $now,
             round: $command->round,
+            isPlayoff: $command->isPlayoff,
         );
     }
 }

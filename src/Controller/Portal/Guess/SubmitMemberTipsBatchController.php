@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\InvalidGuessScore;
+use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
@@ -149,6 +150,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
                     || $inner instanceof GuessDeadlinePassed
                     || $inner instanceof GuessAlreadyExists
                     || $inner instanceof NotAMember
+                    || $inner instanceof MatchNotInCompetition
                 ) {
                     $errors[] = sprintf('%s: %s', $label, $inner->getMessage());
                 } else {
