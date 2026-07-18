@@ -44,6 +44,16 @@ class CreditTransaction
         private(set) ?CreditPurchase $purchase,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
+        #[ORM\ManyToOne(targetEntity: Competition::class)]
+        #[ORM\JoinColumn(name: 'competition_id', referencedColumnName: 'id', nullable: true)]
+        private(set) ?Competition $competition = null,
+        /** E.g. the joining member behind a premium charge. */
+        #[ORM\ManyToOne(targetEntity: User::class)]
+        #[ORM\JoinColumn(name: 'related_user_id', referencedColumnName: 'id', nullable: true)]
+        private(set) ?User $relatedUser = null,
+        /** Stored as string for now — typed enum lands with the boost commerce stage. */
+        #[ORM\Column(length: 32, nullable: true)]
+        private(set) ?string $boostType = null,
     ) {
     }
 }

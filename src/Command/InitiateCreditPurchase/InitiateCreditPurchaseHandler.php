@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command\InitiateCreditPurchase;
 
 use App\Entity\CreditPurchase;
+use App\Exception\CreditPurchaseRequiresEmail;
 use App\Exception\InvalidCreditAmount;
 use App\Repository\CreditPurchaseRepository;
 use App\Repository\UserRepository;
@@ -40,7 +41,7 @@ final readonly class InitiateCreditPurchaseHandler
         $user = $this->userRepository->get($command->userId);
 
         if (null === $user->email) {
-            throw new \DomainException('Kredity může nakupovat jen účet s e-mailem.');
+            throw CreditPurchaseRequiresEmail::forAnonymousAccount();
         }
 
         $now = $this->clock->now();

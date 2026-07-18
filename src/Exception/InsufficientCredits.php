@@ -13,4 +13,9 @@ final class InsufficientCredits extends \DomainException
     {
         return new self(sprintf('Nedostatek kreditů: zůstatek %d nelze snížit o %d.', $balance, abs($amount)));
     }
+
+    public static function forSpend(int $missing): self
+    {
+        return new self(sprintf('Nedostatek kreditů — do potřebné částky chybí %d.', $missing));
+    }
 }

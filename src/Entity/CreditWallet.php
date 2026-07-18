@@ -6,6 +6,8 @@ namespace App\Entity;
 
 use App\Enum\CreditTransactionType;
 use App\Event\CreditsAdjustedByAdmin;
+use App\Event\CreditsRefunded;
+use App\Event\CreditsSpent;
 use App\Exception\InsufficientCredits;
 use App\Exception\InvalidCreditAmount;
 use Doctrine\ORM\Mapping as ORM;
@@ -100,6 +102,114 @@ class CreditWallet implements EntityWithEvents
             performedBy: $adjustedBy,
             purchase: null,
             createdAt: $now,
+        );
+    }
+
+    /**
+     * Generic business debit — callers must load the wallet via
+     * CreditWalletProvider::getForUpdateOrCreate() to serialize concurrent movements.
+     */
+    public function spend(
+        Uuid $transactionId,
+        int $amount,
+        CreditTransactionType $type,
+        \DateTimeImmutable $now,
+        ?Competition $competition = null,
+        ?User $relatedUser = null,
+        ?string $boostType = null,
+        ?string $note = null,
+    ): CreditTransaction {
+        if (!$type->isSpend()) {
+            throw new \LogicException(sprintf('Typ transakce "%s" není útrata.', $type->value));
+        }
+
+        if ($amount <= 0) {
+            throw InvalidCreditAmount::nonPositiveMovement($amount);
+        }
+
+        if ($this->balance < $amount) {
+            throw InsufficientCredits::forSpend($amount - $this->balance);
+        }
+
+        $this->balance -= $amount;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CreditsSpent(
+            walletUserId: $this->user->id,
+            amount: $amount,
+            type: $type,
+            competitionId: $competition?->id,
+            relatedUserId: $relatedUser?->id,
+            boostType: $boostType,
+            balanceAfter: $this->balance,
+            occurredOn: $now,
+        ));
+
+        return new CreditTransaction(
+            id: $transactionId,
+            wallet: $this,
+            amount: -$amount,
+            balanceAfter: $this->balance,
+            type: $type,
+            note: $note,
+            performedBy: null,
+            purchase: null,
+            createdAt: $now,
+            competition: $competition,
+            relatedUser: $relatedUser,
+            boostType: $boostType,
+        );
+    }
+
+    /**
+     * Credits back an earlier business debit (premium/boost switching flows only —
+     * entry fees are final). Same locking requirement as spend().
+     */
+    public function refund(
+        Uuid $transactionId,
+        int $amount,
+        CreditTransactionType $refundType,
+        \DateTimeImmutable $now,
+        ?Competition $competition = null,
+        ?User $relatedUser = null,
+        ?string $boostType = null,
+        ?string $note = null,
+    ): CreditTransaction {
+        if (!$refundType->isRefund()) {
+            throw new \LogicException(sprintf('Typ transakce "%s" není vratka.', $refundType->value));
+        }
+
+        if ($amount <= 0) {
+            throw InvalidCreditAmount::nonPositiveMovement($amount);
+        }
+
+        $this->balance += $amount;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CreditsRefunded(
+            walletUserId: $this->user->id,
+            amount: $amount,
+            type: $refundType,
+            competitionId: $competition?->id,
+            relatedUserId: $relatedUser?->id,
+            boostType: $boostType,
+            balanceAfter: $this->balance,
+            occurredOn: $now,
+        ));
+
+        return new CreditTransaction(
+            id: $transactionId,
+            wallet: $this,
+            amount: $amount,
+            balanceAfter: $this->balance,
+            type: $refundType,
+            note: $note,
+            performedBy: null,
+            purchase: null,
+            createdAt: $now,
+            competition: $competition,
+            relatedUser: $relatedUser,
+            boostType: $boostType,
         );
     }
 }

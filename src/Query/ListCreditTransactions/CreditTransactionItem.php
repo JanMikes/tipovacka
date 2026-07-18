@@ -20,6 +20,9 @@ final readonly class CreditTransactionItem
         public ?CreditPurchaseStatus $purchaseStatus,
         public ?string $invoiceUrl,
         public ?string $invoicePdfUrl,
+        public ?string $competitionName,
+        public ?string $boostType,
+        public ?string $relatedUserName,
         public \DateTimeImmutable $createdAt,
     ) {
     }

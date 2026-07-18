@@ -23,4 +23,9 @@ final class InvalidCreditAmount extends \DomainException
     {
         return new self('Úprava kreditů nesmí být nulová.');
     }
+
+    public static function nonPositiveMovement(int $amount): self
+    {
+        return new self(sprintf('Částka musí být kladná, zadáno %d.', $amount));
+    }
 }
