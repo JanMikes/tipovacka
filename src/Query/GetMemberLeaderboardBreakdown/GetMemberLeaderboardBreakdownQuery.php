@@ -8,8 +8,10 @@ use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionRuleConfigurationRepository;
 use App\Repository\GuessEvaluationRepository;
 use App\Repository\UserRepository;
+use App\Rule\RuleRegistry;
 use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -21,6 +23,8 @@ final readonly class GetMemberLeaderboardBreakdownQuery
         private CompetitionRepository $competitionRepository,
         private UserRepository $userRepository,
         private GuessEvaluationRepository $evaluationRepository,
+        private CompetitionRuleConfigurationRepository $configurationRepository,
+        private RuleRegistry $ruleRegistry,
         private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
     ) {
@@ -30,6 +34,7 @@ final readonly class GetMemberLeaderboardBreakdownQuery
     {
         $competition = $this->competitionRepository->get($query->competitionId);
         $user = $this->userRepository->get($query->userId);
+        $storedConfigurations = $this->configurationRepository->mapForCompetition($competition->id);
 
         $matchesQb = $this->entityManager->createQueryBuilder()
             ->select('m')
@@ -86,10 +91,30 @@ final readonly class GetMemberLeaderboardBreakdownQuery
                 if (null !== $evaluation) {
                     $matchPoints = $evaluation->totalPoints;
 
+                    $registeredRules = $this->ruleRegistry->all();
+
                     foreach ($evaluation->rulePoints as $rulePoints) {
+                        $rule = $registeredRules[$rulePoints->ruleIdentifier] ?? null;
+                        $configuration = $storedConfigurations[$rulePoints->ruleIdentifier] ?? null;
+
+                        // Points-per-hit as currently configured; rule changes
+                        // trigger full recalculation, so this matches the
+                        // stored product except in transient edge states.
+                        if (null !== $configuration) {
+                            $unitPoints = $configuration->points;
+                        } else {
+                            $unitPoints = null !== $rule ? $rule->defaultPoints : 0;
+                        }
+
+                        $multiplier = $unitPoints > 0 && 0 === $rulePoints->points % $unitPoints
+                            ? intdiv($rulePoints->points, $unitPoints)
+                            : 1;
+
                         $breakdown[] = new RulePointsItem(
                             ruleIdentifier: $rulePoints->ruleIdentifier,
+                            label: null !== $rule ? $rule->label : $rulePoints->ruleIdentifier,
                             points: $rulePoints->points,
+                            multiplier: max(1, $multiplier),
                         );
                     }
                 }

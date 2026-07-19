@@ -36,7 +36,16 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         self::assertIsArray($decoded);
         ksort($decoded);
         self::assertSame(
-            ['correct_away_goals' => 1, 'correct_home_goals' => 1, 'correct_outcome' => 3, 'exact_score' => 5],
+            [
+                'correct_away_goals' => 1,
+                'correct_home_goals' => 1,
+                'correct_outcome' => 3,
+                'exact_score' => 5,
+                'overtime_exact' => 3,
+                'period_exact' => 5,
+                'period_tendency' => 2,
+                'scorer_hit' => 2,
+            ],
             $decoded,
         );
     }

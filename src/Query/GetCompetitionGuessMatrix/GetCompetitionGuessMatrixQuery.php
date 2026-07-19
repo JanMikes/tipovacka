@@ -9,6 +9,7 @@ use App\Entity\GuessEvaluation;
 use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
+use App\Repository\GuessScorerRepository;
 use App\Repository\MembershipRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
@@ -22,6 +23,7 @@ final readonly class GetCompetitionGuessMatrixQuery
     public function __construct(
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
+        private GuessScorerRepository $guessScorerRepository,
         private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
         private EffectiveTipDeadlineResolver $deadlineResolver,
@@ -50,10 +52,14 @@ final readonly class GetCompetitionGuessMatrixQuery
 
         $guessRowsQb = $this->entityManager->createQueryBuilder()
             ->select(
+                'g.id AS guessId',
                 'IDENTITY(g.user) AS userId',
                 'IDENTITY(g.sportMatch) AS sportMatchId',
                 'g.homeScore AS homeScore',
                 'g.awayScore AS awayScore',
+                'g.periodScoresData AS periodScores',
+                'g.overtimeHomeScore AS overtimeHomeScore',
+                'g.overtimeAwayScore AS overtimeAwayScore',
                 'e.totalPoints AS totalPoints',
             )
             ->from(Guess::class, 'g')
@@ -66,8 +72,12 @@ final readonly class GetCompetitionGuessMatrixQuery
             ->setParameter('cancelled', SportMatchState::Cancelled);
         $this->matchProvider->applyCompetitionMatchFilter($guessRowsQb, 'm', $competition);
 
-        /** @var list<array{userId: string, sportMatchId: string, homeScore: int, awayScore: int, totalPoints: int|null}> $guessRows */
+        /** @var list<array{guessId: \Symfony\Component\Uid\Uuid, userId: string, sportMatchId: string, homeScore: int, awayScore: int, periodScores: list<array{int, int}>|null, overtimeHomeScore: int|null, overtimeAwayScore: int|null, totalPoints: int|null}> $guessRows */
         $guessRows = $guessRowsQb->getQuery()->getArrayResult();
+
+        $scorerNamesByGuess = $this->guessScorerRepository->playerNamesByGuessIds(
+            array_map(static fn (array $row) => $row['guessId'], $guessRows),
+        );
 
         $deadlineByMatchKey = $this->deadlineResolver->resolveMany($competition, $matches);
 
@@ -95,6 +105,10 @@ final readonly class GetCompetitionGuessMatrixQuery
                     homeScore: (int) $row['homeScore'],
                     awayScore: (int) $row['awayScore'],
                     points: $points,
+                    periodScores: $row['periodScores'],
+                    overtimeHomeScore: $row['overtimeHomeScore'],
+                    overtimeAwayScore: $row['overtimeAwayScore'],
+                    scorerNames: $scorerNamesByGuess[$row['guessId']->toRfc4122()] ?? [],
                 );
 
             if (null !== $points) {

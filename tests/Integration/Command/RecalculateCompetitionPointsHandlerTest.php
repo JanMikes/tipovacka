@@ -100,11 +100,15 @@ final class RecalculateCompetitionPointsHandlerTest extends IntegrationTestCase
             'UPDATE App\Entity\GuessEvaluation e SET e.totalPoints = 999 WHERE e.id = :id',
         )->execute(['id' => Uuid::fromString(AppFixtures::FIXTURE_GUESS_EVALUATION_ID)]);
 
-        // SUBSET_COMPETITION shares the source with PUBLIC_COMPETITION but has no
-        // guesses — recalculating it must not touch PUBLIC_COMPETITION's evaluations.
+        // SUBSET_COMPETITION shares the source with PUBLIC_COMPETITION — recalculating
+        // it evaluates ONLY its own (S06 fixture) guess and must not touch
+        // PUBLIC_COMPETITION's evaluations. Subset total: exact 2:1 hit ⇒ base 10
+        // + period_exact 2×5 + scorer_hit 1×2 = 22.
         $this->handleRecalc($subsetId);
 
-        self::assertCount(0, $this->loadEvaluations($subsetId));
+        $subsetEvaluations = $this->loadEvaluations($subsetId);
+        self::assertCount(1, $subsetEvaluations);
+        self::assertSame(22, $subsetEvaluations[0]->totalPoints);
 
         $publicEvaluations = $this->loadEvaluations($publicId);
         self::assertCount(1, $publicEvaluations);
@@ -154,7 +158,11 @@ final class RecalculateCompetitionPointsHandlerTest extends IntegrationTestCase
         ));
 
         self::assertSame(1, $this->processEnqueuedRecalcs($async));
-        self::assertCount(0, $this->loadEvaluations($competitionId));
+
+        // Only the S06 fixture guess on the still-selected MATCH_FINISHED remains.
+        $remaining = $this->loadEvaluations($competitionId);
+        self::assertCount(1, $remaining);
+        self::assertSame(22, $remaining[0]->totalPoints);
 
         // Re-add the match — another recalc restores the evaluation.
         $async->reset();
@@ -170,8 +178,12 @@ final class RecalculateCompetitionPointsHandlerTest extends IntegrationTestCase
         self::assertSame(1, $this->processEnqueuedRecalcs($async));
 
         $evaluations = $this->loadEvaluations($competitionId);
-        self::assertCount(1, $evaluations);
-        self::assertSame(10, $evaluations[0]->totalPoints);
+        self::assertCount(2, $evaluations);
+
+        $totals = array_map(fn (GuessEvaluation $e) => $e->totalPoints, $evaluations);
+        sort($totals);
+        // 10 = exact 1:0 hit on the re-added match; 22 = the S06 fixture guess.
+        self::assertSame([10, 22], $totals);
 
         $async->reset();
     }

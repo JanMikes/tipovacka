@@ -83,6 +83,12 @@
                             <p class="mt-0.5 text-xs text-white/50">
                                 Vyplňte skóre u zápasů, které chcete uložit. Nevyplněné zápasy se přeskočí.
                             </p>
+                            {% if features.scorerTips or features.overtimeTip %}
+                                <p class="mt-1 flex items-center gap-1.5 text-xs text-accent-300">
+                                    <twig:ux:icon name="lucide:info" class="h-3.5 w-3.5 shrink-0" />
+                                    Střelce a prodloužení tipnete v detailu zápasu.
+                                </p>
+                            {% endif %}
                         </div>
                         <span class="shrink-0 text-xs font-semibold tabular-nums text-white/60"
                               data-tip-fill-target="counter">0/{{ rows|length }} vyplněno</span>
@@ -130,24 +136,49 @@
                                 </span>
                             </div>
 
-                            <div class="flex items-center gap-2.5">
-                                <input type="number"
-                                       name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
-                                       min="0" max="99"
-                                       value="{{ row.guess ? row.guess.homeScore : '' }}"
-                                       class="score-input"
-                                       data-tip-fill-target="score"
-                                       data-match="{{ row.match.id.toRfc4122 }}"
-                                       aria-label="Domácí – {{ row.match.homeTeam }}">
-                                <span class="text-lg font-bold text-white/40">:</span>
-                                <input type="number"
-                                       name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
-                                       min="0" max="99"
-                                       value="{{ row.guess ? row.guess.awayScore : '' }}"
-                                       class="score-input"
-                                       data-tip-fill-target="score"
-                                       data-match="{{ row.match.id.toRfc4122 }}"
-                                       aria-label="Hosté – {{ row.match.awayTeam }}">
+                            <div class="flex flex-col items-end gap-2">
+                                <div class="flex items-center gap-2.5">
+                                    <input type="number"
+                                           name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
+                                           min="0" max="99"
+                                           value="{{ row.guess ? row.guess.homeScore : '' }}"
+                                           class="score-input"
+                                           data-tip-fill-target="score"
+                                           data-match="{{ row.match.id.toRfc4122 }}"
+                                           aria-label="Domácí – {{ row.match.homeTeam }}">
+                                    <span class="text-lg font-bold text-white/40">:</span>
+                                    <input type="number"
+                                           name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
+                                           min="0" max="99"
+                                           value="{{ row.guess ? row.guess.awayScore : '' }}"
+                                           class="score-input"
+                                           data-tip-fill-target="score"
+                                           data-match="{{ row.match.id.toRfc4122 }}"
+                                           aria-label="Hosté – {{ row.match.awayTeam }}">
+                                </div>
+                                {% if features.periodTips %}
+                                    {% set guess_periods = row.guess and row.guess.periodScores is not null ? row.guess.periodScores.toArray : null %}
+                                    <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+                                        {% for number in 1..sport.periodCount %}
+                                            <span class="inline-flex items-center gap-1 text-[11px] text-white/50">
+                                                {{ number }}. {{ sport.periodLabelSingular }}
+                                                <input type="number"
+                                                       name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][home]"
+                                                       min="0" max="99"
+                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][0] : '' }}"
+                                                       class="input h-8 w-12 px-1 text-center text-sm"
+                                                       aria-label="{{ number }}. {{ sport.periodLabelSingular }} – domácí">
+                                                <span class="text-white/30">:</span>
+                                                <input type="number"
+                                                       name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][away]"
+                                                       min="0" max="99"
+                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][1] : '' }}"
+                                                       class="input h-8 w-12 px-1 text-center text-sm"
+                                                       aria-label="{{ number }}. {{ sport.periodLabelSingular }} – hosté">
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </li>
                     {% endfor %}

@@ -16,6 +16,7 @@ use App\Rule\Rule;
 use App\Rule\RuleRegistry;
 use App\Service\Identity\ProvideIdentity;
 use App\Service\Scoring\CompetitionRuleConfigurationProvisioner;
+use App\Service\Scoring\MatchContext;
 use App\Tests\Unit\Rule\RuleTestFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -77,7 +78,9 @@ final class CompetitionRuleConfigurationProvisionerTest extends TestCase
 
             public bool $enabledByDefault { get => false; }
 
-            public function evaluate(Guess $guess, SportMatch $match): int
+            public string $category { get => 'scorers'; }
+
+            public function evaluate(Guess $guess, SportMatch $match, MatchContext $context): int
             {
                 return 0;
             }

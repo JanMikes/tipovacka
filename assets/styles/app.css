@@ -697,5 +697,8 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
 .ts-dropdown .option.selected { background: rgba(255,255,255,0.06); }
 .ts-dropdown .option:hover:not(.active) { background: rgba(255,255,255,0.05); }
 .ts-dropdown .no-results { padding: 0.75rem; color: var(--fg-3); font-style: normal; }
+.ts-dropdown .optgroup-header { background: var(--color-surface-2); color: var(--fg-3); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+.ts-dropdown .optgroup { border-top: 1px solid var(--border-2); }
+.ts-dropdown .create { color: var(--fg-3); }
 .ts-wrapper.multi .ts-control > div { background: rgba(70,153,208,0.16); border: 1px solid rgba(70,153,208,0.32); color: #fff; border-radius: 6px; }
-select[data-controller~="tom-select"] { opacity: 0; }
+select[data-controller~="tom-select"], select[data-scorer-picker-target="select"] { opacity: 0; }

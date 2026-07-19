@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Entity\Player;
 use App\Enum\MatchEventType;
 use App\Enum\MatchSide;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -23,6 +24,6 @@ final class MatchEventFormData
     public ?int $minute = null;
 
     #[Assert\NotBlank(message: 'Zadejte prosím jméno hráče.')]
-    #[Assert\Length(max: 120, maxMessage: 'Jméno hráče nesmí být delší než {{ limit }} znaků.')]
+    #[Assert\Length(max: Player::NAME_MAX_LENGTH, maxMessage: 'Jméno hráče nesmí být delší než {{ limit }} znaků.')]
     public string $playerName = '';
 }

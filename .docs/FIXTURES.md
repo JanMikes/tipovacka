@@ -20,13 +20,15 @@ NOT in `src/`. Import in tests: `use App\DataFixtures\AppFixtures;`
 
 `App\Tests\Support\PredictableIdentityProvider` (replaces `RandomIdentityProvider` in the
 test env) returns UUIDs from a fixed pool `01933333-0000-7000-8000-0000000000XX`
-(XX = 01…30), resetting between tests via `kernel.reset`.
+(XX = 01…80, digits-only suffixes — grown in S06 for the heavier recalculation flows:
+8 provisioned rules plus scorer/period rule-point rows), resetting between tests via
+`kernel.reset`.
 
 - `FIXTURE_RESERVED_COUNT = 5`: indices 0–4 (UUIDs `…0001`–`…0005`) are reserved for the
   five fixture users below, which are persisted with those exact IDs. The provider starts
   at index 5, so the **first `next()` call in a test returns `…0006`** — avoiding unique
   constraint collisions with fixture rows.
-- The pool has 30 entries; exhausting it throws (`Exhausted all predefined UUIDs`).
+- The pool has 80 entries; exhausting it throws (`Exhausted all predefined UUIDs`).
 
 ## Users
 
@@ -165,6 +167,8 @@ goal-count vs score consistency is a UI warning only, never enforced.
 | `FIXTURE_GUESS_ID`                  | `019eeeee-0000-7000-8000-000000000001` | ADMIN's guess **3:0** on MATCH_FINISHED (actual 2:1) in PUBLIC_COMPETITION, submitted at `$now` |
 | `FIXTURE_GUESS_EVALUATION_ID`       | `019eeeee-0000-7000-8000-000000000002` | Evaluation of that guess, evaluated at `$now` |
 | `FIXTURE_GUESS_EVAL_RULE_POINTS_ID` | `019eeeee-0000-7000-8000-000000000003` | Single rule-points row: `correct_outcome` → **3 points** (both picked home win; exact score missed) |
+| `SUBSET_GUESS_ID`                   | `019eeeee-0000-7000-8000-000000000005` | S06: SECOND_VERIFIED_USER's guess **2:1** on MATCH_FINISHED in SUBSET_COMPETITION with period tips `[[1,0],[1,1]]`. **No evaluation seeded** — evaluation tests trigger it themselves |
+| `SUBSET_GUESS_SCORER_ID`            | `019eeeee-0000-7000-8000-000000000006` | S06: scorer tip on that guess → PLAYER_HOME_SCORER_ONE (`Jan Novák`, a correct scorer of the 2:1) |
 
 ## Rule configurations (`CompetitionRuleConfiguration`)
 
@@ -185,8 +189,18 @@ per-competition since S04 — sources own no rules):
 | `SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID`      | SUBSET_COMPETITION   | `correct_outcome`    | 3 |
 | `SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID`   | SUBSET_COMPETITION   | `correct_home_goals` | 1 |
 | `SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID`   | SUBSET_COMPETITION   | `correct_away_goals` | 1 |
+| `SUBSET_COMPETITION_RULE_SCORER_HIT_ID`           | SUBSET_COMPETITION   | `scorer_hit`         | 2 |
+| `SUBSET_COMPETITION_RULE_PERIOD_EXACT_ID`         | SUBSET_COMPETITION   | `period_exact`       | 5 |
+| `SUBSET_COMPETITION_RULE_PERIOD_TENDENCY_ID`      | SUBSET_COMPETITION   | `period_tendency`    | 2 |
 
-UUIDs are `019fffff-0000-7000-8000-0000000000XX` with XX = 01–12 in the table's order.
+UUIDs are `019fffff-0000-7000-8000-0000000000XX` with XX = 01–15 in the table's order.
+
+**S06 feature-on example**: only SUBSET_COMPETITION has the optional rules
+`scorer_hit` + `period_exact` + `period_tendency` **enabled** (fixture rows above);
+`overtime_exact` has NO stored row anywhere (⇒ disabled via `enabledByDefault=false`) —
+tests enable it per competition via `UpdateCompetitionRuleConfigurationCommand`.
+VERIFIED and PUBLIC competitions keep every optional rule off, so they double as the
+"payload part rejected" fixtures (`GuessFeatureNotEnabled`).
 
 ## Tie resolution
 

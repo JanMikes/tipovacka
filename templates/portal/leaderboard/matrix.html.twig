@@ -121,7 +121,21 @@
                                                 <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
                                             </span>
                                         {% else %}
-                                            <div class="text-[11px] tabular-nums text-white/50">{{ cell.homeScore }}:{{ cell.awayScore }}</div>
+                                            {% set extra_tip_parts = [] %}
+                                            {% if cell.periodScores is not null %}
+                                                {% set periods_text = [] %}
+                                                {% for p in cell.periodScores %}{% set periods_text = periods_text|merge([p[0] ~ ':' ~ p[1]]) %}{% endfor %}
+                                                {% set extra_tip_parts = extra_tip_parts|merge(['Části: ' ~ periods_text|join(', ')]) %}
+                                            {% endif %}
+                                            {% if cell.overtimeHomeScore is not null %}
+                                                {% set extra_tip_parts = extra_tip_parts|merge(['Po prodloužení: ' ~ cell.overtimeHomeScore ~ ':' ~ cell.overtimeAwayScore]) %}
+                                            {% endif %}
+                                            {% if cell.scorerNames|length > 0 %}
+                                                {% set extra_tip_parts = extra_tip_parts|merge(['Střelci: ' ~ cell.scorerNames|join(', ')]) %}
+                                            {% endif %}
+                                            <div class="text-[11px] tabular-nums text-white/50"{% if extra_tip_parts|length > 0 %} title="{{ extra_tip_parts|join(' · ') }}"{% endif %}>
+                                                {{ cell.homeScore }}:{{ cell.awayScore }}{% if extra_tip_parts|length > 0 %}<span class="text-accent-300">*</span>{% endif %}
+                                            </div>
                                             <div class="mt-0.5 text-sm font-black tabular-nums text-white">
                                                 {% if cell.points is null %}
                                                     <span class="text-white/30">—</span>

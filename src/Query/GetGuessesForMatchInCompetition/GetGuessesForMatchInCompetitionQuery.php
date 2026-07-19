@@ -45,6 +45,16 @@ final readonly class GetGuessesForMatchInCompetitionQuery
                 $isMine = $g->user->id->equals($query->viewerId);
                 $hidden = $hideOthers && !$isMine;
 
+                $scorerNames = [];
+
+                if (!$hidden) {
+                    foreach ($g->scorers as $scorer) {
+                        $scorerNames[] = $scorer->player->name;
+                    }
+
+                    sort($scorerNames);
+                }
+
                 return new GuessForMatchItem(
                     userId: $g->user->id,
                     nickname: $g->user->displayName,
@@ -54,6 +64,10 @@ final readonly class GetGuessesForMatchInCompetitionQuery
                     updatedAt: $g->updatedAt,
                     isMine: $isMine,
                     hidden: $hidden,
+                    periodScores: $hidden ? null : $g->periodScores?->toArray(),
+                    overtimeHomeScore: $hidden ? null : $g->overtimeHomeScore,
+                    overtimeAwayScore: $hidden ? null : $g->overtimeAwayScore,
+                    scorerNames: $scorerNames,
                 );
             },
             $guesses,

@@ -59,6 +59,8 @@ return App::config([
                 '../src/Service/Payment/CheckoutSessionDetails.php',
                 '../src/Service/Payment/InvoiceDetails.php',
                 '../src/Service/Payment/WebhookEvent.php',
+                '../src/Service/Competition/GuessFeatures.php',
+                '../src/Service/Scoring/MatchContext.php',
             ],
         ],
         'App\\Service\\Payment\\StripePaymentGateway' => [

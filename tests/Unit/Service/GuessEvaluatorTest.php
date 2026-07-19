@@ -8,6 +8,7 @@ use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\MatchEventRepository;
 use App\Rule\CorrectAwayGoalsRule;
 use App\Rule\CorrectHomeGoalsRule;
 use App\Rule\CorrectOutcomeRule;
@@ -16,6 +17,7 @@ use App\Rule\Rule;
 use App\Rule\RuleRegistry;
 use App\Service\Identity\ProvideIdentity;
 use App\Service\Scoring\GuessEvaluator;
+use App\Service\Scoring\MatchContext;
 use App\Tests\Unit\Rule\RuleTestFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -23,6 +25,8 @@ use Symfony\Component\Uid\Uuid;
 final class GuessEvaluatorTest extends TestCase
 {
     private \DateTimeImmutable $now;
+
+    private CountingMatchEventRepository $matchEvents;
 
     protected function setUp(): void
     {
@@ -158,9 +162,80 @@ final class GuessEvaluatorTest extends TestCase
         self::assertContains('optional_rule', $identifiers);
     }
 
-    private function optionalRule(): Rule
+    public function testMultiplierMultipliesConfiguredPointsAndStoresProduct(): void
     {
-        return new class () implements Rule {
+        // The counting rule triggers 3× with 7 configured points ⇒ ONE row of 21.
+        $evaluator = $this->makeEvaluator([
+            'exact_score' => [false, 5],
+            'correct_outcome' => [false, 3],
+            'correct_home_goals' => [false, 1],
+            'correct_away_goals' => [false, 1],
+            'optional_rule' => [true, 7],
+        ], [$this->optionalRule(3)]);
+
+        $guess = RuleTestFactory::guess(3, 0);
+        $match = RuleTestFactory::finishedMatch(2, 1);
+
+        $evaluation = $evaluator->evaluate($guess, $match, $this->now);
+
+        self::assertNotNull($evaluation);
+        self::assertSame(21, $evaluation->totalPoints);
+        self::assertCount(1, $evaluation->rulePoints);
+
+        $first = $evaluation->rulePoints->first();
+        self::assertNotFalse($first);
+        self::assertSame('optional_rule', $first->ruleIdentifier);
+        self::assertSame(21, $first->points);
+    }
+
+    public function testMultiplierZeroStoresNoRow(): void
+    {
+        // Enabled counting rule that never triggers ⇒ no row (only hits stored).
+        $evaluator = $this->makeEvaluator([
+            'exact_score' => [false, 5],
+            'correct_outcome' => [false, 3],
+            'correct_home_goals' => [false, 1],
+            'correct_away_goals' => [false, 1],
+            'optional_rule' => [true, 7],
+        ], [$this->optionalRule(0)]);
+
+        $guess = RuleTestFactory::guess(3, 0);
+        $match = RuleTestFactory::finishedMatch(2, 1);
+
+        $evaluation = $evaluator->evaluate($guess, $match, $this->now);
+
+        self::assertNotNull($evaluation);
+        self::assertSame(0, $evaluation->totalPoints);
+        self::assertCount(0, $evaluation->rulePoints);
+    }
+
+    public function testMatchEventsLoadOncePerMatchAcrossManyGuesses(): void
+    {
+        $evaluator = $this->makeEvaluator([]);
+
+        $match = RuleTestFactory::finishedMatch(2, 1);
+
+        $evaluator->evaluate(RuleTestFactory::guess(2, 1), $match, $this->now);
+        $evaluator->evaluate(RuleTestFactory::guess(3, 0), $match, $this->now);
+        $evaluator->evaluate(RuleTestFactory::guess(0, 0), $match, $this->now);
+
+        self::assertSame(1, $this->matchEvents->goalScorerLookups);
+
+        // forgetMatch (score-correction path) drops the cached context.
+        $evaluator->forgetMatch($match->id);
+        $evaluator->evaluate(RuleTestFactory::guess(2, 1), $match, $this->now);
+
+        self::assertSame(2, $this->matchEvents->goalScorerLookups);
+    }
+
+    private function optionalRule(int $multiplier = 1): Rule
+    {
+        return new class ($multiplier) implements Rule {
+            public function __construct(
+                private readonly int $multiplier,
+            ) {
+            }
+
             public string $identifier { get => 'optional_rule'; }
 
             public string $label { get => 'Volitelné pravidlo'; }
@@ -171,9 +246,11 @@ final class GuessEvaluatorTest extends TestCase
 
             public bool $enabledByDefault { get => false; }
 
-            public function evaluate(Guess $guess, SportMatch $match): int
+            public string $category { get => 'scorers'; }
+
+            public function evaluate(Guess $guess, SportMatch $match, MatchContext $context): int
             {
-                return 1; // Always hits — participation is driven purely by config.
+                return $this->multiplier; // Participation is driven purely by config.
             }
         };
     }
@@ -212,6 +289,29 @@ final class GuessEvaluatorTest extends TestCase
         $identity = $this->createStub(ProvideIdentity::class);
         $identity->method('next')->willReturnCallback(fn () => Uuid::v7());
 
-        return new GuessEvaluator($registry, $repo, $identity);
+        $this->matchEvents = new CountingMatchEventRepository();
+
+        return new GuessEvaluator($registry, $repo, $this->matchEvents, $identity);
+    }
+}
+
+/**
+ * Counting fake proving the evaluator loads a match's events once per match,
+ * not once per guess (MatchEventRepository is non-final exactly for this).
+ */
+final class CountingMatchEventRepository extends MatchEventRepository
+{
+    public int $goalScorerLookups = 0;
+
+    public function __construct()
+    {
+        // No EntityManager needed — every queried method is overridden.
+    }
+
+    public function goalScorerPlayerIds(Uuid $sportMatchId): array
+    {
+        ++$this->goalScorerLookups;
+
+        return [];
     }
 }

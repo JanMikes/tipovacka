@@ -8,6 +8,10 @@ use Symfony\Component\Uid\Uuid;
 
 final readonly class GuessForMatchItem
 {
+    /**
+     * @param list<array{int, int}>|null $periodScores
+     * @param list<string>               $scorerNames
+     */
     public function __construct(
         public Uuid $userId,
         public string $nickname,
@@ -17,6 +21,10 @@ final readonly class GuessForMatchItem
         public \DateTimeImmutable $updatedAt,
         public bool $isMine,
         public bool $hidden = false,
+        public ?array $periodScores = null,
+        public ?int $overtimeHomeScore = null,
+        public ?int $overtimeAwayScore = null,
+        public array $scorerNames = [],
     ) {
     }
 }

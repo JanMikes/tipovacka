@@ -1,7 +1,15 @@
 {#
     Wtips dark score-input block for a single match guess (Live Component).
-    Props (via `this`): sportMatch, competitionId, isLocked, existingGuess, hasExistingGuess.
-    Writable models: homeScore, awayScore. Caller can override the wrapper via class="...".
+    Props (via `this`): sportMatch, competitionId, isLocked, existingGuess, hasExistingGuess,
+    features (per-competition rule enablement), sport, periodNumbers, showOvertimeInputs,
+    scorerOptionGroups, selectedScorers.
+    Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeHomeScore,
+    overtimeAwayScore, scorersJson (hidden, written by the scorer-picker controller).
+    Caller can override the wrapper via class="...".
+
+    The scorer picker lives in a data-live-ignore island so live re-renders never
+    destroy the tom-select instance; its state reaches the component through the
+    hidden scorersJson input (data-model + dispatched input events).
 #}
 <div{{ attributes.defaults({class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
 
@@ -11,9 +19,26 @@
             Tipování uzavřeno — zápas už začal nebo není aktivní.
         </p>
         {% if this.existingGuess %}
+            {% set locked_guess = this.existingGuess %}
             <p class="mt-2 text-2xl font-black tabular-nums text-white">
-                {{ this.existingGuess.homeScore }} : {{ this.existingGuess.awayScore }}
+                {{ locked_guess.homeScore }} : {{ locked_guess.awayScore }}
             </p>
+            {% if locked_guess.periodScores is not null %}
+                <p class="mt-1 text-xs text-white/50">
+                    {{ this.sport.periodLabelPlural|capitalize }}:
+                    {% for p in locked_guess.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </p>
+            {% endif %}
+            {% if locked_guess.hasOvertimeTip %}
+                <p class="mt-1 text-xs text-white/50">
+                    Po prodloužení: {{ locked_guess.overtimeHomeScore }}:{{ locked_guess.overtimeAwayScore }}
+                </p>
+            {% endif %}
+            {% if locked_guess.scorers|length > 0 %}
+                <p class="mt-1 text-xs text-white/50">
+                    Střelci: {% for scorer in locked_guess.scorers %}{{ scorer.player.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </p>
+            {% endif %}
         {% else %}
             <p class="mt-2 text-sm text-white/40">Netipováno.</p>
         {% endif %}
@@ -73,6 +98,121 @@
                     {% endif %}
                 </div>
             </div>
+
+            {# ── Period tips (iff period rules enabled; labels per sport) ── #}
+            {% if this.features.periodTips %}
+                <fieldset class="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
+                    <legend class="field-label px-1">Tip na {{ this.sport.periodLabelPlural }} <span class="font-normal normal-case text-white/40">(nepovinné)</span></legend>
+                    <div class="space-y-2">
+                        {% for number in this.periodNumbers %}
+                            {% set tip = this.periodTip(number) %}
+                            <div class="flex items-center gap-3">
+                                <span class="w-24 shrink-0 text-sm text-white/70">{{ number }}. {{ this.sport.periodLabelSingular }}</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="99"
+                                    data-model="period{{ number }}Home"
+                                    value="{{ tip[0] ?? '' }}"
+                                    class="input w-16 text-center"
+                                    aria-label="{{ number }}. {{ this.sport.periodLabelSingular }} – domácí"
+                                />
+                                <span class="text-white/40">:</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="99"
+                                    data-model="period{{ number }}Away"
+                                    value="{{ tip[1] ?? '' }}"
+                                    class="input w-16 text-center"
+                                    aria-label="{{ number }}. {{ this.sport.periodLabelSingular }} – hosté"
+                                />
+                            </div>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            {% endif %}
+
+            {# ── Overtime tip (revealed reactively when the main tip is a draw) ── #}
+            {% if this.showOvertimeInputs %}
+                <fieldset class="mt-4 rounded-lg border border-accent-400/20 bg-accent-500/[0.05] p-3">
+                    <legend class="field-label px-1">Po prodloužení / nájezdech</legend>
+                    <p class="mb-2 text-xs text-white/50">Tipujete remízu — jak zápas skončí po prodloužení? Remíza v základní hrací době zůstává hlavním tipem.</p>
+                    <div class="flex items-center gap-3">
+                        <span class="w-24 shrink-0 text-sm text-white/70">Konečný stav</span>
+                        <input
+                            type="number"
+                            min="0"
+                            max="99"
+                            data-model="overtimeHomeScore"
+                            value="{{ overtimeHomeScore ?? '' }}"
+                            class="input w-16 text-center"
+                            aria-label="Po prodloužení – domácí"
+                        />
+                        <span class="text-white/40">:</span>
+                        <input
+                            type="number"
+                            min="0"
+                            max="99"
+                            data-model="overtimeAwayScore"
+                            value="{{ overtimeAwayScore ?? '' }}"
+                            class="input w-16 text-center"
+                            aria-label="Po prodloužení – hosté"
+                        />
+                    </div>
+                </fieldset>
+            {% endif %}
+
+            {# ── Scorer tips (iff scorer_hit enabled) — tom-select island, never morphed ── #}
+            {% if this.features.scorerTips %}
+                <div class="mt-4" data-live-ignore>
+                    <div
+                        data-controller="scorer-picker"
+                        data-scorer-picker-max-value="5"
+                        data-scorer-picker-home-team-value="{{ this.sportMatch.homeTeam }}"
+                        data-scorer-picker-away-team-value="{{ this.sportMatch.awayTeam }}"
+                    >
+                        <label class="field-label mb-1.5 block" for="guess_scorers_{{ this.sportMatch.id }}_{{ this.competitionId }}">
+                            Tip na střelce <span class="font-normal normal-case text-white/40">(max 5, nepovinné)</span>
+                        </label>
+                        <select
+                            id="guess_scorers_{{ this.sportMatch.id }}_{{ this.competitionId }}"
+                            multiple
+                            data-scorer-picker-target="select"
+                            placeholder="Vyberte nebo napište jméno hráče…"
+                        >
+                            {% for group in this.scorerOptionGroups %}
+                                <optgroup label="{{ group.team }}">
+                                    {% for name in group.players %}
+                                        {% set option_value = (group.side == 'home' ? 'h|' : 'a|') ~ name %}
+                                        <option
+                                            value="{{ option_value }}"
+                                            {% for selected in this.selectedScorers %}{% if selected.side == group.side and selected.name == name %}selected{% endif %}{% endfor %}
+                                        >{{ name }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/50">
+                            <span>Nového hráče přidat do týmu:</span>
+                            <label class="inline-flex cursor-pointer items-center gap-1.5">
+                                <input type="radio" name="scorer_side_{{ this.sportMatch.id }}_{{ this.competitionId }}" value="home" checked data-scorer-picker-target="sideRadio" />
+                                {{ this.sportMatch.homeTeam }}
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-1.5">
+                                <input type="radio" name="scorer_side_{{ this.sportMatch.id }}_{{ this.competitionId }}" value="away" data-scorer-picker-target="sideRadio" />
+                                {{ this.sportMatch.awayTeam }}
+                            </label>
+                        </div>
+                        <input
+                            type="hidden"
+                            data-model="scorersJson"
+                            data-scorer-picker-target="payload"
+                            value="{{ scorersJson }}"
+                        />
+                    </div>
+                </div>
+            {% endif %}
 
             {% set is_clearing = this.hasExistingGuess and homeScore is null and awayScore is null %}
             <button type="submit" class="btn btn-block mt-4 {{ is_clearing ? 'btn-danger' : (this.hasExistingGuess ? 'btn-edit-block' : 'btn-primary-block') }}">

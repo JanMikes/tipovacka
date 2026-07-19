@@ -7,11 +7,16 @@ namespace App\Tests\Unit\Rule;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\Guess;
+use App\Entity\GuessScorer;
 use App\Entity\MatchSource;
+use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
+use App\Service\Scoring\MatchContext;
+use App\Value\PeriodScores;
 use Symfony\Component\Uid\Uuid;
 
 final class RuleTestFactory
@@ -95,8 +100,48 @@ final class RuleTestFactory
         return $match;
     }
 
+    /**
+     * Finished match with full result detail (football sport: exactly 2 periods
+     * summing to the final score; OT only on a regular-time draw).
+     *
+     * @param list<array{int, int}>|null $periods
+     */
+    public static function finishedMatchWithDetails(
+        int $home,
+        int $away,
+        ?array $periods = null,
+        ?int $overtimeHome = null,
+        ?int $overtimeAway = null,
+    ): SportMatch {
+        $match = self::scheduledMatch();
+        $match->setFinalScore(
+            $home,
+            $away,
+            null === $periods ? null : PeriodScores::fromArray($periods),
+            $overtimeHome,
+            $overtimeAway,
+            self::now(),
+        );
+        $match->popEvents();
+
+        return $match;
+    }
+
     public static function guess(int $home, int $away): Guess
     {
+        return self::guessWithDetails($home, $away);
+    }
+
+    /**
+     * @param list<array{int, int}>|null $periods
+     */
+    public static function guessWithDetails(
+        int $home,
+        int $away,
+        ?array $periods = null,
+        ?int $overtimeHome = null,
+        ?int $overtimeAway = null,
+    ): Guess {
         $user = self::user();
         $matchSource = self::matchSource();
 
@@ -122,9 +167,53 @@ final class RuleTestFactory
             homeScore: $home,
             awayScore: $away,
             submittedAt: self::now(),
+            periodScores: null === $periods ? null : PeriodScores::fromArray($periods),
+            overtimeHomeScore: $overtimeHome,
+            overtimeAwayScore: $overtimeAway,
         );
         $guess->popEvents();
 
         return $guess;
+    }
+
+    public static function player(string $name, ?string $teamName = null): Player
+    {
+        return new Player(
+            id: Uuid::v7(),
+            matchSource: self::matchSource(),
+            teamName: $teamName ?? 'A',
+            name: $name,
+            createdAt: self::now(),
+        );
+    }
+
+    /**
+     * Attaches scorer tips to a guess (one row per player).
+     *
+     * @param list<Player> $players
+     */
+    public static function withScorerTips(Guess $guess, array $players, MatchSide $side = MatchSide::Home): Guess
+    {
+        foreach ($players as $player) {
+            $guess->addScorer(new GuessScorer(
+                id: Uuid::v7(),
+                guess: $guess,
+                player: $player,
+                side: $side,
+                createdAt: self::now(),
+            ));
+        }
+
+        return $guess;
+    }
+
+    /**
+     * @param list<Player> $goalScorers
+     */
+    public static function contextWithGoals(array $goalScorers): MatchContext
+    {
+        return new MatchContext(
+            goalScorerPlayerIds: array_map(static fn (Player $player) => $player->id, $goalScorers),
+        );
     }
 }

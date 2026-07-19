@@ -13,7 +13,7 @@ final class ListRegisteredRulesQueryTest extends IntegrationTestCase
     {
         $result = $this->queryBus()->handle(new ListRegisteredRules());
 
-        self::assertCount(4, $result);
+        self::assertCount(8, $result);
 
         $identifiers = array_map(static fn ($item) => $item->identifier, $result);
 
@@ -21,6 +21,10 @@ final class ListRegisteredRulesQueryTest extends IntegrationTestCase
         self::assertContains('correct_outcome', $identifiers);
         self::assertContains('correct_home_goals', $identifiers);
         self::assertContains('correct_away_goals', $identifiers);
+        self::assertContains('scorer_hit', $identifiers);
+        self::assertContains('period_exact', $identifiers);
+        self::assertContains('period_tendency', $identifiers);
+        self::assertContains('overtime_exact', $identifiers);
     }
 
     public function testEachItemHasLabelAndDefaultPoints(): void

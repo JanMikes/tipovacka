@@ -18,16 +18,23 @@ final class GetCompetitionRuleConfigurationQueryTest extends IntegrationTestCase
             competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
         ));
 
-        self::assertCount(4, $result->items);
+        self::assertCount(8, $result->items);
 
         $identifiers = array_map(fn ($item) => $item->identifier, $result->items);
         self::assertContains('exact_score', $identifiers);
         self::assertContains('correct_outcome', $identifiers);
         self::assertContains('correct_home_goals', $identifiers);
         self::assertContains('correct_away_goals', $identifiers);
+        self::assertContains('scorer_hit', $identifiers);
+        self::assertContains('period_exact', $identifiers);
+        self::assertContains('period_tendency', $identifiers);
+        self::assertContains('overtime_exact', $identifiers);
+
+        $baseIdentifiers = ['exact_score', 'correct_outcome', 'correct_home_goals', 'correct_away_goals'];
 
         foreach ($result->items as $item) {
-            self::assertTrue($item->enabled);
+            // Base rules enabled; S06 optional rules disabled (PUBLIC has no rows for them).
+            self::assertSame(in_array($item->identifier, $baseIdentifiers, true), $item->enabled);
             self::assertSame($item->defaultPoints, $item->points);
         }
     }
@@ -49,7 +56,7 @@ final class GetCompetitionRuleConfigurationQueryTest extends IntegrationTestCase
             competitionId: $competitionId,
         ));
 
-        self::assertCount(4, $result->items);
+        self::assertCount(8, $result->items);
 
         $exactScore = null;
         foreach ($result->items as $item) {

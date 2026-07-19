@@ -30,7 +30,9 @@ final class GetMemberLeaderboardBreakdownQueryTest extends IntegrationTestCase
         self::assertSame(3, $row->totalPoints);
         self::assertCount(1, $row->breakdown);
         self::assertSame('correct_outcome', $row->breakdown[0]->ruleIdentifier);
+        self::assertSame('Správný tip výsledku', $row->breakdown[0]->label);
         self::assertSame(3, $row->breakdown[0]->points);
+        self::assertSame(1, $row->breakdown[0]->multiplier);
     }
 
     public function testUserWithoutGuessStillSeesFinishedMatchesAsEmpty(): void

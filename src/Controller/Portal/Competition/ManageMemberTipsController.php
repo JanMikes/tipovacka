@@ -8,6 +8,7 @@ use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
@@ -31,6 +32,7 @@ final class ManageMemberTipsController extends AbstractController
         private readonly GuessRepository $guessRepository,
         private readonly UserRepository $userRepository,
         private readonly CompetitionMatchProvider $matchProvider,
+        private readonly CompetitionGuessFeatures $guessFeatures,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -84,6 +86,8 @@ final class ManageMemberTipsController extends AbstractController
             'members' => $members,
             'selectedMember' => $selectedMember,
             'rows' => $rows,
+            'sport' => $competition->matchSource->sport,
+            'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);
     }
 }

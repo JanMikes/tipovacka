@@ -16,6 +16,7 @@ use App\Event\GuessSubmitted;
 use App\Event\GuessUpdated;
 use App\Event\GuessVoided;
 use App\Exception\InvalidGuessScore;
+use App\Value\PeriodScores;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -187,5 +188,146 @@ final class GuessEntityTest extends TestCase
         $guess->voidGuess($this->later);
 
         self::assertCount(0, $guess->popEvents());
+    }
+
+    // ── S06: period + overtime tip invariants ─────────────────────────────
+
+    public function testConstructorAcceptsPeriodAndOvertimeTips(): void
+    {
+        $user = $this->makeUser();
+        $matchSource = $this->makeMatchSource($user);
+        $competition = $this->makeCompetition($user, $matchSource);
+        $match = $this->makeMatch($matchSource);
+
+        $guess = new Guess(
+            id: Uuid::fromString(AppFixtures::FIXTURE_GUESS_ID),
+            user: $user,
+            sportMatch: $match,
+            competition: $competition,
+            homeScore: 1,
+            awayScore: 1,
+            submittedAt: $this->now,
+            periodScores: PeriodScores::fromArray([[1, 0], [0, 1]]),
+            overtimeHomeScore: 2,
+            overtimeAwayScore: 1,
+        );
+
+        self::assertSame([[1, 0], [0, 1]], $guess->periodScores?->toArray());
+        self::assertSame(2, $guess->overtimeHomeScore);
+        self::assertSame(1, $guess->overtimeAwayScore);
+        self::assertTrue($guess->hasOvertimeTip);
+    }
+
+    public function testPeriodTipMustMatchSportPeriodCount(): void
+    {
+        // Football = 2 periods; a 3-period tip is invalid.
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessageMatches('/2 poločasy/');
+
+        $this->makeGuessWithDetails(2, 1, PeriodScores::fromArray([[1, 0], [1, 1], [0, 0]]));
+    }
+
+    public function testPeriodTipSumMustMatchMainTip(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.');
+
+        // Periods sum to 2:1, main tip says 3:0.
+        $this->makeGuessWithDetails(3, 0, PeriodScores::fromArray([[1, 0], [1, 1]]));
+    }
+
+    public function testUpdateScoresRejectsPeriodSumMismatch(): void
+    {
+        $guess = $this->makeGuess();
+        $guess->popEvents();
+
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.');
+
+        // Periods sum to 1:1, new main tip says 2:1.
+        $guess->updateScores(2, 1, $this->later, PeriodScores::fromArray([[1, 0], [0, 1]]));
+    }
+
+    public function testOvertimeTipAllowedOnlyOnDrawTip(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('remíze');
+
+        $this->makeGuessWithDetails(2, 1, null, 3, 2);
+    }
+
+    public function testOvertimeTipMustNotBeDraw(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('remíza');
+
+        $this->makeGuessWithDetails(1, 1, null, 2, 2);
+    }
+
+    public function testOvertimeTipMustNotBeBelowRegularTip(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('nižší');
+
+        $this->makeGuessWithDetails(2, 2, null, 3, 1);
+    }
+
+    public function testOvertimeTipRequiresBothValues(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('obě hodnoty');
+
+        $this->makeGuessWithDetails(1, 1, null, 2, null);
+    }
+
+    public function testUpdateScoresFullyReplacesAllTipParts(): void
+    {
+        $guess = $this->makeGuessWithDetails(1, 1, PeriodScores::fromArray([[1, 0], [0, 1]]), 2, 1);
+        $guess->popEvents();
+
+        // Omitted parts are CLEARED, not kept (full-replace semantics).
+        $guess->updateScores(2, 1, $this->later);
+
+        self::assertSame(2, $guess->homeScore);
+        self::assertSame(1, $guess->awayScore);
+        self::assertNull($guess->periodScores);
+        self::assertNull($guess->overtimeHomeScore);
+        self::assertNull($guess->overtimeAwayScore);
+        self::assertFalse($guess->hasOvertimeTip);
+    }
+
+    public function testUpdateScoresValidatesOvertimeAgainstNewMainTip(): void
+    {
+        $guess = $this->makeGuess();
+        $guess->popEvents();
+
+        $this->expectException(InvalidGuessScore::class);
+        $guess->updateScores(2, 1, $this->later, null, 3, 2);
+    }
+
+    private function makeGuessWithDetails(
+        int $home,
+        int $away,
+        ?PeriodScores $periods = null,
+        ?int $overtimeHome = null,
+        ?int $overtimeAway = null,
+    ): Guess {
+        $user = $this->makeUser();
+        $matchSource = $this->makeMatchSource($user);
+        $competition = $this->makeCompetition($user, $matchSource);
+        $match = $this->makeMatch($matchSource);
+
+        return new Guess(
+            id: Uuid::fromString(AppFixtures::FIXTURE_GUESS_ID),
+            user: $user,
+            sportMatch: $match,
+            competition: $competition,
+            homeScore: $home,
+            awayScore: $away,
+            submittedAt: $this->now,
+            periodScores: $periods,
+            overtimeHomeScore: $overtimeHome,
+            overtimeAwayScore: $overtimeAway,
+        );
     }
 }

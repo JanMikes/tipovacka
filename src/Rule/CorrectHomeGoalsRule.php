@@ -6,6 +6,7 @@ namespace App\Rule;
 
 use App\Entity\Guess;
 use App\Entity\SportMatch;
+use App\Service\Scoring\MatchContext;
 
 #[AsRule]
 final class CorrectHomeGoalsRule implements Rule
@@ -22,7 +23,9 @@ final class CorrectHomeGoalsRule implements Rule
 
     public bool $enabledByDefault { get => true; }
 
-    public function evaluate(Guess $guess, SportMatch $match): int
+    public string $category { get => 'base'; }
+
+    public function evaluate(Guess $guess, SportMatch $match, MatchContext $context): int
     {
         if (null === $match->homeScore || null === $match->awayScore) {
             return 0;

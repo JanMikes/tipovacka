@@ -341,6 +341,7 @@ Hotwire Turbo is installed but **disabled globally** via `data-turbo="false"` on
 Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`](.docs/features/). When adding a new reusable pattern (modal, widget, Stimulus controller), drop a brief doc there and link it below.
 
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
+- [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
 
 ## Testing
 

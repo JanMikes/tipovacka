@@ -38,6 +38,10 @@ final readonly class SportMatchScoreUpdatedHandler
         $this->evaluationRepository->deleteByMatch($event->sportMatchId);
         $this->entityManager->flush();
 
+        // A score correction replaces the event sheet — never re-evaluate
+        // against a stale cached scorer context from earlier in this process.
+        $this->evaluator->forgetMatch($event->sportMatchId);
+
         $guesses = $this->guessRepository->findActiveByMatch($event->sportMatchId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 

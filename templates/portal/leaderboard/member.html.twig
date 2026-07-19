@@ -69,7 +69,7 @@
                                     {% if row.breakdown|length > 0 %}
                                         <ul class="space-y-0.5">
                                             {% for item in row.breakdown %}
-                                                <li>{{ item.ruleIdentifier }}: <span class="font-bold text-white">{{ item.points }}</span></li>
+                                                <li>{% if item.multiplier > 1 %}{{ item.multiplier }}× {% endif %}{{ item.label }} <span class="font-bold text-white">({{ item.points }} b.)</span></li>
                                             {% endfor %}
                                         </ul>
                                     {% else %}

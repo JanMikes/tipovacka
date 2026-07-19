@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\MatchEvent;
+use App\Enum\MatchEventType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
-final class MatchEventRepository
+// Non-final so GuessEvaluatorTest can fake it (counting stub proving events load once per match).
+class MatchEventRepository
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -18,6 +20,31 @@ final class MatchEventRepository
     public function save(MatchEvent $matchEvent): void
     {
         $this->entityManager->persist($matchEvent);
+    }
+
+    /**
+     * Distinct players with at least one goal event in the match — the
+     * scorer_hit rule's source of truth (via {@see \App\Service\Scoring\MatchContext}).
+     *
+     * @return list<Uuid>
+     */
+    public function goalScorerPlayerIds(Uuid $sportMatchId): array
+    {
+        /** @var list<array{playerId: Uuid|string}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('DISTINCT IDENTITY(e.player) AS playerId')
+            ->from(MatchEvent::class, 'e')
+            ->where('e.sportMatch = :sportMatchId')
+            ->andWhere('e.type = :goal')
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->setParameter('goal', MatchEventType::Goal)
+            ->getQuery()
+            ->getResult();
+
+        return array_map(
+            static fn (array $row): Uuid => $row['playerId'] instanceof Uuid ? $row['playerId'] : Uuid::fromString((string) $row['playerId']),
+            $rows,
+        );
     }
 
     /**

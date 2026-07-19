@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Rule;
 
 use App\Rule\CorrectAwayGoalsRule;
+use App\Service\Scoring\MatchContext;
 use PHPUnit\Framework\TestCase;
 
 final class CorrectAwayGoalsRuleTest extends TestCase
@@ -16,7 +17,7 @@ final class CorrectAwayGoalsRuleTest extends TestCase
         $guess = RuleTestFactory::guess(0, 1);
         $match = RuleTestFactory::finishedMatch(2, 1);
 
-        self::assertSame(1, $rule->evaluate($guess, $match));
+        self::assertSame(1, $rule->evaluate($guess, $match, MatchContext::empty()));
     }
 
     public function testMissesOnDifferentAwayScore(): void
@@ -26,7 +27,7 @@ final class CorrectAwayGoalsRuleTest extends TestCase
         $guess = RuleTestFactory::guess(2, 3);
         $match = RuleTestFactory::finishedMatch(2, 1);
 
-        self::assertSame(0, $rule->evaluate($guess, $match));
+        self::assertSame(0, $rule->evaluate($guess, $match, MatchContext::empty()));
     }
 
     public function testReturnsZeroWhenMatchHasNoScore(): void
@@ -36,6 +37,6 @@ final class CorrectAwayGoalsRuleTest extends TestCase
         $guess = RuleTestFactory::guess(0, 0);
         $match = RuleTestFactory::scheduledMatch();
 
-        self::assertSame(0, $rule->evaluate($guess, $match));
+        self::assertSame(0, $rule->evaluate($guess, $match, MatchContext::empty()));
     }
 }

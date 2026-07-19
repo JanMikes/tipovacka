@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class CompetitionCreatedAutoProvisionsRulesTest extends IntegrationTestCase
 {
-    public function testCreatingCompetitionProvisionsFourRuleConfigurations(): void
+    public function testCreatingCompetitionProvisionsAllRegisteredRuleConfigurations(): void
     {
         $this->commandBus()->dispatch(new CreateCompetitionCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -46,17 +46,38 @@ final class CompetitionCreatedAutoProvisionsRulesTest extends IntegrationTestCas
             ->getQuery()
             ->getResult();
 
-        self::assertCount(4, $configurations);
+        self::assertCount(8, $configurations);
 
         $identifiers = array_map(fn (CompetitionRuleConfiguration $c) => $c->ruleIdentifier, $configurations);
         sort($identifiers);
         self::assertSame(
-            ['correct_away_goals', 'correct_home_goals', 'correct_outcome', 'exact_score'],
+            [
+                'correct_away_goals',
+                'correct_home_goals',
+                'correct_outcome',
+                'exact_score',
+                'overtime_exact',
+                'period_exact',
+                'period_tendency',
+                'scorer_hit',
+            ],
             $identifiers,
         );
 
+        // Base rules provision enabled; optional S06 rules provision DISABLED.
+        $enabledByIdentifier = [];
+
         foreach ($configurations as $configuration) {
-            self::assertTrue($configuration->enabled);
+            $enabledByIdentifier[$configuration->ruleIdentifier] = $configuration->enabled;
         }
+
+        self::assertTrue($enabledByIdentifier['exact_score']);
+        self::assertTrue($enabledByIdentifier['correct_outcome']);
+        self::assertTrue($enabledByIdentifier['correct_home_goals']);
+        self::assertTrue($enabledByIdentifier['correct_away_goals']);
+        self::assertFalse($enabledByIdentifier['scorer_hit']);
+        self::assertFalse($enabledByIdentifier['period_exact']);
+        self::assertFalse($enabledByIdentifier['period_tendency']);
+        self::assertFalse($enabledByIdentifier['overtime_exact']);
     }
 }

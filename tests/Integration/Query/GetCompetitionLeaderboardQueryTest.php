@@ -284,17 +284,9 @@ final class GetCompetitionLeaderboardQueryTest extends IntegrationTestCase
         self::assertNotNull($liveMatch);
 
         // Evaluated guess on a SELECTED match (MATCH_FINISHED) — must count.
-        $selectedGuess = new Guess(
-            id: Uuid::v7(),
-            user: $secondVerified,
-            sportMatch: $finishedMatch,
-            competition: $subsetCompetition,
-            homeScore: 1,
-            awayScore: 0,
-            submittedAt: $now,
-        );
-        $selectedGuess->popEvents();
-        $em->persist($selectedGuess);
+        // S06 fixtures already seed SECOND's guess on it (without evaluation).
+        $selectedGuess = $em->find(Guess::class, Uuid::fromString(AppFixtures::SUBSET_GUESS_ID));
+        self::assertNotNull($selectedGuess);
 
         $selectedEvaluation = new GuessEvaluation(id: Uuid::v7(), guess: $selectedGuess, evaluatedAt: $now);
         $selectedEvaluation->addRulePoints(new GuessEvaluationRulePoints(

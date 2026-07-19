@@ -8,6 +8,7 @@ use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Rule\Rule;
 use App\Rule\RuleRegistry;
+use App\Service\Scoring\MatchContext;
 use PHPUnit\Framework\TestCase;
 
 final class RuleRegistryTest extends TestCase
@@ -62,7 +63,9 @@ final class RuleRegistryTest extends TestCase
 
             public bool $enabledByDefault { get => true; }
 
-            public function evaluate(Guess $guess, SportMatch $match): int
+            public string $category { get => 'base'; }
+
+            public function evaluate(Guess $guess, SportMatch $match, MatchContext $context): int
             {
                 return 0;
             }

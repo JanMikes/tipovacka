@@ -61,11 +61,16 @@ final class CompetitionMatchSelectionChangedTriggersRecalcTest extends Integrati
 
     public function testNoRecalcWhenCompetitionHasNoGuesses(): void
     {
+        // S06 seeds a SUBSET guess on MATCH_FINISHED — void the match's guesses
+        // first so the competition truly has nothing to recalculate.
+        $this->commandBus()->dispatch(new \App\Command\VoidGuessesForMatch\VoidGuessesForMatchCommand(
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
+        ));
+
         /** @var InMemoryTransport $async */
         $async = self::getContainer()->get('test.messenger.transport.async'); // @phpstan-ignore symfonyContainer.serviceNotFound
         $async->reset();
 
-        // SUBSET_COMPETITION has no guesses (and no evaluations) at fixture time.
         $this->commandBus()->dispatch(new UpdateCompetitionMatchSelectionCommand(
             editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
             competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),

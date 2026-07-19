@@ -9,6 +9,7 @@ use App\Command\UpdateGuessOnBehalf\UpdateGuessOnBehalfCommand;
 use App\Entity\User;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
+use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
@@ -16,6 +17,8 @@ use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionGuessFeatures;
+use App\Service\Guess\GuessScorerWriter;
 use App\Voter\CompetitionVoter;
 use App\Voter\GuessOnBehalfContext;
 use App\Voter\GuessVoter;
@@ -45,6 +48,8 @@ final class SubmitGuessOnBehalfController extends AbstractController
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly UserRepository $userRepository,
         private readonly GuessRepository $guessRepository,
+        private readonly CompetitionGuessFeatures $guessFeatures,
+        private readonly GuessScorerWriter $scorerWriter,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -100,11 +105,23 @@ final class SubmitGuessOnBehalfController extends AbstractController
             } else {
                 $this->denyAccessUnlessGranted(GuessVoter::UPDATE_ON_BEHALF, $existing);
 
+                // This form edits only the main score; periods, overtime and
+                // scorers of a full-replace update are passed through untouched
+                // (filtered by feature enablement — a legacy part of a since-
+                // disabled feature is dropped, not rejected; the OT pair travels
+                // only while still valid against the NEW tip, else it is dropped).
+                $features = $this->guessFeatures->featuresFor($competition->id);
+                $carryOvertime = $features->overtimeTip && $existing->overtimeTipValidFor($homeScore, $awayScore);
+
                 $this->commandBus->dispatch(new UpdateGuessOnBehalfCommand(
                     actingUserId: $user->id,
                     guessId: $existing->id,
                     homeScore: $homeScore,
                     awayScore: $awayScore,
+                    periodScores: $features->periodTips ? $existing->periodScores : null,
+                    overtimeHomeScore: $carryOvertime ? $existing->overtimeHomeScore : null,
+                    overtimeAwayScore: $carryOvertime ? $existing->overtimeAwayScore : null,
+                    scorers: $features->scorerTips ? $this->scorerWriter->inputsFor($existing) : [],
                 ));
             }
 
@@ -113,6 +130,7 @@ final class SubmitGuessOnBehalfController extends AbstractController
             $inner = $e->getPrevious();
 
             if ($inner instanceof InvalidGuessScore
+                || $inner instanceof GuessFeatureNotEnabled
                 || $inner instanceof GuessDeadlinePassed
                 || $inner instanceof GuessAlreadyExists
                 || $inner instanceof NotAMember

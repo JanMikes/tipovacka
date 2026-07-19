@@ -9,6 +9,7 @@ use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
 use App\Repository\UserRepository;
 use App\Rule\RuleRegistry;
+use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -21,6 +22,7 @@ final readonly class UpdateCompetitionRuleConfigurationHandler
         private UserRepository $userRepository,
         private CompetitionRuleConfigurationRepository $configurationRepository,
         private RuleRegistry $ruleRegistry,
+        private CompetitionGuessFeatures $guessFeatures,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -68,5 +70,9 @@ final readonly class UpdateCompetitionRuleConfigurationHandler
         }
 
         $competition->recordRulesChanged($editor, $now);
+
+        // Rule enablement drives the guess-feature toggles — drop the cached
+        // resolution so the same process (form re-render, tests) sees the change.
+        $this->guessFeatures->forgetCompetition($competition->id);
     }
 }

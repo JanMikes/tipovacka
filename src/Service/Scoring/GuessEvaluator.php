@@ -10,6 +10,7 @@ use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\SportMatch;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\MatchEventRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Identity\ProvideIdentity;
 use Symfony\Component\Uid\Uuid;
@@ -25,22 +26,31 @@ use Symfony\Contracts\Service\ResetInterface;
  * agreement with the GetCompetitionRuleConfiguration display query — nothing is
  * silently skipped or provisioned.
  *
- * Caching choice: the evaluator caches the per-competition config map internally
- * (keyed by competition id) rather than making handlers thread a map through the
- * API. SportMatchFinishedHandler / SportMatchScoreUpdatedHandler evaluate many
- * guesses across multiple competitions for one match and hit each competition's
- * config exactly once. The cache is dropped on kernel/worker reset
- * ({@see ResetInterface}) and explicitly by the recalculation handler via
- * {@see forgetCompetition} so a just-changed configuration is always re-read.
+ * Points model: `Rule::evaluate()` returns a multiplier ≥ 0 (binary rules 0/1,
+ * counting rules the hit count); the evaluator stores `multiplier × configured
+ * points` as the rule-points row. Multiplier 0 stores no row (only hits are stored).
+ *
+ * Caching choice: the evaluator caches BOTH the per-competition config map and
+ * the per-match {@see MatchContext} (goal scorer ids for the scorer rule)
+ * internally, keyed by UUID. SportMatchFinishedHandler / SportMatchScoreUpdatedHandler
+ * evaluate many guesses across multiple competitions for ONE match — each
+ * competition's config and the match's events load exactly once, not per guess.
+ * Caches drop on kernel/worker reset ({@see ResetInterface}) and explicitly via
+ * {@see forgetCompetition} (recalculation after config change) /
+ * {@see forgetMatch} (re-evaluation after a score correction replaced the events).
  */
 class GuessEvaluator implements ResetInterface
 {
     /** @var array<string, array<string, CompetitionRuleConfiguration>> competition UUID → stored rows by rule identifier */
     private array $configCache = [];
 
+    /** @var array<string, MatchContext> sport match UUID → per-match rule context */
+    private array $contextCache = [];
+
     public function __construct(
         private readonly RuleRegistry $ruleRegistry,
         private readonly CompetitionRuleConfigurationRepository $configurationRepository,
+        private readonly MatchEventRepository $matchEventRepository,
         private readonly ProvideIdentity $identity,
     ) {
     }
@@ -58,6 +68,7 @@ class GuessEvaluator implements ResetInterface
         }
 
         $storedConfigurations = $this->configurationsFor($guess->competition->id);
+        $context = $this->contextFor($match->id);
 
         $evaluation = new GuessEvaluation(
             id: $this->identity->next(),
@@ -74,17 +85,19 @@ class GuessEvaluator implements ResetInterface
                 continue;
             }
 
-            $hit = $rule->evaluate($guess, $match);
+            $multiplier = $rule->evaluate($guess, $match, $context);
 
-            if (1 !== $hit) {
+            if ($multiplier < 1) {
                 continue;
             }
+
+            $points = null === $configuration ? $rule->defaultPoints : $configuration->points;
 
             $evaluation->addRulePoints(new GuessEvaluationRulePoints(
                 id: $this->identity->next(),
                 evaluation: $evaluation,
                 ruleIdentifier: $ruleIdentifier,
-                points: null === $configuration ? $rule->defaultPoints : $configuration->points,
+                points: $multiplier * $points,
             ));
         }
 
@@ -97,12 +110,23 @@ class GuessEvaluator implements ResetInterface
     }
 
     /**
+     * Drops the cached per-match context — called by the score-correction path
+     * (SportMatchScoreUpdatedHandler) after the event sheet was replaced, so a
+     * re-evaluation within the same process never sees stale scorer ids.
+     */
+    public function forgetMatch(Uuid $sportMatchId): void
+    {
+        unset($this->contextCache[$sportMatchId->toRfc4122()]);
+    }
+
+    /**
      * Kernel/worker reset (autoconfigured via {@see ResetInterface}) — drops the
-     * config cache between requests/messages/tests so stale rows never leak.
+     * caches between requests/messages/tests so stale rows never leak.
      */
     public function reset(): void
     {
         $this->configCache = [];
+        $this->contextCache = [];
     }
 
     /**
@@ -113,5 +137,14 @@ class GuessEvaluator implements ResetInterface
         $key = $competitionId->toRfc4122();
 
         return $this->configCache[$key] ??= $this->configurationRepository->mapForCompetition($competitionId);
+    }
+
+    private function contextFor(Uuid $sportMatchId): MatchContext
+    {
+        $key = $sportMatchId->toRfc4122();
+
+        return $this->contextCache[$key] ??= new MatchContext(
+            goalScorerPlayerIds: $this->matchEventRepository->goalScorerPlayerIds($sportMatchId),
+        );
     }
 }

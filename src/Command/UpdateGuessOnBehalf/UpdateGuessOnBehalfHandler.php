@@ -7,13 +7,16 @@ namespace App\Command\UpdateGuessOnBehalf;
 use App\Entity\Guess;
 use App\Enum\UserRole;
 use App\Exception\GuessDeadlinePassed;
+use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\GuessNotFound;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
 use App\Repository\GuessRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
+use App\Service\Guess\GuessScorerWriter;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -25,6 +28,8 @@ final readonly class UpdateGuessOnBehalfHandler
         private GuessRepository $guessRepository,
         private UserRepository $userRepository,
         private CompetitionMatchProvider $matchProvider,
+        private CompetitionGuessFeatures $guessFeatures,
+        private GuessScorerWriter $scorerWriter,
         private EffectiveTipDeadlineResolver $deadlineResolver,
         private ClockInterface $clock,
     ) {
@@ -53,6 +58,22 @@ final readonly class UpdateGuessOnBehalfHandler
             throw MatchNotInCompetition::create();
         }
 
+        // Feature toggles = rule enablement: payload parts of disabled features
+        // are rejected, never silently dropped.
+        $features = $this->guessFeatures->featuresFor($guess->competition->id);
+
+        if (null !== $command->periodScores && !$features->periodTips) {
+            throw GuessFeatureNotEnabled::periods();
+        }
+
+        if ((null !== $command->overtimeHomeScore || null !== $command->overtimeAwayScore) && !$features->overtimeTip) {
+            throw GuessFeatureNotEnabled::overtime();
+        }
+
+        if ([] !== $command->scorers && !$features->scorerTips) {
+            throw GuessFeatureNotEnabled::scorers();
+        }
+
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $deadline = $this->deadlineResolver->resolve($guess->competition, $guess->sportMatch);
 
@@ -60,7 +81,17 @@ final readonly class UpdateGuessOnBehalfHandler
             throw GuessDeadlinePassed::create();
         }
 
-        $guess->updateScores($command->homeScore, $command->awayScore, $now);
+        // Full replace: every tip part becomes exactly what the command carries.
+        $guess->updateScores(
+            $command->homeScore,
+            $command->awayScore,
+            $now,
+            $command->periodScores,
+            $command->overtimeHomeScore,
+            $command->overtimeAwayScore,
+        );
+
+        $this->scorerWriter->replace($guess, $command->scorers, $now);
 
         return $guess;
     }

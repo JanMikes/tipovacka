@@ -16,6 +16,8 @@ final class SportMatchScoreUpdatedReEvaluatesTest extends IntegrationTestCase
     {
         // Admin's fixture guess is 3:0, MATCH_FINISHED was 2:1 (correct outcome = 3 points).
         // Now rescore the match to 3:0 — admin's guess should become an exact hit (10 points).
+        // S06: the SUBSET fixture guess (2:1, periods + scorer tips) is ALSO re-evaluated;
+        // the rescore clears periods and events, so only correct_outcome (3) remains there.
         $this->commandBus()->dispatch(new SetSportMatchFinalScoreCommand(
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
             editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
@@ -28,7 +30,7 @@ final class SportMatchScoreUpdatedReEvaluatesTest extends IntegrationTestCase
 
         /** @var list<GuessEvaluation> $evaluations */
         $evaluations = $em->createQueryBuilder()
-            ->select('e')
+            ->select('e', 'g')
             ->from(GuessEvaluation::class, 'e')
             ->innerJoin('e.guess', 'g')
             ->where('g.sportMatch = :matchId')
@@ -36,7 +38,15 @@ final class SportMatchScoreUpdatedReEvaluatesTest extends IntegrationTestCase
             ->getQuery()
             ->getResult();
 
-        self::assertCount(1, $evaluations);
-        self::assertSame(10, $evaluations[0]->totalPoints);
+        self::assertCount(2, $evaluations);
+
+        $totalsByGuess = [];
+
+        foreach ($evaluations as $evaluation) {
+            $totalsByGuess[$evaluation->guess->id->toRfc4122()] = $evaluation->totalPoints;
+        }
+
+        self::assertSame(10, $totalsByGuess[AppFixtures::FIXTURE_GUESS_ID]);
+        self::assertSame(3, $totalsByGuess[AppFixtures::SUBSET_GUESS_ID]);
     }
 }

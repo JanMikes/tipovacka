@@ -12,6 +12,7 @@ use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\GuessScorer;
 use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
@@ -146,6 +147,24 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000010';
     public const string SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000011';
     public const string SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000012';
+
+    /**
+     * S06: SUBSET_COMPETITION is the feature-on example — scorer_hit + both
+     * period rules enabled at default points (overtime_exact stays disabled;
+     * tests enable it via UpdateCompetitionRuleConfiguration when needed).
+     */
+    public const string SUBSET_COMPETITION_RULE_SCORER_HIT_ID = '019fffff-0000-7000-8000-000000000013';
+    public const string SUBSET_COMPETITION_RULE_PERIOD_EXACT_ID = '019fffff-0000-7000-8000-000000000014';
+    public const string SUBSET_COMPETITION_RULE_PERIOD_TENDENCY_ID = '019fffff-0000-7000-8000-000000000015';
+
+    /**
+     * S06: SECOND_VERIFIED_USER's guess in SUBSET_COMPETITION on MATCH_FINISHED
+     * (2:1, periods [[1,0],[1,1]]) with one scorer tip (PLAYER_HOME_SCORER_ONE —
+     * a correct scorer). Seeded WITHOUT an evaluation: evaluation tests trigger
+     * it themselves (score correction / recalculation).
+     */
+    public const string SUBSET_GUESS_ID = '019eeeee-0000-7000-8000-000000000005';
+    public const string SUBSET_GUESS_SCORER_ID = '019eeeee-0000-7000-8000-000000000006';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -573,6 +592,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             [self::SUBSET_COMPETITION_RULE_CORRECT_OUTCOME_ID, $subsetCompetition, 'correct_outcome', 3],
             [self::SUBSET_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $subsetCompetition, 'correct_home_goals', 1],
             [self::SUBSET_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $subsetCompetition, 'correct_away_goals', 1],
+            // S06 feature-on example: optional rules enabled for SUBSET only.
+            [self::SUBSET_COMPETITION_RULE_SCORER_HIT_ID, $subsetCompetition, 'scorer_hit', 2],
+            [self::SUBSET_COMPETITION_RULE_PERIOD_EXACT_ID, $subsetCompetition, 'period_exact', 5],
+            [self::SUBSET_COMPETITION_RULE_PERIOD_TENDENCY_ID, $subsetCompetition, 'period_tendency', 2],
         ] as $row) {
             [$id, $competition, $identifier, $points] = $row;
             $configuration = new CompetitionRuleConfiguration(
@@ -585,6 +608,29 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             );
             $manager->persist($configuration);
         }
+
+        // S06: guess with period + scorer tips in the feature-on SUBSET_COMPETITION
+        // (MATCH_FINISHED is explicitly selected there). No evaluation seeded —
+        // tests trigger evaluation themselves.
+        $subsetGuess = new Guess(
+            id: Uuid::fromString(self::SUBSET_GUESS_ID),
+            user: $secondVerified,
+            sportMatch: $finishedMatch,
+            competition: $subsetCompetition,
+            homeScore: 2,
+            awayScore: 1,
+            submittedAt: $now,
+            periodScores: PeriodScores::fromArray([[1, 0], [1, 1]]),
+        );
+        $subsetGuess->addScorer(new GuessScorer(
+            id: Uuid::fromString(self::SUBSET_GUESS_SCORER_ID),
+            guess: $subsetGuess,
+            player: $homeScorerOne,
+            side: MatchSide::Home,
+            createdAt: $now,
+        ));
+        $subsetGuess->popEvents();
+        $manager->persist($subsetGuess);
 
         // Stage 7: seeded evaluation for admin's guess (3:0 vs actual 2:1).
         // Expected: correct_outcome hits (both home wins) → 3 points total.
