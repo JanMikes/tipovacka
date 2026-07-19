@@ -10,9 +10,26 @@ use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 
 abstract class IntegrationTestCase extends KernelTestCase
 {
+    protected function eventBus(): MessageBusInterface
+    {
+        /* @var MessageBusInterface */
+        return self::getContainer()->get('test.event.bus');
+    }
+
+    /**
+     * The in-memory `async` transport (emails / notifier messages land here in
+     * the test env instead of being sent). Inspect via `->getSent()`.
+     */
+    protected function messengerAsyncTransport(): InMemoryTransport
+    {
+        /* @var InMemoryTransport */
+        return self::getContainer()->get('test.messenger.transport.async');
+    }
+
     protected function entityManager(): EntityManagerInterface
     {
         /* @var EntityManagerInterface */

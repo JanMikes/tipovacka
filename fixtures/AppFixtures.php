@@ -17,6 +17,8 @@ use App\Entity\GuessScorer;
 use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
+use App\Entity\Notification;
+use App\Entity\NotificationPreference;
 use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -27,6 +29,7 @@ use App\Enum\CompetitionMonetization;
 use App\Enum\MatchEventType;
 use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
+use App\Enum\NotificationType;
 use App\Enum\UserRole;
 use App\Value\PeriodScores;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -223,6 +226,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
      */
     public const string SUBSET_GUESS_ID = '019eeeee-0000-7000-8000-000000000005';
     public const string SUBSET_GUESS_SCORER_ID = '019eeeee-0000-7000-8000-000000000006';
+
+    /**
+     * Notifications + a preference override for VERIFIED_USER (one unread, one
+     * read). Own `019a0000-…` block, clear of the predictable identity pool.
+     */
+    public const string NOTIFICATION_UNREAD_ID = '019a0000-0000-7000-8000-0000000000f1';
+    public const string NOTIFICATION_READ_ID = '019a0000-0000-7000-8000-0000000000f2';
+    public const string NOTIFICATION_PREFERENCE_ID = '019a0000-0000-7000-8000-0000000000f3';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -848,6 +859,42 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             points: 3,
         ));
         $manager->persist($evaluation);
+
+        // Stage 11: notification feed for VERIFIED_USER (one unread, one read)
+        // plus a preference override (match_evaluated: in-app on, email off).
+        $unreadNotification = new Notification(
+            id: Uuid::fromString(self::NOTIFICATION_UNREAD_ID),
+            user: $verified,
+            type: NotificationType::MatchAdded,
+            title: 'Nový zápas: Bayern – Real Madrid',
+            body: sprintf('Do soutěže %s přibyl zápas Bayern – Real Madrid (22. 6. 2025 21:00).', self::VERIFIED_COMPETITION_NAME),
+            competition: $verifiedCompetition,
+            createdAt: $now->modify('-2 hours'),
+            url: '/portal/souteze/'.self::VERIFIED_COMPETITION_ID.'/zebricek',
+        );
+        $manager->persist($unreadNotification);
+
+        $readNotification = new Notification(
+            id: Uuid::fromString(self::NOTIFICATION_READ_ID),
+            user: $verified,
+            type: NotificationType::MatchEvaluated,
+            title: 'Vyhodnoceno: Sparta 2:1 Slavia',
+            body: 'Sparta 2:1 Slavia: získáváte 3 b., jste 2. v soutěži '.self::VERIFIED_COMPETITION_NAME.'.',
+            competition: $verifiedCompetition,
+            createdAt: $now->modify('-1 day'),
+            url: '/portal/souteze/'.self::VERIFIED_COMPETITION_ID.'/zebricek',
+        );
+        $readNotification->markRead($now->modify('-20 hours'));
+        $manager->persist($readNotification);
+
+        $manager->persist(new NotificationPreference(
+            id: Uuid::fromString(self::NOTIFICATION_PREFERENCE_ID),
+            user: $verified,
+            type: NotificationType::MatchEvaluated,
+            inApp: true,
+            email: false,
+            createdAt: $now,
+        ));
 
         $manager->flush();
     }

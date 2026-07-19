@@ -8,6 +8,7 @@ use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\SportMatch;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\SportMatchState;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,6 +62,30 @@ class CompetitionMatchProvider implements ResetInterface
         $result = $qb->getQuery()->getResult();
 
         return $result;
+    }
+
+    /**
+     * Whether the competition still has an INCLUDED match that is not settled —
+     * still Scheduled, Live or Postponed, i.e. a result that may yet move the
+     * standings. Finished (evaluated synchronously on finish) and Cancelled (no
+     * result) count as settled. The `competition_ended` gate uses this so final
+     * standings never fire while a match is still to be played.
+     */
+    public function hasUnsettledMatches(Competition $competition): bool
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(SportMatch::class, 'm')
+            ->andWhere('m.state IN (:cmp_unsettled_states)')
+            ->setParameter('cmp_unsettled_states', [
+                SportMatchState::Scheduled,
+                SportMatchState::Live,
+                SportMatchState::Postponed,
+            ]);
+
+        $this->applyCompetitionMatchFilter($qb, 'm', $competition);
+
+        return (int) $qb->getQuery()->getSingleScalarResult() > 0;
     }
 
     public function includes(Competition $competition, SportMatch $sportMatch): bool

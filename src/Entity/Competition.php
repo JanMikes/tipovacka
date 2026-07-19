@@ -122,6 +122,14 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column(options: ['default' => false])]
     public private(set) bool $premiumAllowTipChanges = false;
 
+    /**
+     * When the „competition ended" notifications were sent to members (S11).
+     * A one-shot guard so re-firing {@see \App\Event\MatchSourceCompleted}
+     * (e.g. a source reopened + re-completed) never re-notifies the group.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $endedNotifiedAt = null;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -385,6 +393,36 @@ class Competition implements EntityWithEvents, SoftDeletable
             ownerId: $this->owner->id,
             occurredOn: $now,
         ));
+    }
+
+    /**
+     * S11 one-shot guard: stamps that „competition ended" notifications were
+     * delivered. Idempotent; records NO event — it is a delivery marker, not a
+     * domain fact.
+     */
+    public function markEndedNotified(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->endedNotifiedAt) {
+            return;
+        }
+
+        $this->endedNotifiedAt = $now;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Clears the „competition ended" guard so a corrected final standing can be
+     * re-sent — used when the match source is reopened (more matches to play).
+     * Idempotent; records NO event (a delivery marker, not a domain fact).
+     */
+    public function clearEndedNotified(\DateTimeImmutable $now): void
+    {
+        if (null === $this->endedNotifiedAt) {
+            return;
+        }
+
+        $this->endedNotifiedAt = null;
+        $this->updatedAt = $now;
     }
 
     public function recordMatchSelectionChanged(User $editor, \DateTimeImmutable $now): void

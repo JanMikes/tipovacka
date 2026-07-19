@@ -1,0 +1,47 @@
+{#
+    Notification preference matrix (Live Component). One row per NotificationType
+    with two instant-save toggles (V aplikaci / E-mail). `this.toggle` flips one
+    channel and re-renders.
+#}
+<div {{ attributes.defaults({ class: 'space-y-2' }) }}>
+    <div class="hidden items-center gap-4 px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40 sm:flex">
+        <span class="flex-1">Typ oznámení</span>
+        <span class="w-20 text-center">V aplikaci</span>
+        <span class="w-20 text-center">E-mail</span>
+    </div>
+
+    {% for row in this.rows %}
+        <div class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 text-sm font-bold text-white">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] {{ row.type.tone }}">
+                        <twig:ux:icon name="lucide:{{ row.type.icon }}" class="h-4 w-4" />
+                    </span>
+                    {{ row.type.label }}
+                </div>
+                <p class="mt-1 text-[13px] text-white/50">{{ row.type.description }}</p>
+            </div>
+
+            <div class="flex items-center gap-8 sm:gap-0">
+                {% for channel in [{ key: 'inApp', on: row.inApp, label: 'V aplikaci' }, { key: 'email', on: row.email, label: 'E-mail' }] %}
+                    <div class="flex w-20 flex-col items-center gap-1">
+                        <span class="text-[11px] text-white/40 sm:hidden">{{ channel.label }}</span>
+                        <button
+                            type="button"
+                            data-action="live#action:prevent"
+                            data-live-action-param="toggle"
+                            data-live-type-param="{{ row.type.value }}"
+                            data-live-channel-param="{{ channel.key }}"
+                            role="switch"
+                            aria-checked="{{ channel.on ? 'true' : 'false' }}"
+                            aria-label="{{ channel.label }} — {{ row.type.label }}"
+                            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors {{ channel.on ? 'bg-accent-500' : 'bg-white/15' }}"
+                        >
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform {{ channel.on ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>

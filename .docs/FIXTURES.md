@@ -319,3 +319,27 @@ VERIFIED and PUBLIC competitions keep every optional rule off, so they double as
 `FIXTURE_TIE_RESOLUTION_ID` = `019eeeee-0000-7000-8000-000000000004` is a **reserved
 constant only** — `AppFixtures::load()` does not persist any `LeaderboardTieResolution`
 row. Use it as a stable ID when a test needs to create one.
+
+## Notifications (`Notification`, table `notifications`) — S11
+
+Two rows for **VERIFIED_USER**, both tied to VERIFIED_COMPETITION (own `019a0000-…`
+block, clear of the identity pool). Content is pre-rendered Czech (title/body/url).
+
+| Constant                 | ID                                     | Type            | State  | createdAt   |
+|--------------------------|----------------------------------------|-----------------|--------|-------------|
+| `NOTIFICATION_UNREAD_ID` | `019a0000-0000-7000-8000-0000000000f1` | MatchAdded      | unread | now − 2 h   |
+| `NOTIFICATION_READ_ID`   | `019a0000-0000-7000-8000-0000000000f2` | MatchEvaluated  | read   | now − 1 day |
+
+So VERIFIED_USER always has **exactly one unread** notification — bell badge / center
+mark-read flows assert on that. Both carry a `url` pointing at the competition leaderboard.
+
+## Notification preferences (`NotificationPreference`, table `notification_preferences`)
+
+| Constant                     | ID                                     | User          | Type           | inApp | email |
+|------------------------------|----------------------------------------|---------------|----------------|-------|-------|
+| `NOTIFICATION_PREFERENCE_ID` | `019a0000-0000-7000-8000-0000000000f3` | VERIFIED_USER | MatchEvaluated | true  | false |
+
+Only ONE explicit override is seeded; every other type falls back to
+`NotificationType::defaultInApp()` / `defaultEmail()`. In-app defaults ON for all types;
+email defaults ON only for guess reminder, competition ended, the three premium problems,
+and boost refunded.

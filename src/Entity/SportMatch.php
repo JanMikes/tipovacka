@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
 use App\Enum\SportMatchState;
+use App\Event\GuessesEvaluatedForMatch;
 use App\Event\SportMatchCancelled;
 use App\Event\SportMatchCreated;
 use App\Event\SportMatchDeleted;
@@ -329,6 +330,23 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             matchSourceId: $this->matchSource->id,
             homeScore: $homeScore,
             awayScore: $awayScore,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Records that this match's guesses were evaluated (S11 `match_evaluated`
+     * fan-out). Bumps `updatedAt` so the row is dirtied and the recorded event
+     * is collected by the domain-event subscriber on flush, then dispatched
+     * (isolated, post-commit) once the evaluations are committed. Call only
+     * after the evaluation batch produced at least one evaluation.
+     */
+    public function recordGuessesEvaluated(\DateTimeImmutable $now): void
+    {
+        $this->updatedAt = $now;
+
+        $this->recordThat(new GuessesEvaluatedForMatch(
+            sportMatchId: $this->id,
             occurredOn: $now,
         ));
     }

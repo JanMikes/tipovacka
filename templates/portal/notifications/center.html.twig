@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Oznámení — {{ brand_name }}{% endblock %}
+
+{% block body %}
+    <div class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+        <twig:Breadcrumbs :items="[{ label: 'Nástěnka', path: path('portal_dashboard') }, { label: 'Oznámení' }]" />
+
+        <header class="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
+            <h1 class="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-white">
+                <twig:ux:icon name="lucide:bell" class="h-6 w-6 text-accent-300" />
+                Oznámení
+            </h1>
+
+            {% if tab == 'feed' and unreadCount > 0 %}
+                <form method="post" action="{{ path('portal_notifications_read_all') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('notifications_read_all') }}">
+                    <button type="submit" class="btn btn-ghost btn-sm">
+                        <twig:ux:icon name="lucide:check-check" class="h-4 w-4" />
+                        Označit vše jako přečtené
+                    </button>
+                </form>
+            {% endif %}
+        </header>
+
+        {# ── Tabs ── #}
+        <div class="mb-6 flex gap-1 border-b border-white/10">
+            <a href="{{ path('portal_notifications') }}"
+               class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold {{ tab == 'feed' ? 'border-accent-400 text-white' : 'border-transparent text-white/50 hover:text-white/80' }}">
+                <twig:ux:icon name="lucide:bell" class="h-4 w-4" />
+                Feed
+                {% if unreadCount > 0 %}
+                    <span class="rounded-full bg-accent-500/20 px-1.5 py-0.5 text-[11px] font-bold text-accent-300">{{ unreadCount }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ path('portal_notifications', { tab: 'nastaveni' }) }}"
+               class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold {{ tab == 'nastaveni' ? 'border-accent-400 text-white' : 'border-transparent text-white/50 hover:text-white/80' }}">
+                <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
+                Nastavení oznámení
+            </a>
+        </div>
+
+        {% if tab == 'nastaveni' %}
+            <p class="mb-4 text-sm text-white/50">Vyberte, o čem chcete být informováni v aplikaci a e-mailem.</p>
+            <twig:Notification:Preferences />
+        {% else %}
+            {% if notifications is empty %}
+                <div class="card-glass flex flex-col items-center gap-3 px-6 py-16 text-center">
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/40">
+                        <twig:ux:icon name="lucide:bell" class="h-6 w-6" />
+                    </span>
+                    <p class="text-sm text-white/60">Zatím nemáte žádná oznámení.</p>
+                </div>
+            {% else %}
+                <ul class="space-y-2">
+                    {% for note in notifications %}
+                        <li>
+                            <a href="{{ path('portal_notification_read', { id: note.id.toRfc4122 }) }}"
+                               class="card flex items-start gap-3 p-4 transition hover:border-white/20 {{ note.isRead ? '' : 'border-accent-500/30 bg-accent-500/[0.06]' }}">
+                                <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] {{ note.type.tone }}">
+                                    <twig:ux:icon name="lucide:{{ note.type.icon }}" class="h-[18px] w-[18px]" />
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-bold text-white">{{ note.title }}</span>
+                                        {% if not note.isRead %}
+                                            <span class="h-2 w-2 shrink-0 rounded-full bg-accent-400" aria-hidden="true"></span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="mt-0.5 text-[13px] text-white/60">{{ note.body }}</p>
+                                    <span class="mt-1 block text-[11px] font-medium text-white/35">{{ note.createdAt|czech_ago }}</span>
+                                </div>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if page > 1 or hasNextPage %}
+                    <nav class="mt-6 flex items-center justify-between">
+                        {% if page > 1 %}
+                            <a href="{{ path('portal_notifications', { page: page - 1 }) }}" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
+                                Novější
+                            </a>
+                        {% else %}
+                            <span></span>
+                        {% endif %}
+
+                        {% if hasNextPage %}
+                            <a href="{{ path('portal_notifications', { page: page + 1 }) }}" class="btn btn-ghost btn-sm">
+                                Starší
+                                <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+                            </a>
+                        {% else %}
+                            <span></span>
+                        {% endif %}
+                    </nav>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}

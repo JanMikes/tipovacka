@@ -108,4 +108,31 @@ final class GuessEvaluationRepository
             $this->entityManager->remove($evaluation);
         }
     }
+
+    /**
+     * Per-(competition, user) points scored on a single match — the input for the
+     * `match_evaluated` notification (points from THIS match + which competitions
+     * to look up rank in). Only active (non-voided) guesses count.
+     *
+     * @return list<array{competitionId: string, userId: string, points: int}>
+     */
+    public function pointsForMatchByCompetition(Uuid $sportMatchId): array
+    {
+        /** @var list<array{competitionId: string, userId: string, points: int}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select(
+                'IDENTITY(g.competition) AS competitionId',
+                'IDENTITY(g.user) AS userId',
+                'e.totalPoints AS points',
+            )
+            ->from(GuessEvaluation::class, 'e')
+            ->innerJoin('e.guess', 'g')
+            ->where('g.sportMatch = :sportMatchId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->getQuery()
+            ->getArrayResult();
+
+        return $rows;
+    }
 }

@@ -124,6 +124,30 @@ class CompetitionRepository
     }
 
     /**
+     * Every non-deleted competition — the reminder sweep's candidate set (the
+     * handler then keeps only those with active members and open upcoming
+     * matches). Eager-loads source + owner so downstream services avoid N+1.
+     *
+     * @return list<Competition>
+     */
+    public function findAllActive(): array
+    {
+        /** @var list<Competition> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('g', 't', 'o')
+            ->from(Competition::class, 'g')
+            ->innerJoin('g.matchSource', 't')
+            ->innerJoin('g.owner', 'o')
+            ->where('g.deletedAt IS NULL')
+            ->orderBy('g.createdAt', 'ASC')
+            ->addOrderBy('g.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
      * @return Competition[]
      */
     public function findByMatchSource(Uuid $matchSourceId): array

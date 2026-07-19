@@ -33,6 +33,7 @@ final readonly class SportMatchFinishedHandler
 
         $guesses = $this->guessRepository->findActiveByMatch($event->sportMatchId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $evaluatedAny = false;
 
         foreach ($guesses as $guess) {
             $evaluation = $this->evaluator->evaluate($guess, $match, $now);
@@ -42,6 +43,14 @@ final readonly class SportMatchFinishedHandler
             }
 
             $this->evaluationRepository->save($evaluation);
+            $evaluatedAny = true;
+        }
+
+        // Fan out `match_evaluated` notifications only once evaluations are
+        // committed — recording on the match defers dispatch (post-commit,
+        // isolated) via the domain-event middleware. See {@see \App\Event\NotifyMatchEvaluatedHandler}.
+        if ($evaluatedAny) {
+            $match->recordGuessesEvaluated($now);
         }
     }
 }

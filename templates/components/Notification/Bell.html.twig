@@ -1,0 +1,73 @@
+{#
+    Nav notification bell (Live Component). Unread badge + dropdown with the
+    latest 5. Polls every 60 s ONLY while open. `this.toggle` opens/closes; a
+    full-screen transparent backdrop closes it on outside click.
+#}
+<div {{ attributes.defaults({ class: 'relative' }) }}{% if this.open %} data-poll="delay(60000)|$render"{% endif %}>
+    <button
+        type="button"
+        class="icon-btn relative"
+        data-action="live#action:prevent"
+        data-live-action-param="toggle"
+        aria-label="Oznámení"
+        aria-expanded="{{ this.open ? 'true' : 'false' }}"
+    >
+        <twig:ux:icon name="lucide:bell" class="h-[18px] w-[18px]" />
+        {% if this.unreadCount > 0 %}
+            <span class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 text-[10px] font-bold leading-none text-white">
+                {{ this.unreadCount > 9 ? '9+' : this.unreadCount }}
+            </span>
+        {% endif %}
+    </button>
+
+    {% if this.open %}
+        <button
+            type="button"
+            class="fixed inset-0 z-40 cursor-default"
+            data-action="live#action:prevent"
+            data-live-action-param="toggle"
+            tabindex="-1"
+            aria-label="Zavřít oznámení"
+        ></button>
+
+        <div class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-white/10 bg-surface-2 shadow-xl">
+            <div class="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <span class="text-sm font-bold text-white">Oznámení</span>
+                {% if this.unreadCount > 0 %}
+                    <span class="text-[11px] font-medium text-white/50">{{ this.unreadCount }} {{ this.unreadCount|czech_unread }}</span>
+                {% endif %}
+            </div>
+
+            {% if this.latest is empty %}
+                <p class="px-4 py-6 text-center text-sm text-white/50">Zatím žádná oznámení.</p>
+            {% else %}
+                <ul class="max-h-96 divide-y divide-white/5 overflow-y-auto">
+                    {% for note in this.latest %}
+                        <li>
+                            <a
+                                href="{{ path('portal_notification_read', { id: note.id.toRfc4122 }) }}"
+                                class="flex items-start gap-3 px-4 py-3 hover:bg-white/5 {{ note.isRead ? '' : 'bg-accent-500/[0.06]' }}"
+                            >
+                                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] {{ note.type.tone }}">
+                                    <twig:ux:icon name="lucide:{{ note.type.icon }}" class="h-4 w-4" />
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate text-[13px] font-bold text-white">{{ note.title }}</span>
+                                    <span class="mt-0.5 block truncate text-[12px] text-white/55">{{ note.body }}</span>
+                                    <span class="mt-0.5 block text-[11px] font-medium text-white/35">{{ note.createdAt|czech_ago }}</span>
+                                </span>
+                                {% if not note.isRead %}
+                                    <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent-400" aria-hidden="true"></span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <a href="{{ path('portal_notifications') }}" class="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-accent-300 hover:bg-white/5">
+                Zobrazit vše
+            </a>
+        </div>
+    {% endif %}
+</div>
