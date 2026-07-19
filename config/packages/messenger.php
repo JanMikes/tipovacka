@@ -53,6 +53,7 @@ return App::config([
                 'Symfony\\Component\\Notifier\\Message\\ChatMessage' => 'async',
                 'Symfony\\Component\\Notifier\\Message\\SmsMessage' => 'async',
                 'App\\Command\\RecalculateCompetitionPoints\\RecalculateCompetitionPointsCommand' => 'async',
+                'App\\Command\\SettleUncoveredPremiumCharges\\SettleUncoveredPremiumChargesCommand' => 'async',
             ],
         ],
     ],

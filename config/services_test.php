@@ -38,6 +38,17 @@ return App::config([
         'App\\Tests\\Support\\FakePaymentGateway' => [
             'tags' => [['name' => 'kernel.reset', 'method' => 'reset']],
         ],
+        // Spy on the recording-only S10 premium events so integration tests can
+        // assert they were dispatched through the event bus (they have no prod handler).
+        'App\\Tests\\Support\\RecordedDomainEvents' => [
+            'tags' => [
+                ['name' => 'kernel.reset', 'method' => 'reset'],
+                ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumConfirmed', 'method' => 'record'],
+                ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumDowngraded', 'method' => 'record'],
+                ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumChargeUncovered', 'method' => 'record'],
+                ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumBalanceLow', 'method' => 'record'],
+            ],
+        ],
         'App\\Service\\Payment\\PaymentGateway' => [
             'alias' => 'App\\Tests\\Support\\FakePaymentGateway',
         ],

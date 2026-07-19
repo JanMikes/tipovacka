@@ -10,6 +10,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
 use App\Event\CompetitionCreated;
 use App\Event\CompetitionDeleted;
@@ -21,6 +22,8 @@ use App\Event\CompetitionShareableLinkRevoked;
 use App\Event\CompetitionTipsLocked;
 use App\Event\CompetitionTipsUnlocked;
 use App\Event\CompetitionUpdated;
+use App\Event\PremiumConfirmed;
+use App\Event\PremiumDowngraded;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -383,5 +386,153 @@ final class CompetitionEntityTest extends TestCase
 
         self::assertSame($firstDelete, $competition->deletedAt);
         self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testFreshCompetitionMonetizationDefaultsToNone(): void
+    {
+        $competition = $this->makeCompetition();
+
+        self::assertSame(CompetitionMonetization::None, $competition->monetization);
+        self::assertNull($competition->premiumReconciledAt);
+        self::assertFalse($competition->premiumShowDistribution);
+        self::assertFalse($competition->premiumShowOthersTips);
+        self::assertFalse($competition->premiumAllowTipChanges);
+    }
+
+    public function testEnablePremiumSetsPremiumAndResetsReconciliation(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        // A prior reconciliation stamp must be cleared so the competition is
+        // reconciled again at its next start.
+        $competition->markPremiumReconciled($this->now);
+        $competition->popEvents();
+        self::assertNotNull($competition->premiumReconciledAt);
+
+        $later = $this->now->modify('+1 hour');
+        $competition->enablePremium($later);
+
+        self::assertSame(CompetitionMonetization::Premium, $competition->monetization);
+        self::assertNull($competition->premiumReconciledAt);
+        self::assertSame($later, $competition->updatedAt);
+        // enablePremium is a state flip, not a domain fact — no event.
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testSwitchToBoostsLeavesReconciliationStampUntouched(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->enablePremium($this->now);
+        $competition->markPremiumReconciled($this->now);
+        $competition->popEvents();
+        $stamp = $competition->premiumReconciledAt;
+        self::assertNotNull($stamp);
+
+        $competition->switchToBoosts($this->now->modify('+1 day'));
+
+        self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
+        self::assertSame($stamp, $competition->premiumReconciledAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testMarkPremiumReconciledStampsAndRecordsConfirmed(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->enablePremium($this->now);
+        $competition->popEvents();
+
+        $competition->markPremiumReconciled($this->now);
+
+        self::assertSame(CompetitionMonetization::Premium, $competition->monetization);
+        self::assertSame($this->now, $competition->premiumReconciledAt);
+
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(PremiumConfirmed::class, $events[0]);
+        self::assertSame($competition->id, $events[0]->competitionId);
+        self::assertSame($competition->owner->id, $events[0]->ownerId);
+    }
+
+    public function testMarkPremiumReconciledIsIdempotent(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->markPremiumReconciled($this->now);
+        $competition->popEvents();
+
+        $competition->markPremiumReconciled($this->now->modify('+1 day'));
+
+        self::assertSame($this->now, $competition->premiumReconciledAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testDowngradeToBoostsSwitchesStampsAndRecordsDowngraded(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->enablePremium($this->now);
+        $competition->popEvents();
+
+        $competition->downgradeToBoosts($this->now);
+
+        self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
+        self::assertSame($this->now, $competition->premiumReconciledAt);
+
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(PremiumDowngraded::class, $events[0]);
+        self::assertSame($competition->id, $events[0]->competitionId);
+        self::assertSame($competition->owner->id, $events[0]->ownerId);
+    }
+
+    public function testDowngradeToBoostsIsIdempotent(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->markPremiumReconciled($this->now);
+        $competition->popEvents();
+
+        // Already reconciled ⇒ a downgrade attempt must not re-fire or re-flip.
+        $competition->downgradeToBoosts($this->now->modify('+1 day'));
+
+        self::assertSame(CompetitionMonetization::None, $competition->monetization);
+        self::assertSame($this->now, $competition->premiumReconciledAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testSetPremiumFeaturesUpdatesTogglesAndOffset(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        $later = $this->now->modify('+2 hours');
+        $competition->setPremiumFeatures(
+            showDistribution: true,
+            showOthersTips: true,
+            allowTipChanges: true,
+            tipChangeOffsetMinutes: 90,
+            now: $later,
+        );
+
+        self::assertTrue($competition->premiumShowDistribution);
+        self::assertTrue($competition->premiumShowOthersTips);
+        self::assertTrue($competition->premiumAllowTipChanges);
+        self::assertSame(90, $competition->tipChangeOffsetMinutes);
+        self::assertSame($later, $competition->updatedAt);
+        // Tuning knobs — no domain event.
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testSetPremiumFeaturesRejectsNegativeOffset(): void
+    {
+        $competition = $this->makeCompetition();
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $competition->setPremiumFeatures(
+            showDistribution: false,
+            showOthersTips: false,
+            allowTipChanges: false,
+            tipChangeOffsetMinutes: -1,
+            now: $this->now,
+        );
     }
 }

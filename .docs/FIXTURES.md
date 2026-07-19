@@ -85,10 +85,23 @@ curated one.)
 | `SUBSET_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000033` | `Vybrané zápasy party` | PUBLIC_SOURCE | SECOND_VERIFIED_USER | none (`null`) | `SUBSET_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000319bbbbb0000700b3` |
 | `GLOBAL_COMPETITION_*`      | `019bbbbb-0000-7000-8000-000000000044` | `Globální tipovačka LM`     | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
 | `FREE_GLOBAL_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000045` | `Globální tipovačka zdarma` | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
+| `PREMIUM_COMPETITION_*`     | `019bbbbb-0000-7000-8000-000000000055` | `Prémiová firemní liga`     | PUBLIC_SOURCE | ADMIN | none (`null`) | `PREMIUM_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000519bbbbb0000700b5` |
 
 All competitions: `tipsLockedAt = null` (never manually locked),
 `tipChangeOffsetMinutes = 60` (default) and `monetization = None` (S08 entity
-default — the create-competition wizard sets `premium|boosts`, fixtures keep None).
+default — the create-competition wizard sets `premium|boosts`, fixtures keep None)
+— **except `PREMIUM_COMPETITION`** (see S10 below).
+
+**S10 premium competition** (`PREMIUM_COMPETITION`, `monetization = Premium`,
+`isGlobal = false`, mode `all` over the PUBLIC curated source, owned by ADMIN — the
+paying manager): its earliest included kickoff is MATCH_FINISHED (2025-06-10, in the
+past vs the fixed clock), so the reconcile sweep treats it as **started**. It has the
+four default rule configs (`PREMIUM_COMPETITION_RULE_*` = `019fffff-…-16…19`) and a
+shareable link (tests add joiners with it). SECOND_VERIFIED_USER is a non-owner member
+with an already-**Charged** `CompetitionPremiumCharge` (`PREMIUM_CHARGE_ID` =
+`019bbbbb-0000-7000-8000-0000000000d1`, amount 10). **No wallet/ledger is seeded** for
+the charge (that would break the whole-table credit asserts, see below) — the Charged
+row just represents the already-paid state; tests grant the owner credits in-test.
 
 **S09 global competitions** (`isGlobal = true`, mode `all`, owned by ADMIN, both
 over the PUBLIC curated source; the ADMIN owner is the sole member of each ⇒ fee
@@ -147,11 +160,15 @@ Practical consequences for tests:
 | `SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa04` | SUBSET_COMPETITION   | SECOND_VERIFIED_USER |
 | `GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID`      | `019bbbbb-0000-7000-8000-00000000aa05` | GLOBAL_COMPETITION      | ADMIN |
 | `FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID` | `019bbbbb-0000-7000-8000-00000000aa06` | FREE_GLOBAL_COMPETITION | ADMIN |
+| `PREMIUM_COMPETITION_OWNER_MEMBERSHIP_ID`     | `019bbbbb-0000-7000-8000-00000000aa07` | PREMIUM_COMPETITION     | ADMIN |
+| `PREMIUM_COMPETITION_MEMBER_MEMBERSHIP_ID`    | `019bbbbb-0000-7000-8000-00000000aa08` | PREMIUM_COMPETITION     | SECOND_VERIFIED_USER |
 
 Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION,
-ADMIN is NOT a member of VERIFIED_COMPETITION, SECOND_VERIFIED_USER's only membership
-is SUBSET_COMPETITION (which they own). Neither VERIFIED_USER nor SECOND_VERIFIED_USER
-is a member of the two global competitions (ADMIN owns both).
+ADMIN is NOT a member of VERIFIED_COMPETITION. Neither VERIFIED_USER nor
+SECOND_VERIFIED_USER is a member of the two global competitions (ADMIN owns both).
+SECOND_VERIFIED_USER owns SUBSET_COMPETITION and (since S10) is a non-owner member of
+PREMIUM_COMPETITION; VERIFIED_USER is a natural joiner for PREMIUM_COMPETITION (via its
+shareable link) in premium charge tests.
 
 ## Credit wallets — none seeded
 
@@ -161,6 +178,26 @@ the WHOLE `credit_transactions` table with `getOneOrNullResult()`, so any seeded
 ledger row would make them throw `NonUniqueResult`. Paid-global-join tests therefore
 grant a balance in-test (dispatch `AdjustUserCreditsCommand`), and use
 SECOND_VERIFIED_USER (no wallet, balance 0) as the "insufficient credits" subject.
+
+The single seeded `CompetitionPremiumCharge` (`PREMIUM_CHARGE_ID`, status Charged) is
+deliberately **not** backed by a wallet/ledger row for the same reason — it has no
+FK to `credit_wallets`/`credit_transactions`, so it never trips the whole-table credit
+asserts. It stands for an already-charged member; premium tests that need real
+balances grant the owner (ADMIN) credits in-test.
+
+## Premium charges (`CompetitionPremiumCharge`, table `competition_premium_charges`)
+
+| Constant           | ID                                     | Competition         | Member               | Status  | Amount |
+|--------------------|----------------------------------------|---------------------|----------------------|---------|--------|
+| `PREMIUM_CHARGE_ID`| `019bbbbb-0000-7000-8000-0000000000d1` | PREMIUM_COMPETITION | SECOND_VERIFIED_USER | Charged | 10     |
+
+## Recorded domain events (test spy)
+
+`App\Tests\Support\RecordedDomainEvents` is a test-only event.bus handler (registered
+in `config/services_test.php`) that captures the recording-only S10 premium events
+(`PremiumConfirmed`, `PremiumDowngraded`, `PremiumChargeUncovered`, `PremiumBalanceLow`).
+Integration tests get it via `IntegrationTestCase::recordedDomainEvents()` and assert
+with `->ofType(EventClass::class)`; call `->reset()` between phases of a test.
 
 ## Competition invitation (`CompetitionInvitation`)
 

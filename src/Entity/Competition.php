@@ -19,6 +19,8 @@ use App\Event\CompetitionShareableLinkRevoked;
 use App\Event\CompetitionTipsLocked;
 use App\Event\CompetitionTipsUnlocked;
 use App\Event\CompetitionUpdated;
+use App\Event\PremiumConfirmed;
+use App\Event\PremiumDowngraded;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -98,6 +100,27 @@ class Competition implements EntityWithEvents, SoftDeletable
      */
     #[ORM\Column(options: ['default' => 0])]
     public private(set) int $entryFeeCredits = 0;
+
+    /**
+     * When the premium per-player charges were reconciled at competition start
+     * (all covered ⇒ confirmed; any uncovered ⇒ refunded + downgraded). Null
+     * until reconciliation runs. Guards {@see \App\Command\ReconcilePremiumCompetitions}
+     * against re-processing and stops a late uncovered join from re-downgrading.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $premiumReconciledAt = null;
+
+    /** Premium toggle: show the anonymous tip-distribution bar to everyone. */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $premiumShowDistribution = false;
+
+    /** Premium toggle: show concrete member tips to everyone (superset of distribution). */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $premiumShowOthersTips = false;
+
+    /** Premium toggle: let everyone change tips (until the tip-change offset). */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $premiumAllowTipChanges = false;
 
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
@@ -273,6 +296,95 @@ class Competition implements EntityWithEvents, SoftDeletable
 
         $this->tipChangeOffsetMinutes = $minutes;
         $this->updatedAt = $now;
+    }
+
+    /**
+     * Premium settings (manager, only meaningful when monetization=premium):
+     * the three visibility/change toggles that feed
+     * {@see \App\Service\Competition\CompetitionEntitlements}, plus the
+     * „Měnit tip" offset. Tuning knobs — no domain event.
+     */
+    public function setPremiumFeatures(
+        bool $showDistribution,
+        bool $showOthersTips,
+        bool $allowTipChanges,
+        int $tipChangeOffsetMinutes,
+        \DateTimeImmutable $now,
+    ): void {
+        if ($tipChangeOffsetMinutes < 0) {
+            throw new \InvalidArgumentException('Tip change offset must not be negative.');
+        }
+
+        $this->premiumShowDistribution = $showDistribution;
+        $this->premiumShowOthersTips = $showOthersTips;
+        $this->premiumAllowTipChanges = $allowTipChanges;
+        $this->tipChangeOffsetMinutes = $tipChangeOffsetMinutes;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Turn premium ON (re-enable anytime). Resets the reconciliation stamp so
+     * the competition is reconciled again at its (next) start. The per-member
+     * charges + any boost refunds are handled by
+     * {@see \App\Command\EnablePremium\EnablePremiumHandler}.
+     */
+    public function enablePremium(\DateTimeImmutable $now): void
+    {
+        $this->monetization = CompetitionMonetization::Premium;
+        $this->premiumReconciledAt = null;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Manager switches the competition to boosts (refunds handled by the
+     * caller). Not a reconciliation — leaves {@see $premiumReconciledAt} alone.
+     */
+    public function switchToBoosts(\DateTimeImmutable $now): void
+    {
+        $this->monetization = CompetitionMonetization::Boosts;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Reconciliation, all charges covered: the competition stays premium and is
+     * stamped reconciled. Idempotent — a second run is a no-op.
+     */
+    public function markPremiumReconciled(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->premiumReconciledAt) {
+            return;
+        }
+
+        $this->premiumReconciledAt = $now;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new PremiumConfirmed(
+            competitionId: $this->id,
+            ownerId: $this->owner->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Reconciliation, at least one uncovered charge: the competition is
+     * downgraded to boosts and stamped reconciled (the caller refunds every
+     * charged row). Idempotent — a second run is a no-op.
+     */
+    public function downgradeToBoosts(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->premiumReconciledAt) {
+            return;
+        }
+
+        $this->monetization = CompetitionMonetization::Boosts;
+        $this->premiumReconciledAt = $now;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new PremiumDowngraded(
+            competitionId: $this->id,
+            ownerId: $this->owner->id,
+            occurredOn: $now,
+        ));
     }
 
     public function recordMatchSelectionChanged(User $editor, \DateTimeImmutable $now): void

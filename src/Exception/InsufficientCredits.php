@@ -18,4 +18,17 @@ final class InsufficientCredits extends \DomainException
     {
         return new self(sprintf('Nedostatek kreditů — do potřebné částky chybí %d.', $missing));
     }
+
+    /**
+     * Re-enabling premium charges the whole group at once (all-or-nothing), so
+     * the message names the exact total the manager needs.
+     */
+    public static function forPremiumActivation(int $totalNeeded, int $balance): self
+    {
+        return new self(sprintf(
+            'Nedostatek kreditů pro zapnutí prémia: potřebujete %d kreditů, na účtu máte %d.',
+            $totalNeeded,
+            $balance,
+        ));
+    }
 }

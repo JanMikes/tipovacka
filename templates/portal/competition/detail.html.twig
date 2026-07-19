@@ -444,6 +444,36 @@
                             </a>
                         {% endif %}
 
+                        {# Monetizace: prémium (za členy platí organizátor) ↔ příspěvky (kupuje si každý sám). #}
+                        {% if competition.monetization.value == 'premium' %}
+                            <a href="{{ path('portal_competition_premium', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:crown" class="h-4 w-4" />Prémium
+                            </a>
+                            <form method="post" action="{{ path('portal_competition_switch_to_boosts', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Přepnout na příspěvky"
+                                data-confirm-message-value="Prémium se vypne a zaplacené platby za členy se vám vrátí do peněženky. Vylepšení si pak kupuje každý hráč sám."
+                                data-confirm-confirm-label-value="Ano, přepnout">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_switch_to_boosts_' ~ competition.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                    <twig:ux:icon name="lucide:hand-coins" class="h-4 w-4" />Přepnout na příspěvky
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{{ path('portal_competition_premium_enable', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Zapnout prémium"
+                                data-confirm-message-value="Zaplatíte za celou skupinu — za každého člena se z vaší peněženky strhne poplatek. Za nově příchozí platíte při jejich připojení."
+                                data-confirm-confirm-label-value="Ano, zapnout prémium">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_premium_enable_' ~ competition.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                    <twig:ux:icon name="lucide:crown" class="h-4 w-4" />Zapnout prémium
+                                </button>
+                            </form>
+                        {% endif %}
+
                         {% if not tips_locked %}
                             <form method="post" action="{{ path('portal_competition_lock_tips', {id: competition.id.toRfc4122}) }}"
                                 data-controller="confirm"

@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
@@ -114,6 +115,26 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string FREE_GLOBAL_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000045';
     public const string FREE_GLOBAL_COMPETITION_NAME = 'Globální tipovačka zdarma';
     public const string FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa06';
+
+    /**
+     * S10 premium competition (monetization=premium, NOT global) over the PUBLIC
+     * curated source, owned by ADMIN (the paying manager). SECOND_VERIFIED_USER is
+     * a non-owner member whose join is represented as an already-Charged
+     * {@see CompetitionPremiumCharge} row (PREMIUM_CHARGE_ID). Its start moment is
+     * MATCH_FINISHED's kickoff (2025-06-10, in the past vs the fixed clock), so the
+     * reconcile sweep treats it as started. No wallet/ledger seeded (would break the
+     * whole-table credit asserts) — tests grant the owner credits in-test.
+     */
+    public const string PREMIUM_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000055';
+    public const string PREMIUM_COMPETITION_NAME = 'Prémiová firemní liga';
+    public const string PREMIUM_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000519bbbbb0000700b5';
+    public const string PREMIUM_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa07';
+    public const string PREMIUM_COMPETITION_MEMBER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa08';
+    public const string PREMIUM_CHARGE_ID = '019bbbbb-0000-7000-8000-0000000000d1';
+    public const string PREMIUM_COMPETITION_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-000000000016';
+    public const string PREMIUM_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000017';
+    public const string PREMIUM_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000018';
+    public const string PREMIUM_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000019';
 
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
     public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
@@ -451,6 +472,52 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $freeGlobalOwnerMembership->popEvents();
         $manager->persist($freeGlobalOwnerMembership);
 
+        // S10: premium (NOT global) competition over the PUBLIC source, owned by
+        // ADMIN. SECOND_VERIFIED_USER is a non-owner member with an already-Charged
+        // premium charge. A shareable link lets tests add further joiners.
+        $premiumCompetition = new Competition(
+            id: Uuid::fromString(self::PREMIUM_COMPETITION_ID),
+            matchSource: $public,
+            owner: $admin,
+            name: self::PREMIUM_COMPETITION_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: self::PREMIUM_COMPETITION_LINK_TOKEN,
+            createdAt: $now,
+            monetization: CompetitionMonetization::Premium,
+        );
+        $premiumCompetition->popEvents();
+        $manager->persist($premiumCompetition);
+
+        $premiumOwnerMembership = new Membership(
+            id: Uuid::fromString(self::PREMIUM_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $premiumCompetition,
+            user: $admin,
+            joinedAt: $now,
+        );
+        $premiumOwnerMembership->popEvents();
+        $manager->persist($premiumOwnerMembership);
+
+        $premiumMemberMembership = new Membership(
+            id: Uuid::fromString(self::PREMIUM_COMPETITION_MEMBER_MEMBERSHIP_ID),
+            competition: $premiumCompetition,
+            user: $secondVerified,
+            joinedAt: $now,
+        );
+        $premiumMemberMembership->popEvents();
+        $manager->persist($premiumMemberMembership);
+
+        $premiumCharge = new CompetitionPremiumCharge(
+            id: Uuid::fromString(self::PREMIUM_CHARGE_ID),
+            competition: $premiumCompetition,
+            member: $secondVerified,
+            amount: 10,
+            createdAt: $now,
+        );
+        $premiumCharge->markCharged($now);
+        $premiumCharge->popEvents();
+        $manager->persist($premiumCharge);
+
         $playoffMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PLAYOFF_ID),
             matchSource: $public,
@@ -652,6 +719,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             [self::SUBSET_COMPETITION_RULE_SCORER_HIT_ID, $subsetCompetition, 'scorer_hit', 2],
             [self::SUBSET_COMPETITION_RULE_PERIOD_EXACT_ID, $subsetCompetition, 'period_exact', 5],
             [self::SUBSET_COMPETITION_RULE_PERIOD_TENDENCY_ID, $subsetCompetition, 'period_tendency', 2],
+            [self::PREMIUM_COMPETITION_RULE_EXACT_SCORE_ID, $premiumCompetition, 'exact_score', 5],
+            [self::PREMIUM_COMPETITION_RULE_CORRECT_OUTCOME_ID, $premiumCompetition, 'correct_outcome', 3],
+            [self::PREMIUM_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $premiumCompetition, 'correct_home_goals', 1],
+            [self::PREMIUM_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $premiumCompetition, 'correct_away_goals', 1],
         ] as $row) {
             [$id, $competition, $identifier, $points] = $row;
             $configuration = new CompetitionRuleConfiguration(

@@ -49,6 +49,12 @@ abstract class IntegrationTestCase extends KernelTestCase
         return self::getContainer()->get(FakePaymentGateway::class);
     }
 
+    protected function recordedDomainEvents(): RecordedDomainEvents
+    {
+        /* @var RecordedDomainEvents */
+        return self::getContainer()->get(RecordedDomainEvents::class);
+    }
+
     protected function firstWrappedException(HandlerFailedException $exception): ?\Throwable
     {
         return array_values($exception->getWrappedExceptions())[0] ?? null;

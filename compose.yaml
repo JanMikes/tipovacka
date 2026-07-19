@@ -69,3 +69,19 @@ services:
             - .:/app
         command: bin/console tailwind:build --watch
         restart: unless-stopped
+
+    # Optional local messenger worker — consumes async messages AND the
+    # scheduler_default transport (symfony/scheduler, e.g. premium reconciliation)
+    # so scheduled/delayed paths are exercisable in dev. Off by default; start
+    # with `docker compose --profile worker up worker`. Tests never rely on it —
+    # they dispatch scheduled handlers directly.
+    worker:
+        image: ghcr.io/thedevs-cz/php:8.5
+        volumes:
+            - .:/app
+        command: bin/console messenger:consume async scheduler_default -vv --time-limit=3600 --memory-limit=256M
+        restart: unless-stopped
+        depends_on:
+            - postgres
+        profiles:
+            - worker

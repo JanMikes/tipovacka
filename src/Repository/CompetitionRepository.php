@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Competition;
+use App\Enum\CompetitionMonetization;
 use App\Exception\CompetitionNotFound;
 use App\Exception\InvalidPin;
 use App\Exception\InvalidShareableLink;
@@ -94,6 +95,32 @@ class CompetitionRepository
             ->getOneOrNullResult();
 
         return null !== $result;
+    }
+
+    /**
+     * Premium competitions not yet reconciled — the reconcile sweep's candidate
+     * set (the handler then keeps only those whose start moment has passed).
+     *
+     * @return list<Competition>
+     */
+    public function findPremiumAwaitingReconciliation(): array
+    {
+        /** @var list<Competition> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('g', 't', 'o')
+            ->from(Competition::class, 'g')
+            ->innerJoin('g.matchSource', 't')
+            ->innerJoin('g.owner', 'o')
+            ->where('g.monetization = :premium')
+            ->andWhere('g.premiumReconciledAt IS NULL')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('premium', CompetitionMonetization::Premium)
+            ->orderBy('g.createdAt', 'ASC')
+            ->addOrderBy('g.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
     }
 
     /**
