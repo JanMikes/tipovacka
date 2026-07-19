@@ -304,6 +304,11 @@
                 </section>
             {% endif %}
 
+            {# Boosts („Tvoje vylepšení") / premium note — renders only for monetized competitions #}
+            {% if is_granted('competition_view', competition) %}
+                <twig:Boost:Panel :competition="competition" />
+            {% endif %}
+
             {{ include('_partials/competition_rules.html.twig', { items: rule_items }) }}
 
             {# Invites (PIN + shareable link) — hidden for global competitions #}

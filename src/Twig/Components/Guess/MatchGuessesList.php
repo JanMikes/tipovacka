@@ -26,9 +26,6 @@ final class MatchGuessesList
     #[LiveProp]
     public string $competitionId = '';
 
-    #[LiveProp]
-    public bool $applyHiding = false;
-
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly Security $security,
@@ -44,7 +41,6 @@ final class MatchGuessesList
                 competitionId: Uuid::fromString($this->competitionId),
                 sportMatchId: $this->sportMatch->id,
                 viewerId: $viewerId,
-                applyHiding: $this->applyHiding,
             ));
         }
     }

@@ -18,12 +18,12 @@ use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipVisibilityGate;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use App\Voter\GuessVoter;
 use App\Voter\GuessVotingContext;
 use App\Voter\SportMatchVoter;
-use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -46,7 +46,7 @@ final class SportMatchGuessesController extends AbstractController
         private readonly CompetitionMatchSettingRepository $competitionMatchSettingRepository,
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
-        private readonly ClockInterface $clock,
+        private readonly TipVisibilityGate $visibilityGate,
         private readonly QueryBus $queryBus,
     ) {
     }
@@ -72,27 +72,26 @@ final class SportMatchGuessesController extends AbstractController
         $isCompetitionManager = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
         // Per-viewer deadline for THIS user's tip-entry surfaces / displayed „Uzávěrka".
         $effectiveDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $currentUser);
-        // Visibility of OTHERS' tips is competition-wide: gate on the userless
-        // deadline (what the embedded ranking/distribution queries assume). A
-        // viewer's own „Měnit tip" entitlement never reveals others' tips early.
-        $visibilityDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch);
-        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $canSeeAllTips = $isCompetitionManager
-            || !$competition->hideOthersTipsBeforeDeadline
-            || $now >= $visibilityDeadline;
 
-        // Pick distribution (1/X/2) is only shown once others' tips are visible
-        // (after the deadline, or when the competition doesn't hide them).
-        $pickDistribution = $canSeeAllTips
-            ? $this->queryBus->handle(new GetMatchPickDistribution(
-                competitionId: $competition->id,
-                sportMatchId: $sportMatch->id,
-            ))
-            : null;
+        // Visibility gate composes THIS viewer's entitlement (premium toggle / own
+        // boost — per viewer) with the userless deadline having passed (public to
+        // everyone). Distribution and concrete tips are gated independently: an
+        // OthersTips buyer sees both, a TipDistribution buyer only the bar.
+        $canSeeDistribution = $this->visibilityGate->canSeeDistribution($competition, $currentUser, $sportMatch);
+        $canSeeOthersTips = $this->visibilityGate->canSeeOthersTips($competition, $currentUser, $sportMatch);
 
-        // Per-match ranking ("Pořadí za zápas") needs evaluated guesses, so it only
-        // makes sense once the match is finished and others' tips are visible.
-        $matchRanking = ($canSeeAllTips && $sportMatch->isFinished)
+        // The bar is a cheap aggregate: compute it always so the paywall can show
+        // „Uvidíte, jak tipuje X hráčů" (only the total leaks, never the split),
+        // but hand the breakdown to the view only when the viewer may see it.
+        $distribution = $this->queryBus->handle(new GetMatchPickDistribution(
+            competitionId: $competition->id,
+            sportMatchId: $sportMatch->id,
+        ));
+        $pickDistribution = $canSeeDistribution ? $distribution : null;
+
+        // Per-match ranking ("Pořadí za zápas") reveals concrete tips + points, so
+        // it needs the others-tips entitlement and a finished match.
+        $matchRanking = ($canSeeOthersTips && $sportMatch->isFinished)
             ? $this->queryBus->handle(new GetMatchRanking(
                 competitionId: $competition->id,
                 sportMatchId: $sportMatch->id,
@@ -141,8 +140,10 @@ final class SportMatchGuessesController extends AbstractController
             'match_events' => $this->matchEventRepository->listByMatch($sportMatch->id),
             'member_rows' => $memberRows,
             'effective_deadline' => $effectiveDeadline,
-            'can_see_all_tips' => $canSeeAllTips,
+            'can_see_distribution' => $canSeeDistribution,
+            'can_see_others_tips' => $canSeeOthersTips,
             'pick_distribution' => $pickDistribution,
+            'tip_count' => $distribution->total,
             'match_ranking' => $matchRanking,
             'deadline_form' => $deadlineForm,
             'current_user_id' => $currentUser->id,

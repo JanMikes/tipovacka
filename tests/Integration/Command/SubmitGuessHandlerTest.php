@@ -122,7 +122,8 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
     {
         // Manual „Uzamknout tipy" locks immediately: tipsLockedAt = now (12:00),
         // so a submit at the very same now is already past the deadline —
-        // even though the match kicks off only on 2025-06-20.
+        // even though the match kicks off only on 2025-06-20. The owner is NOT
+        // exempt: locking is a universal freeze (no „Měnit tip" entitlement here).
         $this->commandBus()->dispatch(new LockCompetitionTipsCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),

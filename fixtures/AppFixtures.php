@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Entity\BoostPurchase;
 use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
@@ -20,6 +21,7 @@ use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchEventType;
@@ -135,6 +137,28 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string PREMIUM_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-000000000017';
     public const string PREMIUM_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-000000000018';
     public const string PREMIUM_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-000000000019';
+
+    /**
+     * S10 boosts competition (monetization=boosts, NOT global) over the PUBLIC
+     * curated source, owned by ADMIN. SECOND_VERIFIED_USER is the single non-owner
+     * member and holds one active OthersTips {@see BoostPurchase}
+     * (BOOST_PURCHASE_OTHERS_TIPS_ID) — the entitled viewer. VERIFIED_USER is
+     * deliberately NOT a member here (it stays the „single competition" user other
+     * count tests rely on); visibility tests join a second, non-entitled member on
+     * the fly. No wallet/ledger is seeded for the purchase (that would break the
+     * whole-table credit asserts) — the row alone drives the entitlement, exactly
+     * like the premium-charge fixture above.
+     */
+    public const string BOOSTS_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000066';
+    public const string BOOSTS_COMPETITION_NAME = 'Příspěvková firemní liga';
+    public const string BOOSTS_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000619bbbbb0000700b6';
+    public const string BOOSTS_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa09';
+    public const string BOOSTS_COMPETITION_MEMBER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa0a';
+    public const string BOOST_PURCHASE_OTHERS_TIPS_ID = '019bbbbb-0000-7000-8000-0000000000e1';
+    public const string BOOSTS_COMPETITION_RULE_EXACT_SCORE_ID = '019fffff-0000-7000-8000-00000000001a';
+    public const string BOOSTS_COMPETITION_RULE_CORRECT_OUTCOME_ID = '019fffff-0000-7000-8000-00000000001b';
+    public const string BOOSTS_COMPETITION_RULE_CORRECT_HOME_GOALS_ID = '019fffff-0000-7000-8000-00000000001c';
+    public const string BOOSTS_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID = '019fffff-0000-7000-8000-00000000001d';
 
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
     public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
@@ -518,6 +542,53 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $premiumCharge->popEvents();
         $manager->persist($premiumCharge);
 
+        // S10: boosts (NOT global) competition over the PUBLIC source, owned by
+        // ADMIN. SECOND_VERIFIED_USER is the single non-owner member and holds an
+        // active OthersTips boost (sees others' tips + distribution before the
+        // deadline). No wallet/ledger seeded.
+        $boostsCompetition = new Competition(
+            id: Uuid::fromString(self::BOOSTS_COMPETITION_ID),
+            matchSource: $public,
+            owner: $admin,
+            name: self::BOOSTS_COMPETITION_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: self::BOOSTS_COMPETITION_LINK_TOKEN,
+            createdAt: $now,
+            monetization: CompetitionMonetization::Boosts,
+        );
+        $boostsCompetition->popEvents();
+        $manager->persist($boostsCompetition);
+
+        $boostsOwnerMembership = new Membership(
+            id: Uuid::fromString(self::BOOSTS_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $boostsCompetition,
+            user: $admin,
+            joinedAt: $now,
+        );
+        $boostsOwnerMembership->popEvents();
+        $manager->persist($boostsOwnerMembership);
+
+        $boostsMemberMembership = new Membership(
+            id: Uuid::fromString(self::BOOSTS_COMPETITION_MEMBER_MEMBERSHIP_ID),
+            competition: $boostsCompetition,
+            user: $secondVerified,
+            joinedAt: $now,
+        );
+        $boostsMemberMembership->popEvents();
+        $manager->persist($boostsMemberMembership);
+
+        $othersTipsBoost = new BoostPurchase(
+            id: Uuid::fromString(self::BOOST_PURCHASE_OTHERS_TIPS_ID),
+            user: $secondVerified,
+            competition: $boostsCompetition,
+            type: BoostType::OthersTips,
+            pricePaid: BoostType::OthersTips->price(),
+            purchasedAt: $now,
+        );
+        $othersTipsBoost->popEvents();
+        $manager->persist($othersTipsBoost);
+
         $playoffMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PLAYOFF_ID),
             matchSource: $public,
@@ -723,6 +794,10 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             [self::PREMIUM_COMPETITION_RULE_CORRECT_OUTCOME_ID, $premiumCompetition, 'correct_outcome', 3],
             [self::PREMIUM_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $premiumCompetition, 'correct_home_goals', 1],
             [self::PREMIUM_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $premiumCompetition, 'correct_away_goals', 1],
+            [self::BOOSTS_COMPETITION_RULE_EXACT_SCORE_ID, $boostsCompetition, 'exact_score', 5],
+            [self::BOOSTS_COMPETITION_RULE_CORRECT_OUTCOME_ID, $boostsCompetition, 'correct_outcome', 3],
+            [self::BOOSTS_COMPETITION_RULE_CORRECT_HOME_GOALS_ID, $boostsCompetition, 'correct_home_goals', 1],
+            [self::BOOSTS_COMPETITION_RULE_CORRECT_AWAY_GOALS_ID, $boostsCompetition, 'correct_away_goals', 1],
         ] as $row) {
             [$id, $competition, $identifier, $points] = $row;
             $configuration = new CompetitionRuleConfiguration(

@@ -1,0 +1,157 @@
+{#
+    Boost commerce surface. See src/Twig/Components/Boost/BoostPanel.php.
+    props:
+      competition  (Competition)
+      feature      null = „Tvoje vylepšení" sidebar; 'distribution' | 'others' = inline locked paywall
+      playerCount  int, for the distribution paywall copy
+#}
+{% set p = this.panel %}
+{% if p is not null %}
+    {% set mon = competition.monetization.value %}
+    {% set back = app.request.pathinfo %}
+    {% set offset_label = p.tipChangeOffsetMinutes % 60 == 0 ? (p.tipChangeOffsetMinutes // 60) ~ ' h' : p.tipChangeOffsetMinutes ~ ' min' %}
+
+    {% if feature is null %}
+        {# ═════════ Management panel: „Tvoje vylepšení" ═════════ #}
+        {% if mon == 'boosts' %}
+            <section class="card-glass overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
+                    <twig:ux:icon name="lucide:sparkles" class="h-5 w-5 text-[#8ac3e8]" />
+                    <h2 class="text-lg font-semibold text-white">Tvoje vylepšení</h2>
+                </header>
+                <div class="divide-y divide-white/[0.06]">
+                    {% for type in this.boostTypes %}
+                        {% set owned = (type.value == 'tip_distribution' and p.hasDistribution)
+                            or (type.value == 'others_tips' and p.hasOthersTips)
+                            or (type.value == 'tip_change' and p.hasTipChange) %}
+                        {% set superseded = type.value == 'tip_distribution' and p.hasOthersTips and not p.hasExplicitDistribution %}
+                        <div class="px-6 py-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-white">{{ type.label }}</p>
+                                    <p class="mt-0.5 text-[12px] leading-snug text-white/55">
+                                        {% if type.value == 'tip_change' %}
+                                            Měnit tip až do {{ offset_label }} před prvním zápasem dne.
+                                        {% else %}
+                                            {{ type.description }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% if owned %}
+                                    <span class="pill pill-success shrink-0">
+                                        <twig:ux:icon name="lucide:check" class="h-3 w-3" />
+                                        {{ superseded ? 'V balíčku' : 'Aktivní' }}
+                                    </span>
+                                {% else %}
+                                    <span class="shrink-0 text-sm font-black tabular-nums text-[#8ac3e8]">{{ type.price }} kr.</span>
+                                {% endif %}
+                            </div>
+                            {% if not owned %}
+                                <div class="mt-3">
+                                    {% if p.canAfford(type) %}
+                                        <form method="post" action="{{ path('portal_competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
+                                            data-controller="confirm"
+                                            data-confirm-variant-value="warning"
+                                            data-confirm-title-value="Koupit „{{ type.label }}"
+                                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
+                                            data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
+                                            <input type="hidden" name="type" value="{{ type.value }}">
+                                            <input type="hidden" name="_redirect" value="{{ back }}">
+                                            <button type="submit" class="btn btn-primary btn-sm w-full">
+                                                <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                                                Koupit za {{ type.price }} kr.
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm w-full">
+                                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                                            Dokoupit kredity
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center justify-between border-t border-white/10 px-6 py-3 text-xs">
+                    <span class="text-white/50">Váš zůstatek</span>
+                    <span class="font-bold tabular-nums text-white">{{ p.balance }} kr.</span>
+                </div>
+            </section>
+        {% elseif mon == 'premium' %}
+            <section class="relative overflow-hidden rounded-2xl border border-[#f5cd54]/30 bg-gradient-to-br from-[#f5cd54]/[0.12] to-transparent p-5">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f5cd54]/40 bg-[#f5cd54]/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#f5cd54]">
+                    <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
+                    Prémium
+                </span>
+                <h3 class="mt-3 text-base font-bold text-white">Vylepšení máte v ceně</h3>
+                <p class="mt-1.5 text-sm text-white/60">Organizátor platí za celou partičku — funkce zapíná pro všechny.</p>
+            </section>
+        {% endif %}
+    {% else %}
+        {# ═════════ Inline locked paywall (distribution / others) ═════════ #}
+        {% set type = this.featureType %}
+        {% if mon == 'boosts' %}
+            <section class="relative overflow-hidden rounded-2xl border border-[#8ac3e8]/25 p-5"
+                style="background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 10px, transparent 10px 20px);">
+                <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8ac3e8]/15 text-[#8ac3e8]">
+                        <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
+                    </span>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-white">
+                            {% if feature == 'distribution' %}
+                                Uvidíte, jak tipuje {{ playerCount }} {{ playerCount == 1 ? 'hráč' : (playerCount >= 2 and playerCount <= 4 ? 'hráči' : 'hráčů') }}
+                            {% else %}
+                                Odemkněte konkrétní tipy kolegů
+                            {% endif %}
+                        </h3>
+                        <p class="mt-1 text-[12px] leading-snug text-white/55">{{ type.description }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    {% if p.canAfford(type) %}
+                        <form method="post" action="{{ path('portal_competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Odemknout „{{ type.label }}"
+                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
+                            data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
+                            <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
+                            <input type="hidden" name="type" value="{{ type.value }}">
+                            <input type="hidden" name="_redirect" value="{{ back }}">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                                Odemknout za {{ type.price }} kr.
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="text-[12px] text-white/50">Chybí kredity ({{ p.balance }} / {{ type.price }} kr.)</span>
+                            <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                                Dokoupit kredity
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+        {% elseif mon == 'premium' %}
+            <section class="rounded-2xl border border-[#f5cd54]/25 bg-[#f5cd54]/[0.06] p-4">
+                <p class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#f5cd54]">
+                    <twig:ux:icon name="lucide:crown" class="h-4 w-4" />
+                    Prémium
+                </p>
+                <p class="mt-1 text-[12px] text-white/55">Tuto funkci zapíná organizátor soutěže pro všechny.</p>
+            </section>
+        {% else %}
+            <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p class="inline-flex items-center gap-1.5 text-sm font-medium text-white/60">
+                    <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-white/40" />
+                    {{ feature == 'distribution' ? 'Rozložení tipů' : 'Tipy ostatních' }} se zobrazí po uzávěrce.
+                </p>
+            </section>
+        {% endif %}
+    {% endif %}
+{% endif %}

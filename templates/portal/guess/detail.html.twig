@@ -128,6 +128,8 @@
                 :homeTeam="sport_match.homeTeam"
                 :awayTeam="sport_match.awayTeam"
             />
+        {% elseif not can_see_distribution %}
+            <twig:Boost:Panel :competition="competition" feature="distribution" :playerCount="tip_count" />
         {% endif %}
 
         {% if match_ranking is defined and match_ranking is not null and match_ranking.rows|length > 0 %}
@@ -177,10 +179,13 @@
             </section>
         {% endif %}
 
+        {% if not can_see_others_tips %}
+            <twig:Boost:Panel :competition="competition" feature="others" />
+        {% endif %}
+
         <twig:Guess:MatchGuessesList
             :sportMatch="sport_match"
             competitionId="{{ competition.id.toRfc4122 }}"
-            :applyHiding="not can_see_all_tips"
         />
 
         {% if premium_enabled %}

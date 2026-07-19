@@ -47,6 +47,7 @@ return App::config([
                 ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumDowngraded', 'method' => 'record'],
                 ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumChargeUncovered', 'method' => 'record'],
                 ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\PremiumBalanceLow', 'method' => 'record'],
+                ['name' => 'messenger.message_handler', 'bus' => 'event.bus', 'handles' => 'App\\Event\\BoostRefunded', 'method' => 'record'],
             ],
         ],
         'App\\Service\\Payment\\PaymentGateway' => [

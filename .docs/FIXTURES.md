@@ -86,11 +86,12 @@ curated one.)
 | `GLOBAL_COMPETITION_*`      | `019bbbbb-0000-7000-8000-000000000044` | `Globální tipovačka LM`     | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
 | `FREE_GLOBAL_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000045` | `Globální tipovačka zdarma` | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
 | `PREMIUM_COMPETITION_*`     | `019bbbbb-0000-7000-8000-000000000055` | `Prémiová firemní liga`     | PUBLIC_SOURCE | ADMIN | none (`null`) | `PREMIUM_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000519bbbbb0000700b5` |
+| `BOOSTS_COMPETITION_*`      | `019bbbbb-0000-7000-8000-000000000066` | `Příspěvková firemní liga`  | PUBLIC_SOURCE | ADMIN | none (`null`) | `BOOSTS_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000619bbbbb0000700b6` |
 
 All competitions: `tipsLockedAt = null` (never manually locked),
 `tipChangeOffsetMinutes = 60` (default) and `monetization = None` (S08 entity
 default — the create-competition wizard sets `premium|boosts`, fixtures keep None)
-— **except `PREMIUM_COMPETITION`** (see S10 below).
+— **except `PREMIUM_COMPETITION`** (Premium) and `BOOSTS_COMPETITION` (Boosts) (see S10 below).
 
 **S10 premium competition** (`PREMIUM_COMPETITION`, `monetization = Premium`,
 `isGlobal = false`, mode `all` over the PUBLIC curated source, owned by ADMIN — the
@@ -102,6 +103,18 @@ with an already-**Charged** `CompetitionPremiumCharge` (`PREMIUM_CHARGE_ID` =
 `019bbbbb-0000-7000-8000-0000000000d1`, amount 10). **No wallet/ledger is seeded** for
 the charge (that would break the whole-table credit asserts, see below) — the Charged
 row just represents the already-paid state; tests grant the owner credits in-test.
+
+**S10 boosts competition** (`BOOSTS_COMPETITION`, `monetization = Boosts`,
+`isGlobal = false`, mode `all` over the PUBLIC curated source, owned by ADMIN): four
+default rule configs (`BOOSTS_COMPETITION_RULE_*` = `019fffff-…-1a…1d`) and a shareable
+link. SECOND_VERIFIED_USER is the single non-owner member and holds one **active**
+`BoostPurchase` of type `OthersTips` (`BOOST_PURCHASE_OTHERS_TIPS_ID` =
+`019bbbbb-0000-7000-8000-0000000000e1`, `pricePaid = 20`) — the entitled viewer.
+VERIFIED_USER is deliberately NOT a member (it stays the „single competition" user
+other count tests rely on); visibility tests join a second, non-entitled member on the
+fly (via the shareable link). **No wallet/ledger is seeded** for the purchase (would
+break the whole-table credit asserts) — the row alone drives the entitlement, exactly
+like the premium charge.
 
 **S09 global competitions** (`isGlobal = true`, mode `all`, owned by ADMIN, both
 over the PUBLIC curated source; the ADMIN owner is the sole member of each ⇒ fee
@@ -162,13 +175,17 @@ Practical consequences for tests:
 | `FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID` | `019bbbbb-0000-7000-8000-00000000aa06` | FREE_GLOBAL_COMPETITION | ADMIN |
 | `PREMIUM_COMPETITION_OWNER_MEMBERSHIP_ID`     | `019bbbbb-0000-7000-8000-00000000aa07` | PREMIUM_COMPETITION     | ADMIN |
 | `PREMIUM_COMPETITION_MEMBER_MEMBERSHIP_ID`    | `019bbbbb-0000-7000-8000-00000000aa08` | PREMIUM_COMPETITION     | SECOND_VERIFIED_USER |
+| `BOOSTS_COMPETITION_OWNER_MEMBERSHIP_ID`        | `019bbbbb-0000-7000-8000-00000000aa09` | BOOSTS_COMPETITION | ADMIN |
+| `BOOSTS_COMPETITION_MEMBER_MEMBERSHIP_ID`       | `019bbbbb-0000-7000-8000-00000000aa0a` | BOOSTS_COMPETITION | SECOND_VERIFIED_USER |
 
 Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION,
 ADMIN is NOT a member of VERIFIED_COMPETITION. Neither VERIFIED_USER nor
 SECOND_VERIFIED_USER is a member of the two global competitions (ADMIN owns both).
 SECOND_VERIFIED_USER owns SUBSET_COMPETITION and (since S10) is a non-owner member of
-PREMIUM_COMPETITION; VERIFIED_USER is a natural joiner for PREMIUM_COMPETITION (via its
-shareable link) in premium charge tests.
+PREMIUM_COMPETITION and of BOOSTS_COMPETITION (where it holds the OthersTips boost).
+VERIFIED_USER is deliberately kept out of the S10 monetized competitions (it stays the
+„single competition" user); it is a natural joiner for PREMIUM_COMPETITION / BOOSTS_COMPETITION
+(via their shareable links) in charge / visibility tests.
 
 ## Credit wallets — none seeded
 
@@ -191,13 +208,23 @@ balances grant the owner (ADMIN) credits in-test.
 |--------------------|----------------------------------------|---------------------|----------------------|---------|--------|
 | `PREMIUM_CHARGE_ID`| `019bbbbb-0000-7000-8000-0000000000d1` | PREMIUM_COMPETITION | SECOND_VERIFIED_USER | Charged | 10     |
 
+## Boost purchases (`BoostPurchase`, table `boost_purchases`)
+
+| Constant                        | ID                                     | Competition        | User                 | Type       | Price | Active |
+|---------------------------------|----------------------------------------|--------------------|----------------------|------------|-------|--------|
+| `BOOST_PURCHASE_OTHERS_TIPS_ID` | `019bbbbb-0000-7000-8000-0000000000e1` | BOOSTS_COMPETITION | SECOND_VERIFIED_USER | OthersTips | 20    | yes    |
+
+Like the premium charge, this row has **no** backing wallet/ledger (keeps the whole-table
+credit asserts intact) — it just represents an already-bought boost, and drives the
+`CompetitionEntitlements` / `TipVisibilityGate` entitlement for SECOND_VERIFIED_USER.
+
 ## Recorded domain events (test spy)
 
 `App\Tests\Support\RecordedDomainEvents` is a test-only event.bus handler (registered
-in `config/services_test.php`) that captures the recording-only S10 premium events
-(`PremiumConfirmed`, `PremiumDowngraded`, `PremiumChargeUncovered`, `PremiumBalanceLow`).
-Integration tests get it via `IntegrationTestCase::recordedDomainEvents()` and assert
-with `->ofType(EventClass::class)`; call `->reset()` between phases of a test.
+in `config/services_test.php`) that captures the recording-only S10 premium/boost events
+(`PremiumConfirmed`, `PremiumDowngraded`, `PremiumChargeUncovered`, `PremiumBalanceLow`,
+`BoostRefunded`). Integration tests get it via `IntegrationTestCase::recordedDomainEvents()`
+and assert with `->ofType(EventClass::class)`; call `->reset()` between phases of a test.
 
 ## Competition invitation (`CompetitionInvitation`)
 

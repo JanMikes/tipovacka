@@ -15,7 +15,6 @@ final readonly class GetCompetitionGuessMatrix implements QueryMessage
     public function __construct(
         public Uuid $competitionId,
         public Uuid $requestingUserId,
-        public bool $applyHiding,
     ) {
     }
 }

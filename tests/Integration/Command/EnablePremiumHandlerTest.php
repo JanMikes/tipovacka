@@ -8,12 +8,14 @@ use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
 use App\Command\EnablePremium\EnablePremiumCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\DataFixtures\AppFixtures;
+use App\Entity\BoostPurchase;
 use App\Entity\Competition;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CreditTransaction;
 use App\Enum\CompetitionMonetization;
 use App\Enum\CreditTransactionType;
 use App\Enum\PremiumChargeStatus;
+use App\Event\BoostRefunded;
 use App\Exception\InsufficientCredits;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -161,5 +163,55 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
         self::assertSame(CompetitionMonetization::None, $competition->monetization);
         self::assertCount(0, $this->charges(AppFixtures::VERIFIED_COMPETITION_ID));
         self::assertCount(0, $this->premiumChargeLedger(AppFixtures::VERIFIED_COMPETITION_ID));
+    }
+
+    public function testEnablingPremiumOnBoostsCompetitionRefundsActiveBoosts(): void
+    {
+        // BOOSTS_COMPETITION: ADMIN owns it, SECOND_VERIFIED_USER (the sole non-owner
+        // member) holds an active OthersTips boost (fixture, pricePaid 20). Enabling
+        // premium charges ADMIN for the member and refunds the boost to SECOND.
+        $this->grant(AppFixtures::ADMIN_ID, 100);
+
+        $this->enable(AppFixtures::BOOSTS_COMPETITION_ID, AppFixtures::ADMIN_ID);
+
+        $this->entityManager()->clear();
+
+        $competition = $this->competition(AppFixtures::BOOSTS_COMPETITION_ID);
+        self::assertSame(CompetitionMonetization::Premium, $competition->monetization);
+
+        // The fixture boost is now refunded (no active boost remains).
+        /** @var list<BoostPurchase> $active */
+        $active = $this->entityManager()->createQueryBuilder()
+            ->select('b')
+            ->from(BoostPurchase::class, 'b')
+            ->where('b.competition = :competition')
+            ->andWhere('b.refundedAt IS NULL')
+            ->setParameter('competition', Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID))
+            ->getQuery()
+            ->getResult();
+        self::assertCount(0, $active);
+
+        // A BoostRefund ledger row credited the buyer (VERIFIED_USER) 20 back.
+        /** @var list<CreditTransaction> $refunds */
+        $refunds = $this->entityManager()->createQueryBuilder()
+            ->select('t')
+            ->from(CreditTransaction::class, 't')
+            ->where('t.type = :type')
+            ->andWhere('t.competition = :competition')
+            ->setParameter('type', CreditTransactionType::BoostRefund)
+            ->setParameter('competition', Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID))
+            ->getQuery()
+            ->getResult();
+        self::assertCount(1, $refunds);
+        self::assertSame(20, $refunds[0]->amount);
+        self::assertSame('others_tips', $refunds[0]->boostType);
+        self::assertSame(AppFixtures::SECOND_VERIFIED_USER_ID, $refunds[0]->wallet->user->id->toRfc4122());
+
+        // A BoostRefunded domain event was dispatched for the buyer.
+        $events = $this->recordedDomainEvents()->ofType(BoostRefunded::class);
+        self::assertCount(1, $events);
+        self::assertSame(AppFixtures::SECOND_VERIFIED_USER_ID, $events[0]->userId->toRfc4122());
+        self::assertSame('others_tips', $events[0]->boostType);
+        self::assertSame(20, $events[0]->amount);
     }
 }

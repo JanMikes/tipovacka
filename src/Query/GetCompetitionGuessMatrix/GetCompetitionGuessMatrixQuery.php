@@ -11,10 +11,10 @@ use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessScorerRepository;
 use App\Repository\MembershipRepository;
+use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
-use App\Service\EffectiveTipDeadlineResolver;
+use App\Service\Competition\TipVisibilityGate;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
@@ -24,10 +24,10 @@ final readonly class GetCompetitionGuessMatrixQuery
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private GuessScorerRepository $guessScorerRepository,
+        private UserRepository $userRepository,
         private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
-        private EffectiveTipDeadlineResolver $deadlineResolver,
-        private ClockInterface $clock,
+        private TipVisibilityGate $visibilityGate,
     ) {
     }
 
@@ -35,7 +35,6 @@ final readonly class GetCompetitionGuessMatrixQuery
     {
         $competition = $this->competitionRepository->get($query->competitionId);
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
-        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $requestingUserKey = $query->requestingUserId->toRfc4122();
 
         $matchesQb = $this->entityManager->createQueryBuilder()
@@ -79,9 +78,11 @@ final readonly class GetCompetitionGuessMatrixQuery
             array_map(static fn (array $row) => $row['guessId'], $guessRows),
         );
 
-        // Visibility is competition-wide (no per-viewer entitlement): others'
-        // tips stay hidden until each match's generic effective deadline.
-        $deadlineByMatchKey = $this->deadlineResolver->deadlinesFor($competition, $matches);
+        // Per-viewer visibility: this viewer's entitlement (premium toggle / own
+        // boost) OR each match's userless deadline having passed. The viewer sees
+        // their OWN cells always; OTHERS' cells only when entitled/past-deadline.
+        $viewer = $this->userRepository->find($query->requestingUserId);
+        $othersVisibleByMatch = $this->visibilityGate->othersTipsVisibleByMatch($competition, $viewer, $matches);
 
         /** @var array<string, array<string, MatrixCell>> $cellsByUser */
         $cellsByUser = [];
@@ -95,11 +96,8 @@ final readonly class GetCompetitionGuessMatrixQuery
             $matchKey = $row['sportMatchId'];
             $points = null !== $row['totalPoints'] ? (int) $row['totalPoints'] : null;
 
-            $deadline = $deadlineByMatchKey[$matchKey] ?? null;
-            $isHidden = $query->applyHiding
-                && $userKey !== $requestingUserKey
-                && null !== $deadline
-                && $now < $deadline;
+            $isHidden = $userKey !== $requestingUserKey
+                && !($othersVisibleByMatch[$matchKey] ?? false);
 
             $cellsByUser[$userKey][$matchKey] = $isHidden
                 ? MatrixCell::hidden()

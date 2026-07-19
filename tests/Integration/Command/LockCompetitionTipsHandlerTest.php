@@ -62,7 +62,7 @@ final class LockCompetitionTipsHandlerTest extends IntegrationTestCase
             competitionId: $competitionId,
         ));
 
-        // Locked ⇒ submitting fails…
+        // Locked ⇒ submitting fails (the owner is not exempt — universal freeze)…
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: $userId,
@@ -186,7 +186,7 @@ final class LockCompetitionTipsHandlerTest extends IntegrationTestCase
         /** @var \App\Entity\SportMatch $lateMatch */
         $lateMatch = $handled->getResult();
 
-        // The pre-lock match is blocked…
+        // The pre-lock match is blocked (the owner is not exempt from locking)…
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(
                 userId: $userId,

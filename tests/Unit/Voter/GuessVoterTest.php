@@ -12,6 +12,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
+use App\Repository\BoostPurchaseRepository;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
@@ -93,11 +94,14 @@ final class GuessVoterTest extends TestCase
         $selectionRepo = $this->createStub(CompetitionMatchSelectionRepository::class);
         $selectionRepo->method('listByCompetition')->willReturn([]);
 
+        $boostRepo = $this->createStub(BoostPurchaseRepository::class);
+        $boostRepo->method('findActiveByUserAndCompetition')->willReturn([]);
+
         $resolver = new EffectiveTipDeadlineResolver(
             $matchProvider,
             $settingRepo,
             $selectionRepo,
-            new CompetitionEntitlements(),
+            new CompetitionEntitlements($boostRepo),
         );
 
         $clock = new MockClock($this->now);
@@ -390,7 +394,9 @@ final class GuessVoterTest extends TestCase
         $matchSource = $this->makeMatchSource($owner);
         $competition = $this->makeCompetition($owner, $matchSource);
         $match = $this->makeMatch($matchSource);
-        // Tips manually locked at "now"; match kickoff still in the future.
+        // Tips manually locked at "now"; match kickoff still in the future. The
+        // manual lock is a hard, universal freeze — managers are NOT exempt (only
+        // the paid „Měnit tip" entitlement, absent here, would extend the window).
         $competition->lockTips($this->now);
         $guess = $this->makeGuessOwnedBy($owner, $match, $competition);
 

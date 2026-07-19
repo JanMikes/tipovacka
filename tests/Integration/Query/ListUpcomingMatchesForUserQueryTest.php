@@ -42,7 +42,8 @@ final class ListUpcomingMatchesForUserQueryTest extends IntegrationTestCase
     {
         // VERIFIED_USER's upcoming match (Tygři vs Lvi) is missing a tip in
         // their only competition ⇒ pending 1. After the competition locks its
-        // tips, the gap is no longer actionable ⇒ pending 0 (pill hidden).
+        // tips, the gap is no longer actionable ⇒ pending 0 (pill hidden). The
+        // owner is NOT exempt — locking is a universal freeze (no „Měnit tip" here).
         $userId = Uuid::fromString(AppFixtures::VERIFIED_USER_ID);
 
         $result = $this->queryBus()->handle(new ListUpcomingMatchesForUser(userId: $userId));

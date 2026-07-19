@@ -21,7 +21,6 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             requestingUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-            applyHiding: false,
         ));
 
         $matchKey = AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
@@ -32,7 +31,7 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
                 ++$hiddenCount;
             }
         }
-        self::assertSame(0, $hiddenCount, 'No cells should be hidden when applyHiding is false.');
+        self::assertSame(0, $hiddenCount, 'No cells should be hidden when the competition does not hide others'."'".' tips.');
     }
 
     public function testHidingMasksOtherMembersBeforeDeadline(): void
@@ -49,7 +48,6 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             requestingUserId: Uuid::fromString(AppFixtures::ANONYMOUS_USER_ID),
-            applyHiding: true,
         ));
 
         $matchKey = AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
@@ -83,15 +81,11 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
             hideOthersTipsBeforeDeadline: true,
         ));
 
-        // Controller would not pass applyHiding=true when requesting user is owner;
-        // but the query should still respect requestingUserId — owner sees their own,
-        // and any "other" cells will be hidden ONLY if applyHiding stays true. We
-        // test the controller-side guarantee here: passing applyHiding=false skips
-        // hiding completely, mimicking what the controller does for owners.
+        // The owner is a manager, so the TipVisibilityGate treats them as entitled
+        // to everyone's tips regardless of the hide flag — no cell is ever hidden.
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             requestingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            applyHiding: false,
         ));
 
         $matchKey = AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
@@ -116,7 +110,6 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             requestingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            applyHiding: false,
         ));
 
         $byUser = [];

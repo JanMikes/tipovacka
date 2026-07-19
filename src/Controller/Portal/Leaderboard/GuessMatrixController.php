@@ -8,7 +8,6 @@ use App\Entity\User;
 use App\Query\GetCompetitionGuessMatrix\GetCompetitionGuessMatrix;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
-use App\Voter\CompetitionVoter;
 use App\Voter\LeaderboardVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,13 +36,12 @@ final class GuessMatrixController extends AbstractController
         $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
         $this->denyAccessUnlessGranted(LeaderboardVoter::VIEW, $competition);
 
-        $applyHiding = $competition->hideOthersTipsBeforeDeadline
-            && !$this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
-
+        // Visibility (per-viewer entitlement + userless deadline) is resolved
+        // inside the query via TipVisibilityGate — the manager/entitlement/deadline
+        // logic no longer lives in the controller.
         $matrix = $this->queryBus->handle(new GetCompetitionGuessMatrix(
             competitionId: $competition->id,
             requestingUserId: $user->id,
-            applyHiding: $applyHiding,
         ));
 
         return $this->render('portal/leaderboard/matrix.html.twig', [

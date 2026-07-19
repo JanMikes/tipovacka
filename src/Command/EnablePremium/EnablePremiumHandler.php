@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Command\EnablePremium;
 
+use App\Entity\BoostPurchase;
+use App\Entity\Competition;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\Membership;
 use App\Enum\CreditTransactionType;
 use App\Exception\InsufficientCredits;
+use App\Repository\BoostPurchaseRepository;
 use App\Repository\CompetitionPremiumChargeRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\CreditTransactionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionEntitlements;
 use App\Service\Credits\CreditWalletProvider;
 use App\Service\Credits\PricingConfig;
 use App\Service\Identity\ProvideIdentity;
@@ -25,6 +29,10 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  * exact total, before anything is written), then stamp each member with a
  * Charged row and flip the competition to premium (reconciliation reset).
  *
+ * Re-enabling premium also refunds every active boost purchase in the
+ * competition (players who paid for boosts are made whole — the whole group is
+ * now covered by the manager), inside this same transaction.
+ *
  * See .docs/DOMAIN.md §Monetization.
  */
 #[AsMessageHandler]
@@ -34,8 +42,10 @@ final readonly class EnablePremiumHandler
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private CompetitionPremiumChargeRepository $chargeRepository,
+        private BoostPurchaseRepository $boostPurchaseRepository,
         private CreditWalletProvider $walletProvider,
         private CreditTransactionRepository $transactionRepository,
+        private CompetitionEntitlements $entitlements,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -46,9 +56,13 @@ final readonly class EnablePremiumHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
-        // TODO(S10-B): refund every active boost purchase in this competition
-        // (BoostRefund to each buyer + event per buyer). Boosts don't exist yet
-        // in Part A, so there is nothing to refund here — this is the hook point.
+        // Refund every active boost purchase to its buyer (BoostRefund ledger row
+        // + BoostRefunded event via the entity) before flipping to premium.
+        foreach ($this->boostPurchaseRepository->listActiveByCompetition($competition->id) as $boostPurchase) {
+            $this->refundBoost($boostPurchase, $competition, $now);
+        }
+
+        $this->entitlements->forget($competition->id);
 
         $nonOwnerMemberships = array_values(array_filter(
             $this->membershipRepository->findActiveByCompetition($competition->id),
@@ -98,5 +112,23 @@ final readonly class EnablePremiumHandler
         }
 
         $competition->enablePremium($now);
+    }
+
+    private function refundBoost(BoostPurchase $boostPurchase, Competition $competition, \DateTimeImmutable $now): void
+    {
+        $wallet = $this->walletProvider->getForUpdateOrCreate($boostPurchase->user, $now);
+
+        $transaction = $wallet->refund(
+            transactionId: $this->identity->next(),
+            amount: $boostPurchase->pricePaid,
+            refundType: CreditTransactionType::BoostRefund,
+            now: $now,
+            competition: $competition,
+            boostType: $boostPurchase->type->value,
+        );
+        $this->transactionRepository->save($transaction);
+
+        // Records BoostRefunded on the entity (dispatched after commit).
+        $boostPurchase->refund($now);
     }
 }

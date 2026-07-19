@@ -7,8 +7,8 @@ namespace App\Query\GetGuessesForMatchInCompetition;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
-use App\Service\EffectiveTipDeadlineResolver;
-use Psr\Clock\ClockInterface;
+use App\Repository\UserRepository;
+use App\Service\Competition\TipVisibilityGate;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
@@ -18,8 +18,8 @@ final readonly class GetGuessesForMatchInCompetitionQuery
         private GuessRepository $guessRepository,
         private CompetitionRepository $competitionRepository,
         private SportMatchRepository $sportMatchRepository,
-        private EffectiveTipDeadlineResolver $deadlineResolver,
-        private ClockInterface $clock,
+        private UserRepository $userRepository,
+        private TipVisibilityGate $visibilityGate,
     ) {
     }
 
@@ -30,17 +30,14 @@ final readonly class GetGuessesForMatchInCompetitionQuery
             $query->sportMatchId,
         );
 
-        $hideOthers = false;
+        // Per-viewer visibility: this viewer's entitlement (premium toggle / own
+        // boost) OR the match's userless deadline having passed. A viewer with the
+        // OthersTips boost sees concrete tips before the deadline; others do not.
+        $competition = $this->competitionRepository->get($query->competitionId);
+        $sportMatch = $this->sportMatchRepository->get($query->sportMatchId);
+        $viewer = $this->userRepository->find($query->viewerId);
 
-        if ($query->applyHiding) {
-            $competition = $this->competitionRepository->get($query->competitionId);
-            $sportMatch = $this->sportMatchRepository->get($query->sportMatchId);
-            $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-            // Visibility is competition-wide (no per-viewer entitlement): others'
-            // tips stay hidden until the match's generic effective deadline.
-            $deadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch);
-            $hideOthers = $now < $deadline;
-        }
+        $hideOthers = !$this->visibilityGate->canSeeOthersTips($competition, $viewer, $sportMatch);
 
         $items = array_map(
             static function ($g) use ($query, $hideOthers): GuessForMatchItem {
