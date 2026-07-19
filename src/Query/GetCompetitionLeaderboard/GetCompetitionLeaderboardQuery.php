@@ -8,23 +8,33 @@ use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\SportMatch;
+use App\Enum\LeaderboardTimeFilter;
 use App\Repository\CompetitionRepository;
+use App\Repository\LeaderboardSnapshotRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
 use App\Rule\ExactScoreRule;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\PragueCalendar;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
+use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class GetCompetitionLeaderboardQuery
 {
+    /** „Posledních 7 dní" rolling window length. */
+    private const string WINDOW_LAST_7_DAYS = '-7 days';
+
     public function __construct(
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private LeaderboardTieResolutionRepository $resolutionRepository,
+        private LeaderboardSnapshotRepository $snapshotRepository,
         private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
+        private ClockInterface $clock,
     ) {
     }
 
@@ -32,6 +42,8 @@ final readonly class GetCompetitionLeaderboardQuery
     {
         $competition = $this->competitionRepository->get($query->competitionId);
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
+
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $aggregatesQb = $this->entityManager->createQueryBuilder()
             ->select(
@@ -48,6 +60,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->groupBy('g.user')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($aggregatesQb, 'm', $competition);
+        $this->applyTimeWindow($aggregatesQb, 'm', $query->filter, $now);
 
         /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
         $aggregates = $aggregatesQb->getQuery()->getArrayResult();
@@ -78,6 +91,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->setParameter('competitionId', $competition->id)
             ->setParameter('exactId', ExactScoreRule::IDENTIFIER);
         $this->matchProvider->applyCompetitionMatchFilter($exactQb, 'm', $competition);
+        $this->applyTimeWindow($exactQb, 'm', $query->filter, $now);
 
         /** @var list<array{userId: string, exact: int}> $exactAggregates */
         $exactAggregates = $exactQb->getQuery()->getArrayResult();
@@ -100,6 +114,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->addOrderBy('m.kickoffAt', 'DESC')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($streakQb, 'm', $competition);
+        $this->applyTimeWindow($streakQb, 'm', $query->filter, $now);
 
         /** @var list<array{userId: string, points: int}> $streakRows */
         $streakRows = $streakQb->getQuery()->getArrayResult();
@@ -122,6 +137,14 @@ final readonly class GetCompetitionLeaderboardQuery
         }
 
         $resolutions = $this->resolutionRepository->findForCompetition($competition->id);
+
+        // Δ is all-time only: a windowed board re-ranks by windowed points, so an
+        // all-time snapshot Δ would be meaningless — the UI then hides the column.
+        $showDelta = LeaderboardTimeFilter::AllTime === $query->filter;
+        $previousRanks = $showDelta
+            ? $this->snapshotRepository->latestBefore($competition->id, PragueCalendar::day($now))
+            : [];
+        $hasHistory = [] !== $previousRanks;
 
         $baseRows = [];
 
@@ -176,12 +199,29 @@ final readonly class GetCompetitionLeaderboardQuery
             $scored = $scoredByUser[$userKey] ?? 0;
             $exact = $exactByUser[$userKey] ?? 0;
 
+            // Tie-resolution overrides stay authoritative for the current rank, so
+            // Δ is measured against the rank actually shown.
+            $currentRank = null !== $override ? $override->rank : $row['rank'];
+
+            $delta = null;
+            $deltaIsNew = false;
+
+            if ($hasHistory) {
+                $previous = $previousRanks[$userKey] ?? null;
+
+                if (null !== $previous) {
+                    $delta = $previous['rank'] - $currentRank;
+                } else {
+                    $deltaIsNew = true;
+                }
+            }
+
             $finalRows[] = new LeaderboardRow(
                 userId: $row['userId'],
                 nickname: $row['nickname'],
                 fullName: $row['fullName'],
                 totalPoints: $row['points'],
-                rank: null !== $override ? $override->rank : $row['rank'],
+                rank: $currentRank,
                 isTieResolvedOverride: null !== $override,
                 evaluatedCount: $evaluated,
                 scoredCount: $scored,
@@ -189,6 +229,8 @@ final readonly class GetCompetitionLeaderboardQuery
                 partialCount: max(0, $scored - $exact),
                 accuracyPercent: $evaluated > 0 ? (int) round($scored * 100 / $evaluated) : 0,
                 streak: $streakByUser[$userKey] ?? 0,
+                delta: $delta,
+                deltaIsNew: $deltaIsNew,
             );
         }
 
@@ -202,6 +244,22 @@ final readonly class GetCompetitionLeaderboardQuery
         return new CompetitionLeaderboardResult(
             rows: $finalRows,
             matchSourceCompleted: $competition->matchSource->isCompleted,
+            showDelta: $showDelta,
         );
+    }
+
+    /**
+     * „Posledních 7 dní": keep only evaluations whose match kicked off within the
+     * rolling 7-day window ending now. The boundary is an instant (both sides
+     * UTC-stored), so it is derived directly from the injected clock — the Prague
+     * framing only matters for day-labelled snapshots, not this rolling sum.
+     * All-time applies no window.
+     */
+    private function applyTimeWindow(QueryBuilder $qb, string $matchAlias, LeaderboardTimeFilter $filter, \DateTimeImmutable $now): void
+    {
+        if (LeaderboardTimeFilter::Last7Days === $filter) {
+            $qb->andWhere(sprintf('%s.kickoffAt >= :lbWindowStart', $matchAlias))
+                ->setParameter('lbWindowStart', $now->modify(self::WINDOW_LAST_7_DAYS));
+        }
     }
 }

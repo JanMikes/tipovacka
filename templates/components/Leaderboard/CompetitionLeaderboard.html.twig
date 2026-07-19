@@ -21,6 +21,7 @@
                 <thead class="lb-thead">
                     <tr>
                         <th class="w-12">Pozice</th>
+                        {% if this.leaderboard.showDelta %}<th class="text-right" title="Změna pořadí oproti předchozímu dennímu snímku">Δ</th>{% endif %}
                         <th>Hráč</th>
                         <th class="hidden text-right sm:table-cell">Úspěšnost</th>
                         <th class="hidden text-right sm:table-cell">Přesné</th>
@@ -36,6 +37,11 @@
                                 <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
                                 {% if row.isTieResolvedOverride %}<span class="ml-1 text-[10px] text-white/40" title="Rozřazeno organizátorem">(R)</span>{% endif %}
                             </td>
+                            {% if this.leaderboard.showDelta %}
+                                <td class="text-right">
+                                    <twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" />
+                                </td>
+                            {% endif %}
                             <td>
                                 <a href="{{ path('portal_competition_leaderboard_member', {competitionId: this.competition.id.toRfc4122, userId: row.userId.toRfc4122}) }}"
                                    class="flex items-center gap-3 hover:opacity-90">

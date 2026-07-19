@@ -497,7 +497,16 @@ label.required::after {
     .you-strip .col { display: flex; flex-direction: column; gap: 2px; }
     .you-strip .col .k { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
     .you-strip .col .v { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+    .you-strip .ys-delta { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 700; }
+    .you-strip .ys-delta-lbl { color: var(--fg-3); font-weight: 600; }
+    .you-strip .ys-delta.ys-delta-flat { color: var(--fg-3); font-weight: 600; }
     @media (max-width: 640px) { .you-strip .ys-divider { display: none; } }
+
+    /* ---- Leaderboard time-window tabs (DS zebricek Celkem/Týden/…) ---- */
+    .lb-tabs { display: inline-flex; gap: 4px; margin-bottom: 20px; padding: 4px; border: 1px solid var(--border-1); border-radius: 12px; background: rgba(255,255,255,0.03); }
+    .lb-tab { padding: 7px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--fg-3); transition: color 0.15s, background 0.15s; }
+    .lb-tab:hover { color: #fff; }
+    .lb-tab.active { color: #fff; background: var(--grad-accent-2); box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
 
     /* ---- Mini leaderboard row (DS dashboard-hrac .lb-row) ---- */
     .lb-row { display: grid; grid-template-columns: 40px 1fr 70px 64px; gap: 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-1); }
@@ -513,6 +522,12 @@ label.required::after {
     .lb-streak { color: var(--color-win); font-weight: 700; font-variant-numeric: tabular-nums; }
     .lb-delta-up { color: #6fe4b5; font-weight: 700; font-variant-numeric: tabular-nums; }
     .lb-delta-down { color: #ff8ea1; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .lb-delta-new { color: var(--color-accent-300); font-weight: 700; font-size: 11px; }
+    /* Compact Δ pill for the dashboard mini-leaderboard (screenshot 2 „+9"/„−4"). */
+    .lb-delta-chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+    .lb-delta-chip.up { color: #6fe4b5; background: rgba(111,228,181,0.12); }
+    .lb-delta-chip.down { color: #ff8ea1; background: rgba(255,142,161,0.12); }
+    .lb-delta-chip.new { color: var(--color-accent-300); background: rgba(70,153,208,0.14); }
 
     /* ---- Podium ---- */
     .podium { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 16px; align-items: end; }

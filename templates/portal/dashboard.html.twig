@@ -113,6 +113,7 @@
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ row.nickname }}</span>
                                     {% if is_me %}<span class="lb-ty">TY</span>{% endif %}
+                                    <twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" variant="chip" />
                                 </span>
                             </a>
                             <span class="text-right">
@@ -130,6 +131,7 @@
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ mini_me_row.nickname }}</span>
                                     <span class="lb-ty">TY</span>
+                                    <twig:Leaderboard:Delta :delta="mini_me_row.delta" :isNew="mini_me_row.deltaIsNew" variant="chip" />
                                 </span>
                             </a>
                             <span class="text-right">

@@ -1,0 +1,42 @@
+{#
+    Leaderboard Δ (rank movement vs the previous snapshot day). Single source of
+    truth for every surface: full table (variant 'cell'), dashboard mini-board
+    (variant 'chip'). delta: ?int (positive = climbed, null = no history), isNew:
+    member absent from the previous snapshot.
+
+    Icons: lucide chevron-up / chevron-down / minus / sparkles.
+#}
+{% props delta = null, isNew = false, variant = 'cell' %}
+{% if variant == 'chip' %}
+    {% if delta is not null and delta > 0 %}
+        <span class="lb-delta-chip up">+{{ delta }}</span>
+    {% elseif delta is not null and delta < 0 %}
+        <span class="lb-delta-chip down">−{{ delta|abs }}</span>
+    {% elseif isNew %}
+        <span class="lb-delta-chip new">nový</span>
+    {% endif %}
+{% else %}
+    {% if delta is not null and delta > 0 %}
+        <span class="lb-delta-up inline-flex items-center justify-end gap-0.5" title="Vzestup o {{ delta }}">
+            <twig:ux:icon name="lucide:chevron-up" class="h-3.5 w-3.5" />{{ delta }}
+        </span>
+    {% elseif delta is not null and delta < 0 %}
+        <span class="lb-delta-down inline-flex items-center justify-end gap-0.5" title="Propad o {{ delta|abs }}">
+            <twig:ux:icon name="lucide:chevron-down" class="h-3.5 w-3.5" />{{ delta|abs }}
+        </span>
+    {% elseif isNew %}
+        <span class="lb-delta-new inline-flex items-center justify-end gap-0.5" title="Nový v žebříčku">
+            <twig:ux:icon name="lucide:sparkles" class="h-3.5 w-3.5" />nový
+        </span>
+    {% elseif delta is not null %}
+        {# delta == 0: real „beze změny" (has history) #}
+        <span class="inline-flex items-center justify-end gap-0.5 font-bold tabular-nums text-white/35" title="Beze změny">
+            <twig:ux:icon name="lucide:minus" class="h-3.5 w-3.5" />0
+        </span>
+    {% else %}
+        {# null + not new: no snapshot history yet — a neutral dot #}
+        <span class="inline-flex items-center justify-end text-white/25" title="Zatím bez historie">
+            <twig:ux:icon name="lucide:minus" class="h-3.5 w-3.5" />
+        </span>
+    {% endif %}
+{% endif %}

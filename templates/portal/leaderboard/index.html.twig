@@ -81,6 +81,16 @@
             <div class="ys-hero">
                 <span class="lbl">Tvoje pozice</span>
                 <span class="pos">{{ me_row.rank }}.<small>/ {{ player_count }}</small></span>
+                {% if me_row.deltaIsNew %}
+                    <span class="ys-delta"><span class="lb-delta-new">Nový v žebříčku</span></span>
+                {% elseif me_row.delta is not null and me_row.delta != 0 %}
+                    <span class="ys-delta">
+                        <twig:Leaderboard:Delta :delta="me_row.delta" :isNew="false" />
+                        <span class="ys-delta-lbl">od minula</span>
+                    </span>
+                {% elseif me_row.delta is not null %}
+                    <span class="ys-delta ys-delta-flat">Beze změny od minula</span>
+                {% endif %}
             </div>
             <div class="ys-divider"></div>
             <div class="col">
@@ -119,6 +129,18 @@
         <twig:Leaderboard:Podium :rows="podium_rows" />
     {% endif %}
 
-    {{ component('Leaderboard:CompetitionLeaderboard', {competition: competition}) }}
+    {# Time-window tabs. Only implemented windows are enum cases, so only they
+       render — a future window is one case + one query branch (S12 ships
+       Celkem + Posledních 7 dní). #}
+    <div class="lb-tabs" role="tablist" aria-label="Časové období">
+        {% for f in time_filters %}
+            <a href="{{ path('portal_competition_leaderboard', {competitionId: competition.id.toRfc4122, obdobi: f.value}) }}"
+               class="lb-tab{{ f.value == active_filter.value ? ' active' }}"
+               role="tab" data-turbo="false"
+               {{ f.value == active_filter.value ? 'aria-selected="true"' : 'aria-selected="false"' }}>{{ f.label }}</a>
+        {% endfor %}
+    </div>
+
+    {{ component('Leaderboard:CompetitionLeaderboard', {competition: competition, filter: active_filter.value}) }}
 </div>
 {% endblock %}

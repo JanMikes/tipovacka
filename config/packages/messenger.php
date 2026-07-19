@@ -54,6 +54,7 @@ return App::config([
                 'Symfony\\Component\\Notifier\\Message\\SmsMessage' => 'async',
                 'App\\Command\\RecalculateCompetitionPoints\\RecalculateCompetitionPointsCommand' => 'async',
                 'App\\Command\\SettleUncoveredPremiumCharges\\SettleUncoveredPremiumChargesCommand' => 'async',
+                'App\\Command\\CaptureLeaderboardSnapshots\\CaptureLeaderboardSnapshotsCommand' => 'async',
             ],
         ],
     ],

@@ -10,6 +10,7 @@ use App\Enum\SportMatchState;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
 use App\Repository\GuessEvaluationRepository;
+use App\Repository\LeaderboardSnapshotRepository;
 use App\Repository\UserRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Competition\CompetitionMatchProvider;
@@ -24,6 +25,7 @@ final readonly class GetMemberLeaderboardBreakdownQuery
         private UserRepository $userRepository,
         private GuessEvaluationRepository $evaluationRepository,
         private CompetitionRuleConfigurationRepository $configurationRepository,
+        private LeaderboardSnapshotRepository $snapshotRepository,
         private RuleRegistry $ruleRegistry,
         private CompetitionMatchProvider $matchProvider,
         private EntityManagerInterface $entityManager,
@@ -136,11 +138,22 @@ final readonly class GetMemberLeaderboardBreakdownQuery
             );
         }
 
+        $progress = [];
+
+        foreach ($this->snapshotRepository->listDaysForUser($competition->id, $user->id) as $snapshotDay) {
+            $progress[] = new MemberProgressDay(
+                day: $snapshotDay['day'],
+                rank: $snapshotDay['rank'],
+                points: $snapshotDay['points'],
+            );
+        }
+
         return new MemberBreakdownResult(
             userId: $user->id,
             nickname: $user->displayName,
             totalPoints: $totalPoints,
             rows: $rows,
+            progress: $progress,
         );
     }
 }

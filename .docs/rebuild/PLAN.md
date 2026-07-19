@@ -124,9 +124,9 @@ disabled for global competitions; rejoining a paid global competition charges th
 | S08 | Create-competition wizard | done | 9b49a1d |
 | S09 | Global competitions & entry fees | done | d5c89a1 |
 | S10 | Premium & boosts commerce (+ scheduler infra) | done | c969e43 |
-| S11 | Notification center | done | (this commit) |
-| S12 | Leaderboard delta & snapshots | in-progress | |
-| S13 | Admin consolidation, docs, e2e, final review | todo | |
+| S11 | Notification center | done | ed27a54 |
+| S12 | Leaderboard delta & snapshots | done | (this commit) |
+| S13 | Admin consolidation, docs, e2e, final review | in-progress | |
 
 Statuses: `todo` → `in-progress` → `done (sha)`. Update immediately after each transition.
 

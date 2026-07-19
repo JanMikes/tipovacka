@@ -110,6 +110,32 @@ final class GuessEvaluationRepository
     }
 
     /**
+     * Whether the competition has ≥1 (non-voided) evaluation newer than `$since`
+     * — the daily snapshot sweep's cheap "did standings possibly move since the
+     * last snapshot?" gate. `$since` null (never snapshotted) ⇒ "any evaluation
+     * at all". Strictly after, so an evaluation exactly at the last snapshot
+     * moment does not re-trigger a capture.
+     */
+    public function hasAnyForCompetitionSince(Uuid $competitionId, ?\DateTimeImmutable $since): bool
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('1')
+            ->from(GuessEvaluation::class, 'e')
+            ->innerJoin('e.guess', 'g')
+            ->where('g.competition = :competitionId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('competitionId', $competitionId)
+            ->setMaxResults(1);
+
+        if (null !== $since) {
+            $qb->andWhere('e.evaluatedAt > :since')
+                ->setParameter('since', $since);
+        }
+
+        return null !== $qb->getQuery()->getOneOrNullResult();
+    }
+
+    /**
      * Per-(competition, user) points scored on a single match — the input for the
      * `match_evaluated` notification (points from THIS match + which competitions
      * to look up rank in). Only active (non-voided) guesses count.

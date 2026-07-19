@@ -10,12 +10,14 @@ final readonly class MemberBreakdownResult
 {
     /**
      * @param list<MemberMatchBreakdown> $rows
+     * @param list<MemberProgressDay>    $progress
      */
     public function __construct(
         public Uuid $userId,
         public string $nickname,
         public int $totalPoints,
         public array $rows,
+        public array $progress = [],
     ) {
     }
 }

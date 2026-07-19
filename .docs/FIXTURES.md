@@ -333,6 +333,39 @@ block, clear of the identity pool). Content is pre-rendered Czech (title/body/ur
 So VERIFIED_USER always has **exactly one unread** notification — bell badge / center
 mark-read flows assert on that. Both carry a `url` pointing at the competition leaderboard.
 
+## Leaderboard snapshots (`LeaderboardSnapshot`, table `leaderboard_snapshots`) — S12
+
+Seeded for **VERIFIED_COMPETITION** (own `019a1111-…` block, clear of the identity pool).
+`$now = 2025-06-15 12:00 UTC` ⇒ Prague today = 2025-06-15, „yesterday" = 2025-06-14.
+VERIFIED_COMPETITION has **no finished matches** (its only match is Scheduled), so its
+live board is all-zeros (both members tied rank 1). The snapshots mirror that reality —
+**0 points, rank 1** — so no screen ever shows points the board cannot justify.
+
+| Constant                         | ID                                     | Day        | User           | Rank | Points |
+|----------------------------------|----------------------------------------|------------|----------------|------|--------|
+| `SNAPSHOT_YESTERDAY_VERIFIED_ID` | `019a1111-0000-7000-8000-000000000001` | 2025-06-14 | VERIFIED_USER  | 1    | 0      |
+| `SNAPSHOT_TODAY_VERIFIED_ID`     | `019a1111-0000-7000-8000-000000000003` | 2025-06-15 | VERIFIED_USER  | 1    | 0      |
+| `SNAPSHOT_TODAY_ANONYMOUS_ID`    | `019a1111-0000-7000-8000-000000000004` | 2025-06-15 | ANONYMOUS_USER | 1    | 0      |
+
+`day` is a Prague-midnight DATE; the yesterday row carries `createdAt = now − 1 day`,
+today's `createdAt = now`. VERIFIED_USER (owner) is present on both days; ANONYMOUS_USER
+joined at `$now` (2025-06-15) so it appears only on today's snapshot. Δ compares today's
+rank to the **latest day strictly before today** (2025-06-14): VERIFIED_USER is **beze
+změny** (rank 1 → 1), ANONYMOUS_USER is **„nový"** (absent from the 2025-06-14 baseline).
+The 2025-06-15 rows feed the member breakdown „Vývoj" list — they are NOT used for
+today's Δ.
+
+Because VERIFIED_COMPETITION has no evaluations, the daily sweep skips it (nothing new
+since its last snapshot), so its **three** seeded rows stay intact across a sweep. No
+other AppFixtures competition has snapshots, so their leaderboards render a neutral Δ dot.
+
+**DevFixtures** (dev browser only) adds the rich, moving Δ demo: a genuine EARLIER
+standing of the **VŠCHT tipovačka** competition, dated 2025-06-09 — the board as it stood
+after only the first finished Fortuna match (Sparta 3:1, 2025-06-08), before the second
+(Plzeň 2:2, 2025-06-10) reshuffled it. Being a real partial-sum state, every seeded total
+is ≤ that member's current total, so the leaderboard Δ shows honest movement and the
+member „Vývoj" never exceeds the live „Celkem bodů".
+
 ## Notification preferences (`NotificationPreference`, table `notification_preferences`)
 
 | Constant                     | ID                                     | User          | Type           | inApp | email |

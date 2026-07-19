@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scheduler;
 
+use App\Command\CaptureDailyLeaderboardSnapshots\CaptureDailyLeaderboardSnapshotsCommand;
 use App\Command\ReconcilePremiumCompetitions\ReconcilePremiumCompetitionsCommand;
 use App\Command\SendGuessReminders\SendGuessRemindersCommand;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -16,7 +17,7 @@ use Symfony\Contracts\Cache\CacheInterface;
  * The app's single recurring schedule (transport `scheduler_default`, consumed
  * by the prod worker alongside `async` — see compose.yaml). S10 wires premium
  * reconciliation (every 5 minutes); S11 adds the hourly guess-reminder sweep.
- * S12 appends its own RecurringMessages here (leaderboard snapshots).
+ * S12 adds the daily 03:00 Europe/Prague leaderboard-snapshot sweep.
  *
  * Stateful (cache-backed) so a worker that was briefly down runs only the last
  * missed tick instead of replaying every skipped one.
@@ -37,6 +38,9 @@ final class MainSchedule implements ScheduleProviderInterface
             ->add(
                 RecurringMessage::every('5 minutes', new ReconcilePremiumCompetitionsCommand()),
                 RecurringMessage::every('1 hour', new SendGuessRemindersCommand()),
+                // 03:00 Prague: quiet hour, after any late-evening match has
+                // finished + evaluated, so the day's final standings are frozen.
+                RecurringMessage::cron('0 3 * * *', new CaptureDailyLeaderboardSnapshotsCommand(), new \DateTimeZone('Europe/Prague')),
             );
     }
 }

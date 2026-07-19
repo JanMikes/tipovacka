@@ -21,6 +21,14 @@ final readonly class LeaderboardRow
         public int $partialCount = 0,
         public int $accuracyPercent = 0,
         public int $streak = 0,
+        /**
+         * Rank movement vs the latest snapshot day strictly before today
+         * (positive = climbed). Null when there is no snapshot history at all
+         * (render a neutral dot) or under a time filter (Δ is all-time only).
+         */
+        public ?int $delta = null,
+        /** True when snapshot history exists but this member is absent from it. */
+        public bool $deltaIsNew = false,
     ) {
     }
 }

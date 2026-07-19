@@ -14,6 +14,7 @@ use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\GuessScorer;
+use App\Entity\LeaderboardSnapshot;
 use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
@@ -234,6 +235,17 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string NOTIFICATION_UNREAD_ID = '019a0000-0000-7000-8000-0000000000f1';
     public const string NOTIFICATION_READ_ID = '019a0000-0000-7000-8000-0000000000f2';
     public const string NOTIFICATION_PREFERENCE_ID = '019a0000-0000-7000-8000-0000000000f3';
+
+    // S12 leaderboard snapshots (own 019a1111-… block, clear of the identity pool).
+    // VERIFIED_COMPETITION has no finished matches ⇒ its live board is all-zeros
+    // (both members tied rank 1), so the seeded snapshots stay all-zeros too — a
+    // coherent history, never a fabricated standing. VERIFIED_USER (owner) is on
+    // both days; ANONYMOUS_USER joined at $now (2025-06-15), so it appears only on
+    // today's snapshot ⇒ „nový v žebříčku" today. The rich delta demo with real
+    // movement lives in DevFixtures (an already-evaluated competition).
+    public const string SNAPSHOT_YESTERDAY_VERIFIED_ID = '019a1111-0000-7000-8000-000000000001';
+    public const string SNAPSHOT_TODAY_VERIFIED_ID = '019a1111-0000-7000-8000-000000000003';
+    public const string SNAPSHOT_TODAY_ANONYMOUS_ID = '019a1111-0000-7000-8000-000000000004';
 
     public const string DEFAULT_PASSWORD = 'password';
 
@@ -893,6 +905,46 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             type: NotificationType::MatchEvaluated,
             inApp: true,
             email: false,
+            createdAt: $now,
+        ));
+
+        // ── Leaderboard snapshots (S12) ──────────────────────────────────────
+        // $now is 2025-06-15 12:00 UTC ⇒ Prague today = 2025-06-15, „yesterday" =
+        // 2025-06-14. VERIFIED_COMPETITION has no finished matches, so its live
+        // leaderboard is all-zeros (both members tied rank 1); the snapshots below
+        // mirror that reality — 0 points, rank 1 — so no screen ever shows points
+        // the board cannot justify. VERIFIED_USER (owner) is present on both days;
+        // ANONYMOUS_USER joined today, so it is absent from the 2025-06-14 baseline
+        // ⇒ today's board flags it „nový v žebříčku", while VERIFIED_USER is „beze
+        // změny". Δ compares today's rank to the latest day strictly before today.
+        $yesterday = new \DateTimeImmutable('2025-06-14 00:00:00', new \DateTimeZone('Europe/Prague'));
+        $today = new \DateTimeImmutable('2025-06-15 00:00:00', new \DateTimeZone('Europe/Prague'));
+
+        $manager->persist(new LeaderboardSnapshot(
+            id: Uuid::fromString(self::SNAPSHOT_YESTERDAY_VERIFIED_ID),
+            competition: $verifiedCompetition,
+            user: $verified,
+            day: $yesterday,
+            points: 0,
+            rank: 1,
+            createdAt: $now->modify('-1 day'),
+        ));
+        $manager->persist(new LeaderboardSnapshot(
+            id: Uuid::fromString(self::SNAPSHOT_TODAY_VERIFIED_ID),
+            competition: $verifiedCompetition,
+            user: $verified,
+            day: $today,
+            points: 0,
+            rank: 1,
+            createdAt: $now,
+        ));
+        $manager->persist(new LeaderboardSnapshot(
+            id: Uuid::fromString(self::SNAPSHOT_TODAY_ANONYMOUS_ID),
+            competition: $verifiedCompetition,
+            user: $anonymous,
+            day: $today,
+            points: 0,
+            rank: 1,
             createdAt: $now,
         ));
 

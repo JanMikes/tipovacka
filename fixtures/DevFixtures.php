@@ -9,6 +9,7 @@ use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\LeaderboardSnapshot;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
@@ -332,6 +333,40 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         foreach ([$users[22], $users[17], $users[23]] as $memberIndex => $member) {
             [$gh, $ga] = $guessPattern[($memberIndex + 2) % count($guessPattern)];
             $this->createEvaluatedGuess($manager, $member, $firmaFinished, $firmaB, $gh, $ga, $now);
+        }
+
+        // -- Leaderboard snapshots (S12 delta demo) -----------------------------
+        // A genuine EARLIER standing of the VŠCHT competition: the board exactly as
+        // it stood after only the FIRST finished Fortuna match (Sparta 3:1 Slavia,
+        // 2025-06-08), captured on 2025-06-09 — before the second finished match
+        // (Plzeň 2:2 Slovácko, 2025-06-10) reshuffled it. Because it is a real
+        // partial-sum state, every seeded point total is ≤ that member's current
+        // total, so the member „Vývoj" list never exceeds the live „Celkem bodů",
+        // and the leaderboard Δ shows honest movement (current board vs this day).
+        // The other dev competitions carry no snapshot ⇒ a neutral „bez historie"
+        // dot, never a fabricated delta.
+        $vsChtAfterFirstMatch = [
+            [$verified, 1, 4],
+            [$users[1], 1, 4],
+            [$users[10], 3, 3],
+            [$users[9], 4, 1],
+            [$users[11], 4, 1],
+            [$users[12], 6, 0],
+            [$users[13], 6, 0],
+        ];
+        $snapshotDay = new \DateTimeImmutable('2025-06-09 00:00:00', new \DateTimeZone('Europe/Prague'));
+        $snapshotCreatedAt = new \DateTimeImmutable('2025-06-09 03:00:00 UTC');
+
+        foreach ($vsChtAfterFirstMatch as [$member, $rank, $points]) {
+            $manager->persist(new LeaderboardSnapshot(
+                id: Uuid::v7(),
+                competition: $vsChtCompetition,
+                user: $member,
+                day: $snapshotDay,
+                points: $points,
+                rank: $rank,
+                createdAt: $snapshotCreatedAt,
+            ));
         }
 
         $manager->flush();

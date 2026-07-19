@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Leaderboard;
 
 use App\Entity\User;
+use App\Enum\LeaderboardTimeFilter;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\ListMyCompetitions\ListMyCompetitions;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Voter\LeaderboardVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -29,7 +31,7 @@ final class CompetitionLeaderboardController extends AbstractController
     ) {
     }
 
-    public function __invoke(string $competitionId): Response
+    public function __invoke(string $competitionId, Request $request): Response
     {
         $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
         $this->denyAccessUnlessGranted(LeaderboardVoter::VIEW, $competition);
@@ -38,10 +40,23 @@ final class CompetitionLeaderboardController extends AbstractController
         $user = $this->getUser();
         $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(userId: $user->id));
 
-        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
+        // Everything on this page reads from ONE board resolved for the active
+        // filter — the main table (the Live Component), the podium, and the
+        // „Tvoje pozice" strip — so a windowed tab never shows a strip rank that
+        // contradicts the re-ranked table. Under a window the board carries no Δ
+        // (snapshots are all-time only), so the strip's „od minula" movement
+        // simply does not render there.
+        $filter = LeaderboardTimeFilter::fromRequest($request->query->getString('obdobi'));
+        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(
+            competitionId: $competition->id,
+            filter: $filter,
+        ));
 
+        // The winner banner is the competition's overall champion — an all-time
+        // fact — so it is only shown on the all-time board, never derived from a
+        // windowed (e.g. „posledních 7 dní") re-ranking.
         $winner = null;
-        if ($competition->matchSource->isCompleted) {
+        if ($competition->matchSource->isCompleted && LeaderboardTimeFilter::AllTime === $filter) {
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;
@@ -57,8 +72,9 @@ final class CompetitionLeaderboardController extends AbstractController
             $podiumRows = array_slice($leaderboard->rows, 0, 3);
         }
 
-        // "Tvoje pozice" strip — the current user's row + point gaps to the top tiers
-        // (Δ rank-change is deferred, so it is intentionally omitted).
+        // "Tvoje pozice" strip — the current user's row (rank/points/Δ) + point
+        // gaps to the top tiers, all taken from the filtered board above so the
+        // strip stays consistent with the table.
         $meRow = null;
         foreach ($leaderboard->rows as $row) {
             if ($row->userId->equals($user->id)) {
@@ -88,6 +104,8 @@ final class CompetitionLeaderboardController extends AbstractController
             'player_count' => count($leaderboard->rows),
             'gap_to_top3' => $gapToTop3,
             'gap_to_top5' => $gapToTop5,
+            'active_filter' => $filter,
+            'time_filters' => LeaderboardTimeFilter::cases(),
         ]);
     }
 }

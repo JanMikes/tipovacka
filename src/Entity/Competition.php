@@ -10,6 +10,7 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Event\CompetitionCreated;
 use App\Event\CompetitionDeleted;
+use App\Event\CompetitionEnded;
 use App\Event\CompetitionMatchSelectionChanged;
 use App\Event\CompetitionPinRegenerated;
 use App\Event\CompetitionPinRevoked;
@@ -397,8 +398,10 @@ class Competition implements EntityWithEvents, SoftDeletable
 
     /**
      * S11 one-shot guard: stamps that „competition ended" notifications were
-     * delivered. Idempotent; records NO event — it is a delivery marker, not a
-     * domain fact.
+     * delivered. Idempotent. Records {@see CompetitionEnded} the first time the
+     * competition is detected as over — the single moment „the competition is
+     * finished" becomes a domain fact — so S12 can freeze a final leaderboard
+     * snapshot independently of the S11 notification side effect.
      */
     public function markEndedNotified(\DateTimeImmutable $now): void
     {
@@ -408,6 +411,14 @@ class Competition implements EntityWithEvents, SoftDeletable
 
         $this->endedNotifiedAt = $now;
         $this->updatedAt = $now;
+
+        // One-shot: fires exactly when the competition is first detected as over,
+        // so a final leaderboard snapshot can be captured (S12) independently of
+        // the notification side effect (S11).
+        $this->recordThat(new CompetitionEnded(
+            competitionId: $this->id,
+            occurredOn: $now,
+        ));
     }
 
     /**
