@@ -17,6 +17,8 @@ final readonly class GetBoostPanelResult
         public int $balance,
         public array $ownedTypes,
         public int $tipChangeOffsetMinutes,
+        public bool $entitledToDistribution = false,
+        public bool $entitledToOthersTips = false,
     ) {
     }
 
@@ -50,5 +52,22 @@ final readonly class GetBoostPanelResult
     public function canAfford(BoostType $type): bool
     {
         return $this->balance >= $type->price();
+    }
+
+    /**
+     * The viewer already gets the distribution bar for FREE (manager/admin
+     * auto-entitlement) without owning a boost — hide the buy offer entirely.
+     * A member who OWNS the entitling boost is NOT auto-entitled here (their row
+     * shows as owned/superseded instead).
+     */
+    public function autoEntitledToDistribution(): bool
+    {
+        return $this->entitledToDistribution && !$this->hasDistribution();
+    }
+
+    /** As {@see autoEntitledToDistribution} for concrete member tips. */
+    public function autoEntitledToOthersTips(): bool
+    {
+        return $this->entitledToOthersTips && !$this->hasOthersTips();
     }
 }

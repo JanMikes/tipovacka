@@ -7,6 +7,7 @@ namespace App\Controller\Portal\Competition;
 use App\Command\EnablePremium\EnablePremiumCommand;
 use App\Entity\User;
 use App\Exception\InsufficientCredits;
+use App\Exception\PremiumAlreadyEnabled;
 use App\Repository\CompetitionRepository;
 use App\Voter\CompetitionVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,6 +59,12 @@ final class EnablePremiumController extends AbstractController
                 $this->addFlash('error', $inner->getMessage());
 
                 return $this->redirectToRoute('portal_credits');
+            }
+
+            if ($inner instanceof PremiumAlreadyEnabled) {
+                $this->addFlash('info', 'Soutěž už je prémiová.');
+
+                return $this->redirectToRoute('portal_competition_premium', ['id' => $competition->id->toRfc4122()]);
             }
 
             throw $handlerFailed;

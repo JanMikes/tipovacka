@@ -74,6 +74,22 @@ final class BoostFlowTest extends WebTestCase
         self::assertCount(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
     }
 
+    public function testManagerSidebarHidesFreeVisibilityBoostsButOffersTipChange(): void
+    {
+        // ADMIN owns BOOSTS_COMPETITION ⇒ auto-entitled to visibility. The sidebar
+        // must NOT offer Lišta/Konkrétní (already free), but tip_change stays buyable.
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+        $this->grant(AppFixtures::ADMIN_ID, 100);
+
+        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_distribution"]'));
+        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="others_tips"]'));
+        self::assertCount(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
+    }
+
     public function testBuyBoostFromSidebarWritesRowAndRedirects(): void
     {
         $client = static::createClient();
@@ -89,6 +105,48 @@ final class BoostFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'je aktivní');
 
         self::assertInstanceOf(BoostPurchase::class, $this->activeTipChange(AppFixtures::SECOND_VERIFIED_USER_ID));
+    }
+
+    public function testDoubleBuyOfOwnedBoostShowsFriendlyMessageWithoutError(): void
+    {
+        // Double-click on „Koupit": SECOND_VERIFIED_USER already owns OthersTips
+        // (fixture). A repeat purchase of it must never 500 — a friendly flash and
+        // still exactly one active OthersTips row. The boost-purchase CSRF token is
+        // shared per competition, so it is grabbed from the rendered tip_change form.
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+
+        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $token = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[name="_token"]')->first()->attr('value');
+
+        $client->request('POST', self::BOOSTS_PURCHASE, [
+            '_token' => $token,
+            'type' => 'others_tips',
+            '_redirect' => self::BOOSTS_DETAIL,
+        ]);
+
+        self::assertResponseRedirects(self::BOOSTS_DETAIL);
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'už v této soutěži máte');
+
+        // No duplicate row, balance untouched (nothing charged).
+        $em = $this->testEntityManager();
+        $em->clear();
+        $active = $em->createQueryBuilder()
+            ->select('COUNT(b.id)')
+            ->from(BoostPurchase::class, 'b')
+            ->where('b.user = :user')
+            ->andWhere('b.competition = :competition')
+            ->andWhere('b.type = :type')
+            ->andWhere('b.refundedAt IS NULL')
+            ->setParameter('user', Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID))
+            ->setParameter('competition', Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID))
+            ->setParameter('type', BoostType::OthersTips)
+            ->getQuery()
+            ->getSingleScalarResult();
+        self::assertSame(1, (int) $active);
     }
 
     public function testPremiumCompetitionGuessPageShowsPremiumPillNotBuyForm(): void

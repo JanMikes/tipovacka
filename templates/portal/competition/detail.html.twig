@@ -470,7 +470,7 @@
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Zapnout prémium"
-                                data-confirm-message-value="Zaplatíte za celou skupinu — za každého člena se z vaší peněženky strhne poplatek. Za nově příchozí platíte při jejich připojení."
+                                data-confirm-message-value="{% if premium_enable_member_count > 0 %}Z vaší peněženky se teď strhne {{ (premium_enable_member_count * premium_per_player)|credits }} ({{ premium_per_player|credits }} × {{ premium_enable_member_count }} {{ premium_enable_member_count == 1 ? 'hráč' : (premium_enable_member_count >= 2 and premium_enable_member_count <= 4 ? 'hráči' : 'hráčů') }}). {% endif %}Zaplatíte za celou skupinu — za nově příchozí platíte při jejich připojení."
                                 data-confirm-confirm-label-value="Ano, zapnout prémium">
                                 <input type="hidden" name="_token" value="{{ csrf_token('competition_premium_enable_' ~ competition.id.toRfc4122) }}">
                                 <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">

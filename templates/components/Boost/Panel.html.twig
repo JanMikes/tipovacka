@@ -25,6 +25,10 @@
                             or (type.value == 'others_tips' and p.hasOthersTips)
                             or (type.value == 'tip_change' and p.hasTipChange) %}
                         {% set superseded = type.value == 'tip_distribution' and p.hasOthersTips and not p.hasExplicitDistribution %}
+                        {# Manager/admin already sees tips for free → never sell them a visibility boost. #}
+                        {% set autoEntitled = (type.value == 'tip_distribution' and p.autoEntitledToDistribution)
+                            or (type.value == 'others_tips' and p.autoEntitledToOthersTips) %}
+                        {% if not autoEntitled %}
                         <div class="px-6 py-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
@@ -52,7 +56,7 @@
                                         <form method="post" action="{{ path('portal_competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
                                             data-controller="confirm"
                                             data-confirm-variant-value="warning"
-                                            data-confirm-title-value="Koupit „{{ type.label }}"
+                                            data-confirm-title-value="Koupit „{{ type.label }}“"
                                             data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
                                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
@@ -72,6 +76,7 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 <div class="flex items-center justify-between border-t border-white/10 px-6 py-3 text-xs">
@@ -115,7 +120,7 @@
                         <form method="post" action="{{ path('portal_competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
-                            data-confirm-title-value="Odemknout „{{ type.label }}"
+                            data-confirm-title-value="Odemknout „{{ type.label }}“"
                             data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">

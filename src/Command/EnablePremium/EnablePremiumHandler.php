@@ -8,8 +8,10 @@ use App\Entity\BoostPurchase;
 use App\Entity\Competition;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\Membership;
+use App\Enum\CompetitionMonetization;
 use App\Enum\CreditTransactionType;
 use App\Exception\InsufficientCredits;
+use App\Exception\PremiumAlreadyEnabled;
 use App\Repository\BoostPurchaseRepository;
 use App\Repository\CompetitionPremiumChargeRepository;
 use App\Repository\CompetitionRepository;
@@ -54,6 +56,15 @@ final readonly class EnablePremiumHandler
     public function __invoke(EnablePremiumCommand $command): void
     {
         $competition = $this->competitionRepository->get($command->competitionId);
+
+        // Idempotency guard BEFORE any wallet movement: enabling charges the owner
+        // N × PREMIUM_PER_PLAYER, so re-invoking on an already-premium competition
+        // would debit them again with no new rows. Re-enabling is only meaningful
+        // from a non-premium state (e.g. after a downgrade to boosts).
+        if (CompetitionMonetization::Premium === $competition->monetization) {
+            throw PremiumAlreadyEnabled::forCompetition($competition->id);
+        }
+
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         // Refund every active boost purchase to its buyer (BoostRefund ledger row

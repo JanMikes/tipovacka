@@ -62,9 +62,19 @@ final readonly class ChargePremiumOnMemberJoinedHandler
         $member = $this->userRepository->get($event->userId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
-        $wallet = $this->walletProvider->getForUpdateOrCreate($competition->owner, $now);
-
         $charge = $this->chargeRepository->findByCompetitionAndMember($competition->id, $member->id);
+
+        // Rejoin onto an already-paid slot: the (competition, member) charge row
+        // can be refunded only ONCE, and leaving never refunds it — so the owner
+        // has already paid for this slot and never got the money back. Charging
+        // again here would debit them a second time against that single refundable
+        // row (permanent PREMIUM_PER_PLAYER loss + broken refund symmetry). The
+        // paid slot stands; do nothing. See .docs/DOMAIN.md §Monetization.
+        if (null !== $charge && $charge->isCharged) {
+            return;
+        }
+
+        $wallet = $this->walletProvider->getForUpdateOrCreate($competition->owner, $now);
 
         if (null === $charge) {
             $charge = new CompetitionPremiumCharge(
@@ -76,7 +86,7 @@ final readonly class ChargePremiumOnMemberJoinedHandler
             );
             $this->chargeRepository->save($charge);
         } else {
-            // Rejoin — reuse the existing row for a fresh attempt.
+            // Rejoin onto an Uncovered/Refunded row — reuse it for a fresh attempt.
             $charge->reactivate(PricingConfig::PREMIUM_PER_PLAYER, $now);
         }
 

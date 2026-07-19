@@ -46,6 +46,67 @@ final class ReconcilePremiumCompetitionsHandlerTest extends IntegrationTestCase
         ));
     }
 
+    private function grantAdmin(int $amount): void
+    {
+        $this->commandBus()->dispatch(new AdjustUserCreditsCommand(
+            userId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            amount: $amount,
+            note: 'Test dotace',
+            adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
+        ));
+    }
+
+    private function enablePremiumPublic(): void
+    {
+        $this->commandBus()->dispatch(new EnablePremiumCommand(
+            editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
+        ));
+    }
+
+    private function joinPublic(string $userId): void
+    {
+        $this->commandBus()->dispatch(new JoinCompetitionByLinkCommand(
+            userId: Uuid::fromString($userId),
+            token: AppFixtures::PUBLIC_COMPETITION_LINK_TOKEN,
+        ));
+    }
+
+    /**
+     * @return list<CreditTransaction>
+     */
+    private function publicRefunds(): array
+    {
+        /** @var list<CreditTransaction> $rows */
+        $rows = $this->entityManager()->createQueryBuilder()
+            ->select('t')
+            ->from(CreditTransaction::class, 't')
+            ->where('t.type = :type')
+            ->andWhere('t.competition = :competition')
+            ->setParameter('type', CreditTransactionType::PremiumRefund)
+            ->setParameter('competition', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
+            ->getQuery()
+            ->getResult();
+
+        return $rows;
+    }
+
+    private function publicCharge(string $userId): CompetitionPremiumCharge
+    {
+        $charge = $this->entityManager()->createQueryBuilder()
+            ->select('c')
+            ->from(CompetitionPremiumCharge::class, 'c')
+            ->where('c.competition = :competition')
+            ->andWhere('c.member = :member')
+            ->setParameter('competition', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
+            ->setParameter('member', Uuid::fromString($userId))
+            ->getQuery()
+            ->getOneOrNullResult();
+        self::assertInstanceOf(CompetitionPremiumCharge::class, $charge);
+
+        return $charge;
+    }
+
     private function competition(string $id): Competition
     {
         $competition = $this->entityManager()->find(Competition::class, Uuid::fromString($id));
@@ -65,17 +126,6 @@ final class ReconcilePremiumCompetitionsHandlerTest extends IntegrationTestCase
             ->getOneOrNullResult();
 
         return $wallet instanceof CreditWallet ? $wallet->balance : 0;
-    }
-
-    private function premiumRefundCount(): int
-    {
-        return (int) $this->entityManager()->createQueryBuilder()
-            ->select('COUNT(t.id)')
-            ->from(CreditTransaction::class, 't')
-            ->where('t.type = :type')
-            ->setParameter('type', CreditTransactionType::PremiumRefund)
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 
     private function recorded(): RecordedDomainEvents
@@ -113,33 +163,47 @@ final class ReconcilePremiumCompetitionsHandlerTest extends IntegrationTestCase
         self::assertSame(CompetitionMonetization::Premium, $this->competition(self::PREMIUM_ID)->monetization);
     }
 
-    public function testAnyUncoveredRefundsAllAndDowngrades(): void
+    public function testAnyUncoveredRefundsAllChargedAndDowngradesWithRealLedgerSymmetry(): void
     {
-        $this->joinUncovered();
-        $this->recorded()->reset();
+        // FAITHFUL money path — a CLEAN premium competition built via real commands
+        // (PUBLIC_COMPETITION, owner ADMIN, owner-only). Grant exactly ONE member's
+        // worth, enable premium while empty, then two members JOIN so the join hook
+        // does REAL spends: the first is covered (Charged, owner 10→0), the second
+        // is not (Uncovered). Refund symmetry is thus asserted against genuine
+        // ledger movement, not a fixture Charged row with no backing debit.
+        $this->grantAdmin(10);
+        $this->enablePremiumPublic();
+        $this->joinPublic(AppFixtures::VERIFIED_USER_ID);
+        $this->joinPublic(AppFixtures::SECOND_VERIFIED_USER_ID);
 
+        $this->entityManager()->clear();
+        self::assertSame(0, $this->ownerBalance());
+
+        $this->recorded()->reset();
         $this->reconcile();
 
-        // The fixture's Charged row was refunded to the manager.
-        $charge = $this->entityManager()->find(CompetitionPremiumCharge::class, Uuid::fromString(AppFixtures::PREMIUM_CHARGE_ID));
-        self::assertInstanceOf(CompetitionPremiumCharge::class, $charge);
-        self::assertSame(PremiumChargeStatus::Refunded, $charge->status);
-
-        // Downgraded + stamped reconciled + event fired.
-        $competition = $this->competition(self::PREMIUM_ID);
+        // Any uncovered ⇒ every Charged row refunded to the manager, downgraded.
+        $competition = $this->competition(AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
         self::assertNotNull($competition->premiumReconciledAt);
         self::assertCount(1, $this->recorded()->ofType(PremiumDowngraded::class));
 
+        // Symmetry: owner spent 10 (one real join charge) and is made whole back to
+        // the granted 10 — a phantom refund of unspent money would overshoot.
         self::assertSame(10, $this->ownerBalance());
-        self::assertSame(1, $this->premiumRefundCount());
+        self::assertCount(1, $this->publicRefunds());
+        self::assertSame(10, $this->publicRefunds()[0]->amount);
+
+        // The covered member's charge is Refunded; the uncovered one stays Uncovered.
+        self::assertSame(PremiumChargeStatus::Refunded, $this->publicCharge(AppFixtures::VERIFIED_USER_ID)->status);
+        self::assertSame(PremiumChargeStatus::Uncovered, $this->publicCharge(AppFixtures::SECOND_VERIFIED_USER_ID)->status);
 
         // Idempotent re-run: already downgraded ⇒ no second refund, no second event.
         $this->recorded()->reset();
         $this->reconcile();
 
         self::assertCount(0, $this->recorded()->ofType(PremiumDowngraded::class));
-        self::assertSame(1, $this->premiumRefundCount());
+        self::assertCount(1, $this->publicRefunds());
         self::assertSame(10, $this->ownerBalance());
     }
 

@@ -205,6 +205,43 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
         self::assertCount(0, $this->boostLedger(AppFixtures::BOOSTS_COMPETITION_ID));
     }
 
+    public function testManagerCannotBuyVisibilityBoostTheyAlreadyGetForFree(): void
+    {
+        // ADMIN owns BOOSTS_COMPETITION ⇒ auto-entitled to the distribution bar and
+        // concrete tips. Selling them Lišta/Konkrétní would just burn their credits.
+        $this->grant(AppFixtures::ADMIN_ID, 100);
+
+        foreach ([BoostType::TipDistribution, BoostType::OthersTips] as $type) {
+            try {
+                $this->purchase(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID, $type);
+                self::fail('Expected BoostNotAvailable for '.$type->value);
+            } catch (HandlerFailedException $e) {
+                self::assertInstanceOf(BoostNotAvailable::class, $this->firstWrappedException($e));
+            }
+        }
+
+        $this->entityManager()->clear();
+
+        // Nothing charged, no rows written for the auto-entitled manager.
+        self::assertCount(0, $this->activeBoosts(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID));
+        self::assertCount(0, $this->boostLedger(AppFixtures::BOOSTS_COMPETITION_ID));
+        self::assertSame(100, $this->balance(AppFixtures::ADMIN_ID));
+    }
+
+    public function testManagerCanStillBuyTipChangeBoost(): void
+    {
+        // tip_change is NOT auto-granted to managers (subject to the tip freeze), so
+        // the owner may still buy it to keep changing their own tips after lock.
+        $this->grant(AppFixtures::ADMIN_ID, 100);
+
+        $this->purchase(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID, BoostType::TipChange);
+
+        $this->entityManager()->clear();
+
+        self::assertCount(1, $this->activeBoosts(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID));
+        self::assertSame(60, $this->balance(AppFixtures::ADMIN_ID));
+    }
+
     public function testInsufficientCreditsWritesNoRow(): void
     {
         // SECOND_VERIFIED_USER has balance 0 — cannot afford TipChange (40).

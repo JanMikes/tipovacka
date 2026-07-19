@@ -69,6 +69,25 @@ class MembershipRepository
             ->getSingleScalarResult();
     }
 
+    /**
+     * Active non-owner member count — the exact number of players a premium
+     * enable would charge (PREMIUM_PER_PLAYER each). Mirrors the filter in
+     * {@see \App\Command\EnablePremium\EnablePremiumHandler}.
+     */
+    public function countActiveNonOwnerMembers(Uuid $competitionId, Uuid $ownerId): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(Membership::class, 'm')
+            ->where('m.competition = :competitionId')
+            ->andWhere('m.user != :ownerId')
+            ->andWhere('m.leftAt IS NULL')
+            ->setParameter('competitionId', $competitionId)
+            ->setParameter('ownerId', $ownerId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function hasActiveMembership(Uuid $userId, Uuid $competitionId): bool
     {
         $result = $this->entityManager->createQueryBuilder()

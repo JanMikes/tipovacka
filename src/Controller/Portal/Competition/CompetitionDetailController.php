@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Competition;
 
 use App\Entity\User;
+use App\Enum\CompetitionMonetization;
 use App\Enum\UserRole;
 use App\Form\BulkInvitationFormData;
 use App\Form\BulkInvitationFormType;
@@ -18,6 +19,7 @@ use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForComp
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Credits\PricingConfig;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
@@ -108,12 +110,20 @@ final class CompetitionDetailController extends AbstractController
         $canUnlockTips = null !== $competition->tipsLockedAt
             && (null === $firstKickoffAt || $now < $firstKickoffAt);
 
+        // „Zapnout prémium" charges the manager PREMIUM_PER_PLAYER per active
+        // non-owner member immediately — the confirm modal discloses the total.
+        $premiumEnableMemberCount = CompetitionMonetization::Premium === $competition->monetization
+            ? 0
+            : $this->membershipRepository->countActiveNonOwnerMembers($competition->id, $competition->owner->id);
+
         return $this->render('portal/competition/detail.html.twig', [
             'competition' => $competition,
             'detail' => $detail,
             'lock_moment' => $lockMoment,
             'tips_locked' => $tipsLocked,
             'can_unlock_tips' => $canUnlockTips,
+            'premium_enable_member_count' => $premiumEnableMemberCount,
+            'premium_per_player' => PricingConfig::PREMIUM_PER_PLAYER,
             'invitationForm' => $invitationForm->createView(),
             'bulkInvitationForm' => $bulkInvitationForm?->createView(),
             'pendingInvitations' => $pendingInvitations,

@@ -12,11 +12,13 @@ use App\Entity\BoostPurchase;
 use App\Entity\Competition;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CreditTransaction;
+use App\Entity\CreditWallet;
 use App\Enum\CompetitionMonetization;
 use App\Enum\CreditTransactionType;
 use App\Enum\PremiumChargeStatus;
 use App\Event\BoostRefunded;
 use App\Exception\InsufficientCredits;
+use App\Exception\PremiumAlreadyEnabled;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
@@ -87,6 +89,45 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
         self::assertInstanceOf(Competition::class, $competition);
 
         return $competition;
+    }
+
+    private function ownerBalance(string $userId): int
+    {
+        $wallet = $this->entityManager()->createQueryBuilder()
+            ->select('w')
+            ->from(CreditWallet::class, 'w')
+            ->where('w.user = :user')
+            ->setParameter('user', Uuid::fromString($userId))
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $wallet instanceof CreditWallet ? $wallet->balance : 0;
+    }
+
+    public function testEnableOnAlreadyPremiumIsRejectedAndSpendsNothing(): void
+    {
+        // PREMIUM_COMPETITION is already premium (fixture) with one Charged row.
+        // Re-enabling must be idempotent: guarded BEFORE any wallet movement, so
+        // the well-funded owner is not charged again and no new rows appear.
+        $this->grant(AppFixtures::ADMIN_ID, 100);
+
+        try {
+            $this->enable(AppFixtures::PREMIUM_COMPETITION_ID, AppFixtures::ADMIN_ID);
+            self::fail('Expected PremiumAlreadyEnabled.');
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(PremiumAlreadyEnabled::class, $this->firstWrappedException($e));
+        }
+
+        $this->entityManager()->clear();
+
+        $competition = $this->competition(AppFixtures::PREMIUM_COMPETITION_ID);
+        self::assertSame(CompetitionMonetization::Premium, $competition->monetization);
+
+        // Exactly the ONE pre-existing fixture charge row, no new group debit,
+        // and the grant is intact — nothing was spent.
+        self::assertCount(1, $this->charges(AppFixtures::PREMIUM_COMPETITION_ID));
+        self::assertCount(0, $this->premiumChargeLedger(AppFixtures::PREMIUM_COMPETITION_ID));
+        self::assertSame(100, $this->ownerBalance(AppFixtures::ADMIN_ID));
     }
 
     public function testEnableWithNoNonOwnerMembersJustFlipsMonetization(): void

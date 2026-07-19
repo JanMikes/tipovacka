@@ -47,6 +47,9 @@ return App::config([
         'App\\Repository\\' => [
             'resource' => '../src/Repository/',
         ],
+        'App\\Scheduler\\' => [
+            'resource' => '../src/Scheduler/',
+        ],
         'App\\Service\\' => [
             'resource' => '../src/Service/',
             'exclude' => [

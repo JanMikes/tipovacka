@@ -78,6 +78,19 @@ final readonly class PurchaseBoostHandler
         }
 
         $user = $this->userRepository->get($command->userId);
+
+        // Don't sell a visibility boost to a buyer already entitled to it for free.
+        // A manager/admin is auto-entitled to see the distribution bar + others'
+        // tips, so charging them for Lišta/Konkrétní would just burn their credits.
+        // tip_change is NOT auto-granted to managers (subject to the tip freeze),
+        // so it stays buyable by the owner. See .docs/DOMAIN.md §Monetization.
+        if (
+            (BoostType::TipDistribution === $command->type && $this->entitlements->isEntitledToDistribution($competition, $user))
+            || (BoostType::OthersTips === $command->type && $this->entitlements->isEntitledToOthersTips($competition, $user))
+        ) {
+            throw BoostNotAvailable::becauseAlreadyEntitled($command->type);
+        }
+
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $price = $command->type->price();
 

@@ -12,6 +12,7 @@ use App\Exception\InsufficientCredits;
 use App\Exception\NotAMember;
 use App\Repository\CompetitionRepository;
 use App\Voter\CompetitionVoter;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -85,10 +86,25 @@ final class PurchaseBoostController extends AbstractController
                 return $this->redirect($backTo);
             }
 
+            if ($inner instanceof UniqueConstraintViolationException) {
+                $this->addFlash('error', 'Toto vylepšení už máte.');
+
+                return $this->redirect($backTo);
+            }
+
             throw $handlerFailed;
+        } catch (UniqueConstraintViolationException) {
+            // A double-click races two identical purchases; the partial unique
+            // index rejects the duplicate at flush time (after the handler
+            // returned, so it arrives UNWRAPPED, not inside HandlerFailedException).
+            // Each transaction rolls back its own debit, so this is money-safe —
+            // surface a friendly message instead of a 500.
+            $this->addFlash('error', 'Toto vylepšení už máte.');
+
+            return $this->redirect($backTo);
         }
 
-        $this->addFlash('success', sprintf('Vylepšení „%s" je aktivní.', $type->label()));
+        $this->addFlash('success', sprintf('Vylepšení „%s“ je aktivní.', $type->label()));
 
         return $this->redirect($backTo);
     }

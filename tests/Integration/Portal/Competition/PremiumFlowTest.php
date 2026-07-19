@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Portal\Competition;
 
 use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
+use App\Command\EnablePremium\EnablePremiumCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Enum\CompetitionMonetization;
@@ -156,6 +157,38 @@ final class PremiumFlowTest extends WebTestCase
         $client->submit($crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form());
 
         self::assertResponseRedirects(self::PLAIN_DETAIL.'/premium');
+
+        self::assertSame(CompetitionMonetization::Premium, $this->reloadCompetition(AppFixtures::VERIFIED_COMPETITION_ID)->monetization);
+    }
+
+    public function testEnablePremiumOnAlreadyPremiumShowsFriendlyFlash(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
+
+        // Owner opens the enable form on a still-`none` competition (valid token).
+        $crawler = $client->request('GET', self::PLAIN_DETAIL);
+        $form = $crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form();
+
+        // Meanwhile the competition becomes premium out-of-band (a double-submit /
+        // another tab already enabled it). ANONYMOUS is the sole non-owner member.
+        $this->testCommandBus()->dispatch(new AdjustUserCreditsCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            amount: 50,
+            note: 'Test dotace',
+            adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
+        ));
+        $this->testCommandBus()->dispatch(new EnablePremiumCommand(
+            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+        ));
+
+        // Submitting the now-stale form must not double-charge — friendly flash.
+        $client->submit($form);
+
+        self::assertResponseRedirects(self::PLAIN_DETAIL.'/premium');
+        $client->followRedirect();
+        self::assertSelectorTextContains('body', 'Soutěž už je prémiová.');
 
         self::assertSame(CompetitionMonetization::Premium, $this->reloadCompetition(AppFixtures::VERIFIED_COMPETITION_ID)->monetization);
     }

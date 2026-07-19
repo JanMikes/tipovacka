@@ -123,8 +123,8 @@ disabled for global competitions; rejoining a paid global competition charges th
 | S07 | Tip locking model | done | 06e5c1a |
 | S08 | Create-competition wizard | done | 9b49a1d |
 | S09 | Global competitions & entry fees | done | d5c89a1 |
-| S10 | Premium & boosts commerce (+ scheduler infra) | in-progress | |
-| S11 | Notification center | todo | |
+| S10 | Premium & boosts commerce (+ scheduler infra) | done | (this commit) |
+| S11 | Notification center | in-progress | |
 | S12 | Leaderboard delta & snapshots | todo | |
 | S13 | Admin consolidation, docs, e2e, final review | todo | |
 
