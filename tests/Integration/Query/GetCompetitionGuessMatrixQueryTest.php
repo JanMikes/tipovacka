@@ -44,7 +44,6 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
             name: AppFixtures::VERIFIED_COMPETITION_NAME,
             description: null,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: null,
         ));
 
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
@@ -82,7 +81,6 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
             name: AppFixtures::VERIFIED_COMPETITION_NAME,
             description: null,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: null,
         ));
 
         // Controller would not pass applyHiding=true when requesting user is owner;

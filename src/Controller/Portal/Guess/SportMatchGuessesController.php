@@ -70,11 +70,16 @@ final class SportMatchGuessesController extends AbstractController
         $this->denyAccessUnlessGranted(GuessVoter::VIEW, $context);
 
         $isCompetitionManager = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
-        $effectiveDeadline = $this->deadlineResolver->resolve($competition, $sportMatch);
+        // Per-viewer deadline for THIS user's tip-entry surfaces / displayed „Uzávěrka".
+        $effectiveDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $currentUser);
+        // Visibility of OTHERS' tips is competition-wide: gate on the userless
+        // deadline (what the embedded ranking/distribution queries assume). A
+        // viewer's own „Měnit tip" entitlement never reveals others' tips early.
+        $visibilityDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $canSeeAllTips = $isCompetitionManager
             || !$competition->hideOthersTipsBeforeDeadline
-            || $now >= $effectiveDeadline;
+            || $now >= $visibilityDeadline;
 
         // Pick distribution (1/X/2) is only shown once others' tips are visible
         // (after the deadline, or when the competition doesn't hide them).

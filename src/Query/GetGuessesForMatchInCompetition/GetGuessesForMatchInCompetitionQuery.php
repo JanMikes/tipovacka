@@ -36,7 +36,9 @@ final readonly class GetGuessesForMatchInCompetitionQuery
             $competition = $this->competitionRepository->get($query->competitionId);
             $sportMatch = $this->sportMatchRepository->get($query->sportMatchId);
             $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-            $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
+            // Visibility is competition-wide (no per-viewer entitlement): others'
+            // tips stay hidden until the match's generic effective deadline.
+            $deadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch);
             $hideOthers = $now < $deadline;
         }
 

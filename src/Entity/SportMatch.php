@@ -339,12 +339,14 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             throw SportMatchInvalidTransition::from($this->state, 'postpone');
         }
 
+        $previousKickoffAt = $this->kickoffAt;
         $this->kickoffAt = $newKickoffAt;
         $this->state = SportMatchState::Postponed;
         $this->updatedAt = $now;
 
         $this->recordThat(new SportMatchPostponed(
             sportMatchId: $this->id,
+            previousKickoffAt: $previousKickoffAt,
             newKickoffAt: $newKickoffAt,
             occurredOn: $now,
         ));

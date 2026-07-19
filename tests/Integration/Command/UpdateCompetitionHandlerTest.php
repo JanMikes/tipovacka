@@ -22,7 +22,6 @@ final class UpdateCompetitionHandlerTest extends IntegrationTestCase
             name: 'Upravená parta',
             description: 'Nový popis',
             hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: null,
         ));
 
         $em = $this->entityManager();
@@ -37,7 +36,6 @@ final class UpdateCompetitionHandlerTest extends IntegrationTestCase
     public function testPersistsTipVisibilitySettings(): void
     {
         $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00');
 
         $this->commandBus()->dispatch(new UpdateCompetitionCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
@@ -45,7 +43,6 @@ final class UpdateCompetitionHandlerTest extends IntegrationTestCase
             name: 'Parta',
             description: null,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
         ));
 
         $em = $this->entityManager();
@@ -54,38 +51,7 @@ final class UpdateCompetitionHandlerTest extends IntegrationTestCase
         $competition = $em->find(Competition::class, $competitionId);
         self::assertInstanceOf(Competition::class, $competition);
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
-        self::assertEquals($deadline, $competition->tipsDeadline);
-    }
-
-    public function testClearsPreviouslySetTipsDeadline(): void
-    {
-        $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
-        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00');
-
-        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
-            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            competitionId: $competitionId,
-            name: 'Parta',
-            description: null,
-            hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
-        ));
-
-        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
-            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            competitionId: $competitionId,
-            name: 'Parta',
-            description: null,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: null,
-        ));
-
-        $em = $this->entityManager();
-        $em->clear();
-
-        $competition = $em->find(Competition::class, $competitionId);
-        self::assertInstanceOf(Competition::class, $competition);
-        self::assertFalse($competition->hideOthersTipsBeforeDeadline);
-        self::assertNull($competition->tipsDeadline);
+        // Editing details never touches the tip lock.
+        self::assertNull($competition->tipsLockedAt);
     }
 }

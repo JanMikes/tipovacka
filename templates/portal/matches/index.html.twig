@@ -47,14 +47,18 @@
     {% else %}
         <ul class="flex flex-col gap-3">
             {% for m in matches %}
-                {% set is_tippable = m.isOpenForGuesses and m.kickoffAt >= date() %}
-                {% set is_locked = not m.isFinished and not m.isPostponed and not is_tippable %}
+                {# Per-competition locking: tippable = open in at least one of the user's competitions (resolver-driven). #}
+                {% set is_tippable = m.isTippable %}
+                {# Zlomky počítají jen soutěže s otevřenou uzávěrkou (open-including). #}
+                {% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
+                {% set is_locked = not m.isFinished and not m.isPostponed and m.openCompetitionsCount == 0 and m.guessedCompetitionsCount == 0 %}
                 {% set is_tipped = m.guessedCompetitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
-                {% set has_pending = m.competitionsCount > 0 and m.pendingCompetitionsCount > 0 and is_tippable %}
+                {% set has_pending = m.pendingCompetitionsCount > 0 %}
                 {#
                     Stav → clean enum (live je CUT, probíhající zápas čteme jako „Uzamčeno"):
-                      finished | locked (vč. live/uzávěrka) | tipped (vše natipováno) | open (tipnutelný)
-                    Jeden pilulkový slot: stavová pilulka má přednost; u tipnutelných ukáže stav tipu.
+                      finished | odloženo | locked (bez tipu a bez otevřené soutěže) |
+                      pending (chybí tip v otevřené soutěži) | tipped (vše natipováno) | open (brzy)
+                    Jeden pilulkový slot; zlomky (x/y) = natipováno / soutěže s otevřenou uzávěrkou.
                 #}
                 {% if m.isFinished %}
                     {% set row_state = 'finished' %}{% set pill_variant = 'done' %}{% set pill_icon = 'check' %}{% set pill_label = 'Ukončeno' %}{% set pill_dot = false %}
@@ -64,10 +68,10 @@
                     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
                 {% elseif has_pending %}
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
-                    {% set pill_label = m.competitionsCount > 1 ? 'Chybí tip (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Chybí tip' %}
+                    {% set pill_label = m.openCompetitionsCount > 1 ? 'Chybí tip (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Chybí tip' %}
                 {% elseif is_tipped %}
                     {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_dot = false %}
-                    {% set pill_label = m.competitionsCount > 1 ? 'Tip odeslán (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Tip odeslán' %}
+                    {% set pill_label = m.openCompetitionsCount > 1 ? 'Tip odeslán (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Tip odeslán' %}
                 {% else %}
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
                 {% endif %}

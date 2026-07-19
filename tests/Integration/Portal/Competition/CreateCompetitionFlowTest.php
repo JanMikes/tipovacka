@@ -33,8 +33,6 @@ final class CreateCompetitionFlowTest extends WebTestCase
             'competition_form[matchSourceId]' => AppFixtures::PUBLIC_SOURCE_ID,
             'competition_form[selectionMode]' => 'all',
             'competition_form[hideOthersTipsBeforeDeadline]' => '1',
-            // Entered in Czech local time (CEST) → stored as 16:00 UTC.
-            'competition_form[tipsDeadline]' => '2025-06-19 18:00',
         ]);
 
         self::assertResponseRedirects();
@@ -57,8 +55,8 @@ final class CreateCompetitionFlowTest extends WebTestCase
 
         // Regression: the create form must persist tip settings (S01-documented bug).
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
-        self::assertNotNull($competition->tipsDeadline);
-        self::assertSame('2025-06-19 16:00', $competition->tipsDeadline->format('Y-m-d H:i'));
+        // S07: no group-wide deadline anymore — a new competition starts unlocked.
+        self::assertNull($competition->tipsLockedAt);
     }
 
     public function testCreateFromOwnPrivateSourceViaPreselect(): void
@@ -116,7 +114,6 @@ final class CreateCompetitionFlowTest extends WebTestCase
                 'matchSourceId' => AppFixtures::PUBLIC_SOURCE_ID,
                 'selectionMode' => 'subset',
                 'selectedMatchIds' => [AppFixtures::MATCH_SCHEDULED_ID],
-                'tipsDeadline' => '',
             ],
         ]);
 
@@ -166,7 +163,6 @@ final class CreateCompetitionFlowTest extends WebTestCase
             'includePlayoff' => '0',
             'hideOthersTipsBeforeDeadline' => '1',
             'withPin' => '1',
-            'tipsDeadline' => '2025-06-19 18:00',
         ]));
 
         self::assertResponseIsSuccessful();
@@ -177,8 +173,6 @@ final class CreateCompetitionFlowTest extends WebTestCase
         self::assertNull($crawler->filter('input[name="competition_form[includePlayoff]"]')->attr('checked'));
         self::assertNotNull($crawler->filter('input[name="competition_form[hideOthersTipsBeforeDeadline]"]')->attr('checked'));
         self::assertNotNull($crawler->filter('input[name="competition_form[withPin]"]')->attr('checked'));
-        // Round-trips through the model (UTC) back to the Prague view value.
-        self::assertSame('2025-06-19 18:00', $crawler->filter('input[name="competition_form[tipsDeadline]"]')->attr('value'));
     }
 
     public function testInvalidPrefillQueryParamsAreIgnored(): void
@@ -194,14 +188,12 @@ final class CreateCompetitionFlowTest extends WebTestCase
             'zdroj' => AppFixtures::PUBLIC_SOURCE_ID,
             'selectionMode' => 'garbage',
             'withPin' => 'yes',
-            'tipsDeadline' => 'not-a-date',
         ]));
 
         self::assertResponseIsSuccessful();
 
         self::assertNotNull($crawler->filter('input[name="competition_form[selectionMode]"][value="all"]')->attr('checked'));
         self::assertNull($crawler->filter('input[name="competition_form[withPin]"]')->attr('checked'));
-        self::assertSame('', (string) $crawler->filter('input[name="competition_form[tipsDeadline]"]')->attr('value'));
     }
 
     public function testSubsetWithoutSelectedMatchesIsRejected(): void
@@ -222,7 +214,6 @@ final class CreateCompetitionFlowTest extends WebTestCase
                 'description' => '',
                 'matchSourceId' => AppFixtures::PUBLIC_SOURCE_ID,
                 'selectionMode' => 'subset',
-                'tipsDeadline' => '',
             ],
         ]);
 

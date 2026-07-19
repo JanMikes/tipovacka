@@ -176,15 +176,33 @@ final class GuessSubmitForm
 
     public bool $isLocked {
         get {
-            if (!$this->sportMatch->isOpenForGuesses) {
-                return true;
-            }
-
             $now = \DateTimeImmutable::createFromInterface($this->clock->now());
             $competition = $this->competitionRepository->get(Uuid::fromString($this->competitionId));
-            $deadline = $this->deadlineResolver->resolve($competition, $this->sportMatch);
+            $user = $this->security->getUser();
 
-            return $now >= $deadline;
+            return $this->deadlineResolver->isLocked(
+                $competition,
+                $this->sportMatch,
+                $user instanceof User ? $user : null,
+                $now,
+            );
+        }
+    }
+
+    /**
+     * This viewer's effective tip deadline for the match (entitlements included)
+     * — drives the „Uzávěrka" line and the cause-aware locked copy on the card.
+     */
+    public \DateTimeImmutable $effectiveDeadline {
+        get {
+            $competition = $this->competitionRepository->get(Uuid::fromString($this->competitionId));
+            $user = $this->security->getUser();
+
+            return $this->deadlineResolver->deadlineFor(
+                $competition,
+                $this->sportMatch,
+                $user instanceof User ? $user : null,
+            );
         }
     }
 

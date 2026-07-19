@@ -9,6 +9,7 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Exception\MatchNotInCompetition;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
+use App\Repository\GuessRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
@@ -25,6 +26,7 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         private SportMatchRepository $sportMatchRepository,
         private UserRepository $userRepository,
         private CompetitionMatchProvider $matchProvider,
+        private GuessRepository $guessRepository,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -81,11 +83,20 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         }
 
         foreach ($wantedMatches as $sportMatch) {
+            // Férovost: zápas, který v této soutěži už nese aktivní tipy z dřívějšího
+            // zařazení (byl odebrán a teď se přidává zpět), nesmí být považován za
+            // „pozdě přidaný" — to by mu obnovilo uzávěrku a znovu otevřelo už
+            // zveřejněné tipy. Zakotvíme jeho vstup k založení soutěže, aby ho řídilo
+            // běžné uzamčení. Zápas bez tipů vstupuje teď.
+            $addedAt = $this->guessRepository->hasActiveInCompetitionAndMatch($competition->id, $sportMatch->id)
+                ? $competition->createdAt
+                : $now;
+
             $this->selectionRepository->save(new CompetitionMatchSelection(
                 id: $this->identity->next(),
                 competition: $competition,
                 sportMatch: $sportMatch,
-                addedAt: $now,
+                addedAt: $addedAt,
             ));
             $changed = true;
         }

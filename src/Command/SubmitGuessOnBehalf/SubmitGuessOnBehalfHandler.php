@@ -87,10 +87,11 @@ final readonly class SubmitGuessOnBehalfHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
+        // Entitlements follow the TARGET member — it is their tip window.
+        $deadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $targetUser);
 
         if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::create();
+            throw GuessDeadlinePassed::at($deadline);
         }
 
         $existing = $this->guessRepository->findActiveByUserMatchCompetition(

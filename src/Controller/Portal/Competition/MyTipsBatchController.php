@@ -69,11 +69,12 @@ final class MyTipsBatchController extends AbstractController
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
-        $rows = $this->buildRows($competition, $user->id, $now);
+        $rows = $this->buildRows($competition, $user, $now);
 
         return $this->render('portal/competition/my_tips_batch.html.twig', [
             'competition' => $competition,
             'rows' => $rows,
+            'lock_moment' => $this->deadlineResolver->lockMomentFor($competition),
             'sport' => $competition->matchSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);
@@ -349,17 +350,19 @@ final class MyTipsBatchController extends AbstractController
     }
 
     /**
-     * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null}>
+     * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null, deadline: \DateTimeImmutable}>
      */
-    private function buildRows(\App\Entity\Competition $competition, Uuid $userId, \DateTimeImmutable $now): array
+    private function buildRows(\App\Entity\Competition $competition, User $user, \DateTimeImmutable $now): array
     {
         $allMatches = $this->matchProvider->matchesFor($competition);
         $candidateMatches = array_values(array_filter(
             $allMatches,
-            static fn ($m) => $m->isOpenForGuesses && $m->kickoffAt > $now,
+            static fn ($m) => $m->isOpenForGuesses,
         ));
 
-        $deadlines = $this->deadlineResolver->resolveMany($competition, $candidateMatches);
+        // The effective deadline is never later than kickoff, so filtering on
+        // the deadline alone covers the "already kicked off" case too.
+        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $candidateMatches, $user);
 
         $rows = [];
 
@@ -373,10 +376,11 @@ final class MyTipsBatchController extends AbstractController
             $rows[] = [
                 'match' => $sportMatch,
                 'guess' => $this->guessRepository->findActiveByUserMatchCompetition(
-                    $userId,
+                    $user->id,
                     $sportMatch->id,
                     $competition->id,
                 ),
+                'deadline' => $deadline,
             ];
         }
 

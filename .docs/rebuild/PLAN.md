@@ -119,9 +119,9 @@ disabled for global competitions; rejoining a paid global competition charges th
 | S03 | Credit spending core (debit/refund API) | done | 00a5729 |
 | S04 | Rules per competition | done | 9b542ff |
 | S05 | Sports & match result model (periods, OT, events, roster, live) | done | b255cbd |
-| S06 | Guess extensions & new scoring rules | done | (this commit) |
-| S07 | Tip locking model | in-progress | |
-| S08 | Create-competition wizard | todo | |
+| S06 | Guess extensions & new scoring rules | done | e08171c |
+| S07 | Tip locking model | done | (this commit) |
+| S08 | Create-competition wizard | in-progress | |
 | S09 | Global competitions & entry fees | todo | |
 | S10 | Premium & boosts commerce (+ scheduler infra) | todo | |
 | S11 | Notification center | todo | |

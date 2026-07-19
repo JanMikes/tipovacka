@@ -19,7 +19,6 @@ final readonly class CreateCompetitionCommand
         public ?string $description,
         public bool $withPin,
         public bool $hideOthersTipsBeforeDeadline = false,
-        public ?\DateTimeImmutable $tipsDeadline = null,
         public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
         public bool $includePlayoff = true,
         public array $selectedMatchIds = [],

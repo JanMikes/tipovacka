@@ -18,7 +18,10 @@ use App\Event\CompetitionPinRegenerated;
 use App\Event\CompetitionPinRevoked;
 use App\Event\CompetitionShareableLinkRegenerated;
 use App\Event\CompetitionShareableLinkRevoked;
+use App\Event\CompetitionTipsLocked;
+use App\Event\CompetitionTipsUnlocked;
 use App\Event\CompetitionUpdated;
+use App\Exception\CompetitionTipsCannotBeUnlocked;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -102,7 +105,8 @@ final class CompetitionEntityTest extends TestCase
         $competition = $this->makeCompetition();
 
         self::assertFalse($competition->hideOthersTipsBeforeDeadline);
-        self::assertNull($competition->tipsDeadline);
+        self::assertNull($competition->tipsLockedAt);
+        self::assertSame(60, $competition->tipChangeOffsetMinutes);
     }
 
     public function testSelectionDefaultsOnFreshCompetition(): void
@@ -116,7 +120,6 @@ final class CompetitionEntityTest extends TestCase
     public function testConstructorHonorsSelectionAndTipSettings(): void
     {
         $owner = $this->makeOwner();
-        $deadline = new \DateTimeImmutable('2025-06-20 10:00:00 UTC');
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
@@ -130,13 +133,11 @@ final class CompetitionEntityTest extends TestCase
             selectionMode: CompetitionMatchSelectionMode::Subset,
             includePlayoff: false,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
         );
 
         self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
         self::assertFalse($competition->includePlayoff);
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
-        self::assertSame($deadline, $competition->tipsDeadline);
     }
 
     public function testRecordMatchSelectionChangedRecordsEventAndTouchesUpdatedAt(): void
@@ -167,7 +168,6 @@ final class CompetitionEntityTest extends TestCase
             name: 'Nový',
             description: 'Popis',
             hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: null,
             now: $later,
         );
 
@@ -180,46 +180,120 @@ final class CompetitionEntityTest extends TestCase
         self::assertInstanceOf(CompetitionUpdated::class, $events[0]);
     }
 
-    public function testUpdateDetailsAppliesNewTipVisibilityFields(): void
+    public function testUpdateDetailsAppliesTipVisibilityField(): void
     {
         $competition = $this->makeCompetition();
         $competition->popEvents();
 
-        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00 UTC');
         $competition->updateDetails(
             name: $competition->name,
             description: $competition->description,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
             now: $this->now,
         );
 
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
-        self::assertSame($deadline, $competition->tipsDeadline);
     }
 
-    public function testUpdateDetailsCanClearTipsDeadline(): void
+    public function testLockTipsRecordsEventAndKeepsFirstLockMomentOnRepeat(): void
     {
         $competition = $this->makeCompetition();
-        $deadline = new \DateTimeImmutable('2025-06-19 09:00:00 UTC');
-        $competition->updateDetails(
-            name: $competition->name,
-            description: $competition->description,
-            hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
-            now: $this->now,
-        );
+        $competition->popEvents();
 
-        $competition->updateDetails(
-            name: $competition->name,
-            description: $competition->description,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: null,
-            now: $this->now,
-        );
+        $competition->lockTips($this->now);
 
-        self::assertFalse($competition->hideOthersTipsBeforeDeadline);
-        self::assertNull($competition->tipsDeadline);
+        self::assertSame($this->now, $competition->tipsLockedAt);
+        self::assertSame($this->now, $competition->updatedAt);
+
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(CompetitionTipsLocked::class, $events[0]);
+        self::assertSame($competition->id, $events[0]->competitionId);
+
+        // Locking again is a no-op: original moment kept, no event.
+        $competition->lockTips(new \DateTimeImmutable('2025-06-16 12:00:00 UTC'));
+        self::assertSame($this->now, $competition->tipsLockedAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testUnlockTipsAllowedBeforeFirstKickoff(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->lockTips($this->now);
+        $competition->popEvents();
+
+        $competition->unlockTips($this->now, new \DateTimeImmutable('2025-06-20 18:00:00 UTC'));
+
+        self::assertNull($competition->tipsLockedAt);
+
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(CompetitionTipsUnlocked::class, $events[0]);
+    }
+
+    public function testUnlockTipsAllowedWhenCompetitionHasNoMatches(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->lockTips($this->now);
+        $competition->popEvents();
+
+        $competition->unlockTips($this->now, null);
+
+        self::assertNull($competition->tipsLockedAt);
+        self::assertCount(1, $competition->popEvents());
+    }
+
+    public function testUnlockTipsRejectedAfterFirstKickoff(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->lockTips($this->now);
+        $competition->popEvents();
+
+        $this->expectException(CompetitionTipsCannotBeUnlocked::class);
+
+        // First kickoff was an hour ago — the competition genuinely started.
+        $competition->unlockTips($this->now, new \DateTimeImmutable('2025-06-15 11:00:00 UTC'));
+    }
+
+    public function testUnlockTipsOnUnlockedCompetitionIsNoOp(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        // Even a passed first kickoff must not throw — there is nothing to undo.
+        $competition->unlockTips($this->now, new \DateTimeImmutable('2025-06-15 11:00:00 UTC'));
+
+        self::assertNull($competition->tipsLockedAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testPinTipsLockMomentSetsMomentWithoutEventAndIsIdempotent(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        $pinned = new \DateTimeImmutable('2025-06-10 18:00:00 UTC');
+        $competition->pinTipsLockMoment($pinned, $this->now);
+
+        self::assertEquals($pinned, $competition->tipsLockedAt);
+        // Correctness pin, not a user action ⇒ records NO domain event.
+        self::assertCount(0, $competition->popEvents());
+
+        // Idempotent: a later pin (or manual lock) never overwrites the moment.
+        $competition->pinTipsLockMoment(new \DateTimeImmutable('2025-06-12 09:00:00 UTC'), $this->now);
+        self::assertEquals($pinned, $competition->tipsLockedAt);
+    }
+
+    public function testChangeTipChangeOffsetValidatesAndApplies(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        $competition->changeTipChangeOffset(120, $this->now);
+        self::assertSame(120, $competition->tipChangeOffsetMinutes);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $competition->changeTipChangeOffset(-1, $this->now);
     }
 
     public function testSetPinRecordsEvent(): void

@@ -133,14 +133,11 @@
                     {{ form_errors(form.hideOthersTipsBeforeDeadline) }}
                 </div>
 
-                <div class="field">
-                    {{ form_label(form.tipsDeadline) }}
-                    {{ form_widget(form.tipsDeadline, {attr: {class: 'input'}}) }}
-                    {% if form.tipsDeadline.vars.help %}
-                        <p class="text-xs leading-relaxed text-white/50">{{ form.tipsDeadline.vars.help }}</p>
-                    {% endif %}
-                    {{ form_errors(form.tipsDeadline) }}
-                </div>
+                <p class="rounded-xl border border-white/10 bg-inset px-4 py-3 text-xs leading-relaxed text-white/60">
+                    Tipy se uzamknou startem soutěže — výkopem jejího prvního zápasu (nebo dřív ručním
+                    uzamknutím v detailu soutěže). Zápasy přidané později, třeba playoff, se tipují až do
+                    svého výkopu.
+                </p>
             </div>
 
             <div>

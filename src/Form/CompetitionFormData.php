@@ -23,8 +23,6 @@ final class CompetitionFormData
 
     public bool $hideOthersTipsBeforeDeadline = false;
 
-    public ?\DateTimeImmutable $tipsDeadline = null;
-
     /** Selected match source UUID (create form only). */
     public ?string $matchSourceId = null;
 
@@ -42,7 +40,6 @@ final class CompetitionFormData
         $formData->description = $competition->description;
         $formData->withPin = null !== $competition->pin;
         $formData->hideOthersTipsBeforeDeadline = $competition->hideOthersTipsBeforeDeadline;
-        $formData->tipsDeadline = $competition->tipsDeadline;
         $formData->matchSourceId = $competition->matchSource->id->toRfc4122();
         $formData->selectionMode = $competition->selectionMode;
         $formData->includePlayoff = $competition->includePlayoff;

@@ -60,6 +60,14 @@
                                         <twig:ux:icon name="lucide:calendar" class="h-3.5 w-3.5 shrink-0" />
                                         {{ row.match.kickoffAt|date('d. m. Y') }} · {{ row.match.kickoffAt|date('H:i') }}
                                     </p>
+                                    {# Per-match effective deadline, shown only when it differs from the
+                                       competition-level lock moment (late-added matches, manager overrides). #}
+                                    {% if lock_moment is null or row.deadline != lock_moment %}
+                                        <p class="mt-0.5 flex items-center gap-1.5 text-[11px] font-light tracking-wide text-white/50">
+                                            <twig:ux:icon name="lucide:hourglass" class="h-3.5 w-3.5 shrink-0" />
+                                            Uzávěrka: {{ row.deadline|date('j. n. Y H:i') }}
+                                        </p>
+                                    {% endif %}
                                 </div>
                                 <span class="ml-auto sm:ml-0">
                                     <twig:TeamFlag :name="row.match.awayTeam" size="40" />

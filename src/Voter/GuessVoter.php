@@ -71,7 +71,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch, $subject->user)) {
                 return false;
             }
 
@@ -85,7 +85,8 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
+            // Entitlements follow the guess owner — it is their tip window.
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch, $subject->user)) {
                 return false;
             }
 
@@ -107,7 +108,7 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch)) {
+            if (!$this->isWithinDeadline($subject->competition, $subject->sportMatch, $subject->targetUser)) {
                 return false;
             }
 
@@ -134,12 +135,12 @@ final class GuessVoter extends Voter
 
         // SUBMIT: the match must belong to the same match source as the competition,
         // must still be open for guesses, must be before the effective deadline
-        // (per-match override → competition default → kickoff), and the user must not
-        // already have an active guess for this (user, match, competition) triple.
+        // (EffectiveTipDeadlineResolver — the single deadline authority), and the user
+        // must not already have an active guess for this (user, match, competition) triple.
         $sportMatch = $subject->sportMatch;
         $competition = $this->competitionRepository->get($subject->competitionId);
 
-        if (!$this->isWithinDeadline($competition, $sportMatch)) {
+        if (!$this->isWithinDeadline($competition, $sportMatch, $currentUser)) {
             return false;
         }
 
@@ -152,16 +153,11 @@ final class GuessVoter extends Voter
         return null === $existing;
     }
 
-    private function isWithinDeadline(Competition $competition, SportMatch $sportMatch): bool
+    private function isWithinDeadline(Competition $competition, SportMatch $sportMatch, User $user): bool
     {
-        if (!$sportMatch->isOpenForGuesses) {
-            return false;
-        }
-
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($competition, $sportMatch);
 
-        return $now < $deadline;
+        return !$this->deadlineResolver->isLocked($competition, $sportMatch, $user, $now);
     }
 
     private function isCompetitionManager(User $currentUser, \Symfony\Component\Uid\Uuid $ownerId): bool

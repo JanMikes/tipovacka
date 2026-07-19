@@ -75,10 +75,11 @@ final readonly class UpdateGuessOnBehalfHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($guess->competition, $guess->sportMatch);
+        // Entitlements follow the guess owner — it is their tip window.
+        $deadline = $this->deadlineResolver->deadlineFor($guess->competition, $guess->sportMatch, $guess->user);
 
         if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::create();
+            throw GuessDeadlinePassed::at($deadline);
         }
 
         // Full replace: every tip part becomes exactly what the command carries.

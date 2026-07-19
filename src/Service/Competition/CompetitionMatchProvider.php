@@ -69,6 +69,17 @@ class CompetitionMatchProvider implements ResetInterface
             return false;
         }
 
+        return $this->includesIgnoringDeletion($competition, $sportMatch);
+    }
+
+    /**
+     * Same membership test as {@see includes} but WITHOUT the deleted-match
+     * short-circuit — for reasoning about a match's membership as it was BEFORE
+     * a soft-delete (the SportMatchDeleted lock-moment pin). Live read paths
+     * always use {@see includes}.
+     */
+    public function includesIgnoringDeletion(Competition $competition, SportMatch $sportMatch): bool
+    {
         if (!$sportMatch->matchSource->id->equals($competition->matchSource->id)) {
             return false;
         }

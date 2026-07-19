@@ -12,10 +12,13 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
+use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionEntitlements;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\GuessVoter;
 use App\Voter\GuessVotingContext;
@@ -82,7 +85,20 @@ final class GuessVoterTest extends TestCase
         $settingRepo->method('findByCompetitionAndMatch')->willReturn(null);
         $settingRepo->method('findByCompetitionAndMatches')->willReturn([]);
 
-        $resolver = new EffectiveTipDeadlineResolver($settingRepo);
+        // Empty match list ⇒ no lock moment ⇒ matches lock at their own kickoff,
+        // unless a test locks tips manually (Competition::lockTips).
+        $matchProvider = $this->createStub(CompetitionMatchProvider::class);
+        $matchProvider->method('matchesFor')->willReturn([]);
+
+        $selectionRepo = $this->createStub(CompetitionMatchSelectionRepository::class);
+        $selectionRepo->method('listByCompetition')->willReturn([]);
+
+        $resolver = new EffectiveTipDeadlineResolver(
+            $matchProvider,
+            $settingRepo,
+            $selectionRepo,
+            new CompetitionEntitlements(),
+        );
 
         $clock = new MockClock($this->now);
 
@@ -368,38 +384,26 @@ final class GuessVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($owner), $guess, [GuessVoter::UPDATE]));
     }
 
-    public function testOwnerCannotUpdateGuessAfterCompetitionDefaultDeadline(): void
+    public function testOwnerCannotUpdateGuessAfterManualTipLock(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource($owner);
         $competition = $this->makeCompetition($owner, $matchSource);
         $match = $this->makeMatch($matchSource);
-        // Competition default deadline is in the past; match kickoff still in the future.
-        $competition->updateDetails(
-            name: $competition->name,
-            description: $competition->description,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00 UTC'),
-            now: $this->now,
-        );
+        // Tips manually locked at "now"; match kickoff still in the future.
+        $competition->lockTips($this->now);
         $guess = $this->makeGuessOwnedBy($owner, $match, $competition);
 
         self::assertSame(-1, $this->voter->vote($this->token($owner), $guess, [GuessVoter::UPDATE]));
     }
 
-    public function testMemberCannotSubmitAfterCompetitionDefaultDeadline(): void
+    public function testMemberCannotSubmitAfterManualTipLock(): void
     {
         $user = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $matchSource = $this->makeMatchSource($user);
         $competition = $this->makeCompetition($user, $matchSource);
         $match = $this->makeMatch($matchSource);
-        $competition->updateDetails(
-            name: $competition->name,
-            description: $competition->description,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00 UTC'),
-            now: $this->now,
-        );
+        $competition->lockTips($this->now);
         $this->markAsMember($user, $competition);
 
         $context = new GuessVotingContext($match, $competition->id);

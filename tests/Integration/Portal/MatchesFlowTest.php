@@ -6,7 +6,9 @@ namespace App\Tests\Integration\Portal;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\Guess;
 use App\Entity\Membership;
+use App\Entity\SportMatch;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -100,5 +102,101 @@ final class MatchesFlowTest extends WebTestCase
         self::assertStringContainsString('Sparta Praha', $body);
         // …the finished one is not.
         self::assertStringNotContainsString('Bohemians 1905', $body);
+    }
+
+    public function testMissingTipFractionCountsOnlyOpenCompetitions(): void
+    {
+        // Admin is in PUBLIC_COMPETITION (all-mode) and — added here — SUBSET_COMPETITION,
+        // both on PUBLIC_SOURCE and both including MATCH_SCHEDULED (2025-06-20, open).
+        // Admin tipped it in PUBLIC only ⇒ „Chybí tip (1/2)" (2 open, 1 guessed).
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $subset = $em->find(Competition::class, Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID));
+        self::assertNotNull($subset);
+        $publicCompetition = $em->find(Competition::class, Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertNotNull($publicCompetition);
+        $scheduledMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertNotNull($scheduledMatch);
+
+        $membership = new Membership(id: Uuid::v7(), competition: $subset, user: $admin, joinedAt: $now);
+        $membership->popEvents();
+        $em->persist($membership);
+
+        $guess = new Guess(
+            id: Uuid::v7(),
+            user: $admin,
+            sportMatch: $scheduledMatch,
+            competition: $publicCompetition,
+            homeScore: 1,
+            awayScore: 0,
+            submittedAt: $now,
+        );
+        $guess->popEvents();
+        $em->persist($guess);
+        $em->flush();
+
+        $client->loginUser($admin);
+
+        $client->request('GET', '/zapasy');
+        self::assertResponseIsSuccessful();
+        $body = (string) $client->getResponse()->getContent();
+        // Denominator counts only OPEN competitions (both open here).
+        self::assertStringContainsString('Chybí tip (1/2)', $body);
+
+        // Locking the un-tipped competition drops it from the open count: the match
+        // now reads as fully tipped among still-open competitions.
+        $subset->lockTips($now);
+        $subset->popEvents();
+        $em->flush();
+
+        $client->request('GET', '/zapasy');
+        $body = (string) $client->getResponse()->getContent();
+        self::assertStringNotContainsString('Chybí tip (1/2)', $body);
+        self::assertStringContainsString('Tip odeslán', $body);
+    }
+
+    public function testTippableFilterRespectsPerCompetitionLocking(): void
+    {
+        // „Tipovatelné" is per-competition: after the user's only competition
+        // including the match locks its tips, the match stops being tippable
+        // even though its kickoff is still ahead.
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($verified);
+        $client->loginUser($verified);
+
+        $client->request('GET', '/zapasy?filtr=tipovatelne');
+        self::assertResponseIsSuccessful();
+        $body = $client->getResponse()->getContent();
+        self::assertIsString($body);
+        self::assertStringContainsString('Tygři', $body);
+
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        self::assertNotNull($competition);
+        $competition->lockTips(new \DateTimeImmutable('2025-06-15 12:00:00 UTC'));
+        $competition->popEvents();
+        $em->flush();
+
+        $client->request('GET', '/zapasy?filtr=tipovatelne');
+        self::assertResponseIsSuccessful();
+        $body = $client->getResponse()->getContent();
+        self::assertIsString($body);
+        self::assertStringNotContainsString('Tygři', $body);
+
+        // On the unfiltered list the row renders as locked, not as missing a tip.
+        $client->request('GET', '/zapasy');
+        $body = $client->getResponse()->getContent();
+        self::assertIsString($body);
+        self::assertStringContainsString('Tygři', $body);
+        self::assertStringContainsString('Uzamčeno', $body);
+        self::assertStringNotContainsString('Chybí tip', $body);
     }
 }

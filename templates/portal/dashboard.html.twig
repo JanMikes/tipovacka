@@ -335,8 +335,22 @@
         {% else %}
             <ul class="flex flex-col gap-3">
                 {% for m in upcoming_matches %}
-                    {# stavová pilulka: chybí tip → „soon", vše natipováno → „tipped" #}
-                    {% set is_tipped = m.competitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
+                    {#
+                        Stavová pilulka (jen soutěže s otevřenou uzávěrkou se počítají do zlomků):
+                          – nějaká otevřená soutěž bez tipu → „Chybí tip (natipováno/otevřených)"
+                          – vše natipováno → „Tip odeslán"
+                          – žádná otevřená soutěž a žádný tip → „Uzamčeno" (nikdy ne „Tip odeslán" bez tipu)
+                    #}
+                    {% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
+                    {% if m.pendingCompetitionsCount > 0 %}
+                        {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}
+                        {% set pill_label = m.openCompetitionsCount > 1 ? 'Chybí tip (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Chybí tip' %}
+                    {% elseif m.guessedCompetitionsCount > 0 %}
+                        {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}
+                        {% set pill_label = m.openCompetitionsCount > 1 ? 'Tip odeslán (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Tip odeslán' %}
+                    {% else %}
+                        {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}
+                    {% endif %}
                     <li data-reveal-target="item" class="{% if loop.index0 >= upcoming_visible %}hidden{% endif %}">
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
@@ -344,12 +358,10 @@
                             :kickoffAt="m.kickoffAt"
                             :round="m.round"
                             :isPlayoff="m.isPlayoff"
-                            :state="is_tipped ? 'tipped' : 'open'"
-                            :pillVariant="m.pendingCompetitionsCount > 0 ? 'soon' : (is_tipped ? 'tipped' : null)"
-                            :pillIcon="m.pendingCompetitionsCount > 0 ? 'circle-alert' : (is_tipped ? 'check' : null)"
-                            :pillLabel="m.pendingCompetitionsCount > 0
-                                ? (m.competitionsCount > 1 ? 'Chybí tip v ' ~ m.pendingCompetitionsCount ~ ' z ' ~ m.competitionsCount ~ ' soutěží' : 'Chybí tip')
-                                : (is_tipped ? (m.competitionsCount > 1 ? 'Tip odeslán (' ~ m.guessedCompetitionsCount ~ '/' ~ m.competitionsCount ~ ')' : 'Tip odeslán') : null)"
+                            :state="row_state"
+                            :pillVariant="pill_variant"
+                            :pillIcon="pill_icon"
+                            :pillLabel="pill_label"
                             :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
                             detailLabel="Tipovat"
                         />

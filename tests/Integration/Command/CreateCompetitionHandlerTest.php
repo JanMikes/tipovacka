@@ -55,8 +55,6 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
     public function testCreatesCompetitionWithTipSettingsAndSubsetSelection(): void
     {
-        $deadline = new \DateTimeImmutable('2025-06-19 16:00:00 UTC');
-
         $this->commandBus()->dispatch(new CreateCompetitionCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
@@ -64,7 +62,6 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
             description: null,
             withPin: false,
             hideOthersTipsBeforeDeadline: true,
-            tipsDeadline: $deadline,
             selectionMode: CompetitionMatchSelectionMode::Subset,
             includePlayoff: true,
             selectedMatchIds: [
@@ -86,7 +83,8 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
         self::assertInstanceOf(Competition::class, $competition);
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
-        self::assertEquals($deadline, $competition->tipsDeadline);
+        // A fresh competition is never pre-locked; locking is a separate command.
+        self::assertNull($competition->tipsLockedAt);
         self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
 
         $selections = $em->createQueryBuilder()

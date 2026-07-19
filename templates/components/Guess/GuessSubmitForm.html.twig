@@ -16,7 +16,11 @@
     {% if this.isLocked %}
         <p class="flex items-center gap-1.5 text-sm text-white/60">
             <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
-            Tipování uzavřeno — zápas už začal nebo není aktivní.
+            {% if not this.sportMatch.isOpenForGuesses %}
+                Tipování uzavřeno — zápas už začal nebo není aktivní.
+            {% else %}
+                Tipování uzavřeno — uzávěrka proběhla {{ this.effectiveDeadline|date('j. n. Y H:i') }}.
+            {% endif %}
         </p>
         {% if this.existingGuess %}
             {% set locked_guess = this.existingGuess %}
@@ -54,6 +58,14 @@
             <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-win/30 bg-win/10 px-3 py-2 text-sm text-win">
                 <twig:ux:icon name="lucide:circle-check-big" class="h-4 w-4 shrink-0" />
                 {{ this.successMessage }}
+            </p>
+        {% endif %}
+
+        {# Uzávěrka se ukáže, jen když se liší od výkopu (jinak platí prostě „do výkopu"). #}
+        {% if this.effectiveDeadline != this.sportMatch.kickoffAt %}
+            <p class="mb-3 flex items-center gap-1.5 text-xs text-white/50">
+                <twig:ux:icon name="lucide:hourglass" class="h-3.5 w-3.5 shrink-0" />
+                Uzávěrka: {{ this.effectiveDeadline|date('j. n. Y H:i') }}
             </p>
         {% endif %}
 

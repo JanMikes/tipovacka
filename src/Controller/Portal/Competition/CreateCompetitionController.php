@@ -93,7 +93,6 @@ final class CreateCompetitionController extends AbstractController
                     description: $formData->description ?: null,
                     withPin: $formData->withPin,
                     hideOthersTipsBeforeDeadline: $formData->hideOthersTipsBeforeDeadline,
-                    tipsDeadline: $formData->tipsDeadline,
                     selectionMode: $formData->selectionMode,
                     includePlayoff: CompetitionMatchSelectionMode::All === $formData->selectionMode
                         ? $formData->includePlayoff
@@ -144,17 +143,6 @@ final class CreateCompetitionController extends AbstractController
         $formData->includePlayoff = $this->queryBool($request, 'includePlayoff', $formData->includePlayoff);
         $formData->hideOthersTipsBeforeDeadline = $this->queryBool($request, 'hideOthersTipsBeforeDeadline', $formData->hideOthersTipsBeforeDeadline);
         $formData->withPin = $this->queryBool($request, 'withPin', $formData->withPin);
-
-        $tipsDeadline = $request->query->get('tipsDeadline');
-
-        if (\is_string($tipsDeadline) && '' !== trim($tipsDeadline)) {
-            // Same format + timezone the form field uses (view Europe/Prague, model UTC).
-            $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d H:i', trim($tipsDeadline), new \DateTimeZone('Europe/Prague'));
-
-            if (false !== $parsed) {
-                $formData->tipsDeadline = $parsed->setTimezone(new \DateTimeZone('UTC'));
-            }
-        }
     }
 
     private function queryBool(Request $request, string $key, bool $default): bool

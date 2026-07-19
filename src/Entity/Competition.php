@@ -15,7 +15,10 @@ use App\Event\CompetitionPinRevoked;
 use App\Event\CompetitionRulesChanged;
 use App\Event\CompetitionShareableLinkRegenerated;
 use App\Event\CompetitionShareableLinkRevoked;
+use App\Event\CompetitionTipsLocked;
+use App\Event\CompetitionTipsUnlocked;
 use App\Event\CompetitionUpdated;
+use App\Exception\CompetitionTipsCannotBeUnlocked;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -47,8 +50,21 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column]
     public private(set) bool $hideOthersTipsBeforeDeadline = false;
 
+    /**
+     * Manual lock moment („Uzamknout tipy"). When null, the competition's tips
+     * lock automatically at the earliest kickoff among its included matches
+     * (computed live by {@see \App\Service\EffectiveTipDeadlineResolver}).
+     */
     #[ORM\Column(nullable: true)]
-    public private(set) ?\DateTimeImmutable $tipsDeadline = null;
+    public private(set) ?\DateTimeImmutable $tipsLockedAt = null;
+
+    /**
+     * „Měnit tip" entitlement offset: entitled members may change tips until
+     * this many minutes before the day's first competition match. Editable by
+     * managers on premium competitions only (S10); until then the default holds.
+     */
+    #[ORM\Column(options: ['default' => 60])]
+    public private(set) int $tipChangeOffsetMinutes = 60;
 
     /** All ⇒ every source match belongs here; Subset ⇒ only `CompetitionMatchSelection` rows. */
     #[ORM\Column(enumType: CompetitionMatchSelectionMode::class, options: ['default' => CompetitionMatchSelectionMode::All->value])]
@@ -84,7 +100,6 @@ class Competition implements EntityWithEvents, SoftDeletable
         CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
         bool $includePlayoff = true,
         bool $hideOthersTipsBeforeDeadline = false,
-        ?\DateTimeImmutable $tipsDeadline = null,
     ) {
         $this->name = $name;
         $this->description = $description;
@@ -93,7 +108,6 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->selectionMode = $selectionMode;
         $this->includePlayoff = $includePlayoff;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
-        $this->tipsDeadline = $tipsDeadline;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new CompetitionCreated(
@@ -109,19 +123,96 @@ class Competition implements EntityWithEvents, SoftDeletable
         string $name,
         ?string $description,
         bool $hideOthersTipsBeforeDeadline,
-        ?\DateTimeImmutable $tipsDeadline,
         \DateTimeImmutable $now,
     ): void {
         $this->name = $name;
         $this->description = $description;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
-        $this->tipsDeadline = $tipsDeadline;
         $this->updatedAt = $now;
 
         $this->recordThat(new CompetitionUpdated(
             competitionId: $this->id,
             occurredOn: $now,
         ));
+    }
+
+    /**
+     * Manual „Uzamknout tipy": from this moment the competition counts as
+     * started for tip locking. Idempotent — locking an already locked
+     * competition keeps the original lock moment.
+     */
+    public function lockTips(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->tipsLockedAt) {
+            return;
+        }
+
+        $this->tipsLockedAt = $now;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CompetitionTipsLocked(
+            competitionId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Reverts a manual lock. Allowed only while the competition has not really
+     * started yet — i.e. before the first included match kicks off (the caller
+     * passes that moment in; null = the competition has no scheduled matches).
+     * Unlocking an unlocked competition is a no-op.
+     */
+    public function unlockTips(\DateTimeImmutable $now, ?\DateTimeImmutable $firstKickoffAt): void
+    {
+        if (null === $this->tipsLockedAt) {
+            return;
+        }
+
+        if (null !== $firstKickoffAt && $now >= $firstKickoffAt) {
+            throw CompetitionTipsCannotBeUnlocked::afterCompetitionStart();
+        }
+
+        $this->tipsLockedAt = null;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CompetitionTipsUnlocked(
+            competitionId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Pins the automatic lock moment onto `tipsLockedAt` when the match that
+     * defined it (the competition's earliest included kickoff) is postponed
+     * later or soft-deleted after the moment already passed. Without it the
+     * live first-kickoff recomputation would jump forward and reopen already
+     * closed tips (see {@see \App\Service\EffectiveTipDeadlineResolver::lockMomentToPinAfterDefiningMatchLeft}).
+     * Idempotent; records NO event — a correctness pin, not a manager's
+     * „Uzamknout tipy" action.
+     */
+    public function pinTipsLockMoment(\DateTimeImmutable $lockMoment, \DateTimeImmutable $now): void
+    {
+        if (null !== $this->tipsLockedAt) {
+            return;
+        }
+
+        $this->tipsLockedAt = $lockMoment;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * S10 territory (premium settings) — kept here so the offset has a single
+     * mutation path once the premium UI lands. No event: it is a tuning knob,
+     * not a domain fact.
+     */
+    public function changeTipChangeOffset(int $minutes, \DateTimeImmutable $now): void
+    {
+        if ($minutes < 0) {
+            throw new \InvalidArgumentException('Tip change offset must not be negative.');
+        }
+
+        $this->tipChangeOffsetMinutes = $minutes;
+        $this->updatedAt = $now;
     }
 
     public function recordMatchSelectionChanged(User $editor, \DateTimeImmutable $now): void

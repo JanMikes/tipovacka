@@ -9,7 +9,9 @@ use App\Entity\Guess;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
 use App\Repository\SportMatchRepository;
+use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\EffectiveTipDeadlineResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,7 +22,9 @@ final readonly class ListUserMatchesQuery
 {
     public function __construct(
         private SportMatchRepository $sportMatchRepository,
+        private UserRepository $userRepository,
         private CompetitionMatchProvider $matchProvider,
+        private EffectiveTipDeadlineResolver $deadlineResolver,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
     ) {
@@ -42,6 +46,8 @@ final readonly class ListUserMatchesQuery
             return [];
         }
 
+        $user = $this->userRepository->get($query->userId);
+
         $matchSourceIds = [];
         $matchIds = [];
 
@@ -59,18 +65,30 @@ final readonly class ListUserMatchesQuery
             $matchSourceKey = $m->matchSource->id->toRfc4122();
             $matchKey = $m->id->toRfc4122();
 
-            $competitionIds = $this->includingCompetitionIds($competitionsByMatchSource[$matchSourceKey] ?? [], $m);
+            $includingCompetitions = $this->includingCompetitions($competitionsByMatchSource[$matchSourceKey] ?? [], $m);
 
             // A match that belongs to none of the user's competitions
             // (subset-excluded, playoff-excluded) is not theirs to tip.
-            if (0 === count($competitionIds)) {
+            if (0 === count($includingCompetitions)) {
                 continue;
             }
 
-            $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
+            $competitionIds = array_map(
+                static fn (Competition $c): string => $c->id->toRfc4122(),
+                $includingCompetitions,
+            );
 
-            $competitionsCount = count($competitionIds);
-            $guessedCompetitionsCount = count(array_intersect($competitionIds, $guessedCompetitionIds));
+            // Per-competition locking: the match is tippable/pending only in
+            // competitions where the resolver still has it open for this user.
+            $openCompetitionIds = [];
+
+            foreach ($includingCompetitions as $competition) {
+                if (!$this->deadlineResolver->isLocked($competition, $m, $user, $now)) {
+                    $openCompetitionIds[] = $competition->id->toRfc4122();
+                }
+            }
+
+            $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
 
             $items[] = new UserMatchItem(
                 id: $m->id,
@@ -88,9 +106,11 @@ final readonly class ListUserMatchesQuery
                 isPostponed: $m->isPostponed,
                 homeScore: $m->homeScore,
                 awayScore: $m->awayScore,
-                competitionsCount: $competitionsCount,
-                guessedCompetitionsCount: $guessedCompetitionsCount,
-                pendingCompetitionsCount: $competitionsCount - $guessedCompetitionsCount,
+                isTippable: [] !== $openCompetitionIds,
+                competitionsCount: count($competitionIds),
+                guessedCompetitionsCount: count(array_intersect($competitionIds, $guessedCompetitionIds)),
+                openCompetitionsCount: count($openCompetitionIds),
+                pendingCompetitionsCount: count(array_diff($openCompetitionIds, $guessedCompetitionIds)),
             );
         }
 
@@ -100,19 +120,14 @@ final readonly class ListUserMatchesQuery
     /**
      * @param list<Competition> $competitions
      *
-     * @return list<string> UUIDs of the competitions that include the match
+     * @return list<Competition> the competitions that include the match
      */
-    private function includingCompetitionIds(array $competitions, SportMatch $match): array
+    private function includingCompetitions(array $competitions, SportMatch $match): array
     {
-        $ids = [];
-
-        foreach ($competitions as $competition) {
-            if ($this->matchProvider->includes($competition, $match)) {
-                $ids[] = $competition->id->toRfc4122();
-            }
-        }
-
-        return $ids;
+        return array_values(array_filter(
+            $competitions,
+            fn (Competition $competition): bool => $this->matchProvider->includes($competition, $match),
+        ));
     }
 
     /**

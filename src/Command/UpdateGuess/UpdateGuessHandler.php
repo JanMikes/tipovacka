@@ -68,10 +68,10 @@ final readonly class UpdateGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->resolve($guess->competition, $guess->sportMatch);
+        $deadline = $this->deadlineResolver->deadlineFor($guess->competition, $guess->sportMatch, $guess->user);
 
         if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::create();
+            throw GuessDeadlinePassed::at($deadline);
         }
 
         // Full replace: every tip part becomes exactly what the command carries.

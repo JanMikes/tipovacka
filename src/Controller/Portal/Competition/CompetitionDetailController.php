@@ -19,6 +19,7 @@ use App\Query\ListPendingJoinRequestsForCompetition\ListPendingJoinRequestsForCo
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,6 +38,7 @@ final class CompetitionDetailController extends AbstractController
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly MembershipRepository $membershipRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly QueryBus $queryBus,
         private readonly ClockInterface $clock,
     ) {
@@ -104,9 +106,21 @@ final class CompetitionDetailController extends AbstractController
             competitionId: $competition->id,
         ));
 
+        // Tip-locking state for the hero + management buttons: locked = the
+        // competition-level lock moment (manual lock or first kickoff) passed;
+        // a manual lock can be undone only before the first kickoff.
+        $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
+        $firstKickoffAt = $this->deadlineResolver->firstKickoffFor($competition);
+        $tipsLocked = null !== $lockMoment && $lockMoment <= $now;
+        $canUnlockTips = null !== $competition->tipsLockedAt
+            && (null === $firstKickoffAt || $now < $firstKickoffAt);
+
         return $this->render('portal/competition/detail.html.twig', [
             'competition' => $competition,
             'detail' => $detail,
+            'lock_moment' => $lockMoment,
+            'tips_locked' => $tipsLocked,
+            'can_unlock_tips' => $canUnlockTips,
             'invitationForm' => $invitationForm->createView(),
             'bulkInvitationForm' => $bulkInvitationForm?->createView(),
             'pendingInvitations' => $pendingInvitations,

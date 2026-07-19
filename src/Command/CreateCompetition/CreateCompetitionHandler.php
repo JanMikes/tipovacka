@@ -55,7 +55,6 @@ final readonly class CreateCompetitionHandler
             selectionMode: $command->selectionMode,
             includePlayoff: $command->includePlayoff,
             hideOthersTipsBeforeDeadline: $command->hideOthersTipsBeforeDeadline,
-            tipsDeadline: $command->tipsDeadline,
         );
 
         $this->competitionRepository->save($competition);

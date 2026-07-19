@@ -84,6 +84,9 @@ curated one.)
 | `PUBLIC_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000002` | `Admin liga`   | PUBLIC_SOURCE  | ADMIN         | none (`null`) | `PUBLIC_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000219bbbbb0000700b2` |
 | `SUBSET_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000033` | `Vybrané zápasy party` | PUBLIC_SOURCE | SECOND_VERIFIED_USER | none (`null`) | `SUBSET_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000319bbbbb0000700b3` |
 
+All competitions: `tipsLockedAt = null` (never manually locked) and
+`tipChangeOffsetMinutes = 60` (default).
+
 Selection mode: VERIFIED_COMPETITION and PUBLIC_COMPETITION are mode `all` with
 `includePlayoff = true` (defaults). **`SUBSET_COMPETITION` is mode `subset`** with
 exactly two `CompetitionMatchSelection` rows:
@@ -94,6 +97,35 @@ exactly two `CompetitionMatchSelection` rows:
 | `SUBSET_SELECTION_FINISHED_ID`  | `019bbbbb-0000-7000-8000-00000000bb02` | `MATCH_FINISHED`   |
 
 NOT selected (⇒ `MatchNotInCompetition` when tipped there): `MATCH_LIVE`, `MATCH_PLAYOFF`.
+
+### Tip locking in fixtures (S07)
+
+Since S07 tips lock at **competition start** (earliest included kickoff, or a manual
+`tipsLockedAt`), with one escape hatch: matches that ENTERED the competition after its
+lock moment (mode All: `max(SportMatch.createdAt, Competition.createdAt)` > lock; mode
+Subset: selection `addedAt` > lock) keep their own kickoff as the deadline
+(`EffectiveTipDeadlineResolver`).
+
+Because every fixture row is created at `$now = 2025-06-15 12:00 UTC`, the fixture
+competitions on the PUBLIC source **naturally exercise the late-added branch**:
+
+| Competition | Lock moment (earliest included kickoff) | Why scheduled matches stay tippable |
+|---|---|---|
+| PUBLIC_COMPETITION | `2025-06-10 18:00` (MATCH_FINISHED) — in the past | ALL matches have `createdAt = 2025-06-15 12:00` > lock ⇒ **late-added** ⇒ deadline = own kickoff |
+| SUBSET_COMPETITION | `2025-06-10 18:00` (MATCH_FINISHED is selected) | both selections have `addedAt = 2025-06-15 12:00` > lock ⇒ **late-added** ⇒ deadline = own kickoff |
+| VERIFIED_COMPETITION | `2025-06-20 19:00` (MATCH_PRIVATE_SCHEDULED) — in the future | not started yet ⇒ default branch, deadline = first kickoff (= the match's own kickoff) |
+
+Practical consequences for tests:
+
+- Submitting on `MATCH_SCHEDULED` / `MATCH_PLAYOFF` / `MATCH_PRIVATE_SCHEDULED` works
+  exactly as before S07 (deadline = kickoff, all in the future).
+- To test **locked** tipping, either dispatch `LockCompetitionTipsCommand` (locks at the
+  MockClock now, 12:00 — a fixture match created at 12:00 is NOT late-added because the
+  comparison is strictly `>`), or advance the `MockClock` before creating a match to make
+  it late-added (see `LockCompetitionTipsHandlerTest`).
+- VERIFIED_COMPETITION is the natural place to test manual lock/unlock (its first kickoff
+  is still ahead ⇒ unlock allowed); SUBSET_COMPETITION is the natural "already started"
+  competition (unlock rejected with `CompetitionTipsCannotBeUnlocked`).
 
 ## Memberships
 

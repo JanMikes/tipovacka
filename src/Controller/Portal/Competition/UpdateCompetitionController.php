@@ -9,7 +9,9 @@ use App\Entity\User;
 use App\Form\CompetitionFormData;
 use App\Form\CompetitionFormType;
 use App\Repository\CompetitionRepository;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,7 +29,9 @@ final class UpdateCompetitionController extends AbstractController
 {
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly MessageBusInterface $commandBus,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -52,7 +56,6 @@ final class UpdateCompetitionController extends AbstractController
                 name: $formData->name,
                 description: $formData->description ?: null,
                 hideOthersTipsBeforeDeadline: $formData->hideOthersTipsBeforeDeadline,
-                tipsDeadline: $formData->tipsDeadline,
             ));
 
             $this->addFlash('success', 'Soutěž byla uložena.');
@@ -60,9 +63,14 @@ final class UpdateCompetitionController extends AbstractController
             return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+        $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
+
         return $this->render('portal/competition/edit.html.twig', [
             'form' => $form,
             'competition' => $competition,
+            'lock_moment' => $lockMoment,
+            'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
         ]);
     }
 }

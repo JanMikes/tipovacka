@@ -9,7 +9,6 @@ use App\Enum\CompetitionMatchSelectionMode;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -57,21 +56,7 @@ final class CompetitionFormType extends AbstractType
         $builder->add('hideOthersTipsBeforeDeadline', CheckboxType::class, [
             'label' => 'Schovat tipy ostatních před uzávěrkou',
             'required' => false,
-            'help' => 'Když je zapnuto, ostatní členové uvidí tvůj tip až po uzávěrce. Ty samozřejmě vždy vidíš svoje.',
-        ]);
-
-        $builder->add('tipsDeadline', DateTimeType::class, [
-            'label' => 'Uzávěrka všech tipů',
-            'required' => false,
-            'widget' => 'single_text',
-            'input' => 'datetime_immutable',
-            'html5' => false,
-            'with_seconds' => false,
-            'format' => 'yyyy-MM-dd HH:mm',
-            // Stored in UTC, entered/displayed in Czech local time.
-            'model_timezone' => 'UTC',
-            'view_timezone' => 'Europe/Prague',
-            'help' => 'Uzávěrku lze nastavit i jednotlivě pro každý zápas. Pokud zde žádnou nezadáš a tipy ostatních jsou skryté, zveřejní se v okamžiku začátku zápasu.',
+            'help' => 'Když je zapnuto, ostatní členové uvidí tvůj tip až po uzávěrce zápasu. Ty samozřejmě vždy vidíš svoje.',
         ]);
 
         if (true !== $options['with_source_selection']) {

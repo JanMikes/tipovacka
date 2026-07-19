@@ -63,6 +63,28 @@ class GuessRepository
     }
 
     /**
+     * Whether ANY active (non-voided) tip exists for the match in the
+     * competition — used to keep a re-selected match from becoming late-added
+     * (and thereby reopening already-revealed tips).
+     */
+    public function hasActiveInCompetitionAndMatch(Uuid $competitionId, Uuid $sportMatchId): bool
+    {
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('1')
+            ->from(Guess::class, 'g')
+            ->where('g.competition = :competitionId')
+            ->andWhere('g.sportMatch = :sportMatchId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('competitionId', $competitionId)
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return null !== $result;
+    }
+
+    /**
      * @return list<Guess>
      */
     public function listActiveByCompetitionAndMatch(Uuid $competitionId, Uuid $sportMatchId): array

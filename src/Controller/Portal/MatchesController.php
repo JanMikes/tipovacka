@@ -43,7 +43,9 @@ final class MatchesController extends AbstractController
 
         $isToday = static fn (UserMatchItem $m): bool => $m->kickoffAt
             ->setTimezone(new \DateTimeZone(self::TIMEZONE))->format('Y-m-d') === $today;
-        $isTippable = static fn (UserMatchItem $m): bool => $m->isOpenForGuesses && $m->kickoffAt >= $now;
+        // Per-competition aware: open in at least one of the user's competitions
+        // including the match (resolved by EffectiveTipDeadlineResolver in the query).
+        $isTippable = static fn (UserMatchItem $m): bool => $m->isTippable;
         $isFinished = static fn (UserMatchItem $m): bool => $m->isFinished;
 
         $counts = [

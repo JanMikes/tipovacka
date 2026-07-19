@@ -14,7 +14,6 @@ final readonly class UpdateCompetitionCommand
         public string $name,
         public ?string $description,
         public bool $hideOthersTipsBeforeDeadline,
-        public ?\DateTimeImmutable $tipsDeadline,
     ) {
     }
 }

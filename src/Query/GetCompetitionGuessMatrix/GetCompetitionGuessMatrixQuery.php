@@ -79,7 +79,9 @@ final readonly class GetCompetitionGuessMatrixQuery
             array_map(static fn (array $row) => $row['guessId'], $guessRows),
         );
 
-        $deadlineByMatchKey = $this->deadlineResolver->resolveMany($competition, $matches);
+        // Visibility is competition-wide (no per-viewer entitlement): others'
+        // tips stay hidden until each match's generic effective deadline.
+        $deadlineByMatchKey = $this->deadlineResolver->deadlinesFor($competition, $matches);
 
         /** @var array<string, array<string, MatrixCell>> $cellsByUser */
         $cellsByUser = [];

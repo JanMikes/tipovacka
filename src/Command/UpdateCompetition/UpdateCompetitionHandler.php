@@ -26,7 +26,6 @@ final readonly class UpdateCompetitionHandler
             name: $command->name,
             description: $command->description,
             hideOthersTipsBeforeDeadline: $command->hideOthersTipsBeforeDeadline,
-            tipsDeadline: $command->tipsDeadline,
             now: $now,
         );
     }

@@ -60,13 +60,20 @@
                     {{ form_errors(form.hideOthersTipsBeforeDeadline) }}
                 </div>
 
-                <div class="field">
-                    {{ form_label(form.tipsDeadline) }}
-                    {{ form_widget(form.tipsDeadline, {attr: {class: 'input'}}) }}
-                    {% if form.tipsDeadline.vars.help %}
-                        <p class="text-xs leading-relaxed text-white/50">{{ form.tipsDeadline.vars.help }}</p>
+                <div class="rounded-xl border border-white/10 bg-inset px-4 py-3 text-xs leading-relaxed text-white/60">
+                    {% if tips_locked %}
+                        <p class="flex items-center gap-1.5 font-semibold text-white/80">
+                            <twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" />
+                            Tipy jsou uzamčeny.
+                        </p>
+                        <p class="mt-1">Soutěž už odstartovala{% if competition.tipsLockedAt %}, nebo byly tipy uzamčeny ručně{% endif %}. Zápasy přidané později se tipují až do svého výkopu.</p>
+                    {% else %}
+                        <p>
+                            Tipy se uzamknou startem soutěže{% if lock_moment %} —
+                            <span class="font-semibold text-white/80">{{ lock_moment|date('j. n. Y H:i') }}</span>{% endif %}.
+                            Uzamknout je můžete i dřív tlačítkem „Uzamknout tipy“ v detailu soutěže.
+                        </p>
                     {% endif %}
-                    {{ form_errors(form.tipsDeadline) }}
                 </div>
             </div>
 

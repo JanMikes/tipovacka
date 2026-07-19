@@ -11,6 +11,7 @@ use App\Entity\Guess;
 use App\Entity\MatchSource;
 use App\Entity\SportMatch;
 use App\Exception\MatchNotInCompetition;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
@@ -191,6 +192,129 @@ final class UpdateCompetitionMatchSelectionHandlerTest extends IntegrationTestCa
             $this->fixtureSelection(),
             $this->currentSelection(),
         );
+    }
+
+    public function testReAddingMatchWithExistingGuessesKeepsItLockedNotLateAdded(): void
+    {
+        $em = $this->entityManager();
+        $competitionId = Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID);
+        $ownerId = Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID);
+
+        // A tip exists on the still-scheduled selected match, revealed while open.
+        $owner = $em->find(\App\Entity\User::class, $ownerId);
+        self::assertNotNull($owner);
+        $competition = $em->find(\App\Entity\Competition::class, $competitionId);
+        self::assertNotNull($competition);
+        $scheduledMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertNotNull($scheduledMatch);
+        $guess = new Guess(
+            id: Uuid::v7(),
+            user: $owner,
+            sportMatch: $scheduledMatch,
+            competition: $competition,
+            homeScore: 2,
+            awayScore: 0,
+            submittedAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $guess->popEvents();
+        $em->persist($guess);
+        $em->flush();
+
+        // Manual lock at "now" (12:00), then time passes.
+        $this->commandBus()->dispatch(new \App\Command\LockCompetitionTips\LockCompetitionTipsCommand(
+            editorId: $ownerId,
+            competitionId: $competitionId,
+        ));
+        $clock = $this->clock();
+        self::assertInstanceOf(\Symfony\Component\Clock\MockClock::class, $clock);
+        $clock->modify('+30 minutes');
+
+        // Deselect then re-add the (already-tipped) match.
+        $this->commandBus()->dispatch(new UpdateCompetitionMatchSelectionCommand(
+            editorId: $ownerId,
+            competitionId: $competitionId,
+            selectedMatchIds: [Uuid::fromString(AppFixtures::MATCH_FINISHED_ID)],
+        ));
+        $this->commandBus()->dispatch(new UpdateCompetitionMatchSelectionCommand(
+            editorId: $ownerId,
+            competitionId: $competitionId,
+            selectedMatchIds: [
+                Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
+                Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+            ],
+        ));
+
+        $em->clear();
+
+        // The re-added selection is pinned to competition creation (NOT "now"),
+        // so the match is not late-added and stays locked.
+        $selection = $this->selectionFor($competitionId, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        $reloadedCompetition = $em->find(\App\Entity\Competition::class, $competitionId);
+        self::assertNotNull($reloadedCompetition);
+        self::assertEquals($reloadedCompetition->createdAt, $selection->addedAt);
+
+        $resolver = self::getContainer()->get(EffectiveTipDeadlineResolver::class);
+        $resolver->reset();
+        $reloadedMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertNotNull($reloadedMatch);
+        self::assertTrue($resolver->isLocked($reloadedCompetition, $reloadedMatch, null, new \DateTimeImmutable('2025-06-15 12:30:00 UTC')));
+    }
+
+    public function testReAddingNeverGuessedMatchAfterLockIsTippable(): void
+    {
+        $em = $this->entityManager();
+        $competitionId = Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID);
+        $ownerId = Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID);
+
+        $this->commandBus()->dispatch(new \App\Command\LockCompetitionTips\LockCompetitionTipsCommand(
+            editorId: $ownerId,
+            competitionId: $competitionId,
+        ));
+        $clock = $this->clock();
+        self::assertInstanceOf(\Symfony\Component\Clock\MockClock::class, $clock);
+        $clock->modify('+30 minutes');
+
+        // Add the never-guessed playoff match (kickoff 2025-06-22, future).
+        $this->commandBus()->dispatch(new UpdateCompetitionMatchSelectionCommand(
+            editorId: $ownerId,
+            competitionId: $competitionId,
+            selectedMatchIds: [
+                Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+                Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
+                Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+            ],
+        ));
+
+        $em->clear();
+
+        // No prior guess ⇒ enters "now" (after the lock) ⇒ late-added ⇒ tippable.
+        $selection = $this->selectionFor($competitionId, Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID));
+        self::assertEquals(new \DateTimeImmutable('2025-06-15 12:30:00 UTC'), $selection->addedAt);
+
+        $resolver = self::getContainer()->get(EffectiveTipDeadlineResolver::class);
+        $resolver->reset();
+        $competition = $em->find(\App\Entity\Competition::class, $competitionId);
+        self::assertNotNull($competition);
+        $playoffMatch = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID));
+        self::assertNotNull($playoffMatch);
+        self::assertFalse($resolver->isLocked($competition, $playoffMatch, null, new \DateTimeImmutable('2025-06-15 12:30:00 UTC')));
+    }
+
+    private function selectionFor(Uuid $competitionId, Uuid $sportMatchId): CompetitionMatchSelection
+    {
+        $selection = $this->entityManager()->createQueryBuilder()
+            ->select('s')
+            ->from(CompetitionMatchSelection::class, 's')
+            ->where('s.competition = :competitionId')
+            ->andWhere('s.sportMatch = :sportMatchId')
+            ->setParameter('competitionId', $competitionId)
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(CompetitionMatchSelection::class, $selection);
+
+        return $selection;
     }
 
     /**

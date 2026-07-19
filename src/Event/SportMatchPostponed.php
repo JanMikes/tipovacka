@@ -10,6 +10,7 @@ final readonly class SportMatchPostponed
 {
     public function __construct(
         public Uuid $sportMatchId,
+        public \DateTimeImmutable $previousKickoffAt,
         public \DateTimeImmutable $newKickoffAt,
         public \DateTimeImmutable $occurredOn,
     ) {

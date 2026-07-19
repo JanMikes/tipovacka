@@ -273,13 +273,13 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         // always has upcoming matches to exercise the UI, regardless of when fixtures
         // are reloaded. Finished/live matches stay at their historical dates.
         $today = (new \DateTimeImmutable('today', new \DateTimeZone('UTC')));
-        $fortunaUpcoming1 = $this->scheduledMatch($manager, $fortuna, 'ddbb0104', 'Bohemians 1905', 'Mladá Boleslav', $today->modify('+2 days')->setTime(17, 0)->format('Y-m-d H:i:s'), 'Ďolíček');
-        $fortunaUpcoming2 = $this->scheduledMatch($manager, $fortuna, 'ddbb0105', 'Teplice', 'Liberec', $today->modify('+5 days')->setTime(15, 0)->format('Y-m-d H:i:s'), null);
-        $this->scheduledMatch($manager, $fortuna, 'ddbb0106', 'Hradec Králové', 'Zlín', $today->modify('+10 days')->setTime(17, 30)->format('Y-m-d H:i:s'), 'Malšovická aréna');
+        $fortunaUpcoming1 = $this->scheduledMatch($manager, $fortuna, 'ddbb0104', 'Bohemians 1905', 'Mladá Boleslav', $today->modify('+2 days')->setTime(17, 0)->format('Y-m-d H:i:s'), 'Ďolíček', $now);
+        $fortunaUpcoming2 = $this->scheduledMatch($manager, $fortuna, 'ddbb0105', 'Teplice', 'Liberec', $today->modify('+5 days')->setTime(15, 0)->format('Y-m-d H:i:s'), null, $now);
+        $this->scheduledMatch($manager, $fortuna, 'ddbb0106', 'Hradec Králové', 'Zlín', $today->modify('+10 days')->setTime(17, 30)->format('Y-m-d H:i:s'), 'Malšovická aréna', $now);
 
         // Private match source — mostly scheduled, one finished.
-        $this->scheduledMatch($manager, $firma, 'ddcc0101', 'Tygři', 'Lvi', $today->modify('+3 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
-        $this->scheduledMatch($manager, $firma, 'ddcc0102', 'Orli', 'Medvědi', $today->modify('+14 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null);
+        $this->scheduledMatch($manager, $firma, 'ddcc0101', 'Tygři', 'Lvi', $today->modify('+3 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null, $now);
+        $this->scheduledMatch($manager, $firma, 'ddcc0102', 'Orli', 'Medvědi', $today->modify('+14 days')->setTime(18, 0)->format('Y-m-d H:i:s'), null, $now);
         $firmaFinished = $this->finishedMatch($manager, $firma, 'ddcc0103', 'Kohouti', 'Vlci', '2025-06-08 17:00:00', null, 1, 0, $now);
 
         // -- Guesses + evaluations ---------------------------------------
@@ -443,7 +443,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         int $awayScore,
         \DateTimeImmutable $now,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue, $now);
         $match->setFinalScore($homeScore, $awayScore, null, null, null, $now);
         $match->popEvents();
 
@@ -460,7 +460,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         ?string $venue,
         \DateTimeImmutable $now,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue, $now);
         $match->beginLive($now);
         $match->popEvents();
 
@@ -475,8 +475,9 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         string $awayTeam,
         string $kickoff,
         ?string $venue,
+        \DateTimeImmutable $now,
     ): SportMatch {
-        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue);
+        $match = $this->baseMatch($manager, $matchSource, $idSuffix, $homeTeam, $awayTeam, $kickoff, $venue, $now);
         $match->popEvents();
 
         return $match;
@@ -490,6 +491,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         string $awayTeam,
         string $kickoff,
         ?string $venue,
+        \DateTimeImmutable $now,
     ): SportMatch {
         $match = new SportMatch(
             id: Uuid::fromString('019ddddd-0000-7000-8000-'.str_pad($idSuffix, 12, '0', STR_PAD_LEFT)),
@@ -498,7 +500,14 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable($kickoff, new \DateTimeZone('UTC')),
             venue: $venue,
-            createdAt: new \DateTimeImmutable('2024-04-01 10:00:00 UTC'),
+            // createdAt = the dev seed "now" (2025-06-15), like AppFixtures — NOT a
+            // pre-history date. Under S07 the lock moment is a competition's earliest
+            // included kickoff (often a past finished match), so a match created before
+            // that moment would be treated as pre-lock and lock immediately. Seeding
+            // createdAt at "now" makes the upcoming scheduled matches count as
+            // late-added (createdAt > lock moment) ⇒ tippable until their own kickoff,
+            // so the dev browser actually has tippable fixtures.
+            createdAt: $now,
         );
         $manager->persist($match);
 

@@ -10,6 +10,7 @@ use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -33,6 +34,7 @@ final class ManageMemberTipsController extends AbstractController
         private readonly UserRepository $userRepository,
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly CompetitionGuessFeatures $guessFeatures,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -62,13 +64,19 @@ final class ManageMemberTipsController extends AbstractController
             if ($isMember) {
                 $selectedMember = $candidate;
 
-                $allMatches = $this->matchProvider->matchesFor($competition);
-                $openMatches = array_values(array_filter(
-                    $allMatches,
-                    static fn ($m) => $m->isOpenForGuesses && $m->kickoffAt > $now,
+                // Open = tippable through the resolver for the SELECTED member
+                // (their entitlements, their tip window) — not a raw kickoff check.
+                $candidateMatches = array_values(array_filter(
+                    $this->matchProvider->matchesFor($competition),
+                    static fn ($m) => $m->isOpenForGuesses,
                 ));
+                $deadlines = $this->deadlineResolver->deadlinesFor($competition, $candidateMatches, $selectedMember);
 
-                foreach ($openMatches as $sportMatch) {
+                foreach ($candidateMatches as $sportMatch) {
+                    if ($deadlines[$sportMatch->id->toRfc4122()] <= $now) {
+                        continue;
+                    }
+
                     $rows[] = [
                         'match' => $sportMatch,
                         'guess' => $this->guessRepository->findActiveByUserMatchCompetition(

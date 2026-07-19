@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
+use App\Command\LockCompetitionTips\LockCompetitionTipsCommand;
 use App\Command\SetCompetitionMatchDeadline\SetCompetitionMatchDeadlineCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
-use App\Command\UpdateCompetition\UpdateCompetitionCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Guess;
 use App\Exception\GuessAlreadyExists;
@@ -118,16 +118,14 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         }
     }
 
-    public function testRejectsWhenCompetitionDefaultDeadlinePassed(): void
+    public function testRejectsWhenTipsManuallyLocked(): void
     {
-        // Now is fixed at 2025-06-15 12:00 UTC; set competition deadline a day earlier.
-        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
+        // Manual „Uzamknout tipy" locks immediately: tipsLockedAt = now (12:00),
+        // so a submit at the very same now is already past the deadline —
+        // even though the match kicks off only on 2025-06-20.
+        $this->commandBus()->dispatch(new LockCompetitionTipsCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            name: AppFixtures::VERIFIED_COMPETITION_NAME,
-            description: null,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00:00'),
         ));
 
         $this->expectException(HandlerFailedException::class);
@@ -173,16 +171,13 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
         }
     }
 
-    public function testOverridePushesDeadlinePastNowEvenIfCompetitionDefaultPassed(): void
+    public function testOverridePushesDeadlinePastNowEvenIfTipsAreLocked(): void
     {
-        // Competition default in past, override pushes deadline to the future (still ≤ kickoff).
-        $this->commandBus()->dispatch(new UpdateCompetitionCommand(
+        // Tips manually locked, but a manager per-match override pushes THIS
+        // match's deadline to the future (still ≤ kickoff) — the override wins.
+        $this->commandBus()->dispatch(new LockCompetitionTipsCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            name: AppFixtures::VERIFIED_COMPETITION_NAME,
-            description: null,
-            hideOthersTipsBeforeDeadline: false,
-            tipsDeadline: new \DateTimeImmutable('2025-06-14 09:00:00'),
         ));
         $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
             editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),

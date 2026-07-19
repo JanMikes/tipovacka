@@ -18,6 +18,9 @@
             {% if detail.matchSourceIsCompleted %}
                 <twig:Pill label="Zdroj zápasů ukončen" variant="done" />
             {% endif %}
+            {% if tips_locked %}
+                <twig:Pill label="Tipy uzamčeny" variant="locked" icon="lock" />
+            {% endif %}
         </div>
         <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
             <span class="inline-flex items-center gap-1.5">
@@ -27,6 +30,12 @@
             <span class="inline-flex items-center gap-1.5">
                 <twig:ux:icon name="lucide:user" class="h-4 w-4 text-white/40" />{{ detail.ownerNickname }}
             </span>
+            {% if not tips_locked and lock_moment %}
+                <span class="inline-flex items-center gap-1.5">
+                    <twig:ux:icon name="lucide:hourglass" class="h-4 w-4 text-white/40" />
+                    Uzávěrka tipů: {{ lock_moment|date('j. n. Y H:i') }}
+                </span>
+            {% endif %}
         </p>
     </header>
 
@@ -479,6 +488,32 @@
                             <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                                 <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
                             </a>
+                        {% endif %}
+
+                        {% if not tips_locked %}
+                            <form method="post" action="{{ path('portal_competition_lock_tips', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Uzamknout tipy"
+                                data-confirm-message-value="Tipy všech členů se okamžitě uzamknou, jako by soutěž právě odstartovala. Odemknout je půjde jen do výkopu prvního zápasu."
+                                data-confirm-confirm-label-value="Ano, uzamknout">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_lock_tips_' ~ competition.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                    <twig:ux:icon name="lucide:lock" class="h-4 w-4" />Uzamknout tipy
+                                </button>
+                            </form>
+                        {% elseif can_unlock_tips %}
+                            <form method="post" action="{{ path('portal_competition_unlock_tips', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Odemknout tipy"
+                                data-confirm-message-value="Ruční zámek se zruší a členové budou moct znovu tipovat až do startu soutěže."
+                                data-confirm-confirm-label-value="Ano, odemknout">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_unlock_tips_' ~ competition.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                    <twig:ux:icon name="lucide:lock-open" class="h-4 w-4" />Odemknout tipy
+                                </button>
+                            </form>
                         {% endif %}
                     {% endif %}
 
