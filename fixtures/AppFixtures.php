@@ -6,7 +6,6 @@ namespace App\DataFixtures;
 
 use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
-use App\Entity\CompetitionJoinRequest;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\Guess;
@@ -21,6 +20,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\CompetitionMonetization;
 use App\Enum\MatchEventType;
 use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
@@ -100,11 +100,24 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string ANONYMOUS_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa03';
     public const string SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa04';
 
+    /**
+     * S09 global (publicly discoverable) competitions over the PUBLIC curated
+     * source, owned by ADMIN. GLOBAL_COMPETITION charges an entry fee; the FREE
+     * one is fee 0. Neither has any non-owner member in the baseline, so both are
+     * still fee-unlocked and joinable by VERIFIED_USER / SECOND_VERIFIED_USER.
+     */
+    public const string GLOBAL_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000044';
+    public const string GLOBAL_COMPETITION_NAME = 'Globální tipovačka LM';
+    public const int GLOBAL_COMPETITION_ENTRY_FEE = 50;
+    public const string GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa05';
+
+    public const string FREE_GLOBAL_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000045';
+    public const string FREE_GLOBAL_COMPETITION_NAME = 'Globální tipovačka zdarma';
+    public const string FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID = '019bbbbb-0000-7000-8000-00000000aa06';
+
     public const string PENDING_INVITATION_ID = '019ccccc-0000-7000-8000-000000000001';
     public const string PENDING_INVITATION_TOKEN = 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789';
     public const string PENDING_INVITATION_EMAIL = 'outsider@tipovacka.test';
-
-    public const string PENDING_JOIN_REQUEST_ID = '019ccccc-0000-7000-8000-000000000002';
 
     /** Roster pool of the PUBLIC (curated) source — created for MATCH_FINISHED events. */
     public const string PLAYER_HOME_SCORER_ONE_ID = '019ddddd-0000-7000-8000-0000000000b1';
@@ -385,15 +398,58 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $pendingInvitation->popEvents();
         $manager->persist($pendingInvitation);
 
-        // Verified user is not a member of PUBLIC_COMPETITION, so a pending join request is valid.
-        $pendingJoinRequest = new CompetitionJoinRequest(
-            id: Uuid::fromString(self::PENDING_JOIN_REQUEST_ID),
-            competition: $publicCompetition,
-            user: $verified,
-            requestedAt: $now,
+        // S09: global (publicly discoverable) competitions over the PUBLIC curated
+        // source, owned by ADMIN. Paid one charges GLOBAL_COMPETITION_ENTRY_FEE; the
+        // other is free. Owner is the sole member of each ⇒ fee still unlocked.
+        $globalCompetition = new Competition(
+            id: Uuid::fromString(self::GLOBAL_COMPETITION_ID),
+            matchSource: $public,
+            owner: $admin,
+            name: self::GLOBAL_COMPETITION_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: null,
+            createdAt: $now,
+            monetization: CompetitionMonetization::None,
+            isGlobal: true,
+            entryFeeCredits: self::GLOBAL_COMPETITION_ENTRY_FEE,
         );
-        $pendingJoinRequest->popEvents();
-        $manager->persist($pendingJoinRequest);
+        $globalCompetition->popEvents();
+        $manager->persist($globalCompetition);
+
+        $globalOwnerMembership = new Membership(
+            id: Uuid::fromString(self::GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $globalCompetition,
+            user: $admin,
+            joinedAt: $now,
+        );
+        $globalOwnerMembership->popEvents();
+        $manager->persist($globalOwnerMembership);
+
+        $freeGlobalCompetition = new Competition(
+            id: Uuid::fromString(self::FREE_GLOBAL_COMPETITION_ID),
+            matchSource: $public,
+            owner: $admin,
+            name: self::FREE_GLOBAL_COMPETITION_NAME,
+            description: null,
+            pin: null,
+            shareableLinkToken: null,
+            createdAt: $now,
+            monetization: CompetitionMonetization::None,
+            isGlobal: true,
+            entryFeeCredits: 0,
+        );
+        $freeGlobalCompetition->popEvents();
+        $manager->persist($freeGlobalCompetition);
+
+        $freeGlobalOwnerMembership = new Membership(
+            id: Uuid::fromString(self::FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID),
+            competition: $freeGlobalCompetition,
+            user: $admin,
+            joinedAt: $now,
+        );
+        $freeGlobalOwnerMembership->popEvents();
+        $manager->persist($freeGlobalOwnerMembership);
 
         $playoffMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PLAYOFF_ID),

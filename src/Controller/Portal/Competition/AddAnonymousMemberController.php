@@ -38,7 +38,7 @@ final class AddAnonymousMemberController extends AbstractController
         $user = $this->getUser();
 
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
-        $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
+        $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_JOIN_MECHANICS, $competition);
 
         $formData = new AnonymousMemberFormData();
         $form = $this->createForm(AnonymousMemberFormType::class, $formData);

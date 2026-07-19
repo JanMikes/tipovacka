@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Sport;
+use App\Enum\CompetitionMonetization;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -76,6 +80,32 @@ final class MatchSourceFormType extends AbstractType
             'view_timezone' => 'Europe/Prague',
         ]);
 
+        // „Rovnou vytvořit globální soutěž" — offered on curated create only.
+        if (true === $options['with_global_option']) {
+            $builder->add('createGlobalCompetition', CheckboxType::class, [
+                'label' => 'Rovnou vytvořit globální soutěž nad tímto zdrojem',
+                'required' => false,
+            ]);
+
+            $builder->add('globalCompetitionName', TextType::class, [
+                'label' => 'Název globální soutěže',
+                'required' => false,
+                'attr' => ['placeholder' => 'Nechte prázdné pro převzetí názvu zdroje'],
+            ]);
+
+            $builder->add('globalCompetitionEntryFee', IntegerType::class, [
+                'label' => 'Vstupné (kredity)',
+                'required' => false,
+                'help' => '0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.',
+                'attr' => ['min' => 0],
+            ]);
+
+            $builder->add('globalCompetitionMonetization', EnumType::class, [
+                'label' => 'Monetizace globální soutěže',
+                'class' => CompetitionMonetization::class,
+                'choice_label' => static fn (CompetitionMonetization $monetization): string => $monetization->label(),
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -83,7 +113,9 @@ final class MatchSourceFormType extends AbstractType
         $resolver->setDefaults([
             'data_class' => MatchSourceFormData::class,
             'with_sport' => false,
+            'with_global_option' => false,
         ]);
         $resolver->setAllowedTypes('with_sport', 'bool');
+        $resolver->setAllowedTypes('with_global_option', 'bool');
     }
 }

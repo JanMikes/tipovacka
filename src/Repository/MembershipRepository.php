@@ -36,6 +36,39 @@ class MembershipRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Active member count (leftAt IS NULL) for a competition.
+     */
+    public function countActiveMembers(Uuid $competitionId): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(Membership::class, 'm')
+            ->where('m.competition = :competitionId')
+            ->andWhere('m.leftAt IS NULL')
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count of ALL memberships ever created for a competition — including those
+     * left (leftAt set). Drives the global fee-lock: once anyone besides the owner
+     * has EVER joined (count > 1), the fee/monetization lock permanently, even if
+     * that joiner later leaves (their row persists). A count based on active
+     * members would wrongly UNLOCK when the last non-owner leaves.
+     */
+    public function countAllForCompetition(Uuid $competitionId): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(Membership::class, 'm')
+            ->where('m.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function hasActiveMembership(Uuid $userId, Uuid $competitionId): bool
     {
         $result = $this->entityManager->createQueryBuilder()

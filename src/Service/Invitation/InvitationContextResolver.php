@@ -59,6 +59,13 @@ final readonly class InvitationContextResolver
     {
         $competition = $this->competitionRepository->getByShareableLinkToken($token);
 
+        // Global competitions never mint shareable-link tokens; a leaked/stale one
+        // must not resolve to a joinable context (join is entry-fee only). Treat it
+        // as an invalid link — the landing page renders the „not found" state.
+        if ($competition->isGlobal) {
+            throw InvalidShareableLink::create();
+        }
+
         $status = $competition->matchSource->isCompleted
             ? InvitationContextStatus::MatchSourceCompleted
             : InvitationContextStatus::Active;

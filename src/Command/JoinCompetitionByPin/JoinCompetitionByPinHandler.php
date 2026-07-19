@@ -8,6 +8,7 @@ use App\Entity\Competition;
 use App\Entity\Membership;
 use App\Exception\AlreadyMember;
 use App\Exception\CannotJoinFinishedMatchSource;
+use App\Exception\CompetitionIsGlobal;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
@@ -31,6 +32,12 @@ final readonly class JoinCompetitionByPinHandler
     {
         $competition = $this->competitionRepository->getByPin($command->pin);
         $user = $this->userRepository->get($command->userId);
+
+        // Defense-in-depth: global competitions must never carry a PIN, but an
+        // errant one must NEVER buy a fee-free membership.
+        if ($competition->isGlobal) {
+            throw CompetitionIsGlobal::joinViaPin($competition->id);
+        }
 
         if ($competition->matchSource->isCompleted) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);

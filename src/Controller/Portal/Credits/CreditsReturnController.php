@@ -7,6 +7,7 @@ namespace App\Controller\Portal\Credits;
 use App\Command\FulfillCreditPurchase\FulfillCreditPurchaseCommand;
 use App\Entity\CreditPurchase;
 use App\Entity\User;
+use App\Service\Competition\GlobalJoinReturnIntentSession;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Landing page after Stripe Checkout. Fulfillment normally arrives via
@@ -26,6 +28,7 @@ final class CreditsReturnController extends AbstractController
     public function __construct(
         private readonly MessageBusInterface $commandBus,
         private readonly LoggerInterface $logger,
+        private readonly GlobalJoinReturnIntentSession $returnIntent,
     ) {
     }
 
@@ -59,6 +62,19 @@ final class CreditsReturnController extends AbstractController
         if ($purchase instanceof CreditPurchase && $purchase->user->id->equals($user->id)) {
             if ($purchase->isCompleted) {
                 $this->addFlash('success', sprintf('Platba proběhla úspěšně — %d kreditů bylo připsáno. Děkujeme!', $purchase->credits));
+
+                // Came here from a paid global-competition join? Send the user
+                // back to the public discovery list, anchored on that competition
+                // (they click „Připojit se" again — we never auto-join). We land on
+                // /souteze, NOT the competition detail: the detail page's VIEW voter
+                // forbids non-members, so a not-yet-joined user would hit a 403.
+                $returnTo = $this->returnIntent->consume();
+
+                if (null !== $returnTo && Uuid::isValid($returnTo)) {
+                    return $this->redirect(
+                        $this->generateUrl('public_competitions_list').'#soutez-'.$returnTo,
+                    );
+                }
             } elseif ($purchase->isPending) {
                 $this->addFlash('info', 'Platba se zpracovává. Kredity připíšeme, jakmile ji Stripe potvrdí.');
             } else {

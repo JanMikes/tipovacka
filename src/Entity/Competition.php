@@ -83,6 +83,22 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column(enumType: CompetitionMonetization::class, options: ['default' => CompetitionMonetization::None->value])]
     public private(set) CompetitionMonetization $monetization = CompetitionMonetization::None;
 
+    /**
+     * Global (admin-run, publicly discoverable) competition. Global competitions
+     * are joinable by any verified user by paying {@see $entryFeeCredits} (no
+     * PIN/link/invite), and have on-behalf tipping + anonymous members disabled
+     * (voter-level). See .docs/DOMAIN.md §Global competitions.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $isGlobal = false;
+
+    /**
+     * Credit entry fee (0 = free), charged once at join and BURNED
+     * (non-refundable). Meaningful only when {@see $isGlobal}. Always ≥ 0.
+     */
+    #[ORM\Column(options: ['default' => 0])]
+    public private(set) int $entryFeeCredits = 0;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -110,7 +126,13 @@ class Competition implements EntityWithEvents, SoftDeletable
         bool $includePlayoff = true,
         bool $hideOthersTipsBeforeDeadline = false,
         CompetitionMonetization $monetization = CompetitionMonetization::None,
+        bool $isGlobal = false,
+        int $entryFeeCredits = 0,
     ) {
+        if ($entryFeeCredits < 0) {
+            throw new \InvalidArgumentException('Vstupné nesmí být záporné.');
+        }
+
         $this->name = $name;
         $this->description = $description;
         $this->pin = $pin;
@@ -119,6 +141,8 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->includePlayoff = $includePlayoff;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
         $this->monetization = $monetization;
+        $this->isGlobal = $isGlobal;
+        $this->entryFeeCredits = $entryFeeCredits;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new CompetitionCreated(
@@ -139,6 +163,31 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->name = $name;
         $this->description = $description;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new CompetitionUpdated(
+            competitionId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * Admin edit of a global competition's entry fee + monetization. The
+     * caller ({@see \App\Command\UpdateGlobalCompetition\UpdateGlobalCompetitionHandler})
+     * refuses this once the first non-owner member has joined — from that
+     * moment the fee is locked (players joined under the advertised terms).
+     */
+    public function updateGlobalSettings(
+        int $entryFeeCredits,
+        CompetitionMonetization $monetization,
+        \DateTimeImmutable $now,
+    ): void {
+        if ($entryFeeCredits < 0) {
+            throw new \InvalidArgumentException('Vstupné nesmí být záporné.');
+        }
+
+        $this->entryFeeCredits = $entryFeeCredits;
+        $this->monetization = $monetization;
         $this->updatedAt = $now;
 
         $this->recordThat(new CompetitionUpdated(

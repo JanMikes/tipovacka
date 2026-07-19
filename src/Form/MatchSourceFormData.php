@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\MatchSource;
 use App\Entity\Sport;
+use App\Enum\CompetitionMonetization;
 use Symfony\Component\Validator\Constraints as Assert;
 
 final class MatchSourceFormData
@@ -25,6 +26,17 @@ final class MatchSourceFormData
     public ?\DateTimeImmutable $startAt = null;
 
     public ?\DateTimeImmutable $endAt = null;
+
+    /** Optional „Rovnou vytvořit globální soutěž" step (admin curated create only). */
+    public bool $createGlobalCompetition = false;
+
+    #[Assert\Length(max: 160, maxMessage: 'Název soutěže nesmí být delší než {{ limit }} znaků.')]
+    public ?string $globalCompetitionName = null;
+
+    #[Assert\GreaterThanOrEqual(value: 0, message: 'Vstupné nesmí být záporné.')]
+    public int $globalCompetitionEntryFee = 0;
+
+    public CompetitionMonetization $globalCompetitionMonetization = CompetitionMonetization::None;
 
     public static function fromMatchSource(MatchSource $matchSource): self
     {

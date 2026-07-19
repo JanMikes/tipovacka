@@ -144,6 +144,40 @@
     </div>
 </section>
 
+{# ───────── Kredity: in-app ceny ───────── #}
+<section class="mx-auto max-w-[80rem] px-4 pb-4 sm:px-6 lg:px-8">
+    <div class="card-glass p-8">
+        <div class="max-w-2xl">
+            <span class="eyebrow">Kredity</span>
+            <h2 class="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Placené funkce jedou na kreditech</h2>
+            <p class="mt-3 text-white/70">
+                Kredit koupíte kartou přes Stripe, <strong class="text-white">1&nbsp;kredit = 1&nbsp;Kč</strong>. Vstupné do veřejných soutěží
+                i doplňkové funkce se platí právě v kreditech — nikde žádné sázky ani kurzy.
+            </p>
+        </div>
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {% set credit_prices = [
+                { title: 'Vstupné do soutěže', price: 'dle soutěže', note: 'Určuje organizátor, 0 = zdarma. Jednorázově při připojení.' },
+                { title: 'Prémium za hráče', price: pricing.premiumPerPlayer ~ ' kr.', note: 'Organizátor zaplatí za každého hráče a odemkne funkce všem.' },
+                { title: 'Lišta tipů ostatních', price: pricing.boostTipDistribution ~ ' kr.', note: 'Anonymní rozložení tipů ostatních hráčů.' },
+                { title: 'Konkrétní tipy kolegů', price: pricing.boostOthersTips ~ ' kr.', note: 'Uvidíte, kdo co tipnul (obsahuje i lištu tipů).' },
+            ] %}
+            {% for cp in credit_prices %}
+                <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-white/50">{{ cp.title }}</p>
+                    <p class="mt-2 text-2xl font-black tracking-tight text-white">{{ cp.price }}</p>
+                    <p class="mt-2 text-xs leading-relaxed text-white/60">{{ cp.note }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <p class="mt-5 text-sm text-white/50">
+            Chcete měnit tip i během turnaje? Vylepšení „Měnit tip během turnaje“ vyjde na {{ pricing.boostTipChange }}&nbsp;kreditů za soutěž.
+        </p>
+    </div>
+</section>
+
 {# ───────── FAQ-to-pricing note ───────── #}
 <section class="mx-auto max-w-[80rem] px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
     <div class="grid gap-4 md:grid-cols-3">

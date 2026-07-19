@@ -1,0 +1,56 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Nová globální soutěž — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li><a href="{{ path('admin_competition_list') }}" class="hover:text-accent-300 transition-colors">Soutěže</a></li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="text-white/80 font-medium" aria-current="page">Nová globální soutěž</li>
+{% endblock %}
+
+{% block admin_title %}Nová globální soutěž{% endblock %}
+{% block admin_subtitle %}Veřejná soutěž nad kurátorovaným zdrojem zápasů — přidat se může kdokoli za vstupné v kreditech.{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_competition_list') }}" class="btn btn-ghost btn-sm">
+        <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+        Zpět na soutěže
+    </a>
+{% endblock %}
+
+{% block admin_body %}
+<div class="card-glass p-6 md:p-8 max-w-3xl">
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+        <div class="field">
+            {{ form_label(form.matchSource) }}
+            {{ form_widget(form.matchSource) }}
+            {{ form_errors(form.matchSource) }}
+        </div>
+        <div class="field">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name) }}
+            {{ form_errors(form.name) }}
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="field">
+                {{ form_label(form.entryFeeCredits) }}
+                {{ form_widget(form.entryFeeCredits) }}
+                {{ form_errors(form.entryFeeCredits) }}
+            </div>
+            <div class="field">
+                {{ form_label(form.monetization) }}
+                {{ form_widget(form.monetization) }}
+                {{ form_errors(form.monetization) }}
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-3 pt-2">
+            <button type="submit" class="btn btn-primary">
+                Vytvořit globální soutěž
+            </button>
+            <a href="{{ path('admin_competition_list') }}" class="btn btn-ghost">
+                Zrušit
+            </a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

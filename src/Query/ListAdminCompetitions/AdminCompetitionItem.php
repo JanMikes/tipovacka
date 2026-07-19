@@ -16,6 +16,8 @@ final readonly class AdminCompetitionItem
         public string $ownerNickname,
         public int $memberCount,
         public bool $isDeleted,
+        public bool $isGlobal,
+        public int $entryFeeCredits,
     ) {
     }
 }

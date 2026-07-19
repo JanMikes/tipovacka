@@ -9,6 +9,12 @@
 
 {% block admin_title %}Soutěže{% endblock %}
 {% block admin_subtitle %}Všechny soutěže napříč zdroji zápasů.{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_global_competition_create') }}" class="btn btn-primary btn-sm">
+        <twig:ux:icon name="lucide:globe" class="h-4 w-4" />
+        Vytvořit globální soutěž
+    </a>
+{% endblock %}
 
 {% block admin_body %}
 <div class="card-glass overflow-hidden">
@@ -26,13 +32,25 @@
             <tbody>
                 {% for competition in competitions %}
                     <tr class="border-b border-white/[0.06] {% if competition.isDeleted %}text-white/40{% else %}text-white/80 hover:bg-white/[0.03]{% endif %}">
-                        <td class="px-4 py-3 font-medium {{ competition.isDeleted ? 'text-white/40' : 'text-white' }}">{{ competition.name }}{% if competition.isDeleted %} <span class="text-xs font-normal text-white/40">(smazáno)</span>{% endif %}</td>
+                        <td class="px-4 py-3 font-medium {{ competition.isDeleted ? 'text-white/40' : 'text-white' }}">
+                            {{ competition.name }}
+                            {% if competition.isGlobal %}
+                                <span class="ml-1.5 inline-flex items-center gap-1 rounded-full border border-accent-500/40 bg-accent-500/15 px-2 py-0.5 text-xs font-semibold text-accent-300">
+                                    <twig:ux:icon name="lucide:globe" class="h-3 w-3" />
+                                    {% if competition.entryFeeCredits > 0 %}{{ competition.entryFeeCredits }} kr.{% else %}Zdarma{% endif %}
+                                </span>
+                            {% endif %}
+                            {% if competition.isDeleted %} <span class="text-xs font-normal text-white/40">(smazáno)</span>{% endif %}
+                        </td>
                         <td class="px-4 py-3">{{ competition.matchSourceName }}</td>
                         <td class="px-4 py-3">{{ competition.ownerNickname }}</td>
                         <td class="px-4 py-3">{{ competition.memberCount }}</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-2 whitespace-nowrap">
                                 <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Detail</a>
+                                {% if competition.isGlobal and not competition.isDeleted %}
+                                    <a href="{{ path('admin_global_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Nastavení</a>
+                                {% endif %}
                                 {% if not competition.isDeleted %}
                                     <form method="post" action="{{ path('admin_competition_delete', {id: competition.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"

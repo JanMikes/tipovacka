@@ -6,9 +6,12 @@ namespace App\Tests\Integration\Command;
 
 use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
 use App\DataFixtures\AppFixtures;
+use App\Entity\Competition;
+use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\User;
 use App\Exception\AlreadyMember;
+use App\Exception\CompetitionIsGlobal;
 use App\Exception\InvalidPin;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -72,6 +75,72 @@ final class JoinCompetitionByPinHandlerTest extends IntegrationTestCase
 
             throw $e;
         }
+    }
+
+    /**
+     * Defense-in-depth: a global competition is joinable via the entry-fee flow
+     * ONLY. Even if one somehow carries a PIN, that PIN must never buy a fee-free
+     * membership.
+     */
+    public function testGlobalCompetitionCannotBeJoinedByPin(): void
+    {
+        $user = $this->createVerifiedUser();
+        $pin = 'GLOB1234';
+        $competitionId = $this->createGlobalCompetitionWithPin($pin);
+
+        try {
+            $this->commandBus()->dispatch(new JoinCompetitionByPinCommand(
+                userId: $user->id,
+                pin: $pin,
+            ));
+            self::fail('Expected CompetitionIsGlobal.');
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(CompetitionIsGlobal::class, $this->firstWrappedException($e));
+        }
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $memberships = $em->createQueryBuilder()
+            ->select('m')
+            ->from(Membership::class, 'm')
+            ->where('m.user = :userId')
+            ->andWhere('m.competition = :competitionId')
+            ->setParameter('userId', $user->id)
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getResult();
+
+        self::assertCount(0, $memberships);
+    }
+
+    private function createGlobalCompetitionWithPin(string $pin): Uuid
+    {
+        $em = $this->entityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        /** @var MatchSource $source */
+        $source = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
+        /** @var User $admin */
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+
+        $competition = new Competition(
+            id: $this->identityProvider()->next(),
+            matchSource: $source,
+            owner: $admin,
+            name: 'Globální s PINem',
+            description: null,
+            pin: $pin,
+            shareableLinkToken: null,
+            createdAt: $now,
+            isGlobal: true,
+            entryFeeCredits: 50,
+        );
+        $competition->popEvents();
+        $em->persist($competition);
+        $em->flush();
+
+        return $competition->id;
     }
 
     private function createVerifiedUser(): User

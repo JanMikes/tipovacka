@@ -50,6 +50,8 @@ final readonly class ListAdminCompetitionsQuery
                 ownerNickname: $g->owner->displayName,
                 memberCount: $memberCounts[$g->id->toRfc4122()] ?? 0,
                 isDeleted: null !== $g->deletedAt,
+                isGlobal: $g->isGlobal,
+                entryFeeCredits: $g->entryFeeCredits,
             ),
             $competitions,
         ));

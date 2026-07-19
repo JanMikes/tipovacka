@@ -127,6 +127,16 @@ final class MatchesFlowTest extends WebTestCase
         $membership->popEvents();
         $em->persist($membership);
 
+        // Admin also owns the two S09 global competitions on PUBLIC_SOURCE (they
+        // include MATCH_SCHEDULED too). Lock them so this scenario stays at the two
+        // intended OPEN competitions (PUBLIC + SUBSET).
+        foreach ([AppFixtures::GLOBAL_COMPETITION_ID, AppFixtures::FREE_GLOBAL_COMPETITION_ID] as $globalId) {
+            $global = $em->find(Competition::class, Uuid::fromString($globalId));
+            self::assertNotNull($global);
+            $global->lockTips($now);
+            $global->popEvents();
+        }
+
         $guess = new Guess(
             id: Uuid::v7(),
             user: $admin,

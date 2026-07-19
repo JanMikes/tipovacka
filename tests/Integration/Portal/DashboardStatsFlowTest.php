@@ -21,7 +21,10 @@ final class DashboardStatsFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/nastenka');
+        // Explicitly select PUBLIC_COMPETITION (where admin has an evaluated tip);
+        // admin also owns the S09 global competitions, which would otherwise be the
+        // default selection and have no evaluated results yet.
+        $client->request('GET', '/nastenka?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Moje výsledky');
         // Populated branch renders the per-soutěž stat cards (not the empty hint).

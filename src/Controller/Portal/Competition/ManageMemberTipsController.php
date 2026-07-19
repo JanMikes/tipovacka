@@ -44,6 +44,11 @@ final class ManageMemberTipsController extends AbstractController
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
 
+        // On-behalf tipping is disabled for global competitions — each player owns their tips.
+        if ($competition->isGlobal) {
+            throw $this->createAccessDeniedException('On-behalf tipping is disabled for global competitions.');
+        }
+
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);

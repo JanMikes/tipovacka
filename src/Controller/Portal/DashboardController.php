@@ -6,8 +6,9 @@ namespace App\Controller\Portal;
 
 use App\Entity\User;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
+use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\GetMemberCompetitionStats\GetMemberCompetitionStats;
-use App\Query\ListDiscoverablePublicMatchSources\ListDiscoverablePublicMatchSources;
+use App\Query\ListDiscoverableGlobalCompetitions\ListDiscoverableGlobalCompetitions;
 use App\Query\ListMyCompetitions\ListMyCompetitions;
 use App\Query\ListMyOwnedMatchSources\ListMyOwnedMatchSources;
 use App\Query\ListRecentEvaluatedGuessesForUser\ListRecentEvaluatedGuessesForUser;
@@ -35,7 +36,8 @@ final class DashboardController extends AbstractController
         $myOwnedMatchSources = $this->queryBus->handle(new ListMyOwnedMatchSources(ownerId: $user->id));
         $upcomingMatches = $this->queryBus->handle(new ListUpcomingMatchesForUser(userId: $user->id));
         $evaluatedGuesses = $this->queryBus->handle(new ListRecentEvaluatedGuessesForUser(userId: $user->id));
-        $discoverableMatchSources = $this->queryBus->handle(new ListDiscoverablePublicMatchSources(userId: $user->id));
+        $discoverableCompetitions = $this->queryBus->handle(new ListDiscoverableGlobalCompetitions(viewerId: $user->id));
+        $walletBalance = $this->queryBus->handle(new GetCreditWallet($user->id))->balance;
 
         // Personal stat cards are scoped to the selected soutěž. The switcher passes
         // ?soutez=<competitionId>; default to the most recently joined competition. A foreign or
@@ -83,7 +85,8 @@ final class DashboardController extends AbstractController
             'my_owned_match_sources' => $myOwnedMatchSources,
             'upcoming_matches' => $upcomingMatches,
             'evaluated_guesses' => $evaluatedGuesses,
-            'discoverable_match_sources' => $discoverableMatchSources,
+            'discoverable_competitions' => $discoverableCompetitions,
+            'wallet_balance' => $walletBalance,
             'selected_competition' => $selectedCompetition,
             'member_stats' => $memberStats,
             'mini_leaderboard_rows' => $miniLeaderboardRows,

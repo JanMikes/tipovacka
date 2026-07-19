@@ -31,7 +31,10 @@ final class CreateCuratedMatchSourceController extends AbstractController
         $admin = $this->getUser();
 
         $formData = new MatchSourceFormData();
-        $form = $this->createForm(MatchSourceFormType::class, $formData, ['with_sport' => true]);
+        $form = $this->createForm(MatchSourceFormType::class, $formData, [
+            'with_sport' => true,
+            'with_global_option' => true,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -44,11 +47,17 @@ final class CreateCuratedMatchSourceController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
+                createGlobalCompetition: $formData->createGlobalCompetition,
+                globalCompetitionName: $formData->globalCompetitionName ?: null,
+                globalCompetitionEntryFee: $formData->globalCompetitionEntryFee,
+                globalCompetitionMonetization: $formData->globalCompetitionMonetization,
             ));
 
             $matchSource = $this->extractMatchSource($envelope);
 
-            $this->addFlash('success', 'Zdroj zápasů byl vytvořen.');
+            $this->addFlash('success', $formData->createGlobalCompetition
+                ? 'Zdroj zápasů i globální soutěž byly vytvořeny.'
+                : 'Zdroj zápasů byl vytvořen.');
 
             return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }

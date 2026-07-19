@@ -68,7 +68,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Moje soutěže');
         self::assertSelectorTextContains('body', 'Nadcházející zápasy');
-        self::assertSelectorTextContains('body', 'Objev další zdroje zápasů');
+        self::assertSelectorTextContains('body', 'Objev další soutěže');
     }
 
     public function testUserSeesOwnCompetitions(): void
@@ -86,7 +86,7 @@ final class DashboardFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
     }
 
-    public function testUserSeesDiscoverablePublicMatchSources(): void
+    public function testUserSeesDiscoverableGlobalCompetitions(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -98,7 +98,8 @@ final class DashboardFlowTest extends WebTestCase
         $client->request('GET', '/nastenka');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', AppFixtures::PUBLIC_SOURCE_NAME);
+        // S09: discovery now lists global competitions (not curated sources).
+        self::assertSelectorTextContains('body', AppFixtures::GLOBAL_COMPETITION_NAME);
     }
 
     public function testAdminDoesNotSeeOwnPublicMatchSourceInDiscovery(): void

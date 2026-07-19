@@ -15,7 +15,6 @@ use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
 use App\Query\GetMyGuessesInMatchSource\GetMyGuessesInMatchSource;
 use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForCompetition;
-use App\Query\ListPendingJoinRequestsForCompetition\ListPendingJoinRequestsForCompetition;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
@@ -71,12 +70,6 @@ final class CompetitionDetailController extends AbstractController
             ))
             : [];
 
-        $pendingJoinRequests = ($canManage && $competition->matchSource->isCurated)
-            ? $this->queryBus->handle(new ListPendingJoinRequestsForCompetition(
-                competitionId: $competition->id,
-            ))
-            : [];
-
         $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
         $scoreByUserId = [];
         foreach ($leaderboard->rows as $row) {
@@ -124,7 +117,6 @@ final class CompetitionDetailController extends AbstractController
             'invitationForm' => $invitationForm->createView(),
             'bulkInvitationForm' => $bulkInvitationForm?->createView(),
             'pendingInvitations' => $pendingInvitations,
-            'pendingJoinRequests' => $pendingJoinRequests,
             'score_by_user_id' => $scoreByUserId,
             'my_guesses' => $myGuesses,
             'isMember' => $isMember,

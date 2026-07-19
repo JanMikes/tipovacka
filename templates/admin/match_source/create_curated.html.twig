@@ -48,6 +48,34 @@
                 {{ form_errors(form.endAt) }}
             </div>
         </div>
+        {% if form.createGlobalCompetition is defined %}
+            <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+                <label class="flex cursor-pointer items-start gap-3">
+                    {{ form_widget(form.createGlobalCompetition, {attr: {class: 'mt-1'}}) }}
+                    <span>
+                        <span class="block font-medium text-white">Rovnou vytvořit globální soutěž</span>
+                        <span class="block text-sm text-white/50">Nad tímto zdrojem vznikne veřejná soutěž, do které se může přidat kdokoli.</span>
+                    </span>
+                </label>
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="field sm:col-span-2">
+                        {{ form_label(form.globalCompetitionName) }}
+                        {{ form_widget(form.globalCompetitionName) }}
+                        {{ form_errors(form.globalCompetitionName) }}
+                    </div>
+                    <div class="field">
+                        {{ form_label(form.globalCompetitionEntryFee) }}
+                        {{ form_widget(form.globalCompetitionEntryFee) }}
+                        {{ form_errors(form.globalCompetitionEntryFee) }}
+                    </div>
+                    <div class="field">
+                        {{ form_label(form.globalCompetitionMonetization) }}
+                        {{ form_widget(form.globalCompetitionMonetization) }}
+                        {{ form_errors(form.globalCompetitionMonetization) }}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary">
                 Vytvořit zdroj zápasů

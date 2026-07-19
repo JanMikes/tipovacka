@@ -196,54 +196,8 @@
                 </section>
             {% endif %}
 
-            {# Pending join requests (public match_sources only) #}
-            {% if is_granted('competition_manage_members', competition) and competition.matchSource.isCurated %}
-                <section class="card-glass overflow-hidden p-0">
-                    <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
-                        <twig:ux:icon name="lucide:log-in" class="h-5 w-5 text-accent-400" />
-                        <h2 class="text-lg font-semibold text-white">Žádosti o připojení</h2>
-                        {% if pendingJoinRequests|length > 0 %}
-                            <span class="rounded-full border border-accent-500/40 bg-accent-500/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-accent-300">{{ pendingJoinRequests|length }}</span>
-                        {% endif %}
-                    </header>
-
-                    {% if pendingJoinRequests|length > 0 %}
-                        <ul class="divide-y divide-white/[0.06]">
-                            {% for req in pendingJoinRequests %}
-                                <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-                                    <div>
-                                        <span class="font-medium text-white">{{ req.nickname }}</span>
-                                        <p class="text-xs text-white/40">Žádost {{ req.requestedAt|date('j. n. Y H:i') }}</p>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <form method="post" action="{{ path('portal_join_request_approve', {requestId: req.requestId.toRfc4122}) }}" class="inline">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('join_request_approve_' ~ req.requestId.toRfc4122) }}">
-                                            <button type="submit" class="btn btn-success btn-sm">
-                                                <twig:ux:icon name="lucide:check" class="h-3.5 w-3.5" />Schválit
-                                            </button>
-                                        </form>
-                                        <form method="post" action="{{ path('portal_join_request_reject', {requestId: req.requestId.toRfc4122}) }}" class="inline"
-                                            data-controller="confirm"
-                                            data-confirm-title-value="Zamítnout žádost"
-                                            data-confirm-message-value="Opravdu chcete zamítnout žádost od {{ req.nickname }}?"
-                                            data-confirm-confirm-label-value="Ano, zamítnout">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('join_request_reject_' ~ req.requestId.toRfc4122) }}">
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                <twig:ux:icon name="lucide:x" class="h-3.5 w-3.5" />Zamítnout
-                                            </button>
-                                        </form>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="px-6 py-10 text-center text-sm text-white/50">Žádné čekající žádosti.</p>
-                    {% endif %}
-                </section>
-            {% endif %}
-
-            {# Email invitations — admin / owner only #}
-            {% if is_granted('competition_manage_members', competition) %}
+            {# Email invitations — admin / owner only, hidden for global competitions #}
+            {% if is_granted('competition_manage_join_mechanics', competition) %}
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
                         <twig:ux:icon name="lucide:mail" class="h-5 w-5 text-accent-400" />
@@ -352,8 +306,8 @@
 
             {{ include('_partials/competition_rules.html.twig', { items: rule_items }) }}
 
-            {# Invites (PIN + shareable link) #}
-            {% if is_granted('competition_manage_members', competition) %}
+            {# Invites (PIN + shareable link) — hidden for global competitions #}
+            {% if is_granted('competition_manage_join_mechanics', competition) %}
                 <section class="card-glass overflow-hidden p-0">
                     <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
                         <twig:ux:icon name="lucide:key-round" class="h-5 w-5 text-accent-400" />
@@ -523,7 +477,7 @@
                         </a>
                     {% endif %}
 
-                    {% if is_granted('competition_manage_members', competition) %}
+                    {% if is_granted('competition_manage_members', competition) and not competition.isGlobal %}
                         <a href="{{ path('portal_competition_manage_member_tips', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat za členy
                         </a>

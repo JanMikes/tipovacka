@@ -48,7 +48,8 @@ final class ListAdminMatchSourcesQueryTest extends IntegrationTestCase
         self::assertSame(MatchSourceKind::Curated, $public->kind);
         self::assertSame('football', $public->sportCode);
         self::assertSame(AppFixtures::ADMIN_NICKNAME, $public->ownerNickname);
-        // PUBLIC_COMPETITION + SUBSET_COMPETITION both live on the public source.
-        self::assertSame(2, $public->competitionCount);
+        // PUBLIC_COMPETITION + SUBSET_COMPETITION + the two S09 global competitions
+        // all live on the public source.
+        self::assertSame(4, $public->competitionCount);
     }
 }

@@ -62,6 +62,11 @@ final class SubmitMemberTipsBatchController extends AbstractController
         $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
         $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
 
+        // On-behalf tipping is disabled for global competitions — each player owns their tips.
+        if ($competition->isGlobal) {
+            throw $this->createAccessDeniedException('On-behalf tipping is disabled for global competitions.');
+        }
+
         $csrfToken = $request->request->get('_token');
         $expectedToken = sprintf('guess_on_behalf_batch_%s_%s', $competitionId, $memberId);
 

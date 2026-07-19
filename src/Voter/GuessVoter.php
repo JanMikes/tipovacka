@@ -81,6 +81,11 @@ final class GuessVoter extends Voter
         if (self::UPDATE_ON_BEHALF === $attribute) {
             \assert($subject instanceof Guess);
 
+            // On-behalf tipping is disabled for global competitions — each player owns their tips.
+            if ($subject->competition->isGlobal) {
+                return false;
+            }
+
             if (!$this->isCompetitionManager($currentUser, $subject->competition->owner->id)) {
                 return false;
             }
@@ -95,6 +100,11 @@ final class GuessVoter extends Voter
 
         if (self::SUBMIT_ON_BEHALF === $attribute) {
             \assert($subject instanceof GuessOnBehalfContext);
+
+            // On-behalf tipping is disabled for global competitions — each player owns their tips.
+            if ($subject->competition->isGlobal) {
+                return false;
+            }
 
             if (!$this->isCompetitionManager($currentUser, $subject->competition->owner->id)) {
                 return false;

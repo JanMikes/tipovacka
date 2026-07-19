@@ -9,6 +9,7 @@ use App\Enum\MatchSourceKind;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportRepository;
 use App\Repository\UserRepository;
+use App\Service\Competition\GlobalCompetitionComposer;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,6 +21,7 @@ final readonly class CreateCuratedMatchSourceHandler
         private MatchSourceRepository $matchSourceRepository,
         private UserRepository $userRepository,
         private SportRepository $sportRepository,
+        private GlobalCompetitionComposer $globalCompetitionComposer,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -44,6 +46,24 @@ final readonly class CreateCuratedMatchSourceHandler
         );
 
         $this->matchSourceRepository->save($matchSource);
+
+        // Optional one-shot: also stand up a global competition over the new source
+        // in the same transaction (both commit together or roll back together).
+        if ($command->createGlobalCompetition) {
+            $name = null !== $command->globalCompetitionName && '' !== trim($command->globalCompetitionName)
+                ? $command->globalCompetitionName
+                : $command->name;
+
+            $this->globalCompetitionComposer->compose(
+                matchSource: $matchSource,
+                admin: $admin,
+                name: $name,
+                entryFeeCredits: $command->globalCompetitionEntryFee,
+                monetization: $command->globalCompetitionMonetization,
+                ruleChanges: [],
+                now: $now,
+            );
+        }
 
         return $matchSource;
     }

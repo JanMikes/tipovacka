@@ -83,10 +83,19 @@ curated one.)
 | `VERIFIED_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000001` | `Kámoši u piva` | PRIVATE_SOURCE | VERIFIED_USER | `12345678` (`VERIFIED_COMPETITION_PIN`) | `VERIFIED_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000119bbbbb0000700b1` |
 | `PUBLIC_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000002` | `Admin liga`   | PUBLIC_SOURCE  | ADMIN         | none (`null`) | `PUBLIC_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000219bbbbb0000700b2` |
 | `SUBSET_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000033` | `Vybrané zápasy party` | PUBLIC_SOURCE | SECOND_VERIFIED_USER | none (`null`) | `SUBSET_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000319bbbbb0000700b3` |
+| `GLOBAL_COMPETITION_*`      | `019bbbbb-0000-7000-8000-000000000044` | `Globální tipovačka LM`     | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
+| `FREE_GLOBAL_COMPETITION_*` | `019bbbbb-0000-7000-8000-000000000045` | `Globální tipovačka zdarma` | PUBLIC_SOURCE | ADMIN | none (`null`) | none (`null`) |
 
 All competitions: `tipsLockedAt = null` (never manually locked),
 `tipChangeOffsetMinutes = 60` (default) and `monetization = None` (S08 entity
 default — the create-competition wizard sets `premium|boosts`, fixtures keep None).
+
+**S09 global competitions** (`isGlobal = true`, mode `all`, owned by ADMIN, both
+over the PUBLIC curated source; the ADMIN owner is the sole member of each ⇒ fee
+still unlocked): `GLOBAL_COMPETITION` charges `GLOBAL_COMPETITION_ENTRY_FEE = 50`
+credits; `FREE_GLOBAL_COMPETITION` is fee `0`. Every other fixture competition is
+`isGlobal = false`, `entryFeeCredits = 0`. VERIFIED_USER and SECOND_VERIFIED_USER
+are NOT members of either ⇒ both can be used to test joining.
 
 Selection mode: VERIFIED_COMPETITION and PUBLIC_COMPETITION are mode `all` with
 `includePlayoff = true` (defaults). **`SUBSET_COMPETITION` is mode `subset`** with
@@ -136,10 +145,22 @@ Practical consequences for tests:
 | `ANONYMOUS_MEMBERSHIP_ID`                  | `019bbbbb-0000-7000-8000-00000000aa03` | VERIFIED_COMPETITION | ANONYMOUS_USER |
 | `PUBLIC_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa02` | PUBLIC_COMPETITION   | ADMIN          |
 | `SUBSET_COMPETITION_OWNER_MEMBERSHIP_ID`   | `019bbbbb-0000-7000-8000-00000000aa04` | SUBSET_COMPETITION   | SECOND_VERIFIED_USER |
+| `GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID`      | `019bbbbb-0000-7000-8000-00000000aa05` | GLOBAL_COMPETITION      | ADMIN |
+| `FREE_GLOBAL_COMPETITION_OWNER_MEMBERSHIP_ID` | `019bbbbb-0000-7000-8000-00000000aa06` | FREE_GLOBAL_COMPETITION | ADMIN |
 
-Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION
-(a pending join request exists instead), ADMIN is NOT a member of VERIFIED_COMPETITION,
-SECOND_VERIFIED_USER's only membership is SUBSET_COMPETITION (which they own).
+Membership gaps useful in tests: VERIFIED_USER is NOT a member of PUBLIC_COMPETITION,
+ADMIN is NOT a member of VERIFIED_COMPETITION, SECOND_VERIFIED_USER's only membership
+is SUBSET_COMPETITION (which they own). Neither VERIFIED_USER nor SECOND_VERIFIED_USER
+is a member of the two global competitions (ADMIN owns both).
+
+## Credit wallets — none seeded
+
+No `CreditWallet`/`CreditTransaction` rows are seeded: several credit tests
+(`AdjustUserCreditsHandlerTest`, `FulfillCreditPurchaseHandlerTest`, …) assert over
+the WHOLE `credit_transactions` table with `getOneOrNullResult()`, so any seeded
+ledger row would make them throw `NonUniqueResult`. Paid-global-join tests therefore
+grant a balance in-test (dispatch `AdjustUserCreditsCommand`), and use
+SECOND_VERIFIED_USER (no wallet, balance 0) as the "insufficient credits" subject.
 
 ## Competition invitation (`CompetitionInvitation`)
 
@@ -152,14 +173,8 @@ SECOND_VERIFIED_USER's only membership is SUBSET_COMPETITION (which they own).
 Invitation to PUBLIC_COMPETITION, invited by ADMIN, created at `$now`, expires
 `$now + 7 days`, not accepted, not revoked.
 
-## Competition join request (`CompetitionJoinRequest`)
-
-| Constant                 | Value                                  |
-|--------------------------|----------------------------------------|
-| `PENDING_JOIN_REQUEST_ID` | `019ccccc-0000-7000-8000-000000000002` |
-
-VERIFIED_USER requesting to join PUBLIC_COMPETITION (valid because they are not a
-member), requested at `$now`, undecided.
+> The join-request flow was retired in S09 (global competitions replace public
+> discovery join-requests). There is no `CompetitionJoinRequest` fixture anymore.
 
 ## Sport matches (`SportMatch`)
 

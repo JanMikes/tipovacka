@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<'competition_view'|'competition_edit'|'competition_delete'|'competition_manage_members'|'competition_join'|'competition_leave'|'competition_invite_member'|'competition_request_join', Competition>
+ * @extends Voter<'competition_view'|'competition_edit'|'competition_delete'|'competition_manage_members'|'competition_manage_join_mechanics'|'competition_join'|'competition_join_global'|'competition_leave'|'competition_invite_member', Competition>
  */
 final class CompetitionVoter extends Voter
 {
@@ -21,10 +21,12 @@ final class CompetitionVoter extends Voter
     public const string EDIT = 'competition_edit';
     public const string DELETE = 'competition_delete';
     public const string MANAGE_MEMBERS = 'competition_manage_members';
+    /** PIN / shareable link / e-mail invite / anonymous member — all disabled for global competitions. */
+    public const string MANAGE_JOIN_MECHANICS = 'competition_manage_join_mechanics';
     public const string JOIN = 'competition_join';
+    public const string JOIN_GLOBAL = 'competition_join_global';
     public const string LEAVE = 'competition_leave';
     public const string INVITE_MEMBER = 'competition_invite_member';
-    public const string REQUEST_JOIN = 'competition_request_join';
 
     public function __construct(
         private readonly MembershipRepository $membershipRepository,
@@ -38,10 +40,11 @@ final class CompetitionVoter extends Voter
             self::EDIT,
             self::DELETE,
             self::MANAGE_MEMBERS,
+            self::MANAGE_JOIN_MECHANICS,
             self::JOIN,
+            self::JOIN_GLOBAL,
             self::LEAVE,
             self::INVITE_MEMBER,
-            self::REQUEST_JOIN,
         ], true) && $subject instanceof Competition;
     }
 
@@ -63,14 +66,24 @@ final class CompetitionVoter extends Voter
             self::EDIT => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isCompleted,
             self::DELETE => $isAdmin || $isOwner,
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
+            self::MANAGE_JOIN_MECHANICS => ($isAdmin || $isOwner)
+                && $subject->isNotDeleted
+                && !$subject->matchSource->isCompleted
+                && !$subject->isGlobal,
             self::JOIN => $currentUser->isVerified && !$subject->matchSource->isCompleted && $subject->isNotDeleted,
-            self::LEAVE => $isMember && !$isOwner,
-            self::INVITE_MEMBER => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isCompleted,
-            self::REQUEST_JOIN => $subject->matchSource->isCurated
+            // Global discovery join: any verified non-member, source not finished.
+            // The entry fee is charged (or the friendly insufficient-credits redirect
+            // happens) in JoinGlobalCompetitionHandler / the controller, not here.
+            self::JOIN_GLOBAL => $subject->isGlobal
                 && $subject->isNotDeleted
                 && !$subject->matchSource->isCompleted
                 && $currentUser->isVerified
                 && !$isMember,
+            self::LEAVE => $isMember && !$isOwner,
+            self::INVITE_MEMBER => ($isAdmin || $isOwner)
+                && $subject->isNotDeleted
+                && !$subject->matchSource->isCompleted
+                && !$subject->isGlobal,
         };
     }
 }

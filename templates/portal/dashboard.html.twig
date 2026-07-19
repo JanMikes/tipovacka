@@ -460,69 +460,86 @@
         {% endif %}
     </section>
 
-    {# ───── Objev další zdroje zápasů ───── #}
+    {# ───── Objev další soutěže ───── #}
     <section>
         <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
                 <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
                     <twig:ux:icon name="lucide:globe" class="h-5 w-5 text-accent-300" />
-                    Objev další zdroje zápasů
+                    Objev další soutěže
                 </h2>
-                <p class="mt-1.5 text-sm text-white/50">Veřejné zdroje zápasů, ve kterých se můžete přidat do soutěže.</p>
+                <p class="mt-1.5 text-sm text-white/50">Veřejné soutěže, do kterých se můžete přidat.</p>
             </div>
+            <a href="{{ path('public_competitions_list') }}" class="text-sm font-semibold text-accent-300 transition-colors hover:text-accent-200">Všechny soutěže</a>
         </div>
 
-        {% if discoverable_match_sources|length == 0 %}
+        {% if discoverable_competitions|length == 0 %}
             <div class="card-glass p-10 text-center">
                 <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
                     <twig:ux:icon name="lucide:search" class="h-7 w-7" />
                 </span>
-                <h3 class="text-lg font-semibold text-white">Žádné další dostupné zdroje zápasů</h3>
-                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné další veřejné zdroje zápasů k objevení.</p>
+                <h3 class="text-lg font-semibold text-white">Žádné další dostupné soutěže</h3>
+                <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné další veřejné soutěže k objevení.</p>
             </div>
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {% for t in discoverable_match_sources %}
+                {% for c in discoverable_competitions %}
                     <li>
-                        <a
-                            href="{{ path('public_match_source_detail', {id: t.matchSourceId.toRfc4122}) }}"
-                            class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
-                        >
+                        <div class="card-glass flex h-full flex-col justify-between p-6">
                             <div>
-                                <span class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
-                                    <twig:ux:icon name="lucide:trophy" class="h-5 w-5" />
-                                </span>
+                                <div class="mb-4 flex items-start justify-between gap-3">
+                                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
+                                        <twig:ux:icon name="lucide:trophy" class="h-5 w-5" />
+                                    </span>
+                                    {% if c.entryFeeCredits > 0 %}
+                                        <span class="inline-flex items-center gap-1.5 rounded-full border border-accent-500/40 bg-accent-500/15 px-3 py-1 text-sm font-semibold text-accent-300">
+                                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                                            {{ c.entryFeeCredits|credits }}
+                                        </span>
+                                    {% else %}
+                                        <twig:Pill label="Zdarma" variant="success" />
+                                    {% endif %}
+                                </div>
 
-                                <h3 class="text-lg font-semibold leading-tight text-white transition-colors group-hover:text-accent-300">{{ t.name }}</h3>
+                                <h3 class="text-lg font-semibold leading-tight text-white">{{ c.name }}</h3>
 
                                 <div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-white/50">
                                     <span class="flex items-center gap-1.5">
-                                        <twig:ux:icon name="lucide:layout-grid" class="h-4 w-4 text-white/40" />
-                                        {{ t.competitionCount }} {% if t.competitionCount == 1 %}soutěž{% elseif t.competitionCount >= 2 and t.competitionCount <= 4 %}soutěže{% else %}soutěží{% endif %}
+                                        <twig:ux:icon name="lucide:globe" class="h-4 w-4 text-white/40" />
+                                        {{ c.sportName }}
                                     </span>
                                     <span class="flex items-center gap-1.5">
                                         <twig:ux:icon name="lucide:users" class="h-4 w-4 text-white/40" />
-                                        {{ t.memberCount }} {% if t.memberCount == 1 %}hráč{% elseif t.memberCount >= 2 and t.memberCount <= 4 %}hráči{% else %}hráčů{% endif %}
+                                        {{ c.playerCount }} {% if c.playerCount == 1 %}hráč{% elseif c.playerCount >= 2 and c.playerCount <= 4 %}hráči{% else %}hráčů{% endif %}
                                     </span>
                                 </div>
+                            </div>
 
-                                {% if t.startAt or t.endAt %}
-                                    <p class="mt-2 flex items-center gap-1.5 text-sm text-white/50">
-                                        <twig:ux:icon name="lucide:calendar" class="h-4 w-4 text-white/40" />
-                                        <span>
-                                            {% if t.startAt %}{{ t.startAt|date('d. m. Y') }}{% endif %}
-                                            {% if t.startAt and t.endAt %} – {% endif %}
-                                            {% if t.endAt %}{{ t.endAt|date('d. m. Y') }}{% endif %}
-                                        </span>
-                                    </p>
+                            <div class="mt-5">
+                                {% if c.viewerIsMember %}
+                                    <a href="{{ path('portal_competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
+                                        Otevřít soutěž
+                                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                                    </a>
+                                {% elseif c.entryFeeCredits > 0 and wallet_balance < c.entryFeeCredits %}
+                                    <p class="mb-2 text-center text-xs text-white/50">Máte {{ wallet_balance }}/{{ c.entryFeeCredits|credits }}</p>
+                                    <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm w-full">
+                                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                                        Dokoupit kredity
+                                    </a>
+                                {% elseif app.user.isVerified %}
+                                    <form method="post" action="{{ path('portal_competition_join_global', {id: c.competitionId.toRfc4122}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('competition_join_global_' ~ c.competitionId.toRfc4122) }}">
+                                        <button type="submit" class="btn btn-primary btn-sm w-full">
+                                            <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
+                                            {% if c.entryFeeCredits > 0 %}Připojit se za {{ c.entryFeeCredits|credits }}{% else %}Připojit se zdarma{% endif %}
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <a href="{{ path('portal_profile_edit') }}" class="btn btn-ghost btn-sm w-full">Ověřte e-mail pro připojení</a>
                                 {% endif %}
                             </div>
-
-                            <div class="mt-5 flex items-center justify-end text-sm font-semibold text-accent-300">
-                                Zobrazit zdroj zápasů
-                                <twig:ux:icon name="lucide:arrow-right" class="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                            </div>
-                        </a>
+                        </div>
                     </li>
                 {% endfor %}
             </ul>

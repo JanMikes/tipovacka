@@ -96,7 +96,7 @@ final class CompetitionVoterTest extends TestCase
         return $matchSource;
     }
 
-    private function makeCompetition(User $owner, ?MatchSource $matchSource = null, bool $deleted = false): Competition
+    private function makeCompetition(User $owner, ?MatchSource $matchSource = null, bool $deleted = false, bool $isGlobal = false, int $entryFeeCredits = 0): Competition
     {
         $matchSource ??= $this->makeMatchSource($owner);
 
@@ -109,6 +109,8 @@ final class CompetitionVoterTest extends TestCase
             pin: null,
             shareableLinkToken: null,
             createdAt: $this->now,
+            isGlobal: $isGlobal,
+            entryFeeCredits: $entryFeeCredits,
         );
 
         if ($deleted) {
@@ -331,54 +333,73 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($owner), $competition, [CompetitionVoter::INVITE_MEMBER]));
     }
 
-    public function testRequestJoinDeniedForPrivateMatchSource(): void
+    public function testJoinGlobalAllowedForVerifiedNonMember(): void
     {
-        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
         $outsider = $this->makeUser(self::NON_OWNER_ID);
-        $competition = $this->makeCompetition($owner);
+        $matchSource = $this->makePublicMatchSource($admin);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: true, entryFeeCredits: 50);
 
-        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::REQUEST_JOIN]));
+        self::assertSame(1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::JOIN_GLOBAL]));
     }
 
-    public function testRequestJoinAllowedForPublicMatchSource(): void
+    public function testJoinGlobalDeniedForNonGlobalCompetition(): void
     {
-        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
         $outsider = $this->makeUser(self::NON_OWNER_ID);
-        $matchSource = $this->makePublicMatchSource($owner);
-        $competition = $this->makeCompetition($owner, $matchSource);
+        $matchSource = $this->makePublicMatchSource($admin);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: false);
 
-        self::assertSame(1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::REQUEST_JOIN]));
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::JOIN_GLOBAL]));
     }
 
-    public function testRequestJoinDeniedForMember(): void
+    public function testJoinGlobalDeniedForExistingMember(): void
     {
-        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
         $member = $this->makeUser(self::MEMBER_ID);
-        $matchSource = $this->makePublicMatchSource($owner);
-        $competition = $this->makeCompetition($owner, $matchSource);
+        $matchSource = $this->makePublicMatchSource($admin);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: true, entryFeeCredits: 50);
         $this->markAsMember($member, $competition);
 
-        self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::REQUEST_JOIN]));
+        self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::JOIN_GLOBAL]));
     }
 
-    public function testRequestJoinDeniedForUnverifiedUser(): void
+    public function testJoinGlobalDeniedForUnverifiedUser(): void
+    {
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
+        $outsider = $this->makeUser(self::NON_OWNER_ID, verified: false);
+        $matchSource = $this->makePublicMatchSource($admin);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: true, entryFeeCredits: 50);
+
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::JOIN_GLOBAL]));
+    }
+
+    public function testJoinGlobalDeniedWhenMatchSourceCompleted(): void
+    {
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
+        $outsider = $this->makeUser(self::NON_OWNER_ID);
+        $matchSource = $this->makePublicMatchSource($admin, finished: true);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: true, entryFeeCredits: 50);
+
+        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::JOIN_GLOBAL]));
+    }
+
+    public function testManageJoinMechanicsAllowedForOwnerOfNonGlobalCompetition(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $outsider = $this->makeUser(self::NON_OWNER_ID, verified: false);
         $matchSource = $this->makePublicMatchSource($owner);
         $competition = $this->makeCompetition($owner, $matchSource);
 
-        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::REQUEST_JOIN]));
+        self::assertSame(1, $this->voter->vote($this->token($owner), $competition, [CompetitionVoter::MANAGE_JOIN_MECHANICS]));
     }
 
-    public function testRequestJoinDeniedWhenMatchSourceCompleted(): void
+    public function testManageJoinMechanicsDeniedForGlobalCompetition(): void
     {
-        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
-        $outsider = $this->makeUser(self::NON_OWNER_ID);
-        $matchSource = $this->makePublicMatchSource($owner, finished: true);
-        $competition = $this->makeCompetition($owner, $matchSource);
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
+        $matchSource = $this->makePublicMatchSource($admin);
+        $competition = $this->makeCompetition($admin, $matchSource, isGlobal: true, entryFeeCredits: 50);
 
-        self::assertSame(-1, $this->voter->vote($this->token($outsider), $competition, [CompetitionVoter::REQUEST_JOIN]));
+        self::assertSame(-1, $this->voter->vote($this->token($admin), $competition, [CompetitionVoter::MANAGE_JOIN_MECHANICS]));
     }
 
     private function makePublicMatchSource(User $owner, bool $finished = false): MatchSource
