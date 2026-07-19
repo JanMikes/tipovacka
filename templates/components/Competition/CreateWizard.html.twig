@@ -1,0 +1,371 @@
+{#
+    Competition:CreateWizard (S08) — the single guided „Vytvořit soutěž" flow.
+
+    4 steps driven by LiveProps + LiveActions (next/back/submit); the dot stepper
+    reflects `step`. See src/Twig/Components/Competition/CreateWizard.php for the
+    judgment calls (LiveProp-driven checklist, writable-array rule state, WYSIWYG
+    PIN/link). Glossary: soutěž = Competition, zdroj zápasů = MatchSource.
+#}
+{% set steps = ['Základy', 'Pravidla', 'Pozvánky', 'Podpora'] %}
+{% set rule_copy = {
+    correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
+    correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
+    correct_outcome:    { label: 'Dobrý tip výsledku',        sub: 'Výhra / remíza / prohra' },
+    exact_score:        { label: 'Přesný tip výsledku',       sub: 'Trefená obě skóre současně' },
+    period_exact:       { label: 'Přesný tip části zápasu',   sub: 'Trefené přesné skóre poločasu či třetiny' },
+    period_tendency:    { label: 'Tendence části zápasu',     sub: 'Správný vítěz nebo remíza části (bez přesného skóre)' },
+    scorer_hit:         { label: 'Trefený střelec',           sub: 'Body za každého správně tipnutého střelce' },
+    overtime_exact:     { label: 'Přesný tip po prodloužení', sub: 'Trefený konečný stav po prodloužení či nájezdech' },
+} %}
+{% set section_headings = {
+    base: 'Základní bodování',
+    periods: 'Tipovat také ' ~ this.ruleSport.periodLabelPlural ~ ' zápasu?',
+    scorers: 'Střelci',
+    overtime: 'Tipovat výsledek po prodloužení při remíze?',
+} %}
+
+<div {{ attributes }} class="mx-auto w-full max-w-3xl">
+    <div class="modal-panel !p-0">
+        {# ---- Stepper ---- #}
+        <div class="border-b border-white/10 px-6 py-6 sm:px-8">
+            <div class="stepper">
+                {% for i in 1..4 %}
+                    <div class="step-item">
+                        <div class="step-num {{ step == i ? 'active' : (step > i ? 'done' : '') }}">
+                            {% if step > i %}
+                                <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                            {% else %}
+                                {{ i }}
+                            {% endif %}
+                        </div>
+                        <span class="step-label {{ step >= i ? 'is-current' : '' }}">{{ steps[i - 1] }}</span>
+                    </div>
+                    {% if not loop.last %}
+                        <div class="step-bar {{ step > i ? 'done' : '' }}"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="px-6 py-7 sm:px-8">
+            {% if errorMessage %}
+                <div class="mb-5 flex items-start gap-2 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white">
+                    <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-4 w-4 shrink-0 text-loss" />
+                    <span>{{ errorMessage }}</span>
+                </div>
+            {% endif %}
+
+            {# ================= KROK 1 — Základy ================= #}
+            {% if step == 1 %}
+                <div class="mb-6">
+                    <span class="eyebrow">Krok 1 ze 4</span>
+                    <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Vytvořit novou soutěž</h2>
+                    <p class="mt-1 text-sm text-white/60">Nastavte základy. Hráče pozvete v dalším kroku.</p>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="field">
+                        <label class="field-label" for="wizard-name">Název soutěže</label>
+                        <input id="wizard-name" type="text" class="input" placeholder="Např. Kámoši u piva"
+                               data-model="norender|name" value="{{ name }}" maxlength="160" />
+                    </div>
+
+                    <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
+                        <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                               data-model="fromScratch" {{ fromScratch ? 'checked' }} />
+                        <span class="text-sm">
+                            <span class="block font-semibold text-white">Vytvořit soutěž od začátku</span>
+                            <span class="mt-1 block text-xs leading-relaxed text-white/50">Bez šablony — zápasy, týmy a termíny doplníte ručně.</span>
+                        </span>
+                    </label>
+
+                    {% if fromScratch %}
+                        <div class="field">
+                            <label class="field-label" for="wizard-sport">Sport</label>
+                            <select id="wizard-sport" class="input" data-model="sportId">
+                                {% for sport in this.availableSports %}
+                                    <option value="{{ sport.id.toRfc4122 }}" {{ sportId == sport.id.toRfc4122 ? 'selected' }}>{{ sport.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs leading-relaxed text-white/50">Sport určuje strukturu zápasu ({{ this.selectedSport.periodLabelPlural }}) a bodování.</p>
+                        </div>
+                    {% else %}
+                        <div class="field">
+                            <label class="field-label" for="wizard-source">Zdroj zápasů</label>
+                            <select id="wizard-source" class="input" data-model="sourceId">
+                                <option value="">Vyberte zdroj zápasů…</option>
+                                {% for source in this.availableSources %}
+                                    {% set dates = source.startAt ? source.startAt|date('j. n. Y', 'Europe/Prague') : '' %}
+                                    {% set dates = source.endAt ? dates ~ '–' ~ source.endAt|date('j. n. Y', 'Europe/Prague') : dates %}
+                                    <option value="{{ source.id.toRfc4122 }}" {{ sourceId == source.id.toRfc4122 ? 'selected' }}>
+                                        {{ source.name }} · {{ source.sport.name }}{{ dates ? ' · ' ~ dates }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs leading-relaxed text-white/50">Rozpis zápasů, nad kterým se soutěž tipuje.</p>
+                        </div>
+
+                        {% if this.selectedSource %}
+                            <div class="space-y-3 border-t border-white/10 pt-5">
+                                <span class="field-label">Zápasy soutěže</span>
+                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ not this.isSubset ? 'selected' : '' }}">
+                                        <input type="radio" name="wizard-selection-mode" value="all" data-model="selectionMode"
+                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ not this.isSubset ? 'checked' }} />
+                                        <span class="text-sm font-medium text-white">Všechny zápasy</span>
+                                    </label>
+                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isSubset ? 'selected' : '' }}">
+                                        <input type="radio" name="wizard-selection-mode" value="subset" data-model="selectionMode"
+                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isSubset ? 'checked' }} />
+                                        <span class="text-sm font-medium text-white">Vybrat jen některé zápasy</span>
+                                    </label>
+                                </div>
+
+                                {% if this.isSubset %}
+                                    <div data-controller="wizard-matches">
+                                        <div class="relative mb-3">
+                                            <twig:ux:icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                                            <input type="text" class="input pl-9" placeholder="Filtrovat zápasy…"
+                                                   data-wizard-matches-target="filter" data-action="input->wizard-matches#filter" />
+                                        </div>
+
+                                        {% for group, matches in this.groupedMatches %}
+                                            <div class="mb-3 rounded-xl border border-white/10 bg-inset p-4" data-group-block data-wizard-matches-target="group">
+                                                <div class="mb-2 flex items-center justify-between gap-3">
+                                                    <span class="text-xs font-semibold uppercase tracking-wider text-white/50">{{ group }}</span>
+                                                    <button type="button" class="btn btn-ghost btn-sm" data-action="wizard-matches#toggleGroup">Vybrat vše</button>
+                                                </div>
+                                                <div class="space-y-1.5">
+                                                    {% for match in matches %}
+                                                        <label class="flex cursor-pointer items-center gap-3" data-wizard-matches-target="row"
+                                                               data-search="{{ (match.homeTeam ~ ' ' ~ match.awayTeam)|lower }}">
+                                                            <input type="checkbox" class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                                                   data-model="norender|selectedMatchIds[]" value="{{ match.id.toRfc4122 }}"
+                                                                   {{ match.id.toRfc4122 in selectedMatchIds ? 'checked' }} />
+                                                            <span class="text-sm text-white/80">{{ match.homeTeam }} – {{ match.awayTeam }} <span class="text-white/40">({{ match.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }})</span></span>
+                                                            {% if match.isPlayoff %}
+                                                                <twig:Pill label="Playoff" variant="neutral" />
+                                                            {% endif %}
+                                                        </label>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <label class="flex cursor-pointer items-start gap-3">
+                                        <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                               data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
+                                        <span class="text-sm">
+                                            <span class="block font-medium text-white">Zahrnout playoff zápasy</span>
+                                            <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když je vypnete, soutěž se tipuje jen na základní část.</span>
+                                        </span>
+                                    </label>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+            {# ================= KROK 2 — Pravidla ================= #}
+            {% elseif step == 2 %}
+                <div class="mb-6">
+                    <span class="eyebrow">Krok 2 ze 4</span>
+                    <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Vyberte pravidla</h2>
+                    <p class="mt-1 text-sm text-white/60">Bodování ovlivní pořadí v žebříčku. Hodnoty lze kdykoli upravit.</p>
+                </div>
+
+                <div data-controller="scoring-preset"
+                     data-scoring-preset-defaults-value="{{ this.defaultPoints|json_encode }}"
+                     data-scoring-preset-presets-value="{{ this.rulePresets|json_encode }}">
+                    <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <button type="button" class="variant-card" data-scoring-preset-target="card" data-action="scoring-preset#standard">
+                            <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
+                            <span class="block text-[13px] font-bold">Standardní</span>
+                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Skóre + výsledek</span>
+                        </button>
+                        <button type="button" class="variant-card" data-scoring-preset-target="card" data-action="scoring-preset#scorer">
+                            <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
+                            <span class="block text-[13px] font-bold">Standard + střelec</span>
+                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Skóre, výsledek i střelci</span>
+                        </button>
+                        <button type="button" class="variant-card selected" data-scoring-preset-target="card" data-action="scoring-preset#custom">
+                            <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
+                            <span class="block text-[13px] font-bold">Vlastní</span>
+                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Nastavte si sami</span>
+                        </button>
+                    </div>
+
+                    <div class="scoring-fields">
+                        {% for section in this.ruleSections %}
+                            <div class="mb-1 mt-4 first:mt-0">
+                                <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">{{ section_headings[section.category] ?? section.heading }}</div>
+                            </div>
+                            {% for identifier in section.identifiers %}
+                                {% set copy = rule_copy[identifier] ?? { label: identifier, sub: null } %}
+                                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-white/[0.06] py-3 last:border-b-0">
+                                    <div class="min-w-0">
+                                        <div class="field-label mb-0">{{ copy.label }}</div>
+                                        {% if copy.sub %}
+                                            <div class="mt-1 text-[13px] font-medium text-white">{{ copy.sub }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex shrink-0 items-center gap-3">
+                                        <label class="flex cursor-pointer items-center gap-2 text-sm text-white/70">
+                                            <input type="checkbox" value="{{ identifier }}"
+                                                   data-model="norender|enabledRuleIds[]"
+                                                   data-scoring-preset-target="enabledField" data-rule="{{ identifier }}"
+                                                   {{ identifier in enabledRuleIds ? 'checked' }} />
+                                            <span class="cursor-pointer">Aktivní</span>
+                                        </label>
+                                        <input type="number" min="0" max="1000" class="num-input w-24"
+                                               data-model="norender|rulePoints.{{ identifier }}"
+                                               data-scoring-preset-target="field" data-rule="{{ identifier }}"
+                                               value="{{ rulePoints[identifier] ?? this.defaultPoints[identifier] }}" />
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+            {# ================= KROK 3 — Pozvánky ================= #}
+            {% elseif step == 3 %}
+                <div class="mb-6">
+                    <span class="eyebrow">Krok 3 ze 4</span>
+                    <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Pozvěte hráče</h2>
+                    <p class="mt-1 text-sm text-white/60">Vše je nepovinné — pozvat můžete kdykoli později z detailu soutěže.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="field">
+                        <label class="field-label">Odkaz na pozvánku</label>
+                        <div class="copy-field" data-controller="copy">
+                            <input type="text" readonly value="{{ url('competition_join_by_link', {token: shareableLinkToken}) }}" data-copy-target="source" />
+                            <button type="button" data-action="copy#copy" data-copy-target="button" aria-label="Zkopírovat odkaz">
+                                <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                            </button>
+                        </div>
+                        <p class="text-xs leading-relaxed text-white/50">Kdo odkaz otevře, rovnou se přidá do soutěže.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                   data-model="withPin" {{ withPin ? 'checked' }} />
+                            <span class="text-sm">
+                                <span class="block font-medium text-white">Vygenerovat PIN pro připojení</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">8místný kód — hráč ho zadá na <strong>wtips.cz/pripojit</strong> a hned se přidá.</span>
+                            </span>
+                        </label>
+
+                        {% if withPin %}
+                            <div class="copy-field" data-controller="copy">
+                                <input type="text" readonly value="{{ pin }}" data-copy-target="source" class="font-mono tracking-[0.3em]" />
+                                <button type="button" data-action="live#action" data-live-action-param="regeneratePin" aria-label="Vygenerovat nový PIN">
+                                    <twig:ux:icon name="lucide:rotate-ccw" class="h-4 w-4" />
+                                </button>
+                                <button type="button" data-action="copy#copy" data-copy-target="button" aria-label="Zkopírovat PIN">
+                                    <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="wizard-emails">Pozvat e-mailem</label>
+                        <textarea id="wizard-emails" class="input" rows="3" placeholder="jan@example.com, petr@example.com…"
+                                  data-model="norender|inviteEmailsRaw">{{ inviteEmailsRaw }}</textarea>
+                        <p class="text-xs leading-relaxed text-white/50">Adresy oddělte čárkou, mezerou nebo novým řádkem. Každý dostane pozvánku e-mailem.</p>
+                    </div>
+                </div>
+
+            {# ================= KROK 4 — Podpora ================= #}
+            {% elseif step == 4 %}
+                <div class="mb-6">
+                    <span class="eyebrow">Krok 4 ze 4</span>
+                    <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
+                        <twig:ux:icon name="lucide:beer" class="h-6 w-6 text-draw" />
+                        Pozvete nás na pivo?
+                    </h2>
+                    <p class="mt-1 text-sm text-white/60">Wtips je zdarma. Když nás podpoříte, můžeme ho dál vylepšovat. Vyberte, jak na to.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                    {# Premium #}
+                    <label class="option-card relative flex cursor-pointer flex-col {{ monetization == 'premium' ? 'selected' : '' }}">
+                        <span class="badge badge-organizer absolute right-3 top-3 text-[10px] uppercase tracking-wider">Doporučujeme</span>
+                        <input type="radio" name="wizard-monetization" value="premium" class="sr-only" data-model="monetization" {{ monetization == 'premium' ? 'checked' }} />
+                        <span class="flex items-center gap-2 text-sm font-bold text-white">
+                            <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-draw" />
+                            Zaplatím za celou skupinu
+                        </span>
+                        <span class="mt-1 text-[13px] text-white/60">{{ premiumPerPlayer }} kreditů × počet hráčů, zaúčtováno při připojení.</span>
+                        <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
+                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Lišta i konkrétní tipy pro všechny</li>
+                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Stejná uzávěrka pro celou skupinu</li>
+                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Možnost měnit tip během turnaje</li>
+                        </ul>
+                    </label>
+
+                    {# Boosts #}
+                    <label class="option-card flex cursor-pointer flex-col {{ monetization == 'boosts' ? 'selected' : '' }}">
+                        <input type="radio" name="wizard-monetization" value="boosts" class="sr-only" data-model="monetization" {{ monetization == 'boosts' ? 'checked' }} />
+                        <span class="flex items-center gap-2 text-sm font-bold text-white">
+                            <twig:ux:icon name="lucide:hand-coins" class="h-5 w-5 text-accent-300" />
+                            Nechám příspěvek na jednotlivcích
+                        </span>
+                        <span class="mt-1 text-[13px] text-white/60">Soutěž je zdarma, každý hráč si může dokoupit vlastní vychytávky.</span>
+                        <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
+                            {% for boost in this.boostPrices %}
+                                <li class="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-1.5 last:border-b-0">
+                                    <span>{{ boost.label }}</span>
+                                    <span class="font-bold text-white">{{ boost.price }} kr.</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </label>
+                </div>
+
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-inset px-4 py-3">
+                    <span class="flex items-center gap-2 text-sm text-white/70">
+                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4 text-accent-300" />
+                        Váš zůstatek: <strong class="text-white">{{ this.creditBalance }} kreditů</strong>
+                    </span>
+                    {% if monetization == 'premium' %}
+                        <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm">
+                            <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Dokoupit kredity
+                        </a>
+                    {% endif %}
+                </div>
+                <p class="mt-2 text-xs leading-relaxed text-white/40">Teď se nic nestrhává — jen si volbu uložíme. Platby spustíme později.</p>
+            {% endif %}
+        </div>
+
+        {# ---- Footer nav ---- #}
+        <div class="flex items-center justify-between gap-3 border-t border-white/10 px-6 py-5 sm:px-8">
+            <div>
+                {% if step > 1 %}
+                    <button type="button" class="btn btn-ghost" data-action="live#action" data-live-action-param="back">
+                        <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />Zpět
+                    </button>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-3">
+                {% if step == 3 %}
+                    <button type="button" class="btn btn-link text-sm" data-action="live#action" data-live-action-param="next">Přeskočit — pozvat můžete kdykoli později</button>
+                {% endif %}
+                {% if not this.isLastStep %}
+                    <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="next">
+                        Pokračovat<twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="submit">
+                        <twig:ux:icon name="lucide:party-popper" class="h-4 w-4" />
+                        {{ monetization == 'premium' ? 'Vytvořit a přispět' : 'Vytvořit soutěž' }}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

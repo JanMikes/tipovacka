@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Command;
 
-use App\Command\CreatePrivateMatchSource\CreatePrivateMatchSourceCommand;
+use App\Command\CreateCompetition\CreateCompetitionCommand;
 use App\Command\CreateSportMatch\CreateSportMatchCommand;
 use App\Command\SetSportMatchFinalScore\SetSportMatchFinalScoreCommand;
 use App\DataFixtures\AppFixtures;
@@ -26,13 +26,14 @@ final class HockeyMatchSourceEndToEndTest extends IntegrationTestCase
 {
     private function createHockeyMatch(): SportMatch
     {
-        $this->commandBus()->dispatch(new CreatePrivateMatchSourceCommand(
+        // A from-scratch competition auto-creates the hidden private hockey source.
+        $this->commandBus()->dispatch(new CreateCompetitionCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            sportId: Uuid::fromString(Sport::HOCKEY_ID),
             name: 'Hokejová liga',
-            description: null,
-            startAt: null,
-            endAt: null,
+            matchSourceId: null,
+            sportId: Uuid::fromString(Sport::HOCKEY_ID),
+            fromScratch: true,
+            withPin: false,
         ));
 
         $em = $this->entityManager();

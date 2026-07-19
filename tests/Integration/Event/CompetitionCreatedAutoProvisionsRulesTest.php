@@ -17,9 +17,10 @@ final class CompetitionCreatedAutoProvisionsRulesTest extends IntegrationTestCas
     {
         $this->commandBus()->dispatch(new CreateCompetitionCommand(
             ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
-            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             name: 'Auto-provision test',
-            description: null,
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            sportId: null,
+            fromScratch: false,
             withPin: false,
         ));
 

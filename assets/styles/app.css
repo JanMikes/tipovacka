@@ -361,6 +361,35 @@ label.required::after {
     .scoring-fields { padding: 6px 16px; background: rgba(255,255,255,0.025);
         border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
 
+    /* ---- Wizard dot stepper (re-derived from the DS; the source rule was malformed) ---- */
+    .stepper { display: flex; align-items: flex-start; justify-content: center; gap: 6px; }
+    .step-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .step-num {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border-radius: 50%; flex: none;
+        background: rgba(255,255,255,0.06); border: 1px solid var(--border-2);
+        color: var(--fg-3); font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums;
+        transition: background var(--dur-base) var(--ease-standard),
+                    box-shadow var(--dur-base) var(--ease-standard),
+                    color var(--dur-base) var(--ease-standard),
+                    border-color var(--dur-base) var(--ease-standard);
+    }
+    .step-num.active { background: var(--color-accent-500); border-color: transparent; color: #fff; box-shadow: 0 0 0 4px rgba(70,153,208,0.18); }
+    .step-num.done { background: rgba(70,153,208,0.55); border-color: transparent; color: #fff; }
+    .step-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--fg-4); text-align: center; }
+    .step-label.is-current { color: var(--fg-2); }
+    .step-bar { flex: 1; max-width: 72px; height: 2px; margin-top: 16px; border-radius: 2px; background: var(--border-2); }
+    .step-bar.done { background: rgba(70,153,208,0.4); }
+
+    /* ---- Selectable option tile (wizard source/monetization pickers) ---- */
+    .option-card {
+        padding: 14px 16px; border-radius: 12px;
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+        transition: background 150ms var(--ease-standard), border-color 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard);
+    }
+    .option-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); }
+    .option-card.selected { background: rgba(70,153,208,0.12); border-color: rgba(70,153,208,0.55); box-shadow: 0 0 0 3px rgba(70,153,208,0.12); }
+
     /* ---- one-click copy field ---- */
     .copy-field {
         display: flex; align-items: center;

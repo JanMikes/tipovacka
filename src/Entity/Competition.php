@@ -7,6 +7,7 @@ namespace App\Entity;
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\CompetitionMonetization;
 use App\Event\CompetitionCreated;
 use App\Event\CompetitionDeleted;
 use App\Event\CompetitionMatchSelectionChanged;
@@ -74,6 +75,14 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column(options: ['default' => true])]
     public private(set) bool $includePlayoff = true;
 
+    /**
+     * Premium XOR boosts (XOR by column). Set by the create-competition wizard
+     * (premium|boosts); admin/global competitions default None. S08 stores intent
+     * only — charging goes live in S10. See .docs/DOMAIN.md §Monetization.
+     */
+    #[ORM\Column(enumType: CompetitionMonetization::class, options: ['default' => CompetitionMonetization::None->value])]
+    public private(set) CompetitionMonetization $monetization = CompetitionMonetization::None;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -100,6 +109,7 @@ class Competition implements EntityWithEvents, SoftDeletable
         CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
         bool $includePlayoff = true,
         bool $hideOthersTipsBeforeDeadline = false,
+        CompetitionMonetization $monetization = CompetitionMonetization::None,
     ) {
         $this->name = $name;
         $this->description = $description;
@@ -108,6 +118,7 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->selectionMode = $selectionMode;
         $this->includePlayoff = $includePlayoff;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
+        $this->monetization = $monetization;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new CompetitionCreated(

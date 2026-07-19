@@ -84,8 +84,9 @@ curated one.)
 | `PUBLIC_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000002` | `Admin liga`   | PUBLIC_SOURCE  | ADMIN         | none (`null`) | `PUBLIC_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000219bbbbb0000700b2` |
 | `SUBSET_COMPETITION_*`   | `019bbbbb-0000-7000-8000-000000000033` | `Vybrané zápasy party` | PUBLIC_SOURCE | SECOND_VERIFIED_USER | none (`null`) | `SUBSET_COMPETITION_LINK_TOKEN` = `019bbbbb00007000800000000000000319bbbbb0000700b3` |
 
-All competitions: `tipsLockedAt = null` (never manually locked) and
-`tipChangeOffsetMinutes = 60` (default).
+All competitions: `tipsLockedAt = null` (never manually locked),
+`tipChangeOffsetMinutes = 60` (default) and `monetization = None` (S08 entity
+default — the create-competition wizard sets `premium|boosts`, fixtures keep None).
 
 Selection mode: VERIFIED_COMPETITION and PUBLIC_COMPETITION are mode `all` with
 `includePlayoff = true` (defaults). **`SUBSET_COMPETITION` is mode `subset`** with

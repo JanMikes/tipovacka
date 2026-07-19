@@ -342,6 +342,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
 - [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
+- [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`)
 
 ## Testing
 

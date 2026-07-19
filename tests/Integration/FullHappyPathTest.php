@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Integration;
 
 use App\Command\CreateCompetition\CreateCompetitionCommand;
-use App\Command\CreatePrivateMatchSource\CreatePrivateMatchSourceCommand;
 use App\Command\CreateSportMatch\CreateSportMatchCommand;
 use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
 use App\Command\SetSportMatchFinalScore\SetSportMatchFinalScoreCommand;
@@ -14,10 +13,10 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
-use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\MatchSourceKind;
 use App\Query\GetCompetitionLeaderboard\CompetitionLeaderboardResult;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Tests\Support\IntegrationTestCase;
@@ -49,22 +48,14 @@ final class FullHappyPathTest extends IntegrationTestCase
         $userB = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($userB);
 
-        // 1) User A creates a private match source.
-        $matchSourceId = $this->extractId($bus->dispatch(new CreatePrivateMatchSourceCommand(
-            ownerId: $userA->id,
-            sportId: Uuid::fromString(Sport::FOOTBALL_ID),
-            name: 'E2E Liga',
-            description: null,
-            startAt: null,
-            endAt: null,
-        )), MatchSource::class);
-
-        // 2) User A creates a competition (with PIN) in that match source — auto-membership for owner.
+        // 1+2) User A creates a from-scratch competition (with PIN) — this
+        // auto-creates the hidden private source AND the owner membership.
         $competitionId = $this->extractId($bus->dispatch(new CreateCompetitionCommand(
             ownerId: $userA->id,
-            matchSourceId: $matchSourceId,
             name: 'E2E Soutěž',
-            description: null,
+            matchSourceId: null,
+            sportId: Uuid::fromString(Sport::FOOTBALL_ID),
+            fromScratch: true,
             withPin: true,
         )), Competition::class);
 
@@ -72,6 +63,8 @@ final class FullHappyPathTest extends IntegrationTestCase
         $competition = $em->find(Competition::class, $competitionId);
         self::assertNotNull($competition);
         self::assertNotNull($competition->pin);
+        $matchSourceId = $competition->matchSource->id;
+        self::assertSame(MatchSourceKind::Private, $competition->matchSource->kind);
 
         // 3) User B joins via PIN.
         $bus->dispatch(new JoinCompetitionByPinCommand(

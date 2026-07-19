@@ -118,10 +118,10 @@
                 </span>
                 <h3 class="text-lg font-semibold text-white">Žádné veřejné zdroje zápasů</h3>
                 {% if app.user %}
-                    <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně nejsou k dispozici žádné veřejné zdroje zápasů. Založte si vlastní.</p>
-                    <a href="{{ path('portal_match_source_create') }}" class="btn btn-primary btn-sm mt-6">
+                    <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně nejsou k dispozici žádné veřejné zdroje zápasů. Vytvořte si vlastní soutěž od začátku.</p>
+                    <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm mt-6">
                         <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
-                        Nový zdroj zápasů
+                        Vytvořit soutěž
                     </a>
                 {% else %}
                     <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně nejsou k dispozici žádné veřejné zdroje zápasů. Zaregistrujte se a založte si vlastní.</p>
@@ -185,8 +185,8 @@
         {% endif %}
     </section>
 
-    {# ───── Hero CTA: create your own private match_source ───── #}
-    {% set createHref = app.user ? path('portal_match_source_create') : path('app_register') %}
+    {# ───── Hero CTA: create your own competition (from scratch) ───── #}
+    {% set createHref = app.user ? path('portal_competition_create') : path('app_register') %}
     <section class="surface-accent relative mt-12 overflow-hidden p-6 sm:p-8">
         <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div class="flex items-start gap-4">
@@ -198,7 +198,7 @@
                         <twig:ux:icon name="lucide:sparkles" class="h-3.5 w-3.5" />
                         Nové
                     </p>
-                    <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vytvořte si vlastní zdroj zápasů</h2>
+                    <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Vytvořte si vlastní soutěž</h2>
                     <p class="mt-2 max-w-xl text-sm text-white/70 sm:text-base">Nastavte si vlastní pravidla a bodování, založte soutěže pro různé party a tipujte jen s lidmi, které chcete.</p>
 
                     <ul class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs text-white/70 sm:text-sm">
@@ -221,7 +221,7 @@
             <div class="flex md:flex-col md:items-stretch md:justify-center">
                 <a href="{{ createHref }}" class="btn btn-primary w-full sm:w-auto">
                     <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
-                    {% if app.user %}Nový zdroj zápasů{% else %}Začít zdarma{% endif %}
+                    {% if app.user %}Vytvořit soutěž{% else %}Začít zdarma{% endif %}
                 </a>
                 {% if app.user is null %}
                     <p class="mt-2 text-center text-xs text-white/50 md:mt-3">Stačí krátká registrace.</p>

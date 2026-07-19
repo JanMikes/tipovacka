@@ -120,9 +120,9 @@ disabled for global competitions; rejoining a paid global competition charges th
 | S04 | Rules per competition | done | 9b542ff |
 | S05 | Sports & match result model (periods, OT, events, roster, live) | done | b255cbd |
 | S06 | Guess extensions & new scoring rules | done | e08171c |
-| S07 | Tip locking model | done | (this commit) |
-| S08 | Create-competition wizard | in-progress | |
-| S09 | Global competitions & entry fees | todo | |
+| S07 | Tip locking model | done | 06e5c1a |
+| S08 | Create-competition wizard | done | (this commit) |
+| S09 | Global competitions & entry fees | in-progress | |
 | S10 | Premium & boosts commerce (+ scheduler infra) | todo | |
 | S11 | Notification center | todo | |
 | S12 | Leaderboard delta & snapshots | todo | |
