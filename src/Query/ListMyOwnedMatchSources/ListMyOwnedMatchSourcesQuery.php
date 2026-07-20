@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Query\ListMyOwnedMatchSources;
 
 use App\Entity\MatchSource;
-use App\Query\ListActivePublicMatchSources\MatchSourceListItem;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Query\ListMyOwnedMatchSources;
 
-use App\Query\ListActivePublicMatchSources\MatchSourceListItem;
 use App\Query\QueryMessage;
 use Symfony\Component\Uid\Uuid;
 

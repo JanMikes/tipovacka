@@ -48,10 +48,18 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-2 whitespace-nowrap">
-                                <a href="{{ path('portal_match_source_detail', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Otevřít</a>
+                                <a href="{{ path('portal_match_source_detail', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                                    <twig:ux:icon name="lucide:list-ordered" class="h-3.5 w-3.5" />
+                                    Zápasy
+                                </a>
                                 <a href="{{ path('admin_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
-                                <a href="{{ path('admin_sport_match_list', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Zápasy</a>
                                 <a href="{{ path('admin_competition_list', {match_source: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Soutěže</a>
+                                {% if match_source.kind.value == 'curated' and not match_source.isCompleted and not match_source.isDeleted %}
+                                    <a href="{{ path('admin_global_competition_create', {source: match_source.id.toRfc4122}) }}" class="btn btn-ghost btn-sm text-accent-300 hover:text-accent-200">
+                                        <twig:ux:icon name="lucide:globe" class="h-3.5 w-3.5" />
+                                        Globální soutěž
+                                    </a>
+                                {% endif %}
                                 {% if not match_source.isCompleted and not match_source.isDeleted %}
                                     <form method="post" action="{{ path('admin_match_source_complete', {id: match_source.id.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"

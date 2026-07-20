@@ -28,47 +28,110 @@ Must-know invariants (details in DOMAIN.md):
 All commands must be run inside Docker:
 
 ```bash
-# Run all quality checks (ALWAYS run before committing)
+# composer quality = phpstan (level 8) + UNIT tests only — fast, no DB. Run before committing.
 docker compose exec web composer quality
 
-# Individual commands
-docker compose exec web composer test:unit         # Unit tests
-docker compose exec web composer test              # All tests
+docker compose exec web composer cs:fix            # Fix code style (run first)
 docker compose exec web composer cs:check          # Check code style
-docker compose exec web composer cs:fix            # Fix code style
 docker compose exec web composer phpstan           # Static analysis (level 8)
-docker compose exec web composer db:reset          # Reset database with fixtures
-docker compose exec web bin/console make:migration # Create migration
+docker compose exec web composer test:unit         # Unit tests (tests/Unit)
+docker compose exec web composer db:reset          # Drop → create → migrate → load fixtures
+docker compose exec web bin/console doctrine:migrations:diff   # Generate a migration after entity changes
+```
+
+**Running tests — mind the OOM.** `composer quality` does NOT run the integration suite.
+Run integration tests **in chunks per subdirectory** — a single `phpunit tests/` (or a huge
+ad-hoc selection) exhausts memory and dies with exit 137:
+
+```bash
+docker compose exec web vendor/bin/phpunit tests/Integration/Command
+docker compose exec web vendor/bin/phpunit tests/Integration/Query
+# …then Event, Portal, Admin, Auth, Invitation, Public, Webhook, Scheduler, Service, and the rest
+docker compose exec web composer test            # the project's OWN full-suite script (vendor/bin/phpunit);
+                                                 # CI runs this. If it OOMs locally, fall back to chunks.
+```
+
+**Local worker (scheduler + async).** The prod worker is a compose profile, off by default.
+To exercise `symfony/scheduler` (premium reconciliation, guess reminders, daily snapshots) or
+async delivery locally:
+
+```bash
+docker compose --profile worker up worker    # runs: messenger:consume async scheduler_default
 ```
 
 ## Architecture Overview
 
 ### CQRS with Symfony Messenger
 
-Three message buses:
+Three buses, wired in `config/packages/messenger.php` (PHP config, not YAML):
 
-**Command Bus** (`command.bus`): Write operations with `doctrine_transaction` middleware - auto-flushes on success, rolls back on exception.
+**Command Bus** (`command.bus`, the default bus): write operations. Middleware chain
+`DispatchDomainEventsMiddleware` → `doctrine_transaction` (auto-flush on success, rollback on
+exception) → `validation`.
 
-**Query Bus** (`query.bus`): Read operations via `App\Query\QueryBus` class (NOT `MessageBusInterface`). Provides type-safe results via PHPStan generics.
+**Query Bus** (`query.bus`): read operations via the `App\Query\QueryBus` class (NOT
+`MessageBusInterface`) — type-safe results via PHPStan generics (`QueryMessage<Result>`).
+Queries return DTOs, never entities.
 
-**Event Bus** (`event.bus`): Domain events with zero-or-more handlers. Used for side effects (emails, logging).
+**Event Bus** (`event.bus`): domain events, zero-or-more handlers (`allow_no_handlers`). Same
+`DispatchDomainEventsMiddleware` + `doctrine_transaction` — side effects (emails, notifications,
+premium charges, snapshots) run in their own committed transaction AFTER the triggering command
+commits.
+
+### Scheduler
+
+`src/Scheduler/MainSchedule.php` (`#[AsSchedule('default')]`, transport `scheduler_default`,
+consumed by the prod worker — see Commands) dispatches the recurring domain jobs:
+`ReconcilePremiumCompetitionsCommand` (every 5 min), `SendGuessRemindersCommand` (hourly),
+`CaptureDailyLeaderboardSnapshotsCommand` (03:00 Europe/Prague). No cron, no separate process.
 
 ### Directory Structure
 
 ```
 src/
-├── Command/        # Commands + Handlers (write operations)
-├── Controller/     # Single-action controllers
+├── Command/        # Commands (final readonly DTO) + Handlers; returns entity or void
+├── Controller/     # Single-action controllers (route at class level)
+│   ├── Admin/      # ROLE_ADMIN area (^/admin firewall + voters)
 │   └── Portal/     # Authenticated user portal
-├── Entity/         # Domain entities with PHP 8.4 property hooks
-├── Enum/           # Value objects (UserRole)
-├── Event/          # Domain events + handlers
-├── Exception/      # Domain exceptions with #[WithHttpStatus]
+├── Entity/         # Domain entities, PHP property hooks, recordThat() events (26 entities)
+├── Enum/           # Enums (UserRole, CompetitionMonetization, CreditTransactionType, BoostType, …)
+├── Event/          # Domain events + #[AsMessageHandler] side-effect handlers
+├── Exception/      # Domain exceptions with #[WithHttpStatus] (no `Exception` suffix)
 ├── Form/           # FormData + FormType pairs
-├── Query/          # QueryMessage + Handler + Result (read operations)
-├── Repository/     # EntityManager composition (NO ServiceEntityRepository)
-└── Service/        # Identity providers, Voters, Subscribers and others...
+├── Middleware/     # DispatchDomainEventsMiddleware
+├── Query/          # QueryMessage + Handler (…Query suffix) + Result DTO
+├── Repository/     # EntityManager composition (NO ServiceEntityRepository, no flush)
+├── Rule/           # Scoring rules (#[AsRule]; binary/count evaluators × configured points)
+├── Scheduler/      # MainSchedule (symfony/scheduler)
+├── Service/        # Domain services (see below)
+├── Twig/           # Twig extensions + Live Components
+├── Value/          # Immutable value objects (PeriodScores, GuessScorerInput, MatchEventInput)
+└── Voter/          # Security voters (Competition, MatchSource, SportMatch, Guess, Leaderboard, …)
 ```
+
+### Domain services (`src/Service/`)
+
+- **`Competition/CompetitionMatchProvider`** — the matches a competition includes (mode
+  `all`/`subset`, playoff filter); the single answer to "what's in this competition".
+- **`Competition/CompetitionEntitlements`** — deadline-INDEPENDENT entitlement: `canChangeTips`,
+  `isEntitledToDistribution/OthersTips` (premium toggles or the buyer's boost; managers/admins
+  auto-SEE others' tips but are NOT auto-granted tip changes).
+- **`Competition/TipVisibilityGate`** — composes the entitlement with the userless deadline: a
+  viewer sees others' tips iff entitled OR past that match's deadline.
+- **`EffectiveTipDeadlineResolver`** — per-match effective tip deadline: extend-only `max()` of
+  competition lock / late-added kickoff / „Měnit tip" window / manager override.
+- **`Notification/Notifier`** — writes one `Notification` per delivery, honoring the user's
+  per-type × channel preferences (stamps `inAppVisible`).
+- **`Credits/PricingConfig`** — the single home for every credit price (never scatter literals).
+
+### Entities (26)
+
+`User`, `Sport`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
+`CompetitionMatchSelection`, `CompetitionMatchSetting`, `CompetitionRuleConfiguration`,
+`Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`, `GuessEvaluation`,
+`GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`, `CreditWallet`,
+`CreditTransaction`, `CreditPurchase`, `CompetitionPremiumCharge`, `BoostPurchase`,
+`Notification`, `NotificationPreference`, `ResetPasswordRequest`.
 
 ## Key Patterns
 

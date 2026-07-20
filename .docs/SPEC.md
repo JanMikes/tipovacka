@@ -1,3 +1,14 @@
+> [!WARNING]
+> **SUPERSEDED — historical only.** This is the original pre-build brief. The product
+> has since been fully rebuilt (2026-07 domain rebuild, stages S01–S13) and renamed to
+> **Wtips**. Key concepts in this file are now WRONG: `Tournament`→`MatchSource`,
+> `Group`→`Competition`, football-only→football **and** hockey, single visibility
+> flag→`isGlobal` + PIN/link/invite joins, single deadline→per-match effective deadlines,
+> plus credits, premium/boosts, notifications, and leaderboard delta that did not exist
+> when this was written. **The authoritative, always-current domain record is
+> [`DOMAIN.md`](DOMAIN.md).** Read that, not this. This file is retained only as a
+> historical snapshot of the initial intent.
+
 # Tipovačka — Product & Build Spec
 
 Brief for Claude Code. The tech skeleton (FrankenPHP, PHP 8.5, Symfony 8.0, CQRS-like with `symfony/messenger` and query objects, Clean Architecture) is provided separately by the owner. This document specifies **business behavior, domain model, and UX expectations** only.

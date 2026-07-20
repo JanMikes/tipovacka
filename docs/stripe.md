@@ -18,6 +18,47 @@ Invoices are issued by Stripe (`invoice_creation`), fulfillment happens via webh
 The credit price is resolved at runtime via **lookup key `wtips_credit_czk`**
 (quantity = number of credits) — no environment-specific price id in config.
 
+## Spending credits (in-app economy)
+
+Stripe only ever **tops up** the wallet (`purchase`) or an admin corrects it
+(`admin_adjustment`). Everything else moves credits between the user and the app *inside*
+the ledger — no Stripe call. Every movement is a typed `CreditTransaction` (enum
+`App\Enum\CreditTransactionType`) with `balanceAfter`; the balance can never go negative.
+
+| Type | `isSpend`/`isRefund` | Trigger | References |
+|---|---|---|---|
+| `purchase` | — (mint) | Stripe checkout fulfilled | `CreditPurchase` |
+| `admin_adjustment` | — (mint/burn) | `AdjustUserCreditsCommand` (note required) | — |
+| `entry_fee` | spend | Join a global competition with a fee | competition |
+| `premium_charge` | spend | Premium manager charged per joining player | competition, member |
+| `boost_purchase` | spend | A player buys a per-competition boost | competition, boost |
+| `premium_refund` | refund | Premium reconciliation/downgrade or switch-to-boosts | competition, member |
+| `boost_refund` | refund | Re-enabling premium refunds active boosts; switch direction | competition, boost |
+
+- **Spend vs refund are enforced at the wallet:** `CreditWallet::spend()` only accepts a
+  type where `isSpend()` is true, `refund()` only a type where `isRefund()` is true — an
+  `entry_fee` can never be refunded (entry fees are **final, burned** revenue), and a
+  `premium_refund` can never debit.
+- **Entry fees are non-refundable** by design (no gambling payouts). Refund types exist
+  **only** for the premium ⇄ boosts switching flows (see DOMAIN.md §Monetization).
+- Uncovered premium charges (insufficient wallet at join) are recorded as
+  `CompetitionPremiumCharge` rows in state `Uncovered` **without** a ledger entry — they
+  become real `premium_charge`/`premium_refund` ledger rows only when settled or refunded.
+
+### Prices — one config class
+
+All in-app prices are constants in **`App\Service\Credits\PricingConfig`** (1 credit = 1 Kč).
+Never scatter these literals — read them from the class (or the `PricingExtension` Twig
+helper). Current values (locked, DOMAIN.md decision log 2026-07-18):
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `PREMIUM_PER_PLAYER` | 10 | Premium: charged to the manager per player, at each join |
+| `BOOST_TIP_DISTRIBUTION` | 10 | Boost „Lišta tipů ostatních" (anonymous distribution bar) |
+| `BOOST_OTHERS_TIPS` | 20 | Boost „Konkrétní tipy kolegů" (superset — includes the bar) |
+| `BOOST_TIP_CHANGE` | 40 | Boost „Měnit tip během turnaje" |
+| `LOW_BALANCE_WARNING_THRESHOLD` | 50 | Warn a premium manager below ~5 players' worth |
+
 ## Environment variables
 
 ```

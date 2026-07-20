@@ -11,6 +11,21 @@
 {% block admin_subtitle %}Stripe platby za kredity — posledních {{ purchases|length }} nákupů.{% endblock %}
 
 {% block admin_body %}
+{% set _tabs = [
+    {route: 'admin_credit_purchases', label: 'Nákupy', icon: 'lucide:shopping-cart'},
+    {route: 'admin_credit_ledger',    label: 'Transakce', icon: 'lucide:receipt'},
+] %}
+<div class="mb-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-surface p-1 text-sm">
+    {% for tab in _tabs %}
+        {% set is_active = app.request.attributes.get('_route') == tab.route %}
+        <a href="{{ path(tab.route) }}"
+           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors {{ is_active ? 'bg-accent-500 font-semibold text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+            <twig:ux:icon name="{{ tab.icon }}" class="h-3.5 w-3.5" />
+            {{ tab.label }}
+        </a>
+    {% endfor %}
+</div>
+
 <div class="card-glass overflow-hidden">
     <div class="overflow-x-auto">
         <table class="w-full text-sm">

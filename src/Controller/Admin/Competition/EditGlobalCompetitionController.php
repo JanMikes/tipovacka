@@ -8,6 +8,8 @@ use App\Command\UpdateGlobalCompetition\UpdateGlobalCompetitionCommand;
 use App\Exception\GlobalCompetitionFeeLocked;
 use App\Form\GlobalCompetitionFormData;
 use App\Form\GlobalCompetitionFormType;
+use App\Query\GetCompetitionMonetizationOverview\GetCompetitionMonetizationOverview;
+use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -30,6 +32,7 @@ final class EditGlobalCompetitionController extends AbstractController
         private readonly CompetitionRepository $competitionRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly MessageBusInterface $commandBus,
+        private readonly QueryBus $queryBus,
     ) {
     }
 
@@ -77,6 +80,9 @@ final class EditGlobalCompetitionController extends AbstractController
             'form' => $form,
             'competition' => $competition,
             'fee_locked' => $feeLocked,
+            'monetization' => $this->queryBus->handle(new GetCompetitionMonetizationOverview(
+                competitionId: $competition->id,
+            )),
         ]);
     }
 }

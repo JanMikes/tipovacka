@@ -4,17 +4,25 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Admin;
 
+use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
+use App\Command\CreateGlobalCompetition\CreateGlobalCompetitionCommand;
+use App\Command\JoinGlobalCompetition\JoinGlobalCompetitionCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\User;
+use App\Enum\CompetitionMonetization;
+use App\Tests\Support\WebFlowHelpers;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Uid\Uuid;
 
 final class AdminGlobalCompetitionFlowTest extends WebTestCase
 {
+    use WebFlowHelpers;
+
     public function testAdminCompetitionListShowsGlobalCreateAction(): void
     {
         $client = static::createClient();
@@ -86,6 +94,55 @@ final class AdminGlobalCompetitionFlowTest extends WebTestCase
         self::assertInstanceOf(Competition::class, $competition);
         self::assertTrue($competition->isGlobal);
         self::assertSame($source->id->toRfc4122(), $competition->matchSource->id->toRfc4122());
+    }
+
+    public function testGlobalCreateFormPrefillsSourceFromQuery(): void
+    {
+        $client = static::createClient();
+        $this->loginAdmin($client);
+
+        // The „+ Globální soutěž" quick action on the sources list deep-links here with ?source=.
+        $crawler = $client->request('GET', '/admin/souteze/globalni/vytvorit?source='.AppFixtures::PUBLIC_SOURCE_ID);
+        self::assertResponseIsSuccessful();
+
+        $selected = $crawler->filter('select[name="global_competition_form[matchSource]"] option[selected]');
+        self::assertCount(1, $selected, 'The curated source should be preselected.');
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, trim($selected->text()));
+    }
+
+    public function testEditGlobalShowsPremiumChargesPanel(): void
+    {
+        $client = static::createClient();
+        $bus = $this->testCommandBus();
+
+        $envelope = $bus->dispatch(new CreateGlobalCompetitionCommand(
+            adminId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            name: 'Prémiová globální soutěž',
+            entryFeeCredits: 0,
+            monetization: CompetitionMonetization::Premium,
+        ));
+        $competition = $envelope->last(HandledStamp::class)?->getResult();
+        self::assertInstanceOf(Competition::class, $competition);
+
+        // Fund the owner, then a member joins ⇒ the manager is charged per player.
+        $bus->dispatch(new AdjustUserCreditsCommand(
+            userId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            amount: 100,
+            note: 'Kredity na prémium',
+            adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
+        ));
+        $bus->dispatch(new JoinGlobalCompetitionCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            competitionId: $competition->id,
+        ));
+
+        $this->loginAdmin($client);
+        $client->request('GET', '/admin/souteze/'.$competition->id->toRfc4122().'/globalni/upravit');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Prémiové platby za hráče');
+        self::assertSelectorTextContains('body', 'Zaplaceno');
     }
 
     private function competitionByName(KernelBrowser $client, string $name): ?Competition

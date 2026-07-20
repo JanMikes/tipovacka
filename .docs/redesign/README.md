@@ -1,5 +1,16 @@
 # Wtips redesign — implementation plan
 
+> [!NOTE]
+> **Historical planning folder — visual/UX reference only.** This describes the dark
+> design-system redesign as it was planned. It is NOT a description of current domain
+> behavior. For *what the product is and why the rules are the way they are*, read the
+> authoritative [`../DOMAIN.md`](../DOMAIN.md); for *implementation status* of the
+> 2026-07 rebuild read [`../rebuild/PLAN.md`](../rebuild/PLAN.md). Where this folder and
+> DOMAIN.md disagree on domain concepts (e.g. any lingering „soutěž=Group/turnaj=Tournament"
+> mapping), DOMAIN.md wins — the rebuild settled on **zdroj zápasů=`MatchSource`,
+> soutěž=`Competition`**. Keep this folder for the design tokens, component markup, and
+> Czech copy rules, which remain in force.
+
 A complete visual + UX redesign of the tipovačka app onto the **Wtips dark design
 system** (`~/www/wtips-design-system`). The backend (CQRS domain engine) stays;
 the frontend is rebuilt from the design system, the IA/navigation is redesigned,

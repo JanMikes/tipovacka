@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Query\ListActivePublicMatchSources;
+namespace App\Query\ListMyOwnedMatchSources;
 
 use App\Enum\MatchSourceKind;
 use Symfony\Component\Uid\Uuid;

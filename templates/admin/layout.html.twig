@@ -10,10 +10,10 @@
 {% block body %}
 {% set _route = app.request.attributes.get('_route') %}
 {% set _nav = [
-    {route: 'admin_match_source_list', label: 'Zdroje zápasů',   icon: 'lucide:trophy',   match: ['admin_match_source_list', 'admin_match_source_edit', 'admin_match_source_create', 'admin_sport_match_list']},
+    {route: 'admin_match_source_list', label: 'Zdroje zápasů',   icon: 'lucide:trophy',   match: ['admin_match_source_list', 'admin_match_source_edit', 'admin_match_source_create']},
     {route: 'admin_competition_list',      label: 'Soutěže',   icon: 'lucide:users',    match: ['admin_competition_list']},
     {route: 'admin_user_list',       label: 'Uživatelé', icon: 'lucide:user',     match: ['admin_user_list', 'admin_user_credits']},
-    {route: 'admin_credit_purchases', label: 'Kredity',  icon: 'lucide:wallet',   match: ['admin_credit_purchases']},
+    {route: 'admin_credit_purchases', label: 'Kredity',  icon: 'lucide:wallet',   match: ['admin_credit_purchases', 'admin_credit_ledger']},
     {route: 'admin_rule_list',       label: 'Pravidla',  icon: 'lucide:activity', match: ['admin_rule_list']},
 ] %}
 {% set _title = block('admin_title')|trim %}

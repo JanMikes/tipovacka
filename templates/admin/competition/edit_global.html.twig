@@ -53,4 +53,73 @@
         </div>
     {{ form_end(form) }}
 </div>
+
+{% if monetization.monetization.value == 'premium' %}
+    <div class="card-glass mt-6 max-w-3xl p-6 md:p-8">
+        <h2 class="text-lg font-bold tracking-tight text-white">Prémiové platby za hráče</h2>
+        <p class="mt-1 text-xs leading-relaxed text-white/50">
+            Zaplaceno: <span class="font-mono text-white/80">{{ monetization.chargedCount }}</span> ·
+            nepokryto: <span class="font-mono {{ monetization.uncoveredCount > 0 ? 'text-loss' : 'text-white/80' }}">{{ monetization.uncoveredCount }}</span> ·
+            celkem strženo <span class="font-mono text-white/80">{{ monetization.chargedCredits }}</span> kreditů.
+        </p>
+        {% if monetization.premiumCharges is empty %}
+            <p class="mt-4 py-6 text-center text-sm text-white/50">Zatím žádné platby — připojil se jen organizátor.</p>
+        {% else %}
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10 text-left text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                            <th class="py-2 pr-4">Hráč</th>
+                            <th class="py-2 pr-4">Stav</th>
+                            <th class="py-2 pr-4 text-right">Kredity</th>
+                            <th class="py-2 text-right">Připojen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for charge in monetization.premiumCharges %}
+                            {% set variant = {charged: 'win', uncovered: 'loss', refunded: 'points'}[charge.status.value] ?? 'points' %}
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 pr-4 text-white">{{ charge.memberName }}</td>
+                                <td class="py-3 pr-4"><twig:Badge label="{{ charge.status.label }}" variant="{{ variant }}" /></td>
+                                <td class="py-3 pr-4 text-right font-mono text-white/70">{{ charge.amount }}</td>
+                                <td class="py-3 text-right whitespace-nowrap text-white/50">{{ charge.createdAt|date('d. m. Y H:i') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% elseif monetization.monetization.value == 'boosts' %}
+    <div class="card-glass mt-6 max-w-3xl p-6 md:p-8">
+        <h2 class="text-lg font-bold tracking-tight text-white">Aktivní vylepšení</h2>
+        <p class="mt-1 text-xs leading-relaxed text-white/50">Hráči si koupili vylepšení za celkem <span class="font-mono text-white/80">{{ monetization.boostCredits }}</span> kreditů.</p>
+        {% if monetization.activeBoosts is empty %}
+            <p class="mt-4 py-6 text-center text-sm text-white/50">Zatím si nikdo nekoupil žádné vylepšení.</p>
+        {% else %}
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10 text-left text-[11px] font-semibold uppercase tracking-wider text-white/50">
+                            <th class="py-2 pr-4">Hráč</th>
+                            <th class="py-2 pr-4">Vylepšení</th>
+                            <th class="py-2 pr-4 text-right">Kredity</th>
+                            <th class="py-2 text-right">Koupeno</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for boost in monetization.activeBoosts %}
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 pr-4 text-white">{{ boost.userName }}</td>
+                                <td class="py-3 pr-4 text-white/70">{{ boost.boostLabel }}</td>
+                                <td class="py-3 pr-4 text-right font-mono text-white/70">{{ boost.pricePaid }}</td>
+                                <td class="py-3 text-right whitespace-nowrap text-white/50">{{ boost.purchasedAt|date('d. m. Y H:i') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}
 {% endblock %}

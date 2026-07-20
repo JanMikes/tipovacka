@@ -26,6 +26,11 @@ in-app credit currency (Stripe-backed), never from gambling mechanics or payouts
 | kredit | `CreditWallet` balance | **1 credit = 1 Kč**, bought via Stripe Checkout. All in-app prices are in credits so costs stay flexible |
 | body | `GuessEvaluation.totalPoints` | Per-guess evaluation, per-rule breakdown stored |
 | střelec | `MatchEvent` type `goal` + `GuessScorer` | Scorer guessing (v1 simple rule; fantasy lineups later) |
+| žebříček | `GetCompetitionLeaderboard` result | Standings; a daily `LeaderboardSnapshot` (per competition × user × Prague-day) drives the Δ (movement vs the previous snapshot day) |
+| vylepšení / boost | `BoostPurchase` (`BoostType`) | A per-competition boost a player buys in a `boosts` competition: Lišta tipů / Konkrétní tipy / Měnit tip |
+| prémium | `Competition.monetization = premium` + `CompetitionPremiumCharge` | Manager pays per player; charge lifecycle `Charged` / `Uncovered` / `Refunded` |
+| oznámení | `Notification` (+ `NotificationPreference`) | In-app bell + center and email, per user × type × channel |
+| peněženka / kredity | `CreditWallet` + `CreditTransaction` | Balance + immutable typed ledger (`balanceAfter` always reconciles; never negative) |
 
 ## Core model
 
@@ -134,9 +139,10 @@ In-app center (bell + feed) + email, per-user preference per type × channel; em
 on only for important types (guess reminder, premium problems, competition ended). Types:
 guess reminder (sweep, missing tips with deadline < 24 h), new match added after start,
 match evaluated (your points + standing), competition ended (final standing), premium
-low-balance / uncovered / downgraded / re-enabled, boost refunded. Delivery is event-driven
-via messenger; reminders + premium reconciliation + snapshots run via symfony/scheduler
-(consumed by the prod worker).
+low-balance / uncovered / downgraded / re-enabled, boost refunded, nový hráč se připojil
+do soutěže, kterou spravujete (member_joined — in-app default on / email off, skipped when
+the joiner is the owner). Delivery is event-driven via messenger; reminders + premium
+reconciliation + snapshots run via symfony/scheduler (consumed by the prod worker).
 
 ### Leaderboard delta
 Daily `LeaderboardSnapshot` (competition × user × date → points, rank); Δ shown = movement
@@ -172,3 +178,5 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-19 | `EnablePremium` is idempotent: re-invoking on an already-premium competition throws `PremiumAlreadyEnabled` before any wallet movement (controller → friendly „Soutěž už je prémiová.") | enabling charges N×PREMIUM_PER_PLAYER, so a double-submit would debit the owner again with no new rows; re-enable is only meaningful from a non-premium state |
 | 2026-07-19 | Visibility boosts (Lišta/Konkrétní) are never sold to a buyer already entitled for free — a manager/admin is auto-entitled to see tips, so the Boost:Panel hides the offer and `PurchaseBoostHandler` rejects it (`BoostNotAvailable::becauseAlreadyEntitled`); tip_change stays buyable (managers are NOT auto-entitled to tip changes, subject to the freeze) | buying what you already get free just burns credits; the visibility/tip-change auto-entitlement split mirrors the S07 tip-freeze decision |
 | 2026-07-19 | S11 notification dedup is delivery-level & channel-agnostic: the `Notifier` writes ONE `Notification` row whenever it delivers on ANY channel (in-app OR email), stamping `inAppVisible` = the user's in-app preference (feed/unread queries filter it, so email-only rows never surface); `competition_ended` fires only when the source is completed AND every included match is finished+evaluated (no match still Scheduled/Live/Postponed), driven off BOTH `MatchSourceCompleted` and per-match `GuessesEvaluatedForMatch`, guarded once by `endedNotifiedAt`; a source reopen clears the guard + deletes the sent rows so a corrected standing re-sends | a channel-dependent dedup re-sent the hourly guess-reminder email forever to in-app-off users (spam); stamping „ended" before the last evaluation committed froze stale/missing points permanently |
+| 2026-07-19 | S12 leaderboard delta = a daily `LeaderboardSnapshot` (competition × user × Prague-calendar day → rank + points), captured 03:00 Europe/Prague by the scheduler and idempotent per (competition, day); the Δ shown on the board is movement vs the latest snapshot day **strictly before** today (a member absent from that baseline shows „nový"); a member breakdown „Vývoj" list reads the same rows | a day is the natural „round" of a tipovačka — per-match deltas are noisy when several matches land the same day; comparing to a fixed prior day keeps the arrow stable through the day |
+| 2026-07-20 | S13 admin consolidation: the admin area **deep-links into the voter-guarded portal** (competition detail, source detail = the matches-management page) rather than keeping duplicate admin views — the only admin-owned surfaces are the cross-cutting lists (sources, competitions, users, credits, rules) + the global-competition create/edit forms; „Kredity → Transakce" is a cross-wallet ledger filterable by transaction type and competition, and the global-competition edit page shows a read-only premium-charges / active-boosts panel; all project docs reconciled to the as-built system | one page per concern with no duplicate controllers to drift; admins see the exact same detail members do, plus the money movements (`entry_fee` / `premium_charge` / `boost_purchase` / refunds) the ledger surfaces |

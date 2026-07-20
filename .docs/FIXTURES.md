@@ -46,7 +46,7 @@ Password for all users: `AppFixtures::DEFAULT_PASSWORD` = `password`.
 Notes:
 
 - **`SECOND_VERIFIED_USER_ID` quirk**: its ID ends in `…0099`, deliberately OUTSIDE the
-  predictable provider's pool (`…0001`–`…0030`), so it can never collide with IDs handed
+  predictable provider's pool (`…0001`–`…0080`), so it can never collide with IDs handed
   out by `next()`. Since S02 it owns (and is the sole member of) `SUBSET_COMPETITION`;
   it remains an outsider for every other competition.
 - `DELETED_USER` was soft-deleted at `2025-06-16 09:00:00 UTC` (one day after `$now`).

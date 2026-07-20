@@ -51,6 +51,29 @@ class CompetitionPremiumChargeRepository
     }
 
     /**
+     * Every premium charge for a competition (any status), oldest first — the
+     * admin premium-state list. Member is fetch-joined for display.
+     *
+     * @return list<CompetitionPremiumCharge>
+     */
+    public function findAllForCompetition(Uuid $competitionId): array
+    {
+        /** @var list<CompetitionPremiumCharge> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('c', 'm')
+            ->from(CompetitionPremiumCharge::class, 'c')
+            ->innerJoin('c.member', 'm')
+            ->where('c.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
+            ->orderBy('c.createdAt', 'ASC')
+            ->addOrderBy('c.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
      * @return list<CompetitionPremiumCharge>
      */
     public function findChargedForCompetition(Uuid $competitionId): array

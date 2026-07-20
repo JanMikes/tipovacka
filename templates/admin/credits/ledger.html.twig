@@ -1,0 +1,102 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Transakce kreditů — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="flex items-center"><a href="{{ path('admin_credit_purchases') }}" class="transition-colors hover:text-accent-300">Kredity</a></li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">Transakce</li>
+{% endblock %}
+
+{% block admin_title %}Kredity{% endblock %}
+{% block admin_subtitle %}Kompletní účetní kniha kreditů napříč všemi peněženkami.{% endblock %}
+
+{% block admin_body %}
+{% set _tabs = [
+    {route: 'admin_credit_purchases', label: 'Nákupy', icon: 'lucide:shopping-cart'},
+    {route: 'admin_credit_ledger',    label: 'Transakce', icon: 'lucide:receipt'},
+] %}
+<div class="mb-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-surface p-1 text-sm">
+    {% for tab in _tabs %}
+        {% set is_active = app.request.attributes.get('_route') == tab.route %}
+        <a href="{{ path(tab.route) }}"
+           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors {{ is_active ? 'bg-accent-500 font-semibold text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+            <twig:ux:icon name="{{ tab.icon }}" class="h-3.5 w-3.5" />
+            {{ tab.label }}
+        </a>
+    {% endfor %}
+</div>
+
+<form method="get" action="{{ path('admin_credit_ledger') }}" class="mb-4 flex flex-wrap items-end gap-3">
+    <div class="field mb-0">
+        <label for="filter-type" class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/50">Typ transakce</label>
+        <select id="filter-type" name="type" class="input">
+            <option value="">Všechny typy</option>
+            {% for type in types %}
+                <option value="{{ type.value }}" {{ selectedType is same as(type) ? 'selected' }}>{{ type.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="field mb-0">
+        <label for="filter-competition" class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/50">Soutěž</label>
+        <select id="filter-competition" name="competition" class="input">
+            <option value="">Všechny soutěže</option>
+            {% for competition in ledger.competitions %}
+                <option value="{{ competition.id.toRfc4122 }}" {{ selectedCompetitionId and selectedCompetitionId.toRfc4122 == competition.id.toRfc4122 ? 'selected' }}>{{ competition.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">
+        <twig:ux:icon name="lucide:filter" class="h-4 w-4" />
+        Filtrovat
+    </button>
+    {% if selectedType or selectedCompetitionId %}
+        <a href="{{ path('admin_credit_ledger') }}" class="btn btn-ghost btn-sm">Zrušit filtr</a>
+    {% endif %}
+</form>
+
+<div class="card-glass overflow-hidden p-0">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
+                    <th class="px-4 py-3 text-left font-semibold">Datum</th>
+                    <th class="px-4 py-3 text-left font-semibold">Peněženka</th>
+                    <th class="px-4 py-3 text-left font-semibold">Typ</th>
+                    <th class="px-4 py-3 text-left font-semibold">Detail</th>
+                    <th class="px-4 py-3 text-right font-semibold">Kredity</th>
+                    <th class="px-4 py-3 text-right font-semibold">Zůstatek</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in ledger.transactions %}
+                    {% set variant = {
+                        purchase: 'win', admin_adjustment: 'points',
+                        entry_fee: 'loss', premium_charge: 'loss', boost_purchase: 'loss',
+                        premium_refund: 'win', boost_refund: 'win',
+                    }[tx.type.value] ?? 'points' %}
+                    <tr class="border-b border-white/[0.06] text-white/80 hover:bg-white/[0.03]">
+                        <td class="px-4 py-3 whitespace-nowrap text-white/70">{{ tx.createdAt|date('d. m. Y H:i') }}</td>
+                        <td class="px-4 py-3">
+                            <a href="{{ path('admin_user_credits', {id: tx.walletOwnerId.toRfc4122}) }}" class="text-white hover:text-accent-300">{{ tx.walletOwnerName }}</a>
+                        </td>
+                        <td class="px-4 py-3"><twig:Badge label="{{ tx.type.label }}" variant="{{ variant }}" /></td>
+                        <td class="px-4 py-3">
+                            {% if tx.competitionName %}<span class="text-white/80">{{ tx.competitionName }}</span>{% endif %}
+                            {% if tx.relatedUserName %}<span class="text-white/50"> · {{ tx.relatedUserName }}</span>{% endif %}
+                            {% if tx.boostType %}<span class="text-white/50"> · {{ tx.boostType.label }}</span>{% endif %}
+                            {% if tx.note %}<p class="mt-0.5 text-xs leading-relaxed text-white/40">{{ tx.note }}</p>{% endif %}
+                            {% if not tx.competitionName and not tx.note and not tx.relatedUserName %}<span class="text-white/30">—</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-right font-mono font-semibold {{ tx.amount > 0 ? 'text-win' : 'text-loss' }}">{{ tx.amount > 0 ? '+' }}{{ tx.amount }}</td>
+                        <td class="px-4 py-3 text-right font-mono text-white/70">{{ tx.balanceAfter }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="px-4 py-10 text-center text-white/50">Žádné transakce odpovídající filtru.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
