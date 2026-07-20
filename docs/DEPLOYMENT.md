@@ -49,23 +49,37 @@ public — services talk over the internal Docker network, no published ports.
 `messenger-consumer` sets `SKIP_DATABASE_MIGRATIONS=true` so a worker restart never races the
 schema — migrations happen exactly once per rollout, on the web container.
 
-### The worker consumes both transports
+### The worker consumes `async`
 
 The worker command is:
 
 ```
-bin/console messenger:consume async scheduler_default -vv --time-limit 3600 --memory-limit 256M
+bin/console messenger:consume async -vv --time-limit 3600 --memory-limit 256M
 ```
 
-`async` carries event-driven side effects (emails, notification delivery, recalculation).
-`scheduler_default` is the **symfony/scheduler** transport — the recurring domain jobs
-(guess-reminder sweep, premium reconciliation, daily leaderboard snapshots) are dispatched
-by the in-app `Schedule` provider and consumed here. There is **no cron and no separate
-scheduler process** — one worker container runs both. If you add a new recurring task,
-nothing changes on the box; it flows through the same worker.
+`async` carries event-driven side effects (emails, notification delivery, recalculation,
+and the per-competition leaderboard-snapshot fan-out emitted by the daily snapshot job). The
+`failed` transport is Postgres-backed: inspect with `bin/console messenger:failed:show`,
+retry with `messenger:failed:retry`.
 
-The `failed` transport is Postgres-backed: inspect with
-`bin/console messenger:failed:show`, retry with `messenger:failed:retry`.
+### Recurring jobs run from host cron (not the worker)
+
+The three recurring domain jobs are standalone console commands invoked by the **box
+crontab** — NOT symfony/scheduler (removed) and NOT the worker:
+
+| Cadence | Command |
+|---|---|
+| every 5 min | `app:premium:reconcile` — premium reconciliation at first kickoff |
+| hourly | `app:guess-reminders:send` — guess-deadline reminder sweep |
+| 03:00 Europe/Prague | `app:leaderboard:capture-snapshots` — daily leaderboard snapshots |
+
+The crontab lives in the lily infra repo at `apps/wtips/cron.d/wtips` (D30 convention,
+installed by `deploy.sh install_cron`), each entry wrapped by `lily-cron-run` +
+`sentry-cli monitors` for ops visibility/monitorability. Each entry runs
+`docker compose run --rm messenger-consumer bin/console app:…`. The daily snapshot command
+fans its per-competition capture work out onto `async`, which the `messenger-consumer`
+worker then processes. To add a recurring task: add a console command in `src/Console/` and a
+`cron.d/wtips` line in the infra repo — nothing changes in the worker.
 
 ## Secrets
 

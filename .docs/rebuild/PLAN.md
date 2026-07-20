@@ -79,9 +79,11 @@ Rules that apply to every stage (in addition to `CLAUDE.md`):
    Email defaults on only for important types (reminder, premium issues, competition ended).
 7. **Sports**: football + hockey fully functional in v1. Sport chosen on source creation
    (and from-scratch wizard); sport drives period structure (2 halves / 3 thirds) and copy.
-8. **Scheduling**: symfony/scheduler consumed by the existing prod worker
-   (update `~/www/lily.srv/apps/wtips/compose.yaml` worker command when the first
-   scheduled task ships — stage S10).
+8. **Scheduling**: the recurring jobs (premium reconcile, guess reminders, daily
+   leaderboard snapshots) run as host-cron console commands (`app:premium:reconcile` /
+   `app:guess-reminders:send` / `app:leaderboard:capture-snapshots`) invoked by the box
+   crontab (lily.srv `apps/wtips/cron.d/wtips`). symfony/scheduler was introduced in S10
+   and later removed for ops visibility/monitorability (see DOMAIN.md decision log, 2026-07-20).
 
 Default assumptions taken (veto anytime): entry fees are non-refundable burned credits
 (no payouts, leaving refunds nothing); global competitions are the only publicly

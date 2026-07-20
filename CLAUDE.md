@@ -46,17 +46,25 @@ ad-hoc selection) exhausts memory and dies with exit 137:
 ```bash
 docker compose exec web vendor/bin/phpunit tests/Integration/Command
 docker compose exec web vendor/bin/phpunit tests/Integration/Query
-# …then Event, Portal, Admin, Auth, Invitation, Public, Webhook, Scheduler, Service, and the rest
+# …then Event, Portal, Admin, Auth, Invitation, Public, Webhook, Console, Service, and the rest
 docker compose exec web composer test            # the project's OWN full-suite script (vendor/bin/phpunit);
                                                  # CI runs this. If it OOMs locally, fall back to chunks.
 ```
 
-**Local worker (scheduler + async).** The prod worker is a compose profile, off by default.
-To exercise `symfony/scheduler` (premium reconciliation, guess reminders, daily snapshots) or
-async delivery locally:
+**Local worker (async).** The prod worker is a compose profile, off by default. To exercise
+async delivery locally (emails, notification delivery, per-competition snapshot fan-out):
 
 ```bash
-docker compose --profile worker up worker    # runs: messenger:consume async scheduler_default
+docker compose --profile worker up worker    # runs: messenger:consume async
+```
+
+The recurring domain jobs are NOT on the worker — they are host-cron console commands. Run
+them by hand to exercise them:
+
+```bash
+docker compose exec web bin/console app:premium:reconcile            # every 5 min in prod
+docker compose exec web bin/console app:guess-reminders:send         # hourly in prod
+docker compose exec web bin/console app:leaderboard:capture-snapshots # 03:00 Europe/Prague in prod
 ```
 
 ## Architecture Overview
@@ -78,18 +86,24 @@ Queries return DTOs, never entities.
 premium charges, snapshots) run in their own committed transaction AFTER the triggering command
 commits.
 
-### Scheduler
+### Recurring jobs (host cron, not symfony/scheduler)
 
-`src/Scheduler/MainSchedule.php` (`#[AsSchedule('default')]`, transport `scheduler_default`,
-consumed by the prod worker — see Commands) dispatches the recurring domain jobs:
-`ReconcilePremiumCompetitionsCommand` (every 5 min), `SendGuessRemindersCommand` (hourly),
-`CaptureDailyLeaderboardSnapshotsCommand` (03:00 Europe/Prague). No cron, no separate process.
+The three recurring domain jobs run as standalone console commands in `src/Console/`
+(`#[AsCommand]`), each dispatching its existing command-bus message synchronously:
+`app:premium:reconcile` (every 5 min), `app:guess-reminders:send` (hourly),
+`app:leaderboard:capture-snapshots` (03:00 Europe/Prague). They are invoked by **host cron**
+(lily.srv `apps/wtips/cron.d/wtips` per D30, wrapped by `lily-cron-run` + `sentry-cli monitors`
+for ops visibility/monitorability) — NOT by symfony/scheduler, which was removed. Each cron
+entry runs `docker compose run --rm messenger-consumer bin/console app:…`; keep the command
+names stable (the cron.d file references them). No in-app `Schedule`, no `scheduler_default`
+transport.
 
 ### Directory Structure
 
 ```
 src/
 ├── Command/        # Commands (final readonly DTO) + Handlers; returns entity or void
+├── Console/        # Host-cron console commands (app:premium:reconcile, app:guess-reminders:send, app:leaderboard:capture-snapshots)
 ├── Controller/     # Single-action controllers (route at class level)
 │   ├── Admin/      # ROLE_ADMIN area (^/admin firewall + voters)
 │   └── Portal/     # Authenticated user portal
@@ -102,7 +116,6 @@ src/
 ├── Query/          # QueryMessage + Handler (…Query suffix) + Result DTO
 ├── Repository/     # EntityManager composition (NO ServiceEntityRepository, no flush)
 ├── Rule/           # Scoring rules (#[AsRule]; binary/count evaluators × configured points)
-├── Scheduler/      # MainSchedule (symfony/scheduler)
 ├── Service/        # Domain services (see below)
 ├── Twig/           # Twig extensions + Live Components
 ├── Value/          # Immutable value objects (PeriodScores, GuessScorerInput, MatchEventInput)

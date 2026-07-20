@@ -25,10 +25,11 @@ Decision-log rows dated 2026-07-18 (in-app + email, per-type × channel preferen
   fires only when the source is completed **and** every included match is finished+evaluated,
   guarded once by `endedNotifiedAt` (a source reopen clears the guard + deletes sent rows so a
   corrected standing re-sends).
-- **Scheduled sweeps** run on the prod worker via **symfony/scheduler** (`scheduler_default`
-  transport): the guess-reminder sweep (`SendGuessReminders`, missing tips with deadline
-  < 24 h), premium reconciliation (`ReconcilePremiumCompetitions`) and the daily leaderboard
-  snapshots (`CaptureDailyLeaderboardSnapshots`).
+- **Scheduled sweeps** run as **host-cron console commands** (`src/Console/`, invoked by the
+  box crontab — see [DEPLOYMENT.md](DEPLOYMENT.md); NOT symfony/scheduler, which was removed):
+  the guess-reminder sweep (`app:guess-reminders:send`, missing tips with deadline < 24 h),
+  premium reconciliation (`app:premium:reconcile`) and the daily leaderboard snapshots
+  (`app:leaderboard:capture-snapshots`).
 
 Transactional account/auth emails (verification, welcome, password reset, competition
 invitation) remain plain `event.bus` handlers routing through `symfony/mailer` →
