@@ -16,6 +16,7 @@ use App\Exception\BoostNotAvailable;
 use App\Exception\InsufficientCredits;
 use App\Exception\NotAMember;
 use App\Repository\CreditWalletRepository;
+use App\Service\Credits\PricingConfig;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
@@ -205,27 +206,26 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
         self::assertCount(0, $this->boostLedger(AppFixtures::BOOSTS_COMPETITION_ID));
     }
 
-    public function testManagerCannotBuyVisibilityBoostTheyAlreadyGetForFree(): void
+    public function testManagerBuysVisibilityBoostsLikeAnyOtherPlayer(): void
     {
-        // ADMIN owns BOOSTS_COMPETITION ⇒ auto-entitled to the distribution bar and
-        // concrete tips. Selling them Lišta/Konkrétní would just burn their credits.
+        // ADMIN owns BOOSTS_COMPETITION but gets no free sight of anyone's tips
+        // (2026-07-23) — the organizer plays too, so they pay the same as members.
         $this->grant(AppFixtures::ADMIN_ID, 100);
 
-        foreach ([BoostType::TipDistribution, BoostType::OthersTips] as $type) {
-            try {
-                $this->purchase(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID, $type);
-                self::fail('Expected BoostNotAvailable for '.$type->value);
-            } catch (HandlerFailedException $e) {
-                self::assertInstanceOf(BoostNotAvailable::class, $this->firstWrappedException($e));
-            }
-        }
+        $this->purchase(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID, BoostType::TipDistribution);
 
         $this->entityManager()->clear();
 
-        // Nothing charged, no rows written for the auto-entitled manager.
-        self::assertCount(0, $this->activeBoosts(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID));
-        self::assertCount(0, $this->boostLedger(AppFixtures::BOOSTS_COMPETITION_ID));
-        self::assertSame(100, $this->balance(AppFixtures::ADMIN_ID));
+        self::assertCount(1, $this->activeBoosts(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID));
+        self::assertSame(100 - PricingConfig::BOOST_TIP_DISTRIBUTION, $this->balance(AppFixtures::ADMIN_ID));
+
+        // …and a second attempt at what they now own is still rejected.
+        try {
+            $this->purchase(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID, BoostType::TipDistribution);
+            self::fail('Expected BoostNotAvailable for an already-owned boost.');
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(BoostNotAvailable::class, $this->firstWrappedException($e));
+        }
     }
 
     public function testManagerCanStillBuyTipChangeBoost(): void

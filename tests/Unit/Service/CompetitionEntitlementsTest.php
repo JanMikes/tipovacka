@@ -147,29 +147,44 @@ final class CompetitionEntitlementsTest extends TestCase
 
     // ─────────────────── manager / admin ────────────────────
 
-    public function testOwnerSeesEverythingButIsNotAutoEntitledToTipChange(): void
+    public function testOwnerGetsNoFreeVisibilityAndNoAutoTipChange(): void
     {
         $entitlements = $this->entitlements([]);
         // A boosts competition where the owner bought nothing.
         $competition = $this->makeCompetition(CompetitionMonetization::Boosts);
 
-        // Managers see everything (management / moderation)…
-        self::assertTrue($entitlements->isEntitledToDistribution($competition, $this->owner));
-        self::assertTrue($entitlements->isEntitledToOthersTips($competition, $this->owner));
-        // …but are NOT auto-granted the „Měnit tip" window — locking is a universal
-        // freeze; only the paid entitlement (premium toggle / boost) opens it.
+        // The organizer plays too — a free look at everyone's tips would be an
+        // in-game advantage over members who paid for the same sight (2026-07-23).
+        self::assertFalse($entitlements->isEntitledToDistribution($competition, $this->owner));
+        self::assertFalse($entitlements->isEntitledToOthersTips($competition, $this->owner));
+        // Nor the „Měnit tip" window — locking is a universal freeze; only the paid
+        // entitlement (premium toggle / boost) opens it.
         self::assertFalse($entitlements->canChangeTips($competition, $this->owner));
     }
 
-    public function testAdminSeesEverythingButIsNotAutoEntitledToTipChange(): void
+    public function testAdminGetsNoFreeVisibilityAndNoAutoTipChange(): void
     {
         $entitlements = $this->entitlements([]);
         $competition = $this->makeCompetition(CompetitionMonetization::Premium);
 
-        self::assertTrue($entitlements->isEntitledToDistribution($competition, $this->admin));
-        self::assertTrue($entitlements->isEntitledToOthersTips($competition, $this->admin));
-        // Premium toggle off ⇒ nobody (not even a system admin) may change tips.
+        // Premium toggles are off ⇒ not even a system admin sees the tips.
+        self::assertFalse($entitlements->isEntitledToDistribution($competition, $this->admin));
+        self::assertFalse($entitlements->isEntitledToOthersTips($competition, $this->admin));
         self::assertFalse($entitlements->canChangeTips($competition, $this->admin));
+    }
+
+    public function testManagerVisibilityKnobRestoresTheOldFreePass(): void
+    {
+        // The decision is one constructor argument (wired in config/services.php):
+        // flipping it back must restore free manager/admin visibility wholesale.
+        $entitlements = $this->entitlements([], managersSeeTipsForFree: true);
+        $competition = $this->makeCompetition(CompetitionMonetization::Boosts);
+
+        self::assertTrue($entitlements->isEntitledToDistribution($competition, $this->owner));
+        self::assertTrue($entitlements->isEntitledToOthersTips($competition, $this->owner));
+        self::assertTrue($entitlements->isEntitledToOthersTips($competition, $this->admin));
+        // Still never the tip-change window — that knob is unrelated.
+        self::assertFalse($entitlements->canChangeTips($competition, $this->owner));
     }
 
     // ───────────── canChangeTips deadline-independence ───────
@@ -190,12 +205,12 @@ final class CompetitionEntitlementsTest extends TestCase
     /**
      * @param list<BoostPurchase> $ownedBoosts
      */
-    private function entitlements(array $ownedBoosts): CompetitionEntitlements
+    private function entitlements(array $ownedBoosts, bool $managersSeeTipsForFree = false): CompetitionEntitlements
     {
         $repo = $this->createStub(BoostPurchaseRepository::class);
         $repo->method('findActiveByUserAndCompetition')->willReturn($ownedBoosts);
 
-        return new CompetitionEntitlements($repo);
+        return new CompetitionEntitlements($repo, $managersSeeTipsForFree);
     }
 
     private function boost(Competition $competition, BoostType $type): BoostPurchase

@@ -4,20 +4,24 @@ declare(strict_types=1);
 
 namespace App\Query\ListUserMatches;
 
+use App\Value\TipStats;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class UserMatchItem
 {
     /**
-     * @param bool $isTippable               the match is still open for tipping in at least
-     *                                       one of the user's competitions (per-competition
-     *                                       effective deadlines via EffectiveTipDeadlineResolver)
-     * @param int  $competitionsCount        the user's competitions that include this match
-     * @param int  $guessedCompetitionsCount competitions (of the above) where the user has a tip
-     * @param int  $openCompetitionsCount    competitions (of the above) where tipping is still
-     *                                       open — same semantics as the dashboard's UpcomingMatchItem
-     * @param int  $pendingCompetitionsCount competitions where the tip is missing AND
-     *                                       tipping is still open — i.e. actionable gaps
+     * @param list<TipStats> $tipStats                 one entry per competition of the user's that
+     *                                                 includes this match — the „Rozložení tipů" bar
+     *                                                 or its paywall, batch-resolved by TipStatsProvider
+     * @param bool           $isTippable               the match is still open for tipping in at least
+     *                                                 one of the user's competitions (per-competition
+     *                                                 effective deadlines via EffectiveTipDeadlineResolver)
+     * @param int            $competitionsCount        the user's competitions that include this match
+     * @param int            $guessedCompetitionsCount competitions (of the above) where the user has a tip
+     * @param int            $openCompetitionsCount    competitions (of the above) where tipping is still
+     *                                                 open — same semantics as the dashboard's UpcomingMatchItem
+     * @param int            $pendingCompetitionsCount competitions where the tip is missing AND
+     *                                                 tipping is still open — i.e. actionable gaps
      */
     public function __construct(
         public Uuid $id,
@@ -40,6 +44,7 @@ final readonly class UserMatchItem
         public int $guessedCompetitionsCount,
         public int $openCompetitionsCount,
         public int $pendingCompetitionsCount,
+        public array $tipStats = [],
     ) {
     }
 }

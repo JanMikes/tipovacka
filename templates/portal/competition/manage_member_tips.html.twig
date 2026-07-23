@@ -89,6 +89,12 @@
                                     Střelce a prodloužení tipnete v detailu zápasu.
                                 </p>
                             {% endif %}
+                            {% if rows|filter(r => r.hasGuess and r.guess is null)|length > 0 %}
+                                <p class="mt-1 flex items-center gap-1.5 text-xs text-white/50">
+                                    <twig:ux:icon name="lucide:eye-off" class="h-3.5 w-3.5 shrink-0" />
+                                    Cizí tipy nevidíte — víte jen, že je zápas vyplněný. Uložením ho přepíšete.
+                                </p>
+                            {% endif %}
                         </div>
                         <span class="shrink-0 text-xs font-semibold tabular-nums text-white/60"
                               data-tip-fill-target="counter">0/{{ rows|length }} vyplněno</span>
@@ -137,6 +143,12 @@
                             </div>
 
                             <div class="flex flex-col items-end gap-2">
+                                {% if row.hasGuess and row.guess is null %}
+                                    {# Tip exists but this manager may not see it — filled/not-filled only. #}
+                                    <twig:Pill label="Vyplněno" variant="tipped" icon="check" />
+                                {% elseif not row.hasGuess %}
+                                    <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
+                                {% endif %}
                                 <div class="flex items-center gap-2.5">
                                     <input type="number"
                                            name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"

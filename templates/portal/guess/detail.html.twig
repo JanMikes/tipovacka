@@ -122,14 +122,13 @@
             <twig:Guess:GuessSubmitForm :sportMatch="sport_match" competitionId="{{ competition.id.toRfc4122 }}" />
         </section>
 
-        {% if pick_distribution %}
-            <twig:Match:PickDistribution
-                :distribution="pick_distribution"
+        {% if tip_stats %}
+            <twig:Match:TipStats
+                :stats="tip_stats"
                 :homeTeam="sport_match.homeTeam"
                 :awayTeam="sport_match.awayTeam"
+                :compact="false"
             />
-        {% elseif not can_see_distribution %}
-            <twig:Boost:Panel :competition="competition" feature="distribution" :playerCount="tip_count" />
         {% endif %}
 
         {% if match_ranking is defined and match_ranking is not null and match_ranking.rows|length > 0 %}
@@ -223,6 +222,12 @@
                         <h2 class="text-lg font-semibold text-white">Tipy členů</h2>
                     </div>
                     <p class="mt-1 text-xs text-white/50">Jako vlastník můžete zadat tip za člena, který sám nemá přístup.</p>
+                    {% if member_rows|filter(r => r.hasGuess and r.guess is null)|length > 0 %}
+                        <p class="mt-1 flex items-center gap-1.5 text-xs text-white/50">
+                            <twig:ux:icon name="lucide:eye-off" class="h-3.5 w-3.5 shrink-0" />
+                            Cizí tipy nevidíte — víte jen, že je vyplněný. Uložením ho přepíšete.
+                        </p>
+                    {% endif %}
                 </header>
 
                 {% set can_edit = sport_match.isOpenForGuesses and (effective_deadline > date()) %}
@@ -235,6 +240,11 @@
                                 <span class="font-medium text-white">{{ row.user.nickname }}</span>
                                 {% if not row.user.isVerified %}
                                     <twig:Pill label="NEOVĚŘENÝ" variant="warn" />
+                                {% endif %}
+                                {% if row.hasGuess and row.guess is null %}
+                                    <twig:Pill label="Vyplněno" variant="tipped" icon="check" />
+                                {% elseif not row.hasGuess %}
+                                    <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
                                 {% endif %}
                             </div>
 

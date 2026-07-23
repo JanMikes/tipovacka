@@ -110,14 +110,20 @@ final class PurchaseBoostController extends AbstractController
     }
 
     /**
-     * Return to the origin page after buying. Only local `/portal/…` paths are
-     * accepted (no open redirect); otherwise fall back to the competition detail.
+     * Return to the origin page after buying. Only SAME-SITE absolute paths are
+     * accepted (no open redirect): a leading `//` or `/\` is how browsers read a
+     * protocol-relative URL to another host, so both are rejected. Anything else
+     * falls back to the competition detail. The paywall lives on pages outside
+     * `/portal/` too (`/zapasy`, `/nastenka`), hence the path-wide rule.
      */
     private function resolveRedirect(Request $request, Uuid $competitionId): string
     {
         $redirectTo = (string) $request->request->get('_redirect', '');
 
-        if (str_starts_with($redirectTo, '/portal/')) {
+        if (str_starts_with($redirectTo, '/')
+            && !str_starts_with($redirectTo, '//')
+            && !str_starts_with($redirectTo, '/\\')
+        ) {
             return $redirectTo;
         }
 

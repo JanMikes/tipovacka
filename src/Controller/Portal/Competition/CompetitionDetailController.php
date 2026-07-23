@@ -19,6 +19,8 @@ use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForComp
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipStatsProvider;
 use App\Service\Credits\PricingConfig;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
@@ -40,6 +42,8 @@ final class CompetitionDetailController extends AbstractController
         private readonly CompetitionRepository $competitionRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
+        private readonly CompetitionMatchProvider $matchProvider,
+        private readonly TipStatsProvider $tipStatsProvider,
         private readonly QueryBus $queryBus,
         private readonly ClockInterface $clock,
     ) {
@@ -87,6 +91,30 @@ final class CompetitionDetailController extends AbstractController
             ))
             : [];
 
+        // „Rozložení tipů" under every tipped row — resolved for the whole list in
+        // one batch (see TipStatsProvider); never per row.
+        $tipStats = [];
+
+        if ([] !== $myGuesses) {
+            $matchesById = [];
+
+            foreach ($this->matchProvider->matchesFor($competition) as $match) {
+                $matchesById[$match->id->toRfc4122()] = $match;
+            }
+
+            $rowMatches = [];
+
+            foreach ($myGuesses as $row) {
+                $match = $matchesById[$row->sportMatchId->toRfc4122()] ?? null;
+
+                if (null !== $match) {
+                    $rowMatches[] = $match;
+                }
+            }
+
+            $tipStats = $this->tipStatsProvider->forCompetition($competition, $rowMatches, $user);
+        }
+
         $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
             'action' => $this->generateUrl('portal_competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
         ]);
@@ -129,6 +157,7 @@ final class CompetitionDetailController extends AbstractController
             'pendingInvitations' => $pendingInvitations,
             'score_by_user_id' => $scoreByUserId,
             'my_guesses' => $myGuesses,
+            'tip_stats' => $tipStats,
             'isMember' => $isMember,
             'rule_items' => $ruleConfiguration->items,
         ]);

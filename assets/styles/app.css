@@ -477,6 +477,35 @@ label.required::after {
     .dist-pcts .kx { color: #f5b544; font-weight: 800; margin-right: 5px; }
     .dist-pcts .k2 { color: #ff5d7a; font-weight: 800; margin-right: 5px; }
 
+    /* ---- Locked pick distribution (paywall strip under a match row) ---- */
+    .tip-stats-locked {
+        display: flex; width: 100%; align-items: center; gap: 12px; text-align: left;
+        padding: 10px 14px; border-radius: 12px; cursor: pointer;
+        border: 1px solid rgba(138,195,232,0.25); color: #fff;
+        background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 10px, transparent 10px 20px);
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .tip-stats-locked:hover { border-color: rgba(138,195,232,0.5); background-color: rgba(138,195,232,0.06); }
+    .tip-stats-locked.is-premium { border-color: rgba(245,205,84,0.3); cursor: default; }
+    .tip-stats-locked.is-premium:hover { border-color: rgba(245,205,84,0.3); background-color: transparent; }
+    .tip-stats-locked.is-muted { border-color: var(--border-1); cursor: default; }
+    .tip-stats-locked.is-muted:hover { border-color: var(--border-1); background-color: transparent; }
+    .tip-stats-lock {
+        display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+        height: 28px; width: 28px; border-radius: 999px;
+        background: rgba(138,195,232,0.15); color: #8ac3e8;
+    }
+    .tip-stats-lock.is-premium { background: rgba(245,205,84,0.15); color: #f5cd54; }
+    .tip-stats-lock.is-muted { background: rgba(255,255,255,0.06); color: var(--fg-3); }
+    .tip-stats-copy { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
+    .tip-stats-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
+    .tip-stats-teaser { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .tip-stats-cta {
+        display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; margin-left: auto;
+        font-size: 12px; font-weight: 700; color: #8ac3e8; font-variant-numeric: tabular-nums;
+    }
+    .tip-stats-cta.is-premium { color: #f5cd54; }
+
     /* ---- Leaderboard ---- */
     .lb-table { width: 100%; border-collapse: collapse; }
     .lb-thead th { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); text-align: left; padding: 0 12px 12px; }

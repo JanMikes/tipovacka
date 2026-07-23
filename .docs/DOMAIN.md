@@ -95,6 +95,20 @@ boost) unlock: distribution bar (anonymous percentages) and/or concrete member t
 After the deadline everything is visible to everyone. *Why*: fairness (no copying),
 monetizable curiosity.
 
+**The organizer is not privileged.** A manager (and a system admin) buys the same
+entitlements as everyone else — they play too, so a free look would be an in-game
+advantage over the members who paid. On-behalf tipping („Tipovat za členy") therefore shows
+only WHETHER a member's tip is filled (and lets the manager overwrite it), never the scores.
+The knob is one constructor argument (`CompetitionEntitlements::$managersSeeTipsForFree`,
+wired in `config/services.php`) should the decision ever be revisited.
+
+**Where the bar shows.** The distribution surface — the real 1 / X / 2 bar when entitled,
+a locked placeholder with a one-click buy modal when not — renders on EVERY surface that
+lists matches: „Vaše zápasy", the nástěnka's upcoming list, the competition detail's „Moje
+tipy" rows, the generic match detail (per competition), and the competition-scoped match
+page. One component (`Match:TipStats`), one batch resolver (`TipStatsProvider`) whose cost
+scales with the number of competitions on the page, never the number of matches.
+
 ### Tip locking (deadlines)
 Default: **all tips lock at competition start** — first match kickoff, or earlier via the
 manager's manual „Uzamknout tipy". Matches added after lock (typically playoffs, often known
@@ -182,3 +196,6 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-19 | S12 leaderboard delta = a daily `LeaderboardSnapshot` (competition × user × Prague-calendar day → rank + points), captured 03:00 Europe/Prague by the host-cron `app:leaderboard:capture-snapshots` command and idempotent per (competition, day); the Δ shown on the board is movement vs the latest snapshot day **strictly before** today (a member absent from that baseline shows „nový"); a member breakdown „Vývoj" list reads the same rows | a day is the natural „round" of a tipovačka — per-match deltas are noisy when several matches land the same day; comparing to a fixed prior day keeps the arrow stable through the day |
 | 2026-07-20 | S13 admin consolidation: the admin area **deep-links into the voter-guarded portal** (competition detail, source detail = the matches-management page) rather than keeping duplicate admin views — the only admin-owned surfaces are the cross-cutting lists (sources, competitions, users, credits, rules) + the global-competition create/edit forms; „Kredity → Transakce" is a cross-wallet ledger filterable by transaction type and competition, and the global-competition edit page shows a read-only premium-charges / active-boosts panel; all project docs reconciled to the as-built system | one page per concern with no duplicate controllers to drift; admins see the exact same detail members do, plus the money movements (`entry_fee` / `premium_charge` / `boost_purchase` / refunds) the ledger surfaces |
 | 2026-07-20 | Scheduled jobs moved from symfony/scheduler (hidden in the worker) to host crontab entries (lily.srv `apps/wtips/cron.d/wtips`) for ops visibility/monitorability — three console commands `app:premium:reconcile` / `app:guess-reminders:send` / `app:leaderboard:capture-snapshots` invoked by cron (wrapped by `lily-cron-run` + `sentry-cli monitors`); symfony/scheduler + dragonmantank/cron-expression removed | ops need each scheduled job visible/monitorable as a real crontab entry, not hidden inside the messenger worker |
+| 2026-07-23 | Manager/admin auto-entitlement to VISIBILITY removed (reverses the 2026-07-19 row): an organizer buys „Lišta tipů ostatních" / „Konkrétní tipy kolegů" like any player, and all three boosts are offered to them; `PurchaseBoostHandler` now rejects only what the buyer already owns or already gets from a premium toggle. Kept revertible via `CompetitionEntitlements::$managersSeeTipsForFree` (config/services.php) | the organizer usually plays in their own competition, so a free look at everyone's tips was an in-game advantage over paying members — and it made the paywall invisible to exactly the person exploring the app |
+| 2026-07-23 | On-behalf tipping shows filled/not-filled only: „Tipovat za členy" and the match page's „Tipy členů" render a „Vyplněno"/„Nevyplněno" pill with EMPTY score inputs unless the manager is separately entitled (own row, bought/premium entitlement, or past deadline); blank inputs still skip on save, so a blind manager cannot wipe a tip by accident | managing a member's tip needs to know only that it exists — showing the scores would re-open the advantage the row above closes |
+| 2026-07-23 | The distribution bar/paywall is a single component (`Match:TipStats`) fed by a single batch resolver (`TipStatsProvider` + `GetPickDistributions`), rendered on every match-listing surface; locked always renders (dropping the player count when nobody has tipped yet), unlocked renders only with ≥1 tip | it previously existed on one page only, so most users never saw what they could buy; batching keeps a page O(competitions) instead of O(matches × competitions) |

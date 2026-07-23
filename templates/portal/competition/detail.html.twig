@@ -189,6 +189,13 @@
                                         <twig:Pill label="Zrušen" variant="locked" />
                                     {% endif %}
                                 </a>
+                                {# Distribution bar / its paywall — outside the row link, it carries its own form. #}
+                                {% set stats = tip_stats[row.sportMatchId.toRfc4122]|default(null) %}
+                                {% if stats %}
+                                    <div class="px-6 pb-4">
+                                        <twig:Match:TipStats :stats="stats" />
+                                    </div>
+                                {% endif %}
                             </li>
                         {% endfor %}
                     </ul>

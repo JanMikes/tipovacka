@@ -10,6 +10,7 @@ use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipStatsProvider;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +31,7 @@ final class SportMatchDetailController extends AbstractController
         private readonly GuessRepository $guessRepository,
         private readonly MatchEventRepository $matchEventRepository,
         private readonly CompetitionMatchProvider $matchProvider,
+        private readonly TipStatsProvider $tipStatsProvider,
     ) {
     }
 
@@ -42,19 +44,33 @@ final class SportMatchDetailController extends AbstractController
         $myCompetitionsForMatchSource = [];
 
         if ($user instanceof User) {
+            $including = [];
+
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
                 if ($this->matchProvider->includes($membership->competition, $sportMatch)) {
-                    $guess = $this->guessRepository->findActiveByUserMatchCompetition(
-                        $user->id,
-                        $sportMatch->id,
-                        $membership->competition->id,
-                    );
-                    $myCompetitionsForMatchSource[] = [
-                        'id' => $membership->competition->id,
-                        'name' => $membership->competition->name,
-                        'hasGuess' => null !== $guess,
-                    ];
+                    $including[] = $membership->competition;
                 }
+            }
+
+            // One batch for every competition on the page — the distribution bar
+            // (or its paywall) is per competition, so a per-card resolve would N+1.
+            $tipStats = $this->tipStatsProvider->forPairs(
+                array_map(static fn ($competition) => [$competition, [$sportMatch]], $including),
+                $user,
+            );
+
+            foreach ($including as $competition) {
+                $guess = $this->guessRepository->findActiveByUserMatchCompetition(
+                    $user->id,
+                    $sportMatch->id,
+                    $competition->id,
+                );
+                $myCompetitionsForMatchSource[] = [
+                    'id' => $competition->id,
+                    'name' => $competition->name,
+                    'hasGuess' => null !== $guess,
+                    'stats' => $tipStats[$this->tipStatsProvider->key($competition->id, $sportMatch->id)] ?? null,
+                ];
             }
         }
 

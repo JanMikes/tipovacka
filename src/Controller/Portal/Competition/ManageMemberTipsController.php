@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Competition;
 
+use App\Entity\User;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipVisibilityGate;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
@@ -35,6 +37,7 @@ final class ManageMemberTipsController extends AbstractController
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly CompetitionGuessFeatures $guessFeatures,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
+        private readonly TipVisibilityGate $visibilityGate,
         private readonly ClockInterface $clock,
     ) {
     }
@@ -77,18 +80,34 @@ final class ManageMemberTipsController extends AbstractController
                 ));
                 $deadlines = $this->deadlineResolver->deadlinesFor($competition, $candidateMatches, $selectedMember);
 
+                // Managing someone else's tips does NOT reveal them: the manager
+                // learns only WHETHER a tip is filled and may overwrite it, unless
+                // they are otherwise entitled to see this member's tips (their own
+                // row, a bought/premium entitlement, or the deadline having passed).
+                /** @var User $manager */
+                $manager = $this->getUser();
+                $showScores = $selectedMember->id->equals($manager->id)
+                    ? array_fill_keys(array_map(static fn ($m) => $m->id->toRfc4122(), $candidateMatches), true)
+                    : $this->visibilityGate->othersTipsVisibleByMatch($competition, $manager, $candidateMatches);
+
+                $guessesByMatch = $this->guessRepository->activeByUserInCompetitionIndexedByMatch(
+                    $selectedMember->id,
+                    $competition->id,
+                );
+
                 foreach ($candidateMatches as $sportMatch) {
-                    if ($deadlines[$sportMatch->id->toRfc4122()] <= $now) {
+                    $matchKey = $sportMatch->id->toRfc4122();
+
+                    if ($deadlines[$matchKey] <= $now) {
                         continue;
                     }
 
+                    $guess = $guessesByMatch[$matchKey] ?? null;
+
                     $rows[] = [
                         'match' => $sportMatch,
-                        'guess' => $this->guessRepository->findActiveByUserMatchCompetition(
-                            $selectedMember->id,
-                            $sportMatch->id,
-                            $competition->id,
-                        ),
+                        'hasGuess' => null !== $guess,
+                        'guess' => ($showScores[$matchKey] ?? false) ? $guess : null,
                     ];
                 }
             }

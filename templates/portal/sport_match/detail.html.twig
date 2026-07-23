@@ -127,6 +127,13 @@
                                         competitionId="{{ g.id.toRfc4122 }}"
                                         class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"
                                     />
+                                    {% if g.stats %}
+                                        <twig:Match:TipStats
+                                            :stats="g.stats"
+                                            :homeTeam="sport_match.homeTeam"
+                                            :awayTeam="sport_match.awayTeam"
+                                        />
+                                    {% endif %}
                                 </div>
                             </article>
                         </li>

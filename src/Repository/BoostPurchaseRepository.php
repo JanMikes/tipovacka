@@ -43,6 +43,36 @@ class BoostPurchaseRepository
         return $result;
     }
 
+    /**
+     * Batch variant of {@see findActiveByUserAndCompetition} — one query for many
+     * competitions, feeding {@see \App\Service\Competition\CompetitionEntitlements::preload}
+     * on the cross-competition read paths.
+     *
+     * @param list<Uuid> $competitionIds
+     *
+     * @return list<BoostPurchase>
+     */
+    public function findActiveByUserAndCompetitions(Uuid $userId, array $competitionIds): array
+    {
+        if (0 === count($competitionIds)) {
+            return [];
+        }
+
+        /** @var list<BoostPurchase> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('b')
+            ->from(BoostPurchase::class, 'b')
+            ->where('b.user = :userId')
+            ->andWhere('b.competition IN (:competitionIds)')
+            ->andWhere('b.refundedAt IS NULL')
+            ->setParameter('userId', $userId)
+            ->setParameter('competitionIds', $competitionIds)
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
     public function findActiveByUserCompetitionType(Uuid $userId, Uuid $competitionId, BoostType $type): ?BoostPurchase
     {
         return $this->entityManager->createQueryBuilder()

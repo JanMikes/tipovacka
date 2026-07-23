@@ -137,6 +137,36 @@ class GuessRepository
     }
 
     /**
+     * Every active tip one user holds in one competition, keyed by sport match id
+     * — the batch form of {@see findActiveByUserMatchCompetition} for screens that
+     * walk a whole fixture list (on-behalf tip management).
+     *
+     * @return array<string, Guess>
+     */
+    public function activeByUserInCompetitionIndexedByMatch(Uuid $userId, Uuid $competitionId): array
+    {
+        /** @var list<Guess> $guesses */
+        $guesses = $this->entityManager->createQueryBuilder()
+            ->select('g')
+            ->from(Guess::class, 'g')
+            ->where('g.user = :userId')
+            ->andWhere('g.competition = :competitionId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('userId', $userId)
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getResult();
+
+        $byMatch = [];
+
+        foreach ($guesses as $guess) {
+            $byMatch[$guess->sportMatch->id->toRfc4122()] = $guess;
+        }
+
+        return $byMatch;
+    }
+
+    /**
      * @return list<Guess>
      */
     public function findActiveByMatch(Uuid $sportMatchId): array

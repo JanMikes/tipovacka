@@ -11,7 +11,9 @@ use App\Entity\SportMatch;
 use App\Repository\SportMatchRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipStatsProvider;
 use App\Service\EffectiveTipDeadlineResolver;
+use App\Value\TipStats;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -24,6 +26,7 @@ final readonly class ListUpcomingMatchesForUserQuery
         private SportMatchRepository $sportMatchRepository,
         private UserRepository $userRepository,
         private CompetitionMatchProvider $matchProvider,
+        private TipStatsProvider $tipStatsProvider,
         private EffectiveTipDeadlineResolver $deadlineResolver,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
@@ -59,7 +62,12 @@ final readonly class ListUpcomingMatchesForUserQuery
         $competitionsByMatchSource = $this->loadUserCompetitionsByMatchSource($query->userId, array_values($matchSourceIds));
         $guessedCompetitionsByMatch = $this->loadGuessedCompetitionsByMatch($query->userId, $matchIds);
 
-        $items = [];
+        // Distribution stats are per (competition, match); collect the pairs while
+        // walking the list and resolve them all in ONE batch afterwards.
+        /** @var array<string, array{0: Competition, 1: list<SportMatch>}> $statsPairs */
+        $statsPairs = [];
+        /** @var list<array{match: SportMatch, competitions: list<Competition>, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int}> $rows */
+        $rows = [];
 
         foreach ($matches as $m) {
             $matchSourceKey = $m->matchSource->id->toRfc4122();
@@ -71,6 +79,12 @@ final readonly class ListUpcomingMatchesForUserQuery
             // (subset-excluded, playoff-excluded) is not theirs to tip.
             if (0 === count($includingCompetitions)) {
                 continue;
+            }
+
+            foreach ($includingCompetitions as $competition) {
+                $competitionKey = $competition->id->toRfc4122();
+                $statsPairs[$competitionKey] ??= [$competition, []];
+                $statsPairs[$competitionKey][1][] = $m;
             }
 
             $competitionIds = array_map(
@@ -90,6 +104,22 @@ final readonly class ListUpcomingMatchesForUserQuery
 
             $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
 
+            $rows[] = [
+                'match' => $m,
+                'competitions' => $includingCompetitions,
+                'competitionsCount' => count($competitionIds),
+                'guessedCompetitionsCount' => count(array_intersect($competitionIds, $guessedCompetitionIds)),
+                'openCompetitionsCount' => count($openCompetitionIds),
+                'pendingCompetitionsCount' => count(array_diff($openCompetitionIds, $guessedCompetitionIds)),
+            ];
+        }
+
+        $stats = $this->tipStatsProvider->forPairs(array_values($statsPairs), $user);
+        $items = [];
+
+        foreach ($rows as $row) {
+            $m = $row['match'];
+
             $items[] = new UpcomingMatchItem(
                 id: $m->id,
                 matchSourceId: $m->matchSource->id,
@@ -100,14 +130,36 @@ final readonly class ListUpcomingMatchesForUserQuery
                 venue: $m->venue,
                 round: $m->round,
                 isPlayoff: $m->isPlayoff,
-                competitionsCount: count($competitionIds),
-                guessedCompetitionsCount: count(array_intersect($competitionIds, $guessedCompetitionIds)),
-                openCompetitionsCount: count($openCompetitionIds),
-                pendingCompetitionsCount: count(array_diff($openCompetitionIds, $guessedCompetitionIds)),
+                competitionsCount: $row['competitionsCount'],
+                guessedCompetitionsCount: $row['guessedCompetitionsCount'],
+                openCompetitionsCount: $row['openCompetitionsCount'],
+                pendingCompetitionsCount: $row['pendingCompetitionsCount'],
+                tipStats: $this->statsFor($stats, $m, $row['competitions']),
             );
         }
 
         return $items;
+    }
+
+    /**
+     * @param array<string, TipStats> $stats
+     * @param list<Competition>       $competitions
+     *
+     * @return list<TipStats>
+     */
+    private function statsFor(array $stats, SportMatch $match, array $competitions): array
+    {
+        $result = [];
+
+        foreach ($competitions as $competition) {
+            $entry = $stats[$this->tipStatsProvider->key($competition->id, $match->id)] ?? null;
+
+            if (null !== $entry) {
+                $result[] = $entry;
+            }
+        }
+
+        return $result;
     }
 
     /**

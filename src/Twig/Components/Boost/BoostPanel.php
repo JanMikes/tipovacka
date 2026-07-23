@@ -15,10 +15,13 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * Boost commerce surface. Two shapes driven by {@see $feature}:
- * - null       → the „Tvoje vylepšení" management panel (competition sidebar),
- *                 listing all three boosts with owned / buy states;
- * - 'distribution' / 'others' → an inline LOCKED paywall shown where the
- *                 distribution bar / concrete tips would be, with a one-click buy.
+ * - null      → the „Tvoje vylepšení" management panel (competition sidebar),
+ *                listing all three boosts with owned / buy states;
+ * - 'others'  → an inline LOCKED paywall shown where concrete member tips would
+ *                be, with a one-click buy. (The distribution bar has its own
+ *                surface — {@see \App\Service\Competition\TipStatsProvider} +
+ *                the `Match:TipStats` component — because it renders on every
+ *                match list and must be batch-resolved.)
  *
  * Premium competitions get features from the manager (not per-player), so the
  * paywall becomes a „✓ PRÉMIUM" note; `none` competitions that merely hide tips
@@ -31,11 +34,8 @@ final class BoostPanel
 {
     public Competition $competition;
 
-    /** null = management panel; 'distribution' | 'others' = inline locked paywall. */
+    /** null = management panel; 'others' = inline locked paywall. */
     public ?string $feature = null;
-
-    /** Player count for the „Uvidíš, jak tipuje X hráčů" copy (distribution paywall). */
-    public int $playerCount = 0;
 
     public function __construct(
         private readonly QueryBus $queryBus,
@@ -60,11 +60,7 @@ final class BoostPanel
 
     /** The boost that unlocks the requested inline feature. */
     public ?BoostType $featureType {
-        get => match ($this->feature) {
-            'distribution' => BoostType::TipDistribution,
-            'others' => BoostType::OthersTips,
-            default => null,
-        };
+        get => 'others' === $this->feature ? BoostType::OthersTips : null;
     }
 
     /** @var list<BoostType> */

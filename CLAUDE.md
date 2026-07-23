@@ -127,10 +127,16 @@ src/
 - **`Competition/CompetitionMatchProvider`** — the matches a competition includes (mode
   `all`/`subset`, playoff filter); the single answer to "what's in this competition".
 - **`Competition/CompetitionEntitlements`** — deadline-INDEPENDENT entitlement: `canChangeTips`,
-  `isEntitledToDistribution/OthersTips` (premium toggles or the buyer's boost; managers/admins
-  auto-SEE others' tips but are NOT auto-granted tip changes).
+  `isEntitledToDistribution/OthersTips` (premium toggles or the buyer's own boost). **Managers
+  and admins get NO free pass** — an organizer plays too, so they buy like anyone else
+  (revertible knob: `$managersSeeTipsForFree`, wired in `config/services.php`). On-behalf
+  tipping shows only whether a member's tip is filled, never the scores.
 - **`Competition/TipVisibilityGate`** — composes the entitlement with the userless deadline: a
   viewer sees others' tips iff entitled OR past that match's deadline.
+- **`Competition/TipStatsProvider`** — batch-resolves the „Rozložení tipů" surface (bar when
+  entitled, locked buy-placeholder when not) for a whole page. Every match-listing template
+  renders it via `<twig:Match:TipStats>`; **never resolve one per row** — the provider costs
+  O(competitions), the per-match query would be an N+1.
 - **`EffectiveTipDeadlineResolver`** — per-match effective tip deadline: extend-only `max()` of
   competition lock / late-added kickoff / „Měnit tip" window / manager override.
 - **`Notification/Notifier`** — writes one `Notification` per delivery, honoring the user's

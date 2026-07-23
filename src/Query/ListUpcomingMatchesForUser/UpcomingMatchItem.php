@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Query\ListUpcomingMatchesForUser;
 
+use App\Value\TipStats;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class UpcomingMatchItem
 {
     /**
-     * @param int $competitionsCount        the user's competitions that include this match
-     * @param int $guessedCompetitionsCount competitions (of the above) where the user has a tip
-     * @param int $openCompetitionsCount    competitions (of the above) where tipping is still
-     *                                      open — per-competition effective deadlines via
-     *                                      EffectiveTipDeadlineResolver
-     * @param int $pendingCompetitionsCount competitions where the tip is missing AND tipping
-     *                                      is still open (open − guessed-among-open)
+     * @param list<TipStats> $tipStats                 one entry per competition of the user's that
+     *                                                 includes this match — the „Rozložení tipů" bar
+     *                                                 or its paywall, batch-resolved by TipStatsProvider
+     * @param int            $competitionsCount        the user's competitions that include this match
+     * @param int            $guessedCompetitionsCount competitions (of the above) where the user has a tip
+     * @param int            $openCompetitionsCount    competitions (of the above) where tipping is still
+     *                                                 open — per-competition effective deadlines via
+     *                                                 EffectiveTipDeadlineResolver
+     * @param int            $pendingCompetitionsCount competitions where the tip is missing AND tipping
+     *                                                 is still open (open − guessed-among-open)
      */
     public function __construct(
         public Uuid $id,
@@ -31,6 +35,7 @@ final readonly class UpcomingMatchItem
         public int $guessedCompetitionsCount,
         public int $openCompetitionsCount,
         public int $pendingCompetitionsCount,
+        public array $tipStats = [],
     ) {
     }
 }

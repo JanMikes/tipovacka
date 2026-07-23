@@ -74,10 +74,10 @@ final class BoostFlowTest extends WebTestCase
         self::assertCount(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
     }
 
-    public function testManagerSidebarHidesFreeVisibilityBoostsButOffersTipChange(): void
+    public function testManagerSidebarOffersEveryBoostLikeAnyOtherPlayer(): void
     {
-        // ADMIN owns BOOSTS_COMPETITION ⇒ auto-entitled to visibility. The sidebar
-        // must NOT offer Lišta/Konkrétní (already free), but tip_change stays buyable.
+        // ADMIN owns BOOSTS_COMPETITION but gets no free visibility (2026-07-23):
+        // the organizer plays too, so all three boosts are offered to them as well.
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::ADMIN_ID);
         $this->grant(AppFixtures::ADMIN_ID, 100);
@@ -85,9 +85,10 @@ final class BoostFlowTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_distribution"]'));
-        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="others_tips"]'));
-        self::assertCount(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
+        $sidebar = $crawler->filter('section form[action="'.self::BOOSTS_PURCHASE.'"]');
+        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="tip_distribution"]')->count());
+        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="others_tips"]')->count());
+        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="tip_change"]')->count());
     }
 
     public function testBuyBoostFromSidebarWritesRowAndRedirects(): void

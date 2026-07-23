@@ -8,7 +8,6 @@ use App\Entity\User;
 use App\Exception\MatchNotInCompetition;
 use App\Form\CompetitionMatchDeadlineFormData;
 use App\Form\CompetitionMatchDeadlineFormType;
-use App\Query\GetMatchPickDistribution\GetMatchPickDistribution;
 use App\Query\GetMatchRanking\GetMatchRanking;
 use App\Query\QueryBus;
 use App\Repository\CompetitionMatchSettingRepository;
@@ -18,6 +17,7 @@ use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\TipStatsProvider;
 use App\Service\Competition\TipVisibilityGate;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
@@ -47,6 +47,7 @@ final class SportMatchGuessesController extends AbstractController
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly TipVisibilityGate $visibilityGate,
+        private readonly TipStatsProvider $tipStatsProvider,
         private readonly QueryBus $queryBus,
     ) {
     }
@@ -77,17 +78,11 @@ final class SportMatchGuessesController extends AbstractController
         // boost — per viewer) with the userless deadline having passed (public to
         // everyone). Distribution and concrete tips are gated independently: an
         // OthersTips buyer sees both, a TipDistribution buyer only the bar.
-        $canSeeDistribution = $this->visibilityGate->canSeeDistribution($competition, $currentUser, $sportMatch);
         $canSeeOthersTips = $this->visibilityGate->canSeeOthersTips($competition, $currentUser, $sportMatch);
 
-        // The bar is a cheap aggregate: compute it always so the paywall can show
-        // „Uvidíte, jak tipuje X hráčů" (only the total leaks, never the split),
-        // but hand the breakdown to the view only when the viewer may see it.
-        $distribution = $this->queryBus->handle(new GetMatchPickDistribution(
-            competitionId: $competition->id,
-            sportMatchId: $sportMatch->id,
-        ));
-        $pickDistribution = $canSeeDistribution ? $distribution : null;
+        // The distribution surface (bar when entitled, paywall otherwise) comes
+        // from the same provider every match list uses — one shape, one component.
+        $tipStats = $this->tipStatsProvider->forCompetition($competition, [$sportMatch], $currentUser)[$sportMatch->id->toRfc4122()] ?? null;
 
         // Per-match ranking ("Pořadí za zápas") reveals concrete tips + points, so
         // it needs the others-tips entitlement and a finished match.
@@ -108,9 +103,14 @@ final class SportMatchGuessesController extends AbstractController
                     $sportMatch->id,
                     $competition->id,
                 );
+                // Managing a member's tip must not reveal it: the manager sees only
+                // WHETHER it is filled (and may overwrite it) unless they are
+                // entitled to others' tips here — or it is their own row.
+                $isOwnRow = $membership->user->id->equals($currentUser->id);
                 $memberRows[] = [
                     'user' => $membership->user,
-                    'guess' => $guess,
+                    'hasGuess' => null !== $guess,
+                    'guess' => ($canSeeOthersTips || $isOwnRow) ? $guess : null,
                 ];
             }
         }
@@ -140,10 +140,8 @@ final class SportMatchGuessesController extends AbstractController
             'match_events' => $this->matchEventRepository->listByMatch($sportMatch->id),
             'member_rows' => $memberRows,
             'effective_deadline' => $effectiveDeadline,
-            'can_see_distribution' => $canSeeDistribution,
             'can_see_others_tips' => $canSeeOthersTips,
-            'pick_distribution' => $pickDistribution,
-            'tip_count' => $distribution->total,
+            'tip_stats' => $tipStats,
             'match_ranking' => $matchRanking,
             'deadline_form' => $deadlineForm,
             'current_user_id' => $currentUser->id,

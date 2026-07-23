@@ -2,8 +2,9 @@
     Boost commerce surface. See src/Twig/Components/Boost/BoostPanel.php.
     props:
       competition  (Competition)
-      feature      null = „Tvoje vylepšení" sidebar; 'distribution' | 'others' = inline locked paywall
-      playerCount  int, for the distribution paywall copy
+      feature      null = „Tvoje vylepšení" sidebar; 'others' = inline locked paywall for
+                   concrete member tips (the distribution bar has its own surface:
+                   <twig:Match:TipStats>, fed by TipStatsProvider)
 #}
 {% set p = this.panel %}
 {% if p is not null %}
@@ -95,7 +96,7 @@
             </section>
         {% endif %}
     {% else %}
-        {# ═════════ Inline locked paywall (distribution / others) ═════════ #}
+        {# ═════════ Inline locked paywall („Konkrétní tipy kolegů") ═════════ #}
         {% set type = this.featureType %}
         {% if mon == 'boosts' %}
             <section class="relative overflow-hidden rounded-2xl border border-[#8ac3e8]/25 p-5"
@@ -105,13 +106,7 @@
                         <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
                     </span>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white">
-                            {% if feature == 'distribution' %}
-                                Uvidíte, jak tipuje {{ playerCount }} {{ playerCount == 1 ? 'hráč' : (playerCount >= 2 and playerCount <= 4 ? 'hráči' : 'hráčů') }}
-                            {% else %}
-                                Odemkněte konkrétní tipy kolegů
-                            {% endif %}
-                        </h3>
+                        <h3 class="text-sm font-bold text-white">Odemkněte konkrétní tipy kolegů</h3>
                         <p class="mt-1 text-[12px] leading-snug text-white/55">{{ type.description }}</p>
                     </div>
                 </div>
@@ -154,7 +149,7 @@
             <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p class="inline-flex items-center gap-1.5 text-sm font-medium text-white/60">
                     <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-white/40" />
-                    {{ feature == 'distribution' ? 'Rozložení tipů' : 'Tipy ostatních' }} se zobrazí po uzávěrce.
+                    Tipy ostatních se zobrazí po uzávěrce.
                 </p>
             </section>
         {% endif %}

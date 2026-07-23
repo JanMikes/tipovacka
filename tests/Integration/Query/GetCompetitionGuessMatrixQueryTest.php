@@ -70,7 +70,7 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
         self::assertSame(2, $byUser[AppFixtures::ANONYMOUS_USER_ID]->homeScore);
     }
 
-    public function testHidingDisabledForOwnerEvenWithApplyHiding(): void
+    public function testOwnerAlsoHasOthersTipsHiddenBeforeTheDeadline(): void
     {
         $this->seedTwoTipsOnPrivateScheduledMatch();
         $this->commandBus()->dispatch(new UpdateCompetitionCommand(
@@ -81,20 +81,35 @@ final class GetCompetitionGuessMatrixQueryTest extends IntegrationTestCase
             hideOthersTipsBeforeDeadline: true,
         ));
 
-        // The owner is a manager, so the TipVisibilityGate treats them as entitled
-        // to everyone's tips regardless of the hide flag — no cell is ever hidden.
+        // Being the organizer buys no early look at anyone's tips (2026-07-23) —
+        // only the viewer's OWN cell stays visible, everybody else's is hidden.
         $matrix = $this->queryBus()->handle(new GetCompetitionGuessMatrix(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             requestingUserId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
         ));
 
         $matchKey = AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
+        $seenOwnCell = false;
+        $seenHiddenCell = false;
 
         foreach ($matrix->members as $row) {
-            if (isset($row->cells[$matchKey])) {
-                self::assertFalse($row->cells[$matchKey]->hidden);
+            if (!isset($row->cells[$matchKey])) {
+                continue;
             }
+
+            if (AppFixtures::VERIFIED_USER_ID === $row->userId->toRfc4122()) {
+                $seenOwnCell = true;
+                self::assertFalse($row->cells[$matchKey]->hidden, 'The owner always sees their own tip.');
+
+                continue;
+            }
+
+            $seenHiddenCell = true;
+            self::assertTrue($row->cells[$matchKey]->hidden, 'Another member’s tip is hidden from the owner too.');
         }
+
+        self::assertTrue($seenOwnCell, 'The owner’s own cell should be in the matrix.');
+        self::assertTrue($seenHiddenCell, 'Another member’s cell should be in the matrix.');
     }
 
     public function testFullNameSubtitleBranches(): void

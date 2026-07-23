@@ -63,6 +63,14 @@ return App::config([
                 '../src/Service/Scoring/MatchContext.php',
             ],
         ],
+        // An organizer must hold no in-game advantage: they buy visibility boosts
+        // like every other player. Flip to true to restore the pre-2026-07-23
+        // behavior where managers/admins saw everyone's tips for free.
+        'App\\Service\\Competition\\CompetitionEntitlements' => [
+            'arguments' => [
+                '$managersSeeTipsForFree' => false,
+            ],
+        ],
         'App\\Service\\Payment\\StripePaymentGateway' => [
             'arguments' => [
                 '$secretKey' => '%env(STRIPE_SECRET_KEY)%',

@@ -44,14 +44,6 @@ final readonly class GetMatchPickDistributionQuery
         $away = (int) ($row['away'] ?? 0);
         $total = (int) $row['total'];
 
-        return new MatchPickDistributionResult(
-            homeWinCount: $home,
-            drawCount: $draw,
-            awayWinCount: $away,
-            total: $total,
-            homeWinPercent: $total > 0 ? (int) round($home * 100 / $total) : 0,
-            drawPercent: $total > 0 ? (int) round($draw * 100 / $total) : 0,
-            awayWinPercent: $total > 0 ? (int) round($away * 100 / $total) : 0,
-        );
+        return MatchPickDistributionResult::fromCounts($home, $draw, $away, $total);
     }
 }

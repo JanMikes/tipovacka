@@ -368,6 +368,18 @@
                             detailLabel="Tipovat"
                         />
 
+                        {# Rozložení tipů (or its paywall) per soutěž that includes this match. #}
+                        {% for stats in m.tipStats %}
+                            {% if stats.hasAnythingToShow %}
+                                <div class="px-4 sm:px-5">
+                                    {% if m.tipStats|length > 1 %}
+                                        <p class="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">{{ stats.competitionName }}</p>
+                                    {% endif %}
+                                    <twig:Match:TipStats :stats="stats" />
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+
                         {% if m.matchSourceName or m.venue %}
                             <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
                                 {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
