@@ -197,16 +197,15 @@ label.required::after {
     .card-hover:hover { border-color: var(--border-3); transform: translateY(-2px); }
     .card-glass {
         position: relative; overflow: hidden;
-        background: var(--glass-bg);
+        /* decorative corner wash lives in background-image (not ::before) so both
+           pseudo-elements stay free for the cursor-spotlight layers below */
+        background-color: var(--glass-bg);
+        background-image: radial-gradient(60% 80% at 100% 0%, rgba(70,153,208,0.16) 0%, rgba(70,153,208,0) 60%);
         backdrop-filter: blur(18px) saturate(140%);
         -webkit-backdrop-filter: blur(18px) saturate(140%);
         border: 1px solid var(--border-2);
         border-radius: 16px;
         box-shadow: var(--glass-inner-hi), var(--shadow-card);
-    }
-    .card-glass::before {
-        content: ""; position: absolute; inset: 0; pointer-events: none;
-        background: radial-gradient(60% 80% at 100% 0%, rgba(70,153,208,0.16) 0%, rgba(70,153,208,0) 60%);
     }
     .card-glass > * { position: relative; }
     .surface-accent {
@@ -659,6 +658,66 @@ label.required::after {
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ==========================================================================
+   Cursor spotlight — card surfaces react to the mouse (assets/spotlight.js
+   feeds --mx/--my/--spot-o; keep the selector lists in sync with SELECTOR
+   there). Two layers: a soft inner glow following the pointer (::after,
+   :hover-gated) and a lit segment of the border under it (::before — a 1px
+   gradient ring cut out via mask-composite). With the PROXIMITY toggle on,
+   spotlight.js adds .spotlight-prox to <html> and the ring's opacity follows
+   --spot-o instead, so borders of cards NEAR the cursor light up before
+   hover. .tip-card.accent (bright gradient surface) opts out entirely.
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+    .card, .tip-card, .stat, .option-card, .spotlight { position: relative; }
+
+    .card::after, .card-glass::after, .tip-card:not(.accent)::after, .tip-row::after,
+    .stat::after, .option-card::after, .variant-card::after, .spotlight::after {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        background: radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%),
+            rgba(101,173,222,0.18), rgba(70,153,208,0.07) 45%, transparent 70%);
+        opacity: 0; transition: opacity 350ms var(--ease-standard);
+    }
+
+    /* inset: 0 (not -1px): many cards clip children to the padding box via
+       overflow:hidden, so the lit line hugs the border from the inside */
+    .card::before, .card-glass::before, .tip-card:not(.accent)::before, .tip-row::before,
+    .stat::before, .option-card::before, .variant-card::before, .spotlight::before {
+        content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        padding: 2px;
+        background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%),
+            rgba(179,216,239,0.95), rgba(101,173,222,0.40) 40%, transparent 72%);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0; transition: opacity 350ms var(--ease-standard);
+    }
+
+    .card:hover::after, .card:hover::before,
+    .card-glass:hover::after, .card-glass:hover::before,
+    .tip-card:not(.accent):hover::after, .tip-card:not(.accent):hover::before,
+    .tip-row:hover::after, .tip-row:hover::before,
+    .stat:hover::after, .stat:hover::before,
+    .option-card:hover::after, .option-card:hover::before,
+    .variant-card:not(:disabled):not([disabled]):hover::after,
+    .variant-card:not(:disabled):not([disabled]):hover::before,
+    .spotlight:hover::after, .spotlight:hover::before { opacity: 1; }
+
+    /* Proximity mode — ring opacity driven by distance (JS writes --spot-o 0..1;
+       1 while inside the card, so this also covers the hovered card). Declared
+       after the :hover rules so it wins at equal specificity. The inner glow
+       (::after) stays :hover-only. */
+    .spotlight-prox .card::before, .spotlight-prox .card-glass::before,
+    .spotlight-prox .tip-card:not(.accent)::before, .spotlight-prox .tip-row::before,
+    .spotlight-prox .stat::before, .spotlight-prox .option-card::before,
+    .spotlight-prox .variant-card:not(:disabled):not([disabled])::before,
+    .spotlight-prox .spotlight::before {
+        opacity: var(--spot-o, 0);
+        transition: opacity 150ms linear;
+    }
+}
 
 /* ==========================================================================
    Confirm dialog (built by confirm_controller.js) — dark glass

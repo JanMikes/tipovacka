@@ -417,6 +417,7 @@ Hotwire Turbo is installed but **disabled globally** via `data-turbo="false"` on
 
 - **Do NOT run `asset-map:compile` in your dev checkout** — that's a production build step. It writes frozen, digested copies of every asset into `public/assets/`, and since Caddy/FrankenPHP serves static files from `public/` directly, those stale copies get served *bypassing PHP entirely*. The result: CSS/JS look frozen at whenever you last compiled, and neither `cache:clear` nor restarting the container fixes it (they never touch the static files).
 - **If assets ever look frozen/broken, reset with:** `docker compose exec web rm -rf public/assets`. In dev, AssetMapper generates assets on the fly, so `public/assets/` should not exist (it's git-ignored). Tailwind rebuilds live via the `tailwind` container.
+- **If `public/assets` does NOT exist and assets are still stale: `docker compose restart web`.** FrankenPHP worker mode keeps the booted Symfony kernel (and its AssetMapper state) in memory per worker, so after CSS/JS edits some workers can keep serving an old digest/content mix — requests then nondeterministically get fresh or stale assets depending on which worker answers. Verify by curling the `<link>`/importmap URL from a fresh `curl -s localhost:58080/` and grepping for something you just changed.
 
 ## Features
 
@@ -425,6 +426,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
 - [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
 - [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`)
+- [Cursor spotlight](.docs/features/cursor-spotlight.md) — cards glow & their border lights up under/near the mouse (`assets/spotlight.js` + app.css "Cursor spotlight" section; `PROXIMITY` toggle)
 
 ## Testing
 
