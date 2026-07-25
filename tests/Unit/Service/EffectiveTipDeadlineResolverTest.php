@@ -11,6 +11,7 @@ use App\Entity\CompetitionMatchSetting;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
@@ -786,8 +787,8 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $match = new SportMatch(
             id: Uuid::fromString(sprintf('01933333-0000-7000-8000-0000000009%02d', ++$this->matchSequence)),
             matchSource: $competition->matchSource,
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: new Team(id: Uuid::v7(), sport: $competition->matchSource->sport, matchSource: $competition->matchSource, name: 'A', createdAt: $this->now),
+            awayTeam: new Team(id: Uuid::v7(), sport: $competition->matchSource->sport, matchSource: $competition->matchSource, name: 'B', createdAt: $this->now),
             kickoffAt: new \DateTimeImmutable($kickoff),
             venue: null,
             createdAt: new \DateTimeImmutable($createdAt),

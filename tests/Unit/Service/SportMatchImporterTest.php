@@ -11,8 +11,11 @@ use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
+use App\Repository\TeamRepository;
 use App\Service\Identity\ProvideIdentity;
 use App\Service\SportMatch\SportMatchImporter;
+use App\Service\Team\TeamResolver;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Uid\Uuid;
@@ -29,8 +32,17 @@ final class SportMatchImporterTest extends TestCase
         $repo = $this->createStub(SportMatchRepository::class);
         $identity = $this->createStub(ProvideIdentity::class);
         $identity->method('next')->willReturnCallback(fn () => Uuid::v7());
+        // preview() calls the resolver's find-only lookup for the „nový tým" badge, but over a
+        // stubbed EntityManager every query returns null ⇒ every team reads as new, which these
+        // field-level assertions don't inspect. TeamResolver/TeamRepository are final (cannot be
+        // stubbed), so build them for real over the stub. The badge's real behaviour (existing vs
+        // new) is covered by the integration test SportMatchImportBadgeTest.
+        $teamResolver = new TeamResolver(
+            new TeamRepository($this->createStub(EntityManagerInterface::class)),
+            $identity,
+        );
 
-        $this->importer = new SportMatchImporter($repo, $identity);
+        $this->importer = new SportMatchImporter($repo, $teamResolver, $identity);
     }
 
     private function makeMatchSource(): MatchSource

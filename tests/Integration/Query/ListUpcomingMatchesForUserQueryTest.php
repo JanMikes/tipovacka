@@ -23,8 +23,8 @@ final class ListUpcomingMatchesForUserQueryTest extends IntegrationTestCase
         // MATCH_SCHEDULED (2025-06-20) and MATCH_PLAYOFF (2025-06-22) — the admin's
         // PUBLIC_COMPETITION is mode All with includePlayoff, so both belong.
         self::assertCount(2, $result);
-        self::assertSame('Sparta Praha', $result[0]->homeTeam);
-        self::assertSame('Real Madrid', $result[1]->homeTeam);
+        self::assertSame('Sparta Praha', $result[0]->homeTeam->name);
+        self::assertSame('Real Madrid', $result[1]->homeTeam->name);
         self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, $result[0]->matchSourceName);
     }
 
@@ -48,7 +48,7 @@ final class ListUpcomingMatchesForUserQueryTest extends IntegrationTestCase
 
         $result = $this->queryBus()->handle(new ListUpcomingMatchesForUser(userId: $userId));
         self::assertCount(1, $result);
-        self::assertSame('Tygři', $result[0]->homeTeam);
+        self::assertSame('Tygři', $result[0]->homeTeam->name);
         self::assertSame(1, $result[0]->competitionsCount);
         self::assertSame(1, $result[0]->pendingCompetitionsCount);
 

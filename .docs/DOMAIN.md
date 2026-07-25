@@ -20,6 +20,7 @@ in-app credit currency (Stripe-backed), never from gambling mechanics or payouts
 | soutěž | `Competition` | The thing players are in: members, rules, leaderboard, monetization. THE central user-facing unit |
 | globální soutěž | `Competition` with `isGlobal` | Admin-run, publicly discoverable, joinable by paying an entry fee in credits (fee may be 0) |
 | zápas | `SportMatch` | Belongs to a MatchSource; state machine scheduled→live→finished (+postponed/cancelled) |
+| tým | `Team` | A club/side as a first-class identity across all its matches. Hybrid scope: global admin **directory** (curated sources) or **local** to a private source. Optional short name / country / brand color / logo (future); anchors the per-team `Player` roster |
 | tip | `Guess` | Per (user, match, **competition**) — same user may tip the same match differently in different competitions |
 | organizátor / manažer | Competition `owner` | A relation, not a role. Admin = `ROLE_ADMIN` |
 | hráč / tipující | `Membership` | Active membership (leftAt null); anonymous members (no email) exist for offline players |
@@ -144,6 +145,24 @@ Football (2 poločasy) and hockey (3 třetiny) in v1. Sport lives on the MatchSo
 at creation; it drives period structure, overtime semantics, and copy. Model is
 sport-config-driven (period count/labels), so adding sports = data, not code.
 
+### Teams
+Teams are a first-class `Team` entity (not free-text strings). A team is one identity across
+every match it plays — the home for a logo (upload is a later phase; v1 renders a contrast-safe
+initials **monogram**), a short name, a country (flag) and a brand color, and the anchor for the
+per-team `Player` roster. **Hybrid scope**: a **curated** source draws teams from ONE global,
+sport-scoped **directory** (`Team.matchSource = null`, one row per real club per sport, admin-
+curated at `/admin/tymy`); a **private** source (from-scratch competition internal) gets **local**
+teams scoped to that source, so office-pool names never pollute the directory. Scope is *derived*
+from `matchSource === null` (two partial unique indexes enforce per-scope name uniqueness). The
+single home of the rule is `TeamResolver`. Organizers never see this plumbing: they just type a
+team name (autocompleted; a new name creates the team in the right scope). *Why global rosters
+for global teams*: a curated team's scorers/stats are meant to accumulate across every curated
+competition that uses it — the exact "same team across matches" the entity exists to provide;
+the cost is that a free-typed scorer typo grows the shared roster (admin roster cleanup is a
+later phase). Renaming a team is free (FK stable); only **reassigning a match to a different
+team** is blocked once scorers/events exist (`SportMatchTeamsLocked`). See
+[`features/team-picker.md`](features/team-picker.md).
+
 ### Scorers & roster (phased)
 V1: match results include a timeline of `MatchEvent`s (goal / yellow / red, side, minute,
 player) entered by admin/manager with autocomplete against the source's `Player` pool
@@ -210,4 +229,5 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-23 | Manager/admin auto-entitlement to VISIBILITY removed (reverses the 2026-07-19 row): an organizer buys „Lišta tipů ostatních" / „Konkrétní tipy kolegů" like any player, and all three boosts are offered to them; `PurchaseBoostHandler` now rejects only what the buyer already owns or already gets from a premium toggle. Kept revertible via `CompetitionEntitlements::$managersSeeTipsForFree` (config/services.php) | the organizer usually plays in their own competition, so a free look at everyone's tips was an in-game advantage over paying members — and it made the paywall invisible to exactly the person exploring the app |
 | 2026-07-23 | On-behalf tipping shows filled/not-filled only: „Tipovat za členy" and the match page's „Tipy členů" render a „Vyplněno"/„Nevyplněno" pill with EMPTY score inputs unless the manager is separately entitled (own row, bought/premium entitlement, or past deadline); blank inputs still skip on save, so a blind manager cannot wipe a tip by accident | managing a member's tip needs to know only that it exists — showing the scores would re-open the advantage the row above closes |
 | 2026-07-23 | The distribution bar/paywall is a single component (`Match:TipStats`) fed by a single batch resolver (`TipStatsProvider` + `GetPickDistributions`), rendered on every match-listing surface; locked always renders (dropping the player count when nobody has tipped yet), unlocked renders only with ≥1 tip | it previously existed on one page only, so most users never saw what they could buy; batching keeps a page O(competitions) instead of O(matches × competitions) |
+| 2026-07-25 | Teams became a first-class `Team` entity (was free-text strings on `SportMatch` + `Player.teamName`). Hybrid scope: global sport-scoped **directory** for curated sources, **local** teams for private sources (derived from `matchSource === null`; two partial unique indexes). `Player` recoupled to `Team` (global team ⇒ global roster). Match commands still carry team NAMES, resolved via `TeamResolver`; the reassign guard now blocks changing a match to a DIFFERENT team once scorers/events exist (renaming a team is free). Contrast-safe monogram now, logo upload later; admin directory at `/admin/tymy`; team picker (autocomplete + create) on the match form, import badges new teams | logos/stats/"same team across matches" need a real entity; hybrid keeps office-pool names out of the shared directory; no users yet ⇒ clean cut, no backfill |
 | 2026-07-25 | Admins can create a global competition **from inside the create-competition wizard** via an admin-only „Typ soutěže" toggle (global mode: entry-fee field, curated-source-only, all matches, „Pozvánky" step skipped, monetization none/premium/boosts, rules kept), branching to the existing `CreateGlobalCompetitionCommand`; the dedicated admin page + curated-source checkbox remain. The mode is `ROLE_ADMIN`-gated at render + action and `isGlobalKind` is non-writable, so non-admins can never reach it | the global feature was fully built (S09) but its create entry point lived only in the admin area and admins looked for it where they create every other competition — the wizard — and expected to set „allowed features" (rules) + entry fee there; the wizard already collects rules + monetization, so folding global in removes the discoverability gap without a second code path |

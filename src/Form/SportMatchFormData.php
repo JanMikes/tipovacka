@@ -43,8 +43,8 @@ final class SportMatchFormData
     public static function fromSportMatch(SportMatch $sportMatch): self
     {
         $formData = new self();
-        $formData->homeTeam = $sportMatch->homeTeam;
-        $formData->awayTeam = $sportMatch->awayTeam;
+        $formData->homeTeam = $sportMatch->homeTeam->name;
+        $formData->awayTeam = $sportMatch->awayTeam->name;
         $formData->kickoffAt = $sportMatch->kickoffAt;
         $formData->venue = $sportMatch->venue;
         $formData->round = $sportMatch->round;

@@ -47,7 +47,7 @@
                                         class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                     >
                                     <span class="text-sm text-white/80">
-                                        {{ row.match.homeTeam }} – {{ row.match.awayTeam }}
+                                        {{ row.match.homeTeam.name }} – {{ row.match.awayTeam.name }}
                                         <span class="text-white/40">({{ row.match.kickoffAt|date('j. n. Y H:i') }})</span>
                                     </span>
                                     {% if row.match.isPlayoff %}

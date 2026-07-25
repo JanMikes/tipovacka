@@ -12,6 +12,7 @@ use App\Entity\MatchSource;
 use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
@@ -75,13 +76,27 @@ final class RuleTestFactory
         return $competition;
     }
 
+    public static function team(string $name = 'A', ?MatchSource $source = null): Team
+    {
+        $source ??= self::matchSource();
+
+        return new Team(
+            id: Uuid::v7(),
+            sport: $source->sport,
+            matchSource: $source,
+            name: $name,
+            createdAt: self::now(),
+        );
+    }
+
     public static function scheduledMatch(): SportMatch
     {
+        $source = self::matchSource();
         $match = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            matchSource: self::matchSource(),
-            homeTeam: 'A',
-            awayTeam: 'B',
+            matchSource: $source,
+            homeTeam: self::team('A', $source),
+            awayTeam: self::team('B', $source),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00'),
             venue: null,
             createdAt: self::now(),
@@ -180,8 +195,7 @@ final class RuleTestFactory
     {
         return new Player(
             id: Uuid::v7(),
-            matchSource: self::matchSource(),
-            teamName: $teamName ?? 'A',
+            team: self::team($teamName ?? 'A'),
             name: $name,
             createdAt: self::now(),
         );

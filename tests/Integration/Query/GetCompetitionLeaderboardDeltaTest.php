@@ -14,6 +14,7 @@ use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\LeaderboardSnapshot;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\LeaderboardTimeFilter;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
@@ -181,11 +182,16 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
         $em = $this->entityManager();
         $competition = $this->competition();
 
+        $homeTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
+        self::assertNotNull($homeTeam);
+        $awayTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SLAVIA_ID));
+        self::assertNotNull($awayTeam);
+
         $match = new SportMatch(
             id: Uuid::v7(),
             matchSource: $competition->matchSource,
-            homeTeam: 'Staré A',
-            awayTeam: 'Staré B',
+            homeTeam: $homeTeam,
+            awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable($kickoff, new \DateTimeZone('UTC')),
             venue: null,
             createdAt: $this->now(),

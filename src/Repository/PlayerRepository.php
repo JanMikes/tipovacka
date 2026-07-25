@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
-use App\Entity\MatchSource;
 use App\Entity\Player;
+use App\Entity\Team;
 use App\Service\Identity\ProvideIdentity;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -26,14 +26,12 @@ final class PlayerRepository
      * Players are created lazily when an organizer first types their name into the
      * score-entry form. The lookup is case-insensitive („Novák" and „novák" are the
      * same player); the stored row keeps its first-seen casing. If two concurrent
-     * saves race on the same new name, the unique constraint on
-     * (match_source_id, team_name, name) fails one of the transactions; the
-     * organizer simply re-submits and the player is found on the next attempt
-     * (same pattern as CreditWalletProvider).
+     * saves race on the same new name, the unique constraint on (team_id, name)
+     * fails one of the transactions; the organizer simply re-submits and the player
+     * is found on the next attempt (same pattern as CreditWalletProvider).
      */
     public function findOrCreate(
-        MatchSource $matchSource,
-        string $teamName,
+        Team $team,
         string $name,
         ProvideIdentity $identity,
         \DateTimeImmutable $now,
@@ -41,11 +39,9 @@ final class PlayerRepository
         $player = $this->entityManager->createQueryBuilder()
             ->select('p')
             ->from(Player::class, 'p')
-            ->where('p.matchSource = :matchSourceId')
-            ->andWhere('LOWER(p.teamName) = LOWER(:teamName)')
+            ->where('p.team = :team')
             ->andWhere('LOWER(p.name) = LOWER(:name)')
-            ->setParameter('matchSourceId', $matchSource->id)
-            ->setParameter('teamName', $teamName)
+            ->setParameter('team', $team->id)
             ->setParameter('name', $name)
             ->getQuery()
             ->getOneOrNullResult();
@@ -56,8 +52,7 @@ final class PlayerRepository
 
         $player = new Player(
             id: $identity->next(),
-            matchSource: $matchSource,
-            teamName: $teamName,
+            team: $team,
             name: $name,
             createdAt: $now,
         );
@@ -68,20 +63,18 @@ final class PlayerRepository
     }
 
     /**
-     * Roster of one team within a source, for the scorer-name autocomplete.
+     * Roster of one team, for the scorer-name autocomplete.
      *
      * @return list<Player>
      */
-    public function listBySourceAndTeam(Uuid $matchSourceId, string $teamName): array
+    public function listByTeam(Uuid $teamId): array
     {
         /** @var list<Player> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('p')
             ->from(Player::class, 'p')
-            ->where('p.matchSource = :matchSourceId')
-            ->andWhere('p.teamName = :teamName')
-            ->setParameter('matchSourceId', $matchSourceId)
-            ->setParameter('teamName', $teamName)
+            ->where('p.team = :team')
+            ->setParameter('team', $teamId)
             ->orderBy('p.name', 'ASC')
             ->getQuery()
             ->getResult();
@@ -90,17 +83,17 @@ final class PlayerRepository
     }
 
     /**
-     * Case-insensitive name search across the whole source pool.
+     * Case-insensitive name search within one team's roster.
      *
      * @return list<Player>
      */
-    public function searchBySource(Uuid $matchSourceId, string $term = ''): array
+    public function searchByTeam(Uuid $teamId, string $term = ''): array
     {
         $qb = $this->entityManager->createQueryBuilder()
             ->select('p')
             ->from(Player::class, 'p')
-            ->where('p.matchSource = :matchSourceId')
-            ->setParameter('matchSourceId', $matchSourceId)
+            ->where('p.team = :team')
+            ->setParameter('team', $teamId)
             ->orderBy('p.name', 'ASC');
 
         if ('' !== $term) {

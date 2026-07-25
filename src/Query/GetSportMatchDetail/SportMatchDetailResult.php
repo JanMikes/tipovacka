@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\GetSportMatchDetail;
 
 use App\Enum\SportMatchState;
+use App\Value\TeamView;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class SportMatchDetailResult
@@ -13,8 +14,8 @@ final readonly class SportMatchDetailResult
         public Uuid $id,
         public Uuid $matchSourceId,
         public string $matchSourceName,
-        public string $homeTeam,
-        public string $awayTeam,
+        public TeamView $homeTeam,
+        public TeamView $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public SportMatchState $state,

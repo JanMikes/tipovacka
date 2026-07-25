@@ -10,6 +10,7 @@ use App\Entity\CompetitionMatchSelection;
 use App\Entity\Guess;
 use App\Entity\MatchSource;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Exception\MatchNotInCompetition;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Tests\Support\IntegrationTestCase;
@@ -138,12 +139,16 @@ final class UpdateCompetitionMatchSelectionHandlerTest extends IntegrationTestCa
 
         $publicSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
         self::assertNotNull($publicSource);
+        $homeTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
+        self::assertNotNull($homeTeam);
+        $awayTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SLAVIA_ID));
+        self::assertNotNull($awayTeam);
 
         $cancelledMatch = new SportMatch(
             id: Uuid::v7(),
             matchSource: $publicSource,
-            homeTeam: 'Zrušení',
-            awayTeam: 'Soupeři',
+            homeTeam: $homeTeam,
+            awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable('2025-06-25 18:00:00 UTC'),
             venue: null,
             createdAt: $now,

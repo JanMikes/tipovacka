@@ -32,7 +32,8 @@ final class CreateSportMatchHandlerTest extends IntegrationTestCase
         $match = $em->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.homeTeam = :home')
+            ->join('m.homeTeam', 't')
+            ->where('t.name = :home')
             ->setParameter('home', 'Teplice')
             ->getQuery()
             ->getOneOrNullResult();

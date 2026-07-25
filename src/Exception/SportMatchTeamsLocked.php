@@ -11,6 +11,6 @@ final class SportMatchTeamsLocked extends \DomainException
 {
     public static function create(): self
     {
-        return new self('Název týmu nelze změnit — k zápasu už jsou zapsané události. Nejprve smažte střelce/karty.');
+        return new self('Tým zápasu nelze změnit — k zápasu už jsou zapsaní střelci nebo karty. Nejprve je smažte. (Přejmenovat tým můžete v adresáři týmů.)');
     }
 }

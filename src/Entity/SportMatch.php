@@ -35,12 +35,6 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     use HasEvents;
     use SoftDeletes;
 
-    #[ORM\Column(length: 120)]
-    public private(set) string $homeTeam;
-
-    #[ORM\Column(length: 120)]
-    public private(set) string $awayTeam;
-
     #[ORM\Column]
     public private(set) \DateTimeImmutable $kickoffAt;
 
@@ -126,8 +120,12 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         #[ORM\ManyToOne(targetEntity: MatchSource::class)]
         #[ORM\JoinColumn(name: 'match_source_id', referencedColumnName: 'id', nullable: false)]
         private(set) MatchSource $matchSource,
-        string $homeTeam,
-        string $awayTeam,
+        #[ORM\ManyToOne(targetEntity: Team::class)]
+        #[ORM\JoinColumn(name: 'home_team_id', referencedColumnName: 'id', nullable: false)]
+        private(set) Team $homeTeam,
+        #[ORM\ManyToOne(targetEntity: Team::class)]
+        #[ORM\JoinColumn(name: 'away_team_id', referencedColumnName: 'id', nullable: false)]
+        private(set) Team $awayTeam,
         \DateTimeImmutable $kickoffAt,
         ?string $venue,
         #[ORM\Column]
@@ -137,8 +135,6 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         ?string $round = null,
         bool $isPlayoff = false,
     ) {
-        $this->homeTeam = $homeTeam;
-        $this->awayTeam = $awayTeam;
         $this->kickoffAt = $kickoffAt;
         $this->venue = $venue;
         $this->round = $round;
@@ -149,8 +145,8 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         $this->recordThat(new SportMatchCreated(
             sportMatchId: $this->id,
             matchSourceId: $this->matchSource->id,
-            homeTeam: $this->homeTeam,
-            awayTeam: $this->awayTeam,
+            homeTeam: $this->homeTeam->name,
+            awayTeam: $this->awayTeam->name,
             kickoffAt: $this->kickoffAt,
             isPlayoff: $this->isPlayoff,
             occurredOn: $this->createdAt,
@@ -158,8 +154,8 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     }
 
     public function updateDetails(
-        ?string $homeTeam,
-        ?string $awayTeam,
+        ?Team $homeTeam,
+        ?Team $awayTeam,
         ?\DateTimeImmutable $kickoffAt,
         ?string $venue,
         \DateTimeImmutable $now,

@@ -49,7 +49,8 @@ final class BulkImportFlowTest extends WebTestCase
         $matches = $em->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.homeTeam IN (:h)')
+            ->join('m.homeTeam', 't')
+            ->where('t.name IN (:h)')
             ->setParameter('h', ['ImportA', 'ImportC'])
             ->getQuery()
             ->getResult();
@@ -91,7 +92,8 @@ final class BulkImportFlowTest extends WebTestCase
         $match = $em->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.homeTeam = :h')
+            ->join('m.homeTeam', 't')
+            ->where('t.name = :h')
             ->setParameter('h', 'RoundHome')
             ->getQuery()
             ->getOneOrNullResult();

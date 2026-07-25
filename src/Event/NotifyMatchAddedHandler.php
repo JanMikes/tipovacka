@@ -72,8 +72,8 @@ final readonly class NotifyMatchAddedHandler
                 $this->notifier->notify(
                     user: $membership->user,
                     type: NotificationType::MatchAdded,
-                    title: sprintf('Nový zápas: %s – %s', $match->homeTeam, $match->awayTeam),
-                    body: sprintf('Do soutěže %s přibyl zápas %s – %s (%s).', $competition->name, $match->homeTeam, $match->awayTeam, $kickoff),
+                    title: sprintf('Nový zápas: %s – %s', $match->homeTeam->name, $match->awayTeam->name),
+                    body: sprintf('Do soutěže %s přibyl zápas %s – %s (%s).', $competition->name, $match->homeTeam->name, $match->awayTeam->name, $kickoff),
                     url: $url,
                     competition: $competition,
                     payload: ['sportMatchId' => $match->id->toRfc4122()],

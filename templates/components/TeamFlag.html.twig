@@ -1,9 +1,28 @@
 {#
-    Circular team "coin". Team names are free-text, so we render a robust initials
-    badge on an accent gradient (no missing-flag failures). Pass code to override.
-    props: name, code (optional short label), size (px)
+    Circular team "coin". Pass a `team` object (Team entity or TeamView) — it
+    renders the team's logo when present, otherwise a colored initials monogram
+    with a contrast-safe foreground, plus a small country-flag badge when the
+    team has a country. A bare `name` string is still accepted as a fallback for
+    the few surfaces that only have a label (default gradient, no brand color).
+    props: team (Team|TeamView), name (string fallback), size (px)
 #}
-{% props name = '', code = null, size = 44 %}
-{% set parts = name|trim|split(' ')|filter(p => p|trim is not empty) %}
-{% set label = code ?: (parts|length > 1 ? parts|map(w => w|slice(0, 1))|join|slice(0, 3) : name|trim|slice(0, 3)) %}
-<span class="flag club" style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size / 3.4)|round }}px">{{ label|upper }}</span>
+{% props team = null, name = null, size = 44 %}
+{% if team is not null %}
+    {% set mono = team.monogram %}
+    <span class="flag-coin" style="position:relative;display:inline-flex;flex:none;width:{{ size }}px;height:{{ size }}px">
+        {% if team.logo %}
+            <img class="flag" src="{{ team.logo }}" alt="{{ team.name }}" style="width:{{ size }}px;height:{{ size }}px;object-fit:cover">
+        {% else %}
+            <span class="flag club" title="{{ team.name }}"
+                  style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size / 3.4)|round }}px;background:{{ mono.background }};color:{{ mono.foreground }}">{{ mono.initials }}</span>
+        {% endif %}
+        {% if team.country %}
+            <span class="flag-badge" aria-hidden="true"
+                  style="position:absolute;right:-2px;bottom:-2px;font-size:{{ (size / 3)|round }}px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))">{{ team.country|country_flag }}</span>
+        {% endif %}
+    </span>
+{% else %}
+    {% set parts = (name ?? '')|trim|split(' ')|filter(p => p|trim is not empty) %}
+    {% set label = parts|length > 1 ? parts|map(w => w|slice(0, 1))|join|slice(0, 3) : (name ?? '')|trim|slice(0, 3) %}
+    <span class="flag club" style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size / 3.4)|round }}px">{{ label|upper }}</span>
+{% endif %}

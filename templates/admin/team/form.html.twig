@@ -1,0 +1,68 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ mode == 'edit' ? 'Upravit tým' : 'Nový tým' }} — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li><a href="{{ path('admin_team_list') }}" class="transition-colors hover:text-accent-300">Týmy</a></li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="text-white/80 font-medium" aria-current="page">{{ mode == 'edit' ? 'Upravit tým' : 'Nový tým' }}</li>
+{% endblock %}
+
+{% block admin_title %}{{ mode == 'edit' ? 'Upravit tým' : 'Nový tým' }}{% endblock %}
+{% block admin_subtitle %}{{ mode == 'edit' ? 'Přejmenování se projeví ve všech zápasech — je to stále stejný tým.' : 'Přidat globální tým do sdíleného adresáře.' }}{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_team_list') }}" class="btn btn-ghost btn-sm">
+        <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+        Zpět na týmy
+    </a>
+{% endblock %}
+
+{% block admin_body %}
+<div class="card-glass max-w-2xl p-6 md:p-8">
+    {% if mode == 'edit' and team is defined %}
+        <div class="mb-6 flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <twig:TeamFlag :team="team" size="56" />
+            <div>
+                <div class="text-lg font-semibold text-white">{{ team.name }}</div>
+                <div class="text-sm text-white/50">Náhled monogramu — barva i čitelný kontrast se počítají automaticky.</div>
+            </div>
+        </div>
+    {% endif %}
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+        {% if form.sport is defined %}
+            <div class="field">
+                {{ form_label(form.sport) }}
+                {{ form_widget(form.sport) }}
+                {{ form_errors(form.sport) }}
+            </div>
+        {% endif %}
+        <div class="field">
+            {{ form_label(form.name) }}
+            {{ form_widget(form.name) }}
+            {{ form_errors(form.name) }}
+        </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="field">
+                {{ form_label(form.shortName) }}
+                {{ form_widget(form.shortName) }}
+                {{ form_errors(form.shortName) }}
+            </div>
+            <div class="field">
+                {{ form_label(form.country) }}
+                {{ form_widget(form.country) }}
+                {{ form_errors(form.country) }}
+            </div>
+        </div>
+        <div class="field">
+            {{ form_label(form.brandColor) }}
+            {{ form_widget(form.brandColor) }}
+            {{ form_errors(form.brandColor) }}
+        </div>
+        <div class="flex flex-wrap gap-3 pt-2">
+            <button type="submit" class="btn btn-primary">{{ mode == 'edit' ? 'Uložit změny' : 'Vytvořit tým' }}</button>
+            <a href="{{ path('admin_team_list') }}" class="btn btn-ghost">Zrušit</a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

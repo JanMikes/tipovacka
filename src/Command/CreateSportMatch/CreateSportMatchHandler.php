@@ -8,6 +8,7 @@ use App\Entity\SportMatch;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
+use App\Service\Team\TeamResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -17,6 +18,7 @@ final readonly class CreateSportMatchHandler
     public function __construct(
         private SportMatchRepository $sportMatchRepository,
         private MatchSourceRepository $matchSourceRepository,
+        private TeamResolver $teamResolver,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -30,8 +32,8 @@ final readonly class CreateSportMatchHandler
         $sportMatch = new SportMatch(
             id: $this->identity->next(),
             matchSource: $matchSource,
-            homeTeam: $command->homeTeam,
-            awayTeam: $command->awayTeam,
+            homeTeam: $this->teamResolver->resolve($matchSource, $command->homeTeam, $now),
+            awayTeam: $this->teamResolver->resolve($matchSource, $command->awayTeam, $now),
             kickoffAt: $command->kickoffAt,
             venue: $command->venue,
             createdAt: $now,

@@ -7,6 +7,7 @@ namespace App\Query\GetMyGuessesInMatchSource;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Value\TeamView;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
@@ -42,8 +43,8 @@ final readonly class GetMyGuessesInMatchSourceQuery
         return array_map(
             static fn ($g): MyGuessRowItem => new MyGuessRowItem(
                 sportMatchId: $g->sportMatch->id,
-                homeTeam: $g->sportMatch->homeTeam,
-                awayTeam: $g->sportMatch->awayTeam,
+                homeTeam: TeamView::fromTeam($g->sportMatch->homeTeam),
+                awayTeam: TeamView::fromTeam($g->sportMatch->awayTeam),
                 kickoffAt: $g->sportMatch->kickoffAt,
                 state: $g->sportMatch->state,
                 actualHomeScore: $g->sportMatch->homeScore,

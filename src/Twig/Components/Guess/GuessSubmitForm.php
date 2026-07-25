@@ -240,23 +240,21 @@ final class GuessSubmitForm
      */
     public array $scorerOptionGroups {
         get {
-            $sourceId = $this->sportMatch->matchSource->id;
-
             return [
                 [
                     'side' => MatchSide::Home->value,
-                    'team' => $this->sportMatch->homeTeam,
+                    'team' => $this->sportMatch->homeTeam->name,
                     'players' => array_map(
                         static fn (Player $player): string => $player->name,
-                        $this->playerRepository->listBySourceAndTeam($sourceId, $this->sportMatch->homeTeam),
+                        $this->playerRepository->listByTeam($this->sportMatch->homeTeam->id),
                     ),
                 ],
                 [
                     'side' => MatchSide::Away->value,
-                    'team' => $this->sportMatch->awayTeam,
+                    'team' => $this->sportMatch->awayTeam->name,
                     'players' => array_map(
                         static fn (Player $player): string => $player->name,
-                        $this->playerRepository->listBySourceAndTeam($sourceId, $this->sportMatch->awayTeam),
+                        $this->playerRepository->listByTeam($this->sportMatch->awayTeam->id),
                     ),
                 ],
             ];

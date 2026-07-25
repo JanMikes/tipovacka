@@ -11,8 +11,8 @@
 
     props:
       stats       (TipStats)  required
-      homeTeam    string|null  labels under the full bar
-      awayTeam    string|null
+      homeTeam    TeamView|Team|null  labels under the full bar
+      awayTeam    TeamView|Team|null
       compact     bool         true = one-line strip for rows/cards (default),
                                false = full card (match detail pages)
 #}
@@ -60,9 +60,9 @@
                 </div>
                 {% if homeTeam and awayTeam %}
                     <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
-                        <span class="truncate">Výhra: {{ homeTeam }}</span>
+                        <span class="truncate">Výhra: {{ homeTeam.name }}</span>
                         <span>Remíza</span>
-                        <span class="truncate">Výhra: {{ awayTeam }}</span>
+                        <span class="truncate">Výhra: {{ awayTeam.name }}</span>
                     </div>
                 {% endif %}
             </div>

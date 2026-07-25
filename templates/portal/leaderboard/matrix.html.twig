@@ -64,9 +64,9 @@
                             {% elseif m.state.value == 'cancelled' %}{% set stateLabel = ' — zrušeno' %}
                             {% endif %}
                             <th scope="col" class="sticky top-0 z-20 whitespace-nowrap border-b border-white/10 bg-surface-2 px-2 py-2 text-center"
-                                title="{{ m.homeTeam }} – {{ m.awayTeam }} ({{ m.kickoffAt|date('d. m. Y H:i') }}){{ stateLabel }}">
+                                title="{{ m.homeTeam.name }} – {{ m.awayTeam.name }} ({{ m.kickoffAt|date('d. m. Y H:i') }}){{ stateLabel }}">
                                 <div class="text-[11px] font-bold tracking-wider text-white">
-                                    {{ m.homeTeam|slice(0, 3)|upper }}<span class="mx-0.5 text-white/40">–</span>{{ m.awayTeam|slice(0, 3)|upper }}
+                                    {{ (m.homeTeam.shortName ?? m.homeTeam.name)|slice(0, 3)|upper }}<span class="mx-0.5 text-white/40">–</span>{{ (m.awayTeam.shortName ?? m.awayTeam.name)|slice(0, 3)|upper }}
                                 </div>
                                 <div class="mt-0.5 text-[10px] font-normal">
                                     {% if m.state.value == 'finished' %}

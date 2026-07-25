@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\ListRecentEvaluatedGuessesForUser;
 
+use App\Value\TeamView;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class EvaluatedGuessItem
@@ -14,8 +15,8 @@ final readonly class EvaluatedGuessItem
         public string $matchSourceName,
         public Uuid $competitionId,
         public string $competitionName,
-        public string $homeTeam,
-        public string $awayTeam,
+        public TeamView $homeTeam,
+        public TeamView $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public int $actualHomeScore,
         public int $actualAwayScore,

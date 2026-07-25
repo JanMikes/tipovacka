@@ -80,8 +80,14 @@
                                 {% for row in preview.validRows %}
                                     <tr class="border-b border-white/[0.06] text-white/80 transition-colors hover:bg-white/[0.03]">
                                         <td class="py-2.5 px-3 tabular-nums text-white/50">{{ row.rowNumber }}</td>
-                                        <td class="py-2.5 px-3 font-medium text-white">{{ row.homeTeam }}</td>
-                                        <td class="py-2.5 px-3 font-medium text-white">{{ row.awayTeam }}</td>
+                                        <td class="py-2.5 px-3 font-medium text-white">
+                                            {{ row.homeTeam }}
+                                            {% if row.homeTeamIsNew %}<span class="ml-1.5 rounded-full bg-accent-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-300 align-middle">nový tým</span>{% endif %}
+                                        </td>
+                                        <td class="py-2.5 px-3 font-medium text-white">
+                                            {{ row.awayTeam }}
+                                            {% if row.awayTeamIsNew %}<span class="ml-1.5 rounded-full bg-accent-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-300 align-middle">nový tým</span>{% endif %}
+                                        </td>
                                         <td class="py-2.5 px-3 tabular-nums">{{ row.kickoffAt|date('j. n. Y H:i') }}</td>
                                         <td class="py-2.5 px-3">{{ row.venue ?: '—' }}</td>
                                         <td class="py-2.5 px-3">{{ row.round ?: '—' }}</td>

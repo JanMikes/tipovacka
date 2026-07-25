@@ -15,7 +15,7 @@
             <twig:Breadcrumbs :items="[
                 {label: 'Nástěnka', path: path('portal_dashboard')},
                 {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
-                {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
+                {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
                 {label: 'Upravit zápas'},
             ]" />
         {% endif %}

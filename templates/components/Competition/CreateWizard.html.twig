@@ -173,11 +173,11 @@
                                                 <div class="space-y-1.5">
                                                     {% for match in matches %}
                                                         <label class="flex cursor-pointer items-center gap-3" data-wizard-matches-target="row"
-                                                               data-search="{{ (match.homeTeam ~ ' ' ~ match.awayTeam)|lower }}">
+                                                               data-search="{{ (match.homeTeam.name ~ ' ' ~ match.awayTeam.name)|lower }}">
                                                             <input type="checkbox" class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                                                    data-model="norender|selectedMatchIds[]" value="{{ match.id.toRfc4122 }}"
                                                                    {{ match.id.toRfc4122 in selectedMatchIds ? 'checked' }} />
-                                                            <span class="text-sm text-white/80">{{ match.homeTeam }} – {{ match.awayTeam }} <span class="text-white/40">({{ match.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }})</span></span>
+                                                            <span class="text-sm text-white/80">{{ match.homeTeam.name }} – {{ match.awayTeam.name }} <span class="text-white/40">({{ match.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }})</span></span>
                                                             {% if match.isPlayoff %}
                                                                 <twig:Pill label="Playoff" variant="neutral" />
                                                             {% endif %}

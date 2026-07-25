@@ -1,0 +1,75 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Týmy — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="text-white/80 font-medium" aria-current="page">Týmy</li>
+{% endblock %}
+
+{% block admin_title %}Adresář týmů{% endblock %}
+{% block admin_subtitle %}Globální týmy sdílené napříč kurátorovanými zdroji — jedna identita týmu, jedno logo (brzy), statistiky napříč zápasy.{% endblock %}
+{% block admin_actions %}
+    <a href="{{ path('admin_team_create') }}" class="btn btn-primary btn-sm">
+        <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+        Nový tým
+    </a>
+{% endblock %}
+
+{% block admin_body %}
+{% if teams is empty %}
+    <div class="card-glass p-8 text-center text-white/50">
+        Zatím žádné globální týmy. Vznikají automaticky při zadávání zápasů v kurátorovaných zdrojích — nebo přidejte tým ručně.
+    </div>
+{% else %}
+<div class="card-glass overflow-hidden p-0">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
+                    <th class="text-left px-4 py-3 font-semibold">Tým</th>
+                    <th class="text-left px-4 py-3 font-semibold">Zkratka</th>
+                    <th class="text-left px-4 py-3 font-semibold">Země</th>
+                    <th class="text-left px-4 py-3 font-semibold">Barva</th>
+                    <th class="text-left px-4 py-3 font-semibold">Zápasy</th>
+                    <th class="text-right px-4 py-3 font-semibold">Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set current_sport = null %}
+                {% for item in teams %}
+                    {% if item.sportId.toRfc4122 != current_sport %}
+                        {% set current_sport = item.sportId.toRfc4122 %}
+                        <tr class="bg-white/[0.02]">
+                            <td colspan="6" class="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-accent-300">{{ item.sportName }}</td>
+                        </tr>
+                    {% endif %}
+                    <tr class="border-b border-white/[0.06] text-white/80 transition-colors hover:bg-white/[0.03]">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <twig:TeamFlag :team="item.team" size="32" />
+                                <span class="font-medium text-white">{{ item.team.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">{{ item.team.shortName ?? '—' }}</td>
+                        <td class="px-4 py-3">{% if item.team.country %}{{ item.team.country|country_flag }} {{ item.team.country }}{% else %}<span class="text-white/40">—</span>{% endif %}</td>
+                        <td class="px-4 py-3">
+                            {% if item.team.brandColor %}
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="inline-block h-4 w-4 rounded-full border border-white/20" style="background:{{ item.team.brandColor }}"></span>
+                                    {{ item.team.brandColor }}
+                                </span>
+                            {% else %}<span class="text-white/40">automaticky</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3 tabular-nums">{{ item.matchCount }}</td>
+                        <td class="px-4 py-3 text-right">
+                            <a href="{{ path('admin_team_edit', {id: item.team.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

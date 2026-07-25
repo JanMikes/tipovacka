@@ -9,8 +9,8 @@ use App\Command\UpdateGuess\UpdateGuessCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Guess;
 use App\Entity\GuessScorer;
-use App\Entity\MatchSource;
 use App\Entity\Player;
+use App\Entity\Team;
 use App\Enum\MatchSide;
 use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\TooManyGuessScorers;
@@ -106,9 +106,9 @@ final class GuessTipFeaturesTest extends IntegrationTestCase
             ->getOneOrNullResult();
 
         self::assertInstanceOf(Player::class, $player);
-        // Home side of MATCH_SCHEDULED ⇒ pool key (PUBLIC source, Sparta Praha).
-        self::assertSame('Sparta Praha', $player->teamName);
-        self::assertTrue($player->matchSource->id->equals(Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID)));
+        // Home side of MATCH_SCHEDULED ⇒ the roster of its home team (global Sparta Praha).
+        self::assertSame('Sparta Praha', $player->team->name);
+        self::assertTrue($player->team->id->equals(Uuid::fromString(AppFixtures::TEAM_SPARTA_ID)));
 
         $guess = $this->findGuess(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::MATCH_SCHEDULED_ID);
         self::assertCount(1, $guess->scorers);
@@ -210,43 +210,41 @@ final class GuessTipFeaturesTest extends IntegrationTestCase
         }
     }
 
-    public function testScorerSideIsPersistedAndSurvivesTeamNameCasingDrift(): void
+    public function testScorerSideIsPersistedAndSurvivesCaseInsensitiveReuse(): void
     {
         $em = $this->entityManager();
 
-        /** @var MatchSource|null $source */
-        $source = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
-        self::assertInstanceOf(MatchSource::class, $source);
+        // Pre-seed a roster row on the match's HOME team (global Sparta Praha).
+        $sparta = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
+        self::assertInstanceOf(Team::class, $sparta);
 
-        // Roster-pool row with drifted casing vs the match's 'Sparta Praha'.
-        $drifted = new Player(
+        $existing = new Player(
             id: Uuid::v7(),
-            matchSource: $source,
-            teamName: 'SPARTA PRAHA',
+            team: $sparta,
             name: 'Kasing Odolný',
             createdAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
         );
-        $em->persist($drifted);
+        $em->persist($existing);
         $em->flush();
 
+        // A Home scorer typed with drifted casing must reuse that roster row.
         $this->commandBus()->dispatch(new SubmitGuessCommand(
             userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
             competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
             homeScore: 2,
             awayScore: 1,
-            scorers: [new GuessScorerInput(MatchSide::Home, 'Kasing Odolný')],
+            scorers: [new GuessScorerInput(MatchSide::Home, 'kasing odolný')],
         ));
 
         $guess = $this->findGuess(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::MATCH_SCHEDULED_ID);
         $scorer = $guess->scorers->first();
         self::assertInstanceOf(GuessScorer::class, $scorer);
 
-        // The drifted pool row was reused (case-insensitive lookup) …
-        self::assertSame('SPARTA PRAHA', $scorer->player->teamName);
-        self::assertNotSame($guess->sportMatch->homeTeam, $scorer->player->teamName);
-        // … and the SUBMITTED side is persisted, never re-derived by comparing
-        // the player's team name to the match's current home team string.
+        // The existing roster row was reused (case-insensitive lookup) …
+        self::assertTrue($scorer->player->id->equals($existing->id));
+        self::assertSame('Sparta Praha', $scorer->player->team->name);
+        // … and the SUBMITTED side is persisted, never re-derived from the team.
         self::assertSame(MatchSide::Home, $scorer->side);
 
         /** @var GuessScorerWriter $writer */
@@ -269,7 +267,7 @@ final class GuessTipFeaturesTest extends IntegrationTestCase
         $scorer = $guess->scorers->first();
         self::assertInstanceOf(GuessScorer::class, $scorer);
         self::assertSame(MatchSide::Home, $scorer->side);
-        self::assertSame('SPARTA PRAHA', $scorer->player->teamName);
+        self::assertSame('Sparta Praha', $scorer->player->team->name);
     }
 
     public function testDuplicateScorerInputsCollapseToOneRow(): void

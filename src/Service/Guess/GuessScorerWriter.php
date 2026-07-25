@@ -47,12 +47,11 @@ final readonly class GuessScorerWriter
         $desired = [];
 
         foreach ($inputs as $input) {
-            $teamName = MatchSide::Home === $input->side ? $match->homeTeam : $match->awayTeam;
+            $team = MatchSide::Home === $input->side ? $match->homeTeam : $match->awayTeam;
             $memoKey = mb_strtolower($input->playerName);
 
             $player = $memo[$input->side->value][$memoKey] ??= $this->playerRepository->findOrCreate(
-                matchSource: $match->matchSource,
-                teamName: $teamName,
+                team: $team,
                 name: $input->playerName,
                 identity: $this->identity,
                 now: $now,

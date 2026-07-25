@@ -99,8 +99,8 @@ final class SetSportMatchFinalScoreHandlerTest extends IntegrationTestCase
         foreach ($players as $player) {
             $byName[$player->name] = $player;
         }
-        self::assertSame('Sparta Praha', $byName['Tomáš Rosický']->teamName);
-        self::assertSame('Slavia Praha', $byName['Lukáš Provod']->teamName);
+        self::assertSame('Sparta Praha', $byName['Tomáš Rosický']->team->name);
+        self::assertSame('Slavia Praha', $byName['Lukáš Provod']->team->name);
     }
 
     public function testReusesExistingPlayerFromPoolByName(): void

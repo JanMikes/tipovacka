@@ -74,8 +74,8 @@ final class SetFinalScoreController extends AbstractController
         $allowLive = $sportMatch->isScheduled || $sportMatch->isLive;
 
         $form = $this->createForm(SetFinalScoreFormType::class, $formData, [
-            'home_team' => $sportMatch->homeTeam,
-            'away_team' => $sportMatch->awayTeam,
+            'home_team' => $sportMatch->homeTeam->name,
+            'away_team' => $sportMatch->awayTeam->name,
             'allow_live' => $allowLive,
         ]);
         $form->handleRequest($request);

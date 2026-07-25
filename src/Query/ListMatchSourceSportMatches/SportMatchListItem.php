@@ -6,6 +6,7 @@ namespace App\Query\ListMatchSourceSportMatches;
 
 use App\Enum\SportMatchState;
 use App\Value\PeriodScores;
+use App\Value\TeamView;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class SportMatchListItem
@@ -13,8 +14,8 @@ final readonly class SportMatchListItem
     public function __construct(
         public Uuid $id,
         public Uuid $matchSourceId,
-        public string $homeTeam,
-        public string $awayTeam,
+        public TeamView $homeTeam,
+        public TeamView $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round,

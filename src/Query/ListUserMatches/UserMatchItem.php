@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\ListUserMatches;
 
+use App\Value\TeamView;
 use App\Value\TipStats;
 use Symfony\Component\Uid\Uuid;
 
@@ -27,8 +28,8 @@ final readonly class UserMatchItem
         public Uuid $id,
         public Uuid $matchSourceId,
         public string $matchSourceName,
-        public string $homeTeam,
-        public string $awayTeam,
+        public TeamView $homeTeam,
+        public TeamView $awayTeam,
         public \DateTimeImmutable $kickoffAt,
         public ?string $venue,
         public ?string $round,

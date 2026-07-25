@@ -21,8 +21,9 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
+        // Bohemians is the home team of the finished match — two pool players.
         $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
-            'tym' => 'Bohemians 1905',
+            'team' => AppFixtures::TEAM_BOHEMIANS_ID,
         ]);
 
         self::assertResponseIsSuccessful();
@@ -35,7 +36,7 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         ], $payload);
     }
 
-    public function testSearchAcrossSourceWithoutTeamFilter(): void
+    public function testReturnsEmptyWhenTeamMissingOrInvalid(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -44,13 +45,17 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
-            'q' => 'dole',
-        ]);
-
+        // No team id ⇒ empty roster.
+        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci');
         self::assertResponseIsSuccessful();
-        $payload = json_decode((string) $client->getResponse()->getContent(), true);
-        self::assertSame([['name' => AppFixtures::PLAYER_AWAY_BOOKED_NAME]], $payload);
+        self::assertSame([], json_decode((string) $client->getResponse()->getContent(), true));
+
+        // Malformed team id ⇒ empty roster (never a 500).
+        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
+            'team' => 'not-a-uuid',
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame([], json_decode((string) $client->getResponse()->getContent(), true));
     }
 
     public function testOutsiderGetsForbiddenForPrivateSource(): void
@@ -63,7 +68,7 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         $client->loginUser($outsider);
 
         $client->request('GET', '/portal/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/hraci', [
-            'tym' => 'Tygři',
+            'team' => AppFixtures::TEAM_TYGRI_ID,
         ]);
 
         self::assertResponseStatusCodeSame(403);
