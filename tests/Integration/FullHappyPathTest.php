@@ -271,7 +271,8 @@ final class FullHappyPathTest extends IntegrationTestCase
     {
         $match = $this->entityManager()->createQueryBuilder()
             ->select('m')->from(SportMatch::class, 'm')
-            ->where('m.matchSource = :s AND m.homeTeam = :h')
+            ->join('m.homeTeam', 't')
+            ->where('m.matchSource = :s AND t.name = :h')
             ->setParameter('s', $matchSourceId)
             ->setParameter('h', $homeTeam)
             ->getQuery()

@@ -36,14 +36,15 @@ final class UpdateSportMatchHandlerTest extends IntegrationTestCase
 
         $match = $em->find(SportMatch::class, $matchId);
         self::assertInstanceOf(SportMatch::class, $match);
-        self::assertSame('Brno', $match->homeTeam);
+        self::assertSame('Brno', $match->homeTeam->name);
         self::assertSame('Lužánky', $match->venue);
     }
 
-    public function testTeamRenameIsBlockedWhenMatchHasRecordedEvents(): void
+    public function testTeamReassignIsBlockedWhenMatchHasRecordedEvents(): void
     {
-        // MATCH_FINISHED ships with three fixture events; renaming a team would
-        // split the roster pool (players are keyed by team name).
+        // MATCH_FINISHED ships with three fixture events whose players belong to
+        // the current teams; reassigning the match to a DIFFERENT team ('Bohemka'
+        // resolves to a brand-new team) would orphan those rows.
         $matchId = Uuid::fromString(AppFixtures::MATCH_FINISHED_ID);
 
         try {
@@ -59,10 +60,7 @@ final class UpdateSportMatchHandlerTest extends IntegrationTestCase
         } catch (HandlerFailedException $exception) {
             $wrapped = $this->firstWrappedException($exception);
             self::assertInstanceOf(SportMatchTeamsLocked::class, $wrapped);
-            self::assertSame(
-                'Název týmu nelze změnit — k zápasu už jsou zapsané události. Nejprve smažte střelce/karty.',
-                $wrapped->getMessage(),
-            );
+            self::assertStringStartsWith('Tým zápasu nelze změnit', $wrapped->getMessage());
         }
 
         $em = $this->entityManager();
@@ -70,7 +68,7 @@ final class UpdateSportMatchHandlerTest extends IntegrationTestCase
 
         $match = $em->find(SportMatch::class, $matchId);
         self::assertInstanceOf(SportMatch::class, $match);
-        self::assertSame('Bohemians 1905', $match->homeTeam);
+        self::assertSame('Bohemians 1905', $match->homeTeam->name);
     }
 
     public function testNonRenameUpdateIsAllowedWhenMatchHasRecordedEvents(): void
@@ -93,14 +91,14 @@ final class UpdateSportMatchHandlerTest extends IntegrationTestCase
         $match = $em->find(SportMatch::class, $matchId);
         self::assertInstanceOf(SportMatch::class, $match);
         self::assertSame('Fortuna Arena', $match->venue);
-        self::assertSame('Bohemians 1905', $match->homeTeam);
+        self::assertSame('Bohemians 1905', $match->homeTeam->name);
     }
 
-    public function testTeamRenameIsBlockedWhenMatchHasScorerTips(): void
+    public function testTeamReassignIsBlockedWhenMatchHasScorerTips(): void
     {
         // MATCH_SCHEDULED has no recorded events, but a standing scorer TIP also
-        // locks the names — GuessScorer rows point at roster players keyed by
-        // team name, so a rename would silently detach them.
+        // locks the teams — GuessScorer rows point at roster players of the
+        // current teams, so reassigning to a different team would detach them.
         $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
 
         $this->commandBus()->dispatch(new SubmitGuessCommand(
@@ -131,6 +129,6 @@ final class UpdateSportMatchHandlerTest extends IntegrationTestCase
 
         $match = $em->find(SportMatch::class, $matchId);
         self::assertInstanceOf(SportMatch::class, $match);
-        self::assertSame('Sparta Praha', $match->homeTeam);
+        self::assertSame('Sparta Praha', $match->homeTeam->name);
     }
 }

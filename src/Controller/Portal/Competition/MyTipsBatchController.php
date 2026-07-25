@@ -118,7 +118,7 @@ final class MyTipsBatchController extends AbstractController
             $awayRaw = trim($awayRaw);
 
             $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($sportMatchIdString));
-            $label = sprintf('%s vs %s', $sportMatch->homeTeam, $sportMatch->awayTeam);
+            $label = sprintf('%s vs %s', $sportMatch->homeTeam->name, $sportMatch->awayTeam->name);
 
             $existing = $this->guessRepository->findActiveByUserMatchCompetition(
                 $user->id,

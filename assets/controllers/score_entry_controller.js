@@ -10,15 +10,15 @@ import TomSelect from 'tom-select';
  * - Score steppers (+/−) around the two score inputs.
  * - Dynamic event rows (goals / cards) cloned from the Symfony CollectionType
  *   prototype; player-name inputs get a tom-select autocomplete backed by the
- *   source roster endpoint (?tym=<team>), with free-create for new names.
+ *   team roster endpoint (?team=<uuid>), with free-create for new names.
  * - Non-blocking warning when goal-row counts don't match the entered score.
  */
 export default class extends Controller {
     static targets = ['homeScore', 'awayScore', 'overtime', 'overtimeHome', 'overtimeAway', 'finishOnly', 'eventsList', 'eventRow', 'warning'];
     static values = {
         playersUrl: String,
-        homeTeam: String,
-        awayTeam: String,
+        homeTeamId: String,
+        awayTeamId: String,
         prototype: String,
     };
 
@@ -205,10 +205,10 @@ export default class extends Controller {
             return;
         }
 
-        const team = side.value === 'away' ? this.awayTeamValue : this.homeTeamValue;
+        const teamId = side.value === 'away' ? this.awayTeamIdValue : this.homeTeamIdValue;
         const selected = input.tomselect.getValue();
 
-        fetch(`${this.playersUrlValue}?tym=${encodeURIComponent(team)}`, { headers: { Accept: 'application/json' } })
+        fetch(`${this.playersUrlValue}?team=${encodeURIComponent(teamId)}`, { headers: { Accept: 'application/json' } })
             .then((response) => (response.ok ? response.json() : []))
             .then((players) => {
                 const ts = input.tomselect;

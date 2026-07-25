@@ -14,6 +14,10 @@ final readonly class SportMatchImportRow
         public ?string $venue,
         public ?string $round = null,
         public bool $isPlayoff = false,
+        // Preview-only: this name isn't a team yet in the source's scope, so importing
+        // will create it. First occurrence of a repeated new name carries the flag.
+        public bool $homeTeamIsNew = false,
+        public bool $awayTeamIsNew = false,
     ) {
     }
 }

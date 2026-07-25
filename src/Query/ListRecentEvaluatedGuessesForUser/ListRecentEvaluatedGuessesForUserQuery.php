@@ -8,6 +8,7 @@ use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Enum\SportMatchState;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Value\TeamView;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -59,8 +60,8 @@ final readonly class ListRecentEvaluatedGuessesForUserQuery
                     matchSourceName: $guess->sportMatch->matchSource->name,
                     competitionId: $guess->competition->id,
                     competitionName: $guess->competition->name,
-                    homeTeam: $guess->sportMatch->homeTeam,
-                    awayTeam: $guess->sportMatch->awayTeam,
+                    homeTeam: TeamView::fromTeam($guess->sportMatch->homeTeam),
+                    awayTeam: TeamView::fromTeam($guess->sportMatch->awayTeam),
                     kickoffAt: $guess->sportMatch->kickoffAt,
                     actualHomeScore: $guess->sportMatch->homeScore,
                     actualAwayScore: $guess->sportMatch->awayScore,

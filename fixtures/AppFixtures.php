@@ -23,6 +23,7 @@ use App\Entity\NotificationPreference;
 use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
@@ -187,6 +188,19 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
     public const string MATCH_LIVE_ID = '019ddddd-0000-7000-8000-000000000002';
     public const string MATCH_FINISHED_ID = '019ddddd-0000-7000-8000-000000000003';
     public const string MATCH_PRIVATE_SCHEDULED_ID = '019ddddd-0000-7000-8000-000000000004';
+
+    // Global directory teams (curated PUBLIC source, sport = football, match_source_id NULL).
+    public const string TEAM_REAL_MADRID_ID = '019ddddd-0000-7000-8000-0000000000d1';
+    public const string TEAM_BARCELONA_ID = '019ddddd-0000-7000-8000-0000000000d2';
+    public const string TEAM_SPARTA_ID = '019ddddd-0000-7000-8000-0000000000d3';
+    public const string TEAM_SLAVIA_ID = '019ddddd-0000-7000-8000-0000000000d4';
+    public const string TEAM_PLZEN_ID = '019ddddd-0000-7000-8000-0000000000d5';
+    public const string TEAM_BANIK_ID = '019ddddd-0000-7000-8000-0000000000d6';
+    public const string TEAM_BOHEMIANS_ID = '019ddddd-0000-7000-8000-0000000000d7';
+    public const string TEAM_JABLONEC_ID = '019ddddd-0000-7000-8000-0000000000d8';
+    // Local teams of the PRIVATE (from-scratch) source.
+    public const string TEAM_TYGRI_ID = '019ddddd-0000-7000-8000-0000000000d9';
+    public const string TEAM_LVI_ID = '019ddddd-0000-7000-8000-0000000000da';
 
     public const string FIXTURE_GUESS_ID = '019eeeee-0000-7000-8000-000000000001';
 
@@ -612,11 +626,54 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $othersTipsBoost->popEvents();
         $manager->persist($othersTipsBoost);
 
+        // ── Teams ───────────────────────────────────────────────────────────
+        // Global directory teams live on the curated PUBLIC source's sport with no
+        // match_source; a few carry the optional short name / country / brand color
+        // to exercise those fields. Tygři/Lvi are LOCAL to the private source.
+        $globalTeam = static function (string $id, string $name, ?string $short = null, ?string $country = null, ?string $color = null) use ($manager, $football, $now): Team {
+            $team = new Team(
+                id: Uuid::fromString($id),
+                sport: $football,
+                matchSource: null,
+                name: $name,
+                createdAt: $now,
+                shortName: $short,
+                country: $country,
+                brandColor: $color,
+            );
+            $manager->persist($team);
+
+            return $team;
+        };
+        $localTeam = static function (string $id, string $name) use ($manager, $football, $private, $now): Team {
+            $team = new Team(
+                id: Uuid::fromString($id),
+                sport: $football,
+                matchSource: $private,
+                name: $name,
+                createdAt: $now,
+            );
+            $manager->persist($team);
+
+            return $team;
+        };
+
+        $teamRealMadrid = $globalTeam(self::TEAM_REAL_MADRID_ID, 'Real Madrid', 'RMA', 'ES', '#FEBE10');
+        $teamBarcelona = $globalTeam(self::TEAM_BARCELONA_ID, 'Barcelona', 'BAR', 'ES', '#A50044');
+        $teamSparta = $globalTeam(self::TEAM_SPARTA_ID, 'Sparta Praha', 'SPA', 'CZ', '#EE1C25');
+        $teamSlavia = $globalTeam(self::TEAM_SLAVIA_ID, 'Slavia Praha', 'SLA', 'CZ', '#D7141A');
+        $teamPlzen = $globalTeam(self::TEAM_PLZEN_ID, 'Viktoria Plzeň', 'PLZ', 'CZ', '#005CA9');
+        $teamBanik = $globalTeam(self::TEAM_BANIK_ID, 'Baník Ostrava', 'BAN', 'CZ');
+        $teamBohemians = $globalTeam(self::TEAM_BOHEMIANS_ID, 'Bohemians 1905', 'BOH', 'CZ', '#00843D');
+        $teamJablonec = $globalTeam(self::TEAM_JABLONEC_ID, 'Jablonec', 'JBL', 'CZ');
+        $teamTygri = $localTeam(self::TEAM_TYGRI_ID, 'Tygři');
+        $teamLvi = $localTeam(self::TEAM_LVI_ID, 'Lvi');
+
         $playoffMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PLAYOFF_ID),
             matchSource: $public,
-            homeTeam: 'Real Madrid',
-            awayTeam: 'Barcelona',
+            homeTeam: $teamRealMadrid,
+            awayTeam: $teamBarcelona,
             kickoffAt: new \DateTimeImmutable('2025-06-22 18:00:00 UTC'),
             venue: null,
             createdAt: $now,
@@ -629,8 +686,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $scheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_SCHEDULED_ID),
             matchSource: $public,
-            homeTeam: 'Sparta Praha',
-            awayTeam: 'Slavia Praha',
+            homeTeam: $teamSparta,
+            awayTeam: $teamSlavia,
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: 'Generali Arena',
             createdAt: $now,
@@ -642,8 +699,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $liveMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_LIVE_ID),
             matchSource: $public,
-            homeTeam: 'Viktoria Plzeň',
-            awayTeam: 'Baník Ostrava',
+            homeTeam: $teamPlzen,
+            awayTeam: $teamBanik,
             kickoffAt: new \DateTimeImmutable('2025-06-15 11:00:00 UTC'),
             venue: null,
             createdAt: $now,
@@ -655,8 +712,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $finishedMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_FINISHED_ID),
             matchSource: $public,
-            homeTeam: 'Bohemians 1905',
-            awayTeam: 'Jablonec',
+            homeTeam: $teamBohemians,
+            awayTeam: $teamJablonec,
             kickoffAt: new \DateTimeImmutable('2025-06-10 18:00:00 UTC'),
             venue: 'Ďolíček',
             createdAt: $now,
@@ -678,8 +735,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         // yellow card; goal-count vs score mismatch is allowed by design).
         $homeScorerOne = new Player(
             id: Uuid::fromString(self::PLAYER_HOME_SCORER_ONE_ID),
-            matchSource: $public,
-            teamName: $finishedMatch->homeTeam,
+            team: $finishedMatch->homeTeam,
             name: self::PLAYER_HOME_SCORER_ONE_NAME,
             createdAt: $now,
         );
@@ -687,8 +743,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $homeScorerTwo = new Player(
             id: Uuid::fromString(self::PLAYER_HOME_SCORER_TWO_ID),
-            matchSource: $public,
-            teamName: $finishedMatch->homeTeam,
+            team: $finishedMatch->homeTeam,
             name: self::PLAYER_HOME_SCORER_TWO_NAME,
             createdAt: $now,
         );
@@ -696,8 +751,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $awayBooked = new Player(
             id: Uuid::fromString(self::PLAYER_AWAY_BOOKED_ID),
-            matchSource: $public,
-            teamName: $finishedMatch->awayTeam,
+            team: $finishedMatch->awayTeam,
             name: self::PLAYER_AWAY_BOOKED_NAME,
             createdAt: $now,
         );
@@ -734,8 +788,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $privateScheduledMatch = new SportMatch(
             id: Uuid::fromString(self::MATCH_PRIVATE_SCHEDULED_ID),
             matchSource: $private,
-            homeTeam: 'Tygři',
-            awayTeam: 'Lvi',
+            homeTeam: $teamTygri,
+            awayTeam: $teamLvi,
             kickoffAt: new \DateTimeImmutable('2025-06-20 19:00:00 UTC'),
             venue: null,
             createdAt: $now,

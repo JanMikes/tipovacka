@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tipy – {{ sport_match.homeTeam }} vs {{ sport_match.awayTeam }}{% endblock %}
+{% block title %}Tipy – {{ sport_match.homeTeam.name }} vs {{ sport_match.awayTeam.name }}{% endblock %}
 
 {% block body %}
 <div class="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
@@ -8,7 +8,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('portal_dashboard')},
         {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
-        {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam},
+        {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name},
     ]" />
 
     {#
@@ -66,8 +66,8 @@
 
         <div class="tip-teams mt-6">
             <div class="tip-team">
-                <twig:TeamFlag :name="sport_match.homeTeam" size="56" />
-                <span class="name">{{ sport_match.homeTeam }}</span>
+                <twig:TeamFlag :team="sport_match.homeTeam" size="56" />
+                <span class="name">{{ sport_match.homeTeam.name }}</span>
             </div>
 
             {% if sport_match.isFinished or (sport_match.isLive and sport_match.homeScore is not null) %}
@@ -81,8 +81,8 @@
             {% endif %}
 
             <div class="tip-team">
-                <twig:TeamFlag :name="sport_match.awayTeam" size="56" />
-                <span class="name">{{ sport_match.awayTeam }}</span>
+                <twig:TeamFlag :team="sport_match.awayTeam" size="56" />
+                <span class="name">{{ sport_match.awayTeam.name }}</span>
             </div>
         </div>
 

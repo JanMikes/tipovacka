@@ -142,10 +142,16 @@ src/
 - **`Notification/Notifier`** — writes one `Notification` per delivery, honoring the user's
   per-type × channel preferences (stamps `inAppVisible`).
 - **`Credits/PricingConfig`** — the single home for every credit price (never scatter literals).
+- **`Team/TeamResolver`** — the single home for the hybrid team-scope rule: a match/import/picker
+  team NAME resolves to a `Team` — curated source → shared GLOBAL directory (find-or-create),
+  private source → LOCAL team of that source. `findExisting()` is the create-free variant (reassign
+  guard + import „nový tým" badge). `Team.homeTeam/awayTeam` on the match are FKs; renaming a team is
+  free, only reassigning a match to a *different* team is guarded (`SportMatchTeamsLocked`). Monogram
+  (contrast-safe) via `Value/TeamMonogram`; query DTOs carry `Value/TeamView`. See [team-picker](.docs/features/team-picker.md).
 
-### Entities (26)
+### Entities (27)
 
-`User`, `Sport`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
+`User`, `Sport`, `Team`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
 `CompetitionMatchSelection`, `CompetitionMatchSetting`, `CompetitionRuleConfiguration`,
 `Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`, `GuessEvaluation`,
 `GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`, `CreditWallet`,
@@ -425,6 +431,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
 - [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
+- [Team picker & directory](.docs/features/team-picker.md) — first-class `Team` (hybrid scope: global admin directory / local per private source via `TeamResolver`); `team-picker` tom-select (autocomplete + create, name-based, JS-optional); contrast-safe `TeamMonogram` coin via `<twig:TeamFlag :team>`; admin directory at `/admin/tymy`
 - [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`); an **admin-only „Typ soutěže" toggle** turns it into the global-competition creator (entry fee, curated-only, skips „Pozvánky", branches to `CreateGlobalCompetitionCommand`)
 - [Cursor spotlight](.docs/features/cursor-spotlight.md) — cards glow & their border lights up under/near the mouse (`assets/spotlight.js` + app.css "Cursor spotlight" section; `PROXIMITY` toggle)
 

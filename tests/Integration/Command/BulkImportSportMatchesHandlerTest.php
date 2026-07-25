@@ -34,7 +34,8 @@ final class BulkImportSportMatchesHandlerTest extends IntegrationTestCase
         $matches = $em->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.homeTeam IN (:homes)')
+            ->join('m.homeTeam', 't')
+            ->where('t.name IN (:homes)')
             ->setParameter('homes', ['Liberec', 'Karviná'])
             ->getQuery()
             ->getResult();

@@ -16,8 +16,9 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Scorer-name autocomplete for the score-entry form: the roster pool of one
- * source, optionally narrowed to a team (?tym=…). Returns [{"name": …}, …].
+ * Scorer-name autocomplete for the score-entry form: the roster of one team
+ * (?team=<uuid>). Returns [{"name": …}, …]. The source in the route scopes the
+ * voter check; the team id is server-rendered from the match on that page.
  */
 #[Route(
     '/portal/zdroje/{id}/hraci',
@@ -38,11 +39,13 @@ final class PlayerAutocompleteController extends AbstractController
         $matchSource = $this->matchSourceRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(MatchSourceVoter::VIEW, $matchSource);
 
-        $teamName = trim((string) $request->query->get('tym', ''));
+        $teamId = trim((string) $request->query->get('team', ''));
 
-        $players = '' !== $teamName
-            ? $this->playerRepository->listBySourceAndTeam($matchSource->id, $teamName)
-            : $this->playerRepository->searchBySource($matchSource->id, trim((string) $request->query->get('q', '')));
+        if ('' === $teamId || !Uuid::isValid($teamId)) {
+            return $this->json([]);
+        }
+
+        $players = $this->playerRepository->listByTeam(Uuid::fromString($teamId));
 
         return $this->json(array_map(
             static fn (Player $player): array => ['name' => $player->name],

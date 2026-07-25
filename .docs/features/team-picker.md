@@ -1,0 +1,60 @@
+# Team picker & the team directory
+
+Teams are a first-class entity (`App\Entity\Team`). A team is one identity across every
+match it plays — the home for a logo (future), a short name, a country and a brand color,
+and the anchor for the per-team roster (`Player.team`).
+
+## Hybrid scope (the one rule to remember)
+
+- **Curated source** (admin-managed, reusable) → its matches draw teams from ONE **global
+  directory** (`team.match_source_id IS NULL`), one row per real club per sport.
+- **Private source** (the hidden internal of a from-scratch competition) → **local** teams
+  scoped to that source (`team.match_source_id` set), so office-pool names never pollute the
+  directory.
+
+Scope is *derived* (`Team::$isGlobal = matchSource === null`), never stored. Two partial
+unique indexes enforce name-uniqueness per scope. The single home of the rule is
+[`App\Service\Team\TeamResolver`](../../src/Service/Team/TeamResolver.php): `resolve(source,
+name, now)` find-or-creates in the right scope; `findExisting()` is the create-free variant
+used by the reassign guard and the import "nový tým" preview.
+
+## Picking UX
+
+Commands still carry team **names** (strings) — the picker is pure affordance, and names are
+unique within a source's resolution scope, so `name → Team` is deterministic. This keeps CSV
+import and the form uniform and JS-optional.
+
+- **`team-picker`** Stimulus controller (`assets/controllers/team_picker_controller.js`):
+  enhances the plain home/away text input into a single-select tom-select that autocompletes
+  existing teams and creates a new one on free-type. Degrades to a normal text input with JS
+  off (the typed name still posts and resolves server-side).
+- Autocomplete endpoint: `TeamAutocompleteController` (`GET /portal/zdroje/{id}/tymy?q=…`,
+  gated by `MatchSourceVoter::CREATE_MATCH`) → `TeamRepository::searchGlobalBySport` (curated)
+  or `searchLocalBySource` (private).
+- CSV/XLSX import (`SportMatchImporter`) resolves each `Domácí`/`Hosté` name via `TeamResolver`
+  on commit; unknown names grow the directory (curated) / local pool (private).
+
+## Monogram (logo comes later)
+
+No uploads yet: every team renders as a colored initials **monogram** via the pure, unit-tested
+[`App\Value\TeamMonogram`](../../src/Value/TeamMonogram.php) — background = brand color or a
+stable hash of the name, foreground = whichever of black/white wins WCAG contrast (so text is
+never illegible). One component renders it everywhere: `<twig:TeamFlag :team="…">` (accepts a
+`Team` or a `TeamView`; a bare `name` string still works as a fallback). Query results carry a
+`TeamView` (`App\Value\TeamView`) rather than the entity.
+
+## Reassigning a match's team
+
+`SportMatch.homeTeam/awayTeam` are `Team` FKs. Renaming a team in the directory is free (the FK
+is stable — the same identity, new label). What `SportMatchTeamsLocked` blocks is **reassigning
+a match to a *different* team** once `MatchEvent`/`GuessScorer` rows exist (they point at
+Players of the old team). Fixing a typo is therefore a rename in the admin directory, not a
+match edit.
+
+## Admin directory
+
+`/admin/tymy` (`admin_team_list`) lists global teams grouped by sport with their match count;
+create/edit at `admin_team_create` / `admin_team_edit` (`TeamFormType`, `CreateTeamCommand` /
+`UpdateTeamCommand`). Gated by the `^/admin` firewall (no dedicated voter). Local teams are not
+managed here — they live and die with their private source. The logo-upload field lands on this
+form in the follow-up.

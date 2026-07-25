@@ -38,7 +38,8 @@ final class CreateSportMatchFlowTest extends WebTestCase
         $match = $em->createQueryBuilder()
             ->select('m')
             ->from(SportMatch::class, 'm')
-            ->where('m.homeTeam = :h')
+            ->join('m.homeTeam', 't')
+            ->where('t.name = :h')
             ->setParameter('h', 'Tým A')
             ->getQuery()
             ->getOneOrNullResult();

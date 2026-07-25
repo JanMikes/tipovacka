@@ -11,6 +11,7 @@ use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -74,11 +75,16 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         $membership->popEvents();
         $em->persist($membership);
 
+        $homeTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
+        self::assertNotNull($homeTeam);
+        $awayTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SLAVIA_ID));
+        self::assertNotNull($awayTeam);
+
         $oldMatch = new SportMatch(
             id: Uuid::v7(),
             matchSource: $competition->matchSource,
-            homeTeam: 'Staré A',
-            awayTeam: 'Staré B',
+            homeTeam: $homeTeam,
+            awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable('2025-06-01 18:00:00', new \DateTimeZone('UTC')),
             venue: null,
             createdAt: $now,

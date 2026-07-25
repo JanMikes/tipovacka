@@ -240,7 +240,28 @@ Invitation to PUBLIC_COMPETITION, invited by ADMIN, created at `$now`, expires
 > The join-request flow was retired in S09 (global competitions replace public
 > discovery join-requests). There is no `CompetitionJoinRequest` fixture anymore.
 
+## Teams (`Team`)
+
+Global directory teams (`match_source_id` NULL, sport = football) plus two local teams of the
+PRIVATE source. Some globals carry the optional short name / country / brand color.
+
+| Constant               | ID                                     | Scope  | Name           | Short / Country / Color |
+|------------------------|----------------------------------------|--------|----------------|-------------------------|
+| `TEAM_REAL_MADRID_ID`  | `019ddddd-0000-7000-8000-0000000000d1` | global | Real Madrid    | RMA / ES / `#FEBE10` |
+| `TEAM_BARCELONA_ID`    | `019ddddd-0000-7000-8000-0000000000d2` | global | Barcelona      | BAR / ES / `#A50044` |
+| `TEAM_SPARTA_ID`       | `019ddddd-0000-7000-8000-0000000000d3` | global | Sparta Praha   | SPA / CZ / `#EE1C25` |
+| `TEAM_SLAVIA_ID`       | `019ddddd-0000-7000-8000-0000000000d4` | global | Slavia Praha   | SLA / CZ / `#D7141A` |
+| `TEAM_PLZEN_ID`        | `019ddddd-0000-7000-8000-0000000000d5` | global | Viktoria Plzeň | PLZ / CZ / `#005CA9` |
+| `TEAM_BANIK_ID`        | `019ddddd-0000-7000-8000-0000000000d6` | global | Baník Ostrava  | BAN / CZ / — |
+| `TEAM_BOHEMIANS_ID`    | `019ddddd-0000-7000-8000-0000000000d7` | global | Bohemians 1905 | BOH / CZ / `#00843D` |
+| `TEAM_JABLONEC_ID`     | `019ddddd-0000-7000-8000-0000000000d8` | global | Jablonec       | JBL / CZ / — |
+| `TEAM_TYGRI_ID`        | `019ddddd-0000-7000-8000-0000000000d9` | local (PRIVATE_SOURCE) | Tygři | — |
+| `TEAM_LVI_ID`          | `019ddddd-0000-7000-8000-0000000000da` | local (PRIVATE_SOURCE) | Lvi   | — |
+
 ## Sport matches (`SportMatch`)
+
+Team columns are `home_team_id` / `away_team_id` FKs to the teams above (the „Teams" column
+below shows their names).
 
 | Constant                     | ID                                     | Source          | Teams                          | Kickoff (UTC)       | State / score                | Round / venue |
 |------------------------------|----------------------------------------|-----------------|--------------------------------|---------------------|------------------------------|---------------|
@@ -253,13 +274,16 @@ Invitation to PUBLIC_COMPETITION, invited by ADMIN, created at `$now`, expires
 `MATCH_PLAYOFF` is the only fixture match with `isPlayoff = true` — every other match
 defaults to `false`.
 
-## Players (`Player`, table `players`) — roster pool of PUBLIC_SOURCE
+## Players (`Player`, table `players`) — per-team roster
 
-| Constant                    | ID                                     | Team           | Name (`PLAYER_*_NAME`) |
-|-----------------------------|----------------------------------------|----------------|------------------------|
-| `PLAYER_HOME_SCORER_ONE_ID` | `019ddddd-0000-7000-8000-0000000000b1` | Bohemians 1905 | `Jan Novák`            |
-| `PLAYER_HOME_SCORER_TWO_ID` | `019ddddd-0000-7000-8000-0000000000b2` | Bohemians 1905 | `Petr Svoboda`         |
-| `PLAYER_AWAY_BOOKED_ID`     | `019ddddd-0000-7000-8000-0000000000b3` | Jablonec       | `Marek Doležal`        |
+Each player belongs to a `Team` (`team_id` FK). The scorers below hang off the global teams of
+MATCH_FINISHED (Bohemians home, Jablonec away).
+
+| Constant                    | ID                                     | Team (`team_id`)                 | Name (`PLAYER_*_NAME`) |
+|-----------------------------|----------------------------------------|----------------------------------|------------------------|
+| `PLAYER_HOME_SCORER_ONE_ID` | `019ddddd-0000-7000-8000-0000000000b1` | Bohemians 1905 (`TEAM_BOHEMIANS_ID`) | `Jan Novák`        |
+| `PLAYER_HOME_SCORER_TWO_ID` | `019ddddd-0000-7000-8000-0000000000b2` | Bohemians 1905 (`TEAM_BOHEMIANS_ID`) | `Petr Svoboda`     |
+| `PLAYER_AWAY_BOOKED_ID`     | `019ddddd-0000-7000-8000-0000000000b3` | Jablonec (`TEAM_JABLONEC_ID`)        | `Marek Doležal`    |
 
 ## Match events (`MatchEvent`, table `match_events`) — timeline of MATCH_FINISHED
 

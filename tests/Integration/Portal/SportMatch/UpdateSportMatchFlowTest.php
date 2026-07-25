@@ -34,6 +34,6 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         $em->clear();
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
         self::assertInstanceOf(SportMatch::class, $match);
-        self::assertSame('NEW HOME', $match->homeTeam);
+        self::assertSame('NEW HOME', $match->homeTeam->name);
     }
 }

@@ -11,6 +11,7 @@ use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use App\Service\EffectiveTipDeadlineResolver;
@@ -144,15 +145,22 @@ final class SportMatchLockPinningTest extends IntegrationTestCase
         $competition->popEvents();
         $em->persist($competition);
 
-        $opener = $this->makeMatch($source, 'Opener home', 'Opener away', $openerKickoff, $createdAt);
-        $sibling = $this->makeMatch($source, 'Sibling home', 'Sibling away', '2025-06-20 18:00:00 UTC', $createdAt);
+        // Teams are irrelevant to the lock-pinning logic; reuse the shared
+        // directory fixtures (both matches use the same pair).
+        $homeTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
+        self::assertInstanceOf(Team::class, $homeTeam);
+        $awayTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SLAVIA_ID));
+        self::assertInstanceOf(Team::class, $awayTeam);
+
+        $opener = $this->makeMatch($source, $homeTeam, $awayTeam, $openerKickoff, $createdAt);
+        $sibling = $this->makeMatch($source, $homeTeam, $awayTeam, '2025-06-20 18:00:00 UTC', $createdAt);
 
         $em->flush();
 
         return [$competition, $opener, $sibling];
     }
 
-    private function makeMatch(MatchSource $source, string $home, string $away, string $kickoff, \DateTimeImmutable $createdAt): SportMatch
+    private function makeMatch(MatchSource $source, Team $home, Team $away, string $kickoff, \DateTimeImmutable $createdAt): SportMatch
     {
         $match = new SportMatch(
             id: Uuid::v7(),

@@ -111,7 +111,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
             }
 
             $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($sportMatchIdString));
-            $label = sprintf('%s vs %s', $sportMatch->homeTeam, $sportMatch->awayTeam);
+            $label = sprintf('%s vs %s', $sportMatch->homeTeam->name, $sportMatch->awayTeam->name);
 
             if ($bothEmpty) {
                 $errors[] = sprintf('%s: Vyplňte i celkové skóre zápasu.', $label);

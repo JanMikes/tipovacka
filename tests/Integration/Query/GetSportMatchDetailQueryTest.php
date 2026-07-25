@@ -19,8 +19,8 @@ final class GetSportMatchDetailQueryTest extends IntegrationTestCase
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
         ));
 
-        self::assertSame('Sparta Praha', $result->homeTeam);
-        self::assertSame('Slavia Praha', $result->awayTeam);
+        self::assertSame('Sparta Praha', $result->homeTeam->name);
+        self::assertSame('Slavia Praha', $result->awayTeam->name);
         self::assertSame(SportMatchState::Scheduled, $result->state);
         self::assertTrue($result->isOpenForGuesses);
     }

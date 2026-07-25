@@ -9,6 +9,7 @@ use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
@@ -183,8 +184,8 @@ final class CompetitionMatchProviderTest extends TestCase
         $match = new SportMatch(
             id: Uuid::fromString($id),
             matchSource: $source,
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: new Team(id: Uuid::v7(), sport: $source->sport, matchSource: $source, name: 'A', createdAt: $this->now),
+            awayTeam: new Team(id: Uuid::v7(), sport: $source->sport, matchSource: $source, name: 'B', createdAt: $this->now),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: null,
             createdAt: $this->now,

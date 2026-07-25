@@ -8,6 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use App\Enum\SportMatchState;
@@ -74,13 +75,26 @@ final class SportMatchEntityTest extends TestCase
         return $matchSource;
     }
 
+    private function makeTeam(string $name): Team
+    {
+        $source = $this->makeMatchSource();
+
+        return new Team(
+            id: Uuid::v7(),
+            sport: $source->sport,
+            matchSource: $source,
+            name: $name,
+            createdAt: $this->now,
+        );
+    }
+
     private function makeMatch(): SportMatch
     {
         return new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
             matchSource: $this->makeMatchSource(),
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: $this->makeTeam('A'),
+            awayTeam: $this->makeTeam('B'),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: 'Stadium',
             createdAt: $this->now,
@@ -109,8 +123,8 @@ final class SportMatchEntityTest extends TestCase
         $match = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
             matchSource: $this->makeMatchSource(),
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: $this->makeTeam('A'),
+            awayTeam: $this->makeTeam('B'),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: 'Stadium',
             createdAt: $this->now,
@@ -125,11 +139,11 @@ final class SportMatchEntityTest extends TestCase
         $match = $this->makeMatch();
         $match->popEvents();
 
-        $match->updateDetails('A', 'B', null, 'Stadium', $this->later, round: 'Semifinále');
+        $match->updateDetails($this->makeTeam('A'), $this->makeTeam('B'), null, 'Stadium', $this->later, round: 'Semifinále');
         self::assertSame('Semifinále', $match->round);
 
         // updateDetails replaces round wholesale (like venue) — omitting it clears it.
-        $match->updateDetails('A', 'B', null, 'Stadium', $this->later);
+        $match->updateDetails($this->makeTeam('A'), $this->makeTeam('B'), null, 'Stadium', $this->later);
         self::assertNull($match->round);
     }
 
@@ -149,8 +163,8 @@ final class SportMatchEntityTest extends TestCase
         $match = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
             matchSource: $this->makeMatchSource(),
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: $this->makeTeam('A'),
+            awayTeam: $this->makeTeam('B'),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: 'Stadium',
             createdAt: $this->now,
@@ -170,11 +184,11 @@ final class SportMatchEntityTest extends TestCase
         $match = $this->makeMatch();
         $match->popEvents();
 
-        $match->updateDetails('A', 'B', null, 'Stadium', $this->later, isPlayoff: true);
+        $match->updateDetails($this->makeTeam('A'), $this->makeTeam('B'), null, 'Stadium', $this->later, isPlayoff: true);
         self::assertTrue($match->isPlayoff);
 
         // Like round/venue, isPlayoff is replaced wholesale — omitting it resets it.
-        $match->updateDetails('A', 'B', null, 'Stadium', $this->later);
+        $match->updateDetails($this->makeTeam('A'), $this->makeTeam('B'), null, 'Stadium', $this->later);
         self::assertFalse($match->isPlayoff);
     }
 
@@ -184,15 +198,15 @@ final class SportMatchEntityTest extends TestCase
         $match->popEvents();
 
         $match->updateDetails(
-            homeTeam: 'X',
+            homeTeam: $this->makeTeam('X'),
             awayTeam: null,
             kickoffAt: null,
             venue: 'New',
             now: $this->later,
         );
 
-        self::assertSame('X', $match->homeTeam);
-        self::assertSame('B', $match->awayTeam);
+        self::assertSame('X', $match->homeTeam->name);
+        self::assertSame('B', $match->awayTeam->name);
         self::assertSame('New', $match->venue);
         self::assertSame($this->later, $match->updatedAt);
 
@@ -217,7 +231,7 @@ final class SportMatchEntityTest extends TestCase
         $match->cancel($this->now);
 
         $this->expectException(SportMatchCannotBeEdited::class);
-        $match->updateDetails('X', 'Y', null, null, $this->later);
+        $match->updateDetails($this->makeTeam('X'), $this->makeTeam('Y'), null, null, $this->later);
     }
 
     public function testUpdateDetailsThrowsWhenSoftDeleted(): void
@@ -226,7 +240,7 @@ final class SportMatchEntityTest extends TestCase
         $match->softDelete($this->now);
 
         $this->expectException(SportMatchCannotBeEdited::class);
-        $match->updateDetails('X', 'Y', null, null, $this->later);
+        $match->updateDetails($this->makeTeam('X'), $this->makeTeam('Y'), null, null, $this->later);
     }
 
     public function testUpdateAllowedWhenFinished(): void
@@ -235,9 +249,9 @@ final class SportMatchEntityTest extends TestCase
         $match->setFinalScore(1, 0, null, null, null, $this->now);
         $match->popEvents();
 
-        $match->updateDetails('X', 'Y', null, null, $this->later);
+        $match->updateDetails($this->makeTeam('X'), $this->makeTeam('Y'), null, null, $this->later);
 
-        self::assertSame('X', $match->homeTeam);
+        self::assertSame('X', $match->homeTeam->name);
         self::assertTrue($match->isFinished);
     }
 
@@ -247,9 +261,9 @@ final class SportMatchEntityTest extends TestCase
         $match->postponeTo(new \DateTimeImmutable('2025-07-01 18:00'), $this->now);
         $match->popEvents();
 
-        $match->updateDetails('X', null, null, null, $this->later);
+        $match->updateDetails($this->makeTeam('X'), null, null, null, $this->later);
 
-        self::assertSame('X', $match->homeTeam);
+        self::assertSame('X', $match->homeTeam->name);
         self::assertTrue($match->isPostponed);
     }
 

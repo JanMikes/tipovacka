@@ -9,6 +9,7 @@ use App\Entity\SportMatch;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
+use App\Service\Team\TeamResolver;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -25,13 +26,18 @@ final class SportMatchImporter
 
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
+        private readonly TeamResolver $teamResolver,
         private readonly ProvideIdentity $identity,
     ) {
     }
 
     public function preview(UploadedFile $file, MatchSource $matchSource, \DateTimeImmutable $now): SportMatchImportPreview
     {
-        unset($matchSource, $now); // unused here; kept for signature/stability
+        unset($now); // unused here; kept for signature/stability
+
+        // Lowercased team name → already known (exists in the source's scope OR seen
+        // earlier in this file), so the „nový tým" badge shows once per new name.
+        $seenTeams = [];
 
         $spreadsheet = $this->loadSpreadsheet($file);
         $sheet = $spreadsheet->getActiveSheet();
@@ -145,6 +151,8 @@ final class SportMatchImporter
                 venue: $venue,
                 round: $round,
                 isPlayoff: $isPlayoff,
+                homeTeamIsNew: $this->isNewTeamName($matchSource, $home, $seenTeams),
+                awayTeamIsNew: $this->isNewTeamName($matchSource, $away, $seenTeams),
             );
         }
 
@@ -163,8 +171,8 @@ final class SportMatchImporter
             $sportMatch = new SportMatch(
                 id: $this->identity->next(),
                 matchSource: $matchSource,
-                homeTeam: $row->homeTeam,
-                awayTeam: $row->awayTeam,
+                homeTeam: $this->teamResolver->resolve($matchSource, $row->homeTeam, $now),
+                awayTeam: $this->teamResolver->resolve($matchSource, $row->awayTeam, $now),
                 kickoffAt: $row->kickoffAt,
                 venue: $row->venue,
                 createdAt: $now,
@@ -175,6 +183,26 @@ final class SportMatchImporter
         }
 
         return count($rows);
+    }
+
+    /**
+     * A team name is „new" if it doesn't yet resolve to a team in the source's scope
+     * AND hasn't already appeared earlier in this file. Marks the name seen so a
+     * repeated new name is flagged only on its first row.
+     *
+     * @param array<string, true> $seen lowercased name → already known
+     */
+    private function isNewTeamName(MatchSource $matchSource, string $name, array &$seen): bool
+    {
+        $key = mb_strtolower(trim($name));
+
+        if (isset($seen[$key])) {
+            return false;
+        }
+
+        $seen[$key] = true;
+
+        return null === $this->teamResolver->findExisting($matchSource, $name);
     }
 
     public function generateTemplateCsv(): string

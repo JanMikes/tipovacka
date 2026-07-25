@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ sport_match.homeTeam }} vs {{ sport_match.awayTeam }} — {{ brand_name }}{% endblock %}
+{% block title %}{{ sport_match.homeTeam.name }} vs {{ sport_match.awayTeam.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
 <div class="bg-radial">
@@ -9,7 +9,7 @@
         <twig:Breadcrumbs :items="[
             {label: 'Nástěnka', path: path('portal_dashboard')},
             {label: sport_match.matchSource.name, path: path('portal_match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
-            {label: sport_match.homeTeam ~ ' vs ' ~ sport_match.awayTeam},
+            {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name},
         ]" />
 
         {# Hero card #}
@@ -36,8 +36,8 @@
 
             <div class="tip-teams mt-6">
                 <div class="tip-team">
-                    <twig:TeamFlag :name="sport_match.homeTeam" size="56" />
-                    <span class="name">{{ sport_match.homeTeam }}</span>
+                    <twig:TeamFlag :team="sport_match.homeTeam" size="56" />
+                    <span class="name">{{ sport_match.homeTeam.name }}</span>
                 </div>
 
                 {% if sport_match.isFinished or (sport_match.isLive and sport_match.homeScore is not null) %}
@@ -51,8 +51,8 @@
                 {% endif %}
 
                 <div class="tip-team">
-                    <twig:TeamFlag :name="sport_match.awayTeam" size="56" />
-                    <span class="name">{{ sport_match.awayTeam }}</span>
+                    <twig:TeamFlag :team="sport_match.awayTeam" size="56" />
+                    <span class="name">{{ sport_match.awayTeam.name }}</span>
                 </div>
             </div>
 
@@ -203,7 +203,7 @@
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Zrušit zápas"
-                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} zrušit? Tipy na něj nebudou bodovány."
+                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam.name }} – {{ sport_match.awayTeam.name }} zrušit? Tipy na něj nebudou bodovány."
                             data-confirm-confirm-label-value="Ano, zrušit">
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_cancel_' ~ sport_match.id.toRfc4122) }}">
                             <button type="submit" class="btn btn-ghost btn-sm">
@@ -216,7 +216,7 @@
                         <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
                             data-controller="confirm"
                             data-confirm-title-value="Smazat zápas"
-                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam }} – {{ sport_match.awayTeam }} smazat? Všechny tipy na něj zmizí."
+                            data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam.name }} – {{ sport_match.awayTeam.name }} smazat? Všechny tipy na něj zmizí."
                             data-confirm-confirm-label-value="Ano, smazat">
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_delete_' ~ sport_match.id.toRfc4122) }}">
                             <button type="submit" class="btn btn-danger btn-sm">

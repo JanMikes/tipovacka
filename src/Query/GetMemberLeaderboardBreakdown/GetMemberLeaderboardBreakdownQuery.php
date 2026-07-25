@@ -14,6 +14,7 @@ use App\Repository\LeaderboardSnapshotRepository;
 use App\Repository\UserRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Value\TeamView;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -126,8 +127,8 @@ final readonly class GetMemberLeaderboardBreakdownQuery
 
             $rows[] = new MemberMatchBreakdown(
                 sportMatchId: $match->id,
-                homeTeam: $match->homeTeam,
-                awayTeam: $match->awayTeam,
+                homeTeam: TeamView::fromTeam($match->homeTeam),
+                awayTeam: TeamView::fromTeam($match->awayTeam),
                 kickoffAt: $match->kickoffAt,
                 actualHomeScore: $match->homeScore,
                 actualAwayScore: $match->awayScore,

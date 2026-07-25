@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\ListMatchSourceSportMatches;
 
 use App\Repository\SportMatchRepository;
+use App\Value\TeamView;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
@@ -31,8 +32,8 @@ final readonly class ListMatchSourceSportMatchesQuery
             static fn ($m): SportMatchListItem => new SportMatchListItem(
                 id: $m->id,
                 matchSourceId: $m->matchSource->id,
-                homeTeam: $m->homeTeam,
-                awayTeam: $m->awayTeam,
+                homeTeam: TeamView::fromTeam($m->homeTeam),
+                awayTeam: TeamView::fromTeam($m->awayTeam),
                 kickoffAt: $m->kickoffAt,
                 venue: $m->venue,
                 round: $m->round,

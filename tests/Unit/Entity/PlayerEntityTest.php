@@ -8,6 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Entity\Player;
 use App\Entity\Sport;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use PHPUnit\Framework\TestCase;
@@ -41,18 +42,25 @@ final class PlayerEntityTest extends TestCase
         );
         $matchSource->popEvents();
 
+        $team = new Team(
+            id: Uuid::v7(),
+            sport: $matchSource->sport,
+            matchSource: $matchSource,
+            name: 'Tygři',
+            createdAt: $now,
+        );
+
         $id = Uuid::v7();
         $player = new Player(
             id: $id,
-            matchSource: $matchSource,
-            teamName: 'Tygři',
+            team: $team,
             name: 'Jan Novák',
             createdAt: $now,
         );
 
         self::assertTrue($id->equals($player->id));
-        self::assertSame($matchSource, $player->matchSource);
-        self::assertSame('Tygři', $player->teamName);
+        self::assertSame($team, $player->team);
+        self::assertSame('Tygři', $player->team->name);
         self::assertSame('Jan Novák', $player->name);
         self::assertSame($now, $player->createdAt);
     }

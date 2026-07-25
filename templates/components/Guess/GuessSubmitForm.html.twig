@@ -74,7 +74,7 @@
             <div class="tip-inputs">
                 <div class="text-center">
                     <label class="field-label mb-1.5 block" for="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}">
-                        {{ this.sportMatch.homeTeam }}
+                        {{ this.sportMatch.homeTeam.name }}
                     </label>
                     <input
                         type="number"
@@ -94,7 +94,7 @@
 
                 <div class="text-center">
                     <label class="field-label mb-1.5 block" for="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}">
-                        {{ this.sportMatch.awayTeam }}
+                        {{ this.sportMatch.awayTeam.name }}
                     </label>
                     <input
                         type="number"
@@ -181,8 +181,8 @@
                     <div
                         data-controller="scorer-picker"
                         data-scorer-picker-max-value="5"
-                        data-scorer-picker-home-team-value="{{ this.sportMatch.homeTeam }}"
-                        data-scorer-picker-away-team-value="{{ this.sportMatch.awayTeam }}"
+                        data-scorer-picker-home-team-value="{{ this.sportMatch.homeTeam.name }}"
+                        data-scorer-picker-away-team-value="{{ this.sportMatch.awayTeam.name }}"
                     >
                         <label class="field-label mb-1.5 block" for="guess_scorers_{{ this.sportMatch.id }}_{{ this.competitionId }}">
                             Tip na střelce <span class="font-normal normal-case text-white/40">(max 5, nepovinné)</span>
@@ -209,11 +209,11 @@
                             <span>Nového hráče přidat do týmu:</span>
                             <label class="inline-flex cursor-pointer items-center gap-1.5">
                                 <input type="radio" name="scorer_side_{{ this.sportMatch.id }}_{{ this.competitionId }}" value="home" checked data-scorer-picker-target="sideRadio" />
-                                {{ this.sportMatch.homeTeam }}
+                                {{ this.sportMatch.homeTeam.name }}
                             </label>
                             <label class="inline-flex cursor-pointer items-center gap-1.5">
                                 <input type="radio" name="scorer_side_{{ this.sportMatch.id }}_{{ this.competitionId }}" value="away" data-scorer-picker-target="sideRadio" />
-                                {{ this.sportMatch.awayTeam }}
+                                {{ this.sportMatch.awayTeam.name }}
                             </label>
                         </div>
                         <input

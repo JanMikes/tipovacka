@@ -87,8 +87,8 @@ final readonly class NotifyMatchEvaluatedHandler
                 $this->notifier->notify(
                     user: $user,
                     type: NotificationType::MatchEvaluated,
-                    title: sprintf('Vyhodnoceno: %s %s %s', $match->homeTeam, $score, $match->awayTeam),
-                    body: sprintf('%s %s %s: získáváte %d b.%s', $match->homeTeam, $score, $match->awayTeam, $points, $standing),
+                    title: sprintf('Vyhodnoceno: %s %s %s', $match->homeTeam->name, $score, $match->awayTeam->name),
+                    body: sprintf('%s %s %s: získáváte %d b.%s', $match->homeTeam->name, $score, $match->awayTeam->name, $points, $standing),
                     url: $url,
                     competition: $competition,
                     payload: ['points' => $points, 'rank' => $rank, 'sportMatchId' => $event->sportMatchId->toRfc4122()],

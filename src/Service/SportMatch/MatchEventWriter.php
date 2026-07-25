@@ -39,13 +39,12 @@ final readonly class MatchEventWriter
         $players = [];
 
         foreach ($events as $event) {
-            $teamName = MatchSide::Home === $event->side ? $sportMatch->homeTeam : $sportMatch->awayTeam;
+            $team = MatchSide::Home === $event->side ? $sportMatch->homeTeam : $sportMatch->awayTeam;
             $playerName = trim($event->playerName);
             $memoKey = mb_strtolower($playerName);
 
             $players[$event->side->value][$memoKey] ??= $this->playerRepository->findOrCreate(
-                matchSource: $sportMatch->matchSource,
-                teamName: $teamName,
+                team: $team,
                 name: $playerName,
                 identity: $this->identity,
                 now: $now,

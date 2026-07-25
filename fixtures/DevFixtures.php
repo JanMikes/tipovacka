@@ -16,6 +16,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
+use App\Service\Team\TeamResolver;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -70,6 +71,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
 
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly TeamResolver $teamResolver,
     ) {
     }
 
@@ -531,8 +533,8 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $match = new SportMatch(
             id: Uuid::fromString('019ddddd-0000-7000-8000-'.str_pad($idSuffix, 12, '0', STR_PAD_LEFT)),
             matchSource: $matchSource,
-            homeTeam: $homeTeam,
-            awayTeam: $awayTeam,
+            homeTeam: $this->teamResolver->resolve($matchSource, $homeTeam, $now),
+            awayTeam: $this->teamResolver->resolve($matchSource, $awayTeam, $now),
             kickoffAt: new \DateTimeImmutable($kickoff, new \DateTimeZone('UTC')),
             venue: $venue,
             // createdAt = the dev seed "now" (2025-06-15), like AppFixtures — NOT a

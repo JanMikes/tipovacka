@@ -6,6 +6,7 @@ namespace App\Query\GetSportMatchDetail;
 
 use App\Entity\SportMatch;
 use App\Exception\SportMatchNotFound;
+use App\Value\TeamView;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -37,8 +38,8 @@ final readonly class GetSportMatchDetailQuery
             id: $sportMatch->id,
             matchSourceId: $sportMatch->matchSource->id,
             matchSourceName: $sportMatch->matchSource->name,
-            homeTeam: $sportMatch->homeTeam,
-            awayTeam: $sportMatch->awayTeam,
+            homeTeam: TeamView::fromTeam($sportMatch->homeTeam),
+            awayTeam: TeamView::fromTeam($sportMatch->awayTeam),
             kickoffAt: $sportMatch->kickoffAt,
             venue: $sportMatch->venue,
             state: $sportMatch->state,

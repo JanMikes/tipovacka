@@ -6,8 +6,8 @@
     Left border tinted by state (tipped = zelená, locked = Uzamčeno, finished = accent).
 
     props:
-      homeTeam     string        — domácí tým
-      awayTeam     string        — hostující tým
+      homeTeam     TeamView|Team — domácí tým (objekt: .name + monogram)
+      awayTeam     TeamView|Team — hostující tým
       kickoffAt    \DateTimeImmutable|null — výkop (formát „1. 6." + „20:15", Europe/Prague)
       round        string|null   — kolo / fáze (např. „Osmifinále")
       isPlayoff    bool          — zobrazí malou pilulku „Playoff" vedle kola
@@ -67,10 +67,10 @@
     {# domácí #}
     <div class="tip-row-teams home">
         <div class="info">
-            <div class="name">{{ homeTeam }}</div>
+            <div class="name">{{ homeTeam.name }}</div>
             <div class="role">Domácí</div>
         </div>
-        <twig:TeamFlag :name="homeTeam" size="32" />
+        <twig:TeamFlag :team="homeTeam" size="32" />
     </div>
 
     {# skóre / výkop #}
@@ -92,9 +92,9 @@
 
     {# hosté #}
     <div class="tip-row-teams">
-        <twig:TeamFlag :name="awayTeam" size="32" />
+        <twig:TeamFlag :team="awayTeam" size="32" />
         <div class="info">
-            <div class="name">{{ awayTeam }}</div>
+            <div class="name">{{ awayTeam.name }}</div>
             <div class="role">Hosté</div>
         </div>
     </div>

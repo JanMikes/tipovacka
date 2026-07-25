@@ -40,7 +40,9 @@ final class UpdateSportMatchController extends AbstractController
         $this->denyAccessUnlessGranted(SportMatchVoter::EDIT, $sportMatch);
 
         $formData = SportMatchFormData::fromSportMatch($sportMatch);
-        $form = $this->createForm(SportMatchFormType::class, $formData);
+        $form = $this->createForm(SportMatchFormType::class, $formData, [
+            'teams_url' => $this->generateUrl('portal_match_source_teams', ['id' => $sportMatch->matchSource->id->toRfc4122()]),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

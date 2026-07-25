@@ -14,6 +14,7 @@ use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\TipVisibilityGate;
+use App\Value\TeamView;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -129,8 +130,8 @@ final readonly class GetCompetitionGuessMatrixQuery
 
             $matchColumns[] = new MatrixMatchColumn(
                 sportMatchId: $match->id,
-                homeTeam: $match->homeTeam,
-                awayTeam: $match->awayTeam,
+                homeTeam: TeamView::fromTeam($match->homeTeam),
+                awayTeam: TeamView::fromTeam($match->awayTeam),
                 kickoffAt: $match->kickoffAt,
                 state: $match->state,
                 actualHomeScore: $match->homeScore,

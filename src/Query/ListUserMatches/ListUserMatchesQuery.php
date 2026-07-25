@@ -13,6 +13,7 @@ use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\TipStatsProvider;
 use App\Service\EffectiveTipDeadlineResolver;
+use App\Value\TeamView;
 use App\Value\TipStats;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -125,8 +126,8 @@ final readonly class ListUserMatchesQuery
                 id: $m->id,
                 matchSourceId: $m->matchSource->id,
                 matchSourceName: $m->matchSource->name,
-                homeTeam: $m->homeTeam,
-                awayTeam: $m->awayTeam,
+                homeTeam: TeamView::fromTeam($m->homeTeam),
+                awayTeam: TeamView::fromTeam($m->awayTeam),
                 kickoffAt: $m->kickoffAt,
                 venue: $m->venue,
                 round: $m->round,

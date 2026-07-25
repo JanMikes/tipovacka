@@ -18,14 +18,31 @@ final class SportMatchFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // The team-picker (tom-select autocomplete + create-new) is a progressive
+        // enhancement over these plain text inputs; with JS off the typed name still
+        // posts and the server resolves it to a Team. The URL is per-source so the
+        // picker autocompletes the right scope (global directory / local teams).
+        $homeAttr = ['placeholder' => 'Např. Sparta Praha'];
+        $awayAttr = ['placeholder' => 'Např. Slavia Praha'];
+
+        if (null !== $options['teams_url']) {
+            $picker = [
+                'data-controller' => 'team-picker',
+                'data-team-picker-url-value' => $options['teams_url'],
+                'autocomplete' => 'off',
+            ];
+            $homeAttr += $picker;
+            $awayAttr += $picker;
+        }
+
         $builder->add('homeTeam', TextType::class, [
             'label' => 'Domácí tým',
-            'attr' => ['placeholder' => 'Např. Sparta Praha'],
+            'attr' => $homeAttr,
         ]);
 
         $builder->add('awayTeam', TextType::class, [
             'label' => 'Hostující tým',
-            'attr' => ['placeholder' => 'Např. Slavia Praha'],
+            'attr' => $awayAttr,
         ]);
 
         $builder->add('kickoffAt', DateTimeType::class, [
@@ -64,6 +81,8 @@ final class SportMatchFormType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => SportMatchFormData::class,
+            'teams_url' => null,
         ]);
+        $resolver->setAllowedTypes('teams_url', ['string', 'null']);
     }
 }

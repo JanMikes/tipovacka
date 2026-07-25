@@ -10,6 +10,7 @@ use App\Entity\CompetitionMatchSelection;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use PHPUnit\Framework\TestCase;
@@ -58,8 +59,8 @@ final class CompetitionMatchSelectionEntityTest extends TestCase
         $sportMatch = new SportMatch(
             id: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
             matchSource: $matchSource,
-            homeTeam: 'A',
-            awayTeam: 'B',
+            homeTeam: new Team(id: Uuid::v7(), sport: $matchSource->sport, matchSource: $matchSource, name: 'A', createdAt: $now),
+            awayTeam: new Team(id: Uuid::v7(), sport: $matchSource->sport, matchSource: $matchSource, name: 'B', createdAt: $now),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: null,
             createdAt: $now,
