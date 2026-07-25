@@ -335,6 +335,16 @@ label.required::after {
     .input:focus, .field input:focus, .field select:focus, .field textarea:focus {
         border-color: rgba(70,153,208,0.6); box-shadow: 0 0 0 3px rgba(70,153,208,0.18);
     }
+    /* Native <select>: drop the OS chevron and draw our own, so selects match the
+       text inputs everywhere (admin forms + the create wizard). tom-select-enhanced
+       selects are hidden (opacity:0) and unaffected visually. */
+    .field select, select.input {
+        appearance: none; -webkit-appearance: none; -moz-appearance: none;
+        padding-right: 40px; cursor: pointer;
+        background-color: var(--color-inset);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8e94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 14px center; background-size: 16px 16px;
+    }
     .num-input {
         width: 64px; padding: 6px 8px; text-align: center;
         background: var(--color-inset); border: 1px solid var(--border-2);
@@ -387,7 +397,7 @@ label.required::after {
         transition: background 150ms var(--ease-standard), border-color 150ms var(--ease-standard), box-shadow 150ms var(--ease-standard);
     }
     .option-card:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); }
-    .option-card.selected { background: rgba(70,153,208,0.12); border-color: rgba(70,153,208,0.55); box-shadow: 0 0 0 3px rgba(70,153,208,0.12); }
+    .option-card.selected, .option-card:has(input:checked) { background: rgba(70,153,208,0.12); border-color: rgba(70,153,208,0.55); box-shadow: 0 0 0 3px rgba(70,153,208,0.12); }
 
     /* ---- one-click copy field ---- */
     .copy-field {

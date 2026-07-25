@@ -8,6 +8,29 @@ Podpora) driven by LiveProps + LiveActions (`next` / `back` / `submit`); each st
 validates server-side before advancing. Submit dispatches ONE
 `CreateCompetitionCommand`, composing the whole aggregate in one transaction.
 
+## Admin-only global branch
+
+Step 1 shows a „Typ soutěže" toggle **only to `ROLE_ADMIN`** (`isAdmin` getter). Picking
+„Globální soutěž" (the `useGlobalKind` action — re-checks `ROLE_ADMIN`, so a non-admin
+can never enter the mode; `isGlobalKind` is a non-writable LiveProp) turns the same wizard
+into the admin global-competition creator:
+
+- shows an **„Vstupné (kredity)"** field, restricts the source list to **curated only**
+  (private/from-scratch is hidden — a global competition must sit on a curated source),
+  and forces „all matches" (the subset picker + playoff toggle are hidden);
+- **skips the „Pozvánky" step** entirely — PIN / shareable link / e-mail invites are all
+  invalid for a global competition (joined only via the entry-fee flow). The step flow is
+  driven by `stepSequence` (`[1,2,4]` global, `[1,2,3,4]` private); the dot stepper,
+  „Krok X ze Y" and `next`/`back` all derive from it;
+- keeps the **rules** step and offers monetization **none | premium | boosts** (private
+  wizard offers only premium/boosts; global defaults to `none`);
+- submit branches to the existing, tested **`CreateGlobalCompetitionCommand`** /
+  `GlobalCompetitionComposer` path (isGlobal, mode All, owner = admin, entry fee, rule
+  config) instead of `CreateCompetitionCommand` — one domain path, not a duplicate.
+
+The dedicated admin page (`admin_global_competition_create`) and the „Rovnou vytvořit
+globální soutěž" checkbox on curated-source creation still exist and hit the same command.
+
 ## Dot stepper (reusable)
 
 Ported into `assets/styles/app.css` (re-derived — the DS source rule was malformed):

@@ -31,17 +31,15 @@
     {% endif %}
 
     {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="field">
-                {{ form_label(form.entryFeeCredits) }}
-                {{ form_widget(form.entryFeeCredits, {attr: fee_locked ? {disabled: 'disabled'} : {}}) }}
-                {{ form_errors(form.entryFeeCredits) }}
-            </div>
-            <div class="field">
-                {{ form_label(form.monetization) }}
-                {{ form_widget(form.monetization, {attr: fee_locked ? {disabled: 'disabled'} : {}}) }}
-                {{ form_errors(form.monetization) }}
-            </div>
+        <div class="field sm:max-w-xs">
+            {{ form_label(form.entryFeeCredits) }}
+            {{ form_widget(form.entryFeeCredits, {attr: fee_locked ? {disabled: 'disabled'} : {}}) }}
+            {{ form_errors(form.entryFeeCredits) }}
+        </div>
+        <div class="field">
+            {{ form_label(form.monetization) }}
+            {% include 'admin/competition/_monetization_choices.html.twig' with {field: form.monetization, disabled: fee_locked} %}
+            {{ form_errors(form.monetization) }}
         </div>
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary"{{ fee_locked ? ' disabled' : '' }}>

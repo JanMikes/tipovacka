@@ -71,6 +71,17 @@ and monetization (`none | premium | boosts`). Rejoining after leaving charges ag
 On-behalf tipping and anonymous members are disabled in global competitions (each player
 owns their tips). User competitions are joined via PIN / shareable link / email invite only.
 
+**Where an admin creates one.** Three entry points, all hitting the same
+`CreateGlobalCompetitionCommand` / `GlobalCompetitionComposer`: (1) the **create-competition
+wizard** itself — an admin-only „Typ soutěže → Globální soutěž" toggle on step 1 turns the
+normal „Vytvořit soutěž" flow into the global creator (adds the entry-fee field, restricts
+to curated sources + all matches, skips the „Pozvánky" step, offers monetization
+none/premium/boosts, keeps the rules step); (2) the dedicated admin page
+`admin_global_competition_create` (`/admin/souteze/globalni/vytvorit`); (3) the „Rovnou
+vytvořit globální soutěž" checkbox when an admin creates a curated source. The wizard toggle
+is `ROLE_ADMIN`-gated at both the render (`isAdmin`) and action (`useGlobalKind`) level, and
+`isGlobalKind` is a non-writable LiveProp, so the mode is unreachable by a non-admin.
+
 ### Monetization of a competition — premium XOR boosts
 Single column `monetization: none | premium | boosts` — structurally impossible to combine.
 - **premium** („Zaplatím za celou skupinu"): manager pays 10 credits per player, charged at
@@ -199,3 +210,4 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-23 | Manager/admin auto-entitlement to VISIBILITY removed (reverses the 2026-07-19 row): an organizer buys „Lišta tipů ostatních" / „Konkrétní tipy kolegů" like any player, and all three boosts are offered to them; `PurchaseBoostHandler` now rejects only what the buyer already owns or already gets from a premium toggle. Kept revertible via `CompetitionEntitlements::$managersSeeTipsForFree` (config/services.php) | the organizer usually plays in their own competition, so a free look at everyone's tips was an in-game advantage over paying members — and it made the paywall invisible to exactly the person exploring the app |
 | 2026-07-23 | On-behalf tipping shows filled/not-filled only: „Tipovat za členy" and the match page's „Tipy členů" render a „Vyplněno"/„Nevyplněno" pill with EMPTY score inputs unless the manager is separately entitled (own row, bought/premium entitlement, or past deadline); blank inputs still skip on save, so a blind manager cannot wipe a tip by accident | managing a member's tip needs to know only that it exists — showing the scores would re-open the advantage the row above closes |
 | 2026-07-23 | The distribution bar/paywall is a single component (`Match:TipStats`) fed by a single batch resolver (`TipStatsProvider` + `GetPickDistributions`), rendered on every match-listing surface; locked always renders (dropping the player count when nobody has tipped yet), unlocked renders only with ≥1 tip | it previously existed on one page only, so most users never saw what they could buy; batching keeps a page O(competitions) instead of O(matches × competitions) |
+| 2026-07-25 | Admins can create a global competition **from inside the create-competition wizard** via an admin-only „Typ soutěže" toggle (global mode: entry-fee field, curated-source-only, all matches, „Pozvánky" step skipped, monetization none/premium/boosts, rules kept), branching to the existing `CreateGlobalCompetitionCommand`; the dedicated admin page + curated-source checkbox remain. The mode is `ROLE_ADMIN`-gated at render + action and `isGlobalKind` is non-writable, so non-admins can never reach it | the global feature was fully built (S09) but its create entry point lived only in the admin area and admins looked for it where they create every other competition — the wizard — and expected to set „allowed features" (rules) + entry fee there; the wizard already collects rules + monetization, so folding global in removes the discoverability gap without a second code path |

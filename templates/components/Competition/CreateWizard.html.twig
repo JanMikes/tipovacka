@@ -6,7 +6,7 @@
     judgment calls (LiveProp-driven checklist, writable-array rule state, WYSIWYG
     PIN/link). Glossary: soutěž = Competition, zdroj zápasů = MatchSource.
 #}
-{% set steps = ['Základy', 'Pravidla', 'Pozvánky', 'Podpora'] %}
+{% set step_labels = {1: 'Základy', 2: 'Pravidla', 3: 'Pozvánky', 4: 'Podpora'} %}
 {% set rule_copy = {
     correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
     correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
@@ -29,19 +29,20 @@
         {# ---- Stepper ---- #}
         <div class="border-b border-white/10 px-6 py-6 sm:px-8">
             <div class="stepper">
-                {% for i in 1..4 %}
+                {% for s in this.stepSequence %}
+                    {% set position = loop.index %}
                     <div class="step-item">
-                        <div class="step-num {{ step == i ? 'active' : (step > i ? 'done' : '') }}">
-                            {% if step > i %}
+                        <div class="step-num {{ step == s ? 'active' : (this.stepPosition > position ? 'done' : '') }}">
+                            {% if this.stepPosition > position %}
                                 <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                             {% else %}
-                                {{ i }}
+                                {{ position }}
                             {% endif %}
                         </div>
-                        <span class="step-label {{ step >= i ? 'is-current' : '' }}">{{ steps[i - 1] }}</span>
+                        <span class="step-label {{ this.stepPosition >= position ? 'is-current' : '' }}">{{ step_labels[s] }}</span>
                     </div>
                     {% if not loop.last %}
-                        <div class="step-bar {{ step > i ? 'done' : '' }}"></div>
+                        <div class="step-bar {{ this.stepPosition > position ? 'done' : '' }}"></div>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -58,28 +59,62 @@
             {# ================= KROK 1 — Základy ================= #}
             {% if step == 1 %}
                 <div class="mb-6">
-                    <span class="eyebrow">Krok 1 ze 4</span>
+                    <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
                     <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Vytvořit novou soutěž</h2>
-                    <p class="mt-1 text-sm text-white/60">Nastavte základy. Hráče pozvete v dalším kroku.</p>
+                    <p class="mt-1 text-sm text-white/60">{{ isGlobalKind ? 'Veřejná soutěž nad kurátorovaným zdrojem — přidat se může kdokoli za vstupné.' : 'Nastavte základy. Hráče pozvete v dalším kroku.' }}</p>
                 </div>
 
                 <div class="space-y-5">
+                    {% if this.isAdmin %}
+                        {# Admin-only: pick private vs global. Actions re-check ROLE_ADMIN
+                           and reset the fields the other kind cannot carry. #}
+                        <div class="field">
+                            <span class="field-label">Typ soutěže</span>
+                            <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <button type="button" data-action="live#action" data-live-action-param="usePrivateKind"
+                                        class="option-card flex cursor-pointer items-start gap-3 text-left {{ not isGlobalKind ? 'selected' : '' }}">
+                                    <twig:ux:icon name="lucide:users" class="mt-0.5 h-5 w-5 shrink-0 text-accent-300" />
+                                    <span class="text-sm">
+                                        <span class="block font-semibold text-white">Běžná soutěž</span>
+                                        <span class="mt-1 block text-xs leading-relaxed text-white/50">Soukromá — hráči se přidají přes PIN, odkaz nebo e-mailovou pozvánku.</span>
+                                    </span>
+                                </button>
+                                <button type="button" data-action="live#action" data-live-action-param="useGlobalKind"
+                                        class="option-card flex cursor-pointer items-start gap-3 text-left {{ isGlobalKind ? 'selected' : '' }}">
+                                    <twig:ux:icon name="lucide:globe" class="mt-0.5 h-5 w-5 shrink-0 text-draw" />
+                                    <span class="text-sm">
+                                        <span class="block font-semibold text-white">Globální soutěž</span>
+                                        <span class="mt-1 block text-xs leading-relaxed text-white/50">Veřejná — kdokoli ji najde a přidá se za vstupné v kreditech.</span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <div class="field">
                         <label class="field-label" for="wizard-name">Název soutěže</label>
                         <input id="wizard-name" type="text" class="input" placeholder="Např. Kámoši u piva"
                                data-model="norender|name" value="{{ name }}" maxlength="160" />
                     </div>
 
-                    <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
-                        <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
-                               data-model="fromScratch" {{ fromScratch ? 'checked' }} />
-                        <span class="text-sm">
-                            <span class="block font-semibold text-white">Vytvořit soutěž od začátku</span>
-                            <span class="mt-1 block text-xs leading-relaxed text-white/50">Bez šablony — zápasy, týmy a termíny doplníte ručně.</span>
-                        </span>
-                    </label>
+                    {% if isGlobalKind %}
+                        <div class="field">
+                            <label class="field-label" for="wizard-entry-fee">Vstupné (kredity)</label>
+                            <input id="wizard-entry-fee" type="number" min="0" class="input" data-model="entryFeeCredits" value="{{ entryFeeCredits }}" />
+                            <p class="text-xs leading-relaxed text-white/50">0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.</p>
+                        </div>
+                    {% else %}
+                        <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
+                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                   data-model="fromScratch" {{ fromScratch ? 'checked' }} />
+                            <span class="text-sm">
+                                <span class="block font-semibold text-white">Vytvořit soutěž od začátku</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Bez šablony — zápasy, týmy a termíny doplníte ručně.</span>
+                            </span>
+                        </label>
+                    {% endif %}
 
-                    {% if fromScratch %}
+                    {% if fromScratch and not isGlobalKind %}
                         <div class="field">
                             <label class="field-label" for="wizard-sport">Sport</label>
                             <select id="wizard-sport" class="input" data-model="sportId">
@@ -102,10 +137,10 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                            <p class="text-xs leading-relaxed text-white/50">Rozpis zápasů, nad kterým se soutěž tipuje.</p>
+                            <p class="text-xs leading-relaxed text-white/50">{{ isGlobalKind ? 'Globální soutěž zahrnuje všechny zápasy vybraného zdroje.' : 'Rozpis zápasů, nad kterým se soutěž tipuje.' }}</p>
                         </div>
 
-                        {% if this.selectedSource %}
+                        {% if this.selectedSource and not isGlobalKind %}
                             <div class="space-y-3 border-t border-white/10 pt-5">
                                 <span class="field-label">Zápasy soutěže</span>
                                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -170,7 +205,7 @@
             {# ================= KROK 2 — Pravidla ================= #}
             {% elseif step == 2 %}
                 <div class="mb-6">
-                    <span class="eyebrow">Krok 2 ze 4</span>
+                    <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
                     <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Vyberte pravidla</h2>
                     <p class="mt-1 text-sm text-white/60">Bodování ovlivní pořadí v žebříčku. Hodnoty lze kdykoli upravit.</p>
                 </div>
@@ -232,7 +267,7 @@
             {# ================= KROK 3 — Pozvánky ================= #}
             {% elseif step == 3 %}
                 <div class="mb-6">
-                    <span class="eyebrow">Krok 3 ze 4</span>
+                    <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
                     <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Pozvěte hráče</h2>
                     <p class="mt-1 text-sm text-white/60">Vše je nepovinné — pozvat můžete kdykoli později z detailu soutěže.</p>
                 </div>
@@ -283,18 +318,38 @@
             {# ================= KROK 4 — Podpora ================= #}
             {% elseif step == 4 %}
                 <div class="mb-6">
-                    <span class="eyebrow">Krok 4 ze 4</span>
-                    <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
-                        <twig:ux:icon name="lucide:beer" class="h-6 w-6 text-draw" />
-                        Pozvete nás na pivo?
-                    </h2>
-                    <p class="mt-1 text-sm text-white/60">Wtips je zdarma. Když nás podpoříte, můžeme ho dál vylepšovat. Vyberte, jak na to.</p>
+                    <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
+                    {% if isGlobalKind %}
+                        <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
+                            <twig:ux:icon name="lucide:coins" class="h-6 w-6 text-draw" />
+                            Monetizace soutěže
+                        </h2>
+                        <p class="mt-1 text-sm text-white/60">Vstupné se strhává nezávisle. Tady vyberte, jak si hráči odemknou placené funkce (nebo je nechte vypnuté).</p>
+                    {% else %}
+                        <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
+                            <twig:ux:icon name="lucide:beer" class="h-6 w-6 text-draw" />
+                            Pozvete nás na pivo?
+                        </h2>
+                        <p class="mt-1 text-sm text-white/60">Wtips je zdarma. Když nás podpoříte, můžeme ho dál vylepšovat. Vyberte, jak na to.</p>
+                    {% endif %}
                 </div>
+
+                {% if isGlobalKind %}
+                    {# None — a public competition is free of paid features by default. #}
+                    <label class="option-card mb-3 flex cursor-pointer flex-col {{ monetization == 'none' ? 'selected' : '' }}">
+                        <input type="radio" name="wizard-monetization" value="none" class="sr-only" data-model="monetization" {{ monetization == 'none' ? 'checked' }} />
+                        <span class="flex items-center gap-2 text-sm font-bold text-white">
+                            <twig:ux:icon name="lucide:circle-slash" class="h-5 w-5 text-win" />
+                            Bez placených funkcí
+                        </span>
+                        <span class="mt-1 text-[13px] text-white/60">Soutěž běží jen na vstupné. Nikdo si nic nedokupuje, žádné boosty ani prémium.</span>
+                    </label>
+                {% endif %}
 
                 <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
                     {# Premium #}
                     <label class="option-card relative flex cursor-pointer flex-col {{ monetization == 'premium' ? 'selected' : '' }}">
-                        <span class="badge badge-organizer absolute right-3 top-3 text-[10px] uppercase tracking-wider">Doporučujeme</span>
+                        {% if not isGlobalKind %}<span class="badge badge-organizer absolute right-3 top-3 text-[10px] uppercase tracking-wider">Doporučujeme</span>{% endif %}
                         <input type="radio" name="wizard-monetization" value="premium" class="sr-only" data-model="monetization" {{ monetization == 'premium' ? 'checked' }} />
                         <span class="flex items-center gap-2 text-sm font-bold text-white">
                             <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-draw" />
@@ -362,7 +417,7 @@
                 {% else %}
                     <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="submit">
                         <twig:ux:icon name="lucide:party-popper" class="h-4 w-4" />
-                        {{ monetization == 'premium' ? 'Vytvořit a přispět' : 'Vytvořit soutěž' }}
+                        {{ isGlobalKind ? 'Vytvořit globální soutěž' : (monetization == 'premium' ? 'Vytvořit a přispět' : 'Vytvořit soutěž') }}
                     </button>
                 {% endif %}
             </div>

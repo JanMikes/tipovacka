@@ -39,6 +39,18 @@
 
         <div class="actions">
             {% if is_app %}
+                {% if is_granted('ROLE_ADMIN') %}
+                    {# Admins never found the panel — it used to hide only inside the
+                       avatar dropdown. A visible top-bar entry fixes that (mobile keeps
+                       it in the hamburger menu below). #}
+                    <a href="{{ path('admin_match_source_list') }}"
+                       class="btn btn-ghost btn-sm hidden text-accent-300 hover:text-accent-200 sm:inline-flex{{ current starts with 'admin' ? ' active' }}"
+                       title="Administrace"{{ current starts with 'admin' ? ' aria-current="page"' }}>
+                        <twig:ux:icon name="lucide:shield" class="h-4 w-4" />
+                        <span class="cta-label">Administrace</span>
+                    </a>
+                {% endif %}
+
                 <twig:Notification:Bell />
 
                 <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm">

@@ -31,17 +31,15 @@
             {{ form_widget(form.name) }}
             {{ form_errors(form.name) }}
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="field">
-                {{ form_label(form.entryFeeCredits) }}
-                {{ form_widget(form.entryFeeCredits) }}
-                {{ form_errors(form.entryFeeCredits) }}
-            </div>
-            <div class="field">
-                {{ form_label(form.monetization) }}
-                {{ form_widget(form.monetization) }}
-                {{ form_errors(form.monetization) }}
-            </div>
+        <div class="field sm:max-w-xs">
+            {{ form_label(form.entryFeeCredits) }}
+            {{ form_widget(form.entryFeeCredits) }}
+            {{ form_errors(form.entryFeeCredits) }}
+        </div>
+        <div class="field">
+            {{ form_label(form.monetization) }}
+            {% include 'admin/competition/_monetization_choices.html.twig' with {field: form.monetization, disabled: false} %}
+            {{ form_errors(form.monetization) }}
         </div>
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary">

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Twig\Components\Competition;
 
 use App\Command\CreateCompetition\CreateCompetitionCommand;
+use App\Command\CreateGlobalCompetition\CreateGlobalCompetitionCommand;
 use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
@@ -59,7 +60,6 @@ final class CreateWizard extends AbstractController
     use DefaultActionTrait;
 
     private const int FIRST_STEP = 1;
-    private const int LAST_STEP = 4;
 
     #[LiveProp]
     public int $step = self::FIRST_STEP;
@@ -69,6 +69,19 @@ final class CreateWizard extends AbstractController
 
     #[LiveProp(writable: true)]
     public bool $fromScratch = false;
+
+    /**
+     * Admin-only: build a GLOBAL (publicly discoverable) competition instead of a
+     * private one. Flipped exclusively by the {@see useGlobalKind}/{@see usePrivateKind}
+     * actions (both re-check ROLE_ADMIN) — never a writable prop — and {@see submit()}
+     * re-denies non-admins as the final guard, so the mode is unforgeable client-side.
+     */
+    #[LiveProp]
+    public bool $isGlobalKind = false;
+
+    /** Global-only entry fee in credits (0 = free), burned once at join. */
+    #[LiveProp(writable: true)]
+    public int $entryFeeCredits = 0;
 
     #[LiveProp(writable: true)]
     public string $sportId = Sport::FOOTBALL_ID;
@@ -159,12 +172,17 @@ final class CreateWizard extends AbstractController
      */
     public array $availableSources {
         get {
-            $user = $this->currentUser();
             $sources = $this->matchSourceRepository->findActiveCurated();
 
-            foreach ($this->matchSourceRepository->findPrivateByOwner($user->id) as $private) {
-                if ($private->isActive) {
-                    $sources[] = $private;
+            // A global competition must sit on a curated source — never a private
+            // one — so in global mode the user's own private sources are dropped.
+            if (!$this->isGlobalKind) {
+                $user = $this->currentUser();
+
+                foreach ($this->matchSourceRepository->findPrivateByOwner($user->id) as $private) {
+                    if ($private->isActive) {
+                        $sources[] = $private;
+                    }
                 }
             }
 
@@ -278,8 +296,37 @@ final class CreateWizard extends AbstractController
         ];
     }
 
+    /**
+     * The ordered steps actually shown. A global competition skips „Pozvánky"
+     * (step 3): PIN, shareable link and e-mail invites are all invalid for it
+     * (joined only via the entry-fee flow). Numbering, progress and next/back
+     * navigation all derive from this sequence.
+     *
+     * @var non-empty-list<int>
+     */
+    public array $stepSequence {
+        get => $this->isGlobalKind ? [1, 2, 4] : [1, 2, 3, 4];
+    }
+
+    public int $stepCount {
+        get => count($this->stepSequence);
+    }
+
+    /** 1-based position of the current step within {@see $stepSequence}. */
+    public int $stepPosition {
+        get {
+            $index = array_search($this->step, $this->stepSequence, true);
+
+            return false === $index ? 1 : $index + 1;
+        }
+    }
+
+    public bool $isAdmin {
+        get => $this->security->isGranted('ROLE_ADMIN');
+    }
+
     public bool $isLastStep {
-        get => self::LAST_STEP === $this->step;
+        get => $this->step === $this->stepSequence[array_key_last($this->stepSequence)];
     }
 
     // ---- Actions ---------------------------------------------------------
@@ -293,8 +340,11 @@ final class CreateWizard extends AbstractController
             return;
         }
 
-        if ($this->step < self::LAST_STEP) {
-            ++$this->step;
+        $sequence = $this->stepSequence;
+        $index = array_search($this->step, $sequence, true);
+
+        if (false !== $index && $index < count($sequence) - 1) {
+            $this->step = $sequence[$index + 1];
         }
     }
 
@@ -303,9 +353,39 @@ final class CreateWizard extends AbstractController
     {
         $this->errorMessage = null;
 
-        if ($this->step > self::FIRST_STEP) {
-            --$this->step;
+        $sequence = $this->stepSequence;
+        $index = array_search($this->step, $sequence, true);
+
+        if (false !== $index && $index > 0) {
+            $this->step = $sequence[$index - 1];
         }
+    }
+
+    /**
+     * Admin-only: switch the wizard into GLOBAL mode. Clears the choices a global
+     * competition cannot carry (from-scratch source, subset selection) and resets
+     * monetization to „none" — a public competition is free of paid features by
+     * default; the admin may still pick premium/boosts. Re-checks ROLE_ADMIN so
+     * the mode can never be entered by a non-admin.
+     */
+    #[LiveAction]
+    public function useGlobalKind(): void
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $this->isGlobalKind = true;
+        $this->fromScratch = false;
+        $this->selectionMode = 'all';
+        $this->monetization = CompetitionMonetization::None->value;
+        $this->errorMessage = null;
+    }
+
+    #[LiveAction]
+    public function usePrivateKind(): void
+    {
+        $this->isGlobalKind = false;
+        $this->monetization = CompetitionMonetization::Boosts->value;
+        $this->errorMessage = null;
     }
 
     #[LiveAction]
@@ -319,14 +399,19 @@ final class CreateWizard extends AbstractController
     {
         $this->errorMessage = null;
 
-        // Defensive re-validation of every gated step.
-        for ($stepToValidate = self::FIRST_STEP; $stepToValidate <= self::LAST_STEP; ++$stepToValidate) {
+        // Defensive re-validation of every gated step actually shown.
+        foreach ($this->stepSequence as $stepToValidate) {
             if (!$this->validateStep($stepToValidate)) {
                 return null;
             }
         }
 
         $user = $this->currentUser();
+
+        if ($this->isGlobalKind) {
+            return $this->submitGlobal($user);
+        }
+
         $source = $this->fromScratch ? null : $this->selectedSource;
 
         if (!$this->fromScratch) {
@@ -382,6 +467,51 @@ final class CreateWizard extends AbstractController
 
     // ---- Internals -------------------------------------------------------
 
+    /**
+     * Admin-only global-competition submit: reuses the battle-tested
+     * {@see CreateGlobalCompetitionCommand} path (isGlobal, mode All over a curated
+     * source, owner membership, rule config) rather than duplicating it into the
+     * private handler. The wizard has already forced a curated source + „all"
+     * selection and hidden the invites step, so only fee + monetization + rules
+     * travel here.
+     */
+    private function submitGlobal(User $user): ?Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        $source = $this->selectedSource;
+
+        if (null === $source) {
+            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+
+            return null;
+        }
+
+        try {
+            $envelope = $this->commandBus->dispatch(new CreateGlobalCompetitionCommand(
+                adminId: $user->id,
+                matchSourceId: $source->id,
+                name: trim($this->name),
+                entryFeeCredits: max(0, $this->entryFeeCredits),
+                monetization: CompetitionMonetization::from($this->monetization),
+                ruleChanges: $this->ruleChanges(),
+            ));
+        } catch (HandlerFailedException $e) {
+            $previous = $e->getPrevious();
+            $this->errorMessage = null !== $previous ? $previous->getMessage() : $e->getMessage();
+
+            return null;
+        }
+
+        $competition = $this->extractCompetition($envelope);
+
+        $this->addFlash('success', 'Globální soutěž byla vytvořena. Je veřejně k nalezení a hráči se přidají za vstupné.');
+
+        return $this->redirectToRoute('portal_competition_detail', [
+            'id' => $competition->id->toRfc4122(),
+        ]);
+    }
+
     private function validateStep(int $step): bool
     {
         return match ($step) {
@@ -394,6 +524,12 @@ final class CreateWizard extends AbstractController
     {
         if ('' === trim($this->name)) {
             $this->errorMessage = 'Zadejte prosím název soutěže.';
+
+            return false;
+        }
+
+        if ($this->isGlobalKind && $this->entryFeeCredits < 0) {
+            $this->errorMessage = 'Vstupné nesmí být záporné.';
 
             return false;
         }

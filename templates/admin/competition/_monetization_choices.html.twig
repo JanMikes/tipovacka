@@ -1,0 +1,30 @@
+{#
+    Admin monetization picker for a global competition — explained radio cards
+    (the plain <select> was cryptic for admins). Shared by create + edit.
+
+    Params:
+      field    — the `form.monetization` FormView (the FormType sets `expanded: true`)
+      disabled — bool: fee-locked edit ⇒ grey the cards + disable the radios
+
+    The native radio is `sr-only`; the card highlights via `.selected`
+    (initial) and `.option-card:has(input:checked)` (on click) — no JS.
+#}
+{% set descriptions = {
+    none:    'Žádné placené funkce. Hráči platí jen vstupné (pokud je nastavené). Doporučeno pro veřejné soutěže.',
+    premium: 'Vy platíte prémium za každého hráče (' ~ pricing.premiumPerPlayer ~ ' kr./hráč), účtováno při připojení. Pozor: u veřejné soutěže se může přidat kdokoli, takže náklady nejsou předem omezené.',
+    boosts:  'Soutěž je zdarma. Každý hráč si sám může dokoupit vylepšení — lišta tipů, konkrétní tipy nebo změna tipu během turnaje.',
+} %}
+{% set icons = { none: 'lucide:circle-slash', premium: 'lucide:crown', boosts: 'lucide:hand-coins' } %}
+<div class="grid grid-cols-1 gap-2" role="radiogroup" aria-label="Monetizace">
+    {% for choice in field %}
+        {% set value = choice.vars.value %}
+        <label class="option-card flex cursor-pointer items-start gap-3 {{ choice.vars.checked ? 'selected' : '' }}{{ disabled ? ' cursor-not-allowed opacity-60' : '' }}">
+            {{ form_widget(choice, {attr: {class: 'sr-only', disabled: disabled}}) }}
+            <twig:ux:icon name="{{ icons[value] ?? 'lucide:circle' }}" class="mt-0.5 h-5 w-5 shrink-0 text-accent-300" />
+            <span class="min-w-0 text-sm">
+                <span class="block font-semibold text-white">{{ choice.vars.label }}</span>
+                <span class="mt-1 block text-xs leading-relaxed text-white/50">{{ descriptions[value] ?? '' }}</span>
+            </span>
+        </label>
+    {% endfor %}
+</div>

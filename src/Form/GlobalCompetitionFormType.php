@@ -53,9 +53,13 @@ final class GlobalCompetitionFormType extends AbstractType
             'attr' => ['min' => 0],
         ]);
 
+        // Expanded (radio) so the admin templates can render explained cards — a
+        // bare <select> of „Zaplatím za celou skupinu" / „Nechám příspěvek…" gave
+        // no hint what each choice does. See admin/competition/_monetization_choices.html.twig.
         $builder->add('monetization', EnumType::class, [
             'label' => 'Monetizace',
             'class' => CompetitionMonetization::class,
+            'expanded' => true,
             'choice_label' => static fn (CompetitionMonetization $monetization): string => $monetization->label(),
         ]);
     }
