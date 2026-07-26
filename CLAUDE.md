@@ -125,7 +125,11 @@ src/
 ### Domain services (`src/Service/`)
 
 - **`Competition/CompetitionMatchProvider`** — the matches a competition includes (mode
-  `all`/`subset`, playoff filter); the single answer to "what's in this competition".
+  `all`/`subset`/`teams`, playoff filter); the single answer to "what's in this competition".
+  Mode `teams` = every source match where a `CompetitionTeamFilter` team plays home/away
+  (dynamic, playoff always in). Teach this ONE service a new mode and every read surface follows
+  — both `applyCompetitionMatchFilter` (competition-scoped) and `applyRowLevelCompetitionMatchFilter`
+  (cross-competition) must learn it, or cross-competition surfaces leak/drop rows.
 - **`Competition/CompetitionEntitlements`** — deadline-INDEPENDENT entitlement: `canChangeTips`,
   `isEntitledToDistribution/OthersTips` (premium toggles or the buyer's own boost). **Managers
   and admins get NO free pass** — an organizer plays too, so they buy like anyone else
@@ -149,13 +153,13 @@ src/
   free, only reassigning a match to a *different* team is guarded (`SportMatchTeamsLocked`). Monogram
   (contrast-safe) via `Value/TeamMonogram`; query DTOs carry `Value/TeamView`. See [team-picker](.docs/features/team-picker.md).
 
-### Entities (27)
+### Entities (28)
 
 `User`, `Sport`, `Team`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
-`CompetitionMatchSelection`, `CompetitionMatchSetting`, `CompetitionRuleConfiguration`,
-`Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`, `GuessEvaluation`,
-`GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`, `CreditWallet`,
-`CreditTransaction`, `CreditPurchase`, `CompetitionPremiumCharge`, `BoostPurchase`,
+`CompetitionMatchSelection`, `CompetitionTeamFilter`, `CompetitionMatchSetting`,
+`CompetitionRuleConfiguration`, `Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`,
+`GuessEvaluation`, `GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`,
+`CreditWallet`, `CreditTransaction`, `CreditPurchase`, `CompetitionPremiumCharge`, `BoostPurchase`,
 `Notification`, `NotificationPreference`, `ResetPasswordRequest`.
 
 ## Key Patterns
@@ -432,7 +436,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
 - [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
 - [Team picker & directory](.docs/features/team-picker.md) — first-class `Team` (hybrid scope: global admin directory / local per private source via `TeamResolver`); `team-picker` tom-select (autocomplete + create, name-based, JS-optional); contrast-safe `TeamMonogram` coin via `<twig:TeamFlag :team>`; admin directory at `/admin/tymy`
-- [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`); an **admin-only „Typ soutěže" toggle** turns it into the global-competition creator (entry fee, curated-only, skips „Pozvánky", branches to `CreateGlobalCompetitionCommand`)
+- [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`); an **admin-only „Typ soutěže" toggle** turns it into the global-competition creator (entry fee, curated-only, skips „Pozvánky", branches to `CreateGlobalCompetitionCommand`). The „Zápasy soutěže" step offers three match-scope modes — **Všechny** / **Podle týmu** (`teams`, a multi-team `team-filter` tom-select) / **Vybrané** (`subset`, private only)
 - [Cursor spotlight](.docs/features/cursor-spotlight.md) — cards glow & their border lights up under/near the mouse (`assets/spotlight.js` + app.css "Cursor spotlight" section; `PROXIMITY` toggle)
 
 ## Testing

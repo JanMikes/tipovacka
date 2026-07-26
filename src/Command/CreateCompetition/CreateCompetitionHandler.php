@@ -7,23 +7,28 @@ namespace App\Command\CreateCompetition;
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
+use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\MatchSourceRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\SportRepository;
+use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
 use App\Service\Identity\ProvideIdentity;
 use App\Service\Invitation\CompetitionInviter;
+use App\Service\Team\TeamResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Uid\Uuid;
@@ -45,7 +50,10 @@ final readonly class CreateCompetitionHandler
         private SportRepository $sportRepository,
         private SportMatchRepository $sportMatchRepository,
         private CompetitionMatchSelectionRepository $selectionRepository,
+        private CompetitionTeamFilterRepository $teamFilterRepository,
         private CompetitionRuleConfigurationRepository $ruleConfigurationRepository,
+        private TeamRepository $teamRepository,
+        private TeamResolver $teamResolver,
         private UserRepository $userRepository,
         private RuleRegistry $ruleRegistry,
         private CompetitionInviter $inviter,
@@ -88,6 +96,10 @@ final readonly class CreateCompetitionHandler
 
         if (CompetitionMatchSelectionMode::Subset === $selectionMode) {
             $this->createSelections($command, $competition, $matchSource, $now);
+        }
+
+        if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
+            $this->createTeamFilters($command, $competition, $matchSource, $now);
         }
 
         $this->membershipRepository->save(new Membership(
@@ -154,6 +166,43 @@ final readonly class CreateCompetitionHandler
                 id: $this->identity->next(),
                 competition: $competition,
                 sportMatch: $sportMatch,
+                addedAt: $now,
+            ));
+        }
+    }
+
+    /**
+     * One CompetitionTeamFilter row per selected team. Each team must belong to
+     * the source's resolution scope (same hybrid rule as team resolution) —
+     * a foreign / cross-sport team id aborts the whole creation (TeamNotInSource).
+     * Duplicate ids collapse to a single row.
+     */
+    private function createTeamFilters(
+        CreateCompetitionCommand $command,
+        Competition $competition,
+        MatchSource $matchSource,
+        \DateTimeImmutable $now,
+    ): void {
+        $seen = [];
+
+        foreach ($command->filterTeamIds as $teamId) {
+            $key = $teamId->toRfc4122();
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $team = $this->teamRepository->get($teamId);
+
+            if (!$this->teamResolver->belongsToSourceScope($matchSource, $team)) {
+                throw TeamNotInSource::create($teamId, $matchSource->id);
+            }
+
+            $this->teamFilterRepository->save(new CompetitionTeamFilter(
+                id: $this->identity->next(),
+                competition: $competition,
+                team: $team,
                 addedAt: $now,
             ));
         }

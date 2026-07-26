@@ -6,11 +6,13 @@ namespace App\Service\Competition;
 
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionTeamFilter;
 use App\Entity\SportMatch;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\SportMatchState;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\Uid\Uuid;
@@ -24,6 +26,8 @@ use Symfony\Contracts\Service\ResetInterface;
  *   `includePlayoff = false`, minus deleted matches;
  * - mode Subset ⇒ explicitly selected matches only (selection wins over
  *   `includePlayoff` — an explicitly selected playoff match counts).
+ * - mode Teams ⇒ every source match where a filter team plays (home OR away),
+ *   dynamically — a team match added later auto-joins; playoff always counts.
  *
  * Read queries compose the same semantics via {@see applyCompetitionMatchFilter}
  * (competition-scoped) or {@see applyRowLevelCompetitionMatchFilter}
@@ -34,10 +38,14 @@ class CompetitionMatchProvider implements ResetInterface
     /** @var array<string, array<string, true>> competition UUID → set of selected match UUIDs */
     private array $selectionCache = [];
 
+    /** @var array<string, array<string, true>> competition UUID → set of filter team UUIDs */
+    private array $filterTeamCache = [];
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly CompetitionRepository $competitionRepository,
         private readonly CompetitionMatchSelectionRepository $selectionRepository,
+        private readonly CompetitionTeamFilterRepository $teamFilterRepository,
     ) {
     }
 
@@ -113,6 +121,13 @@ class CompetitionMatchProvider implements ResetInterface
             return isset($this->selectedMatchIdSet($competition->id)[$sportMatch->id->toRfc4122()]);
         }
 
+        if (CompetitionMatchSelectionMode::Teams === $competition->selectionMode) {
+            $teamIds = $this->filterTeamIdSet($competition->id);
+
+            return isset($teamIds[$sportMatch->homeTeam->id->toRfc4122()])
+                || isset($teamIds[$sportMatch->awayTeam->id->toRfc4122()]);
+        }
+
         return $competition->includePlayoff || !$sportMatch->isPlayoff;
     }
 
@@ -140,6 +155,16 @@ class CompetitionMatchProvider implements ResetInterface
             return;
         }
 
+        if (CompetitionMatchSelectionMode::Teams === $competition->selectionMode) {
+            $qb->andWhere(sprintf(
+                'EXISTS(SELECT 1 FROM %1$s cmp_tf WHERE cmp_tf.competition = :cmp_competition_id AND (cmp_tf.team = %2$s.homeTeam OR cmp_tf.team = %2$s.awayTeam))',
+                CompetitionTeamFilter::class,
+                $matchAlias,
+            ))->setParameter('cmp_competition_id', $competition->id);
+
+            return;
+        }
+
         if (!$competition->includePlayoff) {
             $qb->andWhere(sprintf('%s.isPlayoff = false', $matchAlias));
         }
@@ -155,10 +180,15 @@ class CompetitionMatchProvider implements ResetInterface
     public function applyRowLevelCompetitionMatchFilter(QueryBuilder $qb, string $matchAlias, string $competitionAlias): void
     {
         $qb->andWhere(sprintf(
-            '((%1$s.selectionMode = :cmp_mode_all AND (%1$s.includePlayoff = true OR %2$s.isPlayoff = false)) OR EXISTS(SELECT 1 FROM %3$s cmp_sel_row WHERE cmp_sel_row.competition = %1$s AND cmp_sel_row.sportMatch = %2$s))',
+            '('
+            .'(%1$s.selectionMode = :cmp_mode_all AND (%1$s.includePlayoff = true OR %2$s.isPlayoff = false))'
+            .' OR EXISTS(SELECT 1 FROM %3$s cmp_sel_row WHERE cmp_sel_row.competition = %1$s AND cmp_sel_row.sportMatch = %2$s)'
+            .' OR EXISTS(SELECT 1 FROM %4$s cmp_tf_row WHERE cmp_tf_row.competition = %1$s AND (cmp_tf_row.team = %2$s.homeTeam OR cmp_tf_row.team = %2$s.awayTeam))'
+            .')',
             $competitionAlias,
             $matchAlias,
             CompetitionMatchSelection::class,
+            CompetitionTeamFilter::class,
         ))->setParameter('cmp_mode_all', CompetitionMatchSelectionMode::All);
     }
 
@@ -167,13 +197,20 @@ class CompetitionMatchProvider implements ResetInterface
         unset($this->selectionCache[$competitionId->toRfc4122()]);
     }
 
+    public function forgetTeamFilters(Uuid $competitionId): void
+    {
+        unset($this->filterTeamCache[$competitionId->toRfc4122()]);
+    }
+
     /**
      * Kernel reset (autoconfigured via {@see ResetInterface}) — drops the
-     * selection cache between requests/tests so stale selections never leak.
+     * selection + team-filter caches between requests/tests so stale entries
+     * never leak.
      */
     public function reset(): void
     {
         $this->selectionCache = [];
+        $this->filterTeamCache = [];
     }
 
     /**
@@ -194,5 +231,25 @@ class CompetitionMatchProvider implements ResetInterface
         }
 
         return $this->selectionCache[$key];
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function filterTeamIdSet(Uuid $competitionId): array
+    {
+        $key = $competitionId->toRfc4122();
+
+        if (!isset($this->filterTeamCache[$key])) {
+            $set = [];
+
+            foreach ($this->teamFilterRepository->teamIdsFor($competitionId) as $teamId) {
+                $set[$teamId] = true;
+            }
+
+            $this->filterTeamCache[$key] = $set;
+        }
+
+        return $this->filterTeamCache[$key];
     }
 }

@@ -6,17 +6,23 @@ namespace App\Service\Competition;
 
 use App\Entity\Competition;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Exception\GlobalCompetitionRequiresCuratedSource;
+use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\MembershipRepository;
+use App\Repository\TeamRepository;
 use App\Rule\RuleRegistry;
 use App\Service\Identity\ProvideIdentity;
+use App\Service\Team\TeamResolver;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Shared composition of a global competition aggregate — the competition
@@ -31,6 +37,9 @@ final readonly class GlobalCompetitionComposer
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private CompetitionRuleConfigurationRepository $ruleConfigurationRepository,
+        private CompetitionTeamFilterRepository $teamFilterRepository,
+        private TeamRepository $teamRepository,
+        private TeamResolver $teamResolver,
         private RuleRegistry $ruleRegistry,
         private ProvideIdentity $identity,
     ) {
@@ -38,6 +47,7 @@ final readonly class GlobalCompetitionComposer
 
     /**
      * @param array<string, array{enabled: bool, points: int}> $ruleChanges
+     * @param list<Uuid>                                       $filterTeamIds only used when $selectionMode is Teams
      */
     public function compose(
         MatchSource $matchSource,
@@ -47,9 +57,17 @@ final readonly class GlobalCompetitionComposer
         CompetitionMonetization $monetization,
         array $ruleChanges,
         \DateTimeImmutable $now,
+        CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
+        array $filterTeamIds = [],
     ): Competition {
         if (!$matchSource->isCurated) {
             throw GlobalCompetitionRequiresCuratedSource::forSource($matchSource->id);
+        }
+
+        // A global competition never hand-picks matches (Subset is a private-only
+        // affordance) — it is either every source match (All) or a team filter.
+        if (CompetitionMatchSelectionMode::Subset === $selectionMode) {
+            $selectionMode = CompetitionMatchSelectionMode::All;
         }
 
         $competition = new Competition(
@@ -64,7 +82,7 @@ final readonly class GlobalCompetitionComposer
             // pin: null. See fix in .docs/DOMAIN.md §Global competitions.
             shareableLinkToken: null,
             createdAt: $now,
-            selectionMode: CompetitionMatchSelectionMode::All,
+            selectionMode: $selectionMode,
             includePlayoff: true,
             hideOthersTipsBeforeDeadline: false,
             monetization: $monetization,
@@ -73,6 +91,10 @@ final readonly class GlobalCompetitionComposer
         );
 
         $this->competitionRepository->save($competition);
+
+        if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
+            $this->createTeamFilters($filterTeamIds, $matchSource, $competition, $now);
+        }
 
         $this->membershipRepository->save(new Membership(
             id: $this->identity->next(),
@@ -84,6 +106,44 @@ final readonly class GlobalCompetitionComposer
         $this->provisionRules($ruleChanges, $competition, $now);
 
         return $competition;
+    }
+
+    /**
+     * One CompetitionTeamFilter row per selected team, each validated against the
+     * source's resolution scope (curated source ⇒ global directory teams of its
+     * sport). A foreign / cross-sport team id aborts the whole creation.
+     *
+     * @param list<Uuid> $filterTeamIds
+     */
+    private function createTeamFilters(
+        array $filterTeamIds,
+        MatchSource $matchSource,
+        Competition $competition,
+        \DateTimeImmutable $now,
+    ): void {
+        $seen = [];
+
+        foreach ($filterTeamIds as $teamId) {
+            $key = $teamId->toRfc4122();
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            $team = $this->teamRepository->get($teamId);
+
+            if (!$this->teamResolver->belongsToSourceScope($matchSource, $team)) {
+                throw TeamNotInSource::create($teamId, $matchSource->id);
+            }
+
+            $this->teamFilterRepository->save(new CompetitionTeamFilter(
+                id: $this->identity->next(),
+                competition: $competition,
+                team: $team,
+                addedAt: $now,
+            ));
+        }
     }
 
     /**

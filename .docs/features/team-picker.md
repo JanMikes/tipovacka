@@ -34,6 +34,22 @@ import and the form uniform and JS-optional.
 - CSV/XLSX import (`SportMatchImporter`) resolves each `Domácí`/`Hosté` name via `TeamResolver`
   on commit; unknown names grow the directory (curated) / local pool (private).
 
+### Team **filter** picker (competition scope, id-based, multi-select)
+
+A separate picker for the „Podle týmu" competition scope (see
+[create-wizard](create-wizard.md)) — distinct from the match `team-picker` above:
+
+- **`team-filter`** Stimulus controller (`assets/controllers/team_filter_controller.js`):
+  multi-select tom-select, **no** free-create (you filter by existing teams only), keyed on the
+  team **UUID** (`valueField: 'id'`) because a filter stores team identities, not names. It syncs
+  the selected ids into an optional hidden `payload` input (the wizard's LiveProp) and, on a plain
+  form (the manage page), the `<select multiple name="teams[]">` posts them directly.
+- Autocomplete endpoint: `SourceTeamFilterAutocompleteController`
+  (`GET /portal/zdroje/{id}/filtr-tymy?q=…`, gated by `MatchSourceVoter::CREATE_COMPETITION`) →
+  `TeamRepository::searchTeamsInSource` — only teams that actually play in the source (home OR
+  away of a live match), so a filter never offers a team with zero matches. Server-side
+  `TeamResolver::belongsToSourceScope` re-validates on write.
+
 ## Monogram (logo comes later)
 
 No uploads yet: every team renders as a colored initials **monogram** via the pure, unit-tested

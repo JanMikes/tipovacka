@@ -8,12 +8,14 @@ enum CompetitionMatchSelectionMode: string
 {
     case All = 'all';
     case Subset = 'subset';
+    case Teams = 'teams';
 
     public function label(): string
     {
         return match ($this) {
             self::All => 'Všechny zápasy',
             self::Subset => 'Vybrané zápasy',
+            self::Teams => 'Zápasy vybraných týmů',
         };
     }
 }

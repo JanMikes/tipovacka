@@ -37,6 +37,19 @@
                 </span>
             {% endif %}
         </p>
+
+        {% if filter_teams is not empty %}
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
+                    <twig:ux:icon name="lucide:shield-half" class="h-4 w-4 text-accent-400" />Týmy soutěže
+                </span>
+                {% for team in filter_teams %}
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-inset py-1 pl-1 pr-2.5 text-xs text-white/80">
+                        <twig:TeamFlag :team="team" size="20" />{{ team.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        {% endif %}
     </header>
 
     {% if detail.description %}
@@ -453,6 +466,10 @@
                         {% if competition.selectionMode.value == 'subset' %}
                             <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                                 <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
+                            </a>
+                        {% elseif competition.selectionMode.value == 'teams' %}
+                            <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:shield-half" class="h-4 w-4" />Týmy soutěže
                             </a>
                         {% endif %}
 
