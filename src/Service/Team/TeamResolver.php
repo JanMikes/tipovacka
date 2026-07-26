@@ -61,4 +61,21 @@ final readonly class TeamResolver
             ? $this->teams->findGlobalByName($source->sport->id, $name)
             : $this->teams->findLocalByName($source->id, $name);
     }
+
+    /**
+     * Whether a team is in a source's resolution scope — same hybrid rule as
+     * {@see resolve}: a curated source draws from the GLOBAL directory of its
+     * sport, a private source only from its own LOCAL teams. The single guard for
+     * the competition team filter (rejects a cross-source / cross-sport team id).
+     */
+    public function belongsToSourceScope(MatchSource $source, Team $team): bool
+    {
+        if (!$team->sport->id->equals($source->sport->id)) {
+            return false;
+        }
+
+        return $source->isCurated
+            ? null === $team->matchSource
+            : null !== $team->matchSource && $team->matchSource->id->equals($source->id);
+    }
 }

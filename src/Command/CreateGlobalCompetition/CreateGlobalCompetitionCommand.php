@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\CreateGlobalCompetition;
 
+use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use Symfony\Component\Uid\Uuid;
 
@@ -16,7 +17,8 @@ use Symfony\Component\Uid\Uuid;
 final readonly class CreateGlobalCompetitionCommand
 {
     /**
-     * @param array<string, array{enabled: bool, points: int}> $ruleChanges rule identifier → desired state (over the defaults)
+     * @param array<string, array{enabled: bool, points: int}> $ruleChanges   rule identifier → desired state (over the defaults)
+     * @param list<Uuid>                                       $filterTeamIds only used when $selectionMode is Teams
      */
     public function __construct(
         public Uuid $adminId,
@@ -25,6 +27,8 @@ final readonly class CreateGlobalCompetitionCommand
         public int $entryFeeCredits,
         public CompetitionMonetization $monetization = CompetitionMonetization::None,
         public array $ruleChanges = [],
+        public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
+        public array $filterTeamIds = [],
     ) {
     }
 }

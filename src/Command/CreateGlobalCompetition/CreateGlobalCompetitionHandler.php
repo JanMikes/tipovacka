@@ -42,6 +42,8 @@ final readonly class CreateGlobalCompetitionHandler
             monetization: $command->monetization,
             ruleChanges: $command->ruleChanges,
             now: \DateTimeImmutable::createFromInterface($this->clock->now()),
+            selectionMode: $command->selectionMode,
+            filterTeamIds: $command->filterTeamIds,
         );
     }
 }

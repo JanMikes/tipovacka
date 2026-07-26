@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Competition;
 
 use App\Command\UpdateCompetitionMatchSelection\UpdateCompetitionMatchSelectionCommand;
+use App\Command\UpdateCompetitionTeamFilter\UpdateCompetitionTeamFilterCommand;
+use App\Entity\Competition;
 use App\Entity\SportMatch;
+use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\SportMatchRepository;
 use App\Voter\CompetitionVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +24,11 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * Manage which matches a competition includes. The surface adapts to the
+ * competition's selection mode: Subset ⇒ a per-match checklist; Teams ⇒ a
+ * team-filter picker; All ⇒ nothing to manage (redirect back).
+ */
 #[Route(
     '/portal/souteze/{id}/zapasy-vyber',
     name: 'portal_competition_match_selection',
@@ -32,30 +41,37 @@ final class CompetitionMatchSelectionController extends AbstractController
         private readonly CompetitionRepository $competitionRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly CompetitionMatchSelectionRepository $selectionRepository,
+        private readonly CompetitionTeamFilterRepository $teamFilterRepository,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
 
     public function __invoke(Request $request, string $id): Response
     {
-        /** @var \App\Entity\User $user */
+        /** @var User $user */
         $user = $this->getUser();
 
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(CompetitionVoter::EDIT, $competition);
 
-        if (CompetitionMatchSelectionMode::Subset !== $competition->selectionMode) {
-            $this->addFlash('info', 'Tato soutěž zahrnuje všechny zápasy zdroje — výběr zápasů se nespravuje.');
+        return match ($competition->selectionMode) {
+            CompetitionMatchSelectionMode::Subset => $this->manageSubset($request, $competition, $user),
+            CompetitionMatchSelectionMode::Teams => $this->manageTeams($request, $competition, $user),
+            CompetitionMatchSelectionMode::All => $this->redirectAllModeToDetail($competition),
+        };
+    }
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
-        }
+    private function redirectAllModeToDetail(Competition $competition): Response
+    {
+        $this->addFlash('info', 'Tato soutěž zahrnuje všechny zápasy zdroje — výběr zápasů se nespravuje.');
 
+        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+    }
+
+    private function manageSubset(Request $request, Competition $competition, User $user): Response
+    {
         if ($request->isMethod('POST')) {
-            $csrfToken = $request->request->get('_token');
-
-            if (!\is_string($csrfToken) || !$this->isCsrfTokenValid('competition_match_selection_'.$competition->id->toRfc4122(), $csrfToken)) {
-                throw $this->createAccessDeniedException('Invalid CSRF token.');
-            }
+            $this->assertCsrf($request, $competition);
 
             $selectedMatchIds = [];
 
@@ -77,14 +93,7 @@ final class CompetitionMatchSelectionController extends AbstractController
 
                     $this->addFlash('success', 'Výběr zápasů byl uložen.');
                 } catch (HandlerFailedException $e) {
-                    $previous = $e->getPrevious();
-
-                    // Covers MatchNotInCompetition and the empty-selection guard.
-                    if (!$previous instanceof \DomainException) {
-                        throw $e;
-                    }
-
-                    $this->addFlash('error', $previous->getMessage());
+                    $this->flashDomainError($e);
                 }
             }
 
@@ -110,7 +119,68 @@ final class CompetitionMatchSelectionController extends AbstractController
 
         return $this->render('portal/competition/match_selection.html.twig', [
             'competition' => $competition,
+            'mode' => 'subset',
             'groups' => $groups,
         ]);
+    }
+
+    private function manageTeams(Request $request, Competition $competition, User $user): Response
+    {
+        if ($request->isMethod('POST')) {
+            $this->assertCsrf($request, $competition);
+
+            $teamIds = [];
+
+            foreach ($request->request->all('teams') as $teamId) {
+                if (\is_string($teamId) && Uuid::isValid($teamId)) {
+                    $teamIds[] = Uuid::fromString($teamId);
+                }
+            }
+
+            if (0 === count($teamIds)) {
+                $this->addFlash('error', 'Vyberte prosím alespoň jeden tým.');
+            } else {
+                try {
+                    $this->commandBus->dispatch(new UpdateCompetitionTeamFilterCommand(
+                        editorId: $user->id,
+                        competitionId: $competition->id,
+                        teamIds: $teamIds,
+                    ));
+
+                    $this->addFlash('success', 'Filtr týmů byl uložen.');
+                } catch (HandlerFailedException $e) {
+                    $this->flashDomainError($e);
+                }
+            }
+
+            return $this->redirectToRoute('portal_competition_match_selection', ['id' => $competition->id->toRfc4122()]);
+        }
+
+        return $this->render('portal/competition/match_selection.html.twig', [
+            'competition' => $competition,
+            'mode' => 'teams',
+            'filter_teams' => $this->teamFilterRepository->teamViewsFor($competition->id),
+        ]);
+    }
+
+    private function assertCsrf(Request $request, Competition $competition): void
+    {
+        $csrfToken = $request->request->get('_token');
+
+        if (!\is_string($csrfToken) || !$this->isCsrfTokenValid('competition_match_selection_'.$competition->id->toRfc4122(), $csrfToken)) {
+            throw $this->createAccessDeniedException('Invalid CSRF token.');
+        }
+    }
+
+    private function flashDomainError(HandlerFailedException $e): void
+    {
+        $previous = $e->getPrevious();
+
+        // Covers MatchNotInCompetition / TeamNotInSource and the empty-selection guard.
+        if (!$previous instanceof \DomainException) {
+            throw $e;
+        }
+
+        $this->addFlash('error', $previous->getMessage());
     }
 }

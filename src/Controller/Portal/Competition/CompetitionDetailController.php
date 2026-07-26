@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Competition;
 
 use App\Entity\User;
+use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\UserRole;
 use App\Form\BulkInvitationFormData;
@@ -18,6 +19,7 @@ use App\Query\GetMyGuessesInMatchSource\GetMyGuessesInMatchSource;
 use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForCompetition;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\MembershipRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\TipStatsProvider;
@@ -40,6 +42,7 @@ final class CompetitionDetailController extends AbstractController
 {
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
+        private readonly CompetitionTeamFilterRepository $teamFilterRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly CompetitionMatchProvider $matchProvider,
@@ -144,9 +147,14 @@ final class CompetitionDetailController extends AbstractController
             ? 0
             : $this->membershipRepository->countActiveNonOwnerMembers($competition->id, $competition->owner->id);
 
+        $filterTeams = CompetitionMatchSelectionMode::Teams === $competition->selectionMode
+            ? $this->teamFilterRepository->teamViewsFor($competition->id)
+            : [];
+
         return $this->render('portal/competition/detail.html.twig', [
             'competition' => $competition,
             'detail' => $detail,
+            'filter_teams' => $filterTeams,
             'lock_moment' => $lockMoment,
             'tips_locked' => $tipsLocked,
             'can_unlock_tips' => $canUnlockTips,

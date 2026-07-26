@@ -10,6 +10,7 @@ use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
@@ -18,6 +19,7 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
 use App\Exception\InvalidInvitationEmails;
+use App\Exception\TeamNotInSource;
 use App\Rule\ExactScoreRule;
 use App\Rule\ScorerHitRule;
 use App\Tests\Support\IntegrationTestCase;
@@ -120,6 +122,70 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
         self::assertCount(1, $selections);
         self::assertSame(AppFixtures::MATCH_SCHEDULED_ID, $selections[0]->sportMatch->id->toRfc4122());
+    }
+
+    public function testCreatesCompetitionWithTeamFilter(): void
+    {
+        $this->commandBus()->dispatch(new CreateCompetitionCommand(
+            ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            name: 'Podle týmů',
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            sportId: null,
+            fromScratch: false,
+            withPin: false,
+            selectionMode: CompetitionMatchSelectionMode::Teams,
+            // Duplicate id collapses to a single row.
+            filterTeamIds: [
+                Uuid::fromString(AppFixtures::TEAM_SPARTA_ID),
+                Uuid::fromString(AppFixtures::TEAM_REAL_MADRID_ID),
+                Uuid::fromString(AppFixtures::TEAM_SPARTA_ID),
+            ],
+        ));
+
+        $competition = $this->findCompetitionByName('Podle týmů');
+
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->selectionMode);
+        // Teams mode keeps playoff (the toggle is All-only).
+        self::assertTrue($competition->includePlayoff);
+
+        $filters = $this->entityManager()->createQueryBuilder()
+            ->select('f')
+            ->from(CompetitionTeamFilter::class, 'f')
+            ->where('f.competition = :competitionId')
+            ->setParameter('competitionId', $competition->id)
+            ->getQuery()
+            ->getResult();
+
+        self::assertCount(2, $filters);
+    }
+
+    public function testTeamFilterRejectsTeamOutsideTheSourceScopeAndRollsBack(): void
+    {
+        $em = $this->entityManager();
+
+        try {
+            $this->commandBus()->dispatch(new CreateCompetitionCommand(
+                ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+                name: 'Cizí tým ve filtru',
+                matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+                sportId: null,
+                fromScratch: false,
+                withPin: false,
+                selectionMode: CompetitionMatchSelectionMode::Teams,
+                // TYGRI is a LOCAL team of the PRIVATE source — not in the curated scope.
+                filterTeamIds: [Uuid::fromString(AppFixtures::TEAM_TYGRI_ID)],
+            ));
+            self::fail('Expected TeamNotInSource to abort the transaction.');
+        } catch (HandlerFailedException $exception) {
+            self::assertInstanceOf(TeamNotInSource::class, $this->firstWrappedException($exception));
+        }
+
+        $em->clear();
+
+        self::assertNull($em->createQueryBuilder()
+            ->select('c')->from(Competition::class, 'c')
+            ->where('c.name = :name')->setParameter('name', 'Cizí tým ve filtru')
+            ->getQuery()->getOneOrNullResult());
     }
 
     public function testCreatesCompetitionWithPin(): void

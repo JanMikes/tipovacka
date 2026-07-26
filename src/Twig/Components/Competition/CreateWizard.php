@@ -18,6 +18,7 @@ use App\Query\QueryBus;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportMatchRepository;
 use App\Repository\SportRepository;
+use App\Repository\TeamRepository;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
 use App\Service\Credits\PricingConfig;
@@ -99,6 +100,10 @@ final class CreateWizard extends AbstractController
     #[LiveProp(writable: true)]
     public array $selectedMatchIds = [];
 
+    /** Comma-joined filter team UUIDs (teams mode); synced from the tom-select island. */
+    #[LiveProp(writable: true)]
+    public string $selectedTeamIdsCsv = '';
+
     #[LiveProp(writable: true)]
     public bool $withPin = false;
 
@@ -130,6 +135,7 @@ final class CreateWizard extends AbstractController
         private readonly MatchSourceRepository $matchSourceRepository,
         private readonly SportMatchRepository $sportMatchRepository,
         private readonly SportRepository $sportRepository,
+        private readonly TeamRepository $teamRepository,
         private readonly RulePresetProvider $rulePresetProvider,
         private readonly PinGenerator $pinGenerator,
         private readonly ShareableLinkTokenGenerator $linkTokenGenerator,
@@ -209,6 +215,52 @@ final class CreateWizard extends AbstractController
 
     public bool $isSubset {
         get => 'subset' === $this->selectionMode;
+    }
+
+    public bool $isTeams {
+        get => 'teams' === $this->selectionMode;
+    }
+
+    /**
+     * Teams that play in the chosen source — the pool the team-filter picker
+     * offers and the wizard validates the selection against.
+     *
+     * @var list<\App\Entity\Team>
+     */
+    public array $sourceTeams {
+        get {
+            $source = $this->selectedSource;
+
+            return null === $source ? [] : $this->teamRepository->listTeamsInSource($source->id);
+        }
+    }
+
+    /**
+     * The currently-picked filter teams as {id, name}. Rendered as <option selected>
+     * so the tom-select chips survive step navigation (they reappear from the DOM,
+     * not from bare ids). Stale ids from a previously chosen source are dropped.
+     *
+     * @var list<array{id: string, name: string}>
+     */
+    public array $filterTeamOptions {
+        get {
+            if ('' === $this->selectedTeamIdsCsv) {
+                return [];
+            }
+
+            $selected = array_flip($this->parseCsvIds($this->selectedTeamIdsCsv));
+            $options = [];
+
+            foreach ($this->sourceTeams as $team) {
+                $id = $team->id->toRfc4122();
+
+                if (isset($selected[$id])) {
+                    $options[] = ['id' => $id, 'name' => $team->name];
+                }
+            }
+
+            return $options;
+        }
     }
 
     /**
@@ -433,9 +485,10 @@ final class CreateWizard extends AbstractController
                 fromScratch: $this->fromScratch,
                 withPin: $this->withPin,
                 monetization: CompetitionMonetization::from($this->monetization),
-                selectionMode: $this->isSubset ? CompetitionMatchSelectionMode::Subset : CompetitionMatchSelectionMode::All,
+                selectionMode: $this->selectionModeEnum(),
                 includePlayoff: $this->includePlayoff,
                 selectedMatchIds: $this->selectedMatchUuids(),
+                filterTeamIds: $this->filterTeamUuids(),
                 ruleChanges: $this->ruleChanges(),
                 inviteEmails: '' === trim($this->inviteEmailsRaw) ? [] : [$this->inviteEmailsRaw],
                 pin: $this->withPin ? $this->pin : null,
@@ -495,6 +548,8 @@ final class CreateWizard extends AbstractController
                 entryFeeCredits: max(0, $this->entryFeeCredits),
                 monetization: CompetitionMonetization::from($this->monetization),
                 ruleChanges: $this->ruleChanges(),
+                selectionMode: $this->isTeams ? CompetitionMatchSelectionMode::Teams : CompetitionMatchSelectionMode::All,
+                filterTeamIds: $this->filterTeamUuids(),
             ));
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
@@ -556,6 +611,12 @@ final class CreateWizard extends AbstractController
             return false;
         }
 
+        if ($this->isTeams && [] === $this->filterTeamUuids()) {
+            $this->errorMessage = 'Vyberte prosím alespoň jeden tým.';
+
+            return false;
+        }
+
         return true;
     }
 
@@ -588,6 +649,62 @@ final class CreateWizard extends AbstractController
         }
 
         return $result;
+    }
+
+    private function selectionModeEnum(): CompetitionMatchSelectionMode
+    {
+        return match (true) {
+            $this->isTeams => CompetitionMatchSelectionMode::Teams,
+            $this->isSubset => CompetitionMatchSelectionMode::Subset,
+            default => CompetitionMatchSelectionMode::All,
+        };
+    }
+
+    /**
+     * Filter team UUIDs, intersected with the chosen source's teams so a stale
+     * selection left over from a previously chosen source is dropped.
+     *
+     * @return list<Uuid>
+     */
+    private function filterTeamUuids(): array
+    {
+        if (!$this->isTeams) {
+            return [];
+        }
+
+        $validIds = [];
+
+        foreach ($this->sourceTeams as $team) {
+            $validIds[$team->id->toRfc4122()] = true;
+        }
+
+        $result = [];
+
+        foreach ($this->parseCsvIds($this->selectedTeamIdsCsv) as $id) {
+            if (isset($validIds[$id])) {
+                $result[] = Uuid::fromString($id);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function parseCsvIds(string $csv): array
+    {
+        $ids = [];
+
+        foreach (explode(',', $csv) as $raw) {
+            $raw = trim($raw);
+
+            if ('' !== $raw && Uuid::isValid($raw)) {
+                $ids[] = $raw;
+            }
+        }
+
+        return $ids;
     }
 
     /**

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\SportMatch;
 use App\Entity\Team;
+use App\Enum\SportMatchState;
 use App\Exception\TeamNotFound;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -145,5 +147,55 @@ final class TeamRepository
         $result = $qb->getQuery()->getResult();
 
         return $result;
+    }
+
+    /**
+     * Every team that actually plays in a source (home OR away in a live,
+     * non-cancelled, non-deleted match) — the pool the competition team-filter
+     * picker offers and validates against.
+     *
+     * @return list<Team>
+     */
+    public function listTeamsInSource(Uuid $matchSourceId): array
+    {
+        /** @var list<Team> $result */
+        $result = $this->teamsInSourceQuery($matchSourceId)->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
+     * Term-filtered, capped variant of {@see listTeamsInSource} for the
+     * team-filter autocomplete endpoint.
+     *
+     * @return list<Team>
+     */
+    public function searchTeamsInSource(Uuid $matchSourceId, string $term = ''): array
+    {
+        $qb = $this->teamsInSourceQuery($matchSourceId)->setMaxResults(30);
+
+        if ('' !== $term) {
+            $qb->andWhere('LOWER(t.name) LIKE :term')
+                ->setParameter('term', '%'.mb_strtolower($term).'%');
+        }
+
+        /** @var list<Team> $result */
+        $result = $qb->getQuery()->getResult();
+
+        return $result;
+    }
+
+    private function teamsInSourceQuery(Uuid $matchSourceId): \Doctrine\ORM\QueryBuilder
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('t')
+            ->from(Team::class, 't')
+            ->where(sprintf(
+                'EXISTS(SELECT 1 FROM %s m WHERE m.matchSource = :source AND m.deletedAt IS NULL AND m.state != :cancelled AND (m.homeTeam = t OR m.awayTeam = t))',
+                SportMatch::class,
+            ))
+            ->setParameter('source', $matchSourceId)
+            ->setParameter('cancelled', SportMatchState::Cancelled)
+            ->orderBy('t.name', 'ASC');
     }
 }

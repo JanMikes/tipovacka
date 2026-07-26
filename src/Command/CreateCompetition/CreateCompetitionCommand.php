@@ -22,6 +22,7 @@ final readonly class CreateCompetitionCommand
 {
     /**
      * @param list<Uuid>                                       $selectedMatchIds only used when $selectionMode is Subset
+     * @param list<Uuid>                                       $filterTeamIds    only used when $selectionMode is Teams
      * @param array<string, array{enabled: bool, points: int}> $ruleChanges      rule identifier → desired state (over the defaults)
      * @param list<string>                                     $inviteEmails     raw e-mail entries (validated in the handler)
      */
@@ -36,6 +37,7 @@ final readonly class CreateCompetitionCommand
         public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
         public bool $includePlayoff = true,
         public array $selectedMatchIds = [],
+        public array $filterTeamIds = [],
         public array $ruleChanges = [],
         public array $inviteEmails = [],
         public ?string $description = null,

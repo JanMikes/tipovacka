@@ -15,6 +15,7 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -133,6 +134,7 @@ final class CompetitionMatchProviderTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(CompetitionRepository::class),
             $selectionRepository,
+            $this->createStub(CompetitionTeamFilterRepository::class),
         );
 
         self::assertTrue($provider->includes($competition, $this->regularMatch));
@@ -154,11 +156,71 @@ final class CompetitionMatchProviderTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(CompetitionRepository::class),
             $selectionRepository,
+            $this->createStub(CompetitionTeamFilterRepository::class),
         );
 
         self::assertFalse($provider->includes($competition, $this->regularMatch));
         $provider->forgetSelections($competition->id);
         self::assertTrue($provider->includes($competition, $this->regularMatch));
+    }
+
+    public function testTeamsModeIncludesMatchesWhereAFilterTeamPlaysHomeOrAway(): void
+    {
+        $sparta = Uuid::v7();
+        $slavia = Uuid::v7();
+        $plzen = Uuid::v7();
+        $banik = Uuid::v7();
+
+        $derby = $this->makeMatchWithTeams('019ddddd-0000-7000-8000-00000000f011', $this->source, $sparta, $slavia, isPlayoff: false);
+        $spartaAwayPlayoff = $this->makeMatchWithTeams('019ddddd-0000-7000-8000-00000000f012', $this->source, $plzen, $sparta, isPlayoff: true);
+        $noSparta = $this->makeMatchWithTeams('019ddddd-0000-7000-8000-00000000f013', $this->source, $plzen, $banik, isPlayoff: false);
+
+        // includePlayoff = false must NOT affect Teams mode — a filter team's playoff match still counts.
+        $competition = $this->makeCompetition(CompetitionMatchSelectionMode::Teams, includePlayoff: false);
+        $provider = $this->makeTeamsProvider([$sparta->toRfc4122()]);
+
+        self::assertTrue($provider->includes($competition, $derby));            // sparta home
+        self::assertTrue($provider->includes($competition, $spartaAwayPlayoff)); // sparta away, playoff still counts
+        self::assertFalse($provider->includes($competition, $noSparta));         // neither
+    }
+
+    public function testTeamsModeNeverIncludesDeletedOrForeignMatches(): void
+    {
+        $competition = $this->makeCompetition(CompetitionMatchSelectionMode::Teams, includePlayoff: true);
+
+        // Even when a filter team id matches the match's home team, a deleted or
+        // foreign match never counts (deletion short-circuit + source-scope guard).
+        $provider = $this->makeTeamsProvider([
+            $this->deletedMatch->homeTeam->id->toRfc4122(),
+            $this->foreignMatch->homeTeam->id->toRfc4122(),
+        ]);
+
+        self::assertFalse($provider->includes($competition, $this->deletedMatch));
+        self::assertFalse($provider->includes($competition, $this->foreignMatch));
+    }
+
+    public function testForgetTeamFiltersBustsTheCache(): void
+    {
+        $sparta = Uuid::v7();
+        $match = $this->makeMatchWithTeams('019ddddd-0000-7000-8000-00000000f014', $this->source, $sparta, Uuid::v7(), isPlayoff: false);
+        $competition = $this->makeCompetition(CompetitionMatchSelectionMode::Teams, includePlayoff: true);
+
+        $teamFilterRepository = $this->createMock(CompetitionTeamFilterRepository::class);
+        $teamFilterRepository->expects(self::exactly(2))
+            ->method('teamIdsFor')
+            ->with($competition->id)
+            ->willReturnOnConsecutiveCalls([], [$sparta->toRfc4122()]);
+
+        $provider = new CompetitionMatchProvider(
+            $this->createStub(EntityManagerInterface::class),
+            $this->createStub(CompetitionRepository::class),
+            $this->createStub(CompetitionMatchSelectionRepository::class),
+            $teamFilterRepository,
+        );
+
+        self::assertFalse($provider->includes($competition, $match));
+        $provider->forgetTeamFilters($competition->id);
+        self::assertTrue($provider->includes($competition, $match));
     }
 
     private function makeSource(string $id): MatchSource
@@ -186,6 +248,23 @@ final class CompetitionMatchProviderTest extends TestCase
             matchSource: $source,
             homeTeam: new Team(id: Uuid::v7(), sport: $source->sport, matchSource: $source, name: 'A', createdAt: $this->now),
             awayTeam: new Team(id: Uuid::v7(), sport: $source->sport, matchSource: $source, name: 'B', createdAt: $this->now),
+            kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+            venue: null,
+            createdAt: $this->now,
+            isPlayoff: $isPlayoff,
+        );
+        $match->popEvents();
+
+        return $match;
+    }
+
+    private function makeMatchWithTeams(string $id, MatchSource $source, Uuid $homeTeamId, Uuid $awayTeamId, bool $isPlayoff): SportMatch
+    {
+        $match = new SportMatch(
+            id: Uuid::fromString($id),
+            matchSource: $source,
+            homeTeam: new Team(id: $homeTeamId, sport: $source->sport, matchSource: $source, name: 'H', createdAt: $this->now),
+            awayTeam: new Team(id: $awayTeamId, sport: $source->sport, matchSource: $source, name: 'A', createdAt: $this->now),
             kickoffAt: new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
             venue: null,
             createdAt: $this->now,
@@ -227,6 +306,23 @@ final class CompetitionMatchProviderTest extends TestCase
             $this->createStub(EntityManagerInterface::class),
             $this->createStub(CompetitionRepository::class),
             $selectionRepository,
+            $this->createStub(CompetitionTeamFilterRepository::class),
+        );
+    }
+
+    /**
+     * @param list<string> $filterTeamIds
+     */
+    private function makeTeamsProvider(array $filterTeamIds): CompetitionMatchProvider
+    {
+        $teamFilterRepository = $this->createStub(CompetitionTeamFilterRepository::class);
+        $teamFilterRepository->method('teamIdsFor')->willReturn($filterTeamIds);
+
+        return new CompetitionMatchProvider(
+            $this->createStub(EntityManagerInterface::class),
+            $this->createStub(CompetitionRepository::class),
+            $this->createStub(CompetitionMatchSelectionRepository::class),
+            $teamFilterRepository,
         );
     }
 }

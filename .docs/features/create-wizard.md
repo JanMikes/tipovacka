@@ -51,6 +51,24 @@ Ported into `assets/styles/app.css` (re-derived — the DS source rule was malfo
 `.step-bar.done` = accent connector. Pair with `.option-card` (`.selected`) for the
 selectable source/monetization tiles.
 
+## Match scope step (All / Podle týmu / Vybrané zápasy)
+
+Step 1's „Zápasy soutěže" offers three selection modes (radios bound to the
+`selectionMode` LiveProp): **Všechny zápasy** (`all` + the `includePlayoff` toggle),
+**Podle týmu** (`teams`) and **Vybrat jen některé zápasy** (`subset`, private only).
+Global (admin) mode hides `subset` and the playoff toggle — a global competition is `all`
+or `teams`.
+
+- **Podle týmu** reveals a multi-team **`team-filter`** tom-select island (see
+  [team-picker](team-picker.md)) fed by the source's teams. Picks are mirrored as a
+  comma-joined UUID list into the `selectedTeamIdsCsv` LiveProp; `filterTeamUuids()`
+  intersects them with the source's actual teams (drops a stale selection after a source
+  switch), and `submit()`/`submitGlobal()` send them as `filterTeamIds` on
+  `CreateCompetitionCommand` / `CreateGlobalCompetitionCommand`. The competition then
+  dynamically includes every source match where a filter team plays — later-added team
+  matches (playoff!) auto-join. Editable after creation on the same manage surface as
+  `subset` (`portal_competition_match_selection`).
+
 ## Judgment calls
 
 - **Match checklist = LiveProp-driven, not a `data-live-ignore` island** — it must
@@ -58,6 +76,12 @@ selectable source/monetization tiles.
   `selectedMatchIds` (multi-checkbox `data-model="norender|selectedMatchIds[]"`, so
   ticking never round-trips); the live text filter + „Vybrat vše" are pure client-side
   (`wizard_matches` Stimulus controller) and survive because ticking does not re-render.
+- **Team filter picker IS a `data-live-ignore` island** (unlike the match checklist) —
+  tom-select can't live in a re-rendering region. The currently-picked teams are rendered
+  as `<option selected>` server-side (`filterTeamOptions` getter) so the chips survive step
+  navigation from the DOM, not from bare ids; the controller re-syncs the hidden
+  `data-model="norender|selectedTeamIdsCsv"` input on mount, which also clears a stale id
+  list if the picker remounts with an empty selection.
 - **Rules = two writable arrays** (`enabledRuleIds`, `rulePoints`) instead of a Symfony
   sub-form, so the preset tiles (`scoring-preset` controller) + steppers stay instant
   client-side; section metadata comes from the shared `RulePresetProvider` (also used by

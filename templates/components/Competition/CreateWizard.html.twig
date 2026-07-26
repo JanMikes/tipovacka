@@ -140,23 +140,43 @@
                             <p class="text-xs leading-relaxed text-white/50">{{ isGlobalKind ? 'Globální soutěž zahrnuje všechny zápasy vybraného zdroje.' : 'Rozpis zápasů, nad kterým se soutěž tipuje.' }}</p>
                         </div>
 
-                        {% if this.selectedSource and not isGlobalKind %}
+                        {% if this.selectedSource %}
                             <div class="space-y-3 border-t border-white/10 pt-5">
                                 <span class="field-label">Zápasy soutěže</span>
-                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ not this.isSubset ? 'selected' : '' }}">
+                                <div class="grid grid-cols-1 gap-2 {{ isGlobalKind ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }}">
+                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ selectionMode == 'all' ? 'selected' : '' }}">
                                         <input type="radio" name="wizard-selection-mode" value="all" data-model="selectionMode"
-                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ not this.isSubset ? 'checked' }} />
+                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ selectionMode == 'all' ? 'checked' }} />
                                         <span class="text-sm font-medium text-white">Všechny zápasy</span>
                                     </label>
-                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isSubset ? 'selected' : '' }}">
-                                        <input type="radio" name="wizard-selection-mode" value="subset" data-model="selectionMode"
-                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isSubset ? 'checked' }} />
-                                        <span class="text-sm font-medium text-white">Vybrat jen některé zápasy</span>
+                                    <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isTeams ? 'selected' : '' }}">
+                                        <input type="radio" name="wizard-selection-mode" value="teams" data-model="selectionMode"
+                                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isTeams ? 'checked' }} />
+                                        <span class="text-sm font-medium text-white">Podle týmu</span>
                                     </label>
+                                    {% if not isGlobalKind %}
+                                        <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isSubset ? 'selected' : '' }}">
+                                            <input type="radio" name="wizard-selection-mode" value="subset" data-model="selectionMode"
+                                                   class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isSubset ? 'checked' }} />
+                                            <span class="text-sm font-medium text-white">Vybrat jen některé zápasy</span>
+                                        </label>
+                                    {% endif %}
                                 </div>
 
-                                {% if this.isSubset %}
+                                {% if this.isTeams %}
+                                    <div data-live-ignore>
+                                        <div data-controller="team-filter"
+                                             data-team-filter-url-value="{{ path('portal_competition_source_filter_teams', {id: this.selectedSource.id.toRfc4122}) }}">
+                                            <select multiple data-team-filter-target="select" class="input" aria-label="Týmy soutěže" placeholder="Vyhledat a přidat tým…">
+                                                {% for option in this.filterTeamOptions %}
+                                                    <option value="{{ option.id }}" selected>{{ option.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <input type="hidden" data-model="norender|selectedTeamIdsCsv" data-team-filter-target="payload" value="{{ selectedTeamIdsCsv }}" />
+                                        </div>
+                                        <p class="mt-2 text-xs leading-relaxed text-white/50">Soutěž zahrne všechny zápasy vybraných týmů — i ty, které se do rozpisu přidají později (třeba playoff).</p>
+                                    </div>
+                                {% elseif this.isSubset %}
                                     <div data-controller="wizard-matches">
                                         <div class="relative mb-3">
                                             <twig:ux:icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -187,7 +207,7 @@
                                             </div>
                                         {% endfor %}
                                     </div>
-                                {% else %}
+                                {% elseif not isGlobalKind %}
                                     <label class="flex cursor-pointer items-start gap-3">
                                         <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                                data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
