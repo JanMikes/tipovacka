@@ -31,6 +31,9 @@ return App::config([
         'App\\Form\\' => [
             'resource' => '../src/Form/*FormType.php',
         ],
+        'App\\Logging\\' => [
+            'resource' => '../src/Logging/',
+        ],
         'App\\Query\\' => [
             'resource' => '../src/Query/**/*Query.php',
         ],
@@ -121,12 +124,38 @@ return App::config([
         'App\\Twig\\Components\\' => [
             'resource' => '../src/Twig/Components/',
         ],
-        // Sentry Monolog handlers
-        'Sentry\\Monolog\\Handler' => [
+        // Interpolates PSR-3 {placeholders} into the message for ALL handlers.
+        // The Sentry handlers are 'type: service', which monolog-bundle does not
+        // wrap with its per-handler process_psr_3_messages processor — without
+        // this, Sentry issues literally read `running command "{command}"`.
+        'Monolog\\Processor\\PsrLogMessageProcessor' => [
+            'tags' => [['monolog.processor' => []]],
+        ],
+        // Sentry Monolog handlers. Sentry\Monolog\Handler (the old all-in-one) is
+        // deprecated since sentry/sentry 4.24 and gone in 5.0; it is replaced by
+        // the three single-purpose handlers below.
+        //
+        // INFO+ → Sentry Logs. Takes no hub — it writes into the Logs aggregator,
+        // which the bundle flushes on kernel/console terminate and per messenger
+        // message. Note it ignores Monolog processors registered ON the handler,
+        // hence ours are registered on the logger (see PsrLogMessageProcessor above).
+        'Sentry\\SentryBundle\\Monolog\\LogsHandler' => [
+            'arguments' => [
+                '$level' => \Monolog\Level::Info,
+            ],
+        ],
+        // ERROR+ records carrying a Throwable → issue with stack trace.
+        'Sentry\\Monolog\\ExceptionToSentryIssueHandler' => [
             'arguments' => [
                 '$hub' => '@Sentry\\State\\HubInterface',
                 '$level' => \Monolog\Level::Error,
-                '$bubble' => true,
+            ],
+        ],
+        // ERROR+ records without a Throwable → message-grouped issue.
+        'Sentry\\Monolog\\LogToSentryIssueHandler' => [
+            'arguments' => [
+                '$hub' => '@Sentry\\State\\HubInterface',
+                '$level' => \Monolog\Level::Error,
                 '$fillExtraContext' => true,
             ],
         ],
