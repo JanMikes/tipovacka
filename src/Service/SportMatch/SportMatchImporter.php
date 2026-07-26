@@ -6,6 +6,7 @@ namespace App\Service\SportMatch;
 
 use App\Entity\MatchSource;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
 use App\Service\Identity\ProvideIdentity;
@@ -167,12 +168,25 @@ final class SportMatchImporter
      */
     public function commit(MatchSource $matchSource, array $rows, \DateTimeImmutable $now): int
     {
+        // Resolve each distinct team NAME once for the whole batch. resolve() finds
+        // teams via a DB query, which cannot see a team persisted earlier in this same
+        // (still unflushed) transaction — so a team playing several matches in one
+        // import would otherwise be created once per appearance and collide on the
+        // (match_source_id, name) / (sport_id, name) unique index on flush. The key is
+        // case-insensitive to match the resolver's own LOWER(name) = LOWER(name) lookup.
+        $resolvedTeams = [];
+        $resolve = function (string $name) use ($matchSource, $now, &$resolvedTeams): Team {
+            $key = mb_strtolower(trim($name));
+
+            return $resolvedTeams[$key] ??= $this->teamResolver->resolve($matchSource, $name, $now);
+        };
+
         foreach ($rows as $row) {
             $sportMatch = new SportMatch(
                 id: $this->identity->next(),
                 matchSource: $matchSource,
-                homeTeam: $this->teamResolver->resolve($matchSource, $row->homeTeam, $now),
-                awayTeam: $this->teamResolver->resolve($matchSource, $row->awayTeam, $now),
+                homeTeam: $resolve($row->homeTeam),
+                awayTeam: $resolve($row->awayTeam),
                 kickoffAt: $row->kickoffAt,
                 venue: $row->venue,
                 createdAt: $now,
