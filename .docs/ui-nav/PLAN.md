@@ -45,18 +45,38 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 
 ### Rules
 
-1. **One item at a time, sequentially.** Items touch overlapping templates (`base.html.twig`,
-   `Layout/Nav.html.twig`, `dashboard.html.twig`, `competition/detail.html.twig`) — running
-   two implementers in parallel produces conflicts. Never launch a second implementer while
-   one is `IN PROGRESS`.
-2. **Item files are self-contained.** An implementer gets no conversational context. Everything
+1. **One item at a time, sequentially.** Never launch a second implementer while one is
+   `IN PROGRESS`. The shared surfaces below are touched by almost every item, so parallel
+   implementers conflict — and the CSS one conflicts *semantically*, which git will not catch:
+
+   | Surface | Why it collides |
+   |---|---|
+   | `assets/styles/app.css` (**846 lines, one file**) | The entire hand-written `@layer components` lives here. Two items adding component styles land in the same layer; worse, they can silently redefine the same class or fight over specificity/order without a git conflict. **Highest-risk file in the repo.** |
+   | `templates/base.html.twig` | Page shell — every layout item touches it. |
+   | `templates/components/Layout/Nav.html.twig` | Every navigation item touches it. |
+   | `templates/portal/dashboard.html.twig` (564 l.) | Every IA item that moves something off the dashboard. |
+   | `templates/portal/competition/detail.html.twig` (576 l.) | Every item that restructures the soutěž hub. |
+   | `templates/admin/layout.html.twig` | Admin-shell items. |
+   | `importmap.php`, `assets/app.js`, `assets/stimulus_bootstrap.js`, `assets/controllers.json` | Shared JS registration points — small files, so any two edits conflict. |
+
+   **Stimulus controllers themselves are low-risk**: one behaviour per file in
+   `assets/controllers/`, so two items adding two controllers do not collide. Same for
+   `assets/icons/lucide/` — `ux:icons:import` only writes new SVGs, there is no manifest.
+
+2. **CSS discipline** (because of the above). When an item needs styles:
+   - Reuse an existing class first — read the `@layer components` block before adding anything.
+   - New classes go **at the end of the section they belong to**, under a comment naming the
+     item (`/* --- item NN: <title> --- */`), never interleaved into an existing rule block.
+   - Prefer Tailwind utilities in the template over a new class unless the pattern repeats.
+   - Never reorder or reformat existing rules — it makes the next item's diff unreadable.
+3. **Item files are self-contained.** An implementer gets no conversational context. Everything
    it needs — the why, the exact routes/templates, the acceptance criteria — lives in the file.
    Cross-reference other item files by path when there is a genuine dependency; never assume
    the reader has seen them.
-3. **Every item ends with a commit + push.** One commit per item, message
+4. **Every item ends with a commit + push.** One commit per item, message
    `UI: <item title>` plus a short body. Push to `main` (this project deploys from `main`).
-4. **Every item ends with the board updated** — status `DONE` + commit sha, in the same commit.
-5. **Nothing is "done" until it renders.** Verification is part of the item, not optional.
+5. **Every item ends with the board updated** — status `DONE` + commit sha, in the same commit.
+6. **Nothing is "done" until it renders.** Verification is part of the item, not optional.
 
 ### Definition of done (applies to every item unless the item says otherwise)
 
