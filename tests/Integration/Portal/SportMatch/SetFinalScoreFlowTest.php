@@ -182,6 +182,37 @@ final class SetFinalScoreFlowTest extends WebTestCase
         self::assertAnySelectorTextContains('body', 'Skóre po prodloužení lze zadat jen při remíze v základní hrací době.');
     }
 
+    public function testEmptyScorerNameIsRejectedWith422NotACrash(): void
+    {
+        $client = static::createClient();
+        $em = $this->loginAdmin($client);
+
+        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+
+        // Organizer clicked „add goal" but left the player name blank (empty
+        // minute too) — the exact production payload. This must fail validation
+        // with a friendly message, not a 500 from a null → string type error.
+        $client->request('POST', $url, [
+            'set_final_score_form' => [
+                'state' => 'finished',
+                'homeScore' => '1',
+                'awayScore' => '1',
+                'events' => [
+                    ['type' => 'goal', 'side' => 'home', 'minute' => '', 'playerName' => ''],
+                ],
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertAnySelectorTextContains('body', 'Zadejte prosím jméno hráče.');
+
+        // Nothing was saved — the match stayed scheduled.
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame(SportMatchState::Scheduled, $match->state);
+    }
+
     public function testFinishedMatchPageHidesStateToggleAndShowsStaticPill(): void
     {
         $client = static::createClient();

@@ -48,6 +48,12 @@ final class MatchEventFormType extends AbstractType
         $builder->add('playerName', TextType::class, [
             'label' => 'Hráč',
             'attr' => ['placeholder' => 'Jméno hráče…'],
+            // Non-nullable string property: an empty submit must normalize to ''
+            // (not null), otherwise data-mapping throws a TypeError before the
+            // NotBlank validation can surface the friendly „Zadejte jméno hráče"
+            // error. Passing the literal '' also installs TextType's null→''
+            // view transformer — the default (a closure) does not.
+            'empty_data' => '',
         ]);
     }
 
