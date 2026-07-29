@@ -14,6 +14,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B4 | Match detail omits a competition the user is a member of | DONE | `09770f4` |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
+| B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | TODO | — |
 
 ---
 
@@ -320,3 +321,61 @@ move the standings. It is the same settled-ness test `competition_ended` uses.
   `::testBuyingInAFinishedCompetitionIsRefusedAndChargesNothing` (the second one grabs a valid
   CSRF token while the competition is still running, then settles every match — a stale page
   must not be able to burn credits).
+
+---
+
+## B7 — Match rows: overlapping elements, overflowing team names, dead „Zadat tip"
+
+**Report (product owner, 2026-07-29, competition detail).** *„Competition detail there are overlay
+things and the 'chybí tip' and 'zadat tip' should take me to the match guessing. The names of teams
+are overflowing."*
+
+Screenshot: `.docs/ui-nav/screenshots/bug-b7-matchrow-overlap.png`.
+
+### What the screenshot shows
+
+Three distinct defects in the match row, all visible on `/souteze/{id}`:
+
+1. **Elements are painted on top of each other.** The state pill („TIP ODESLÁN" green / „CHYBÍ TIP"
+   amber) is rendered **over the home team's name** („Hlubina", „Frýdek-Místek", „Uherský Brod",
+   „Vrchovina", „Hodonín" are all partly covered). The tip box („MŮJ TIP 1 : 1" / the dashed
+   „TIPNOUT + Zadat tip") is rendered **over the away team's name and its „HOSTÉ" label**
+   („Zbrojovka Brno B", „Hranice", „Vítkovice", „Blansko", „Slovácko B"). Both overlays also sit on
+   top of the team monogram coins.
+2. **Team names overflow** their column instead of wrapping or truncating.
+3. **„CHYBÍ TIP" and „+ Zadat tip" are not links.** They must take the user to the match guessing
+   surface — the same destination as the row's „Tipovat →" button.
+
+### Where to look
+
+`.tip-row` and its children live in `assets/styles/app.css` (§ „Horizontal match row", ~l. 624-668):
+`.tip-row-when` / `.tip-row-teams` (+ `.home`, `.name`, `.role`) / `.tip-row-score` / `.my-tip`
+(+ `.set`, `.empty`) / `.my-tip-lbl` / `.my-tip-val` / `.tip-row-actions`, plus a stacking media
+query at ~l. 659-665. The component is `templates/components/Match/MatchRow.html.twig`.
+
+**Likely cause — verify, do not assume.** Item 08 added an optional `tipPrompt` prop to `MatchRow`
+to render the previously-unused `.my-tip.empty` style, and the competition detail page also renders
+a state pill per row. The overlap pattern (two extra elements landing exactly on the teams column)
+is what happens when new children are added to a `grid`/`flex` row that has **fixed column
+definitions** — the extras fall into an existing track instead of getting their own. Read the rule
+before changing it; the fix is almost certainly the row's track definition, not a `position` hack.
+
+### Requirements
+
+- No element overlaps another at any viewport width. Check the narrow breakpoint too — the stacking
+  media query at the bottom of that section is where a naive fix usually breaks.
+- Long team names must be handled deliberately (wrap or ellipsis), not allowed to overflow. Test
+  with the longest real names in `DevFixtures` („Zbrojovka Brno B", „Uherský Brod", „Slovácko B").
+- „CHYBÍ TIP" and „+ Zadat tip" both navigate to the match guessing surface, same target as the
+  row's „Tipovat →" action. Keep them keyboard-reachable and give them an accessible name — if the
+  whole row becomes clickable, do not nest interactive elements inside a link.
+- **`MatchRow` is shared.** It is rendered on competition detail, `/zapasy`, the Nástěnka and match
+  detail. Fix it once in the component/CSS and verify **every** surface — a per-page patch is not
+  acceptable.
+
+### Definition of done
+
+Per `PLAN.md`, plus: render every surface that uses `MatchRow` at desktop **and** narrow widths, in
+each row state (tip submitted, tip missing, locked, finished with points). CSS discipline — reuse
+first, new rules at the END of the „Horizontal match row" section under a
+`/* --- B7: match row layout --- */` comment, never reorder existing rules.
