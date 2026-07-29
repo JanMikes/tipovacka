@@ -4,18 +4,30 @@ declare(strict_types=1);
 
 namespace App\DataFixtures;
 
+use App\Entity\BoostPurchase;
 use App\Entity\Competition;
+use App\Entity\CompetitionInvitation;
+use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionTeamFilter;
+use App\Entity\CreditWallet;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\LeaderboardSnapshot;
+use App\Entity\LeaderboardTieResolution;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
+use App\Entity\Team;
 use App\Entity\User;
+use App\Enum\BoostType;
+use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\CompetitionMonetization;
+use App\Enum\CreditTransactionType;
 use App\Enum\MatchSourceKind;
+use App\Service\Credits\PricingConfig;
 use App\Service\Team\TeamResolver;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
@@ -29,6 +41,12 @@ use Symfony\Component\Uid\Uuid;
  * Adds 25 extra users, 3 extra match_sources (finished, in-progress public, private active),
  * multiple competitions per match source, cross-competition memberships, matches and evaluated guesses
  * so the UI can be exercised with realistic volume.
+ *
+ * On top of that (item 03 of the UI/nav stream) it seeds four self-contained
+ * „worlds" that the rebuilt pages are developed against — a big paid GLOBAL
+ * competition with a real leaderboard, a small PRIVATE premium one organized by
+ * the primary dev user, a FINISHED one, and a TEAM-FILTER one. They are
+ * documented world by world in `.docs/FIXTURES.md`.
  *
  * Not loaded in the test suite (tests request group=test).
  */
@@ -68,6 +86,70 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         ['kristy', 'Kristýna', 'Pešková'],
         ['miska', 'Michaela', 'Vacková'],
     ];
+
+    // --- item 03: development worlds (documented in .docs/FIXTURES.md) --------
+
+    /** World A + D live on this curated source: a running tournament with rounds and a playoff. */
+    public const string WORLD_CUP_SOURCE_ID = '019aaaaa-0000-7000-8000-0000000000f1';
+    public const string WORLD_CUP_SOURCE_NAME = 'Mistrovství světa 2026';
+
+    /** World A — the big PAID GLOBAL competition (the leaderboard playground). */
+    public const string WORLD_CUP_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f1';
+    public const string WORLD_CUP_COMPETITION_NAME = 'Tipovačka MS 2026';
+    /** Entry fee = competition data set by the admin, NOT a price from PricingConfig. */
+    public const int WORLD_CUP_COMPETITION_ENTRY_FEE = 30;
+
+    /** World D — same source, selection mode Teams (filtered to Česko + Slovensko). */
+    public const string TEAM_FILTER_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f2';
+    public const string TEAM_FILTER_COMPETITION_NAME = 'Fandíme Česku';
+
+    /** World B — small PRIVATE premium competition organized by the primary dev user. */
+    public const string NEIGHBOURS_SOURCE_ID = '019aaaaa-0000-7000-8000-0000000000f2';
+    public const string NEIGHBOURS_SOURCE_NAME = 'Sousedská liga';
+    public const string NEIGHBOURS_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f3';
+    public const string NEIGHBOURS_COMPETITION_NAME = 'Sousedský pohár';
+    public const string NEIGHBOURS_ANONYMOUS_USER_ID = '01933333-0000-7000-8000-0000000001f1';
+    public const string NEIGHBOURS_ANONYMOUS_FIRST_NAME = 'Josef';
+    public const string NEIGHBOURS_ANONYMOUS_LAST_NAME = 'Dvořák';
+    public const string NEIGHBOURS_INVITATION_ID = '019ccccc-0000-7000-8000-0000000000f1';
+    public const string NEIGHBOURS_INVITATION_EMAIL = 'soused@tipovacka.dev';
+    public const string NEIGHBOURS_INVITATION_TOKEN = 'f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1';
+
+    /** World C — everything played, source completed („Ukončeno" states, resolved tie). */
+    public const string WINTER_SOURCE_ID = '019aaaaa-0000-7000-8000-0000000000f3';
+    public const string WINTER_SOURCE_NAME = 'Zimní pohár 2026';
+    public const string WINTER_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f4';
+    public const string WINTER_COMPETITION_NAME = 'Zimní pohár – parta';
+
+    /**
+     * The ONE deliberately unverified dev login, so the e-mail verification
+     * airlock can be exercised. Every other dev user is verified.
+     */
+    public const string UNVERIFIED_DEV_USER_ID = '01933333-0000-7000-8000-0000000001f2';
+    public const string UNVERIFIED_DEV_USER_EMAIL = 'neovereny@tipovacka.dev';
+    public const string UNVERIFIED_DEV_USER_NICKNAME = 'neovereny';
+
+    /** Round labels of the World-Cup source (item 02 `SportMatch::$round`). */
+    public const string ROUND_GROUP_1 = 'Základní skupina – 1. kolo';
+    public const string ROUND_GROUP_2 = 'Základní skupina – 2. kolo';
+    public const string ROUND_GROUP_3 = 'Základní skupina – 3. kolo';
+    public const string ROUND_LAST_16 = 'Osmifinále';
+    public const string ROUND_QUARTER_FINAL = 'Čtvrtfinále';
+
+    /** The two teams World D's team filter is pinned to. */
+    public const string TEAM_CESKO_ID = '019ddddd-0000-7000-8000-0000000ff001';
+    public const string TEAM_SLOVENSKO_ID = '019ddddd-0000-7000-8000-0000000ff002';
+
+    /**
+     * Balance the primary dev user is LEFT with after the seeded spending: enough
+     * for either cheaper boost, deliberately short of „Měnit tip" so the
+     * insufficient-credits branch is one click away. Prices always come from
+     * {@see PricingConfig} — never a literal.
+     */
+    public const int DEV_USER_CREDIT_BALANCE = PricingConfig::BOOST_OTHERS_TIPS + PricingConfig::BOOST_TIP_DISTRIBUTION + 5;
+
+    /** Points a plan code is worth under the four default rules (see {@see guessFor}). */
+    private const array PLAN_CODE_POINTS = ['e' => 10, 'o' => 3, 'h' => 1, 'm' => 0];
 
     public function __construct(
         private readonly UserPasswordHasherInterface $passwordHasher,
@@ -179,7 +261,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             name: 'VŠCHT tipovačka',
             description: 'Bývalí spolužáci z VŠCHT.',
             pin: '10000001',
-            linkToken: str_repeat('v', 48),
+            linkToken: str_repeat('1', 48),
             createdAt: new \DateTimeImmutable('2025-06-02 10:00:00 UTC'),
         );
 
@@ -191,7 +273,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             name: 'Pražský pivní klub',
             description: 'Druhá soutěž ve stejném turnaji — Fortuna Liga.',
             pin: '10000002',
-            linkToken: str_repeat('p', 48),
+            linkToken: str_repeat('2', 48),
             createdAt: new \DateTimeImmutable('2025-06-03 12:00:00 UTC'),
         );
 
@@ -215,7 +297,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             name: 'Management',
             description: 'Druhá soutěž — vedení firmy, stejný turnaj.',
             pin: '20000002',
-            linkToken: str_repeat('m', 48),
+            linkToken: str_repeat('3', 48),
             createdAt: new \DateTimeImmutable('2025-05-22 09:00:00 UTC'),
         );
 
@@ -229,7 +311,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             name: 'Kamarádi ze střední',
             description: 'Druhá soutěž v Lize mistrů.',
             pin: '30000001',
-            linkToken: str_repeat('k', 48),
+            linkToken: str_repeat('4', 48),
             createdAt: new \DateTimeImmutable('2025-06-05 18:00:00 UTC'),
         );
 
@@ -371,7 +453,175 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             ));
         }
 
+        // -- item 03 worlds ------------------------------------------------
+        $this->loadDevWorlds($manager, $football, $admin, $verified, $users);
+
         $manager->flush();
+    }
+
+    /**
+     * The four self-contained worlds items 04–07 are developed against. Unlike the
+     * data above they are anchored to the REAL calendar (`today ± n days`), so a
+     * `db:reset` always produces a tournament that is genuinely half-played: past
+     * matches carry results, upcoming ones are still tippable, and the rolling
+     * „Posledních 7 dní" / „Poslední kolo" leaderboard windows are never empty.
+     * Everything is created at `$seededAt` (= real now), which is AFTER the
+     * earliest kickoff of every world ⇒ each match counts as late-added and keeps
+     * its own kickoff as the tip deadline (see EffectiveTipDeadlineResolver), so
+     * the upcoming fixtures stay tippable in the browser.
+     *
+     * @param array<int, User> $users
+     */
+    private function loadDevWorlds(
+        ObjectManager $manager,
+        Sport $football,
+        User $admin,
+        User $verified,
+        array $users,
+    ): void {
+        $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
+        $seededAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        // The ONE deliberately unverified dev login (verification airlock). It is
+        // a member of nothing so it never muddies a leaderboard.
+        $unverified = new User(
+            id: Uuid::fromString(self::UNVERIFIED_DEV_USER_ID),
+            email: self::UNVERIFIED_DEV_USER_EMAIL,
+            password: null,
+            nickname: self::UNVERIFIED_DEV_USER_NICKNAME,
+            createdAt: $seededAt,
+        );
+        $unverified->changePassword(
+            $this->passwordHasher->hashPassword($unverified, AppFixtures::DEFAULT_PASSWORD),
+            $seededAt,
+        );
+        $unverified->updateProfile('Neověřený', 'Nováček', null, $seededAt);
+        $unverified->popEvents();
+        $manager->persist($unverified);
+
+        $teams = $this->createWorldCupTeams($manager, $football, $seededAt);
+
+        $worldCupSource = new MatchSource(
+            id: Uuid::fromString(self::WORLD_CUP_SOURCE_ID),
+            sport: $football,
+            owner: $admin,
+            kind: MatchSourceKind::Curated,
+            name: self::WORLD_CUP_SOURCE_NAME,
+            description: 'Mistrovství světa ve fotbale — základní skupiny i vyřazovací fáze.',
+            startAt: $today->modify('-16 days')->setTime(0, 0),
+            endAt: $today->modify('+16 days')->setTime(23, 59, 59),
+            createdAt: $seededAt,
+        );
+        $worldCupSource->popEvents();
+        $manager->persist($worldCupSource);
+
+        $matches = $this->createWorldCupMatches($manager, $worldCupSource, $teams, $today, $seededAt);
+        /** @var list<SportMatch> $playedMatches the eight already finished ones, kickoff-ordered */
+        $playedMatches = array_slice($matches, 0, 8);
+
+        // -- World A: the big PAID GLOBAL competition ----------------------
+        // 24 members with designed point totals (see PLAN_CODE_POINTS): a real
+        // podium, a genuine tie on 32 b, and the primary dev user mid-table at
+        // rank 7 — exactly what the leaderboard redesign needs to render.
+        $worldCup = $this->createCompetition(
+            $manager,
+            id: self::WORLD_CUP_COMPETITION_ID,
+            matchSource: $worldCupSource,
+            owner: $admin,
+            name: self::WORLD_CUP_COMPETITION_NAME,
+            description: 'Velká veřejná tipovačka na MS 2026. Vstupné se strhává z kreditů.',
+            pin: null,
+            linkToken: null,
+            createdAt: $seededAt,
+            monetization: CompetitionMonetization::Boosts,
+            isGlobal: true,
+            entryFeeCredits: self::WORLD_CUP_COMPETITION_ENTRY_FEE,
+        );
+        $this->provisionDefaultRules($manager, $worldCup, $seededAt);
+
+        /** @var list<array{User, string}> $worldCupPlans */
+        $worldCupPlans = [
+            [$users[5], 'eeeeoohm'],   // 47
+            [$users[19], 'eeeeohmm'],  // 44
+            [$admin, 'eeeehmmm'],      // 41
+            [$users[2], 'eeeoohhm'],   // 38
+            [$users[11], 'eeeoommm'],  // 36
+            [$users[20], 'eeeohmmm'],  // 34
+            [$verified, 'eeehhmmm'],   // 32 — the primary dev user, rank 7
+            [$users[1], 'eeoooomm'],   // 32 — the tie partner
+            [$users[3], 'eeooommm'],   // 29
+            [$users[4], 'eeoohmmm'],   // 27
+            [$users[6], 'eeohhmmm'],   // 25
+            [$users[7], 'eeohmmmm'],   // 24
+            [$users[9], 'eehhmmmm'],   // 22
+            [$users[10], 'eehmmmmm'],  // 21
+            [$users[12], 'eooommmm'],  // 19
+            [$users[13], 'eoohhmmm'],  // 18
+            [$users[14], 'eoohmmmm'],  // 17
+            [$users[15], 'eohhmmmm'],  // 15
+            [$users[16], 'eohmmmmm'],  // 14
+            [$users[17], 'oooommmm'],  // 12
+            [$users[18], 'ooohhmmm'],  // 11
+            [$users[21], 'ooommmmm'],  // 9
+            [$users[22], 'oohmmmmm'],  // 7
+            [$users[23], 'ohmmmmmm'],  // 4
+        ];
+
+        $this->addMembers($manager, $worldCup, array_map(
+            static fn (array $plan): User => $plan[0],
+            $worldCupPlans,
+        ), $seededAt);
+
+        $this->createPlannedGuesses($manager, $worldCup, $worldCupPlans, $playedMatches, $seededAt);
+
+        // Tips on the still-open fixtures, with thinning participation, so every
+        // „Rozložení tipů" bar has a different shape and the live match already
+        // has a full set of tips waiting for its result.
+        foreach ([8 => 24, 9 => 18, 10 => 12, 11 => 6] as $matchIndex => $tipperCount) {
+            foreach (array_slice($worldCupPlans, 0, $tipperCount) as $offset => [$member]) {
+                $this->createEvaluatedGuess(
+                    $manager,
+                    $member,
+                    $matches[$matchIndex],
+                    $worldCup,
+                    ($offset + $matchIndex) % 4,
+                    ($offset + 2) % 3,
+                    $seededAt,
+                );
+            }
+        }
+
+        // Honest partial-sum standings so the leaderboard Δ shows real movement:
+        // after round 1 (3 matches), after round 2 (6) and the current state (8).
+        // Δ is measured against the latest day strictly BEFORE today ⇒ the
+        // today−4 board, i.e. the round-3 reshuffle.
+        foreach ([[3, 10], [6, 4], [8, 0]] as [$matchesPlayed, $daysAgo]) {
+            $this->createStandingSnapshot(
+                $manager,
+                $worldCup,
+                $worldCupPlans,
+                $matchesPlayed,
+                $today->modify(sprintf('-%d days', $daysAgo)),
+            );
+        }
+
+        // Boosts: the dev user bought the „Konkrétní tipy kolegů" boost here
+        // (⇒ „Rozložení tipů" UNLOCKED), one other member bought the cheaper
+        // distribution bar, the remaining 22 bought nothing.
+        $this->createBoost($manager, '019bbbbb-0000-7000-8000-0000000000e2', $worldCup, $verified, BoostType::OthersTips, $seededAt);
+        $this->createBoost($manager, '019bbbbb-0000-7000-8000-0000000000e3', $worldCup, $users[5], BoostType::TipDistribution, $seededAt);
+
+        // -- World D: same source, selection mode Teams --------------------
+        $this->createTeamFilterWorld($manager, $worldCupSource, $teams, $matches, $verified, $users, $seededAt);
+
+        // -- World B: small PRIVATE premium competition --------------------
+        [$neighbours, $neighbourMembers] = $this->createNeighboursWorld($manager, $football, $verified, $users, $today, $seededAt);
+
+        // -- World C: finished competition ---------------------------------
+        $this->createWinterWorld($manager, $football, $verified, $users, $today, $seededAt);
+
+        // -- Credits -------------------------------------------------------
+        $this->createDevWallets($manager, $admin, $verified, $users[5], $worldCup, $neighbours, $neighbourMembers, $seededAt);
     }
 
     private function createVerifiedUser(
@@ -424,6 +674,11 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         }
     }
 
+    /**
+     * NOTE — `$linkToken` must be 48 chars of `[a-f0-9]`: that is what the
+     * `competition_join_by_link` route requires, and a token outside it makes the
+     * competition detail page blow up when it renders the invite link.
+     */
     private function createCompetition(
         ObjectManager $manager,
         string $id,
@@ -434,6 +689,10 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         ?string $pin,
         ?string $linkToken,
         \DateTimeImmutable $createdAt,
+        CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
+        CompetitionMonetization $monetization = CompetitionMonetization::None,
+        bool $isGlobal = false,
+        int $entryFeeCredits = 0,
     ): Competition {
         $competition = new Competition(
             id: Uuid::fromString($id),
@@ -444,6 +703,10 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             pin: $pin,
             shareableLinkToken: $linkToken,
             createdAt: $createdAt,
+            selectionMode: $selectionMode,
+            monetization: $monetization,
+            isGlobal: $isGlobal,
+            entryFeeCredits: $entryFeeCredits,
         );
         $competition->popEvents();
         $manager->persist($competition);
@@ -632,5 +895,788 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     private function outcome(int $home, int $away): int
     {
         return $home <=> $away;
+    }
+
+    // =====================================================================
+    // item 03 — development worlds
+    // =====================================================================
+
+    /**
+     * The national teams of the World-Cup source. GLOBAL directory teams (curated
+     * source ⇒ shared pool, see TeamResolver), created explicitly rather than
+     * through the resolver because a team plays several matches and the resolver
+     * can only find rows that are already flushed.
+     *
+     * @return array<string, Team> team name → Team
+     */
+    private function createWorldCupTeams(ObjectManager $manager, Sport $football, \DateTimeImmutable $now): array
+    {
+        // Non-European nations on purpose: the Euro 2024 source above already owns
+        // the European names in the shared global directory, and a directory team
+        // name is unique per sport.
+        /** @var list<array{string, string, string, string, string}> $seeds name, short, country, brand color, uuid */
+        $seeds = [
+            ['Česko', 'CZE', 'CZ', '#11457E', self::TEAM_CESKO_ID],
+            ['Slovensko', 'SVK', 'SK', '#0B4EA2', self::TEAM_SLOVENSKO_ID],
+            ['Brazílie', 'BRA', 'BR', '#009C3B', '019ddddd-0000-7000-8000-0000000ff003'],
+            ['Argentina', 'ARG', 'AR', '#75AADB', '019ddddd-0000-7000-8000-0000000ff004'],
+            ['Mexiko', 'MEX', 'MX', '#006341', '019ddddd-0000-7000-8000-0000000ff005'],
+            ['Kanada', 'CAN', 'CA', '#D80621', '019ddddd-0000-7000-8000-0000000ff006'],
+            ['Uruguay', 'URU', 'UY', '#7B9FD4', '019ddddd-0000-7000-8000-0000000ff007'],
+            ['Japonsko', 'JPN', 'JP', '#1B2A6B', '019ddddd-0000-7000-8000-0000000ff008'],
+            ['Maroko', 'MAR', 'MA', '#C1272D', '019ddddd-0000-7000-8000-0000000ff009'],
+            ['USA', 'USA', 'US', '#3C3B6E', '019ddddd-0000-7000-8000-0000000ff00a'],
+            ['Senegal', 'SEN', 'SN', '#00853F', '019ddddd-0000-7000-8000-0000000ff00b'],
+            ['Korea', 'KOR', 'KR', '#0F64CD', '019ddddd-0000-7000-8000-0000000ff00c'],
+        ];
+
+        $teams = [];
+
+        foreach ($seeds as [$name, $shortName, $country, $brandColor, $id]) {
+            $teams[$name] = $this->createTeam($manager, $id, $football, null, $name, $now, $shortName, $country, $brandColor);
+        }
+
+        return $teams;
+    }
+
+    /**
+     * The World-Cup fixtures, kickoff-ordered. Indices 0–7 are finished (with
+     * results), 8 is live right now, 9–11 are upcoming playoff matches — three
+     * distinct group rounds plus two playoff rounds, so „Poslední kolo" always
+     * resolves to the group round that is currently being played.
+     *
+     * @param array<string, Team> $teams
+     *
+     * @return list<SportMatch>
+     */
+    private function createWorldCupMatches(
+        ObjectManager $manager,
+        MatchSource $source,
+        array $teams,
+        \DateTimeImmutable $today,
+        \DateTimeImmutable $seededAt,
+    ): array {
+        /** @var list<array{string, string, string, int, int, string, bool, ?int, ?int}> $seeds */
+        $seeds = [
+            // id suffix, home, away, days from today, hour, round, isPlayoff, home score, away score
+            ['0000000fa001', 'Česko', 'Slovensko', -14, 18, self::ROUND_GROUP_1, false, 2, 1],
+            ['0000000fa002', 'Brazílie', 'Mexiko', -13, 15, self::ROUND_GROUP_1, false, 1, 1],
+            ['0000000fa003', 'Argentina', 'Kanada', -13, 18, self::ROUND_GROUP_1, false, 3, 0],
+            ['0000000fa004', 'Česko', 'Brazílie', -9, 18, self::ROUND_GROUP_2, false, 0, 2],
+            ['0000000fa005', 'Mexiko', 'Argentina', -8, 15, self::ROUND_GROUP_2, false, 2, 2],
+            ['0000000fa006', 'Uruguay', 'Japonsko', -8, 18, self::ROUND_GROUP_2, false, 1, 0],
+            ['0000000fa007', 'Česko', 'Maroko', -3, 18, self::ROUND_GROUP_3, false, 1, 1],
+            ['0000000fa008', 'USA', 'Senegal', -2, 18, self::ROUND_GROUP_3, false, 2, 0],
+            ['0000000fa010', 'Česko', 'Brazílie', 2, 18, self::ROUND_LAST_16, true, null, null],
+            ['0000000fa011', 'Argentina', 'Mexiko', 3, 18, self::ROUND_LAST_16, true, null, null],
+            ['0000000fa012', 'Uruguay', 'Maroko', 7, 18, self::ROUND_QUARTER_FINAL, true, null, null],
+        ];
+
+        $matches = [];
+
+        foreach ($seeds as [$idSuffix, $home, $away, $dayOffset, $hour, $round, $isPlayoff, $homeScore, $awayScore]) {
+            $match = $this->worldMatch(
+                $manager,
+                $idSuffix,
+                $source,
+                $teams[$home],
+                $teams[$away],
+                $today->modify(sprintf('%+d days', $dayOffset))->setTime($hour, 0),
+                $round,
+                $isPlayoff,
+                $seededAt,
+            );
+
+            if (null !== $homeScore && null !== $awayScore) {
+                $match->setFinalScore($homeScore, $awayScore, null, null, null, $seededAt);
+                $match->popEvents();
+            }
+
+            $matches[] = $match;
+        }
+
+        // The one match being played right now — it makes „Poslední kolo" resolve
+        // to the group round in progress and gives the dashboard a live row.
+        $live = $this->worldMatch(
+            $manager,
+            '0000000fa009',
+            $source,
+            $teams['Korea'],
+            $teams['Uruguay'],
+            $seededAt->modify('-1 hour'),
+            self::ROUND_GROUP_3,
+            false,
+            $seededAt,
+        );
+        $live->beginLive($seededAt);
+        $live->popEvents();
+
+        // Keep the list kickoff-ordered: the live match sits right after the eight
+        // finished ones and before the upcoming playoff fixtures.
+        array_splice($matches, 8, 0, [$live]);
+
+        return $matches;
+    }
+
+    /**
+     * World D — the same curated source seen through a TEAM FILTER (selection
+     * mode Teams, pinned to Česko + Slovensko). Reproduces „why is this match not
+     * in that competition" deliberately: only the four Czech/Slovak fixtures are
+     * in, the playoff one among them auto-joins by the always-in rule.
+     *
+     * @param array<string, Team> $teams
+     * @param list<SportMatch>    $matches
+     * @param array<int, User>    $users
+     */
+    private function createTeamFilterWorld(
+        ObjectManager $manager,
+        MatchSource $source,
+        array $teams,
+        array $matches,
+        User $verified,
+        array $users,
+        \DateTimeImmutable $seededAt,
+    ): void {
+        $competition = $this->createCompetition(
+            $manager,
+            id: self::TEAM_FILTER_COMPETITION_ID,
+            matchSource: $source,
+            owner: $users[3],
+            name: self::TEAM_FILTER_COMPETITION_NAME,
+            description: 'Tipujeme jen zápasy Česka a Slovenska — ostatní nás neberou.',
+            pin: '40000001',
+            linkToken: str_repeat('c', 48),
+            createdAt: $seededAt,
+            selectionMode: CompetitionMatchSelectionMode::Teams,
+            monetization: CompetitionMonetization::Boosts,
+        );
+        $this->provisionDefaultRules($manager, $competition, $seededAt);
+
+        foreach (['Česko', 'Slovensko'] as $teamName) {
+            $manager->persist(new CompetitionTeamFilter(
+                id: Uuid::v7(),
+                competition: $competition,
+                team: $teams[$teamName],
+                addedAt: $seededAt,
+            ));
+        }
+
+        /** @var list<array{User, string}> $plans */
+        $plans = [
+            [$users[3], 'eoh'],   // 14
+            [$verified, 'eom'],   // 13 — nobody here bought a boost ⇒ locked „Rozložení tipů"
+            [$users[4], 'ehm'],   // 11
+            [$users[6], 'ooo'],   // 9
+            [$users[12], 'ohm'],  // 4
+            [$users[16], 'mmm'],  // 0 — the 0 % accuracy row
+        ];
+
+        $this->addMembers($manager, $competition, array_map(
+            static fn (array $plan): User => $plan[0],
+            $plans,
+        ), $seededAt);
+
+        // The finished matches Česko played (indices 0, 3 and 6 of the source).
+        $this->createPlannedGuesses($manager, $competition, $plans, [$matches[0], $matches[3], $matches[6]], $seededAt);
+
+        // Everyone also tipped the Czech playoff fixture that auto-joined by the
+        // playoff-always-in rule. Nobody here owns a boost, so that row is the
+        // canonical LOCKED „Rozložení tipů" of the whole dev world.
+        foreach ($plans as $offset => [$member]) {
+            $this->createEvaluatedGuess($manager, $member, $matches[9], $competition, $offset % 3, ($offset + 1) % 2, $seededAt);
+        }
+    }
+
+    /**
+     * World B — a small PRIVATE competition from scratch, organized by the primary
+     * dev user: premium ON for everyone, an anonymous member (no e-mail) and a
+     * pending e-mail invitation, so all three member states have UI to render.
+     *
+     * @param array<int, User> $users
+     *
+     * @return array{Competition, list<User>} the competition and its non-owner members
+     */
+    private function createNeighboursWorld(
+        ObjectManager $manager,
+        Sport $football,
+        User $verified,
+        array $users,
+        \DateTimeImmutable $today,
+        \DateTimeImmutable $seededAt,
+    ): array {
+        $source = new MatchSource(
+            id: Uuid::fromString(self::NEIGHBOURS_SOURCE_ID),
+            sport: $football,
+            owner: $verified,
+            kind: MatchSourceKind::Private,
+            name: self::NEIGHBOURS_SOURCE_NAME,
+            description: 'Zápasy si zadáváme sami — hřiště za sokolovnou.',
+            startAt: $today->modify('-7 days')->setTime(0, 0),
+            endAt: $today->modify('+21 days')->setTime(23, 59, 59),
+            createdAt: $seededAt,
+        );
+        $source->popEvents();
+        $manager->persist($source);
+
+        // LOCAL teams of the private source — office-pool names never reach the
+        // shared directory (TeamResolver's hybrid scope rule).
+        $teams = [];
+
+        foreach ([
+            ['Sokol Dolní', '019ddddd-0000-7000-8000-0000000ff021'],
+            ['Sokol Horní', '019ddddd-0000-7000-8000-0000000ff022'],
+            ['Kanonýři', '019ddddd-0000-7000-8000-0000000ff023'],
+            ['Rebelové', '019ddddd-0000-7000-8000-0000000ff024'],
+            ['Dynamo Zahrádka', '019ddddd-0000-7000-8000-0000000ff025'],
+            ['Old Boys', '019ddddd-0000-7000-8000-0000000ff026'],
+        ] as [$name, $id]) {
+            $teams[$name] = $this->createTeam($manager, $id, $football, $source, $name, $seededAt, null, null, null);
+        }
+
+        /** @var list<array{string, string, string, int, int, string, ?int, ?int}> $seeds */
+        $seeds = [
+            ['0000000fb001', 'Sokol Dolní', 'Kanonýři', -6, 17, '1. kolo', 3, 2],
+            ['0000000fb002', 'Rebelové', 'Old Boys', -6, 19, '1. kolo', 1, 1],
+            ['0000000fb003', 'Sokol Horní', 'Dynamo Zahrádka', 1, 18, '2. kolo', null, null],
+            ['0000000fb004', 'Kanonýři', 'Rebelové', 2, 18, '2. kolo', null, null],
+            ['0000000fb005', 'Old Boys', 'Sokol Dolní', 6, 18, '3. kolo', null, null],
+            ['0000000fb006', 'Dynamo Zahrádka', 'Sokol Horní', 9, 18, '3. kolo', null, null],
+        ];
+
+        $matches = [];
+
+        foreach ($seeds as [$idSuffix, $home, $away, $dayOffset, $hour, $round, $homeScore, $awayScore]) {
+            $match = $this->worldMatch(
+                $manager,
+                $idSuffix,
+                $source,
+                $teams[$home],
+                $teams[$away],
+                $today->modify(sprintf('%+d days', $dayOffset))->setTime($hour, 0),
+                $round,
+                false,
+                $seededAt,
+            );
+
+            if (null !== $homeScore && null !== $awayScore) {
+                $match->setFinalScore($homeScore, $awayScore, null, null, null, $seededAt);
+                $match->popEvents();
+            }
+
+            $matches[] = $match;
+        }
+
+        $competition = $this->createCompetition(
+            $manager,
+            id: self::NEIGHBOURS_COMPETITION_ID,
+            matchSource: $source,
+            owner: $verified,
+            name: self::NEIGHBOURS_COMPETITION_NAME,
+            description: 'Sousedská tipovačka — prémiová, všichni vidí všechno.',
+            pin: '40000002',
+            linkToken: str_repeat('b', 48),
+            createdAt: $seededAt,
+            monetization: CompetitionMonetization::Premium,
+        );
+        // Premium ON for EVERYONE: the manager turned all three toggles on, so the
+        // whole group sees the distribution bar and each other's tips.
+        $competition->setPremiumFeatures(
+            showDistribution: true,
+            showOthersTips: true,
+            allowTipChanges: true,
+            tipChangeOffsetMinutes: 60,
+            now: $seededAt,
+        );
+        $this->provisionDefaultRules($manager, $competition, $seededAt);
+
+        // The anonymous member: no e-mail, no password, only a profile name.
+        $anonymous = new User(
+            id: Uuid::fromString(self::NEIGHBOURS_ANONYMOUS_USER_ID),
+            email: null,
+            password: null,
+            nickname: null,
+            createdAt: $seededAt,
+        );
+        $anonymous->updateProfile(
+            self::NEIGHBOURS_ANONYMOUS_FIRST_NAME,
+            self::NEIGHBOURS_ANONYMOUS_LAST_NAME,
+            null,
+            $seededAt,
+        );
+        $anonymous->popEvents();
+        $manager->persist($anonymous);
+
+        /** @var list<User> $nonOwnerMembers */
+        $nonOwnerMembers = [$users[1], $users[9], $users[10], $users[24], $anonymous];
+
+        $this->addMembers($manager, $competition, [$verified, ...$nonOwnerMembers], $seededAt);
+
+        // Premium is per player and already paid for by the organizer.
+        foreach ($nonOwnerMembers as $member) {
+            $charge = new CompetitionPremiumCharge(
+                id: Uuid::v7(),
+                competition: $competition,
+                member: $member,
+                amount: PricingConfig::PREMIUM_PER_PLAYER,
+                createdAt: $seededAt,
+            );
+            $charge->markCharged($seededAt);
+            $charge->popEvents();
+            $manager->persist($charge);
+        }
+
+        $invitation = new CompetitionInvitation(
+            id: Uuid::fromString(self::NEIGHBOURS_INVITATION_ID),
+            competition: $competition,
+            inviter: $verified,
+            email: self::NEIGHBOURS_INVITATION_EMAIL,
+            token: self::NEIGHBOURS_INVITATION_TOKEN,
+            createdAt: $seededAt,
+            expiresAt: $seededAt->modify('+7 days'),
+        );
+        $invitation->popEvents();
+        $manager->persist($invitation);
+
+        /** @var list<array{User, string}> $plans */
+        $plans = [
+            [$verified, 'eo'],      // 13
+            [$users[1], 'eh'],      // 11
+            [$users[9], 'oo'],      // 6
+            [$users[10], 'oh'],     // 4
+            [$users[24], 'hm'],     // 1
+            [$anonymous, 'mo'],     // 3
+        ];
+
+        $this->createPlannedGuesses($manager, $competition, $plans, [$matches[0], $matches[1]], $seededAt);
+
+        // Half the group already tipped the next fixture — the other half has not,
+        // which is exactly the „kdo ještě netipoval" state the detail page shows.
+        foreach (array_slice($plans, 0, 3) as $offset => [$member]) {
+            $this->createEvaluatedGuess($manager, $member, $matches[2], $competition, $offset % 3, ($offset + 1) % 2, $seededAt);
+        }
+
+        return [$competition, $nonOwnerMembers];
+    }
+
+    /**
+     * World C — everything played and the source completed: the „Ukončeno" states,
+     * a frozen final standing and a tie at the top that the organizer already
+     * resolved by hand ({@see LeaderboardTieResolution}). Monetized as boosts on
+     * purpose, so „a boost can no longer be bought once it is over" has a subject.
+     *
+     * @param array<int, User> $users
+     */
+    private function createWinterWorld(
+        ObjectManager $manager,
+        Sport $football,
+        User $verified,
+        array $users,
+        \DateTimeImmutable $today,
+        \DateTimeImmutable $seededAt,
+    ): void {
+        $source = new MatchSource(
+            id: Uuid::fromString(self::WINTER_SOURCE_ID),
+            sport: $football,
+            owner: $users[14],
+            kind: MatchSourceKind::Curated,
+            name: self::WINTER_SOURCE_NAME,
+            description: 'Zimní turnaj na umělce — dohráno, výsledky jsou konečné.',
+            startAt: $today->modify('-33 days')->setTime(0, 0),
+            endAt: $today->modify('-25 days')->setTime(23, 59, 59),
+            createdAt: $seededAt,
+        );
+        $source->popEvents();
+        $manager->persist($source);
+
+        $teams = [];
+
+        foreach ([
+            ['FK Vlci', 'VLK', '#8A6D3B', '019ddddd-0000-7000-8000-0000000ff031'],
+            ['FK Rysi', 'RYS', '#3B6E8A', '019ddddd-0000-7000-8000-0000000ff032'],
+            ['FK Sokoli', 'SOK', '#6E3B8A', '019ddddd-0000-7000-8000-0000000ff033'],
+            ['FK Jestřábi', 'JES', '#8A3B3B', '019ddddd-0000-7000-8000-0000000ff034'],
+        ] as [$name, $shortName, $brandColor, $id]) {
+            $teams[$name] = $this->createTeam($manager, $id, $football, null, $name, $seededAt, $shortName, 'CZ', $brandColor);
+        }
+
+        /** @var list<array{string, string, string, int, int, string, int, int}> $seeds */
+        $seeds = [
+            ['0000000fc001', 'FK Vlci', 'FK Rysi', -32, 18, 'Semifinále', 2, 1],
+            ['0000000fc002', 'FK Sokoli', 'FK Jestřábi', -32, 20, 'Semifinále', 0, 1],
+            ['0000000fc003', 'FK Rysi', 'FK Sokoli', -26, 17, 'O 3. místo', 3, 1],
+            ['0000000fc004', 'FK Vlci', 'FK Jestřábi', -25, 19, 'Finále', 1, 1],
+        ];
+
+        $matches = [];
+
+        foreach ($seeds as [$idSuffix, $home, $away, $dayOffset, $hour, $round, $homeScore, $awayScore]) {
+            $match = $this->worldMatch(
+                $manager,
+                $idSuffix,
+                $source,
+                $teams[$home],
+                $teams[$away],
+                $today->modify(sprintf('%+d days', $dayOffset))->setTime($hour, 0),
+                $round,
+                true,
+                $seededAt,
+            );
+            $match->setFinalScore($homeScore, $awayScore, null, null, null, $seededAt);
+            $match->popEvents();
+            $matches[] = $match;
+        }
+
+        $source->markCompleted($today->modify('-24 days')->setTime(12, 0));
+        $source->popEvents();
+
+        $competition = $this->createCompetition(
+            $manager,
+            id: self::WINTER_COMPETITION_ID,
+            matchSource: $source,
+            owner: $users[14],
+            name: self::WINTER_COMPETITION_NAME,
+            description: 'Dohraná soutěž — konečné pořadí včetně ručně rozhodnuté shody.',
+            pin: '40000003',
+            linkToken: str_repeat('f', 48),
+            createdAt: $seededAt,
+            monetization: CompetitionMonetization::Boosts,
+        );
+        $this->provisionDefaultRules($manager, $competition, $seededAt);
+
+        /** @var list<array{User, string}> $plans */
+        $plans = [
+            [$users[14], 'eeoh'],  // 24 — tied first
+            [$verified, 'eeho'],   // 24 — tied first
+            [$users[2], 'eohh'],   // 15
+            [$users[5], 'eomm'],   // 13
+            [$users[11], 'ehmm'],  // 11
+            [$users[19], 'ooom'],  // 9
+            [$users[21], 'ohmm'],  // 4
+            [$users[23], 'mmmm'],  // 0
+        ];
+
+        $this->addMembers($manager, $competition, array_map(
+            static fn (array $plan): User => $plan[0],
+            $plans,
+        ), $seededAt);
+
+        $this->createPlannedGuesses($manager, $competition, $plans, $matches, $seededAt);
+
+        // The organizer broke the 24 b tie by hand after the final whistle.
+        foreach ([[$users[14], 1], [$verified, 2]] as [$member, $rank]) {
+            $manager->persist(new LeaderboardTieResolution(
+                id: Uuid::v7(),
+                competition: $competition,
+                user: $member,
+                rank: $rank,
+                resolvedAt: $today->modify('-24 days')->setTime(13, 0),
+                resolvedBy: $users[14],
+            ));
+        }
+    }
+
+    /**
+     * The credit side of the dev world. Only the two users that actually SPEND
+     * anything get a wallet, and every movement is written through
+     * {@see CreditWallet} so the ledger reconciles with the balance. Prices come
+     * from {@see PricingConfig}; the entry fee is the competition's own.
+     *
+     * @param list<User> $premiumMembers
+     */
+    private function createDevWallets(
+        ObjectManager $manager,
+        User $admin,
+        User $verified,
+        User $boostBuyer,
+        Competition $worldCup,
+        Competition $neighbours,
+        array $premiumMembers,
+        \DateTimeImmutable $seededAt,
+    ): void {
+        $premiumTotal = count($premiumMembers) * PricingConfig::PREMIUM_PER_PLAYER;
+        $grant = self::DEV_USER_CREDIT_BALANCE
+            + self::WORLD_CUP_COMPETITION_ENTRY_FEE
+            + PricingConfig::BOOST_OTHERS_TIPS
+            + $premiumTotal;
+
+        $wallet = new CreditWallet(
+            id: Uuid::fromString('019a2222-0000-7000-8000-0000000000f1'),
+            user: $verified,
+            createdAt: $seededAt->modify('-30 days'),
+        );
+        $manager->persist($wallet);
+        $manager->persist($wallet->adjustByAdmin(Uuid::v7(), $grant, 'Vývojářský kredit', $admin, $seededAt->modify('-30 days')));
+        $manager->persist($wallet->spend(
+            Uuid::v7(),
+            self::WORLD_CUP_COMPETITION_ENTRY_FEE,
+            CreditTransactionType::EntryFee,
+            $seededAt->modify('-20 days'),
+            competition: $worldCup,
+        ));
+
+        foreach ($premiumMembers as $member) {
+            $manager->persist($wallet->spend(
+                Uuid::v7(),
+                PricingConfig::PREMIUM_PER_PLAYER,
+                CreditTransactionType::PremiumCharge,
+                $seededAt->modify('-10 days'),
+                competition: $neighbours,
+                relatedUser: $member,
+            ));
+        }
+
+        $manager->persist($wallet->spend(
+            Uuid::v7(),
+            PricingConfig::BOOST_OTHERS_TIPS,
+            CreditTransactionType::BoostPurchase,
+            $seededAt->modify('-5 days'),
+            competition: $worldCup,
+            boostType: BoostType::OthersTips->value,
+        ));
+        $wallet->popEvents();
+
+        // The other boost buyer keeps a token balance — enough to be a realistic
+        // second wallet in the admin credit screens, not enough to matter.
+        $secondWallet = new CreditWallet(
+            id: Uuid::fromString('019a2222-0000-7000-8000-0000000000f2'),
+            user: $boostBuyer,
+            createdAt: $seededAt->modify('-30 days'),
+        );
+        $manager->persist($secondWallet);
+        $manager->persist($secondWallet->adjustByAdmin(
+            Uuid::v7(),
+            PricingConfig::BOOST_TIP_DISTRIBUTION * 2,
+            'Vývojářský kredit',
+            $admin,
+            $seededAt->modify('-30 days'),
+        ));
+        $manager->persist($secondWallet->spend(
+            Uuid::v7(),
+            PricingConfig::BOOST_TIP_DISTRIBUTION,
+            CreditTransactionType::BoostPurchase,
+            $seededAt->modify('-5 days'),
+            competition: $worldCup,
+            boostType: BoostType::TipDistribution->value,
+        ));
+        $secondWallet->popEvents();
+    }
+
+    private function createTeam(
+        ObjectManager $manager,
+        string $id,
+        Sport $sport,
+        ?MatchSource $matchSource,
+        string $name,
+        \DateTimeImmutable $now,
+        ?string $shortName,
+        ?string $country,
+        ?string $brandColor,
+    ): Team {
+        $team = new Team(
+            id: Uuid::fromString($id),
+            sport: $sport,
+            matchSource: $matchSource,
+            name: $name,
+            createdAt: $now,
+            shortName: $shortName,
+            country: $country,
+            brandColor: $brandColor,
+        );
+        $manager->persist($team);
+
+        return $team;
+    }
+
+    private function worldMatch(
+        ObjectManager $manager,
+        string $idSuffix,
+        MatchSource $matchSource,
+        Team $homeTeam,
+        Team $awayTeam,
+        \DateTimeImmutable $kickoffAt,
+        ?string $round,
+        bool $isPlayoff,
+        \DateTimeImmutable $createdAt,
+    ): SportMatch {
+        $match = new SportMatch(
+            id: Uuid::fromString('019ddddd-0000-7000-8000-'.$idSuffix),
+            matchSource: $matchSource,
+            homeTeam: $homeTeam,
+            awayTeam: $awayTeam,
+            kickoffAt: $kickoffAt,
+            venue: null,
+            createdAt: $createdAt,
+            round: $round,
+            isPlayoff: $isPlayoff,
+        );
+        $match->popEvents();
+        $manager->persist($match);
+
+        return $match;
+    }
+
+    private function createBoost(
+        ObjectManager $manager,
+        string $id,
+        Competition $competition,
+        User $user,
+        BoostType $type,
+        \DateTimeImmutable $now,
+    ): void {
+        $purchase = new BoostPurchase(
+            id: Uuid::fromString($id),
+            user: $user,
+            competition: $competition,
+            type: $type,
+            pricePaid: $type->price(),
+            purchasedAt: $now,
+        );
+        $purchase->popEvents();
+        $manager->persist($purchase);
+    }
+
+    /**
+     * Writes each member's guesses from a PLAN — one code per finished match, so a
+     * member's point total is designed rather than random. The plan is rotated by
+     * the member's position so that WHICH matches they hit differs too, which is
+     * what makes streaks, per-round scores and accuracy percentages vary.
+     *
+     * @param list<array{User, string}> $plans   member + plan string (one code per match)
+     * @param list<SportMatch>          $matches finished matches, kickoff-ordered
+     */
+    private function createPlannedGuesses(
+        ObjectManager $manager,
+        Competition $competition,
+        array $plans,
+        array $matches,
+        \DateTimeImmutable $now,
+    ): void {
+        foreach ($plans as $planIndex => [$member, $plan]) {
+            $codes = $this->rotatePlan($plan, $planIndex);
+
+            foreach ($matches as $matchIndex => $match) {
+                [$homeGuess, $awayGuess] = $this->guessFor(
+                    $codes[$matchIndex],
+                    (int) $match->homeScore,
+                    (int) $match->awayScore,
+                );
+
+                $this->createEvaluatedGuess($manager, $member, $match, $competition, $homeGuess, $awayGuess, $now);
+            }
+        }
+    }
+
+    /**
+     * A honest EARLIER standing: the board exactly as it stood after the first
+     * `$matchesPlayed` matches, so every snapshot total is a real partial sum and
+     * the leaderboard Δ / member „Vývoj" can never exceed the live totals.
+     *
+     * @param list<array{User, string}> $plans
+     */
+    private function createStandingSnapshot(
+        ObjectManager $manager,
+        Competition $competition,
+        array $plans,
+        int $matchesPlayed,
+        \DateTimeImmutable $day,
+    ): void {
+        $pragueDay = new \DateTimeImmutable($day->format('Y-m-d').' 00:00:00', new \DateTimeZone('Europe/Prague'));
+        $createdAt = new \DateTimeImmutable($day->format('Y-m-d').' 03:00:00', new \DateTimeZone('UTC'));
+
+        $points = [];
+
+        foreach ($plans as $planIndex => [, $plan]) {
+            $codes = $this->rotatePlan($plan, $planIndex);
+            $total = 0;
+
+            foreach (array_slice($codes, 0, $matchesPlayed) as $code) {
+                $total += self::PLAN_CODE_POINTS[$code];
+            }
+
+            $points[$planIndex] = $total;
+        }
+
+        foreach ($plans as $planIndex => [$member]) {
+            $rank = 1;
+
+            foreach ($points as $otherPoints) {
+                if ($otherPoints > $points[$planIndex]) {
+                    ++$rank;
+                }
+            }
+
+            $manager->persist(new LeaderboardSnapshot(
+                id: Uuid::v7(),
+                competition: $competition,
+                user: $member,
+                day: $pragueDay,
+                points: $points[$planIndex],
+                rank: $rank,
+                createdAt: $createdAt,
+            ));
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function rotatePlan(string $plan, int $by): array
+    {
+        $codes = str_split($plan);
+        $by %= count($codes);
+
+        return array_merge(array_slice($codes, $by), array_slice($codes, 0, $by));
+    }
+
+    /**
+     * Turns one plan code into a concrete guess for a KNOWN result, under the four
+     * default rules (exact 5 + outcome 3 + home 1 + away 1):
+     *
+     *   e = exact hit      → 10 b
+     *   o = right outcome  →  3 b (both goal counts deliberately wrong)
+     *   h = right home goals only → 1 b
+     *   m = complete miss  →  0 b
+     *
+     * The values are what {@see PLAN_CODE_POINTS} promises, so a plan string reads
+     * as a point total.
+     *
+     * @return array{int, int}
+     */
+    private function guessFor(string $code, int $homeScore, int $awayScore): array
+    {
+        if ('e' === $code) {
+            return [$homeScore, $awayScore];
+        }
+
+        if ('o' === $code) {
+            // Shifting both sides keeps the outcome and misses both goal counts.
+            return [$homeScore + 2, $awayScore + 2];
+        }
+
+        if ('h' === $code) {
+            foreach ([$awayScore + 3, 0, 1, 2, $awayScore + 5] as $awayGuess) {
+                if ($awayGuess !== $awayScore && ($homeScore <=> $awayGuess) !== ($homeScore <=> $awayScore)) {
+                    return [$homeScore, $awayGuess];
+                }
+            }
+
+            throw new \LogicException(sprintf('No "home goals only" guess exists for %d:%d.', $homeScore, $awayScore));
+        }
+
+        if ('m' === $code) {
+            foreach ([[0, 5], [5, 0], [1, 6], [6, 1]] as [$homeGuess, $awayGuess]) {
+                if (
+                    $homeGuess !== $homeScore
+                    && $awayGuess !== $awayScore
+                    && ($homeGuess <=> $awayGuess) !== ($homeScore <=> $awayScore)
+                ) {
+                    return [$homeGuess, $awayGuess];
+                }
+            }
+
+            throw new \LogicException(sprintf('No zero-point guess exists for %d:%d.', $homeScore, $awayScore));
+        }
+
+        throw new \LogicException(sprintf('Unknown plan code "%s".', $code));
     }
 }

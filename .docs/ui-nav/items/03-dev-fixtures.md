@@ -1,6 +1,6 @@
 # Item 03 — Development fixtures: a realistic, complete world
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 02 (so fixtures can set a round on matches)
 **Blocks:** nothing, but items 04–07 are far easier to build and verify with this data in place
 
@@ -99,3 +99,45 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → run the integration suite
 and click through `/nastenka`, `/souteze`, a competition detail and a leaderboard to confirm the data
 looks right. Update the status board row to DONE + sha. Commit `UI: development fixtures for the
 rebuilt pages`, push to `main`.
+
+---
+
+## Assumptions made
+
+1. **Everything landed in `DevFixtures`, nothing in `AppFixtures`.** The item asks for ~20+
+   members, several new competitions and a populated ledger; adding any of that to the shared
+   *test* baseline would break the many integration tests that assert exact counts over whole
+   tables (memberships, competitions, `credit_transactions`). `DevFixtures` is group `dev` only
+   and never loaded by `tests/bootstrap.php`, so the new worlds are invisible to the suite —
+   which is also why no existing fixture entity had to be renamed or renumbered.
+2. **The new worlds are anchored to the REAL calendar (`today ± n days`), not to the
+   `2025-06-15` MockClock instant.** Those two anchors cannot both hold, and since `DevFixtures`
+   never runs under MockClock, the real calendar is what makes a `db:reset` useful: „Posledních
+   7 dní" and „Poslední kolo" always have data and the upcoming fixtures are genuinely
+   upcoming. The pre-existing `DevFixtures` data was already doing this for its scheduled
+   matches; item 03 just makes it consistent. Documented in `.docs/FIXTURES.md`.
+3. **The global competition's entry fee (30 kr.) is a `DevFixtures` constant, not a
+   `PricingConfig` one.** `PricingConfig` is the home of *prices the product charges* (premium
+   per player, the three boosts); an entry fee is per-competition data an admin types in — the
+   same call `AppFixtures::GLOBAL_COMPETITION_ENTRY_FEE` already makes. Every boost/premium
+   amount in the new fixtures does come from `PricingConfig`, including the dev user's target
+   balance (`DEV_USER_CREDIT_BALANCE`).
+4. **The one deliberately unverified dev user is a member of nothing.** The airlock does not
+   need data behind it, and a member with no tips would have added a meaningless 0-point row to
+   a leaderboard the item wants realistic.
+5. **A global competition monetized as `boosts` is a legitimate state** (`Competition::
+   updateGlobalSettings()` and `CreateGlobalCompetitionCommand` both take a monetization), so
+   World A is global *and* boosts — that is what gives the primary dev user an unlocked
+   „Rozložení tipů" without inventing a premium competition nobody manages.
+
+## Bugs the new data exposed (fixed in the same commit)
+
+- **`CompetitionTeamFilterRepository::teamViewsFor()` threw on every Teams-mode competition.**
+  Its DQL was `SELECT t FROM CompetitionTeamFilter f JOIN f.team t` — Doctrine cannot hydrate a
+  joined entity when the root entity is not selected, so the competition detail page and the
+  match-selection page 500'd with *„Cannot select entity through identification variables
+  without choosing at least one root entity alias"*. No fixture had ever had a `teams`-mode
+  competition, so nothing caught it. Rewritten with `Team` as the root alias.
+- **Several dev shareable-link tokens were not hex**, so `competition_join_by_link`
+  (`[a-f0-9]{48}`) refused to generate the invite URL and the detail page of e.g. „VŠCHT
+  tipovačka" 500'd. All dev tokens are hex now, with a note on the fixture helper.

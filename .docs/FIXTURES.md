@@ -16,6 +16,11 @@ NOT in `src/`. Import in tests: `use App\DataFixtures\AppFixtures;`
   `fixtures/`; changing either rebuilds automatically. DAMA DoctrineTestBundle wraps each
   test in a transaction, so the fixture baseline is always intact.
 
+> **Browsing the app, not writing a test?** Jump to
+> [Development worlds (`DevFixtures`)](#development-worlds-devfixtures) — that section is the
+> map of what `composer db:reset` puts in front of you, which user to log in as, and what each
+> page looks like with that data. Everything above it describes the shared *test* baseline.
+
 ## Identity provider (tests)
 
 `App\Tests\Support\PredictableIdentityProvider` (replaces `RandomIdentityProvider` in the
@@ -400,3 +405,218 @@ Only ONE explicit override is seeded; every other type falls back to
 `NotificationType::defaultInApp()` / `defaultEmail()`. In-app defaults ON for all types;
 email defaults ON only for guess reminder, competition ended, the three premium problems,
 and boost refunded.
+
+---
+
+# Development worlds (`DevFixtures`)
+
+`App\DataFixtures\DevFixtures` (group `dev` only, **never loaded in tests**) is what
+`docker compose exec web composer db:reset` puts in the browser. On top of the older
+demo data (25 users, Euro 2024, Fortuna Liga, Firemní liga) it seeds **four
+self-contained worlds** designed for the UI/nav restructure — one per situation the
+rebuilt pages have to render.
+
+**These worlds are anchored to the REAL calendar** (`today ± n days`), not to the
+`2025-06-15` MockClock instant the test baseline uses. A `db:reset` therefore always
+produces a tournament that is genuinely half-played: past matches carry results,
+upcoming ones are still tippable, and „Posledních 7 dní" / „Poslední kolo" are never
+empty. Everything is created at real *now*, which is after each world's earliest
+kickoff, so every match counts as **late-added** and keeps its own kickoff as the tip
+deadline (`EffectiveTipDeadlineResolver`) — i.e. the upcoming fixtures really are
+tippable in the browser.
+
+Reference constants live on `DevFixtures` itself (`DevFixtures::WORLD_CUP_COMPETITION_ID`, …).
+
+## Logins
+
+Password for **every** dev/test user: `AppFixtures::DEFAULT_PASSWORD` = `password`.
+
+| Login | Who | Verified | Use it for |
+|---|---|---|---|
+| `user@tipovacka.test` (`tipovac`) | **the primary dev user** | yes | everything — it is a member of six competitions, mid-table in the big one, owns two of them, has a wallet |
+| `admin@tipovacka.test` (`admin`) | system admin, owns the World-Cup source + global competition | yes | admin area, global-competition management |
+| `other@tipovacka.test` (`druhy_tipovac`) | outsider | yes | joining flows (member of almost nothing) |
+| `honza@tipovacka.dev`, `petros@…`, … 25 in total | the demo crowd, `{nickname}@tipovacka.dev` | yes | second/third player perspectives |
+| **`neovereny@tipovacka.dev`** (`neovereny`) | **the ONE unverified dev login** | **no** | the e-mail-verification airlock — it is a member of nothing on purpose, so it never muddies a leaderboard |
+| `unverified@tipovacka.test` (`novy_uzivatel`) | the AppFixtures unverified user | no | same airlock, from the test baseline |
+
+`mischa@tipovacka.dev` (`users[8]`) is **deactivated** — the blocked-user state in the admin UI.
+
+### What the primary dev user (`user@tipovacka.test`) is in
+
+| Competition | Role | Standing | Monetization |
+|---|---|---|---|
+| **Tipovačka MS 2026** (World A) | member | **7th of 24**, tied on 32 b | boosts — owns „Konkrétní tipy kolegů" ⇒ **unlocked** |
+| **Fandíme Česku** (World D) | member | 2nd of 6 (13 b) | boosts — owns nothing ⇒ **locked** |
+| **Sousedský pohár** (World B) | **organizer** | 1st of 6 (13 b) | premium, all toggles ON for everyone |
+| **Zimní pohár – parta** (World C) | member | tied 1st, tie resolved to 2nd | boosts, competition is over |
+| `Kámoši u piva` (AppFixtures) | organizer | — | none |
+| `VŠCHT tipovačka` (older dev data) | organizer | — | none |
+
+Credit balance: **35 kr.** (`DevFixtures::DEV_USER_CREDIT_BALANCE`) — enough for either
+cheaper boost, five short of „Měnit tip" (40 kr.), so the *insufficient credits* branch is
+one click away. The balance is derived from `Credits\PricingConfig`, never a literal. The
+seeded ledger is honest: `+135` admin grant → `−30` entry fee (World A) → `5 × −10` premium
+per player (World B) → `−20` boost (World A) = **35**. `martas` has a second, smaller wallet
+(`10 kr.` left after buying the 10 kr. distribution boost).
+
+## Map of the worlds
+
+### World A — „Tipovačka MS 2026" · the leaderboard playground
+`DevFixtures::WORLD_CUP_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f1`
+
+A **paid, global (publicly discoverable)** competition run by `admin` over the curated
+source **Mistrovství světa 2026** (`WORLD_CUP_SOURCE_ID` = `019aaaaa-…-0000000000f1`),
+entry fee **30 kr.** (`WORLD_CUP_COMPETITION_ENTRY_FEE`), monetization **boosts**.
+**24 members**, every one of them with a *designed* point total from 47 down to 4, so the
+board has a real podium, a real mid-table, a genuine **tie on 32 b** (`tipovac` and
+`honza`, both rank 7) and a long tail worth collapsing behind a „…" gap. Accuracy,
+exact-hit counts and scoring streaks all differ because each member's hits are spread over
+different matches. **Use this one to work on the žebříček.**
+
+### World B — „Sousedský pohár" · the small private premium competition
+`NEIGHBOURS_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f3`
+
+A **private, from-scratch** source (`NEIGHBOURS_SOURCE_ID`, local teams only) organized by
+the **primary dev user**. Six members including one **anonymous member with no e-mail**
+(`Josef Dvořák`, `NEIGHBOURS_ANONYMOUS_USER_ID`) and one **pending e-mail invitation**
+(`soused@tipovacka.dev`, `NEIGHBOURS_INVITATION_TOKEN`). Monetization **premium** with all
+three toggles ON, and a `Charged` `CompetitionPremiumCharge` per non-owner member — so this
+is the „premium is on for everyone" side of the Premium XOR boosts rule. Two matches played,
+four still ahead (rounds „1. kolo"…„3. kolo"), only half the group has tipped the next one.
+**Use this one for organizer/member-management states and on-behalf tipping.**
+
+### World C — „Zimní pohár – parta" · the finished competition
+`WINTER_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f4`
+
+Curated source **Zimní pohár 2026** (`WINTER_SOURCE_ID`), **completed** ~24 days ago; all
+four matches (Semifinále / O 3. místo / Finále) have final results. Eight members, and the
+organizer already broke the 24 b tie at the top by hand — the only seeded
+`LeaderboardTieResolution` in the whole app (`kaja` → rank 1, `tipovac` → rank 2).
+Monetization **boosts** on purpose, so „a boost can no longer be bought once the
+competition is over" has a subject. **Use this one for the „Ukončeno" states.**
+
+### World D — „Fandíme Česku" · the team filter
+`TEAM_FILTER_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f2`
+
+The **same** World-Cup source seen through selection mode **`teams`**, pinned to
+**Česko** (`TEAM_CESKO_ID`) + **Slovensko** (`TEAM_SLOVENSKO_ID`). Only the four
+Czech/Slovak fixtures are in — three played plus the Osmifinále one that auto-joined by the
+playoff-always-in rule — so „why is this match not in that competition" can be reproduced
+deliberately. Six members, monetization **boosts**, and **nobody owns a boost**: this is the
+canonical **locked** „Rozložení tipů" of the dev world (the dev user can afford it, so the
+strip renders the buy trigger, not the „chybí kredity" variant).
+
+## World A in detail
+
+### Teams (global directory, football)
+
+Non-European nations on purpose — the Euro 2024 dev source already owns the European names
+in the shared directory, and a directory team name is unique per sport.
+
+Česko · Slovensko · Brazílie · Argentina · Mexiko · Kanada · Uruguay · Japonsko · Maroko ·
+USA · Senegal · Korea — all with a short name, country and brand color, UUIDs
+`019ddddd-0000-7000-8000-0000000ff001`…`…ff00c` in that order.
+
+### Matches (`019ddddd-0000-7000-8000-0000000fa001`…`…fa012`)
+
+| # | Round | Match | Kickoff | State |
+|---|---|---|---|---|
+| 0 | `ROUND_GROUP_1` — Základní skupina – 1. kolo | Česko – Slovensko | today −14 | **2:1** |
+| 1 | `ROUND_GROUP_1` | Brazílie – Mexiko | today −13 | **1:1** |
+| 2 | `ROUND_GROUP_1` | Argentina – Kanada | today −13 | **3:0** |
+| 3 | `ROUND_GROUP_2` — Základní skupina – 2. kolo | Česko – Brazílie | today −9 | **0:2** |
+| 4 | `ROUND_GROUP_2` | Mexiko – Argentina | today −8 | **2:2** |
+| 5 | `ROUND_GROUP_2` | Uruguay – Japonsko | today −8 | **1:0** |
+| 6 | `ROUND_GROUP_3` — Základní skupina – 3. kolo | Česko – Maroko | today −3 | **1:1** |
+| 7 | `ROUND_GROUP_3` | USA – Senegal | today −2 | **2:0** |
+| 8 | `ROUND_GROUP_3` | Korea – Uruguay | now −1 h | **live** |
+| 9 | `ROUND_LAST_16` — Osmifinále | Česko – Brazílie | today +2 | scheduled, **playoff** |
+| 10 | `ROUND_LAST_16` | Argentina – Mexiko | today +3 | scheduled, **playoff** |
+| 11 | `ROUND_QUARTER_FINAL` — Čtvrtfinále | Uruguay – Maroko | today +7 | scheduled, **playoff** |
+
+Because the live match (#8) is the latest kicked-off labelled match,
+`CompetitionRoundResolver::currentRound()` → **„Základní skupina – 3. kolo"**, which has two
+evaluated matches — so `LeaderboardTimeFilter::LastRound` („Poslední kolo") and
+`GetCompetitionCurrentRound` both return real data. „Posledních 7 dní" covers matches #6–#8.
+
+Tips on the open fixtures thin out on purpose (24 / 18 / 12 / 6 tippers for #8 / #9 / #10 /
+#11), so every „Rozložení tipů" bar has a different shape.
+
+### Standings and how they are built
+
+Each member gets a **plan string** — one character per finished match — which is rotated by
+the member's position so *which* matches they hit differs too:
+
+| code | meaning | points (default rules) |
+|---|---|---|
+| `e` | exact hit | 10 (5 + 3 + 1 + 1) |
+| `o` | right outcome only | 3 |
+| `h` | right home goals only | 1 |
+| `m` | complete miss | 0 |
+
+That makes a plan string readable as a point total, and lets the leaderboard be *designed*:
+
+| Rank | Member | Points | | Rank | Member | Points |
+|---|---|---|---|---|---|---|
+| 1 | `martas` | 47 | | 13 | `mara` | 22 |
+| 2 | `katka` | 44 | | 14 | `filda` | 21 |
+| 3 | `admin` | 41 | | 15 | `ondra` | 19 |
+| 4 | `petros` | 38 | | 16 | `dejv` | 18 |
+| 5 | `kuba` | 36 | | 17 | `kaja` | 17 |
+| 6 | `lucka` | 34 | | 18 | `zdenekb` | 15 |
+| **7** | **`tipovac`** | **32** | | 19 | `romca` | 14 |
+| **7** | **`honza`** | **32** | | 20 | `vojta` | 12 |
+| 9 | `janicka` | 29 | | 21 | `adamr` | 11 |
+| 10 | `tomas_p` | 27 | | 22 | `evinka` | 9 |
+| 11 | `lukas_h` | 25 | | 23 | `terka` | 7 |
+| 12 | `pavlik` | 24 | | 24 | `bara` | 4 |
+
+### Leaderboard snapshots
+
+Three honest partial-sum standings of World A: **today −10** (after round 1), **today −4**
+(after round 2) and **today** (current). Δ compares today's board with the latest day
+*strictly before* today, i.e. the today −4 one — so the leaderboard shows the real round-3
+reshuffle (currently 8 climbers, 14 fallers) and the member „Vývoj" list never exceeds the
+live „Celkem bodů". The older `VŠCHT tipovačka` snapshot (2025-06-09, see above) still exists.
+
+## What each page looks like with this data
+
+**Item 04 — the `SoutezSwitcher` grouped picker.** `tipovac` is in **six** competitions
+across **five** sources, two of them as organizer and one already finished — enough to
+exercise grouping („moje soutěže" vs „organizuji"), a „Ukončeno" badge inside the dropdown,
+and a list long enough that a search box earns its place.
+
+**Item 05 — Žebříček.** Open World A's board: a 24-row table with a podium, a highlighted
+own row at rank 7 that is part of a **tie**, a long tail to collapse, non-trivial accuracy
+percentages and streaks, live Δ arrows, and all three period tabs populated (Celkem /
+Poslední kolo / Posledních 7 dní). World C is the same page in its final, frozen,
+tie-resolved state; World B is the three-row-ish small board.
+
+**Item 06 — Nástěnka hráče.** The primary dev user has a competition worth putting in focus
+(World A: mid-table, a live match right now, three fixtures ahead), plus played *and*
+upcoming matches in three other competitions, one unread notification, a 35 kr. balance,
+and both a locked (World D) and an unlocked (World A / B) „Rozložení tipů" on the
+cross-competition match feed.
+
+**Item 07 — Soutěže.** `/souteze` lists three global competitions (World A plus the two
+AppFixtures ones) with an entry fee to render; the logged-in variant additionally has
+**organized** (World B, `Kámoši u piva`, `VŠCHT tipovačka`), **joined** (World A, World D,
+World C), **private** vs **global**, **live** vs **finished**, premium vs boosts vs none —
+every filter the page will offer has at least two rows on both sides.
+
+## Gotchas worth knowing
+
+- **Shareable link tokens must be 48 chars of `[a-f0-9]`** — that is what the
+  `competition_join_by_link` route requires, and a token outside it makes the competition
+  detail page 500 when it renders the invite link. Dev tokens are therefore `str_repeat()`
+  of a hex character (`e`, `1`, `2`, `d`, `3`, `4`, `c`, `b`, `f`).
+- **Global directory team names are unique per sport.** Adding a curated-source match with a
+  team name another dev source already uses is a unique-constraint violation, not a reuse.
+- Dev PINs: `20240701`, `10000001`, `10000002`, `20000001`, `20000002`, `30000001`,
+  `40000001` (World D), `40000002` (World B), `40000003` (World C).
+- **After `composer db:reset`, run `docker compose restart web`.** `db:reset` DROPs the
+  database, and the FrankenPHP workers keep their old connections — every page then 500s with
+  *„no connection to the server"* until the container is restarted. Nothing is wrong with the
+  data. (If the drop itself fails with *„database is being accessed by other users"*, restart
+  `web` first and re-run.)

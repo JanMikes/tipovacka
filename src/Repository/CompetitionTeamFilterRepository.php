@@ -69,11 +69,15 @@ class CompetitionTeamFilterRepository
      */
     public function teamViewsFor(Uuid $competitionId): array
     {
+        // Team is the ROOT alias: DQL cannot hydrate a joined entity when the
+        // root entity is not selected too ("Cannot select entity through
+        // identification variables without choosing at least one root entity
+        // alias"), so the filter row is joined onto the team, not the reverse.
         /** @var list<Team> $teams */
         $teams = $this->entityManager->createQueryBuilder()
             ->select('t')
-            ->from(CompetitionTeamFilter::class, 'f')
-            ->join('f.team', 't')
+            ->from(Team::class, 't')
+            ->innerJoin(CompetitionTeamFilter::class, 'f', 'WITH', 'f.team = t')
             ->where('f.competition = :competitionId')
             ->setParameter('competitionId', $competitionId)
             ->orderBy('t.name', 'ASC')
