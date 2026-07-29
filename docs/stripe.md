@@ -85,11 +85,16 @@ STRIPE_SECRET_KEY=sk_live_... bin/stripe-bootstrap.sh --webhook-url=https://wtip
 ```
 
 Creates:
-- Product `wtips_credit` („Wtips kredit")
-- Price 1 CZK, lookup key `wtips_credit_czk`
+- Product `wtips_credit` („Kredit Wtips")
+- Price 1 CZK, lookup key `wtips_credit_czk`, nickname „Kredit (1 Kč)"
 - Webhook endpoint (optional) subscribed to `checkout.session.completed`,
   `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`,
   `checkout.session.expired`
+
+Customer-facing text is Czech (checkout runs with `locale=cs`) and lives in the
+`PRODUCT_NAME` / `PRODUCT_DESCRIPTION` / `PRICE_NICKNAME` constants at the top of
+the script — they are the source of truth: edit them and re-run, and the script
+renames the existing live product to match.
 
 ## Local development
 
@@ -122,3 +127,11 @@ Test card: `4242 4242 4242 4242`, any future expiry, any CVC.
 3. In the Stripe dashboard: set business name/address (appears on invoices),
    enable desired payment methods (payment methods are dynamic — no code change),
    configure invoice numbering if needed.
+4. Disable the **test-mode** webhook endpoint pointing at the production URL, or
+   its deliveries hit prod and 400 against the live signing secret.
+
+**Status: done on 2026-07-29** — live account `acct_1TreFbE05PB8A2up` (WTips, CZ/CZK)
+carries product `wtips_credit` + price `price_1TyXN4E05PB8A2upQbXWoaX4` +
+endpoint `we_1TyXN4E05PB8A2upyPq4nXfl`; prod secrets live in Infisical `wtips/prod`.
+Still open: `STRIPE_SECRET_KEY` is a full `sk_live_` key — rotate to a restricted
+`rk_live_` (Dashboard-only; no API to mint one).

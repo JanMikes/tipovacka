@@ -5,7 +5,7 @@ set -euo pipefail
 # Wtips – Stripe account bootstrap
 #
 # Idempotently creates everything the credit system needs on the Stripe side:
-#   * Product "Wtips kredit"           (fixed id: wtips_credit)
+#   * Product "Kredit Wtips"           (fixed id: wtips_credit)
 #   * Price   1 CZK per credit         (lookup_key: wtips_credit_czk)
 #   * Webhook endpoint                 (optional, via --webhook-url)
 #
@@ -27,6 +27,12 @@ API='https://api.stripe.com/v1'
 PRODUCT_ID='wtips_credit'
 PRICE_LOOKUP_KEY='wtips_credit_czk'
 WEBHOOK_URL=''
+
+# Customer-facing text — shown on the Stripe Checkout line item and on the
+# Stripe-issued invoice, so it is Czech (checkout runs with locale=cs).
+PRODUCT_NAME='Kredit Wtips'
+PRODUCT_DESCRIPTION='Kredity pro tipovací soutěže na Wtips. 1 kredit = 1 Kč.'
+PRICE_NICKNAME='Kredit (1 Kč)'
 
 for arg in "$@"; do
     case "$arg" in
@@ -75,14 +81,24 @@ if product=$(stripe_api GET "/products/${PRODUCT_ID}" 2>/dev/null); then
         stripe_api POST "/products/${PRODUCT_ID}" -d 'active=true' >/dev/null
         echo "  ✓ Product '${PRODUCT_ID}' re-activated"
     fi
+    # Converge the customer-facing text — the constants above are the source of
+    # truth, so editing them here and re-running renames the live product.
+    if [[ "$(json_get "$product" "d['name']")" != "$PRODUCT_NAME" \
+       || "$(json_get "$product" "d['description'] or ''")" != "$PRODUCT_DESCRIPTION" ]]; then
+        stripe_api POST "/products/${PRODUCT_ID}" \
+            --data-urlencode "name=${PRODUCT_NAME}" \
+            --data-urlencode "description=${PRODUCT_DESCRIPTION}" \
+            >/dev/null
+        echo "  ✓ Product '${PRODUCT_ID}' text updated to '${PRODUCT_NAME}'"
+    fi
 else
     stripe_api POST '/products' \
         -d "id=${PRODUCT_ID}" \
-        --data-urlencode 'name=Wtips kredit' \
-        --data-urlencode 'description=Kredity pro Wtips – 1 kredit = 1 Kč' \
+        --data-urlencode "name=${PRODUCT_NAME}" \
+        --data-urlencode "description=${PRODUCT_DESCRIPTION}" \
         -d 'metadata[app]=wtips' \
         >/dev/null
-    echo "  ✓ Product '${PRODUCT_ID}' created"
+    echo "  ✓ Product '${PRODUCT_ID}' created ('${PRODUCT_NAME}')"
 fi
 
 # ----------------------------------------------------------------------------
@@ -99,6 +115,7 @@ else
         -d 'currency=czk' \
         -d 'unit_amount=100' \
         -d "lookup_key=${PRICE_LOOKUP_KEY}" \
+        --data-urlencode "nickname=${PRICE_NICKNAME}" \
         -d 'metadata[app]=wtips')
     price_id=$(json_get "$price" "d['id']")
     echo "  ✓ Price '${PRICE_LOOKUP_KEY}' created (${price_id})"
@@ -122,7 +139,7 @@ if [[ -n "$WEBHOOK_URL" ]]; then
             -d 'enabled_events[]=checkout.session.async_payment_succeeded' \
             -d 'enabled_events[]=checkout.session.async_payment_failed' \
             -d 'enabled_events[]=checkout.session.expired' \
-            --data-urlencode 'description=Wtips credit purchases')
+            --data-urlencode 'description=Nákupy kreditů Wtips')
         webhook_secret=$(json_get "$endpoint" "d['secret']")
         echo "  ✓ Webhook endpoint created for ${WEBHOOK_URL}"
     fi
