@@ -332,6 +332,16 @@ final class CreateWizard extends AbstractController
         get => $this->rulePresetProvider->defaultPoints();
     }
 
+    /**
+     * Per-rule DS copy — shared with {@see \App\Twig\Components\Scoring\RuleFields}
+     * so the wizard and the post-creation rules screen never drift apart.
+     *
+     * @var array<string, array{label: string, sub: string}>
+     */
+    public array $ruleCopy {
+        get => $this->rulePresetProvider->copy();
+    }
+
     /** @var array<string, list<string>> */
     public array $rulePresets {
         get => $this->rulePresetProvider->presets();

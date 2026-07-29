@@ -7,21 +7,15 @@
     PIN/link). Glossary: soutěž = Competition, zdroj zápasů = MatchSource.
 #}
 {% set step_labels = {1: 'Základy', 2: 'Pravidla', 3: 'Pozvánky', 4: 'Podpora'} %}
-{% set rule_copy = {
-    correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
-    correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
-    correct_outcome:    { label: 'Dobrý tip výsledku',        sub: 'Výhra / remíza / prohra' },
-    exact_score:        { label: 'Přesný tip výsledku',       sub: 'Trefená obě skóre současně' },
-    period_exact:       { label: 'Přesný tip části zápasu',   sub: 'Trefené přesné skóre poločasu či třetiny' },
-    period_tendency:    { label: 'Tendence části zápasu',     sub: 'Správný vítěz nebo remíza části (bez přesného skóre)' },
-    scorer_hit:         { label: 'Trefený střelec',           sub: 'Body za každého správně tipnutého střelce' },
-    overtime_exact:     { label: 'Přesný tip po prodloužení', sub: 'Trefený konečný stav po prodloužení či nájezdech' },
-} %}
+{# W1: the per-rule copy is ONE shared map (RulePresetProvider::RULE_COPY),
+   also rendered by Scoring:RuleFields — the wizard and the post-creation rules
+   screen must never name a rule differently. #}
+{% set rule_copy = this.ruleCopy %}
 {% set section_headings = {
     base: 'Základní bodování',
     periods: 'Tipovat také ' ~ this.ruleSport.periodLabelPlural ~ ' zápasu?',
-    scorers: 'Střelci',
-    overtime: 'Tipovat výsledek po prodloužení při remíze?',
+    scorers: 'Chcete tipovat také střelce utkání?',
+    overtime: 'Tipovat celkové skóre po prodloužení či penaltách?',
 } %}
 
 <div {{ attributes }} class="mx-auto w-full max-w-3xl">
@@ -225,21 +219,25 @@
                 <div data-controller="scoring-preset"
                      data-scoring-preset-defaults-value="{{ this.defaultPoints|json_encode }}"
                      data-scoring-preset-presets-value="{{ this.rulePresets|json_encode }}">
+                    {# W1: Standardní / Maxi / Vlastní. „Standardní" is the pre-selected
+                       default (it is exactly what mount() enables); „Vlastní" is visible
+                       but disabled until the custom editor ships — the fields below stay
+                       editable regardless, so nothing is lost. #}
                     <div class="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        <button type="button" class="variant-card" data-scoring-preset-target="card" data-action="scoring-preset#standard">
+                        <button type="button" class="variant-card selected" data-scoring-preset-target="card" data-action="scoring-preset#standard">
                             <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
                             <span class="block text-[13px] font-bold">Standardní</span>
                             <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Skóre + výsledek</span>
                         </button>
-                        <button type="button" class="variant-card" data-scoring-preset-target="card" data-action="scoring-preset#scorer">
+                        <button type="button" class="variant-card" data-scoring-preset-target="card" data-action="scoring-preset#maxi">
                             <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
-                            <span class="block text-[13px] font-bold">Standard + střelec</span>
-                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Skóre, výsledek i střelci</span>
+                            <span class="block text-[13px] font-bold">Maxi</span>
+                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">I části zápasu a prodloužení</span>
                         </button>
-                        <button type="button" class="variant-card selected" data-scoring-preset-target="card" data-action="scoring-preset#custom">
+                        <button type="button" class="variant-card" data-scoring-preset-target="card" disabled aria-disabled="true">
                             <span class="variant-check" aria-hidden="true"><twig:ux:icon name="lucide:check" class="h-[18px] w-[18px]" /></span>
-                            <span class="block text-[13px] font-bold">Vlastní</span>
-                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Nastavte si sami</span>
+                            <span class="block text-[13px] font-bold">Vlastní (připravujeme)</span>
+                            <span class="mt-[3px] block text-[11px] leading-snug text-white/40">Body si zatím upravte níže</span>
                         </button>
                     </div>
 
@@ -278,16 +276,19 @@
 
                 {# W2: playoff scope, moved here from step 1. Only mode „all" honours
                    `includePlayoff` — subset keeps whatever was ticked, teams always
-                   includes playoff (see CompetitionMatchProvider). #}
+                   includes playoff (see CompetitionMatchProvider) — so the visibility
+                   condition must stay as narrow as it is.
+                   W1: reworded to „Dohrávat turnaj?" — this ONE checkbox is the answer
+                   to that question; never add a second control writing includePlayoff. #}
                 {% if not isGlobalKind and not fromScratch and this.selectedSource and selectionMode == 'all' %}
                     <div class="mt-6 border-t border-white/10 pt-5">
-                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Playoff</div>
+                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Dohrávat turnaj?</div>
                         <label class="flex cursor-pointer items-start gap-3">
                             <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                    data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
                             <span class="text-sm">
-                                <span class="block font-medium text-white">Zahrnout playoff zápasy</span>
-                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když je vypnete, soutěž se tipuje jen na základní část.</span>
+                                <span class="block font-medium text-white">Ano, dohrajeme turnaj — zahrnout playoff zápasy</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když turnaj dohrávat nebudete, soutěž se tipuje jen na základní část.</span>
                             </span>
                         </label>
                     </div>

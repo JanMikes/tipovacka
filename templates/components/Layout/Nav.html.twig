@@ -11,14 +11,23 @@
 {% set is_app = variant is not null ? (variant == 'app') : (app.user is not null) %}
 {% set current = app.request.attributes.get('_route') %}
 
+{#
+  Active section (item 07): „Soutěže" is the competition hub, so every
+  `competition_*` page lights it up — except the soutěž-scoped leaderboard,
+  which belongs to „Žebříček". Order matters: the leaderboard test runs first.
+#}
+{% set section = current starts with 'leaderboard' or current starts with 'competition_leaderboard' ? 'zebricek'
+    : (current == 'competitions_list' or current starts with 'competition' or current starts with 'invitation' ? 'souteze'
+    : (current starts with 'dashboard' ? 'nastenka' : null)) %}
+
 {% set links = is_app
     ? [
-        { label: 'Nástěnka hráče', path: 'dashboard', match: 'dashboard' },
-        { label: 'Soutěže', path: 'public_competitions_list', match: 'public_competitions_list' },
-        { label: 'Žebříček', path: 'leaderboard', match: 'competition_leaderboard' },
+        { label: 'Nástěnka hráče', path: 'dashboard', key: 'nastenka' },
+        { label: 'Soutěže', path: 'competitions_list', key: 'souteze' },
+        { label: 'Žebříček', path: 'leaderboard', key: 'zebricek' },
     ]
     : [
-        { label: 'Soutěže', path: 'public_competitions_list', match: 'public_competitions_list' },
+        { label: 'Soutěže', path: 'competitions_list', key: 'souteze' },
     ]
 %}
 
@@ -31,7 +40,7 @@
 
         <nav class="primary">
             {% for link in links %}
-                <a href="{{ path(link.path) }}"{{ current starts with link.match ? ' class="active"' }}>{{ link.label }}</a>
+                <a href="{{ path(link.path) }}"{{ section == link.key ? ' class="active"' }}>{{ link.label }}</a>
             {% endfor %}
         </nav>
 
@@ -91,7 +100,7 @@
     {# mobile dropdown panel #}
     <div class="wt-mobile hidden" data-mobile-nav-target="menu">
         {% for link in links %}
-            <a href="{{ path(link.path) }}"{{ current starts with link.match ? ' class="active"' }}>{{ link.label }}</a>
+            <a href="{{ path(link.path) }}"{{ section == link.key ? ' class="active"' }}>{{ link.label }}</a>
         {% endfor %}
         {% if is_app %}
             <a href="{{ path('profile_edit') }}">Profil</a>

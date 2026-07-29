@@ -53,4 +53,14 @@ final class RuleFields
     public array $sections {
         get => $this->rulePresetProvider->sections();
     }
+
+    /**
+     * Per-rule DS copy — shared with the create-competition wizard so both
+     * surfaces name a rule identically.
+     *
+     * @var array<string, array{label: string, sub: string}>
+     */
+    public array $ruleCopy {
+        get => $this->rulePresetProvider->copy();
+    }
 }

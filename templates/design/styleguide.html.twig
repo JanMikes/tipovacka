@@ -278,6 +278,45 @@
             </div>
         </section>
 
+        {# ═════════ E. Přepínač soutěže ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:list-filter" class="h-5 w-5 text-accent-300" />
+                        Přepínač soutěže
+                    </h2>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Sdílená komponenta <code class="text-white/70">&lt;twig:SoutezSwitcher&gt;</code> — vyhledávatelný
+                        výběr soutěže se skupinami „Probíhající" a „Ukončené", názvem zdroje zápasů a termínem.
+                        Funguje i bez JavaScriptu (nativní <code class="text-white/70">&lt;select&gt;</code> ve formuláři).
+                        Data níže jsou ukázková.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <div class="flex flex-wrap items-end gap-6">
+                <twig:SoutezSwitcher
+                    :competitions="switcher_competitions"
+                    currentId="{{ switcher_competitions|first.competitionId.toRfc4122 }}"
+                    route="app_design_styleguide"
+                    param="soutez"
+                    label="Zobrazená soutěž"
+                    id="soutez-switcher-design"
+                />
+
+                {# jediná soutěž → statický chip, ne rozbalovací seznam #}
+                <twig:SoutezSwitcher
+                    :competitions="[switcher_competitions|first]"
+                    route="app_design_styleguide"
+                    param="soutez"
+                    label="Jediná soutěž"
+                    id="soutez-switcher-design-single"
+                />
+            </div>
+        </section>
+
     </div>
 </div>
 </div>

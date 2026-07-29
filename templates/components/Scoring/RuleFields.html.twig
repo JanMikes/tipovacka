@@ -22,18 +22,10 @@
     The component only restructures markup; CSRF/_errors stay on the surrounding <form>.
 #}
 
-{# Per-rule DS copy keyed by the fixed rule identifiers (CLAUDE: src/Rule/*).
+{# Per-rule DS copy — ONE shared map in RulePresetProvider::RULE_COPY, so this
+   screen and the create-competition wizard can never name a rule differently.
    Missing keys fall back to the PHP rule labels via the form field label. #}
-{% set rule_copy = {
-    correct_home_goals: { label: 'Dobrý tip skóre domácích', sub: 'Trefený počet gólů domácího týmu' },
-    correct_away_goals: { label: 'Dobrý tip skóre hostů',     sub: 'Trefený počet gólů hostujícího týmu' },
-    correct_outcome:    { label: 'Dobrý tip výsledku',        sub: 'Výhra / remíza / prohra' },
-    exact_score:        { label: 'Přesný tip výsledku',       sub: 'Trefená obě skóre současně' },
-    period_exact:       { label: 'Přesný tip části zápasu',   sub: 'Trefené přesné skóre poločasu či třetiny' },
-    period_tendency:    { label: 'Tendence části zápasu',     sub: 'Správný vítěz nebo remíza části (bez přesného skóre)' },
-    scorer_hit:         { label: 'Trefený střelec',           sub: 'Body za každého správně tipnutého střelce' },
-    overtime_exact:     { label: 'Přesný tip po prodloužení', sub: 'Trefený konečný stav po prodloužení či nájezdech' },
-} %}
+{% set rule_copy = this.ruleCopy %}
 
 <div data-controller="scoring-preset"
      data-scoring-preset-defaults-value="{{ this.defaultPoints|json_encode }}"

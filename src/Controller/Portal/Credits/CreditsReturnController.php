@@ -74,7 +74,7 @@ final class CreditsReturnController extends AbstractController
 
                 if (null !== $returnTo && Uuid::isValid($returnTo)) {
                     return $this->redirect(
-                        $this->generateUrl('public_competitions_list').'#soutez-'.$returnTo,
+                        $this->generateUrl('competitions_list').'#soutez-'.$returnTo,
                     );
                 }
             } elseif ($purchase->isPending) {

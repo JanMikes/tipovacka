@@ -13,7 +13,12 @@ export default class extends Controller {
         // (which is the fullName for nickname-less users, or '' for the empty placeholder).
         // Subtitle line = fullName, shown only when there's a separate nickname above it.
         const primary = (data) => data.nickname || data.text;
-        const subtitle = (data) => (data.fullName && data.nickname) ? data.fullName : '';
+        const personSubtitle = (data) => (data.fullName && data.nickname) ? data.fullName : '';
+        // Non-person options describe themselves with plain `data-sub` / `data-meta`
+        // attributes (tom-select copies every `dataset` key onto the option data). The
+        // soutěž switcher uses them for the zdroj-zápasů name and the date range.
+        const subtitle = (data) => personSubtitle(data) || data.sub || '';
+        const meta = (data) => data.meta || '';
 
         const options = {
             // Render the dropdown into <body>, never inside the control's own card.
@@ -24,18 +29,27 @@ export default class extends Controller {
             allowEmptyOption: true,
             create: false,
             maxOptions: 200,
-            searchField: ['text'],
+            searchField: ['text', 'sub'],
+            // Optgroups keep their DOM order instead of being reshuffled by search score —
+            // the soutěž switcher must always list „Probíhající" above „Ukončené".
+            lockOptgroupOrder: true,
             dataAttr: 'data-data',
             placeholder: this.placeholderValue || undefined,
             render: {
                 no_results: () => `<div class="no-results">${this.noResultsTextValue}</div>`,
                 option: (data, escape) => {
                     const sub = subtitle(data);
+                    const extra = meta(data);
                     const unverified = data.unverified ? ' <span class="text-xs text-white/40">(neověřený)</span>' : '';
-                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${sub ? `<small class="mt-0.5 block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div>`;
+                    const secondLine = (sub || extra)
+                        ? `<small class="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs leading-tight text-white/60">${sub ? `<span>${escape(sub)}</span>` : ''}${extra ? `<span class="text-white/40">${escape(extra)}</span>` : ''}</small>`
+                        : '';
+                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${secondLine}</div>`;
                 },
+                // The control itself stays single-line: only the person subtitle (nickname +
+                // full name) is worth the second row there, never the `data-sub` metadata.
                 item: (data, escape) => {
-                    const sub = subtitle(data);
+                    const sub = personSubtitle(data);
                     return `<div class="leading-tight"><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div>`;
                 },
             },

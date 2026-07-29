@@ -18,7 +18,7 @@ final class GetCompetitionRuleConfigurationQueryTest extends IntegrationTestCase
             competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
         ));
 
-        self::assertCount(8, $result->items);
+        self::assertCount(10, $result->items);
 
         $identifiers = array_map(fn ($item) => $item->identifier, $result->items);
         self::assertContains('exact_score', $identifiers);
@@ -56,7 +56,7 @@ final class GetCompetitionRuleConfigurationQueryTest extends IntegrationTestCase
             competitionId: $competitionId,
         ));
 
-        self::assertCount(8, $result->items);
+        self::assertCount(10, $result->items);
 
         $exactScore = null;
         foreach ($result->items as $item) {

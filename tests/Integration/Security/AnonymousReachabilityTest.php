@@ -86,10 +86,9 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Public\FeaturesController::class => false,
         \App\Controller\Public\ForBusinessController::class => false,
         \App\Controller\Public\HomeController::class => false,
-        \App\Controller\Public\LegacyMatchSourcesRedirectController::class => false,
         \App\Controller\Public\PricingController::class => false,
         \App\Controller\Public\PrivacyController::class => false,
-        \App\Controller\Public\PublicCompetitionsListController::class => false,
+        \App\Controller\Public\CompetitionsListController::class => false,
         \App\Controller\Webhook\StripeWebhookController::class => false,
 
         // --- Invitation landings (public on purpose: they onboard logged-out people) ---

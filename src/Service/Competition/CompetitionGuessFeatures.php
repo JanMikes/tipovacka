@@ -6,7 +6,9 @@ namespace App\Service\Competition;
 
 use App\Repository\CompetitionRuleConfigurationRepository;
 use App\Rule\OvertimeExactRule;
+use App\Rule\PeriodAwayGoalsRule;
 use App\Rule\PeriodExactRule;
+use App\Rule\PeriodHomeGoalsRule;
 use App\Rule\PeriodTendencyRule;
 use App\Rule\RuleRegistry;
 use App\Rule\ScorerHitRule;
@@ -50,7 +52,10 @@ class CompetitionGuessFeatures implements ResetInterface
             };
 
             $this->cache[$key] = new GuessFeatures(
-                periodTips: $enabled(PeriodExactRule::IDENTIFIER) || $enabled(PeriodTendencyRule::IDENTIFIER),
+                periodTips: $enabled(PeriodExactRule::IDENTIFIER)
+                    || $enabled(PeriodTendencyRule::IDENTIFIER)
+                    || $enabled(PeriodHomeGoalsRule::IDENTIFIER)
+                    || $enabled(PeriodAwayGoalsRule::IDENTIFIER),
                 scorerTips: $enabled(ScorerHitRule::IDENTIFIER),
                 overtimeTip: $enabled(OvertimeExactRule::IDENTIFIER),
             );

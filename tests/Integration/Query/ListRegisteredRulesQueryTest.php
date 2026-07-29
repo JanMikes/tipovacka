@@ -13,7 +13,7 @@ final class ListRegisteredRulesQueryTest extends IntegrationTestCase
     {
         $result = $this->queryBus()->handle(new ListRegisteredRules());
 
-        self::assertCount(8, $result);
+        self::assertCount(10, $result);
 
         $identifiers = array_map(static fn ($item) => $item->identifier, $result);
 

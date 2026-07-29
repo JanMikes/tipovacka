@@ -47,7 +47,7 @@ final class CompetitionCreatedAutoProvisionsRulesTest extends IntegrationTestCas
             ->getQuery()
             ->getResult();
 
-        self::assertCount(8, $configurations);
+        self::assertCount(10, $configurations);
 
         $identifiers = array_map(fn (CompetitionRuleConfiguration $c) => $c->ruleIdentifier, $configurations);
         sort($identifiers);
@@ -58,7 +58,9 @@ final class CompetitionCreatedAutoProvisionsRulesTest extends IntegrationTestCas
                 'correct_outcome',
                 'exact_score',
                 'overtime_exact',
+                'period_away_goals',
                 'period_exact',
+                'period_home_goals',
                 'period_tendency',
                 'scorer_hit',
             ],

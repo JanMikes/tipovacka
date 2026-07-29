@@ -1,0 +1,96 @@
+{#
+    THE competition card — one component, both grids of /souteze (item 07).
+    It is fed a `BrowsableCompetitionItem` and told which relationship it renders:
+
+      context = 'organizer' → „Tvé soutěže": adds the „% dokončeno" progress bar
+                              and a „Spravovat" call to action;
+      context = 'public'    → the discovery grid: „Připojit se" / „Otevřít".
+
+    Money never reads as a prize pool — entry fees are burned credits, there are
+    no payouts (see .docs/DOMAIN.md), so the card shows the entry fee only.
+
+    @var item \App\Query\ListBrowsableCompetitions\BrowsableCompetitionItem
+#}
+{% props item, context = 'public', walletBalance = 0 %}
+
+{% set id = item.competitionId.toRfc4122 %}
+{% set detailUrl = path('competition_detail', {id: id}) %}
+
+<div class="card-glass flex h-full flex-col justify-between p-5 sm:p-6" id="soutez-{{ id }}">
+    <div>
+        <div class="mb-3 flex items-start justify-between gap-3">
+            <p class="eyebrow min-w-0 truncate">{{ item.matchSourceName }}</p>
+
+            {% if item.liveMatchCount > 0 %}
+                <twig:Pill label="Live · {{ item.liveMatchCount }}" variant="live" dot />
+            {% elseif item.isFinished %}
+                <twig:Pill label="Ukončeno" variant="locked" />
+            {% elseif item.state.value == 'nadchazejici' %}
+                <twig:Pill label="Před startem" variant="accent" />
+            {% else %}
+                <twig:Pill label="Probíhá" variant="neutral" />
+            {% endif %}
+        </div>
+
+        <h3 class="text-lg font-bold leading-tight tracking-tight text-white">
+            <a href="{{ detailUrl }}" class="transition-colors hover:text-accent-200">{{ item.name }}</a>
+        </h3>
+
+        <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/50">
+            <span class="flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:users" class="h-4 w-4 text-white/40" />
+                {{ item.playerCount }} {% if item.playerCount == 1 %}hráč{% elseif item.playerCount >= 2 and item.playerCount <= 4 %}hráči{% else %}hráčů{% endif %}
+            </span>
+            <span class="flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:wallet" class="h-4 w-4 text-white/40" />
+                {% if item.entryFeeCredits > 0 %}Vstupné {{ item.entryFeeCredits|credits }}{% else %}Zdarma{% endif %}
+            </span>
+            <span class="flex items-center gap-1.5">
+                <twig:ux:icon name="lucide:globe" class="h-4 w-4 text-white/40" />
+                {{ item.sportName }}
+            </span>
+        </div>
+
+        {% if context == 'organizer' %}
+            <div class="mt-4">
+                <div class="lb-acc-bar"><i style="width: {{ item.progressPercent }}%"></i></div>
+                <p class="mt-2 text-xs text-white/45">{{ item.progressPercent }} % dokončeno{% if item.matchCount > 0 %} · {{ item.finishedMatchCount }}/{{ item.matchCount }} zápasů{% endif %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-5">
+        {% if context == 'organizer' %}
+            <a href="{{ detailUrl }}" class="btn btn-ghost btn-sm w-full">
+                <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
+                Spravovat
+            </a>
+        {% elseif item.viewerIsMember %}
+            <a href="{{ detailUrl }}" class="btn btn-ghost btn-sm w-full">
+                Otevřít
+                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+            </a>
+        {% elseif app.user is null %}
+            <a href="{{ path('app_login') }}" class="btn btn-primary btn-sm w-full">
+                <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
+                Přihlásit se a připojit
+            </a>
+        {% elseif not app.user.isVerified %}
+            <a href="{{ path('profile_edit') }}" class="btn btn-ghost btn-sm w-full">Ověřte e-mail pro připojení</a>
+        {% elseif item.entryFeeCredits > 0 and walletBalance < item.entryFeeCredits %}
+            <p class="mb-2 text-center text-xs text-white/50">Máte {{ walletBalance }}/{{ item.entryFeeCredits|credits }}</p>
+            <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm w-full">
+                <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                Dokoupit kredity
+            </a>
+        {% else %}
+            <form method="post" action="{{ path('competition_join_global', {id: id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('competition_join_global_' ~ id) }}">
+                <button type="submit" class="btn btn-primary btn-sm w-full">
+                    <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
+                    {% if item.entryFeeCredits > 0 %}Připojit se za {{ item.entryFeeCredits|credits }}{% else %}Připojit se zdarma{% endif %}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>

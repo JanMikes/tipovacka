@@ -17,6 +17,8 @@ final readonly class CompetitionListItem
         public string $ownerNickname,
         public bool $isOwner,
         public \DateTimeImmutable $joinedAt,
+        public ?\DateTimeImmutable $matchSourceStartAt = null,
+        public ?\DateTimeImmutable $matchSourceEndAt = null,
     ) {
     }
 }

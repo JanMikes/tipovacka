@@ -1,57 +1,175 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Soutěže — {{ brand_name }}{% endblock %}
-{% block meta_description %}Připojte se do veřejných tipovacích soutěží {{ brand_name }}. Zaplaťte vstupné v kreditech a tipujte s ostatními. Bez sázek, jen pro radost.{% endblock %}
+{% block meta_description %}Soutěže, kde tipuješ, soutěže, které organizuješ, a veřejné soutěže, do kterých se můžeš připojit. Bez sázek, jen pro radost.{% endblock %}
 
 {% block body %}
+{% set is_logged_in = app.user is not null %}
+{% set organizes = organized is not null and organized.totalCount > 0 %}
+
 <div class="bg-radial">
 <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
-    {# Breadcrumb #}
-    <nav class="mb-6 flex items-center gap-1.5 text-sm text-white/50" aria-label="Breadcrumb">
-        <a href="{{ path('app_home') }}" class="transition-colors hover:text-accent-300">Domů</a>
-        <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4 text-white/30" />
-        <span class="text-white/80">Soutěže</span>
-    </nav>
-
-    {# Page header #}
+    {# ───── Hero ───── #}
     <header class="mb-8">
-        <p class="eyebrow mb-3">Veřejné soutěže</p>
-        <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
-            <span>Připojte se do soutěže</span>
-        </h1>
-        <p class="mt-3 max-w-2xl text-white/60">Veřejné tipovací soutěže, do kterých se může přidat kdokoli. Zaplatíte vstupné v kreditech (nebo je zdarma) a tipujete s ostatními o nejlepší skóre.</p>
-    </header>
-
-    {# PIN-join — compact for authenticated users #}
-    {% if app.user and app.user.isVerified %}
-        <div class="mb-12">
-            {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: user_has_competitions|default(false) }) }}
-        </div>
-    {% endif %}
-
-    {# ───── Global competitions ───── #}
-    <section>
-        <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-                <h2 class="flex items-center gap-2 text-xl font-semibold text-white">
-                    <twig:ux:icon name="lucide:globe" class="h-5 w-5 text-accent-300" />
-                    Veřejné soutěže
-                    {% if competitions|length > 0 %}
-                        <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ competitions|length }}</span>
+        <div class="flex flex-wrap items-end justify-between gap-6">
+            <div class="min-w-0">
+                <p class="eyebrow mb-3">{{ is_logged_in ? 'Váš workspace' : 'Veřejné soutěže' }}</p>
+                <h1 class="grad-headline text-4xl font-extrabold tracking-tight sm:text-5xl"><span>Soutěže</span></h1>
+                <p class="mt-3 max-w-xl text-white/60">
+                    {% if is_logged_in %}
+                        Soutěže, kde tipuješ, soutěže, které organizuješ, a veřejné soutěže, do kterých se můžeš připojit.
+                    {% else %}
+                        Veřejné tipovací soutěže, do kterých se může přidat kdokoli. Zaplatíte vstupné v kreditech (nebo je zdarma) a tipujete o nejlepší skóre.
                     {% endif %}
-                </h2>
-                <p class="mt-1.5 text-sm text-white/50">Otevřené soutěže, do kterých se může přidat kdokoli.</p>
+                </p>
+            </div>
+
+            <div class="flex shrink-0 flex-wrap items-center gap-3">
+                <a href="#souteze-verejne" class="btn btn-ghost">
+                    <twig:ux:icon name="lucide:search" class="h-4 w-4" />
+                    Hledat
+                </a>
+                {% if is_logged_in %}
+                    <a href="{{ path('competition_create') }}" class="btn btn-primary">
+                        <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
+                        Vytvořit soutěž
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_register') }}" class="btn btn-primary">Registrace zdarma</a>
+                {% endif %}
             </div>
         </div>
 
-        {% if competitions|length == 0 %}
+        {# Every number below is measured. A sub-label is rendered only when it has
+           something real to say — never a plausible-looking constant. #}
+        {% set competitions_meta = null %}
+        {% if stats.liveCompetitionCount > 0 %}
+            {% set competitions_meta = stats.liveCompetitionCount ~ ' živě teď' %}
+        {% elseif stats.todayMatchCount > 0 %}
+            {% set competitions_meta = stats.todayMatchCount ~ (stats.todayMatchCount == 1 ? ' zápas' : (stats.todayMatchCount <= 4 ? ' zápasy' : ' zápasů')) ~ ' dnes' %}
+        {% endif %}
+        {% set players_meta = stats.newPlayerCount > 0 ? '+' ~ stats.newPlayerCount ~ ' tento týden' : null %}
+        {% set matches_meta = null %}
+        {% if stats.matchSourceCount == 1 %}
+            {% set matches_meta = 'V 1 turnaji' %}
+        {% elseif stats.matchSourceCount > 1 %}
+            {% set matches_meta = 'Ve ' ~ stats.matchSourceCount ~ ' turnajích' %}
+        {% endif %}
+
+        <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <twig:StatCard label="Aktivní soutěže" :value="stats.activeCompetitionCount" :meta="competitions_meta" />
+            <twig:StatCard label="Hráčů celkem" :value="stats.playerCount" :meta="players_meta" />
+            <twig:StatCard label="Sledovaných zápasů" :value="stats.matchCount" :meta="matches_meta" />
+        </div>
+    </header>
+
+    {# ───── Soutěže, kde tipuješ ───── #}
+    {% if playing_competitions|length > 0 %}
+        <section class="mb-14" id="souteze-hraju">
+            <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="eyebrow mb-2">Hraješ v</p>
+                    <h2 class="text-2xl font-bold tracking-tight text-white">Soutěže, kde tipuješ</h2>
+                    <p class="mt-1.5 text-sm text-white/50">Soutěže, do kterých tě pozval kamarád nebo ses připojil přes PIN.</p>
+                </div>
+                {% set playing_active = playing_competitions|filter(c => not c.isFinished)|length %}
+                <p class="text-sm text-white/45">{{ playing_active }} {% if playing_active == 1 %}aktivní{% else %}aktivních{% endif %}</p>
+            </div>
+
+            <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {% for item in playing_competitions %}
+                    <li><twig:Competition:PlayingCard :item="item" /></li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    {# ───── PIN join bar ───── #}
+    {% if is_logged_in and app.user.isVerified %}
+        <div class="mb-14">
+            {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: playing_competitions|length > 0 }) }}
+        </div>
+    {% endif %}
+
+    {# ───── Tvé soutěže (organizuješ) ───── #}
+    {% if organizes %}
+        <section class="mb-14" id="souteze-organizuji">
+            <div class="mb-5">
+                <p class="eyebrow mb-2">Organizuješ</p>
+                <h2 class="text-2xl font-bold tracking-tight text-white">Tvé soutěže</h2>
+                <p class="mt-1.5 text-sm text-white/50">Turnaje, které spravuješ — kontroluj tipy, uzavři kolo, zvi hráče.</p>
+            </div>
+
+            <twig:Competition:FilterBar
+                prefix="moje-"
+                anchor="#souteze-organizuji"
+                :sportOptions="organized.sportOptions"
+                :activeSportId="organized_filters.sport"
+                :stateOptions="organized_state_options"
+                :activeState="organized_filters.state"
+                :visibilityOptions="visibility_options"
+                :activeVisibility="organized_filters.visibility"
+                :search="organized_filters.search"
+                :filteredCount="organized.filteredCount"
+                :totalCount="organized.totalCount"
+            />
+
+            {% if organized.items|length == 0 %}
+                <twig:EmptyState
+                    illustration="search"
+                    title="Žádná soutěž neodpovídá filtru"
+                    body="Zkuste zrušit filtr nebo hledat jiný název."
+                    ctaLabel="Zrušit filtry"
+                    ctaPath="{{ path('competitions_list') }}#souteze-organizuji"
+                />
+            {% else %}
+                <ul class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {% for item in organized.items %}
+                        <li><twig:Competition:Card :item="item" context="organizer" /></li>
+                    {% endfor %}
+                </ul>
+
+                {% if organized.hasMore %}
+                    <div class="mt-6 flex justify-center">
+                        <a href="{{ path('competitions_list', app.request.query.all|merge({'moje-strana': organized.page + 1})|filter(v => v is not empty)) }}#souteze-organizuji" class="btn btn-ghost btn-sm">
+                            Zobrazit další
+                            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </section>
+    {% endif %}
+
+    {# ───── Veřejné soutěže ───── #}
+    <section id="souteze-verejne">
+        <div class="mb-5">
+            <p class="eyebrow mb-2">Připoj se</p>
+            <h2 class="text-2xl font-bold tracking-tight text-white">Veřejné soutěže</h2>
+            <p class="mt-1.5 text-sm text-white/50">Otevřené soutěže, do kterých se může přidat kdokoli.</p>
+        </div>
+
+        {% if discoverable.totalCount > 0 %}
+            <twig:Competition:FilterBar
+                anchor="#souteze-verejne"
+                :sportOptions="discoverable.sportOptions"
+                :activeSportId="discoverable_filters.sport"
+                :stateOptions="discoverable_state_options"
+                :activeState="discoverable_filters.state"
+                :search="discoverable_filters.search"
+                :filteredCount="discoverable.filteredCount"
+                :totalCount="discoverable.totalCount"
+            />
+        {% endif %}
+
+        {% if discoverable.totalCount == 0 %}
             <div class="card-glass p-10 text-center">
                 <span class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
                     <twig:ux:icon name="lucide:search" class="h-7 w-7" />
                 </span>
                 <h3 class="text-lg font-semibold text-white">Žádné veřejné soutěže</h3>
-                {% if app.user %}
+                {% if is_logged_in %}
                     <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné veřejné soutěže. Vytvořte si vlastní soutěž od začátku.</p>
                     <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm mt-6">
                         <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
@@ -65,116 +183,63 @@
                     </a>
                 {% endif %}
             </div>
+        {% elseif discoverable.items|length == 0 %}
+            <twig:EmptyState
+                illustration="search"
+                title="Žádná soutěž neodpovídá filtru"
+                body="Zkuste zrušit filtr nebo hledat jiný název."
+                ctaLabel="Zrušit filtry"
+                ctaPath="{{ path('competitions_list') }}#souteze-verejne"
+            />
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {% for c in competitions %}
-                    <li id="soutez-{{ c.competitionId.toRfc4122 }}">
-                        <div class="card-glass flex h-full flex-col justify-between p-6">
-                            <div>
-                                <div class="mb-4 flex items-start justify-between gap-3">
-                                    <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-accent-500/30 bg-accent-500/15 text-accent-300">
-                                        <twig:ux:icon name="lucide:trophy" class="h-5 w-5" />
-                                    </span>
-                                    {% if c.entryFeeCredits > 0 %}
-                                        <span class="inline-flex items-center gap-1.5 rounded-full border border-accent-500/40 bg-accent-500/15 px-3 py-1 text-sm font-semibold text-accent-300">
-                                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-                                            Vstup: {{ c.entryFeeCredits|credits }}
-                                        </span>
-                                    {% else %}
-                                        <twig:Pill label="Zdarma" variant="success" />
-                                    {% endif %}
-                                </div>
-
-                                <h3 class="text-lg font-semibold leading-tight text-white">{{ c.name }}</h3>
-
-                                <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-white/50">
-                                    <span class="flex items-center gap-1.5">
-                                        <twig:ux:icon name="lucide:globe" class="h-4 w-4 text-white/40" />
-                                        {{ c.sportName }}
-                                    </span>
-                                    <span class="flex items-center gap-1.5">
-                                        <twig:ux:icon name="lucide:users" class="h-4 w-4 text-white/40" />
-                                        {{ c.playerCount }} {% if c.playerCount == 1 %}hráč{% elseif c.playerCount >= 2 and c.playerCount <= 4 %}hráči{% else %}hráčů{% endif %}
-                                    </span>
-                                </div>
-
-                                {% if c.sourceStartAt or c.sourceEndAt %}
-                                    <div class="mt-1.5 flex items-center gap-1.5 text-sm text-white/50">
-                                        <twig:ux:icon name="lucide:calendar" class="h-4 w-4 text-white/40" />
-                                        <span>
-                                            {% if c.sourceStartAt %}{{ c.sourceStartAt|date('d. m. Y') }}{% endif %}
-                                            {% if c.sourceStartAt and c.sourceEndAt %} – {% endif %}
-                                            {% if c.sourceEndAt %}{{ c.sourceEndAt|date('d. m. Y') }}{% endif %}
-                                        </span>
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="mt-5">
-                                {% if c.viewerIsMember %}
-                                    <a href="{{ path('competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
-                                        Otevřít soutěž
-                                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                                    </a>
-                                {% elseif app.user and app.user.isVerified %}
-                                    {% if c.entryFeeCredits > 0 and wallet_balance < c.entryFeeCredits %}
-                                        <p class="mb-2 text-center text-xs text-white/50">Máte {{ wallet_balance }}/{{ c.entryFeeCredits|credits }}</p>
-                                        <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm w-full">
-                                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-                                            Dokoupit kredity
-                                        </a>
-                                    {% else %}
-                                        <form method="post" action="{{ path('competition_join_global', {id: c.competitionId.toRfc4122}) }}">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('competition_join_global_' ~ c.competitionId.toRfc4122) }}">
-                                            <button type="submit" class="btn btn-primary btn-sm w-full">
-                                                <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
-                                                {% if c.entryFeeCredits > 0 %}Připojit se za {{ c.entryFeeCredits|credits }}{% else %}Připojit se zdarma{% endif %}
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                {% else %}
-                                    <a href="{{ path('app_login') }}" class="btn btn-primary btn-sm w-full">
-                                        <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
-                                        Přihlásit se a připojit
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </li>
+                {% for item in discoverable.items %}
+                    <li><twig:Competition:Card :item="item" context="public" :walletBalance="wallet_balance" /></li>
                 {% endfor %}
             </ul>
+
+            {% if discoverable.hasMore %}
+                <div class="mt-6 flex justify-center">
+                    <a href="{{ path('competitions_list', app.request.query.all|merge({'strana': discoverable.page + 1})|filter(v => v is not empty)) }}#souteze-verejne" class="btn btn-ghost btn-sm">
+                        Zobrazit další
+                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    </a>
+                </div>
+            {% endif %}
         {% endif %}
     </section>
 
-    {# ───── Hero CTA: create your own competition (from scratch) ───── #}
-    {% set createHref = app.user ? path('competition_create') : path('app_register') %}
-    <section class="surface-accent relative mt-12 overflow-hidden p-6 sm:p-8">
-        <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-            <div class="flex items-start gap-4">
-                <span class="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 backdrop-blur sm:flex">
-                    <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-accent-300" />
-                </span>
-                <div class="min-w-0">
-                    <p class="eyebrow mb-2 inline-flex items-center gap-1.5">
-                        <twig:ux:icon name="lucide:sparkles" class="h-3.5 w-3.5" />
-                        Vlastní soutěž
-                    </p>
-                    <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Chcete tipovat jen se svými lidmi?</h2>
-                    <p class="mt-2 max-w-xl text-sm text-white/70 sm:text-base">Založte si vlastní soukromou soutěž, nastavte pravidla a bodování a pozvěte jen ty, které chcete. Zdarma, bez závazků.</p>
+    {# ───── Vytvoř si vlastní ───── #}
+    {% if not organizes %}
+        {% set createHref = is_logged_in ? path('competition_create') : path('app_register') %}
+        <section class="surface-accent relative mt-12 overflow-hidden p-6 sm:p-8">
+            <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+                <div class="flex items-start gap-4">
+                    <span class="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 backdrop-blur sm:flex">
+                        <twig:ux:icon name="lucide:trophy" class="h-7 w-7 text-accent-300" />
+                    </span>
+                    <div class="min-w-0">
+                        <p class="eyebrow mb-2 inline-flex items-center gap-1.5">
+                            <twig:ux:icon name="lucide:sparkles" class="h-3.5 w-3.5" />
+                            Vlastní soutěž
+                        </p>
+                        <h2 class="text-2xl font-bold tracking-tight text-white sm:text-3xl">Chcete tipovat jen se svými lidmi?</h2>
+                        <p class="mt-2 max-w-xl text-sm text-white/70 sm:text-base">Založte si vlastní soukromou soutěž, nastavte pravidla a bodování a pozvěte jen ty, které chcete. Zdarma, bez závazků.</p>
+                    </div>
+                </div>
+
+                <div class="flex md:flex-col md:items-stretch md:justify-center">
+                    <a href="{{ createHref }}" class="btn btn-primary w-full sm:w-auto">
+                        <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
+                        {% if is_logged_in %}Vytvořit soutěž{% else %}Začít zdarma{% endif %}
+                    </a>
+                    {% if not is_logged_in %}
+                        <p class="mt-2 text-center text-xs text-white/50 md:mt-3">Stačí krátká registrace.</p>
+                    {% endif %}
                 </div>
             </div>
-
-            <div class="flex md:flex-col md:items-stretch md:justify-center">
-                <a href="{{ createHref }}" class="btn btn-primary w-full sm:w-auto">
-                    <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
-                    {% if app.user %}Vytvořit soutěž{% else %}Začít zdarma{% endif %}
-                </a>
-                {% if app.user is null %}
-                    <p class="mt-2 text-center text-xs text-white/50 md:mt-3">Stačí krátká registrace.</p>
-                {% endif %}
-            </div>
-        </div>
-    </section>
+        </section>
+    {% endif %}
 </div>
 </div>
 {% endblock %}

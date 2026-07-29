@@ -76,7 +76,7 @@ final class JoinGlobalCompetitionController extends AbstractController
             if ($inner instanceof CannotJoinFinishedMatchSource) {
                 $this->addFlash('error', 'Tato soutěž je již ukončena, nelze se do ní přidat.');
 
-                return $this->redirectToRoute('public_competitions_list');
+                return $this->redirectToRoute('competitions_list');
             }
 
             throw $handlerFailed;

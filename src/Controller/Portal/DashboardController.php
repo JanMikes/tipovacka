@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Controller\Portal;
 
 use App\Entity\User;
+use App\Enum\CompetitionBrowseScope;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\GetMemberCompetitionStats\GetMemberCompetitionStats;
-use App\Query\ListDiscoverableGlobalCompetitions\ListDiscoverableGlobalCompetitions;
+use App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions;
 use App\Query\ListMyCompetitions\ListMyCompetitions;
 use App\Query\ListMyOwnedMatchSources\ListMyOwnedMatchSources;
 use App\Query\ListRecentEvaluatedGuessesForUser\ListRecentEvaluatedGuessesForUser;
@@ -38,7 +39,10 @@ final class DashboardController extends AbstractController
         $myOwnedMatchSources = $this->queryBus->handle(new ListMyOwnedMatchSources(ownerId: $user->id));
         $upcomingMatches = $this->queryBus->handle(new ListUpcomingMatchesForUser(userId: $user->id));
         $evaluatedGuesses = $this->queryBus->handle(new ListRecentEvaluatedGuessesForUser(userId: $user->id));
-        $discoverableCompetitions = $this->queryBus->handle(new ListDiscoverableGlobalCompetitions(viewerId: $user->id));
+        $discoverableCompetitions = $this->queryBus->handle(new ListBrowsableCompetitions(
+            scope: CompetitionBrowseScope::Discoverable,
+            viewerId: $user->id,
+        ))->items;
         $walletBalance = $this->queryBus->handle(new GetCreditWallet($user->id))->balance;
 
         // Personal stat cards are scoped to the selected soutěž. The switcher passes

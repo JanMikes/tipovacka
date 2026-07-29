@@ -1,55 +1,67 @@
 {#
-    Server-side soutěž (Competition) switcher. Renders a dropdown of the user's soutěže,
-    each option linking to the same route for the chosen competition. No SPA — plain links.
+    Soutěž (Competition) switcher — a grouped tom-select picker.
+
+    Class-based component: src/Twig/Components/SoutezSwitcher.php
+    Docs: .docs/features/competition-switcher.md
 
     props:
-      competitions    : list<CompetitionListItem> (from ListMyCompetitions) — the user's soutěže
-      currentId : string|null — RFC4122 id of the active soutěž (defaults to the first competition)
-      route     : string — route name to link to for each competition
-      param     : string — the route/query param carrying the competition id (default 'competitionId').
-                  When `route` has a matching path placeholder it becomes a path segment;
-                  otherwise Symfony appends it as a query string (e.g. ?soutez=<id>).
-      label     : string — eyebrow label above the control
+      competitions : list<CompetitionListItem> (ListMyCompetitions) — the viewer's soutěže,
+                     or list<DiscoverableGlobalCompetitionItem> (ListDiscoverableGlobalCompetitions)
+                     for the logged-out variant. One component, two feeds.
+      currentId    : string|null — RFC4122 id of the active soutěž. An unknown/foreign id
+                     silently falls back to the first option (deliberate leak prevention).
+      route        : string — route the GET form submits to. It must be reachable WITHOUT any
+                     path parameter, because a no-JS <form> can only append a query string.
+      param        : string — query parameter carrying the chosen id (default 'soutez').
+      label        : string — eyebrow label above the control.
+      id           : string — DOM id of the <select>; override when a page renders two switchers.
+
+    Progressive enhancement: this is a real <select> in a real <form>. Without JavaScript the
+    native control renders (see the „item 04" block in app.css, which undoes the global
+    `select[data-controller~="tom-select"] { opacity: 0 }` FOUC guard when scripting is off)
+    and the <noscript> button submits it. With JavaScript, tom-select upgrades it to a
+    searchable, grouped dropdown that submits on change.
+
+    Edge cases: zero soutěží renders nothing, exactly one renders a static chip.
 #}
-{% props competitions, currentId = null, route, param = 'competitionId', label = 'Soutěž' %}
-
-{% set matched = competitions|filter(g => g.competitionId.toRfc4122 == currentId) %}
-{% set current = (matched|length > 0) ? matched|first : competitions|first %}
-
-{% if competitions|length > 0 and current is not null %}
-    <div class="min-w-0">
-        <span class="stat-lbl mb-1.5 block">{{ label }}</span>
-        {% if competitions|length == 1 %}
+{% if this.current is not null %}
+    <div{{ attributes.defaults({ class: 'soutez-switcher w-full min-w-0 sm:w-72' }) }}>
+        {% if this.options|length == 1 %}
+            <span class="stat-lbl mb-1.5 block">{{ label }}</span>
             <div class="inline-flex max-w-full items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2">
                 <twig:ux:icon name="lucide:users" class="h-4 w-4 shrink-0 text-accent-300" />
-                <span class="truncate text-sm font-semibold text-white">{{ current.competitionName }}</span>
+                <span class="truncate text-sm font-semibold text-white">{{ this.current.name }}</span>
             </div>
         {% else %}
-            <details class="group relative">
-                <summary
-                    class="flex max-w-full cursor-pointer list-none items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:border-white/20 hover:bg-white/[0.07]"
-                    style="list-style:none"
+            <form method="get" action="{{ path(route) }}" class="field">
+                <label for="{{ id }}">{{ label }}</label>
+                <select
+                    id="{{ id }}"
+                    name="{{ param }}"
+                    data-controller="tom-select"
+                    data-tom-select-submit-on-change-value="true"
+                    data-tom-select-placeholder-value="Vyhledejte soutěž…"
+                    data-tom-select-no-results-text-value="Žádná soutěž nenalezena"
                 >
-                    <twig:ux:icon name="lucide:users" class="h-4 w-4 shrink-0 text-accent-300" />
-                    <span class="truncate">{{ current.competitionName }}</span>
-                    <twig:ux:icon name="lucide:chevron-down" class="h-4 w-4 shrink-0 text-white/50 transition-transform group-open:rotate-180" />
-                </summary>
-                <div class="absolute left-0 z-[60] mt-2 max-h-80 w-72 max-w-[calc(100vw-2rem)] overflow-auto rounded-xl border border-white/10 bg-surface-2 p-1.5 shadow-xl">
-                    {% for g in competitions %}
-                        {% set is_active = g.competitionId.toRfc4122 == current.competitionId.toRfc4122 %}
-                        <a
-                            href="{{ path(route, {(param): g.competitionId.toRfc4122}) }}"
-                            class="flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5 {{ is_active ? 'bg-white/[0.06]' : '' }}"
-                        >
-                            <twig:ux:icon name="lucide:{{ is_active ? 'circle-check' : 'users' }}" class="mt-0.5 h-4 w-4 shrink-0 {{ is_active ? 'text-accent-300' : 'text-white/40' }}" />
-                            <span class="min-w-0">
-                                <span class="block truncate font-semibold {{ is_active ? 'text-white' : 'text-white/80' }}">{{ g.competitionName }}</span>
-                                <span class="block truncate text-xs text-white/45">{{ g.matchSourceName }}</span>
-                            </span>
-                        </a>
+                    {% for group in this.groups %}
+                        <optgroup label="{{ group.label }}">
+                            {% for option in group.options %}
+                                <option
+                                    value="{{ option.id }}"
+                                    data-sub="{{ option.subtitle }}"
+                                    {% if option.dateRange != '' %}data-meta="{{ option.dateRange }}"{% endif %}
+                                    {% if option.id == this.current.id %}selected{% endif %}
+                                >{{ option.name }}</option>
+                            {% endfor %}
+                        </optgroup>
                     {% endfor %}
-                </div>
-            </details>
+                </select>
+                <noscript>
+                    <button type="submit" class="btn btn-ghost btn-sm self-start">
+                        Zobrazit soutěž
+                    </button>
+                </noscript>
+            </form>
         {% endif %}
     </div>
 {% endif %}

@@ -33,6 +33,8 @@ final readonly class ListMyCompetitionsQuery
                 ownerNickname: $m->competition->owner->displayName,
                 isOwner: $m->user->id->equals($m->competition->owner->id),
                 joinedAt: $m->joinedAt,
+                matchSourceStartAt: $m->competition->matchSource->startAt,
+                matchSourceEndAt: $m->competition->matchSource->endAt,
             ),
             $memberships,
         );

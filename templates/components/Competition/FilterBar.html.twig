@@ -1,0 +1,90 @@
+{#
+    THE competition filter bar — one component, both grids of /souteze (item 07).
+    Filters are plain links carrying query parameters, so a filtered view survives
+    a reload and can be pasted to someone else. Each bar owns a parameter prefix
+    („" for the public list, „moje-" for the organizer one) and therefore never
+    disturbs the other bar's state.
+
+    The organizer context adds „Viditelnost"; the public one omits it (a
+    discoverable competition is public by definition) and offers fewer „Stav"
+    chips (see CompetitionStateFilter::forScope).
+
+    @var sportOptions   list<\App\Query\ListBrowsableCompetitions\SportFilterOption>
+    @var stateOptions   list<\App\Enum\CompetitionStateFilter>
+    @var visibilityOptions list<\App\Enum\CompetitionVisibilityFilter>
+#}
+{% props
+    prefix = '',
+    anchor = '',
+    sportOptions = [],
+    activeSportId = null,
+    stateOptions = [],
+    activeState = null,
+    visibilityOptions = null,
+    activeVisibility = null,
+    search = '',
+    filteredCount = 0,
+    totalCount = 0
+%}
+
+{% macro chip_url(prefix, key, value, anchor) %}
+    {%- set query = app.request.query.all|merge({ (prefix ~ key): value, (prefix ~ 'strana'): '' })|filter(v => v is not empty) -%}
+    {{- path('competitions_list', query) ~ anchor -}}
+{% endmacro %}
+
+{% import _self as bar %}
+
+<div class="card-glass mb-5 flex flex-wrap items-end gap-x-8 gap-y-4 p-4 sm:p-5">
+    <div>
+        <p class="stat-lbl">Sport</p>
+        <div class="lb-tabs !mb-0 flex-wrap">
+            <a href="{{ bar.chip_url(prefix, 'sport', '', anchor) }}" class="lb-tab{{ activeSportId is null ? ' active' }}">Všechny sporty</a>
+            {% for sport in sportOptions %}
+                <a href="{{ bar.chip_url(prefix, 'sport', sport.sportId.toRfc4122, anchor) }}"
+                   class="lb-tab{{ activeSportId is not null and activeSportId.equals(sport.sportId) ? ' active' }}">{{ sport.name }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if visibilityOptions is not null %}
+        <div>
+            <p class="stat-lbl">Viditelnost</p>
+            <div class="lb-tabs !mb-0 flex-wrap">
+                {% for option in visibilityOptions %}
+                    <a href="{{ bar.chip_url(prefix, 'viditelnost', option.value, anchor) }}"
+                       class="lb-tab{{ activeVisibility is not null and activeVisibility.value == option.value ? ' active' }}">{{ option.label }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div>
+        <p class="stat-lbl">Stav</p>
+        <div class="lb-tabs !mb-0 flex-wrap">
+            {% for option in stateOptions %}
+                <a href="{{ bar.chip_url(prefix, 'stav', option.value, anchor) }}"
+                   class="lb-tab{{ activeState is not null and activeState.value == option.value ? ' active' }}">{{ option.label }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form method="get" action="{{ path('competitions_list') }}" class="min-w-[13rem] flex-1">
+        {# Carry the other bar's state (and this bar's chips) through the search submit. #}
+        {% for key, value in app.request.query.all %}
+            {% if key != prefix ~ 'hledat' and key != prefix ~ 'strana' and value is not empty %}
+                <input type="hidden" name="{{ key }}" value="{{ value }}">
+            {% endif %}
+        {% endfor %}
+        <label class="stat-lbl block" for="{{ prefix }}hledat">Hledat</label>
+        <div class="flex gap-2">
+            <input type="search" class="input" id="{{ prefix }}hledat" name="{{ prefix }}hledat" value="{{ search }}" placeholder="Název soutěže…">
+            <button type="submit" class="btn btn-ghost btn-sm shrink-0" aria-label="Hledat">
+                <twig:ux:icon name="lucide:search" class="h-4 w-4" />
+            </button>
+        </div>
+    </form>
+
+    <p class="ml-auto whitespace-nowrap pb-1 text-sm text-white/45">
+        {{ filteredCount }} z {{ totalCount }} {% if totalCount == 1 %}soutěže{% elseif totalCount >= 2 and totalCount <= 4 %}soutěží{% else %}soutěží{% endif %}
+    </p>
+</div>

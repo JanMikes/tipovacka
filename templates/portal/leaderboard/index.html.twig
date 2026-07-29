@@ -55,12 +55,15 @@
 
         <div class="flex flex-wrap items-end gap-3">
             {% if my_competitions|length > 1 %}
+                {# `leaderboard` (/zebricek) is the resolver route: a GET form can only append
+                   ?soutez=<id>, so it redirects to that competition's board. #}
                 <twig:SoutezSwitcher
                     :competitions="my_competitions"
                     currentId="{{ competition.id.toRfc4122 }}"
-                    route="competition_leaderboard"
-                    param="competitionId"
+                    route="leaderboard"
+                    param="soutez"
                     label="Žebříček soutěže"
+                    id="soutez-switcher-leaderboard"
                 />
             {% endif %}
             <a href="{{ path('competition_leaderboard_matrix', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">

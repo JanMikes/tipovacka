@@ -42,12 +42,49 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
                 'correct_outcome' => 3,
                 'exact_score' => 5,
                 'overtime_exact' => 3,
+                'period_away_goals' => 1,
                 'period_exact' => 5,
+                'period_home_goals' => 1,
                 'period_tendency' => 2,
                 'scorer_hit' => 2,
             ],
             $decoded,
         );
+    }
+
+    /**
+     * W1 — the per-rule copy is ONE shared map (RulePresetProvider::RULE_COPY),
+     * so this screen names a rule exactly as the create-competition wizard does.
+     * The two used to carry duplicated Twig maps that could silently drift.
+     */
+    public function testRulesScreenUsesTheSharedRenamedRuleCopy(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
+
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('Tip hosté', $html);
+        self::assertStringContainsString('Správný tip hostujícího týmu', $html);
+        self::assertStringContainsString('Tip domácí', $html);
+        self::assertStringContainsString('Správný tip domácího týmu', $html);
+        self::assertStringContainsString('bonus za obě uhodnutá skóre', $html);
+        self::assertStringContainsString('Celkové skóre po prodloužení / penaltách', $html);
+
+        // The two new period rules render here too, and period_tendency is kept.
+        self::assertStringContainsString('Tip domácí v části zápasu', $html);
+        self::assertStringContainsString('Tip hosté v části zápasu', $html);
+        self::assertStringContainsString('Tendence části zápasu', $html);
+
+        self::assertStringNotContainsString('Dobrý tip skóre hostů', $html);
+        self::assertStringNotContainsString('Dobrý tip skóre domácích', $html);
     }
 
     public function testNonOwnerIsForbidden(): void

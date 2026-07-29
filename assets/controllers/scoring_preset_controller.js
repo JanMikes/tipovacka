@@ -4,7 +4,8 @@ import { Controller } from '@hotwired/stimulus';
  * Applies a scoring preset and reflects the active preset on the
  * `.variant-card` tiles.
  *
- *   card         target — one per preset tile (Standardní / Standard + střelec / Vlastní).
+ *   card         target — one per preset tile (wizard: Standardní / Maxi / Vlastní,
+ *                rules screen: Standardní / Standard + střelec / Vlastní).
  *   field        target — one per points <input>, tagged with `data-rule="<identifier>"`.
  *   enabledField target — one per „Aktivní" checkbox, tagged with `data-rule`.
  *
@@ -16,6 +17,7 @@ import { Controller } from '@hotwired/stimulus';
  *
  * Standardní         → enables the base rules at default points, disables the rest.
  * Standard + střelec → base rules + scorer_hit, all at default points.
+ * Maxi               → base rules + the per-period trio + the after-overtime score.
  * Vlastní            → only marks itself active (fields stay as the user left them).
  *
  * Defensive: a missing field is skipped; `input`/`change` events are dispatched
@@ -36,6 +38,11 @@ export default class extends Controller {
 
     scorer(event) {
         this.applyPreset('scorer');
+        this.select(event.currentTarget);
+    }
+
+    maxi(event) {
+        this.applyPreset('maxi');
         this.select(event.currentTarget);
     }
 

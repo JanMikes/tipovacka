@@ -17,7 +17,13 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
 use App\Rule\ExactScoreRule;
+use App\Rule\OvertimeExactRule;
+use App\Rule\PeriodAwayGoalsRule;
+use App\Rule\PeriodExactRule;
+use App\Rule\PeriodHomeGoalsRule;
+use App\Rule\PeriodTendencyRule;
 use App\Rule\ScorerHitRule;
+use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -202,11 +208,15 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertStringContainsString('Vybrat jen některé zápasy', $html);
         self::assertStringContainsString('value="teams"', $html);
 
-        self::assertStringNotContainsString('Zahrnout playoff zápasy', $html);
+        self::assertStringNotContainsString('Dohrávat turnaj?', $html);
+        self::assertStringNotContainsString('data-model="includePlayoff"', $html);
     }
 
-    /** W2 — the playoff toggle now lives on step 2 („Pravidla"). */
-    public function testPlayoffToggleLivesOnRulesStep(): void
+    /**
+     * W2 — the playoff toggle now lives on step 2 („Pravidla").
+     * W1 — and it is worded as „Dohrávat turnaj?": ONE control, not two.
+     */
+    public function testPlayoffToggleLivesOnRulesStepWordedAsDohravatTurnaj(): void
     {
         $client = static::createClient();
         $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
@@ -219,7 +229,139 @@ final class CreateWizardComponentTest extends WebTestCase
             ->render();
 
         self::assertStringContainsString('Vyberte pravidla', $html);
-        self::assertStringContainsString('Zahrnout playoff zápasy', $html);
+        self::assertStringContainsString('Dohrávat turnaj?', $html);
+        self::assertStringContainsString('zahrnout playoff zápasy', $html);
+
+        // Exactly ONE control writes includePlayoff — a second one would be the bug
+        // the product decision exists to prevent.
+        self::assertSame(1, substr_count($html, 'data-model="includePlayoff"'));
+    }
+
+    /**
+     * W1 — the rules step offers Standardní / Maxi / Vlastní (připravujeme),
+     * with Standardní pre-selected (it is exactly what mount() enables) and
+     * Vlastní disabled.
+     */
+    public function testRulesStepOffersStandardMaxiAndDisabledCustomPresets(): void
+    {
+        $html = $this->renderRulesStep();
+
+        self::assertStringContainsString('Standardní', $html);
+        self::assertStringContainsString('>Maxi<', $html);
+        self::assertStringContainsString('Vlastní (připravujeme)', $html);
+        self::assertStringContainsString('scoring-preset#maxi', $html);
+
+        // Standardní is the pre-selected tile now that Vlastní is disabled.
+        self::assertMatchesRegularExpression('~variant-card selected[^>]*scoring-preset\#standard"~', $html);
+        self::assertStringNotContainsString('scoring-preset#custom', $html);
+        self::assertMatchesRegularExpression('#<button[^>]*variant-card"[^>]*disabled#', $html);
+
+        // The Maxi preset is served from PHP — base rules + the per-period trio
+        // + the after-overtime score.
+        $presets = $this->presetsFrom($html);
+        self::assertArrayHasKey('maxi', $presets);
+        self::assertSame(
+            [
+                'correct_away_goals',
+                'correct_home_goals',
+                'correct_outcome',
+                'exact_score',
+                'period_exact',
+                'period_away_goals',
+                'period_home_goals',
+                'overtime_exact',
+            ],
+            $presets['maxi'],
+        );
+        self::assertSame(
+            ['correct_away_goals', 'correct_home_goals', 'correct_outcome', 'exact_score'],
+            $presets['standard'],
+        );
+    }
+
+    /** W1 — the four Standardní rules carry the renamed copy. */
+    public function testRulesStepUsesRenamedStandardRuleCopy(): void
+    {
+        $html = $this->renderRulesStep();
+
+        self::assertStringContainsString('Tip hosté', $html);
+        self::assertStringContainsString('Správný tip hostujícího týmu', $html);
+        self::assertStringContainsString('Tip domácí', $html);
+        self::assertStringContainsString('Správný tip domácího týmu', $html);
+        self::assertStringContainsString('Dobrý tip výsledku', $html);
+        self::assertStringContainsString('Přesný tip výsledku', $html);
+        self::assertStringContainsString('bonus za obě uhodnutá skóre', $html);
+
+        self::assertStringNotContainsString('Dobrý tip skóre hostů', $html);
+        self::assertStringNotContainsString('Dobrý tip skóre domácích', $html);
+        self::assertStringNotContainsString('Trefená obě skóre současně', $html);
+    }
+
+    /**
+     * W1 — the per-period goal rules exist alongside the KEPT „Tendence části
+     * zápasu", scorers are asked as a question, and PP/PEN stay ONE combined
+     * overtime entry.
+     */
+    public function testRulesStepOffersPeriodGoalRulesScorerQuestionAndOneOvertimeEntry(): void
+    {
+        $html = $this->renderRulesStep();
+
+        self::assertStringContainsString('Přesný tip části zápasu', $html);
+        self::assertStringContainsString('Tip hosté v části zápasu', $html);
+        self::assertStringContainsString('Tip domácí v části zápasu', $html);
+        self::assertStringContainsString('Tendence části zápasu', $html);
+        self::assertStringContainsString('data-rule="period_home_goals"', $html);
+        self::assertStringContainsString('data-rule="period_away_goals"', $html);
+
+        self::assertStringContainsString('Chcete tipovat také střelce utkání?', $html);
+
+        // ONE combined „po prodloužení / penaltách" entry — PP and PEN are not split.
+        self::assertSame(1, substr_count($html, 'Celkové skóre po prodloužení / penaltách'));
+        self::assertStringNotContainsString('po PEN', $html);
+
+        // Fantasy is deferred out of the wizard entirely.
+        self::assertStringNotContainsStringIgnoringCase('fantasy', $html);
+    }
+
+    /** W1 — the Maxi rule set actually persists as enabled configuration rows. */
+    public function testMaxiRuleSetPersistsPeriodAndOvertimeRules(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $response = $component
+            ->set('name', 'Maxi soutěž')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->set('enabledRuleIds', [
+                'correct_home_goals',
+                'correct_away_goals',
+                'correct_outcome',
+                ExactScoreRule::IDENTIFIER,
+                PeriodExactRule::IDENTIFIER,
+                PeriodHomeGoalsRule::IDENTIFIER,
+                PeriodAwayGoalsRule::IDENTIFIER,
+                OvertimeExactRule::IDENTIFIER,
+            ])
+            ->call('submit')
+            ->response();
+
+        self::assertSame(302, $response->getStatusCode());
+
+        $competition = $this->competitionByName($client, 'Maxi soutěž');
+
+        self::assertTrue($this->rule($client, $competition->id, PeriodExactRule::IDENTIFIER)->enabled);
+        self::assertTrue($this->rule($client, $competition->id, PeriodHomeGoalsRule::IDENTIFIER)->enabled);
+        self::assertTrue($this->rule($client, $competition->id, PeriodAwayGoalsRule::IDENTIFIER)->enabled);
+        self::assertTrue($this->rule($client, $competition->id, OvertimeExactRule::IDENTIFIER)->enabled);
+
+        // Nothing is retired: period_tendency still exists, just disabled by default.
+        self::assertFalse($this->rule($client, $competition->id, PeriodTendencyRule::IDENTIFIER)->enabled);
+
+        // Enabling only the per-period goal rules must still open the period tips.
+        $features = $client->getContainer()->get(CompetitionGuessFeatures::class);
+        $features->forgetCompetition($competition->id);
+        self::assertTrue($features->featuresFor($competition->id)->periodTips);
     }
 
     /** W3 — the skip action carries no copy duplicating the step heading. */
@@ -333,6 +475,35 @@ final class CreateWizardComponentTest extends WebTestCase
     }
 
     // ---- helpers ----
+
+    /** Renders step 2 („Pravidla") over a curated source. */
+    private function renderRulesStep(): string
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        return (string) $component
+            ->set('name', 'Pravidla')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->render();
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function presetsFrom(string $html): array
+    {
+        self::assertSame(1, preg_match('#data-scoring-preset-presets-value="([^"]+)"#', $html, $matches));
+
+        $decoded = json_decode(html_entity_decode($matches[1], \ENT_QUOTES), true);
+        self::assertIsArray($decoded);
+
+        /* @var array<string, list<string>> $decoded */
+        return $decoded;
+    }
 
     private function em(KernelBrowser $client): EntityManagerInterface
     {

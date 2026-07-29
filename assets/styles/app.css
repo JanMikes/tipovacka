@@ -663,6 +663,20 @@ label.required::after {
         .tip-row-teams.home { justify-content: flex-start; text-align: left; }
         .tip-row-actions { justify-content: flex-start; }
     }
+
+    /* --- item 07: Soutěže page ---
+       The inset „TVÁ POZICE / BODY" panel of a played-competition card. Everything
+       else on that page reuses existing primitives: .card-glass for the cards,
+       .lb-tabs/.lb-tab for the filter chips, .lb-acc-bar for „% dokončeno",
+       .stat for the hero numbers. */
+    .cmp-standing {
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+        padding: 14px 16px; border-radius: 12px;
+        background: rgba(255,255,255,0.03); border: 1px solid var(--border-1);
+    }
+    .cmp-rank { font-size: 30px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; color: #fff; }
+    .cmp-rank.is-first { color: #f5cd54; text-shadow: 0 0 14px rgba(245,205,84,0.45); }
+    .cmp-rank small { font-size: 14px; font-weight: 600; color: var(--fg-3); margin-left: 5px; }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
@@ -862,3 +876,18 @@ select[data-controller~="tom-select"], select[data-scorer-picker-target="select"
    needs to clear .wtnav (50), the fixed action bars (30/60) and .modal-backdrop (200) — a
    picker inside a modal must still drop over it. */
 body > .ts-dropdown { z-index: 300; }
+
+/* --- item 04: competition switcher --- */
+/* The switcher is a real <select> in a real <form>: it is the no-JS path, not just a
+   tom-select seed. The global `select[data-controller~="tom-select"] { opacity: 0 }`
+   FOUC guard above would leave that path invisible, so re-assert visibility here and
+   re-hide it only where scripting really is enabled. Written in this direction on
+   purpose: a browser that does not know the `scripting` media feature flashes the
+   native select for a moment, which is far better than an invisible control. */
+.soutez-switcher select[data-controller~="tom-select"] { opacity: 1; }
+@media (scripting: enabled) {
+    .soutez-switcher select[data-controller~="tom-select"] { opacity: 0; }
+}
+/* `.field` lays the control out as label → select → (noscript) submit; the tom-select
+   wrapper replaces the select in that column and must fill it. */
+.soutez-switcher .ts-wrapper { width: 100%; }
