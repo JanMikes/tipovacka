@@ -15,6 +15,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | DONE | `9e81f31` |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
+| B8 | tom-select jumps on focus — search input wraps to a second line | TODO | — |
 
 ---
 
@@ -563,3 +564,72 @@ and their absence once locked.
   per-label exception.
 - **`MatchRow` was not added to `/_design`** — it needs real `Team`/`TeamView` objects, and the
   styleguide has no fixture plumbing; it stays covered by the three real surfaces.
+
+---
+
+## B8 — tom-select „jumps" on focus (all instances)
+
+**Report (product owner, 2026-07-29).** *„When opening (focusing) the tomselect, it 'jumps' because
+the cursor (focus) is on newline wrapped. Applies for all tomselect instances — fix."*
+
+Screenshots: `.docs/ui-nav/screenshots/bug-b8-tomselect-rest.png` (at rest — one line, control ~76 px
+tall) and `bug-b8-tomselect-focused.png` (focused — the caret sits on a **second line** below
+„Lipina 26/27" and the control has grown taller, shoving the page down).
+
+### The defect
+
+In single-select mode the `.ts-control` holds two children: the selected `.item` and tom-select's
+search `<input>`. On focus the input becomes visible and **wraps onto its own line** instead of
+overlaying the item, so the control's height changes and everything below it shifts. The user sees
+the whole page jump at the moment they click.
+
+This is **not** specific to the competition switcher — it is the shared control, so every picker in
+the app has it: `tom_select`, `team_picker`, `team_filter`, `scorer_picker`, `score_entry`.
+
+### Prime suspect — verify before fixing
+
+`assets/styles/app.css:3` imports `../vendor/tom-select/dist/css/tom-select.min.css`. A previous
+agent (item 04) already established that **this stylesheet does not carry the rules our skin assumes**
+— it found `app.css`'s `.ts-wrapper.single .ts-control::after` caret rules are inert for *every*
+picker in the app, because the imported build never generates that pseudo-element. The single-select
+input-positioning rules are very likely missing for the same reason.
+
+So: **work out which tom-select stylesheet is actually imported and what it does and does not
+provide.** The two candidate fixes are (a) import the complete stylesheet instead of the partial one
+and reconcile the dark skin on top, or (b) keep the current import and add the missing single-select
+layout rules to our own skin. **(b) is lower-risk** — swapping the vendor stylesheet would restyle
+five pickers at once — but check the size of the gap before choosing; if a lot is missing, (a) may be
+the honest answer. Record the reasoning either way.
+
+The mechanical fix in single mode is that the search input must **overlay** the selected item rather
+than participate in flex flow (the item hides or is covered while typing), and `.ts-control` must not
+wrap. Do not fix it by hard-coding a height — the control holds one line of text at a font size the
+design tokens own, and a fixed height would break the multi-select pickers (`team_filter`,
+`scorer_picker`) which legitimately grow as chips are added.
+
+### Also fold in: the inert caret
+
+Since this item is already in that stylesheet, settle the caret finding item 04 deferred: today only
+`.soutez-switcher` has a dropdown caret, because the generic rules never apply. Give **all** pickers
+a consistent caret, or remove the dead rules — do not leave a third state.
+
+### Requirements
+
+1. Focusing any tom-select does **not** change the control's height and does **not** move anything on
+   the page. Verify by measuring the control's and the page's geometry before and after focus, not by
+   eye.
+2. Multi-select pickers still grow correctly as chips are added and removed.
+3. Typing filters as it does today; the placeholder, the „no results" text and the create option all
+   still behave.
+4. All five pickers verified: the competition switcher (`/nastenka`), the member picker
+   (`/souteze/{id}/spravovat-tipy`), the team picker (match edit), the team filter (`…/zapasy-vyber`
+   and the create wizard) and the scorer picker (match detail).
+5. B3 must not regress — dropdowns are rendered into `<body>` via `dropdownParent: 'body'` and must
+   still escape their card, and the dark skin must still win over vendor CSS on focus
+   (`.ts-wrapper.single.input-active .ts-control` out-specifies our rule; see the B3 block).
+
+### Definition of done
+
+Per `PLAN.md`, plus a real browser at desktop and narrow widths. CSS discipline — new rules at the END
+of the tom-select section under `/* --- B8: tom-select focus layout --- */`, never reorder existing
+rules.
