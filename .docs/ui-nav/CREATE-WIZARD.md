@@ -60,6 +60,42 @@ the Maxi extras map onto existing `#[AsRule]` rules / `CompetitionRuleConfigurat
 new domain concepts (fantasy and „dohrávat turnaj" in particular look new). Inventory
 `src/Rule/` first and report the gap before implementing.
 
+### Product-owner decisions (2026-07-29)
+
+Answers to the recon below. **These are settled — implement them as written.**
+
+1. **„Budete hrát také fantasy?" — DEFERRED.** Product owner: *„Fantasy → later, deferred."*
+   Do **not** add the radio group, do **not** add a flag, do **not** add a disabled
+   „připravujeme" tile for it. It leaves the wizard entirely in round 1 and comes back as its own
+   domain item once the feature is designed. Recorded below under „Deferred".
+
+2. **„Dohrávat turnaj?" IS the playoff toggle.** Product owner: *„'Dohrávat turnaj?' is the playoff
+   and should be mentioned in the text."*
+   So there is **no new concept and no second control**. W2 already moved the existing „Zahrnout
+   playoff zápasy" checkbox onto step 2; that single control is the answer to this question. What
+   W1 must do is **reword it so a reader recognises it as „dohrávat turnaj"** — the label and/or
+   help text should say so in as many words. Do not add a duplicate radio group to the rules list;
+   two controls writing one `includePlayoff` flag is exactly the bug this decision prevents.
+
+   Mind the visibility conditions W2 deliberately preserved: the checkbox only shows for a private
+   competition with a source chosen and match scope `all`, because `CompetitionMatchProvider` only
+   honours `includePlayoff` in mode `all` (`subset` keeps what was ticked, `teams` always includes
+   playoff) and `CreateCompetitionHandler` forces it `true` otherwise. Rewording must not widen
+   that — showing the toggle in the other modes would promise a choice the domain does not offer.
+
+3. **„Chcete tipovat také střelce utkání?"** — unchanged from the recon: it maps cleanly onto
+   `scorer_hit` enablement, so implement it as a rule toggle, not as new schema.
+
+Still open, tracked in the board as BLOCKED until answered: the **PP vs PEN** split and the
+**„Tipování části zápasu"** rule set. Do not implement Maxi's overtime or per-period sections until
+those land; everything else in W1 (the four Standardní renames, the preset tiles, „Vlastní
+(připravujeme)", the střelci toggle, the playoff rewording) can proceed now.
+
+### Deferred out of W1
+
+- **Fantasy** — a whole feature, not a toggle. Zero occurrences in the codebase today. Needs a
+  product definition before any schema or UI work.
+
 ### Rule inventory (recon)
 
 Recon only — **nothing below was changed**; the renames wait on the product owner.
