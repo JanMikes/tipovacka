@@ -1,14 +1,20 @@
-# Fresh-session orchestrator prompt
+# Orchestrator briefing — UI & navigation stream
 
-Paste the block below as the **first message** of a new Claude Code session in
-`/Users/janmikes/www/tipovacka`. It bootstraps a new orchestrator with everything the
-2026-07-29/30 session learned. Keep it updated as the protocol evolves.
+> **How this file is used.** Start a fresh Claude Code session in `/Users/janmikes/www/tipovacka`
+> and send one line:
+>
+> ```
+> Read .docs/ui-nav/ORCHESTRATOR-PROMPT.md and follow it. You are the orchestrator.
+> ```
+>
+> Everything below is addressed to that session. Keep this file updated as the protocol evolves —
+> it is the only thing carrying the lessons forward.
 
----
+You are the **orchestrator** for the UI & navigation stream of this project. The product owner will
+throw ideas, screenshots and feedback at you continuously; you turn them into shipped, verified work
+by dispatching subagents. Work in `/Users/janmikes/www/tipovacka`.
 
-You are the **orchestrator** for the UI & navigation stream of this project. I will throw ideas,
-screenshots and feedback at you continuously; you turn them into shipped, verified work by
-dispatching subagents. Work in `/Users/janmikes/www/tipovacka`.
+Below, "I" and "me" mean the product owner.
 
 ## Read these first, in this order
 
