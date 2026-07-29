@@ -10,7 +10,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 |---|-------|--------|--------|
 | B1 | Unverified e-mail account can still use the app | DONE | `7b3f010` |
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | TODO | — |
-| B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `PENDING` |
+| B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | TODO | — |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
 | B6 | Boost can be bought for a competition that is already over | TODO | — |
