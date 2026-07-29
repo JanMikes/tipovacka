@@ -22,8 +22,9 @@ final class CompetitionLeaderboard
     public Competition $competition;
 
     /**
-     * Time window (`celkem` / `7dni`); a string so it round-trips cleanly through
-     * the component state and the `?obdobi` query param the tabs link to.
+     * Period filter (`celkem` / `kolo` / `7dni`); a string so it round-trips
+     * cleanly through the component state and the `?obdobi` query param the tabs
+     * link to.
      */
     #[LiveProp]
     public string $filter = LeaderboardTimeFilter::AllTime->value;

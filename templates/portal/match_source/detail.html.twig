@@ -108,6 +108,7 @@
                                     <div class="flex flex-col text-xs text-white/50 sm:w-24">
                                         <span class="font-medium text-white/70">{{ m.kickoffAt|date('d. m.') }}</span>
                                         <span>{{ m.kickoffAt|date('H:i') }}</span>
+                                        {% if m.round %}<span class="truncate text-[10px] font-semibold uppercase tracking-wider text-white/40">{{ m.round }}</span>{% endif %}
                                     </div>
                                     <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
                                         <span class="truncate text-right font-medium text-white">{{ m.homeTeam.name }}</span>

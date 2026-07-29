@@ -15,6 +15,7 @@ use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
 use App\Rule\ExactScoreRule;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\CompetitionRoundResolver;
 use App\Service\PragueCalendar;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -33,6 +34,7 @@ final readonly class GetCompetitionLeaderboardQuery
         private LeaderboardTieResolutionRepository $resolutionRepository,
         private LeaderboardSnapshotRepository $snapshotRepository,
         private CompetitionMatchProvider $matchProvider,
+        private CompetitionRoundResolver $roundResolver,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
     ) {
@@ -44,6 +46,14 @@ final readonly class GetCompetitionLeaderboardQuery
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
+
+        // „Poslední kolo" slices by round label, not by time. Resolved ONCE here
+        // so every aggregate below sees the same round. A competition with no
+        // round-labelled match yields null — the board then simply stays
+        // unscoped (and carries no $roundLabel, so the UI can hide the tab).
+        $round = LeaderboardTimeFilter::LastRound === $query->filter
+            ? $this->roundResolver->currentRound($competition)
+            : null;
 
         $aggregatesQb = $this->entityManager->createQueryBuilder()
             ->select(
@@ -60,7 +70,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->groupBy('g.user')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($aggregatesQb, 'm', $competition);
-        $this->applyTimeWindow($aggregatesQb, 'm', $query->filter, $now);
+        $this->applyPeriodFilter($aggregatesQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
         $aggregates = $aggregatesQb->getQuery()->getArrayResult();
@@ -91,7 +101,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->setParameter('competitionId', $competition->id)
             ->setParameter('exactId', ExactScoreRule::IDENTIFIER);
         $this->matchProvider->applyCompetitionMatchFilter($exactQb, 'm', $competition);
-        $this->applyTimeWindow($exactQb, 'm', $query->filter, $now);
+        $this->applyPeriodFilter($exactQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, exact: int}> $exactAggregates */
         $exactAggregates = $exactQb->getQuery()->getArrayResult();
@@ -114,7 +124,7 @@ final readonly class GetCompetitionLeaderboardQuery
             ->addOrderBy('m.kickoffAt', 'DESC')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($streakQb, 'm', $competition);
-        $this->applyTimeWindow($streakQb, 'm', $query->filter, $now);
+        $this->applyPeriodFilter($streakQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, points: int}> $streakRows */
         $streakRows = $streakQb->getQuery()->getArrayResult();
@@ -245,6 +255,7 @@ final readonly class GetCompetitionLeaderboardQuery
             rows: $finalRows,
             matchSourceCompleted: $competition->matchSource->isCompleted,
             showDelta: $showDelta,
+            roundLabel: $round,
         );
     }
 
@@ -253,13 +264,30 @@ final readonly class GetCompetitionLeaderboardQuery
      * rolling 7-day window ending now. The boundary is an instant (both sides
      * UTC-stored), so it is derived directly from the injected clock — the Prague
      * framing only matters for day-labelled snapshots, not this rolling sum.
-     * All-time applies no window.
+     *
+     * „Poslední kolo": keep only evaluations on matches carrying `$round`
+     * (pre-resolved by the caller). A null `$round` means the competition has no
+     * round to scope to, so nothing is applied.
+     *
+     * All-time applies neither.
      */
-    private function applyTimeWindow(QueryBuilder $qb, string $matchAlias, LeaderboardTimeFilter $filter, \DateTimeImmutable $now): void
-    {
+    private function applyPeriodFilter(
+        QueryBuilder $qb,
+        string $matchAlias,
+        LeaderboardTimeFilter $filter,
+        \DateTimeImmutable $now,
+        ?string $round,
+    ): void {
         if (LeaderboardTimeFilter::Last7Days === $filter) {
             $qb->andWhere(sprintf('%s.kickoffAt >= :lbWindowStart', $matchAlias))
                 ->setParameter('lbWindowStart', $now->modify(self::WINDOW_LAST_7_DAYS));
+
+            return;
+        }
+
+        if (LeaderboardTimeFilter::LastRound === $filter && null !== $round) {
+            $qb->andWhere(sprintf('%s.round = :lbRound', $matchAlias))
+                ->setParameter('lbRound', $round);
         }
     }
 }

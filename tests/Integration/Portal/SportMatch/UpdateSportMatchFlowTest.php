@@ -35,5 +35,36 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
         self::assertInstanceOf(SportMatch::class, $match);
         self::assertSame('NEW HOME', $match->homeTeam->name);
+        // „Kolo" is prefilled from the entity, so an untouched edit round-trips it.
+        self::assertSame('Čtvrtfinále', $match->round);
+    }
+
+    public function testRoundCanBeChangedAndCleared(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
+        $client->submitForm('Uložit změny', ['sport_match_form[round]' => 'Osmifinále']);
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame('Osmifinále', $match->round);
+
+        // Blanking the field clears the round — a match without one is normal.
+        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
+        $client->submitForm('Uložit změny', ['sport_match_form[round]' => '']);
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertNull($match->round);
     }
 }

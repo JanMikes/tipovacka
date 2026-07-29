@@ -50,6 +50,43 @@ final class CreateSportMatchFlowTest extends WebTestCase
             '2025-09-15 16:00',
             $match->kickoffAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'),
         );
+        self::assertNull($match->round, '„Kolo" left empty stays null.');
+    }
+
+    public function testOwnerCanCreateMatchWithRound(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/zapasy/novy');
+        self::assertResponseIsSuccessful();
+
+        $client->submitForm('Vytvořit zápas', [
+            'sport_match_form[homeTeam]' => 'Tým C',
+            'sport_match_form[awayTeam]' => 'Tým D',
+            'sport_match_form[kickoffAt]' => '2025-09-16 18:00',
+            'sport_match_form[venue]' => '',
+            'sport_match_form[round]' => '3. kolo',
+        ]);
+
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $match = $em->createQueryBuilder()
+            ->select('m')
+            ->from(SportMatch::class, 'm')
+            ->join('m.homeTeam', 't')
+            ->where('t.name = :h')
+            ->setParameter('h', 'Tým C')
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame('3. kolo', $match->round);
     }
 
     public function testNonOwnerCannotCreateMatch(): void

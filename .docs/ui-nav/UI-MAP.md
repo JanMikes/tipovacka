@@ -108,7 +108,7 @@ POST-only actions (no template): `…/pripojit-se` (join global), `…/opustit`,
 ### Portal — leaderboard (soutěž-scoped)
 | Route | Path | Template |
 |---|---|---|
-| `portal_competition_leaderboard` | `/portal/souteze/{competitionId}/zebricek` | `portal/leaderboard/index.html.twig` |
+| `portal_competition_leaderboard` | `/portal/souteze/{competitionId}/zebricek` | `portal/leaderboard/index.html.twig` — period tabs render from `LeaderboardTimeFilter::cases()` (`?obdobi=celkem` \| `kolo` \| `7dni`; `kolo` = „Poslední kolo", scoped by `SportMatch.round` via `CompetitionRoundResolver`, item 02) |
 | `portal_competition_leaderboard_matrix` | `…/zebricek/matice` | `portal/leaderboard/matrix.html.twig` |
 | `portal_competition_leaderboard_member` | `…/zebricek/clen/{userId}` | `portal/leaderboard/member.html.twig` |
 | `portal_competition_leaderboard_resolve_ties` | `…/zebricek/shoda` | `portal/leaderboard/resolve_ties.html.twig` |

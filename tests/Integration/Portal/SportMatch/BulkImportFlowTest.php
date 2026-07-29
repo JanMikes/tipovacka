@@ -67,8 +67,11 @@ final class BulkImportFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
+        // Second row deliberately leaves „Kolo" empty — the column is optional per
+        // ROW, not just per file, so a mixed sheet must import cleanly.
         $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné),Kolo (nepovinné)\n"
-            ."RoundHome,RoundAway,2025-12-03 18:00,Arena 9,Čtvrtfinále\n";
+            ."RoundHome,RoundAway,2025-12-03 18:00,Arena 9,Čtvrtfinále\n"
+            ."NoRoundHome,NoRoundAway,2025-12-04 18:00,Arena 10,\n";
 
         $path = tempnam(sys_get_temp_dir(), 'smi_').'.csv';
         file_put_contents($path, $csv);
@@ -85,21 +88,13 @@ final class BulkImportFlowTest extends WebTestCase
         // Preview surfaces the parsed round.
         self::assertSelectorTextContains('body', 'Čtvrtfinále');
 
-        $client->submitForm('Potvrdit import (1 zápasů)');
+        $client->submitForm('Potvrdit import (2 zápasů)');
         self::assertResponseRedirects();
 
         $em->clear();
-        $match = $em->createQueryBuilder()
-            ->select('m')
-            ->from(SportMatch::class, 'm')
-            ->join('m.homeTeam', 't')
-            ->where('t.name = :h')
-            ->setParameter('h', 'RoundHome')
-            ->getQuery()
-            ->getOneOrNullResult();
 
-        self::assertInstanceOf(SportMatch::class, $match);
-        self::assertSame('Čtvrtfinále', $match->round);
+        self::assertSame('Čtvrtfinále', $this->importedMatch($em, 'RoundHome')->round);
+        self::assertNull($this->importedMatch($em, 'NoRoundHome')->round, 'An empty „Kolo" cell stays null.');
     }
 
     public function testPreviewShowsErrorsForInvalidRow(): void
@@ -128,5 +123,21 @@ final class BulkImportFlowTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Chyby');
+    }
+
+    private function importedMatch(EntityManagerInterface $em, string $homeTeamName): SportMatch
+    {
+        $match = $em->createQueryBuilder()
+            ->select('m')
+            ->from(SportMatch::class, 'm')
+            ->join('m.homeTeam', 't')
+            ->where('t.name = :h')
+            ->setParameter('h', $homeTeamName)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        self::assertInstanceOf(SportMatch::class, $match);
+
+        return $match;
     }
 }
