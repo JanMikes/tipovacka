@@ -180,3 +180,9 @@ here). Update the status board row to DONE + sha. Commit `UI: Nástěnka hráče
    match id in the controller — no per-row lookup).
 7. **A viewer with no row on the board yet gets no hero card** rather than a „0." placeholder; the
    rest of the page renders normally.
+
+## Product-owner confirmation (2026-07-30)
+
+- **„Přátelé" toggle: confirmed dropped.** Product owner: *„Přátelé — ignore it."* The žebříček
+  sidebar renders only „Všichni · N". There is no friends concept in the domain and none is to be
+  invented; this is no longer an open assumption.
