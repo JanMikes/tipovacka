@@ -8,9 +8,11 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\Membership;
 use App\Tests\Support\WebFlowHelpers;
+use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -254,10 +256,10 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $profile = $client->getProfile();
-        self::assertNotFalse($profile);
+        self::assertInstanceOf(Profile::class, $profile);
 
         $collector = $profile->getCollector('db');
-        \assert($collector instanceof \Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector);
+        self::assertInstanceOf(DoctrineDataCollector::class, $collector);
 
         return $collector->getQueryCount();
     }
