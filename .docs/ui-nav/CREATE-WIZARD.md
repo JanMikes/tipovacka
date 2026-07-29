@@ -8,11 +8,11 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
 | W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | BLOCKED | — (recon done, awaits product owner) |
-| W2 | Playoff option moves from step 1 to step 2 | DONE | `_pending_` |
-| W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `_pending_` |
-| W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `_pending_` |
+| W2 | Playoff option moves from step 1 to step 2 | DONE | `f69937d` |
+| W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `f69937d` |
+| W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `f69937d` |
 | W5 | No success flash after sign-up | DONE | `7b3f010` |
-| W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | DONE | `_pending_` (was already shipped — stale report, now pinned by tests) |
+| W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | DONE | `f69937d` (was already shipped — stale report, now pinned by tests) |
 
 ---
 
