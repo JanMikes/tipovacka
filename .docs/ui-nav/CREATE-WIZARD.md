@@ -11,7 +11,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | W2 | Playoff option moves from step 1 to step 2 | TODO | — |
 | W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | TODO | — |
 | W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | TODO | — |
-| W5 | No success flash after sign-up | DONE | — |
+| W5 | No success flash after sign-up | DONE | `7b3f010` |
 | W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | TODO | — |
 
 ---
