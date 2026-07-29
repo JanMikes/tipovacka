@@ -37,7 +37,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 05 | [„Žebříček" becomes a real, standalone, publicly viewable page](items/05-page-zebricek.md) | DONE | `843a80e` |
 | 06 | [„Nástěnka hráče" (rebuild of `/nastenka`)](items/06-page-nastenka.md) | DONE | `6561d1d` |
 | 10 | [Match detail (`/zapasy/{id}`): distribution, timeline, per-match ranking](items/10-page-match-detail.md) | DONE | `6bfd659` |
-| 11 | [Match rows: one card, boosts inside it](items/11-match-row-card.md) | DONE | `3c8a5c6` |
+| 11 | [Match rows: one card, boosts inside it](items/11-match-row-card.md) | DONE | `a8b7e8b` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
