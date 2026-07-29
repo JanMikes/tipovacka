@@ -49,11 +49,17 @@ exist too.
   logged-out nav without this link because the page did not exist — **add it now** (in
   `templates/components/Layout/Nav.html.twig`, both desktop and mobile lists) and update the tests
   that pin the exact link sets (`tests/Integration/Auth/NavigationTest.php`).
-- Existing deep links must keep working: `portal_competition_leaderboard`
-  (`/portal/souteze/{competitionId}/zebricek`) must still resolve — either by rendering the same page
-  or by redirecting to `/zebricek?soutez=…`. Its sub-pages (`/matice`, `/clen/{userId}`, `/shoda`)
-  are **out of scope** and must keep working untouched.
-- `portal_leaderboard` (`/portal/zebricek`) — the old redirector — should now point at the new page.
+- **Consolidate the leaderboard routes rather than preserving them.** There are no users yet and the
+  stream owes no backwards compatibility (see `PLAN.md` conventions), so:
+  - **Delete** `portal_leaderboard` (`/portal/zebricek`) — the old redirector. Do not alias it.
+  - **Delete** `portal_competition_leaderboard` (`/portal/souteze/{competitionId}/zebricek`) and let
+    `/zebricek?soutez={uuid}` be the single leaderboard URL. No redirect.
+  - Move its three sub-pages under the new page so the whole feature lives in one place —
+    `/zebricek/matice`, `/zebricek/clen/{userId}`, `/zebricek/shoda`, each carrying `?soutez={uuid}`
+    (or an equivalent scheme you judge cleaner). They must keep **working**; they need not keep their
+    URLs.
+  - Fix every `path()` call, test and doc that referenced the deleted names, in the same commit.
+    `grep -rn` for each route name before deleting it — nothing inside the app may 404.
 
 ## Content by state
 

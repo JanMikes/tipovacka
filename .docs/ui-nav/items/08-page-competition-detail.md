@@ -33,15 +33,18 @@ members list (l. 82-150), the read-only rules card (l. 332) and the invitation/P
 - Rychlé pozvánky (PIN + shareable link, with regenerate/revoke)
 - Opustit soutěž · Smazat soutěž
 
-**Do not delete any route, command or voter.** Every existing action keeps working; this is a
-relocation of entry points, not a removal of capability. `portal_competition_rules`,
-`portal_competition_edit`, `portal_competition_match_selection`, `portal_competition_premium`,
-`portal_competition_add_anonymous_member`, `portal_competition_promote_anonymous_member`, the PIN/link
-POSTs, leave and delete all stay.
+**No capability may be lost — but routes are free to move.** There are no users yet and the stream
+owes no backwards compatibility (see `PLAN.md` conventions), so you may rename, merge or delete
+routes to get a clean settings area; you may **not** drop a command, a voter or an ability the
+organizer has today.
 
-Where „Nastavení" lives is your call — the conservative reading is a new page at
-`/portal/souteze/{id}/nastaveni` that sections the above, linking out to the existing dedicated pages
-rather than absorbing their forms. Record the choice in `## Assumptions made`.
+That means: if it reads better as one sectioned `/portal/souteze/{id}/nastaveni` page that absorbs
+the smaller forms (rules, member management, PIN/link) and links out only to the genuinely large ones
+(match selection, premium), do that and **delete** the routes you absorbed. Do not leave a
+half-migrated settings area with some things inline and some behind links for no reason.
+
+Whatever you delete: `grep -rn` the route name first and fix every `path()` call, test and doc in the
+same commit. Nothing inside the app may 404. Record the resulting structure in `## Assumptions made`.
 
 ## The new top bar
 

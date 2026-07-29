@@ -131,6 +131,18 @@ A fresh session with zero context can continue by:
 
 ## Conventions specific to this stream
 
+- **No backwards compatibility is owed. There are no users yet.** (Product owner, 2026-07-29:
+  *„don't be afraid to make huge changes or in URL — no users yet."*) So:
+  - **Rename, merge or delete routes freely** when it produces a better information architecture.
+    Do **not** add redirects, route aliases or „legacy" shims to preserve an old URL — delete the old
+    route instead. The `/turnaje` legacy redirect is itself a deletion candidate.
+  - Prefer the clean end-state over an incremental one. Do not leave a worse structure standing
+    because changing it would be a bigger diff.
+  - The constraint that replaces it: **nothing may 404 or 500 from inside the app.** If you delete a
+    route, fix every `path()` call, every test and every doc that referenced it, in the same commit.
+    `grep` for the route name before you delete it.
+  - Database migrations are still generated, never hand-written, and must still run cleanly — „no
+    users" frees the URL space, not the schema discipline.
 - **Language: Czech in the UI, English in code/comments.** Every user-facing string is Czech.
   Never the word „sázka". Vocabulary is fixed in DOMAIN.md — soutěž, zdroj zápasů, tip, žebříček.
 - **Reuse before redesign.** The component vocabulary in `templates/components/` is rich

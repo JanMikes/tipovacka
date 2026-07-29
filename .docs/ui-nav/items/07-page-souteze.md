@@ -75,6 +75,14 @@ additive.
 filters on top. Fix the N+1 as part of this item and add a sane limit/pagination — do not ship the
 existing query behind a filter bar unchanged.
 
+## Route freedom
+
+There are no users yet (see `PLAN.md` conventions): rename or delete routes wherever it produces a
+better structure, with no redirects. In particular `public_competitions_list_legacy` / the `/turnaje`
+legacy redirect is a deletion candidate, and the `public_competitions_list` route name is a poor fit
+now that the page is not merely public — rename it if a better name exists. Fix every `path()` call,
+test and doc in the same commit; nothing inside the app may 404.
+
 ## Nav active state
 
 Item 01 noted that no `portal_competition_*` route lights up „Soutěže", because matching is
