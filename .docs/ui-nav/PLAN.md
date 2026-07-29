@@ -28,7 +28,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | # | Item | Status | Commit |
 |---|------|--------|--------|
 | 01 | [Navigation slim-down + noindex on de-linked marketing pages](items/01-nav-and-noindex.md) | DONE | `586d48f` |
-| 02 | [„Kolo" (round) on a match: optional input, import support, grouping](items/02-match-round.md) | DONE | `PENDING` |
+| 02 | [„Kolo" (round) on a match: optional input, import support, grouping](items/02-match-round.md) | DONE | `b2c83dd` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
