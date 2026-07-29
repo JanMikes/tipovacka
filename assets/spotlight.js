@@ -6,6 +6,10 @@
  * styles/app.css uses them to paint a soft inner glow (:hover-gated) and a lit
  * border segment that follow the mouse.
  *
+ * ENABLED is the master switch: while false the whole effect is off — this
+ * listener never runs and, because the CSS layers are gated behind the
+ * `.spotlight-on` class added below, no glow or lit border renders at all.
+ *
  * PROXIMITY mode (Hyperplexed-style): borders of cards NEAR the cursor light up
  * before hover, scaled by distance via `--spot-o` (0..1). Flip the constant to
  * false to fall back to the hover-only behavior — no other change needed.
@@ -13,10 +17,13 @@
  * Keep SELECTOR in sync with the CSS selector lists.
  */
 const SELECTOR = '.card, .card-glass, .tip-card, .tip-row, .stat, .option-card, .variant-card, .spotlight';
+const ENABLED = false;
 const PROXIMITY = true;
 const PROXIMITY_RADIUS = 300; // px from a card's edge where its border starts to light up
 
-if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+if (ENABLED && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    document.documentElement.classList.add('spotlight-on');
+
     let frame = 0;
     let pointer = null;
     const lit = new Set();

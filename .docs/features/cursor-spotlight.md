@@ -1,5 +1,9 @@
 # Cursor Spotlight
 
+> **Currently OFF.** `ENABLED = false` in `assets/spotlight.js` — cards no longer react
+> to the mouse at all (no glow, no lit/pulsing border). Flip that one constant back to
+> `true` to restore everything described below; nothing else needs changing.
+
 Cards react to the mouse: a soft accent-blue glow inside the hovered card follows the
 cursor, and a 1px segment of the card's border lights up under it. With proximity mode
 on (the default), borders of cards *near* the cursor glow before hover, scaled by
@@ -35,10 +39,16 @@ primitive.
 
 In `assets/spotlight.js`:
 
-| Constant           | Default | Notes                                                          |
-|--------------------|---------|----------------------------------------------------------------|
-| `PROXIMITY`        | `true`  | `false` → hover-only (glow + ring only on the hovered card).   |
-| `PROXIMITY_RADIUS` | `240`   | px from a card's edge where its border starts to light up.     |
+| Constant           | Current | Notes                                                                                                                                  |
+|--------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `ENABLED`          | `false` | Master switch. `true` → JS adds `.spotlight-on` to `<html>`, which every CSS layer below is gated on. `false` → effect fully off.       |
+| `PROXIMITY`        | `true`  | `false` → hover-only (glow + ring only on the hovered card).                                                                            |
+| `PROXIMITY_RADIUS` | `300`   | px from a card's edge where its border starts to light up.                                                                              |
+
+The CSS is inert on its own: without `.spotlight-on` on `<html>` neither pseudo-element
+layer paints, so disabling in JS leaves no half-effect (a static centered glow on hover)
+behind. `position: relative` on the card primitives stays **ungated** — cards must remain
+the containing block for their absolutely-positioned children either way.
 
 ## Gotchas
 
