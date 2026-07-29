@@ -103,6 +103,24 @@ This is the part that breaks if you are not careful.
   `app.css`) because the switcher usually sits inside a `.card-glass`, which clips
   (`overflow: hidden`) and opens a `backdrop-filter` stacking context.
 
+## Shared single-select behaviour (B8) — no longer switcher-specific
+
+Two things used to be scoped to `.soutez-switcher` and are now the contract for **every**
+single-select tom-select in the app (see the `/* --- B8: tom-select focus layout --- */`
+block at the end of `app.css`):
+
+- **The dropdown caret.** The app imports tom-select's *core* stylesheet, which never
+  generates `.ts-wrapper.single .ts-control::after`; item 04 generated it for the switcher
+  only. B8 generates it for every single-select control and reserves its gutter through
+  tom-select's own `--ts-pr-caret`. Multi-select pickers (team filter, scorer picker)
+  deliberately have none — their control grows with the chips.
+- **Focus does not resize the control.** In single mode the search `<input>` is taken out of
+  the flex flow and overlays the control (`position: absolute; inset: 0`), so focusing can
+  never wrap it onto a second line and push the page down. The selected `.item` stays
+  readable underneath until the user actually types, then it goes `visibility: hidden` —
+  hidden, never `display: none`, so it keeps reserving its height. Do not give the control a
+  fixed height „to be safe": it must keep sizing itself from its content.
+
 ## Option metadata (and the tom-select `dataAttr` trap)
 
 Each `<option>` carries `data-sub` (the zdroj-zápasů name) and `data-meta` (the date range).

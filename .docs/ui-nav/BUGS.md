@@ -15,7 +15,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | DONE | `9e81f31` |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
-| B8 | tom-select jumps on focus — search input wraps to a second line | TODO | — |
+| B8 | tom-select jumps on focus — search input wraps to a second line | DONE | — |
 
 ---
 
@@ -633,3 +633,69 @@ a consistent caret, or remove the dead rules — do not leave a third state.
 Per `PLAN.md`, plus a real browser at desktop and narrow widths. CSS discipline — new rules at the END
 of the tom-select section under `/* --- B8: tom-select focus layout --- */`, never reorder existing
 rules.
+
+### What the imported vendor stylesheet actually provides (the diagnosis)
+
+`assets/styles/app.css:3` imports **`tom-select/dist/css/tom-select.min.css`** — tom-select 2.6.0's
+*core* build. Diffing it against `tom-select.default.min.css` (both ship in
+`assets/vendor/tom-select/dist/css/`), the default build adds exactly one thing the skin cared
+about, and it is **not** the layout:
+
+| Assumed by our skin | In core? | In `.default`? |
+|---|---|---|
+| `.ts-wrapper.single .ts-control::after` caret box (`content`) | no | **yes** |
+| `--ts-pr-caret: 2rem` (the gutter vendor's `padding-right: max(…) !important` reserves) | no (stays `0px`) | **yes** |
+| anything that keeps the single-select search input out of the flex flow | **no** | **no** |
+
+So item 04's finding was right and incomplete: the caret really is missing, but the reported jump is
+*not* a missing-stylesheet problem — **neither** vendor build positions the single-select input. Core
+`.ts-control` is `display: flex; flex-wrap: wrap`, and `.ts-control > input` carries
+`flex: 1 1 auto; min-width: 7rem` on top of an `<input>`'s ~180 px intrinsic width. At rest tom-select
+parks the input off-screen (`.input-hidden { left: -10000px }`); on focus that class goes away, the
+input becomes a real flex child next to the selected `.item`, and in a 320 px control the pair no
+longer fits on one line. Measured on `/nastenka`: control `44 px → 57.5 px`, 9 page nodes displaced.
+
+**Fix (b) was chosen** — keep the core import, add the three missing declarations to our own skin.
+Fix (a) was rejected on evidence, not on risk appetite alone: swapping in `tom-select.default.min.css`
+would repaint all five pickers with a light Bootstrap-era theme (white gradients, blue chips, grey
+borders) that the dark skin would then have to un-style declaration by declaration — **and it would
+not fix the bug**, because the default build has no single-select input layout either.
+
+### Verification (measured, not eyeballed)
+
+Headless Chrome, before/after each control's own `getBoundingClientRect()` plus the rect of every
+other element on the page (`body *`, excluding the `.ts-wrapper`/`.ts-dropdown` subtrees) at rest,
+on focus and while typing. Pass = control `Δheight == 0` **and** zero displaced nodes.
+
+| Picker | Page | 1440 px | 390 px |
+|---|---|---|---|
+| competition switcher | `/nastenka`, `/_design` | Δh 0, moved 0 | Δh 0, moved 0 |
+| member picker | `…/spravovat-tipy` | Δh 0, moved 0 | Δh 0, moved 0 |
+| team picker (×2) | `/zapasy/{id}/upravit` | Δh 0, moved 0 | Δh 0, moved 0 |
+| team filter (multi) | `…/zapasy-vyber` + create wizard | Δh 0, moved 0 | — |
+| scorer picker (multi) | match detail | Δh 0, moved 0 | — |
+| score-entry player picker | `/zapasy/{id}/skore` | Δh 0, moved 0 | — |
+
+Same harness on the unpatched CSS reproduces the bug (`Δh +13.5 px`, 21 displaced nodes on `/_design`),
+so the measurement is sensitive to what it claims to measure. Also verified: multi pickers still grow
+and shrink with chips (44 → 82 → 44 px over five chips; team filter 56 → 110 → 56); a synthetic
+two-line `.item` keeps the control at its own taller height in all three states (no fixed height
+anywhere); B3 intact (dropdown in `<body>`, `z-index: 300`, escapes the card, control background
+stays `rgb(12,19,33)` on focus); the no-JS path still renders a visible native `<select>` plus its
+„Zobrazit soutěž" submit (JS disabled in the browser, not simulated).
+
+### Assumptions made
+
+- **„All pickers get a caret" means all *single*-select pickers.** The multi-select ones (team
+  filter, scorer picker) grow with their chips, so a caret pinned to `top: 50%` would float in the
+  middle of a stack of chips pointing at nothing — tom-select's own default theme scopes the caret to
+  `.single` for the same reason. The dead switcher-scoped rule is deleted; there is no third state.
+- **The selected item stays visible on focus and hides only once the user types.** The brief allowed
+  either („the item hides or is covered while typing"); keeping the label until there is something to
+  read instead of it is the smaller behavioural change. The test is `:placeholder-shown` on the search
+  input — tom-select sets `placeholder=""` exactly when a single-select has an item and the input is
+  live, so it is a reliable „nothing typed yet" signal. A browser that refuses to match an empty
+  placeholder degrades to hiding the item one step earlier, on focus; nothing breaks either way.
+- **Not fixed here (out of scope):** the team picker's create row renders tom-select's stock English
+  „Add <b>…</b>…" because `team_picker_controller.js` overrides `no_results` but not `option_create`
+  — a Czech-copy bug that predates B8 and belongs to the picker, not to its layout.

@@ -1034,11 +1034,61 @@ body > .ts-dropdown { z-index: 300; }
 /* `.field` lays the control out as label → select → (noscript) submit; the tom-select
    wrapper replaces the select in that column and must fill it. */
 .soutez-switcher .ts-wrapper { width: 100%; }
-/* Caret. The skin above already colors `.ts-wrapper.single .ts-control::after`, but the app
-   imports tom-select's CORE stylesheet (not `.default`), which never generates that
-   pseudo-element — so those rules are inert everywhere. The switcher reads as a dropdown in
-   the design, so generate the box here. Scoped to this control on purpose: giving every
-   tom-select in the app a caret is a separate, cross-cutting decision. */
-.soutez-switcher .ts-wrapper.single .ts-control::after {
+/* Caret: item 04 generated the pseudo-element here, scoped to the switcher, and left
+   „every picker or none" as an open question. B8 answered it — the box is now generated
+   for every single-select control at the end of this section, so nothing switcher-specific
+   is needed any more. */
+
+/* --- B8: tom-select focus layout --- */
+/* What the imported vendor stylesheet actually provides. `assets/styles/app.css:3` imports
+   tom-select's CORE build (`dist/css/tom-select.min.css`), never `.default`. Diffing the two
+   dist files, the core build is missing exactly three things this skin assumed:
+     1. `.ts-wrapper.single .ts-control::after` — the caret box (core has no `content`, so
+        the skin's colour/size rules for it were inert; item 04 found this and worked around
+        it for the switcher only);
+     2. `--ts-pr-caret: 2rem` on single controls — the gutter that vendor's
+        `padding-right: max(…) !important` reserves for that caret (core leaves it at 0px,
+        which is also why the skin's own `padding-right: 2.25rem` never survived);
+     3. nothing at all, in either build, takes the search <input> out of the control's flex
+        flow in single mode — that is the reported bug.
+   The bug itself: at rest tom-select parks the input off-screen (`.input-hidden`). On focus
+   that class goes away and the input becomes a normal flex child sitting next to the
+   selected `.item`, carrying vendor's `min-width: 7rem` and an <input>'s ~180 px intrinsic
+   width. In a 320 px control that no longer fits beside the item, `.ts-control`'s
+   `flex-wrap: wrap` breaks it onto a second line and the control grows ~13 px — the page
+   jumps under the cursor at the moment of the click.
+   Why fix it here instead of importing `tom-select.default.min.css`: the default build is a
+   light Bootstrap-era skin (white gradients, blue chips, grey borders) and it does NOT
+   contain the missing layout either, so swapping it in would restyle all five pickers and
+   still leave the actual defect. The gap is three declarations' worth — we own them. */
+
+/* Take the input out of the flow and overlay it on the control instead. `inset: 0` plus
+   `padding: inherit` line the typed text up with the item's text without hard-coding a
+   height: the control still sizes itself from its content, so the multi-select pickers
+   (team filter, scorer picker) keep growing chip by chip. Scoped away from `.input-hidden`
+   so tom-select's own at-rest parking (`left: -10000px`) stays untouched. */
+.ts-wrapper.single .ts-control { flex-wrap: nowrap; }
+.ts-wrapper.single:not(.input-hidden) .ts-control > input {
+    position: absolute; inset: 0; width: auto; min-width: 0;
+    margin: 0 !important; padding: inherit !important;
+}
+/* While the search box is empty the selection stays readable underneath it; the moment the
+   user types, hide the item so the two texts never overlap. tom-select sets `placeholder=""`
+   on the input exactly when a single-select has an item and the input is live, so
+   `:placeholder-shown` is a reliable „nothing typed yet" test here — and a browser that
+   refuses to match an empty placeholder merely hides the item one step earlier, on focus.
+   `visibility`, not `display`: the item must keep reserving its height, or hiding it would
+   shrink the control and re-introduce the jump. */
+.ts-wrapper.single:not(.input-hidden) .ts-control:has(> input:not(:placeholder-shown)) > .item {
+    visibility: hidden;
+}
+/* Caret for every single-select picker, settling the state item 04 left behind (only the
+   switcher had one). Multi-select pickers deliberately get none: their control grows with
+   the chips, so a caret pinned to the vertical middle would point at nothing — that is also
+   what tom-select's own default theme does. The gutter is reserved through vendor's
+   `--ts-pr-caret` custom property rather than a padding of ours, because vendor's
+   `padding-right: max(…) !important` outranks anything the skin writes. */
+.ts-wrapper.single .ts-control { --ts-pr-caret: 2rem; }
+.ts-wrapper.single .ts-control::after {
     content: " "; display: block; position: absolute; top: 50%; width: 0; height: 0;
 }
