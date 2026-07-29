@@ -16,6 +16,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
+| B9 | Team picker's create row shows English „Add …" | TODO | — |
 
 ---
 
@@ -699,3 +700,21 @@ stays `rgb(12,19,33)` on focus); the no-JS path still renders a visible native `
 - **Not fixed here (out of scope):** the team picker's create row renders tom-select's stock English
   „Add <b>…</b>…" because `team_picker_controller.js` overrides `no_results` but not `option_create`
   — a Czech-copy bug that predates B8 and belongs to the picker, not to its layout.
+
+---
+
+## B9 — team picker's „create" row is in English
+
+Found while fixing B8, out of that item's scope.
+
+`assets/controllers/team_picker_controller.js` overrides tom-select's `no_results` renderer but not
+`option_create`, so the „create a new team" row falls back to tom-select's stock English string —
+„Add **…**…" — in an otherwise fully Czech UI.
+
+**Fix:** override `option_create` with Czech copy („Přidat tým **…**" or similar, matching the
+vocabulary in `.docs/features/team-picker.md`). While there, check the other TomSelect construction
+sites for the same gap — `scorer_picker` also offers creation, and `tom_select`, `team_filter` and
+`score_entry` may expose other un-translated stock renderers (`loading`, `optgroup_header`,
+`no_results`).
+
+Small and self-contained; good to bundle with any other copy pass.
