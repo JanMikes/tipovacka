@@ -12,9 +12,9 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | DONE | `4e5f482` |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | DONE | `09770f4` |
-| B5 | Locked/past-deadline state is not reflected in the UI after locking | DONE | `PENDING` |
+| B5 | Locked/past-deadline state is not reflected in the UI after locking | DONE | `9e81f31` |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
-| B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `PENDING` |
+| B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 
 ---
 
