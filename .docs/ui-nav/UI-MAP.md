@@ -204,9 +204,34 @@ per the PLAN's „no back-compat" convention. Only the `{id}`-scoped pages below
 | `sport_match_create` | `/turnaje/{matchSourceId}/zapasy/novy` | `portal/sport_match/form.html.twig` |
 | `sport_match_import` | `/turnaje/{matchSourceId}/zapasy/import` | `portal/sport_match/import.html.twig` (+ `…/import/potvrdit`) |
 | `sport_match_template_download` | `/turnaje/zapasy/sablona.csv` | — (CSV) |
-| `sport_match_detail` | `/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) |
+| `sport_match_detail` | `/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) — **one match, fully understood** since item 10 |
 | `sport_match_edit` | `/zapasy/{id}/upravit` | `portal/sport_match/form.html.twig` |
 | `sport_match_set_score` | `/zapasy/{id}/skore` | `portal/sport_match/set_score.html.twig` |
+
+**`/zapasy/{id}` — the match page (item 10).** A match can belong to SEVERAL of the viewer's
+soutěže, and members, scoring rules and boost entitlements all differ per soutěž — so **one is in
+focus at a time**, chosen with `<twig:SoutezSwitcher>` (`route="sport_match_detail"`,
+`:routeParams="{id: matchId}"`, `?soutez={uuid}`, unknown/foreign id falls back silently) and
+**every number on the page is scoped to it**. Sections in order:
+
+1. **Hero** — status `Pill` (Naplánován / Živě / Ukončeno / Odložen / Zrušen), meta line
+   „kolo · venue · datum" (`SportMatch` has exactly ONE `round` and ONE `venue`), „Zapsat výsledek"
+   for whoever passes `sport_match_set_score`, teams + `TeamFlag` + the big score (kickoff time
+   before it), and the **team form** sub-label „ARG · V2 R0 P0" (`GetTeamForm`, one query for both
+   teams, counted over the finished matches THIS soutěž includes; absent, never zeroed).
+2. **Tip form** (`Guess:GuessSubmitForm`) with the switcher beside it, plus B4's
+   **„Proč tu nejsou všechny vaše soutěže"** panel — the switcher lists what INCLUDES the match,
+   the panel explains what EXCLUDES it, so no soutěž is ever described by both.
+3. **„Rozložení tipů"** — `<twig:Match:TipStats :compact="false">` fed by `TipStatsProvider`,
+   gated by `BoostType::TipDistribution`; locked = blurred skeleton + „Odemknout →".
+4. **„Průběh zápasu"** — `_timeline.html.twig`, pure match events (minute · dot · „Gól — Messi
+   (ARG)"). **No „tipovalo N hráčů" counts** — deferred to a future fantasy feature.
+5. **„Pořadí za zápas"** — `GetMatchRanking`, gated by `BoostType::OthersTips` through
+   `TipVisibilityGate` (entitled OR past the deadline; managers/admins get no free pass). Columns
+   # · HRÁČ · TIP · PŘESNOST · BODY; before the match is scored there are no ranks/points, so those
+   three columns are dropped rather than filled with dashes. Locked = the same shell + `Boost:Panel`.
+
+Then „Správa zápasu" (upravit / odložit / přesunout / zrušit / smazat) for the source's owner.
 
 `portal/guess/detail.html.twig` is a partial rendered inside the match/tip surfaces — no route
 of its own.
@@ -242,7 +267,12 @@ POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `�
 variants seen: `done`, `locked`, `warn`, `soon`, `accent`, `organizer`) · `StatCard` ·
 `EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) ·
 `PremiumTeaser` · `Match/MatchRow` · `Match/TipStats` (`:stats` — **always** feed it from
-`TipStatsProvider` batch, never per-row) · `Match/MatchRow` also takes `tipPrompt`
+`TipStatsProvider` batch, never per-row; `compact=true` is the one-line strip under a match row,
+`compact=false` the full „Rozložení tipů" card of item 10: state pill + „N hráčů tipovalo" +
+three labelled bars with an absolute count AND a percentage, or a blurred skeleton behind a lock
+coin with the buy CTA. The real bars are `.dist-bar`/`.dist-fill`, the paywall decoration
+`.dist-ghost-fill` — keep them apart, „is the split visible?" is asserted on the real ones)
+· `Match/MatchRow` also takes `tipPrompt`
 (text of the empty „můj tip" slot, e.g. „+ Zadat tip"; null = empty slot, the other lists' behaviour) · `Leaderboard/Podium` · `Leaderboard/Delta`
 (the Žebříček table itself is plain markup in `public/leaderboard.html.twig` — item 05 dropped
 the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives in the URL)
@@ -259,9 +289,11 @@ the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives i
 `Boost/BoostPanel` (owned boosts render a **jump link** to what they unlocked, unowned a purchase CTA; both disappear once the competition is fully over — B6) · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
 `Profile/ProfileForm` · `Scoring/RuleFields` · `Auth/RegistrationForm`, `Auth/InvitationForm`,
 `Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm` ·
-`SoutezSwitcher` (`:competitions`, `currentId`, `route`, `param`, `label`, `id` — the grouped
-soutěž picker; **`route` must be reachable with no path parameter**, because the control is a
-plain GET `<form>` that can only append `?<param>=<id>`. Groups „Probíhající" / „Ukončené",
+`SoutezSwitcher` (`:competitions`, `currentId`, `route`, `:routeParams`, `param`, `label`, `id` —
+the grouped soutěž picker; **`route` must be reachable with no path parameter carrying the
+COMPETITION**, because the control is a plain GET `<form>` that can only append `?<param>=<id>`.
+Any other path parameter of the route — e.g. the match id on `/zapasy/{id}` (item 10) — goes in
+`:routeParams`, which is constant across every option. Groups „Probíhající" / „Ukončené",
 each option = name + zdroj zápasů + Prague date range. Zero soutěží renders nothing, one
 renders a static chip, an unknown id falls back to the first.
 See [`.docs/features/competition-switcher.md`](../features/competition-switcher.md)).

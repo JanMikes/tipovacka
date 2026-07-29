@@ -809,6 +809,115 @@ label.required::after {
         font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
     }
     .lb-tab.active .mf-count { background: rgba(255,255,255,0.22); color: #fff; }
+
+    /* --- item 10: match detail ---
+       Four surfaces the DS zapas-detail page owns: the wide hero, the full
+       „Rozložení tipů" card (unlocked bars / paywalled twin), the event timeline
+       and the per-match ranking's rank + accuracy marks. Everything else on the
+       page reuses what is already here: .card-glass, .pill-*, .lb-table/.lb-tr,
+       .dist-* (the compact strip), .field. */
+
+    /* 1. Hero — status + meta on one line, teams flanking a very large score. */
+    /* Keeps .card-glass's corner wash and adds a centred one behind the score. */
+    .match-hero {
+        background-image:
+            radial-gradient(110% 130% at 50% -25%, rgba(70,153,208,0.16) 0%, rgba(70,153,208,0) 62%),
+            radial-gradient(60% 80% at 100% 0%, rgba(70,153,208,0.16) 0%, rgba(70,153,208,0) 60%);
+    }
+    .mh-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
+    .mh-meta { font-size: 12px; font-weight: 500; color: var(--fg-3); min-width: 0; }
+    .mh-teams {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+        gap: 12px 20px; margin-top: 28px;
+    }
+    .mh-team { display: flex; flex: 1 1 220px; align-items: center; gap: 14px; min-width: 0; }
+    .mh-team.home { justify-content: flex-end; text-align: right; }
+    .mh-team.away { justify-content: flex-start; text-align: left; }
+    .mh-team-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .mh-team-name { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+    .mh-team-sub { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+    .mh-score { display: flex; flex: 0 0 auto; align-items: center; gap: 12px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .mh-score .sc { font-size: 56px; font-weight: 900; letter-spacing: -0.04em; color: #fff; }
+    .mh-score .sep { font-size: 28px; font-weight: 700; color: var(--fg-4); }
+    .mh-kickoff { display: flex; flex: 0 0 auto; flex-direction: column; align-items: center; gap: 2px; font-variant-numeric: tabular-nums; }
+    .mh-kickoff .t { font-size: 34px; font-weight: 900; letter-spacing: -0.03em; color: #fff; line-height: 1; }
+    .mh-kickoff .d { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+    @media (max-width: 640px) {
+        .mh-team-name { font-size: 18px; }
+        .mh-score .sc { font-size: 40px; }
+    }
+
+    /* 2. „Rozložení tipů" — the FULL card (the compact strip stays .dist-bar above). */
+    .dist-card.is-locked { border-color: rgba(245,205,84,0.22); }
+    .dist-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+    .dist-card-total { margin-top: 12px; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+    .dist-unlock {
+        display: inline-flex; flex-shrink: 0; align-items: center; gap: 7px;
+        padding: 7px 14px; border-radius: 999px; cursor: pointer;
+        border: 1px solid rgba(245,205,84,0.45); background: rgba(245,205,84,0.10);
+        font-size: 12px; font-weight: 700; color: #f5cd54; font-variant-numeric: tabular-nums;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .dist-unlock:hover { background: rgba(245,205,84,0.18); border-color: rgba(245,205,84,0.7); }
+    .dist-unlock.is-static { cursor: default; }
+    .dist-unlock.is-static:hover { background: rgba(245,205,84,0.10); border-color: rgba(245,205,84,0.45); }
+    .dist-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 7px; }
+    .dist-row-label { font-size: 13px; font-weight: 600; color: var(--fg-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dist-row-val { flex: none; font-size: 12px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+    .dist-row-val b { font-size: 14px; font-weight: 800; color: #fff; }
+    .dist-track { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+    /* .dist-fill is the REAL bar (and .dist-bar the compact one) — .dist-ghost-fill is
+       the paywall's decoration. Keep them distinct: „is the split visible?" is asserted
+       on the real classes. */
+    .dist-fill, .dist-ghost-fill { height: 100%; border-radius: 999px; }
+    .dist-fill.f1, .dist-ghost-fill.f1 { background: #4699d0; box-shadow: inset 0 0 10px rgba(70,153,208,0.5); }
+    .dist-fill.fx, .dist-ghost-fill.fx { background: #f5b544; }
+    .dist-fill.f2, .dist-ghost-fill.f2 { background: #ff5d7a; }
+    /* Paywalled twin: a decorative skeleton (no readable figure anywhere) under a
+       blur, with the CTA floating on top. Also used by „Pořadí za zápas". */
+    /* The SKELETON is the absolute layer, not the lock: the veil then always sizes
+       itself to the CTA it carries and can never crop it. */
+    .dist-veil {
+        position: relative; margin-top: 16px; min-height: 150px;
+        display: flex; align-items: center; justify-content: center; padding: 8px 0;
+    }
+    .dist-skeleton { position: absolute; inset: 0; filter: blur(7px); opacity: 0.5; pointer-events: none; user-select: none; }
+    .dist-row-ghost { display: block; width: 100%; max-width: 160px; height: 11px; border-radius: 999px; background: rgba(255,255,255,0.16); }
+    .dist-row-ghost.is-short { max-width: 54px; flex: none; }
+    .dist-lock {
+        position: relative; display: flex; flex-direction: column;
+        align-items: center; gap: 8px; text-align: center; padding: 0 12px;
+    }
+    .dist-lock.is-wide { width: 100%; max-width: 560px; padding: 0; text-align: left; }
+    .dist-lock.is-wide > * { width: 100%; }
+    .dist-lock-coin {
+        display: inline-flex; align-items: center; justify-content: center; height: 46px; width: 46px;
+        border-radius: 999px; background: #f5cd54; color: #1b1608;
+        box-shadow: 0 0 30px rgba(245,205,84,0.45);
+    }
+    .dist-lock-title { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
+    .dist-lock-note { max-width: 34ch; font-size: 12px; line-height: 1.5; color: var(--fg-3); }
+
+    /* 3. „Průběh zápasu" — pure match events: minute · dot · text. No tip counts. */
+    .timeline-row { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid var(--border-1); }
+    .timeline-row:first-child { border-top: none; }
+    .timeline-min { flex: 0 0 34px; font-size: 13px; font-weight: 700; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+    .timeline-dot { flex: none; height: 9px; width: 9px; border-radius: 999px; }
+    .timeline-text { min-width: 0; font-size: 14px; font-weight: 600; color: #fff; }
+    .timeline-side { font-weight: 500; color: var(--fg-3); }
+
+    /* 4. „Pořadí za zápas" — rank mark + accuracy marker inside the shared .lb-table. */
+    .rank-mark { display: inline-flex; align-items: center; gap: 8px; }
+    .rank-dot { height: 6px; width: 6px; border-radius: 999px; background: transparent; }
+    .rank-dot.rank-1 { background: #f5cd54; box-shadow: 0 0 8px rgba(245,205,84,0.7); }
+    .rank-dot.rank-2 { background: #cfd6e0; box-shadow: 0 0 8px rgba(207,214,224,0.55); }
+    .rank-dot.rank-3 { background: #d49460; box-shadow: 0 0 8px rgba(212,148,96,0.6); }
+    .acc-exact { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-2); }
+    .acc-outcome {
+        display: inline-block; padding: 3px 9px; border-radius: 999px;
+        border: 1px solid rgba(245,205,84,0.45); color: #f5cd54;
+        font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }

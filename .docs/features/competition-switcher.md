@@ -16,7 +16,8 @@ end of the tom-select section in `assets/styles/app.css`. Rendered on `/_design`
 |---|---|---|
 | `competitions` | `list<CompetitionListItem>` **or** `list<CompetitionSwitcherOption>` | the feed (see below) |
 | `currentId` | `string\|null` | RFC4122 id of the active soutěž |
-| `route` | `string` | route the GET form submits to — **must be reachable with no path parameter** |
+| `route` | `string` | route the GET form submits to — **must be reachable with no path parameter carrying the competition** |
+| `routeParams` | `array` | other path parameters of `route` (constant across every option), e.g. `{id: matchId}` on `/zapasy/{id}` |
 | `param` | `string` | query parameter carrying the id (default `soutez`) |
 | `label` | `string` | eyebrow label above the control (default `Soutěž`) |
 | `id` | `string` | DOM id of the `<select>`; override when one page renders two switchers |
@@ -68,16 +69,22 @@ Two optgroups, always in this order: **„Probíhající"** then **„Ukončené
 rendered. `lockOptgroupOrder: true` in the shared tom-select controller keeps live on top even
 while the user is typing a search.
 
-## Navigation contract — why `route` must be path-parameter-free
+## Navigation contract — why the competition may never be a path parameter
 
 The control is a real `<form method="get">`. A form can only append a query string, so it can
 never fill a competition id into a **path** placeholder. Pages that scope by path go through a
 resolver route instead:
 
-| Page | `route` / `param` | Result |
+| Page | `route` / `routeParams` / `param` | Result |
 |---|---|---|
-| Nástěnka | `dashboard` / `soutez` | `/nastenka?soutez=<id>` — read by `DashboardController` |
-| Žebříček | `leaderboard` / `soutez` | `/zebricek?soutez=<id>` — read by `LeaderboardController` (item 05 made the page itself id-less; there is no redirect any more) |
+| Nástěnka | `dashboard` / — / `soutez` | `/nastenka?soutez=<id>` — read by `DashboardController` |
+| Žebříček | `leaderboard` / — / `soutez` | `/zebricek?soutez=<id>` — read by `LeaderboardController` (item 05 made the page itself id-less; there is no redirect any more) |
+| Zápas | `sport_match_detail` / `{id: matchId}` / `soutez` | `/zapasy/<matchId>?soutez=<id>` — read by `SportMatchDetailController` (item 10) |
+
+`routeParams` is the escape hatch for a route whose path carries something *other* than the
+competition — the match id above is the same for every option, so `path(route, routeParams)`
+resolves it once and the form still only appends `?soutez=`. The competition itself never goes
+in there.
 
 Both apply the same rule: **an id the viewer may not see silently falls back to one they may.**
 That is deliberate leak prevention — guessing an id must never open somebody else's board — so

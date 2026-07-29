@@ -19,6 +19,7 @@ final class GetMatchRankingQueryTest extends IntegrationTestCase
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
         ));
 
+        self::assertTrue($result->isScored);
         self::assertCount(1, $result->rows);
 
         $row = $result->rows[0];
@@ -30,14 +31,38 @@ final class GetMatchRankingQueryTest extends IntegrationTestCase
         self::assertSame(AppFixtures::ADMIN_ID, $row->userId->toRfc4122());
     }
 
-    public function testEmptyRankingWhenNoEvaluations(): void
+    public function testEmptyRankingWhenTheMatchIsOutOfScope(): void
     {
-        // The scheduled match has no evaluated guesses.
+        // MATCH_SCHEDULED lives on another source than VERIFIED_COMPETITION.
         $result = $this->queryBus()->handle(new GetMatchRanking(
             competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
             sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
         ));
 
         self::assertSame([], $result->rows);
+        self::assertFalse($result->isScored);
+    }
+
+    /**
+     * A tip with no evaluation still lists — the board opens at the deadline, long
+     * before any points exist. It just carries no rank and no points.
+     */
+    public function testUnscoredBoardListsTheTipsWithoutRanksOrPoints(): void
+    {
+        // SUBSET_GUESS (SECOND_VERIFIED_USER, 2:1) is seeded WITHOUT an evaluation.
+        $result = $this->queryBus()->handle(new GetMatchRanking(
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_FINISHED_ID),
+        ));
+
+        self::assertFalse($result->isScored);
+        self::assertCount(1, $result->rows);
+
+        $row = $result->rows[0];
+        self::assertNull($row->rank);
+        self::assertNull($row->totalPoints);
+        self::assertSame(2, $row->guessHome);
+        self::assertSame(1, $row->guessAway);
+        self::assertSame(AppFixtures::SECOND_VERIFIED_USER_NICKNAME, $row->nickname);
     }
 }

@@ -115,10 +115,14 @@ final readonly class TipStatsProvider
                     competitionName: $competition->name,
                     monetization: $competition->monetization,
                     visible: $visible,
+                    entitled: $entitled,
                     total: $distribution->total,
                     homeWinPercent: $visible ? $distribution->homeWinPercent : 0,
                     drawPercent: $visible ? $distribution->drawPercent : 0,
                     awayWinPercent: $visible ? $distribution->awayWinPercent : 0,
+                    homeWinCount: $visible ? $distribution->homeWinCount : 0,
+                    drawCount: $visible ? $distribution->drawCount : 0,
+                    awayWinCount: $visible ? $distribution->awayWinCount : 0,
                     purchasable: !$visible
                         && null !== $viewer
                         && CompetitionMonetization::Boosts === $competition->monetization,

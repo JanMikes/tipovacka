@@ -10,8 +10,11 @@
                      for the logged-out variant. One component, two feeds.
       currentId    : string|null — RFC4122 id of the active soutěž. An unknown/foreign id
                      silently falls back to the first option (deliberate leak prevention).
-      route        : string — route the GET form submits to. It must be reachable WITHOUT any
-                     path parameter, because a no-JS <form> can only append a query string.
+      route        : string — route the GET form submits to. It must be reachable WITHOUT a path
+                     parameter carrying the competition, because a no-JS <form> can only append
+                     a query string.
+      routeParams  : map — path parameters of `route` that are NOT the competition (e.g. the
+                     match id on /zapasy/{id}); constant across every option.
       param        : string — query parameter carrying the chosen id (default 'soutez').
       label        : string — eyebrow label above the control.
       id           : string — DOM id of the <select>; override when a page renders two switchers.
@@ -33,7 +36,7 @@
                 <span class="truncate text-sm font-semibold text-white">{{ this.current.name }}</span>
             </div>
         {% else %}
-            <form method="get" action="{{ path(route) }}" class="field">
+            <form method="get" action="{{ path(route, routeParams) }}" class="field">
                 <label for="{{ id }}">{{ label }}</label>
                 <select
                     id="{{ id }}"

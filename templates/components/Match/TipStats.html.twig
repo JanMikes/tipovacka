@@ -1,72 +1,166 @@
 {#
     „Rozložení tipů" for one match inside one soutěž — the SINGLE surface used by
-    every match list. Renders one of four states off a prepared App\Value\TipStats
-    (built in bulk by App\Service\Competition\TipStatsProvider — never resolve one
-    per row):
+    every match list. Renders off a prepared App\Value\TipStats (built in bulk by
+    App\Service\Competition\TipStatsProvider — never resolve one per row):
 
-      visible                → the 1 / X / 2 bar
+      visible                → the 1 / X / 2 split
       boosts, not entitled   → locked placeholder; clicking it opens the buy modal
       premium, not entitled  → the organizer switches this on for everyone
       none, not entitled     → plain note: it appears after the deadline
 
     props:
       stats       (TipStats)  required
-      homeTeam    TeamView|Team|null  labels under the full bar
+      homeTeam    TeamView|Team|null  labels the bars
       awayTeam    TeamView|Team|null
       compact     bool         true = one-line strip for rows/cards (default),
-                               false = full card (match detail pages)
+                               false = the full „Rozložení tipů" card (item 10),
+                               with labelled bars carrying an absolute count AND a
+                               percentage, and a paywalled twin behind a lock coin
+
+    Never the word „sázka" or its verb forms (DOMAIN.md) — players tipují.
 #}
 {% props stats, homeTeam = null, awayTeam = null, compact = true %}
 
-{% if stats.hasAnythingToShow %}
+{% if not compact %}
+    {# ═════════ Full card (match detail) ═════════ #}
+    {# Czech agrees the noun AND the verb with the count: 1 hráč tipoval · 2–4 hráči
+       tipovali · 5+ hráčů tipovalo. #}
+    {% set players = stats.total ~ ' ' ~ (stats.total == 1 ? 'hráč' : (stats.total <= 4 ? 'hráči' : 'hráčů')) %}
+    {% set tipped_verb = stats.total == 1 ? 'tipoval' : (stats.total <= 4 ? 'tipovali' : 'tipovalo') %}
+    {% set mon = stats.monetization.value %}
+
+    <section class="card-glass dist-card p-5 sm:p-6{{ stats.visible ? '' : ' is-locked' }}">
+        <header class="dist-card-head">
+            <div class="flex min-w-0 flex-wrap items-center gap-2.5">
+                {% if stats.visible and stats.entitled and mon == 'premium' %}
+                    <twig:Pill label="Prémium" variant="success" icon="check" />
+                {% elseif stats.visible and stats.entitled and mon == 'boosts' %}
+                    <twig:Pill label="Odemčeno" variant="success" icon="check" />
+                {% elseif stats.visible %}
+                    <twig:Pill label="Po uzávěrce" variant="neutral" icon="unlock" />
+                {% elseif mon == 'premium' %}
+                    <twig:Pill label="Prémium" variant="warn" icon="crown" />
+                {% elseif mon == 'boosts' %}
+                    <twig:Pill label="Vylepšení" variant="warn" icon="sparkles" />
+                {% else %}
+                    <twig:Pill label="Zamčeno" variant="locked" icon="lock" />
+                {% endif %}
+                <h2 class="eyebrow">Rozložení tipů</h2>
+            </div>
+
+            {% if not stats.visible and stats.purchasable %}
+                {% if stats.canAfford %}
+                    <form method="post"
+                          action="{{ path('competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
+                          data-controller="confirm"
+                          data-confirm-variant-value="warning"
+                          data-confirm-title-value="Odemknout „Lišta tipů ostatních“"
+                          data-confirm-message-value="Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
+                          data-confirm-confirm-label-value="Koupit za {{ stats.price }} kr.">
+                        <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">
+                        <input type="hidden" name="type" value="tip_distribution">
+                        <input type="hidden" name="_redirect" value="{{ app.request.requestUri }}">
+                        <button type="submit" class="dist-unlock group">
+                            Odemknout za {{ stats.price }} kr.
+                            <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ path('credits') }}" class="dist-unlock">
+                        <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
+                        Chybí kredity ({{ stats.balance }}/{{ stats.price }} kr.)
+                    </a>
+                {% endif %}
+            {% elseif not stats.visible and mon == 'premium' %}
+                <span class="dist-unlock is-static">Zapíná organizátor</span>
+            {% endif %}
+        </header>
+
+        <p class="dist-card-total">
+            {%- if stats.total > 0 -%}
+                {{ players }} {{ tipped_verb }}
+            {%- else -%}
+                Zatím nikdo netipoval
+            {%- endif -%}
+        </p>
+
+        {% if stats.visible %}
+            {% if stats.total > 0 %}
+                <div class="mt-4 space-y-3.5">
+                    {% for bar in [
+                        {label: 'Výhra ' ~ (homeTeam ? homeTeam.name : 'domácích'), count: stats.homeWinCount, percent: stats.homeWinPercent, fill: 'f1'},
+                        {label: 'Remíza', count: stats.drawCount, percent: stats.drawPercent, fill: 'fx'},
+                        {label: 'Výhra ' ~ (awayTeam ? awayTeam.name : 'hostů'), count: stats.awayWinCount, percent: stats.awayWinPercent, fill: 'f2'},
+                    ] %}
+                        <div class="dist-row">
+                            <div class="dist-row-head">
+                                <span class="dist-row-label">{{ bar.label }}</span>
+                                <span class="dist-row-val"><b>{{ bar.count }}</b> · {{ bar.percent }} %</span>
+                            </div>
+                            <div class="dist-track">
+                                <div class="dist-fill {{ bar.fill }}" style="width: {{ bar.percent }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            {# Decorative skeleton only — no counts, no percentages, nothing to read. #}
+            <div class="dist-veil">
+                <div aria-hidden="true" class="dist-skeleton space-y-3.5">
+                    {% for width in [58, 22, 20] %}
+                        <div class="dist-row">
+                            <div class="dist-row-head">
+                                <span class="dist-row-ghost"></span>
+                                <span class="dist-row-ghost is-short"></span>
+                            </div>
+                            <div class="dist-track">
+                                <div class="dist-ghost-fill {{ loop.first ? 'f1' : (loop.last ? 'f2' : 'fx') }}" style="width: {{ width }}%"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="dist-lock">
+                    <span class="dist-lock-coin"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></span>
+                    <p class="dist-lock-title">Uvidíš, jak tipuje konkurence</p>
+                    <p class="dist-lock-note">
+                        {%- if mon == 'boosts' -%}
+                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2.
+                        {%- elseif mon == 'premium' -%}
+                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2 — jen pro Prémium.
+                        {%- else -%}
+                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2, se zobrazí po uzávěrce.
+                        {%- endif -%}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </section>
+
+{% elseif stats.hasAnythingToShow %}
     {% set players = stats.total ~ ' ' ~ (stats.total == 1 ? 'hráč' : (stats.total <= 4 ? 'hráči' : 'hráčů')) %}
     {# With no tips yet the count would read „0 hráčů" — tease the feature instead. #}
     {% set teaser = stats.total > 0 ? 'Uvidíte, jak tipuje ' ~ players : 'Uvidíte, jak tipují ostatní' %}
 
     {% if stats.visible %}
         {# ───────── Unlocked: the actual split ───────── #}
-        {% if compact %}
-            <div class="mt-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
-                <div class="flex items-center justify-between gap-3">
-                    <p class="eyebrow">Rozložení tipů</p>
-                    <span class="text-[11px] font-medium tabular-nums text-white/50">{{ players }}</span>
-                </div>
-                <div class="dist-pcts mt-1.5 text-xs">
-                    <span><span class="k1">1</span>{{ stats.homeWinPercent }} %</span>
-                    <span><span class="kx">X</span>{{ stats.drawPercent }} %</span>
-                    <span><span class="k2">2</span>{{ stats.awayWinPercent }} %</span>
-                </div>
-                <div class="dist-bar mt-1.5">
-                    {% if stats.homeWinPercent > 0 %}<div class="b1" style="width: {{ stats.homeWinPercent }}%"></div>{% endif %}
-                    {% if stats.drawPercent > 0 %}<div class="bx" style="width: {{ stats.drawPercent }}%"></div>{% endif %}
-                    {% if stats.awayWinPercent > 0 %}<div class="b2" style="width: {{ stats.awayWinPercent }}%"></div>{% endif %}
-                </div>
+        <div class="mt-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
+            <div class="flex items-center justify-between gap-3">
+                <p class="eyebrow">Rozložení tipů</p>
+                <span class="text-[11px] font-medium tabular-nums text-white/50">{{ players }}</span>
             </div>
-        {% else %}
-            <div class="card-glass p-5">
-                <div class="mb-3 flex items-center justify-between gap-3">
-                    <p class="eyebrow">Rozložení tipů</p>
-                    <span class="text-xs font-medium tabular-nums text-white/50">{{ players }}</span>
-                </div>
-                <div class="dist-pcts mb-2">
-                    <span><span class="k1">1</span>{{ stats.homeWinPercent }} %</span>
-                    <span><span class="kx">X</span>{{ stats.drawPercent }} %</span>
-                    <span><span class="k2">2</span>{{ stats.awayWinPercent }} %</span>
-                </div>
-                <div class="dist-bar">
-                    {% if stats.homeWinPercent > 0 %}<div class="b1" style="width: {{ stats.homeWinPercent }}%"></div>{% endif %}
-                    {% if stats.drawPercent > 0 %}<div class="bx" style="width: {{ stats.drawPercent }}%"></div>{% endif %}
-                    {% if stats.awayWinPercent > 0 %}<div class="b2" style="width: {{ stats.awayWinPercent }}%"></div>{% endif %}
-                </div>
-                {% if homeTeam and awayTeam %}
-                    <div class="mt-2 flex items-center justify-between text-[11px] text-white/40">
-                        <span class="truncate">Výhra: {{ homeTeam.name }}</span>
-                        <span>Remíza</span>
-                        <span class="truncate">Výhra: {{ awayTeam.name }}</span>
-                    </div>
-                {% endif %}
+            <div class="dist-pcts mt-1.5 text-xs">
+                <span><span class="k1">1</span>{{ stats.homeWinPercent }} %</span>
+                <span><span class="kx">X</span>{{ stats.drawPercent }} %</span>
+                <span><span class="k2">2</span>{{ stats.awayWinPercent }} %</span>
             </div>
-        {% endif %}
+            <div class="dist-bar mt-1.5">
+                {% if stats.homeWinPercent > 0 %}<div class="b1" style="width: {{ stats.homeWinPercent }}%"></div>{% endif %}
+                {% if stats.drawPercent > 0 %}<div class="bx" style="width: {{ stats.drawPercent }}%"></div>{% endif %}
+                {% if stats.awayWinPercent > 0 %}<div class="b2" style="width: {{ stats.awayWinPercent }}%"></div>{% endif %}
+            </div>
+        </div>
 
     {% elseif stats.purchasable %}
         {# ───────── Locked, buyable: the whole strip is the buy trigger ───────── #}

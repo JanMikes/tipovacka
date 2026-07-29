@@ -1,6 +1,6 @@
 # Item 10 — Match detail (`/zapasy/{id}`) reworked
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 04 (switcher), item 05 (leaderboard patterns), B4 (the „why is my competition
 missing" panel), B7 (match row layout). All are DONE.
 
@@ -138,3 +138,49 @@ upcoming match, a live match, a finished match; as an entitled and a non-entitle
 premium competition and a boosts competition; and for a viewer in one competition and in several.
 Update `UI-MAP.md` §2/§3. Update the status board row to DONE + sha. Commit
 `UI: match detail — distribution, timeline, per-match ranking`, push to `main`.
+
+---
+
+## Assumptions made
+
+Decisions the item file did not settle, taken on the most conservative reading and recorded here.
+
+1. **Team form counts the WHOLE source (competition-scoped), not just the current round.** As the
+   item suggested, this is the conservative reading. It is computed by the new
+   `GetTeamForm` query through `CompetitionMatchProvider::applyCompetitionMatchFilter`, so a
+   Teams-mode or Subset competition counts only the matches it really includes — one query for
+   both teams, never one per team or per row. A team with no finished match is **absent** from the
+   result (never „V0 R0 P0"); the short name alone still renders when the team has one.
+2. **A draw that went to a shootout counts as a draw.** `SportMatch` documents the regular score as
+   the primary result, so W/D/L reads `homeScore`/`awayScore` and ignores
+   `overtimeHomeScore`/`overtimeAwayScore`.
+3. **„Pořadí za zápas" also renders before the match is scored.** Evaluations are written when the
+   final score lands, so a live or past-deadline match has tips but no points. Rather than hide the
+   section (the reference screenshots show it on a LIVE match) or invent numbers,
+   `GetMatchRanking` now lists every active guess, with `rank`/`totalPoints` **null** until the
+   match is evaluated (`MatchRankingResult::$isScored`). In that state the page drops the
+   #, PŘESNOST and BODY columns entirely — three columns of dashes say nothing — and titles the
+   card „Jak tipovali ostatní" instead of „Nejvíc bodů z tohoto zápasu". Revealing those tips is
+   still `TipVisibilityGate`'s decision, unchanged.
+4. **PŘESNOST is derived, not stored.** „PŘESNĚ" = the exact score, „VÝSLEDEK" = the right 1/X/2
+   outcome only. Computed in the template from the match's own final score (the same way the
+   competition-scoped page already did), so no rule-points read model was needed.
+5. **The state pill on the distribution card names WHY the split is readable.** `TipStats` gained
+   an `entitled` flag (the provider already computed it), so the card can say „✓ PRÉMIUM" /
+   „✓ ODEMČENO" when the viewer is entitled and „PO UZÁVĚRCE" when it is merely past the deadline —
+   instead of claiming premium for a competition whose toggle is off.
+6. **The locked „Pořadí za zápas" reuses `Boost:Panel` (`feature="others"`) for its CTA** rather
+   than a second copy of the pricing / affordability / „soutěž už skončila" logic. It sits inside
+   the same shell as the locked distribution card (blurred skeleton behind it), so both paywalls
+   read as one treatment.
+7. **The switcher gained a `routeParams` prop.** Its contract is that the COMPETITION can never be
+   a path parameter; `/zapasy/{id}` carries the *match* there, which is constant across every
+   option. `path(route, routeParams)` resolves it once and the no-JS GET form still only appends
+   `?soutez=`. Documented in `.docs/features/competition-switcher.md`.
+8. **The hero's meta line is „kolo · venue · datum".** The item named round and venue; the kickoff
+   date was kept because a finished match would otherwise show no date anywhere. No second round
+   field was invented.
+9. **The kickoff row of the timeline carries no minute.** The design shows „1' · Výkop", but that
+   minute is a convention rather than recorded data, so the cell is left empty.
+10. **„Správa zápasu" stayed** (upravit / odložit / přesunout / zrušit / smazat). Only the score
+    action moved out of it, into the hero's „Zapsat výsledek" CTA, so it is not offered twice.

@@ -39,7 +39,7 @@ final class MatchDetailCompetitionScopeTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         // Two all-mode competitions of the same user still take tips here.
-        self::assertSelectorTextContains('h2', 'Vaše tipy');
+        self::assertSelectorTextContains('h2', 'Váš tip');
         self::assertAnySelectorTextContains('section', AppFixtures::PREMIUM_COMPETITION_NAME);
 
         self::assertAnySelectorTextContains('h3', 'Proč tu nejsou všechny vaše soutěže');
@@ -96,7 +96,7 @@ final class MatchDetailCompetitionScopeTest extends WebTestCase
         $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h2', 'Vaše tipy');
+        self::assertSelectorTextContains('h2', 'Váš tip');
         self::assertAnySelectorTextContains('section', 'Sparta & Real');
         self::assertSelectorNotExists('h3:contains("netipuje")');
     }
@@ -137,7 +137,7 @@ final class MatchDetailCompetitionScopeTest extends WebTestCase
         $client->request('GET', '/zapasy/'.AppFixtures::MATCH_LIVE_ID);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorNotExists('h2:contains("Vaše tipy")');
+        self::assertSelectorNotExists('h2:contains("Váš tip")');
         self::assertSelectorNotExists('h3:contains("netipuje")');
     }
 

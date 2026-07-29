@@ -8,8 +8,14 @@ use App\Query\QueryMessage;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Per-match ranking ("Pořadí za zápas") — the evaluated guesses for one match
- * within one soutěž (Competition), ordered by points scored on that match.
+ * Per-match tip board ("Pořadí za zápas") — every active guess on one match
+ * within one soutěž (Competition), ordered by the points it scored there.
+ *
+ * A match that is not finished yet has no evaluations (they are written when the
+ * final score lands), so its rows come back unranked and point-less — a plain
+ * alphabetical tip board. See {@see MatchRankingResult::$isScored}. Revealing
+ * those tips is a VISIBILITY decision the caller owes
+ * ({@see \App\Service\Competition\TipVisibilityGate}); this query does not gate.
  *
  * @implements QueryMessage<MatchRankingResult>
  */

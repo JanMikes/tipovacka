@@ -39,8 +39,20 @@ final class SoutezSwitcher
     /** RFC4122 id of the active soutěž; unknown/foreign ids fall back to the first option. */
     public ?string $currentId = null;
 
-    /** Route the GET form submits to. Must be reachable without any path parameter. */
+    /**
+     * Route the GET form submits to. It must be reachable without a path parameter
+     * carrying the COMPETITION — a plain GET form can only append a query string.
+     */
     public string $route;
+
+    /**
+     * Path parameters the route needs that are NOT the competition — e.g. the match
+     * id on `/zapasy/{id}`, which stays the same across every option. The competition
+     * itself never goes here; it is always the query parameter below.
+     *
+     * @var array<string, string>
+     */
+    public array $routeParams = [];
 
     /** Query parameter carrying the chosen competition id. */
     public string $param = 'soutez';

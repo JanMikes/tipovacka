@@ -25,10 +25,21 @@ final class TipStats
         public readonly string $competitionName,
         public readonly CompetitionMonetization $monetization,
         public readonly bool $visible,
+        /* Deadline-INDEPENDENT entitlement (premium toggle / own boost). `visible`
+           is this OR-ed with „the deadline passed", so the two together say WHY the
+           split is readable — which is all the „✓ PRÉMIUM" / „po uzávěrce" badge on
+           the full card needs. */
+        public readonly bool $entitled,
         public readonly int $total,
         public readonly int $homeWinPercent,
         public readonly int $drawPercent,
         public readonly int $awayWinPercent,
+        /* Absolute counts behind the percentages — the full („Rozložení tipů")
+           card labels each bar with both. Zeroed together with the percentages
+           when the viewer is not entitled, so a locked card leaks nothing. */
+        public readonly int $homeWinCount,
+        public readonly int $drawCount,
+        public readonly int $awayWinCount,
         /** The viewer could buy the unlocking boost right now (boosts competition, not entitled, is a member). */
         public readonly bool $purchasable,
         public readonly int $price,

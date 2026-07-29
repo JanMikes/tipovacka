@@ -9,13 +9,15 @@ use Symfony\Component\Uid\Uuid;
 final readonly class MatchRankingRow
 {
     public function __construct(
-        public int $rank,
+        /** Null while the match is unscored — an unevaluated tip has no position. */
+        public ?int $rank,
         public Uuid $userId,
         public string $nickname,
         public ?string $fullName,
         public int $guessHome,
         public int $guessAway,
-        public int $totalPoints,
+        /** Null while the match is unscored (evaluations are written on finish). */
+        public ?int $totalPoints,
     ) {
     }
 }

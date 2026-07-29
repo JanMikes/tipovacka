@@ -33,6 +33,12 @@ final class TipStatsSurfacesTest extends WebTestCase
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
     private const string MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
     private const string COMPETITION_MATCH = self::BOOSTS_DETAIL.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    /**
+     * The unlocked split, in both of its shapes: `.dist-bar` is the compact strip under a
+     * match row, `.dist-fill` a labelled bar of the full card (item 10). The paywall's
+     * blurred decoration is deliberately `.dist-ghost-fill`, so it never matches here.
+     */
+    private const string VISIBLE_BAR = '.dist-bar, .dist-fill';
 
     /**
      * A member of the boosts competition who has tipped the scheduled match and
@@ -111,7 +117,7 @@ final class TipStatsSurfacesTest extends WebTestCase
             $crawler = $this->visit($client, $path);
 
             self::assertSame(0, $this->lockedStrips($crawler), sprintf('The paywall must be gone on %s.', $path));
-            self::assertGreaterThanOrEqual(1, $crawler->filter('.dist-bar')->count(), sprintf('Expected the 1/X/2 bar on %s.', $path));
+            self::assertGreaterThanOrEqual(1, $crawler->filter(self::VISIBLE_BAR)->count(), sprintf('Expected the 1/X/2 bar on %s.', $path));
         }
     }
 
@@ -130,7 +136,7 @@ final class TipStatsSurfacesTest extends WebTestCase
         // The paywall lives outside the soutěž tree too — the redirect must come back here.
         self::assertResponseRedirects(self::MATCHES_LIST);
         $crawler = $client->followRedirect();
-        self::assertGreaterThanOrEqual(1, $crawler->filter('.dist-bar')->count());
+        self::assertGreaterThanOrEqual(1, $crawler->filter(self::VISIBLE_BAR)->count());
     }
 
     public function testOrganizerSeesTheSamePaywallAsMembers(): void
@@ -150,6 +156,6 @@ final class TipStatsSurfacesTest extends WebTestCase
         $crawler = $this->visit($client, self::COMPETITION_MATCH);
 
         self::assertGreaterThanOrEqual(1, $this->lockedStrips($crawler));
-        self::assertCount(0, $crawler->filter('.dist-bar'));
+        self::assertCount(0, $crawler->filter(self::VISIBLE_BAR));
     }
 }
