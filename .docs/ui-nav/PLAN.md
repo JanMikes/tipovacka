@@ -30,7 +30,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 01 | [Navigation slim-down + noindex on de-linked marketing pages](items/01-nav-and-noindex.md) | DONE | `586d48f` |
 | 02 | [„Kolo" (round) on a match: optional input, import support, grouping](items/02-match-round.md) | DONE | `b2c83dd` |
 | 03 | [Development fixtures: a realistic, complete world](items/03-dev-fixtures.md) | DONE | `11d83aa` |
-| 09 | [Drop the `/portal` URL prefix; unify the soutěž URL space](items/09-drop-portal-prefix.md) | DONE | `PENDING` |
+| 09 | [Drop the `/portal` URL prefix; unify the soutěž URL space](items/09-drop-portal-prefix.md) | DONE | `59e6dc2` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
