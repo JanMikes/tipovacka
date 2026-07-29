@@ -25,8 +25,8 @@ before touching security, and update it in the same commit as any new route.
 
 | Variant | Primary links | Right-hand actions |
 |---|---|---|
-| `app` (logged in) | Nástěnka hráče → `dashboard` · Soutěže → `public_competitions_list` · Žebříček → `leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
-| `public` (logged out) | Soutěže → `public_competitions_list` | Přihlásit se · „Registrace zdarma" → `app_register` |
+| `app` (logged in) | Nástěnka hráče → `dashboard` · Soutěže → `competitions_list` · Žebříček → `leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
+| `public` (logged out) | Soutěže → `competitions_list` | Přihlásit se · „Registrace zdarma" → `app_register` |
 
 Mobile: `mobile_nav_controller.js` toggles `.wt-mobile` panel which repeats the primary links
 plus Profil / Kredity / Administrace / Odhlásit se (logged in) or Přihlásit se / Registrace
@@ -40,8 +40,10 @@ Notable current quirks (candidates for this stream, not yet decided):
 - „Žebříček" is a *resolver* route (`leaderboard`) that redirects to the user's primary
   soutěž leaderboard — global-looking label, soutěž-scoped destination. Logged-out users get no
   Žebříček link at all (no public leaderboard page exists yet — item 02).
-- „Soutěže" points at the **public** `/souteze` list for logged-in users too; it is not yet
-  context-aware (item 04), and no `competition_*` route lights it up as active.
+- „Soutěže" is the **context-aware** competition hub (item 07): the same `/souteze` page serves
+  an anonymous visitor (public list only) and a member (plays in / organizes / can join). Active
+  state is computed from a `section` variable in `Nav.html.twig` — every `competition_*` route
+  lights up „Soutěže", except `competition_leaderboard*`, which belongs to „Žebříček".
 - „Kredity" only exists in the mobile menu and the avatar dropdown (via `CreditBalance`).
 - The admin area has **no link back** into the portal shell other than the brand mark.
 
@@ -81,8 +83,7 @@ Legend: 🔒 = requires a login · 🛡 = ROLE_ADMIN · everything else is anony
 | `app_for_business` | `/pro-firmy` | `public/for_business.html.twig` | **noindex, nofollow** — footer-only |
 | `app_faq` | `/faq` | `public/faq.html.twig` | **noindex, nofollow** — footer-only |
 | `app_privacy` | `/ochrana-soukromi` | `public/privacy.html.twig` | |
-| `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` | the „Soutěže" nav target in **both** variants |
-| `public_match_sources_list_legacy` | `/turnaje` | legacy 301 → `/souteze` | deletion candidate (PLAN conventions) |
+| `competitions_list` | `/souteze` | `public/competitions_list.html.twig` | the „Soutěže" nav target in **both** variants — **context-aware** since item 07, see the soutěž section |
 | `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | 🛡 — gated by an in-controller `denyAccessUnlessGranted('ROLE_ADMIN')`, **not** by path |
 
 ### Auth
@@ -97,7 +98,7 @@ Templates in `templates/auth/`, forms are Live Components in `templates/componen
 |---|---|---|---|
 | `dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Nástěnka hráče" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
 | `matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats`. **No longer in the nav** (item 01); URL-only |
-| `leaderboard` | `/zebricek` | — (redirector) | Resolves to the primary soutěž's leaderboard. Item 05 replaces it with a real page at the same URL |
+| `leaderboard` | `/zebricek` | — (redirector) | Resolves to the primary soutěž's leaderboard; `?soutez=<id>` picks another one and is the switch target of `SoutezSwitcher` (item 04). An unknown/foreign id falls back to the primary. Item 05 replaces it with a real page at the same URL |
 | `credits` | `/kredity` | `portal/credits/overview.html.twig` | + `credits_buy` `/kredity/koupit`, `credits_return` `/kredity/navrat` |
 | `notifications` | `/oznameni` | `portal/notifications/center.html.twig` | + `notification_read` `/oznameni/{id}/precteno`, `notifications_read_all` `/oznameni/precteno` |
 | `profile_edit` | `/profil` | `portal/profile/edit.html.twig` | |
@@ -110,7 +111,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 
 | Route | Path | Template |
 |---|---|---|
-| `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public** |
+| `competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public**, context-aware (see below) |
 | `competition_join_by_link` | `/souteze/pozvanka/{token}` | `invitation/landing.html.twig` — **public** |
 | `competition_create` | `/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
 | `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` (**576 l.** — the biggest page; sections: header + team-filter pills, Členové, Moje tipy, Pozvánky e-mailem, Žebříček panel, `Boost:Panel`, Rychlé pozvánky, Správa) |
@@ -133,6 +134,29 @@ POST-only actions under `/souteze/{id}/` (no template): `…/pripojit-se` (join 
 `…/zapasy/{sportMatchId}/clenove/{memberId}/tip`, `…/spravovat-tipy/{memberId}`.
 Plus `invitation_revoke` `/pozvanky/{invitationId}/zrusit`.
 
+**`/souteze` — the context-aware hub (item 07).** One public route, five sections that appear
+only when they have something to say:
+
+1. **Hero** — eyebrow („Váš workspace" / „Veřejné soutěže"), „Hledat" + „Vytvořit soutěž"
+   („Registrace zdarma" logged out), and three `StatCard`s fed by `GetCompetitionsPageStats`:
+   Aktivní soutěže / Hráčů celkem / Sledovaných zápasů. **Every figure and sub-label is measured**
+   — the scope is the viewer's own world (member of ∪ organizes) or, anonymously, the public list.
+   There is **no „Výherní bank" card**: entry fees are burned credits, there are no payouts.
+2. **„Soutěže, kde tipuješ"** (`#souteze-hraju`) — `ListMyPlayingCompetitions` → one
+   `<twig:Competition:PlayingCard>` each (rank / body / round gain / next action). Members only.
+3. **PIN join bar** — the existing `_partials/join_by_pin_form.html.twig`. Verified users only.
+4. **„Tvé soutěže"** (`#souteze-organizuji`) — organizer scope. Rendered only when the viewer owns
+   something.
+5. **Veřejné soutěže** (`#souteze-verejne`) — the discoverable global competitions.
+
+Sections 4 and 5 share **one** query (`ListBrowsableCompetitions`, scoped by
+`CompetitionBrowseScope`), **one** card (`<twig:Competition:Card>`, `context="organizer"|"public"`)
+and **one** filter bar (`<twig:Competition:FilterBar>`). Filters are query params, never JS state:
+the public bar owns `sport` · `stav` · `hledat` · `strana`, the organizer bar prefixes its own with
+`moje-` (and adds `moje-viditelnost`), so the two never disturb each other and any filtered view is
+shareable. `CompetitionStateFilter::forScope()` decides which „Stav" chips a context offers —
+discovery has no „Skončené" because a global competition over a completed source is not listed at all.
+
 ### Žebříček — soutěž-scoped (🔒)
 | Route | Path | Template |
 |---|---|---|
@@ -142,9 +166,11 @@ Plus `invitation_revoke` `/pozvanky/{invitationId}/zrusit`.
 | `competition_leaderboard_resolve_ties` | `…/zebricek/shoda` | `portal/leaderboard/resolve_ties.html.twig` |
 
 ### Zdroj zápasů (`/turnaje`) & zápasy (`/zapasy`) — 🔒 unless noted
+Bare `/turnaje` no longer exists — item 07 deleted the legacy 301 (`public_match_sources_list_legacy`)
+per the PLAN's „no back-compat" convention. Only the `{id}`-scoped pages below live under it.
+
 | Route | Path | Template |
 |---|---|---|
-| `public_match_sources_list_legacy` | `/turnaje` | legacy 301 → `/souteze` — **public** |
 | `match_source_detail` | `/turnaje/{id}` | `portal/match_source/detail.html.twig` |
 | `match_source_edit` | `/turnaje/{id}/upravit` | `portal/match_source/edit.html.twig` |
 | `sport_match_create` | `/turnaje/{matchSourceId}/zapasy/novy` | `portal/sport_match/form.html.twig` |
@@ -186,17 +212,28 @@ POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `�
 **Presentational (template-only, `{% props %}`)**
 `Avatar` (name, size, rank) · `Badge` (label, variant, icon) · `Pill` (label, variant, icon —
 variants seen: `done`, `locked`, `warn`, `soon`, `accent`, `organizer`) · `StatCard` ·
-`EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) · `SoutezSwitcher` ·
+`EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) ·
 `PremiumTeaser` · `Match/MatchRow` · `Match/TipStats` (`:stats` — **always** feed it from
 `TipStatsProvider` batch, never per-row) · `Leaderboard/Podium` · `Leaderboard/Delta`
-(`:delta`, `:isNew`, variant `chip`) · `Layout/Nav` · `Layout/Footer`.
+(`:delta`, `:isNew`, variant `chip`) · `Layout/Nav` · `Layout/Footer` ·
+`Competition/Card` (`:item` = `BrowsableCompetitionItem`, `context="organizer"|"public"`,
+`:walletBalance` — **the** competition card, shared by the organizer and the public grid) ·
+`Competition/FilterBar` (`prefix`, `anchor`, `:sportOptions`, `:stateOptions`,
+`:visibilityOptions` — **the** competition filter bar, query-param driven) ·
+`Competition/PlayingCard` (`:item` = `PlayingCompetitionItem` — standing + next action).
 
 **Live Components (`src/Twig/Components/`)**
 `Competition/CreateWizard` (4-step wizard, `.docs/features/create-wizard.md`) ·
 `Leaderboard/CompetitionLeaderboard` · `Guess/GuessSubmitForm` · `Guess/MatchGuessesList` ·
 `Boost/BoostPanel` · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
 `Profile/ProfileForm` · `Scoring/RuleFields` · `Auth/RegistrationForm`, `Auth/InvitationForm`,
-`Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm`.
+`Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm` ·
+`SoutezSwitcher` (`:competitions`, `currentId`, `route`, `param`, `label`, `id` — the grouped
+soutěž picker; **`route` must be reachable with no path parameter**, because the control is a
+plain GET `<form>` that can only append `?<param>=<id>`. Groups „Probíhající" / „Ukončené",
+each option = name + zdroj zápasů + Prague date range. Zero soutěží renders nothing, one
+renders a static chip, an unknown id falls back to the first.
+See [`.docs/features/competition-switcher.md`](../features/competition-switcher.md)).
 
 **Partials** `_partials/competition_rules.html.twig`, `_partials/join_by_pin_form.html.twig`.
 
@@ -209,6 +246,11 @@ variants seen: `done`, `locked`, `warn`, `soon`, `accent`, `organizer`) · `Stat
 `password_visibility` · `pin_input` · `reveal` · `score_entry` · `scorer_picker` ·
 `scoring_preset` · `team_filter` · `team_picker` · `tip_fill` · `tom_select` ·
 `competition_matches` · `wizard_matches`.
+
+`tom_select` is shared by all five pickers. Beyond the person shape (`nickname` / `fullName` /
+`unverified`) an option may carry plain `data-sub` / `data-meta` attributes — a second line and
+a dimmed trailing detail in the dropdown; `data-sub` is searchable. `lockOptgroupOrder: true`
+keeps optgroups in DOM order. `dropdownParent: 'body'` on every construction site (B3).
 
 Plus `assets/spotlight.js` (cursor spotlight on cards — `.docs/features/cursor-spotlight.md`).
 
@@ -230,14 +272,16 @@ Rebuilt live by the `tailwind` container. **Never** run `asset-map:compile` loca
 
 Listed so item files can reference them; each becomes a decision only when the product owner says so.
 
-1. **No dedicated „my competitions" list page.** The dashboard mixes a personal summary, a
-   competition list, a source list and a match feed in 564 lines; nav „Soutěže" points at the
-   public `/souteze` discovery list, which is not membership-aware (item 04). _(The old
-   label/destination mismatch — „Soutěže" → dashboard — was fixed by item 01.)_
+1. ~~**No dedicated „my competitions" list page.**~~ **Fixed by item 07**: `/souteze` is now the
+   one place every relationship to a competition lives — plays in / organizes / could join —
+   and „Tvé soutěže" is the organizer list the app never had. The dashboard still carries its own
+   „Moje soutěže" copy of the list (item 06's business).
 2. **Competition detail is a 576-line monolith** — members, my tips, invitations, leaderboard
    preview, boosts, management all stacked vertically with no tabbing or sectioning.
 3. **Two parallel object lists** (soutěže + zdroje zápasů) surfaced on the dashboard with equal
-   weight, though a normal player never owns a zdroj.
+   weight, though a normal player never owns a zdroj. _(Item 07 took the soutěž half off the
+   dashboard's shoulders — `/souteze` is now the canonical list — but the dashboard sections
+   themselves still stand; retiring them is item 06.)_
 4. **Žebříček nav item is soutěž-scoped** but presented as global.
 5. **Kredity is hidden** — reachable only from the avatar dropdown / mobile menu.
 6. **Admin is a separate shell** with no path back; „Administrace" lands on `/admin/turnaje`,

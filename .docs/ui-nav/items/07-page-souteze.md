@@ -1,6 +1,6 @@
 # Item 07 — „Soutěže" (`/souteze`) becomes the context-aware competitions page
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 03 (fixtures) for realistic verification. Independent of 04/05/06.
 
 ---
@@ -106,3 +106,37 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → `tests/Integration/{Publi
 render checks logged out, logged in as a pure player, and logged in as an organizer; plus each filter
 combination. Update `UI-MAP.md` §2/§3 and §6 (pain points 1 and 3). Update the status board row to
 DONE + sha. Commit `UI: context-aware Soutěže page`, push to `main`.
+
+---
+
+## Assumptions made
+
+Product decisions the item file did not settle, resolved conservatively:
+
+1. **The hero's scope.** „Aktivní soutěže / Hráčů celkem / Sledovaných zápasů" describe *what the
+   page is about*: for a signed-in visitor their own world (competitions they play in ∪ organize),
+   for an anonymous one the public list — which is the whole page they get. A visitor in nothing
+   therefore sees honest zeroes, not the platform's global totals.
+2. **The hero's sub-labels.** Computed, never constant, and omitted when they have nothing to say:
+   „N živě teď" (falling back to „N zápasů dnes" — Prague calendar day), „+N tento týden"
+   (memberships joined in the last 7 days), „Ve N turnajích" (distinct zdroje zápasů in scope).
+3. **No prize-pool language anywhere.** The design's „N Kč v banku" / „rozděleno" card meta went
+   the same way as the „VÝHERNÍ BANK" hero card the product owner cut: entry fees are burned
+   credits and there are no payouts (DOMAIN.md). Cards show the entry fee („Vstupné X" / „Zdarma").
+4. **„Stav" chips differ per context.** Discovery keeps the pre-existing rule that a global
+   competition over a **completed** source is not listed at all (it cannot be joined) — so the
+   public bar offers Všechny / Nadcházející / Probíhající and the organizer bar adds Skončené.
+   `CompetitionStateFilter::forScope()` is the single place that decides.
+5. **„Hledat" is a real filter.** The hero button anchors to the public list, whose filter bar
+   carries a name search (`hledat` / `moje-hledat`, matched against the competition and its zdroj
+   zápasů name). A button that only scrolled would have been a lie.
+6. **The round delta is a points gain, never negative.** The design's „−3 v kole" cannot exist —
+   points only accumulate. The card shows „+N v kole" (the viewer's points in the competition's
+   current kolo, resolved exactly like `CompetitionRoundResolver`) and hides it at zero.
+7. **Pagination over infinite scroll.** 12 cards per page, `strana` / `moje-strana`, „Zobrazit
+   další" link. An out-of-range page clamps rather than 404-ing, so a stale shared link still works.
+8. **`/turnaje` was deleted, not redirected** (PLAN's no-back-compat convention). `/turnaje/{id}`
+   and the rest of the zdroj-zápasů tree are untouched.
+9. **The styleguide (`/_design`) was not extended** with the new card/filter-bar. A parallel agent
+   was mid-flight on that exact page (the `SoutezSwitcher` section and its test) and the stream's
+   rule 1 says shared surfaces are not to be touched concurrently. Worth a follow-up.
