@@ -17,8 +17,20 @@ import { Controller } from '@hotwired/stimulus';
  *   data-confirm-confirm-label-value="Ano, smazat"
  *   data-confirm-cancel-label-value="Zpět"
  *   data-confirm-variant-value="danger" | "warning"
+ *
+ * Optional target — a dialog that also ASKS something (B2 „Uzamknout tipy"):
+ *
+ *   <div data-confirm-target="fields" hidden> …inputs… </div>
+ *
+ * The element is moved into the dialog body on first open and revealed there;
+ * because the dialog lives on <body> (outside the form), every form control
+ * inside it gets a `form="<the form's id>"` attribute so it is still submitted
+ * with the form. Keep the markup usable without JS: the form must submit
+ * correctly with the field defaults, since no dialog is ever shown then.
  */
 export default class extends Controller {
+    static targets = ['fields'];
+
     static values = {
         message: String,
         title: { type: String, default: 'Potvrdit akci' },
@@ -95,6 +107,11 @@ export default class extends Controller {
         textWrap.append(titleEl, msgEl);
         header.append(iconEl, textWrap);
 
+        if (this.hasFieldsTarget) {
+            dialog.classList.add('has-fields');
+            this.adoptFields(textWrap);
+        }
+
         const actions = document.createElement('div');
         actions.className = 'mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end';
 
@@ -124,6 +141,26 @@ export default class extends Controller {
         document.body.append(dialog);
         this.dialog = dialog;
         this.cancelBtn = cancelBtn;
+    }
+
+    /*
+     * Moves the fields target into the dialog body. The dialog is appended to
+     * <body>, so the controls leave the <form> element — re-associate them via
+     * the `form` attribute, which submits them all the same.
+     */
+    adoptFields(parent) {
+        if (!this.element.id) {
+            this.element.id = `confirm-form-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        // Named controls only — a picker's internal widgets (flatpickr's hour /
+        // minute number inputs) carry no name and must not be re-associated.
+        this.fieldsTarget
+            .querySelectorAll('input[name], select[name], textarea[name]')
+            .forEach((control) => control.setAttribute('form', this.element.id));
+
+        this.fieldsTarget.hidden = false;
+        parent.append(this.fieldsTarget);
     }
 
     confirm() {

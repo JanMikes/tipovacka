@@ -9,7 +9,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
 | B1 | Unverified e-mail account can still use the app | DONE | `7b3f010` |
-| B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | TODO | — |
+| B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | DONE | — |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | DONE | `09770f4` |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
@@ -113,6 +113,74 @@ that flips the flag. **(a) is strongly preferred** — it reuses `EffectiveTipDe
 needs no new cron. Confirm before building (b).
 
 Reuse the existing `datepicker` Stimulus controller rather than introducing a new picker.
+
+### Decision (settled by the product owner, 2026-07-29): **(a)**
+
+Store a „locked from" timestamp and let the existing deadline maths reach it. **No cron, no
+scheduler entry, no flag to flip** — same user-visible behaviour, no new moving part that can
+fall over at 03:00.
+
+### As built
+
+**The timestamp IS the state.** `Competition.tipsLockedAt` is what
+`EffectiveTipDeadlineResolver::lockMomentFor()` already reads, so a value in the future simply
+makes every match deadline `min(lockAt, kickoff)` the second it is stored; the lock „fires" by
+time passing. **No schema change, no migration** — a past/now value means locked (as before), a
+future value means scheduled. `LockCompetitionTipsCommand` grew one optional `?lockAt`
+(null = „Ihned"), and the resolver itself was not touched beyond a docblock.
+
+**Domain rules** (`Competition::scheduleTipsLock`, exception
+`App\Exception\CompetitionTipsLockTimeInvalid`, HTTP 409, Czech messages surfaced as flashes):
+- the moment must be **in the future** — locking now is `lockTips()`;
+- it must be **before the competition start** (first included kickoff). A later moment would push
+  the lock BEYOND the automatic one and reopen tips the start had already closed — the one thing
+  the „a lock moment is only ever reached once" invariant forbids;
+- **cannot schedule on an already locked competition** (unlock first);
+- re-scheduling a pending lock just moves it; **„Ihned" overrides a pending schedule**;
+- a pending schedule records **no `CompetitionTipsLocked` event** — nothing has locked yet.
+
+**Unlock interaction.** A pending schedule is cleared by the *same* `…/odemknout-tipy` action
+(„Zrušit naplánování"), which the existing rule already allows: unlocking is possible until the
+first kickoff, and a schedule is by construction earlier than that, so the cancel button can
+never outlive its window. Once the moment passes the competition is an ordinary manually locked
+one — „Odemknout tipy" until the first match kicks off, then nothing.
+
+**UI.** The `confirm` controller gained an optional **`fields` target** (documented in
+`.docs/features/confirm-modal.md`): an element inside the form that is moved into the dialog and
+revealed there, with `form="<form id>"` stamped on its named controls so it still submits. The
+lock modal uses it for the „Ihned" / „V určený čas" radio pair; the picker is revealed by CSS
+`:has()` alone. Without JS the form posts „Ihned" — exactly the pre-B2 behaviour. The detail page
+shows the schedule as a `soon` Pill + a header line, and offers „Změnit uzamčení" (modal
+prefilled) and „Zrušit naplánování".
+
+**Datepicker.** The existing `datepicker` controller gained a `inline` value (flatpickr `inline`)
+for pickers inside a modal `<dialog>`; the flatpickr `min`/`max` bounds mirror the domain rule
+(now … first kickoff) in Prague time. Two traps found by exercising it in a real browser, both
+now documented in the feature doc and the controller:
+- flatpickr's `static: true` **hangs the page** — it re-parents the controller's own element, so
+  Stimulus unmatch→matches forever;
+- a flatpickr inside a `<form>` **silently blocks submission** — its internal hour/minute number
+  inputs (`step="5"`) are form controls and fail constraint validation, so the form needs
+  `novalidate`.
+
+Covered by `CompetitionEntityTest` (6 cases), `LockCompetitionTipsHandlerTest`
+(„open until the moment, closed one hour later, with nothing running in between") and
+`CompetitionLockTipsFlowTest` (modal shape, Prague→UTC persistence, fires by time passing,
+change/cancel, and a data-provider of four server-side refusals).
+
+### Assumptions made
+
+- **A schedule later than the competition start is refused, not clamped.** Silently moving the
+  organizer's chosen moment would be worse than an explicit „musí nastat dřív, než soutěž začne".
+- **Validation is against the first kickoff as it stands at write time.** If a match with an
+  EARLIER kickoff joins the source afterwards, a schedule can end up after the (new) competition
+  start, and the matches that kick off later would stay tippable until it. Re-validating on every
+  match change is a match-lifecycle concern (the `pinTipsLockMoment` neighbourhood), deliberately
+  out of B2's scope; the window is small and the failure mode is „tips close later than they
+  could have", never „closed tips reopen".
+- **No notification when a lock is scheduled or fires.** Nothing listens to `CompetitionTipsLocked`
+  today, and inventing a delivery for the scheduled case would need exactly the timer this item
+  set out to avoid.
 
 ---
 

@@ -850,6 +850,17 @@ label.required::after {
 .confirm-dialog[open]::backdrop { background-color: rgba(7,11,20,0.72); backdrop-filter: blur(6px); }
 @starting-style { .confirm-dialog[open]::backdrop { background-color: rgba(7,11,20,0); backdrop-filter: blur(0); } }
 
+/* --- B2: scheduled tip lock — a confirm dialog that also ASKS something --- */
+/* A dialog with fields can outgrow the viewport; the UA's own `overflow: auto`
+   then scrolls it, so the confirm buttons stay reachable. */
+.confirm-dialog.has-fields { max-height: 92dvh; }
+/* „Ihned" vs „V určený čas" — the picker is revealed by the radio alone, no JS. */
+.lock-when .lock-when-at { display: none; }
+.lock-when:has(input[value="at"]:checked) .lock-when-at { display: flex; }
+/* The calendar renders in flow (datepicker `inline`), so the dialog grows around
+   it — a floating one would be painted under the dialog's top layer. */
+.lock-when-at .flatpickr-calendar.inline { margin: 2px auto 0; }
+
 /* ==========================================================================
    Marketing hero background — dark radial glows + masked grid
    ========================================================================== */

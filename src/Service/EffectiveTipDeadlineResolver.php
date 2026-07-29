@@ -45,7 +45,11 @@ use Symfony\Contracts\Service\ResetInterface;
  * - lock moment = C.tipsLockedAt ?? earliest kickoffAt among C's included
  *   matches (via {@see CompetitionMatchProvider}, computed live — any state,
  *   deleted excluded); a competition without matches has no lock moment and
- *   falls back to M's kickoff;
+ *   falls back to M's kickoff. `tipsLockedAt` may sit in the FUTURE — that is a
+ *   scheduled „Uzamknout tipy · V určený čas" (B2), and it needs no job: the
+ *   deadline is already `min(lockMoment, kickoff)`, so the lock fires by time
+ *   passing. `Competition::scheduleTipsLock` keeps it before the first kickoff,
+ *   so a schedule can only ever bring the lock FORWARD;
  * - dayFirstKickoff = earliest kickoffAt among C's included matches on M's
  *   Europe/Prague calendar day (kickoffs are stored UTC and converted to
  *   Europe/Prague for the day grouping — a 23:30 UTC kickoff belongs to the

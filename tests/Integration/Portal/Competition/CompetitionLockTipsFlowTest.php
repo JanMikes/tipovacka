@@ -8,6 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Clock\MockClock;
@@ -39,6 +40,163 @@ final class CompetitionLockTipsFlowTest extends WebTestCase
         self::assertSame('Uzamknout tipy', $form->attr('data-confirm-title-value'));
         self::assertNotNull($form->attr('data-confirm-message-value'));
         self::assertCount(1, $form->filter('input[name="_token"]'));
+    }
+
+    public function testLockModalOffersImmediateAndScheduledChoice(): void
+    {
+        $client = static::createClient();
+        $this->loginOwner($client);
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter('form[action="'.self::LOCK_URL.'"]');
+
+        // The two mutually exclusive choices live inside the confirm dialog's
+        // fields target; „Ihned" is the default so a JS-less POST keeps the
+        // pre-B2 behaviour.
+        self::assertCount(1, $form->filter('[data-confirm-target="fields"]'));
+        self::assertCount(1, $form->filter('input[name="lock_mode"][value="now"][checked]'));
+        self::assertCount(1, $form->filter('input[name="lock_mode"][value="at"]:not([checked])'));
+
+        $picker = $form->filter('input[name="lock_at"]');
+        self::assertCount(1, $picker);
+        self::assertSame('datepicker', $picker->attr('data-controller'));
+        // Rendered inside a modal <dialog> ⇒ the calendar must not go to <body>.
+        self::assertSame('true', $picker->attr('data-datepicker-inline-value'));
+        // Browser-side bounds mirror the domain rule (now … first kickoff), in Prague time.
+        self::assertSame('2025-06-15 14:00', $picker->attr('data-datepicker-min-date-value'));
+        self::assertSame('2025-06-20 21:00', $picker->attr('data-datepicker-max-date-value'));
+    }
+
+    public function testScheduledLockIsStoredInUtcAndShownOnDetail(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $this->loginOwner($client);
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+        $client->submit(
+            $crawler->filter('form[action="'.self::LOCK_URL.'"]')->form(),
+            ['lock_mode' => 'at', 'lock_at' => '2025-06-18 09:00'],
+        );
+
+        self::assertResponseRedirects(self::DETAIL_URL);
+        $crawler = $client->followRedirect();
+
+        self::assertSelectorTextContains('body', 'Uzamčení tipů je naplánováno na 18. 6. 2025 09:00.');
+        // Not locked yet — the moment is still ahead.
+        self::assertSelectorTextNotContains('body', 'Tipy uzamčeny');
+        self::assertSelectorTextContains('body', 'Uzamčení tipů naplánováno na 18. 6. 2025 09:00');
+
+        // Both „change" (the lock form, prefilled) and „cancel" are offered.
+        $lockForm = $crawler->filter('form[action="'.self::LOCK_URL.'"]');
+        self::assertCount(1, $lockForm);
+        self::assertSame('2025-06-18 09:00', $lockForm->filter('input[name="lock_at"]')->attr('value'));
+        self::assertCount(1, $lockForm->filter('input[name="lock_mode"][value="at"][checked]'));
+        self::assertCount(1, $crawler->filter('form[action="'.self::UNLOCK_URL.'"]'));
+
+        $em->clear();
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        self::assertInstanceOf(Competition::class, $competition);
+        // 09:00 Europe/Prague (CEST) == 07:00 UTC.
+        self::assertNotNull($competition->tipsLockedAt);
+        self::assertSame('2025-06-18 07:00:00', $competition->tipsLockedAt->format('Y-m-d H:i:s'));
+        self::assertSame('UTC', $competition->tipsLockedAt->getTimezone()->getName());
+    }
+
+    public function testScheduledLockFiresByTimePassingWithoutAnyJob(): void
+    {
+        $client = static::createClient();
+        $this->loginOwner($client);
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+        $client->submit(
+            $crawler->filter('form[action="'.self::LOCK_URL.'"]')->form(),
+            ['lock_mode' => 'at', 'lock_at' => '2025-06-18 09:00'],
+        );
+        $client->followRedirect();
+
+        // Approach (a): the stored moment IS the lock. Nothing runs at 09:00 —
+        // the deadline resolver simply reaches it. Keep the kernel (and its
+        // MockClock) alive so the advance sticks.
+        $client->disableReboot();
+        /** @var ClockInterface $clock */
+        $clock = $client->getContainer()->get(ClockInterface::class);
+        self::assertInstanceOf(MockClock::class, $clock);
+        $clock->modify('2025-06-18 10:00:00');
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+
+        self::assertSelectorTextContains('body', 'Tipy uzamčeny');
+        self::assertSelectorTextNotContains('body', 'naplánováno');
+        // Now it is a plain manual lock: no more lock/change form, unlock still
+        // possible (the first kickoff is 2025-06-20).
+        self::assertCount(0, $crawler->filter('form[action="'.self::LOCK_URL.'"]'));
+        self::assertCount(1, $crawler->filter('form[action="'.self::UNLOCK_URL.'"]'));
+    }
+
+    public function testCancellingAScheduledLockKeepsTippingOpen(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $this->loginOwner($client);
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+        $client->submit(
+            $crawler->filter('form[action="'.self::LOCK_URL.'"]')->form(),
+            ['lock_mode' => 'at', 'lock_at' => '2025-06-18 09:00'],
+        );
+        $crawler = $client->followRedirect();
+
+        $client->submit($crawler->filter('form[action="'.self::UNLOCK_URL.'"]')->form());
+        $client->followRedirect();
+
+        self::assertSelectorTextContains('body', 'Naplánované uzamčení tipů bylo zrušeno.');
+        self::assertSelectorTextContains('body', 'Uzávěrka tipů: 20. 6. 2025 21:00');
+
+        $em->clear();
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        self::assertInstanceOf(Competition::class, $competition);
+        self::assertNull($competition->tipsLockedAt);
+    }
+
+    /**
+     * @return iterable<string, array{0: string, 1: string}>
+     */
+    public static function refusedScheduleProvider(): iterable
+    {
+        yield 'in the past' => ['2025-06-14 09:00', 'Čas uzamčení musí být v budoucnosti.'];
+        yield 'after the competition start' => ['2025-06-21 09:00', 'Uzamčení musí nastat dřív, než soutěž začne'];
+        yield 'unparseable' => ['zítra večer', 'Neplatný formát data a času uzamčení.'];
+        yield 'empty' => ['', 'Vyberte datum a čas uzamčení.'];
+    }
+
+    #[DataProvider('refusedScheduleProvider')]
+    public function testInvalidScheduleIsRefusedServerSide(string $lockAt, string $expectedFlash): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $this->loginOwner($client);
+
+        $crawler = $client->request('GET', self::DETAIL_URL);
+        $client->submit(
+            $crawler->filter('form[action="'.self::LOCK_URL.'"]')->form(),
+            ['lock_mode' => 'at', 'lock_at' => $lockAt],
+        );
+
+        self::assertResponseRedirects(self::DETAIL_URL);
+        $client->followRedirect();
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', $expectedFlash);
+
+        $em->clear();
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        self::assertInstanceOf(Competition::class, $competition);
+        self::assertNull($competition->tipsLockedAt);
     }
 
     public function testLockFlowLocksAndShowsUnlockButton(): void

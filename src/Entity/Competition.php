@@ -23,6 +23,7 @@ use App\Event\CompetitionUpdated;
 use App\Event\PremiumConfirmed;
 use App\Event\PremiumDowngraded;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
+use App\Exception\CompetitionTipsLockTimeInvalid;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -58,6 +59,11 @@ class Competition implements EntityWithEvents, SoftDeletable
      * Manual lock moment („Uzamknout tipy"). When null, the competition's tips
      * lock automatically at the earliest kickoff among its included matches
      * (computed live by {@see \App\Service\EffectiveTipDeadlineResolver}).
+     *
+     * The moment IS the state: a value in the past (or now) means the tips are
+     * locked, a value in the FUTURE means the manager scheduled the lock for
+     * that moment ({@see scheduleTipsLock}) — no job flips anything, the
+     * deadline resolver simply reaches it (B2).
      */
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $tipsLockedAt = null;
@@ -229,13 +235,17 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
-     * Manual „Uzamknout tipy": from this moment the competition counts as
-     * started for tip locking. Idempotent — locking an already locked
-     * competition keeps the original lock moment.
+     * Manual „Uzamknout tipy · Ihned": from this moment the competition counts
+     * as started for tip locking. Idempotent — locking an already locked
+     * competition keeps the original lock moment. For the „V určený čas"
+     * variant see {@see scheduleTipsLock}; a pending schedule is overwritten
+     * here (locking now always wins over a later moment).
      */
     public function lockTips(\DateTimeImmutable $now): void
     {
-        if (null !== $this->tipsLockedAt) {
+        // Already locked ⇒ keep the original moment. A lock moment still ahead
+        // is only a SCHEDULE, not a lock, so „Ihned" overwrites it.
+        if (null !== $this->tipsLockedAt && $this->tipsLockedAt <= $now) {
             return;
         }
 
@@ -249,9 +259,49 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
-     * Reverts a manual lock. Allowed only while the competition has not really
-     * started yet — i.e. before the first included match kicks off (the caller
-     * passes that moment in; null = the competition has no scheduled matches).
+     * „Uzamknout tipy · V určený čas" (B2): park the lock moment in the future
+     * instead of locking now. Nothing has to run at that moment — `tipsLockedAt`
+     * is already THE lock moment for {@see \App\Service\EffectiveTipDeadlineResolver},
+     * so every match deadline becomes `min(lockAt, kickoff)` the second it is
+     * stored, and the lock „fires" simply by time passing.
+     *
+     * Rules: the moment must be in the future (locking now = {@see lockTips})
+     * and strictly before the competition's start, i.e. the first included
+     * kickoff — a later moment would push the lock BEYOND the automatic one and
+     * reopen tips that the competition start already closed. Re-schedulable and
+     * cancellable ({@see unlockTips}) while it has not fired.
+     *
+     * Records NO event: nothing has locked yet. `CompetitionTipsLocked` stays
+     * reserved for the moment tips actually close, which for a scheduled lock is
+     * an instant nobody dispatches (deliberately — see .docs/ui-nav/BUGS.md B2).
+     */
+    public function scheduleTipsLock(
+        \DateTimeImmutable $lockAt,
+        \DateTimeImmutable $now,
+        ?\DateTimeImmutable $firstKickoffAt,
+    ): void {
+        if ($lockAt <= $now) {
+            throw CompetitionTipsLockTimeInvalid::notInFuture();
+        }
+
+        if (null !== $this->tipsLockedAt && $this->tipsLockedAt <= $now) {
+            throw CompetitionTipsLockTimeInvalid::alreadyLocked();
+        }
+
+        if (null !== $firstKickoffAt && $lockAt >= $firstKickoffAt) {
+            throw CompetitionTipsLockTimeInvalid::afterCompetitionStart();
+        }
+
+        $this->tipsLockedAt = $lockAt;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Reverts a manual lock — also the „zrušit naplánované uzamčení" path, since
+     * a pending schedule is just a lock moment that has not been reached yet.
+     * Allowed only while the competition has not really started yet — i.e.
+     * before the first included match kicks off (the caller passes that moment
+     * in; null = the competition has no scheduled matches).
      * Unlocking an unlocked competition is a no-op.
      */
     public function unlockTips(\DateTimeImmutable $now, ?\DateTimeImmutable $firstKickoffAt): void

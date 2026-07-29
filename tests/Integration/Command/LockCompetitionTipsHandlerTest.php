@@ -12,6 +12,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\Guess;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
+use App\Exception\CompetitionTipsLockTimeInvalid;
 use App\Exception\GuessDeadlinePassed;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Clock\MockClock;
@@ -50,6 +51,71 @@ final class LockCompetitionTipsHandlerTest extends IntegrationTestCase
         $competition = $em->find(Competition::class, $competitionId);
         self::assertInstanceOf(Competition::class, $competition);
         self::assertEquals(new \DateTimeImmutable('2025-06-15 12:00:00 UTC'), $competition->tipsLockedAt);
+    }
+
+    public function testScheduledLockKeepsTippingOpenUntilItsMomentAndNeedsNoJob(): void
+    {
+        // B2 approach (a): the stored „locked from" moment IS the lock. Nothing
+        // flips a flag at 09:00 — EffectiveTipDeadlineResolver simply reaches it.
+        $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
+        $userId = Uuid::fromString(AppFixtures::VERIFIED_USER_ID);
+        $scheduledFor = new \DateTimeImmutable('2025-06-18 07:00:00 UTC');
+
+        $this->commandBus()->dispatch(new LockCompetitionTipsCommand(
+            editorId: $userId,
+            competitionId: $competitionId,
+            lockAt: $scheduledFor,
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+        $competition = $em->find(Competition::class, $competitionId);
+        self::assertInstanceOf(Competition::class, $competition);
+        self::assertEquals($scheduledFor, $competition->tipsLockedAt);
+
+        // Before the moment tipping is untouched…
+        $this->commandBus()->dispatch(new SubmitGuessCommand(
+            userId: $userId,
+            competitionId: $competitionId,
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
+            homeScore: 1,
+            awayScore: 0,
+        ));
+
+        $clock = $this->clock();
+        self::assertInstanceOf(MockClock::class, $clock);
+        $clock->modify('2025-06-18 08:00:00');
+
+        // …and one hour after it the very same match is closed.
+        try {
+            $this->commandBus()->dispatch(new SubmitGuessCommand(
+                userId: $userId,
+                competitionId: $competitionId,
+                sportMatchId: Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
+                homeScore: 2,
+                awayScore: 2,
+            ));
+            self::fail('Tips must be locked once the scheduled moment passed.');
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(GuessDeadlinePassed::class, $e->getPrevious());
+        }
+    }
+
+    public function testSchedulingALockInThePastIsRefused(): void
+    {
+        $this->expectException(HandlerFailedException::class);
+
+        try {
+            $this->commandBus()->dispatch(new LockCompetitionTipsCommand(
+                editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+                competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+                lockAt: new \DateTimeImmutable('2025-06-15 11:59:00 UTC'),
+            ));
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(CompetitionTipsLockTimeInvalid::class, $e->getPrevious());
+
+            throw $e;
+        }
     }
 
     public function testUnlockBeforeFirstKickoffReopensTipping(): void

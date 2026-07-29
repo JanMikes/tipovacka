@@ -90,6 +90,13 @@ final class CompetitionDetailController extends AbstractController
         $canUnlockTips = null !== $competition->tipsLockedAt
             && (null === $firstKickoffAt || $now < $firstKickoffAt);
 
+        // B2: a manual lock moment still ahead is a SCHEDULE — the page shows it
+        // and offers „změnit"/„zrušit" until it fires (after which the branch
+        // above turns into the plain locked state).
+        $scheduledLockAt = null !== $competition->tipsLockedAt && $competition->tipsLockedAt > $now
+            ? $competition->tipsLockedAt
+            : null;
+
         $filterTeams = CompetitionMatchSelectionMode::Teams === $competition->selectionMode
             ? $this->teamFilterRepository->teamViewsFor($competition->id)
             : [];
@@ -142,6 +149,9 @@ final class CompetitionDetailController extends AbstractController
             'lock_moment' => $lockMoment,
             'tips_locked' => $tipsLocked,
             'can_unlock_tips' => $canUnlockTips,
+            'scheduled_lock_at' => $scheduledLockAt,
+            'first_kickoff_at' => $firstKickoffAt,
+            'now' => $now,
             'is_member' => $isMember,
             'is_owner' => $user->id->equals($competition->owner->id),
             'is_over' => $this->matchProvider->isFullyOver($competition),

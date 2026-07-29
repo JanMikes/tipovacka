@@ -23,10 +23,24 @@ const MODES = {
 const CLEAR_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-3.5 w-3.5"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" /></svg>';
 
 export default class extends Controller {
+    /*
+     * `inline` renders the calendar in the flow right under the input instead
+     * of floating it over <body>. Use it whenever the picker sits in a modal
+     * <dialog> (B2 „Uzamknout tipy · V určený čas"): a <body>-level calendar
+     * is painted UNDER the dialog's top layer and is unreachable, and a
+     * floating one inside a vertically centred dialog has nowhere to go —
+     * in flow the dialog simply grows (and scrolls) around it.
+     *
+     * NOTE: flatpickr's `static: true` looks like the answer for the same
+     * problem and is a trap — it re-parents `this.element` into a wrapper it
+     * creates, which makes Stimulus unmatch→match this controller forever and
+     * hangs the page. Do not reintroduce it.
+     */
     static values = {
         mode: { type: String, default: 'datetime' },
         minDate: String,
         maxDate: String,
+        inline: Boolean,
     };
 
     connect() {
@@ -46,6 +60,10 @@ export default class extends Controller {
             onReady: (_dates, _str, instance) => this.toggleClearButton(instance),
             onChange: (_dates, _str, instance) => this.toggleClearButton(instance),
         };
+
+        if (this.inlineValue) {
+            options.inline = true;
+        }
 
         if (this.hasMinDateValue && this.minDateValue !== '') {
             options.minDate = this.minDateValue;

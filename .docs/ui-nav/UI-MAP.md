@@ -133,7 +133,8 @@ remove member, promote/add anonymous member, PIN + link regenerate/revoke, uprav
 prémium switch). Lock/unlock tips, join and leave/delete stay on the detail page.
 
 POST-only actions under `/souteze/{id}/` (no template): `…/pripojit-se` (join global),
-`…/opustit`, `…/smazat`, `…/uzamknout-tipy`, `…/odemknout-tipy`, `…/premium/zapnout`,
+`…/opustit`, `…/smazat`, `…/uzamknout-tipy` (`lock_mode=now|at` + `lock_at`, B2),
+`…/odemknout-tipy` (also cancels a pending scheduled lock), `…/premium/zapnout`,
 `…/premium/prepnout-na-prispevky`, `…/vylepseni/koupit`, `…/pin/novy`, `…/pin/zrusit`,
 `…/odkaz/novy`, `…/odkaz/zrusit`, `…/pozvanky/odeslat`, `…/pozvanky/hromadne`,
 `…/clenove/{userId}/odebrat`, `…/zapasy/{sportMatchId}/uzaverka`,

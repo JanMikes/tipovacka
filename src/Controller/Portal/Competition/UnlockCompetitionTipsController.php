@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
 use App\Repository\CompetitionRepository;
 use App\Voter\CompetitionVoter;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,6 +32,7 @@ final class UnlockCompetitionTipsController extends AbstractController
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly MessageBusInterface $commandBus,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -41,6 +43,11 @@ final class UnlockCompetitionTipsController extends AbstractController
 
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(CompetitionVoter::EDIT, $competition);
+
+        // A lock moment still ahead is a pending schedule (B2), not a lock —
+        // clearing it „cancels the planned lock" rather than „unlocks tips".
+        $wasScheduled = null !== $competition->tipsLockedAt
+            && $competition->tipsLockedAt > \DateTimeImmutable::createFromInterface($this->clock->now());
 
         if (!$this->isCsrfTokenValid('competition_unlock_tips_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
@@ -69,7 +76,9 @@ final class UnlockCompetitionTipsController extends AbstractController
             throw $e;
         }
 
-        $this->addFlash('success', 'Tipy byly odemčeny.');
+        $this->addFlash('success', $wasScheduled
+            ? 'Naplánované uzamčení tipů bylo zrušeno.'
+            : 'Tipy byly odemčeny.');
 
         return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }

@@ -25,6 +25,7 @@ use App\Event\CompetitionUpdated;
 use App\Event\PremiumConfirmed;
 use App\Event\PremiumDowngraded;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
+use App\Exception\CompetitionTipsLockTimeInvalid;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -217,6 +218,99 @@ final class CompetitionEntityTest extends TestCase
         $competition->lockTips(new \DateTimeImmutable('2025-06-16 12:00:00 UTC'));
         self::assertSame($this->now, $competition->tipsLockedAt);
         self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testScheduleTipsLockStoresFutureMomentWithoutEventAndIsReschedulable(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->popEvents();
+
+        $firstKickoff = new \DateTimeImmutable('2025-06-20 18:00:00 UTC');
+        $scheduled = new \DateTimeImmutable('2025-06-18 09:00:00 UTC');
+
+        $competition->scheduleTipsLock($scheduled, $this->now, $firstKickoff);
+
+        self::assertSame($scheduled, $competition->tipsLockedAt);
+        self::assertSame($this->now, $competition->updatedAt);
+        // Nothing has locked yet ⇒ no CompetitionTipsLocked event.
+        self::assertCount(0, $competition->popEvents());
+
+        // Re-scheduling a pending lock just moves the moment.
+        $moved = new \DateTimeImmutable('2025-06-19 20:00:00 UTC');
+        $competition->scheduleTipsLock($moved, $this->now, $firstKickoff);
+        self::assertSame($moved, $competition->tipsLockedAt);
+        self::assertCount(0, $competition->popEvents());
+    }
+
+    public function testScheduleTipsLockRejectsMomentInThePast(): void
+    {
+        $competition = $this->makeCompetition();
+
+        $this->expectException(CompetitionTipsLockTimeInvalid::class);
+
+        $competition->scheduleTipsLock(
+            new \DateTimeImmutable('2025-06-15 11:59:00 UTC'),
+            $this->now,
+            new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+        );
+    }
+
+    public function testScheduleTipsLockRejectsMomentAtOrAfterCompetitionStart(): void
+    {
+        $competition = $this->makeCompetition();
+        $firstKickoff = new \DateTimeImmutable('2025-06-20 18:00:00 UTC');
+
+        $this->expectException(CompetitionTipsLockTimeInvalid::class);
+
+        // At the first kickoff the automatic lock already applies; anything
+        // later would push the lock PAST the start and reopen closed tips.
+        $competition->scheduleTipsLock($firstKickoff, $this->now, $firstKickoff);
+    }
+
+    public function testScheduleTipsLockRejectedOnAlreadyLockedCompetition(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->lockTips($this->now);
+        $competition->popEvents();
+
+        $this->expectException(CompetitionTipsLockTimeInvalid::class);
+
+        $competition->scheduleTipsLock(
+            new \DateTimeImmutable('2025-06-18 09:00:00 UTC'),
+            $this->now,
+            new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+        );
+    }
+
+    public function testLockTipsNowOverridesPendingSchedule(): void
+    {
+        $competition = $this->makeCompetition();
+        $competition->scheduleTipsLock(
+            new \DateTimeImmutable('2025-06-18 09:00:00 UTC'),
+            $this->now,
+            new \DateTimeImmutable('2025-06-20 18:00:00 UTC'),
+        );
+        $competition->popEvents();
+
+        $competition->lockTips($this->now);
+
+        self::assertSame($this->now, $competition->tipsLockedAt);
+        $events = $competition->popEvents();
+        self::assertCount(1, $events);
+        self::assertInstanceOf(CompetitionTipsLocked::class, $events[0]);
+    }
+
+    public function testUnlockTipsCancelsPendingSchedule(): void
+    {
+        $competition = $this->makeCompetition();
+        $firstKickoff = new \DateTimeImmutable('2025-06-20 18:00:00 UTC');
+        $competition->scheduleTipsLock(new \DateTimeImmutable('2025-06-18 09:00:00 UTC'), $this->now, $firstKickoff);
+        $competition->popEvents();
+
+        $competition->unlockTips($this->now, $firstKickoff);
+
+        self::assertNull($competition->tipsLockedAt);
+        self::assertCount(1, $competition->popEvents());
     }
 
     public function testUnlockTipsAllowedBeforeFirstKickoff(): void

@@ -28,6 +28,8 @@
                     {% endif %}
                     {% if tips_locked %}
                         <twig:Pill label="Tipy uzamčeny" variant="locked" icon="lock" />
+                    {% elseif scheduled_lock_at %}
+                        <twig:Pill label="Uzamčení {{ scheduled_lock_at|date('j. n. H:i') }}" variant="soon" icon="clock" />
                     {% endif %}
                 </div>
 
@@ -38,7 +40,13 @@
                     {% if is_member %}
                         <twig:Badge label="Hráč" variant="competition" icon="user" />
                     {% endif %}
-                    {% if not tips_locked and lock_moment %}
+                    {% if scheduled_lock_at %}
+                        {# B2: a manual lock moment that has not been reached yet. #}
+                        <span class="inline-flex items-center gap-1.5 text-sm text-white/70">
+                            <twig:ux:icon name="lucide:clock" class="h-4 w-4 text-accent-400" />
+                            Uzamčení tipů naplánováno na {{ scheduled_lock_at|date('j. n. Y H:i') }}
+                        </span>
+                    {% elseif not tips_locked and lock_moment %}
                         <span class="inline-flex items-center gap-1.5 text-sm text-white/50">
                             <twig:ux:icon name="lucide:hourglass" class="h-4 w-4 text-white/40" />
                             Uzávěrka tipů: {{ lock_moment|date('j. n. Y H:i') }}
@@ -66,17 +74,65 @@
                 {% endif %}
                 {% if is_granted('competition_edit', competition) %}
                     {% if not tips_locked %}
-                        <form method="post" action="{{ path('competition_lock_tips', {id: competition.id.toRfc4122}) }}"
+                        {% set lock_form_id = 'lock-tips-' ~ competition.id.toRfc4122 %}
+                        {# novalidate: flatpickr's calendar lives inside this form and its internal
+                           hour/minute number inputs (step=5) would fail constraint validation and
+                           silently block submitting. Nothing here needs browser validation — the
+                           handler validates the moment. #}
+                        <form method="post" id="{{ lock_form_id }}" novalidate action="{{ path('competition_lock_tips', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Uzamknout tipy"
-                            data-confirm-message-value="Tipy všech členů se okamžitě uzamknou, jako by soutěž právě odstartovala. Odemknout je půjde jen do výkopu prvního zápasu."
-                            data-confirm-confirm-label-value="Ano, uzamknout">
+                            data-confirm-message-value="Tipy všech členů se uzamknou, jako by soutěž právě odstartovala. Odemknout je půjde jen do výkopu prvního zápasu."
+                            data-confirm-confirm-label-value="{{ scheduled_lock_at ? 'Uložit uzamčení' : 'Ano, uzamknout' }}">
                             <input type="hidden" name="_token" value="{{ csrf_token('competition_lock_tips_' ~ competition.id.toRfc4122) }}">
+
+                            {# B2 — the modal asks WHEN. The confirm controller moves this block into
+                               the dialog; without JS the form posts „Ihned", i.e. the pre-B2 behaviour. #}
+                            <div data-confirm-target="fields" hidden class="lock-when mt-5 space-y-2">
+                                <label class="option-card flex cursor-pointer items-center gap-3">
+                                    <input type="radio" name="lock_mode" value="now" {{ scheduled_lock_at ? '' : 'checked' }}
+                                           class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500">
+                                    <span class="text-sm font-medium text-white">Ihned</span>
+                                </label>
+                                <label class="option-card flex cursor-pointer items-center gap-3">
+                                    <input type="radio" name="lock_mode" value="at" {{ scheduled_lock_at ? 'checked' : '' }}
+                                           class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500">
+                                    <span class="text-sm font-medium text-white">V určený čas</span>
+                                </label>
+
+                                <div class="lock-when-at field pt-1">
+                                    <label class="field-label" for="{{ lock_form_id }}-at">Kdy se tipy uzamknou</label>
+                                    <input type="text" name="lock_at" id="{{ lock_form_id }}-at" class="input"
+                                           value="{{ scheduled_lock_at ? scheduled_lock_at|date('Y-m-d H:i') : '' }}"
+                                           data-controller="datepicker"
+                                           data-datepicker-mode-value="datetime"
+                                           data-datepicker-inline-value="true"
+                                           data-datepicker-min-date-value="{{ now|date('Y-m-d H:i') }}"
+                                           {% if first_kickoff_at %}data-datepicker-max-date-value="{{ first_kickoff_at|date('Y-m-d H:i') }}"{% endif %}>
+                                    <p class="text-xs text-white/40">
+                                        Český čas.{% if first_kickoff_at %} Nejpozději před výkopem prvního zápasu ({{ first_kickoff_at|date('j. n. Y H:i') }}).{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn btn-primary btn-sm">
-                                <twig:ux:icon name="lucide:lock" class="h-4 w-4" />Uzamknout tipy
+                                <twig:ux:icon name="lucide:lock" class="h-4 w-4" />{{ scheduled_lock_at ? 'Změnit uzamčení' : 'Uzamknout tipy' }}
                             </button>
                         </form>
+                        {% if scheduled_lock_at and can_unlock_tips %}
+                            <form method="post" action="{{ path('competition_unlock_tips', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Zrušit naplánované uzamčení"
+                                data-confirm-message-value="Uzamčení naplánované na {{ scheduled_lock_at|date('j. n. Y H:i') }} se zruší. Tipy se pak uzamknou až se startem soutěže."
+                                data-confirm-confirm-label-value="Ano, zrušit">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_unlock_tips_' ~ competition.id.toRfc4122) }}">
+                                <button type="submit" class="btn btn-ghost btn-sm">
+                                    <twig:ux:icon name="lucide:x" class="h-4 w-4" />Zrušit naplánování
+                                </button>
+                            </form>
+                        {% endif %}
                     {% elseif can_unlock_tips %}
                         <form method="post" action="{{ path('competition_unlock_tips', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
