@@ -7,7 +7,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
-| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | BLOCKED | — (recon done, awaits product owner) |
+| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | TODO | — |
 | W2 | Playoff option moves from step 1 to step 2 | DONE | `f69937d` |
 | W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `f69937d` |
 | W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `f69937d` |
@@ -86,10 +86,40 @@ Answers to the recon below. **These are settled — implement them as written.**
 3. **„Chcete tipovat také střelce utkání?"** — unchanged from the recon: it maps cleanly onto
    `scorer_hit` enablement, so implement it as a rule toggle, not as new schema.
 
-Still open, tracked in the board as BLOCKED until answered: the **PP vs PEN** split and the
-**„Tipování části zápasu"** rule set. Do not implement Maxi's overtime or per-period sections until
-those land; everything else in W1 (the four Standardní renames, the preset tiles, „Vlastní
-(připravujeme)", the střelci toggle, the playoff rewording) can proceed now.
+4. **PP vs PEN — keep ONE combined overtime score, just relabel it.** Product owner chose „Keep one
+   combined score, relabel" over splitting.
+   So `SportMatch` and `Guess` keep their single overtime score pair meaning „after prolongation *or*
+   shootout", scored by the existing `overtime_exact` rule. **No new columns, no migration, no
+   change to the score-entry or guess forms.** W1's job is only to word it clearly in the Maxi
+   preset — one „Celkové skóre po prodloužení / penaltách" entry, not two. Separating PP from PEN is
+   deferred to its own item if the distinction is ever needed.
+
+5. **Periods („Tipování části zápasu") — BOTH partial-credit styles available.** Product owner chose
+   „Both styles available".
+
+   Today periods reward only the *winner* style. The full match rewards both styles. Maxi must offer
+   both for periods too:
+
+   | Style | Full-match rule (exists) | Period rule |
+   |---|---|---|
+   | exact score | `exact_score` (5 b) | `period_exact` (5 b) — **exists, keep** |
+   | right winner | `correct_outcome` (3 b) | `period_tendency` (2 b) — **exists, KEEP** |
+   | each team's goals | `correct_home_goals` / `correct_away_goals` (1 b each) | **ADD two new rules** |
+
+   So: **add two new rules** — per-period home goals and per-period away goals — and **keep
+   `period_tendency`**. Nothing is retired. The organiser enables whichever they want and sets the
+   points, exactly like every other rule.
+
+   Worked example the decision was made against — half-time finishes **2:1**, player tipped **2:0**:
+   `period_exact` misses; `period_tendency` hits (both home wins); the new per-period home-goals rule
+   hits (2 = 2); the new away-goals rule misses (0 ≠ 1).
+
+   Follow the existing `#[AsRule]` pattern — registration comes from implementing `Rule`, metadata
+   lives in property hooks. `CompetitionRuleConfiguration` stores `(rule identifier, enabled,
+   points)`, so two new rule classes need **no schema change**. Both default to **disabled**, like
+   every other non-`base` rule, so no existing competition's scoring changes.
+
+**W1 is now fully unblocked.** Nothing in it is waiting on the product owner.
 
 ### Deferred out of W1
 
