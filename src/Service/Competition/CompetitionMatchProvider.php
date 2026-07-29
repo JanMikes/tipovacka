@@ -206,20 +206,30 @@ class CompetitionMatchProvider implements ResetInterface
      * query — each row is kept only when the row's match belongs to the row's
      * competition. Deleted-match filtering stays with the call site (it usually
      * exists already).
+     *
+     * Each branch is guarded by the row's OWN selection mode, exactly like
+     * {@see applyCompetitionMatchFilter} and {@see includesIgnoringDeletion}.
+     * An un-guarded OR of the three branches would let a leftover selection /
+     * team-filter row of a mode the competition no longer uses smuggle a match
+     * into a cross-competition surface that the competition-scoped filter (and
+     * therefore the match detail page) says is out of scope.
      */
     public function applyRowLevelCompetitionMatchFilter(QueryBuilder $qb, string $matchAlias, string $competitionAlias): void
     {
         $qb->andWhere(sprintf(
             '('
             .'(%1$s.selectionMode = :cmp_mode_all AND (%1$s.includePlayoff = true OR %2$s.isPlayoff = false))'
-            .' OR EXISTS(SELECT 1 FROM %3$s cmp_sel_row WHERE cmp_sel_row.competition = %1$s AND cmp_sel_row.sportMatch = %2$s)'
-            .' OR EXISTS(SELECT 1 FROM %4$s cmp_tf_row WHERE cmp_tf_row.competition = %1$s AND (cmp_tf_row.team = %2$s.homeTeam OR cmp_tf_row.team = %2$s.awayTeam))'
+            .' OR (%1$s.selectionMode = :cmp_mode_subset AND EXISTS(SELECT 1 FROM %3$s cmp_sel_row WHERE cmp_sel_row.competition = %1$s AND cmp_sel_row.sportMatch = %2$s))'
+            .' OR (%1$s.selectionMode = :cmp_mode_teams AND EXISTS(SELECT 1 FROM %4$s cmp_tf_row WHERE cmp_tf_row.competition = %1$s AND (cmp_tf_row.team = %2$s.homeTeam OR cmp_tf_row.team = %2$s.awayTeam)))'
             .')',
             $competitionAlias,
             $matchAlias,
             CompetitionMatchSelection::class,
             CompetitionTeamFilter::class,
-        ))->setParameter('cmp_mode_all', CompetitionMatchSelectionMode::All);
+        ))
+            ->setParameter('cmp_mode_all', CompetitionMatchSelectionMode::All)
+            ->setParameter('cmp_mode_subset', CompetitionMatchSelectionMode::Subset)
+            ->setParameter('cmp_mode_teams', CompetitionMatchSelectionMode::Teams);
     }
 
     public function forgetSelections(Uuid $competitionId): void

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\SportMatch;
 
+use App\Entity\Competition;
+use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\CompetitionMatchSelectionMode;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MatchEventRepository;
 use App\Repository\MembershipRepository;
@@ -34,6 +38,7 @@ final class SportMatchDetailController extends AbstractController
         private readonly MatchEventRepository $matchEventRepository,
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly TipStatsProvider $tipStatsProvider,
+        private readonly CompetitionTeamFilterRepository $teamFilterRepository,
     ) {
     }
 
@@ -44,13 +49,36 @@ final class SportMatchDetailController extends AbstractController
 
         $user = $this->getUser();
         $myCompetitionsForMatchSource = [];
+        $excludedCompetitions = [];
 
         if ($user instanceof User) {
             $including = [];
 
             foreach ($this->membershipRepository->findMyActive($user->id) as $membership) {
-                if ($this->matchProvider->includes($membership->competition, $sportMatch)) {
-                    $including[] = $membership->competition;
+                $competition = $membership->competition;
+
+                if ($this->matchProvider->includes($competition, $sportMatch)) {
+                    $including[] = $competition;
+
+                    continue;
+                }
+
+                // B4: a competition over ANOTHER source has obviously nothing to
+                // do with this match. A competition over THIS source, though,
+                // raises the „I am a member — why is it not listed?" question,
+                // and the user cannot answer it from this page. Collect those
+                // and say why the match falls outside their scope.
+                if ($competition->matchSource->id->equals($sportMatch->matchSource->id)) {
+                    $excludedCompetitions[] = [
+                        'id' => $competition->id,
+                        'name' => $competition->name,
+                        'reason' => $this->exclusionReason($competition, $sportMatch),
+                        // Bounded by the viewer's own Teams-mode competitions over
+                        // this one source — typically zero or one, so no N+1 risk.
+                        'teams' => CompetitionMatchSelectionMode::Teams === $competition->selectionMode
+                            ? $this->teamFilterRepository->teamViewsFor($competition->id)
+                            : [],
+                    ];
                 }
             }
 
@@ -79,7 +107,25 @@ final class SportMatchDetailController extends AbstractController
         return $this->render('portal/sport_match/detail.html.twig', [
             'sport_match' => $sportMatch,
             'my_competitions_for_match_source' => $myCompetitionsForMatchSource,
+            'excluded_competitions_for_match_source' => $excludedCompetitions,
             'match_events' => $this->matchEventRepository->listByMatch($sportMatch->id),
         ]);
+    }
+
+    /**
+     * Why {@see CompetitionMatchProvider::includes} said no, for a competition
+     * that lives on the very source this match belongs to. The cases mirror the
+     * provider's own branches one-to-one — the deleted-match and foreign-source
+     * ones cannot occur here (the page 404s on the former, the caller filters
+     * the latter), hence the `other` catch-all rather than a partial match.
+     */
+    private function exclusionReason(Competition $competition, SportMatch $sportMatch): string
+    {
+        return match (true) {
+            CompetitionMatchSelectionMode::Subset === $competition->selectionMode => 'subset',
+            CompetitionMatchSelectionMode::Teams === $competition->selectionMode => 'teams',
+            $sportMatch->isPlayoff && !$competition->includePlayoff => 'playoff',
+            default => 'other',
+        };
     }
 }

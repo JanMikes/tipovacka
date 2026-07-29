@@ -11,7 +11,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B1 | Unverified e-mail account can still use the app | DONE | `7b3f010` |
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | TODO | — |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
-| B4 | Match detail omits a competition the user is a member of | TODO | — |
+| B4 | Match detail omits a competition the user is a member of | DONE | `PENDING` |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 
@@ -197,6 +197,67 @@ Observed (screenshots):
 
 Determine which it is, state it in the commit message, then fix accordingly. If it is (1), the match
 detail should still make clear *why* a competition the user belongs to is absent.
+
+### Diagnosis: **(1) — correct behaviour, badly communicated.** No leak, no drop.
+
+Reproduced deliberately on `DevFixtures`, logged in as `user@tipovacka.test`, who is in both
+„Tipovačka MS 2026" (mode `all`) and „Fandíme Česku" (mode `teams`, scoped to Česko +
+Slovensko) over the **same** source „Mistrovství světa 2026":
+
+- `/zapasy/…fa010` (Česko vs Brazílie) → „Vaše tipy **2**"
+- `/zapasy/…fa011` (Argentina vs Mexiko) → „Vaše tipy **1**"
+
+— the exact reported shape. The count is right: the teams filter genuinely excludes the second
+fixture. The reporter's „Fotbal F-M (Lipina)" is the same case: a competition whose match scope
+covers Frýdek-Místek but not Hlubina vs Zbrojovka. Locking is a red herring — the list is built
+from `CompetitionMatchProvider::includes()`, which knows nothing about deadlines or lock state
+(which is why the locked competition rendered its explanatory panel on the *first* screenshot).
+
+Audit of the two filters, since the item points at them: `includes()`,
+`applyCompetitionMatchFilter` and `applyRowLevelCompetitionMatchFilter` agreed on every fixture
+competition × match, so no live surface was leaking or dropping rows. They did, however, differ
+in *shape*: the row-level variant OR-ed its three mode branches instead of guarding each by the
+row's own `selectionMode`. Not reachable today (`selectionMode` is create-only — the form field
+is added only under `with_source_selection`), but it means a leftover `CompetitionMatchSelection`
+/ `CompetitionTeamFilter` row of an unused mode would widen a competition's scope on
+cross-competition surfaces while the match detail kept it out — i.e. it would manufacture
+exactly this bug for real. Hardened, since „both filters must agree" is the documented trap.
+
+### Implementation
+
+- `SportMatchDetailController` now also collects the memberships whose competition sits on
+  **this match's source** but whose scope excludes the match, with a reason (`subset` / `teams` /
+  `playoff` / catch-all) and, for `teams`, the filter teams via `teamViewsFor()`. Competitions
+  over another source are still not listed — they are not surprising and would be noise.
+- `templates/portal/sport_match/detail.html.twig` renders them under the „Vaše tipy" section:
+  „Proč tu nejsou všechny vaše soutěže" (or „Tenhle zápas se ve vašich soutěžích netipuje" when
+  no competition takes a tip here), one row per competition with the reason in one sentence and
+  the filter teams spelled out as `TeamFlag` pills. No new CSS — `card-glass` / `bg-inset` and
+  the team-pill markup are reused verbatim from the competition detail header.
+- `CompetitionMatchProvider::applyRowLevelCompetitionMatchFilter` now guards each branch by the
+  row's `selectionMode`, mirroring `applyCompetitionMatchFilter` / `includesIgnoringDeletion`.
+- Tests: `tests/Integration/Portal/SportMatch/MatchDetailCompetitionScopeTest.php` (all three
+  reasons + the „covered, so no explanation needed" and „nothing on this source at all" cases)
+  and `tests/Integration/Service/CompetitionMatchScopeAgreementTest.php`, which pins all three
+  membership implementations to each other for every mode and fails on the old un-guarded OR.
+
+### Assumptions made
+
+- **The count stays the count.** „Vaše tipy N" keeps counting only competitions that actually
+  take a tip here; the excluded ones are explained *below* it rather than padded into it.
+- **Only same-source competitions are explained.** A competition over a different `MatchSource`
+  can never contain this match and listing it would be noise, so it is silently omitted — the
+  conservative reading of „a user should never have to guess", scoped to the absence that is
+  actually surprising.
+- **The panel replaces nothing.** When every membership includes the match the page is byte-for-byte
+  what it was, so items 05/08 and the other match-listing surfaces are untouched.
+- **The `teams` reason lists the filter teams** (one extra query per Teams-mode competition of the
+  viewer on this one source — typically zero or one, so no N+1); without them the sentence
+  „zahrnuje jen zápasy vybraných týmů" would just move the guessing one step further.
+- **`DevFixtures`' „Fandíme Česku" was used to reproduce and verify by hand**, but not in tests —
+  `DevFixtures` is group `dev` only and is never loaded by `tests/bootstrap.php`. The automated
+  coverage rebuilds the same shape from `AppFixtures` (`SUBSET_COMPETITION` plus a Teams-mode and
+  a playoff-excluding competition created through `CreateCompetitionCommand`).
 
 ---
 
