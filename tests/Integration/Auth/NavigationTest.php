@@ -24,15 +24,28 @@ final class NavigationTest extends WebTestCase
         self::assertSelectorExists('a[href="/registrace"]');
     }
 
-    public function testAnonymousTopBarHasOnlyTheSoutezeLink(): void
+    /**
+     * Item 05 added „Žebříček" to the logged-out bar — the page it points at is now a
+     * real, publicly viewable board rather than a members-only redirector.
+     */
+    public function testAnonymousTopBarHasSoutezeAndZebricek(): void
     {
         $client = static::createClient();
         $crawler = $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertSame(['Soutěže'], $crawler->filter('header.wtnav nav.primary a')->each(
-            static fn (Crawler $node): string => trim($node->text()),
-        ));
+        self::assertSame(
+            [
+                ['Soutěže', '/souteze'],
+                ['Žebříček', '/zebricek'],
+            ],
+            $crawler->filter('header.wtnav nav.primary a')->each(
+                static fn (Crawler $node): array => [trim($node->text()), $node->attr('href')],
+            ),
+        );
+        // …and it is genuinely reachable without logging in.
+        $client->request('GET', '/zebricek');
+        self::assertResponseIsSuccessful();
         // The marketing pages are footer-only now; they must not be back in the bar.
         self::assertSelectorNotExists('header.wtnav nav.primary a[href="/funkce"]');
         self::assertSelectorNotExists('header.wtnav nav.primary a[href="/cenik"]');

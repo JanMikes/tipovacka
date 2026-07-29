@@ -1,6 +1,6 @@
 # Item 05 — „Žebříček" becomes a real, standalone, publicly viewable page
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 02 (round/kolo — for the „Poslední kolo" tab and the „KOLO" hero stat),
 item 04 (the grouped tom-select switcher). Item 03 (fixtures) makes it far easier to verify.
 
@@ -128,3 +128,75 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → `tests/Integration/{Porta
 (never `phpunit tests/` whole — OOM) → render checks on `/zebricek` logged out, logged in, with a
 competition the viewer is not in, and on all four tabs. Update `UI-MAP.md` §1/§2/§3. Update the status
 board row to DONE + sha. Commit `UI: standalone Žebříček page`, push to `main`.
+
+---
+
+## What landed
+
+- **`/zebricek` is a real page** — `src/Controller/Public/LeaderboardController.php` +
+  `templates/public/leaderboard.html.twig`. No `#[IsGranted]`; the audience is the
+  `leaderboard_view` voter's decision. Sections in the screenshots' order: hero (eyebrow,
+  „Žebříček", HRÁČŮ / ODEHRÁNO / KOLO / AKTUALIZACE) → `SoutezSwitcher` (+ „Registrace zdarma"
+  when logged out) → `.you-strip` → `Leaderboard:Podium` → filter bar → table → footer.
+- **Routes consolidated, not aliased.** `competition_leaderboard*` and the old `/zebricek`
+  redirector are **deleted**. The sub-pages are `leaderboard_matrix` (`/zebricek/matice`),
+  `leaderboard_member` (`/zebricek/clen/{userId}`) and `leaderboard_resolve_ties`
+  (`/zebricek/shoda`), each scoped by `?soutez={uuid}` via the
+  `ResolvesLeaderboardCompetition` trait (missing/invalid id → 404). Every `path()` call, the
+  two notification handlers and every test were fixed in the same commit.
+- **`LeaderboardVoter` gained a second attribute rather than being weakened.**
+  `leaderboard_view` = member/owner/admin **or anybody when `Competition.isGlobal`**;
+  the new `leaderboard_details` keeps the old member-only rule and guards the two
+  tip-revealing sub-pages, so widening the public board could not widen them.
+- **All four period tabs.** `LeaderboardTimeFilter` gained `Last30Days` (`?obdobi=mesic`,
+  „Měsíc"), and `Last7Days` is now labelled „Týden" (its `longLabel()` still spells the window
+  out). „Poslední kolo" renders only when `GetCompetitionCurrentRound` returns a round, and so
+  does the KOLO hero stat.
+- **The condensed board.** `Service/Leaderboard/LeaderboardTableBuilder` +
+  `Value/LeaderboardTable(Entry)` do search (`?hledat`), sort (`?razeni`, `Enum/LeaderboardSort`
+  — display order only, POZICE stays the real rank) and the „… pozice 13–24 …" fold
+  (head 12 + viewer ±2 + tail 2, `?vse=1` expands). No pagination — paging would hide the
+  viewer's own row behind a button.
+- **New read query** `GetCompetitionMatchProgress` (one aggregate, competition match scope
+  respected) for the „ODEHRÁNO 38 / 64" hero stat.
+- **Deleted** the `Leaderboard:CompetitionLeaderboard` Live Component: every bit of the table's
+  state is now a query parameter, so a live island bought nothing and would have duplicated it.
+- **Fixed in passing:** `portal/leaderboard/resolve_ties.html.twig` referenced an undefined
+  `tiedCompetitions` (the controller passes `tiedGroups`) and 500'd on every render.
+- **CSS:** one block, `/* --- item 05: Žebříček page --- */`, at the end of the leaderboard
+  section — `.lb-toolbar`, `.lb-search`, `.lb-sort`, table gutters, `.lb-gap`, `.lb-foot`.
+  Everything else reuses `.you-strip`, `.lb-tabs`, `.lb-table`, `.lb-tr.me`, `.lb-ty`,
+  `.lb-acc-bar`, `.podium`.
+- **Tests:** `tests/Integration/Public/PublicLeaderboardFlowTest.php` (10 cases — every
+  acceptance criterion, incl. the private-competition-by-UUID guard and the sub-pages being
+  refused anonymously) and `tests/Unit/Service/LeaderboardTableBuilderTest.php` (8 cases).
+  `AnonymousReachabilityTest`, `NavigationTest`, `SoutezSwitcherFlowTest`,
+  `CompetitionLeaderboardFlowTest`, `PodiumFlowTest` and `LeaderboardDeltaFlowTest` updated.
+
+## Assumptions made
+
+1. **A competition the viewer may not see falls back; it does not 403.** The nav entry carries
+   no id, so the page must always land on something. The private competition's name, members
+   and detail link never appear — only the id the visitor typed themselves echoes back in
+   `<meta og:url>`. This matches the switcher's documented leak-prevention contract.
+2. **The „Tvoje pozice" strip is derived from the same filtered board as the table**, not from
+   `GetMemberCompetitionStats` as the item suggested. `LeaderboardRow` already carries rank,
+   points, Δ, accuracy, exact and streak, and reading one board keeps the strip from
+   contradicting a re-ranked window tab (the reason the old controller did it this way).
+3. **„Měsíc" is a rolling 30-day window** over match kickoffs, the same shape as „Týden".
+4. **„Seřadit" is a real `?razeni` select**, applied server-side, changing display order only.
+   The design shows a dropdown with no submit; the form carries a „Použít" button so it works
+   without JavaScript.
+5. **The anonymous switcher lists the same scope as `/souteze` discovery**
+   (`CompetitionBrowseScope::Discoverable`), i.e. global competitions over a source that is not
+   completed. A finished global competition's board stays reachable by URL — it is simply not
+   offered in the picker, exactly as it is not offered on the discovery page.
+6. **The logged-in default is the viewer's primary (most recently joined) soutěž, live before
+   ended** — the same choice the Nástěnka makes, so both pages agree on „your" soutěž.
+7. **A logged-in user in no soutěž gets the public feed** rather than an empty page.
+8. **`/zebricek` stays behind the unverified-email airlock.** The airlock is an allow-list and
+   an unverified account is mid-onboarding; anonymous visitors are unaffected (the subscriber
+   only fires for a logged-in user), so the public page is genuinely public.
+9. **The page controller lives in `src/Controller/Public/`**, keeping item 09's invariant that
+   every controller under `src/Controller/Portal/` carries `#[IsGranted('ROLE_USER')]` true. The
+   three members-only sub-pages stayed in `Portal/Leaderboard/`.

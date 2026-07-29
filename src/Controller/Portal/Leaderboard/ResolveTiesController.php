@@ -18,18 +18,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
-#[Route(
-    '/souteze/{competitionId}/zebricek/shoda',
-    name: 'competition_leaderboard_resolve_ties',
-    requirements: ['competitionId' => Requirement::UUID],
-)]
+#[Route('/zebricek/shoda', name: 'leaderboard_resolve_ties')]
 #[IsGranted('ROLE_USER')]
 final class ResolveTiesController extends AbstractController
 {
+    use ResolvesLeaderboardCompetition;
+
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly QueryBus $queryBus,
@@ -37,9 +34,9 @@ final class ResolveTiesController extends AbstractController
     ) {
     }
 
-    public function __invoke(Request $request, string $competitionId): Response
+    public function __invoke(Request $request): Response
     {
-        $competition = $this->competitionRepository->get(Uuid::fromString($competitionId));
+        $competition = $this->competitionRepository->get(self::competitionIdFromRequest($request));
         $this->denyAccessUnlessGranted(LeaderboardVoter::RESOLVE_TIES, $competition);
 
         /** @var User $user */
@@ -67,8 +64,8 @@ final class ResolveTiesController extends AbstractController
 
             $this->addFlash('success', 'Rozřazení bylo uloženo.');
 
-            return $this->redirectToRoute('competition_leaderboard', [
-                'competitionId' => $competition->id->toRfc4122(),
+            return $this->redirectToRoute('leaderboard', [
+                'soutez' => $competition->id->toRfc4122(),
             ]);
         }
 

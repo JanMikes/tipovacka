@@ -89,6 +89,11 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Public\PricingController::class => false,
         \App\Controller\Public\PrivacyController::class => false,
         \App\Controller\Public\CompetitionsListController::class => false,
+        // „Žebříček" (item 05) — public on purpose: `/zebricek` serves an anonymous
+        // visitor the board of a PUBLIC GLOBAL competition. Which competition may be
+        // seen is decided by LeaderboardVoter, not by the route: a private one is not
+        // reachable by guessing its UUID (see PublicLeaderboardFlowTest).
+        \App\Controller\Public\LeaderboardController::class => false,
         \App\Controller\Webhook\StripeWebhookController::class => false,
 
         // --- Invitation landings (public on purpose: they onboard logged-out people) ---
@@ -136,9 +141,7 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Portal\Guess\SportMatchGuessesController::class => true,
         \App\Controller\Portal\Guess\SubmitGuessOnBehalfController::class => true,
         \App\Controller\Portal\Guess\SubmitMemberTipsBatchController::class => true,
-        \App\Controller\Portal\Leaderboard\CompetitionLeaderboardController::class => true,
         \App\Controller\Portal\Leaderboard\GuessMatrixController::class => true,
-        \App\Controller\Portal\Leaderboard\LeaderboardController::class => true,
         \App\Controller\Portal\Leaderboard\MemberBreakdownController::class => true,
         \App\Controller\Portal\Leaderboard\ResolveTiesController::class => true,
         \App\Controller\Portal\MatchSource\MarkMatchSourceCompletedController::class => true,

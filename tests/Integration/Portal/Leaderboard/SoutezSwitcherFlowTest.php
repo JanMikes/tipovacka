@@ -20,7 +20,7 @@ final class SoutezSwitcherFlowTest extends WebTestCase
         $verified = $this->userInTwoCompetitions($client->getContainer());
         $client->loginUser($verified);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -46,20 +46,24 @@ final class SoutezSwitcherFlowTest extends WebTestCase
 
         $client->request('GET', '/zebricek?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Žebříček');
+        // The page scoped itself to the chosen soutěž — its detail link proves which one.
+        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'"]');
     }
 
-    public function testForeignSoutezIdFallsBackToThePrimaryOne(): void
+    public function testForeignSoutezIdFallsBackToTheViewersOwnSoutez(): void
     {
         $client = static::createClient();
         $verified = $this->userInTwoCompetitions($client->getContainer());
         $client->loginUser($verified);
 
-        // A competition the user is not a member of must never resolve — the resolver
-        // silently falls back to the primary (most recently joined) soutěž.
+        // A competition the viewer may not see must never resolve — the page silently
+        // falls back to a soutěž of their own rather than leaking a foreign board.
         $client->request('GET', '/zebricek?soutez=de305d54-75b4-431b-adb2-eb6b9e546014');
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'"]');
     }
 
     /**

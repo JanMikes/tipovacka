@@ -45,7 +45,7 @@ final class PodiumFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -68,7 +68,7 @@ final class PodiumFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();

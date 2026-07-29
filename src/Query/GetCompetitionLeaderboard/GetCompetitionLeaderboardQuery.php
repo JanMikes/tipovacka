@@ -25,8 +25,11 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class GetCompetitionLeaderboardQuery
 {
-    /** „Posledních 7 dní" rolling window length. */
+    /** „Týden" rolling window length. */
     private const string WINDOW_LAST_7_DAYS = '-7 days';
+
+    /** „Měsíc" rolling window length. */
+    private const string WINDOW_LAST_30_DAYS = '-30 days';
 
     public function __construct(
         private CompetitionRepository $competitionRepository,
@@ -260,10 +263,10 @@ final readonly class GetCompetitionLeaderboardQuery
     }
 
     /**
-     * „Posledních 7 dní": keep only evaluations whose match kicked off within the
-     * rolling 7-day window ending now. The boundary is an instant (both sides
-     * UTC-stored), so it is derived directly from the injected clock — the Prague
-     * framing only matters for day-labelled snapshots, not this rolling sum.
+     * „Týden" / „Měsíc": keep only evaluations whose match kicked off within the
+     * rolling 7- resp. 30-day window ending now. The boundary is an instant (both
+     * sides UTC-stored), so it is derived directly from the injected clock — the
+     * Prague framing only matters for day-labelled snapshots, not this rolling sum.
      *
      * „Poslední kolo": keep only evaluations on matches carrying `$round`
      * (pre-resolved by the caller). A null `$round` means the competition has no
@@ -278,9 +281,15 @@ final readonly class GetCompetitionLeaderboardQuery
         \DateTimeImmutable $now,
         ?string $round,
     ): void {
-        if (LeaderboardTimeFilter::Last7Days === $filter) {
+        $window = match ($filter) {
+            LeaderboardTimeFilter::Last7Days => self::WINDOW_LAST_7_DAYS,
+            LeaderboardTimeFilter::Last30Days => self::WINDOW_LAST_30_DAYS,
+            default => null,
+        };
+
+        if (null !== $window) {
             $qb->andWhere(sprintf('%s.kickoffAt >= :lbWindowStart', $matchAlias))
-                ->setParameter('lbWindowStart', $now->modify(self::WINDOW_LAST_7_DAYS));
+                ->setParameter('lbWindowStart', $now->modify($window));
 
             return;
         }

@@ -7,7 +7,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
-        {label: 'Žebříček', path: path('competition_leaderboard', {competitionId: competition.id.toRfc4122})},
+        {label: 'Žebříček', path: path('leaderboard', {soutez: competition.id.toRfc4122})},
         {label: 'Rozřazení shod'},
     ]" />
 
@@ -19,14 +19,14 @@
         </p>
     </header>
 
-    {% if tiedCompetitions|length == 0 %}
+    {% if tiedGroups|length == 0 %}
         <div class="card-glass flex flex-col items-center gap-3 p-10 text-center">
             <twig:ux:icon name="lucide:check-check" class="h-8 w-8 text-white/40" />
             <p class="text-sm text-white/70">Aktuálně neexistují žádné shody k rozřazení.</p>
         </div>
     {% else %}
         {{ form_start(form, {attr: {'data-controller': 'orderable-list'}}) }}
-            {% for bucket in tiedCompetitions %}
+            {% for bucket in tiedGroups %}
                 <section class="card mb-4 p-6">
                     <div class="mb-4 flex items-center gap-2">
                         <twig:Badge label="{{ bucket[0].totalPoints }} b" variant="points" />

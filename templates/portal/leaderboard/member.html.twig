@@ -8,7 +8,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
-        {label: 'Žebříček', path: path('competition_leaderboard', {competitionId: competition.id.toRfc4122})},
+        {label: 'Žebříček', path: path('leaderboard', {soutez: competition.id.toRfc4122})},
         {label: breakdown.nickname},
     ]" />
 

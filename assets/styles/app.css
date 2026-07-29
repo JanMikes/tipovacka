@@ -567,6 +567,30 @@ label.required::after {
     .lb-delta-chip.down { color: #ff8ea1; background: rgba(255,142,161,0.12); }
     .lb-delta-chip.new { color: var(--color-accent-300); background: rgba(70,153,208,0.14); }
 
+    /* --- item 05: Žebříček page --- */
+    /* Filter bar above the table (DS zebricek .lb-toolbar): search + „Seřadit" on the
+       left as ONE real GET form, the period tabs on the right. Everything is a query
+       parameter, so the bar works with JavaScript off. */
+    .lb-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; padding: 12px 14px; border: 1px solid var(--border-1); border-radius: 14px; background: var(--glass-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .lb-toolbar-form { display: flex; flex: 1 1 320px; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .lb-search { position: relative; flex: 1 1 200px; min-width: 0; display: block; }
+    .lb-search .input { padding-left: 38px; }
+    .lb-search .lb-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+    .lb-sort { width: auto; min-width: 190px; padding-top: 9px; padding-bottom: 9px; }
+    /* The board now sits flush inside a .card-glass (which carries no padding of its
+       own), so the table brings its own gutters and a tinted header strip. */
+    .lb-thead { background: rgba(0,0,0,0.16); }
+    .lb-thead th { padding-top: 14px; }
+    .lb-table th:first-child, .lb-table td:first-child { padding-left: 20px; }
+    .lb-table th:last-child, .lb-table td:last-child { padding-right: 20px; }
+    /* Condensed „… pozice 13–24 …" separator: a long board folds the ranks between the
+       head, the viewer and the tail instead of paginating them out of reach. */
+    .lb-gap > td { padding: 8px 20px; background: rgba(0,0,0,0.16); border-top: 1px solid var(--border-1); }
+    .lb-gap span { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-4); }
+    .lb-gap span::before, .lb-gap span::after { content: ''; flex: 1; height: 1px; background: var(--border-1); }
+    /* Result count + „Zobrazit celý žebříček" strip under the table. */
+    .lb-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-top: 1px solid var(--border-1); background: rgba(0,0,0,0.12); }
+
     /* ---- Podium ---- */
     .podium { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 16px; align-items: end; }
     .pod { padding: 20px; border-radius: 16px; text-align: center; border: 1px solid var(--border-2); background: var(--color-surface); }

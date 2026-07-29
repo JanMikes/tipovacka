@@ -24,12 +24,18 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Žebříček');
     }
 
-    public function testNonMemberReceivesForbidden(): void
+    /**
+     * The board of a NON-global competition is members-only. Item 05 made `/zebricek`
+     * public, so the refusal is no longer a 403 — the page silently falls back to a
+     * soutěž the viewer may actually see. What must hold either way: nothing of the
+     * private competition leaks.
+     */
+    public function testNonMemberNeverSeesAPrivateCompetitionsBoard(): void
     {
         $client = static::createClient();
         $container = $client->getContainer();
@@ -54,8 +60,14 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->loginUser($stranger);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
-        self::assertResponseStatusCodeSame(403);
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString(
+            AppFixtures::PUBLIC_COMPETITION_NAME,
+            (string) $client->getResponse()->getContent(),
+        );
+        self::assertSelectorNotExists('a[href="/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'"]');
     }
 
     public function testMemberBreakdownPageRenders(): void
@@ -69,7 +81,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/clen/'.AppFixtures::ADMIN_ID,
+            '/zebricek/clen/'.AppFixtures::ADMIN_ID.'?soutez='.AppFixtures::PUBLIC_COMPETITION_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -90,7 +102,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->loginUser($verified);
 
-        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek/matice');
+        $client->request('GET', '/zebricek/matice?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -130,7 +142,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -152,7 +164,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/shoda');
+        $client->request('GET', '/zebricek/shoda?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseStatusCodeSame(403);
     }
 }

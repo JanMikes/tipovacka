@@ -102,8 +102,8 @@ final readonly class NotifyCompetitionEndedHandler
         }
 
         $url = $this->urlGenerator->generate(
-            'competition_leaderboard',
-            ['competitionId' => $competition->id->toRfc4122()],
+            'leaderboard',
+            ['soutez' => $competition->id->toRfc4122()],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 

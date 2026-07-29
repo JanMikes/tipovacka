@@ -33,6 +33,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 09 | [Drop the `/portal` URL prefix; unify the soutěž URL space](items/09-drop-portal-prefix.md) | DONE | `59e6dc2` |
 | 07 | [„Soutěže" (`/souteze`) becomes the context-aware competitions page](items/07-page-souteze.md) | DONE | `b041ff0` |
 | 04 | [`SoutezSwitcher` becomes a real grouped tom-select picker](items/04-competition-switcher.md) | DONE | `b041ff0` + `d98f81f` |
+| 05 | [„Žebříček" becomes a real, standalone, publicly viewable page](items/05-page-zebricek.md) | DONE | `bf3c0ec` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):

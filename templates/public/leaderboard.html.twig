@@ -1,0 +1,372 @@
+{#
+    „Žebříček" — the standalone, publicly viewable leaderboard page (item 05).
+
+    Controller: src/Controller/Public/LeaderboardController.php
+    Every bit of state is a query parameter (soutez / obdobi / hledat / razeni / vse),
+    so any view of this page is linkable and the whole thing works without JavaScript.
+
+    Reuses the design-system classes that were written for exactly this page and had
+    never been rendered: .you-strip, .lb-tabs, .lb-table, .lb-tr.me, .lb-ty,
+    .lb-acc-bar, .podium — plus the Leaderboard:Podium and Leaderboard:Delta components.
+#}
+{% extends 'base.html.twig' %}
+
+{% block title %}Žebříček{% if competition %} — {{ competition.name }}{% endif %} — {{ brand_name }}{% endblock %}
+{% block meta_description %}Průběžné pořadí tipujících — body, úspěšnost, přesné tipy a streak. Bez sázek, jen pro radost.{% endblock %}
+
+{% block body %}
+{% set is_logged_in = app.user is not null %}
+
+<div class="bg-radial">
+<div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+
+    {# ───── Hero ───── #}
+    <header class="mb-8">
+        <div class="flex flex-wrap items-end justify-between gap-6">
+            <div class="min-w-0">
+                <p class="eyebrow mb-3">Soutěžní žebříček{{ competition ? ' · průběžně' }}</p>
+                <h1 class="grad-headline text-4xl font-extrabold tracking-tight sm:text-5xl"><span>Žebříček</span></h1>
+                {% if competition %}
+                    <p class="mt-3 max-w-xl text-white/60">
+                        Pořadí v soutěži
+                        <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
+                        — body, úspěšnost a přesné tipy. Tipy ostatních tady nenajdeš.
+                    </p>
+                {% endif %}
+            </div>
+
+            {% if competition %}
+                {# Every figure is measured; a stat with nothing real to say is not rendered. #}
+                <dl class="flex flex-wrap items-baseline gap-x-8 gap-y-4">
+                    <div>
+                        <dt class="stat-lbl !mb-1">Hráčů</dt>
+                        <dd class="text-2xl font-black tabular-nums text-white">{{ player_count }}</dd>
+                    </div>
+                    {% if progress.matchCount > 0 %}
+                        <div>
+                            <dt class="stat-lbl !mb-1">Odehráno</dt>
+                            <dd class="text-2xl font-black tabular-nums text-white">{{ progress.finishedMatchCount }} / {{ progress.matchCount }}</dd>
+                        </div>
+                    {% endif %}
+                    {% if current_round.round is not null %}
+                        <div>
+                            <dt class="stat-lbl !mb-1">Kolo</dt>
+                            <dd class="text-2xl font-black text-white">{{ current_round.round }}</dd>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <dt class="stat-lbl !mb-1">Aktualizace</dt>
+                        <dd class="text-2xl font-black {{ competition.matchSource.isCompleted ? 'text-white/50' : 'text-win' }}">
+                            {%- if competition.matchSource.isCompleted -%}
+                                Ukončeno
+                            {%- else -%}
+                                <span aria-hidden="true">●</span> Live
+                            {%- endif -%}
+                        </dd>
+                    </div>
+                </dl>
+            {% endif %}
+        </div>
+
+        {% if switcher_competitions|length > 0 or not is_logged_in %}
+            <div class="mt-7 flex flex-wrap items-end justify-between gap-4">
+                {# `leaderboard` is reachable with no path parameter, which is what lets the
+                   no-JS GET form scope the page by appending ?soutez=<id>. #}
+                <twig:SoutezSwitcher
+                    :competitions="switcher_competitions"
+                    :currentId="competition ? competition.id.toRfc4122 : null"
+                    route="leaderboard"
+                    param="soutez"
+                    label="Soutěž"
+                    id="soutez-switcher-leaderboard"
+                    class="w-full min-w-0 sm:w-96"
+                />
+                {% if not is_logged_in %}
+                    <a href="{{ path('app_register') }}" class="btn btn-primary">
+                        Registrace zdarma
+                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </header>
+
+    {% if competition is null %}
+        {% set empty_body = is_logged_in
+            ? 'Nejsi zatím v žádné soutěži a žádná veřejná soutěž není otevřená. Vytvoř si vlastní, nebo se připoj přes PIN či pozvánku.'
+            : 'Žádná veřejná soutěž zrovna neběží. Zaregistruj se zdarma a založ si vlastní tipovačku pro partu nebo firmu.' %}
+        <twig:EmptyState
+            illustration="leaderboard"
+            title="Zatím není co zobrazit"
+            :body="empty_body"
+            :ctaLabel="is_logged_in ? 'Vytvořit soutěž' : 'Registrace zdarma'"
+            :ctaPath="is_logged_in ? path('competition_create') : path('app_register')"
+            secondaryLabel="Procházet soutěže"
+            :secondaryPath="path('competitions_list')"
+        />
+    {% else %}
+
+        {% set competition_id = competition.id.toRfc4122 %}
+        {# Shared query-parameter base: every link on this page keeps the current
+           soutěž, search and sort, and only changes the one thing it is about. #}
+        {% set base_params = {soutez: competition_id} %}
+        {% if search != '' %}{% set base_params = base_params|merge({hledat: search}) %}{% endif %}
+        {% if sort.value != 'body' %}{% set base_params = base_params|merge({razeni: sort.value}) %}{% endif %}
+        {% set current_params = base_params|merge({obdobi: active_filter.value}) %}
+
+        {% if winner is not null %}
+            <section class="surface-accent mb-8 p-6 sm:p-10">
+                <picture>
+                    <source media="(max-width: 767px)" srcset="{{ asset('images/winner/winner-square.png') }}">
+                    <source media="(min-width: 768px)" srcset="{{ asset('images/winner/winner-wide.png') }}">
+                    <img
+                        src="{{ asset('images/winner/winner-wide.png') }}"
+                        alt="Oslavná ilustrace vítěze soutěže"
+                        class="mx-auto w-full max-w-2xl"
+                        loading="lazy"
+                        decoding="async"
+                    >
+                </picture>
+                <div class="mt-6 text-center">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white ring-1 ring-white/25">
+                        <twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" />
+                        Vítěz
+                    </span>
+                    <h2 class="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                        Gratulujeme, {{ winner.nickname }}!
+                    </h2>
+                    <p class="mt-3 text-base text-white/80 sm:text-lg">
+                        {{ winner.nickname }} vyhrává soutěž <strong class="font-bold text-white">{{ competition.name }}</strong>
+                        s {{ winner.totalPoints }} {{ winner.totalPoints == 1 ? 'bodem' : 'body' }}.
+                    </p>
+                </div>
+            </section>
+        {% endif %}
+
+        {# ───── „Tvoje pozice" — only when the viewer plays in this soutěž ───── #}
+        {% if me_row is not null %}
+            <div class="you-strip mb-8">
+                <div class="ys-hero">
+                    <span class="lbl">Tvoje pozice</span>
+                    <span class="pos">{{ me_row.rank }}.<small>/ {{ player_count }}</small></span>
+                    {% if me_row.deltaIsNew %}
+                        <span class="ys-delta"><span class="lb-delta-new">Nový v žebříčku</span></span>
+                    {% elseif me_row.delta is not null and me_row.delta != 0 %}
+                        <span class="ys-delta">
+                            <twig:Leaderboard:Delta :delta="me_row.delta" :isNew="false" />
+                            <span class="ys-delta-lbl">od minula</span>
+                        </span>
+                    {% elseif me_row.delta is not null %}
+                        <span class="ys-delta ys-delta-flat">Beze změny od minula</span>
+                    {% endif %}
+                </div>
+                <div class="ys-divider"></div>
+                <div class="col">
+                    <span class="k">Body</span>
+                    <span class="v">{{ me_row.totalPoints }}</span>
+                </div>
+                <div class="col">
+                    <span class="k">Úspěšnost</span>
+                    <span class="v">{{ me_row.evaluatedCount > 0 ? me_row.accuracyPercent ~ ' %' : '—' }}</span>
+                </div>
+                {% if gap_to_top5 is not null or gap_to_top3 is not null %}
+                    <div class="ys-divider"></div>
+                    {% if gap_to_top5 is not null %}
+                        <div class="col">
+                            <span class="k">Do top 5</span>
+                            <span class="v text-accent-300">+{{ gap_to_top5 }} b</span>
+                        </div>
+                    {% endif %}
+                    {% if gap_to_top3 is not null %}
+                        <div class="col">
+                            <span class="k">Do top 3</span>
+                            <span class="v text-accent-300">+{{ gap_to_top3 }} b</span>
+                        </div>
+                    {% endif %}
+                {% elseif me_row.rank <= 3 %}
+                    <div class="ys-divider"></div>
+                    <div class="col">
+                        <span class="k">Stav</span>
+                        <span class="v text-win">{{ me_row.rank == 1 ? 'Vedeš' : 'Top 3' }}</span>
+                    </div>
+                {% endif %}
+                <a href="{{ path('matches') }}" class="btn btn-ghost btn-sm ml-auto">
+                    Tipnout další zápas
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                </a>
+            </div>
+        {% endif %}
+
+        {% if podium_rows|length >= 3 %}
+            <p class="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[#f5cd54]">
+                Top 3 · {{ active_filter.longLabel|lower }}
+            </p>
+            <twig:Leaderboard:Podium :rows="podium_rows" />
+        {% endif %}
+
+        {# ───── Filter bar: hledání · období · řazení ───── #}
+        <div class="lb-toolbar mb-4">
+            <form method="get" action="{{ path('leaderboard') }}" class="lb-toolbar-form">
+                <input type="hidden" name="soutez" value="{{ competition_id }}">
+                <input type="hidden" name="obdobi" value="{{ active_filter.value }}">
+                <label class="sr-only" for="lb-hledat">Najít hráče v žebříčku</label>
+                <span class="lb-search">
+                    <twig:ux:icon name="lucide:search" class="lb-search-icon h-4 w-4" />
+                    <input type="search" id="lb-hledat" name="hledat" value="{{ search }}" class="input" placeholder="Najít hráče v žebříčku…">
+                </span>
+                <label class="sr-only" for="lb-razeni">Seřadit</label>
+                <select id="lb-razeni" name="razeni" class="input lb-sort">
+                    {% for option in sort_options %}
+                        <option value="{{ option.value }}"{{ option.value == sort.value ? ' selected' }}>Seřadit: {{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-ghost btn-sm">Použít</button>
+            </form>
+
+            {# Time-window tabs. Only implemented windows are enum cases, so only they
+               render; „Poslední kolo" is hidden when the soutěž has no round-labelled
+               match at all — a board scoped to nothing would silently lie. #}
+            <div class="lb-tabs !mb-0" role="tablist" aria-label="Časové období">
+                {% for f in time_filters %}
+                    {% if f.value != 'kolo' or current_round.round is not null %}
+                        <a href="{{ path('leaderboard', base_params|merge({obdobi: f.value})) }}"
+                           class="lb-tab{{ f.value == active_filter.value ? ' active' }}"
+                           role="tab"
+                           {{ f.value == active_filter.value ? 'aria-selected="true"' : 'aria-selected="false"' }}>{{ f.label }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ───── Table ───── #}
+        <div class="card-glass">
+            {% if table.totalCount == 0 %}
+                <div class="p-8 text-center">
+                    <p class="text-sm text-white/60">Tabulka je zatím prázdná. Jakmile první hráč zadá tip, objeví se tady žebříček.</p>
+                    {% if is_granted('competition_manage_members', competition) %}
+                        <a href="{{ path('competition_detail', {id: competition_id}) }}" class="btn btn-primary btn-sm mt-4">
+                            <twig:ux:icon name="lucide:users" class="h-4 w-4" />Pozvat hráče
+                        </a>
+                    {% endif %}
+                </div>
+            {% elseif table.matchedCount == 0 %}
+                <div class="p-8 text-center">
+                    <p class="text-sm text-white/60">Hráč „{{ search }}" v tomhle žebříčku není.</p>
+                    <a href="{{ path('leaderboard', {soutez: competition_id, obdobi: active_filter.value}) }}" class="btn btn-ghost btn-sm mt-4">Zrušit hledání</a>
+                </div>
+            {% else %}
+                {% set can_open_member = is_granted('leaderboard_details', competition) %}
+                <div class="overflow-x-auto">
+                    <table class="lb-table">
+                        <thead class="lb-thead">
+                            <tr>
+                                <th class="w-14">Pozice</th>
+                                {% if show_delta %}<th title="Změna pořadí oproti předchozímu dennímu snímku">Δ</th>{% endif %}
+                                <th>Hráč</th>
+                                <th class="text-right">Body</th>
+                                <th class="hidden text-right sm:table-cell">Úspěšnost</th>
+                                <th class="hidden text-center sm:table-cell">Přesné</th>
+                                <th class="hidden text-center sm:table-cell">Trefa</th>
+                                <th class="hidden text-right sm:table-cell">Streak</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in table.entries %}
+                                {% if entry.isGap %}
+                                    <tr class="lb-gap">
+                                        <td colspan="{{ show_delta ? 8 : 7 }}">
+                                            <span>… pozice {{ entry.gapFrom }}{% if entry.gapTo != entry.gapFrom %}–{{ entry.gapTo }}{% endif %} …</span>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    {% set row = entry.row %}
+                                    {% set is_me = me_row is not null and row.userId.toRfc4122 == me_row.userId.toRfc4122 %}
+                                    <tr class="lb-tr{{ is_me ? ' me' }}">
+                                        <td>
+                                            <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
+                                            {% if row.isTieResolvedOverride %}<span class="ml-1 text-[10px] text-white/40" title="Rozřazeno organizátorem">(R)</span>{% endif %}
+                                        </td>
+                                        {% if show_delta %}
+                                            <td><twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" /></td>
+                                        {% endif %}
+                                        <td>
+                                            {% set player %}
+                                                <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                                <span class="min-w-0">
+                                                    <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                                        <span class="truncate">{{ row.nickname }}</span>
+                                                        {% if is_me %}<span class="lb-ty">TY</span>{% endif %}
+                                                    </span>
+                                                    {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
+                                                </span>
+                                            {% endset %}
+                                            {% if can_open_member %}
+                                                <a href="{{ path('leaderboard_member', {soutez: competition_id, userId: row.userId.toRfc4122}) }}"
+                                                   class="flex items-center gap-3 hover:opacity-90">{{ player }}</a>
+                                            {% else %}
+                                                <span class="flex items-center gap-3">{{ player }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
+                                        <td class="hidden sm:table-cell">
+                                            {% if row.evaluatedCount > 0 %}
+                                                <div class="flex flex-col items-end gap-1">
+                                                    <span class="text-sm font-semibold tabular-nums text-white">{{ row.accuracyPercent }} %</span>
+                                                    <span class="lb-acc-bar w-16"><i style="width: {{ row.accuracyPercent }}%"></i></span>
+                                                </div>
+                                            {% else %}
+                                                <span class="block text-right text-white/30">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="hidden text-center sm:table-cell">
+                                            <span class="text-sm font-semibold tabular-nums {{ row.exactCount > 0 ? 'text-win' : 'text-white/40' }}">{{ row.exactCount }}</span>
+                                        </td>
+                                        <td class="hidden text-center sm:table-cell">
+                                            <span class="text-sm font-semibold tabular-nums {{ row.partialCount > 0 ? 'text-draw' : 'text-white/40' }}">{{ row.partialCount }}</span>
+                                        </td>
+                                        <td class="hidden text-right sm:table-cell">
+                                            {% if row.streak > 0 %}
+                                                <span class="lb-streak inline-flex items-center gap-1"><twig:ux:icon name="lucide:flame" class="h-3.5 w-3.5" />{{ row.streak }}</span>
+                                            {% else %}
+                                                <span class="text-white/30">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="lb-foot">
+                    <p class="text-xs text-white/50">
+                        Zobrazeno <strong class="font-bold text-white">{{ table.shownCount }} z {{ table.totalCount }}</strong>
+                        {{ table.totalCount == 1 ? 'hráče' : 'hráčů' }}
+                        {%- if search != '' %} · hledání „{{ search }}"{% endif %}
+                    </p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        {% if table.isCondensed %}
+                            <a href="{{ path('leaderboard', current_params|merge({vse: 1})) }}" class="btn btn-primary btn-sm">Zobrazit celý žebříček</a>
+                        {% elseif app.request.query.get('vse') %}
+                            <a href="{{ path('leaderboard', current_params) }}" class="btn btn-ghost btn-sm">Zobrazit zkrácený žebříček</a>
+                        {% endif %}
+                        {% if is_granted('leaderboard_details', competition) %}
+                            <a href="{{ path('leaderboard_matrix', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />
+                                Tabulka tipů
+                            </a>
+                        {% endif %}
+                        {% if is_granted('leaderboard_resolve_ties', competition) %}
+                            <a href="{{ path('leaderboard_resolve_ties', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4 text-accent-400" />
+                                Rozřadit shody
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

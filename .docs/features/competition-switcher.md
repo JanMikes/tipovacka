@@ -77,11 +77,13 @@ resolver route instead:
 | Page | `route` / `param` | Result |
 |---|---|---|
 | Nástěnka | `dashboard` / `soutez` | `/nastenka?soutez=<id>` — read by `DashboardController` |
-| Žebříček | `leaderboard` / `soutez` | `/zebricek?soutez=<id>` → 302 → `/souteze/<id>/zebricek` |
+| Žebříček | `leaderboard` / `soutez` | `/zebricek?soutez=<id>` — read by `LeaderboardController` (item 05 made the page itself id-less; there is no redirect any more) |
 
-Both resolvers apply the same rule: **an unknown or foreign id silently falls back to the
-viewer's primary (most recently joined) soutěž.** That is deliberate leak prevention — guessing
-an id must never open somebody else's board — so any new call site owes the same fallback.
+Both apply the same rule: **an id the viewer may not see silently falls back to one they may.**
+That is deliberate leak prevention — guessing an id must never open somebody else's board — so
+any new call site owes the same fallback. On the žebříček the decision is the
+`leaderboard_view` voter's, which is what lets a public global competition through while a
+private one still falls back.
 
 ## Works without JavaScript
 

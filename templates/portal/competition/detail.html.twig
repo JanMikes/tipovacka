@@ -98,7 +98,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <twig:Avatar name="{{ member.displayName }}" size="32" rank="{{ score ? score.rank : null }}" />
-                                    <a href="{{ path('competition_leaderboard_member', {competitionId: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="min-w-0 font-medium text-white transition-colors hover:text-accent-300 hover:underline">
+                                    <a href="{{ path('leaderboard_member', {soutez: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="min-w-0 font-medium text-white transition-colors hover:text-accent-300 hover:underline">
                                         <span class="block truncate">{{ member.displayName }}</span>
                                         {% if member.fullName %}<small class="block truncate text-xs font-normal text-white/50">{{ member.fullName }}</small>{% endif %}
                                     </a>
@@ -317,7 +317,7 @@
                         <h2 class="text-sm font-semibold uppercase tracking-wider">Žebříček</h2>
                     </div>
                     <p class="mt-2 text-sm text-white/80">Podívejte se, kdo vede a kolik má bodů.</p>
-                    <a href="{{ path('competition_leaderboard', {competitionId: competition.id.toRfc4122}) }}" class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/25">
+                    <a href="{{ path('leaderboard', {soutez: competition.id.toRfc4122}) }}" class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/25">
                         Zobrazit žebříček
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>

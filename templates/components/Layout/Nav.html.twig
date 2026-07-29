@@ -1,9 +1,10 @@
 {#
   Sticky glass top navigation. Two variants:
    - app    (authenticated): Nástěnka hráče / Soutěže / Žebříček + Vytvořit soutěž CTA + avatar dropdown
-   - public (logged out):    Soutěže + Přihlásit se + Registrace zdarma
-  „Žebříček" is soutěž-scoped: it points at the `leaderboard` resolver, which
-  redirects to the user's primary soutěž leaderboard (or discovery if they're in none).
+   - public (logged out):    Soutěže / Žebříček + Přihlásit se + Registrace zdarma
+  „Žebříček" (`leaderboard`, /zebricek) is a real page in BOTH variants since item 05:
+  signed in it opens the viewer's own soutěž, logged out a public global one. The
+  competition is picked with `?soutez=<id>`, so the nav entry needs no parameter.
   „Zápasy" (`matches`) is intentionally NOT in the bar — the page stays reachable by URL.
   The marketing pages (Funkce / Ceník / Pro firmy / FAQ) are footer-only and `noindex` until rewritten.
 #}
@@ -13,10 +14,11 @@
 
 {#
   Active section (item 07): „Soutěže" is the competition hub, so every
-  `competition_*` page lights it up — except the soutěž-scoped leaderboard,
-  which belongs to „Žebříček". Order matters: the leaderboard test runs first.
+  `competition_*` page lights it up — except the žebříček, which lives under
+  `leaderboard*` (item 05 moved its sub-pages there too). Order matters: the
+  leaderboard test runs first.
 #}
-{% set section = current starts with 'leaderboard' or current starts with 'competition_leaderboard' ? 'zebricek'
+{% set section = current starts with 'leaderboard' ? 'zebricek'
     : (current == 'competitions_list' or current starts with 'competition' or current starts with 'invitation' ? 'souteze'
     : (current starts with 'dashboard' ? 'nastenka' : null)) %}
 
@@ -28,6 +30,7 @@
     ]
     : [
         { label: 'Soutěže', path: 'competitions_list', key: 'souteze' },
+        { label: 'Žebříček', path: 'leaderboard', key: 'zebricek' },
     ]
 %}
 
