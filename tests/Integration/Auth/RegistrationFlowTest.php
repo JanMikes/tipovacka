@@ -41,6 +41,23 @@ final class RegistrationFlowTest extends WebTestCase
         self::assertSame('/overeni-ceka', $response->headers->get('Location'));
     }
 
+    /**
+     * W5 — the airlock page already explains what to do next, so a success flash on top of
+     * it is noise. Neither the component nor LoginSubscriber may queue one.
+     */
+    public function testSuccessfulRegistrationShowsNoFlash(): void
+    {
+        $client = static::createClient();
+
+        $component = $this->createLiveComponent('Auth:RegistrationForm');
+        $component->submitForm($this->validRegistrationFormValues(), 'register');
+
+        $client->request('GET', '/overeni-ceka');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('[role="alert"]');
+    }
+
     public function testDuplicateEmailRejected(): void
     {
         static::createClient();

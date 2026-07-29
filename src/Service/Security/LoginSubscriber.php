@@ -18,6 +18,7 @@ use App\Exception\InvalidShareableLink;
 use App\Service\Competition\CompetitionJoinIntentSession;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -55,13 +56,10 @@ final class LoginSubscriber implements EventSubscriberInterface
         $flashBag = (null !== $request && $request->hasSession()) ? $request->getSession()->getFlashBag() : null;
 
         if (!$user->isVerified) {
-            $currentRoute = $request?->attributes->get('_route');
-
-            // During registration, the controller already shows a richer success flash
-            // ("Registrace proběhla úspěšně. Zkontrolujte…"), so the generic warning
-            // would duplicate it. Only add the warning when the user is re-logging in
-            // to an unverified account.
-            if ('app_register' !== $currentRoute) {
+            // Sign-up lands straight on `/overeni-ceka`, a full page that already explains
+            // the next step — a flash on top of it is noise (W5). Only warn when the user
+            // is re-logging in to an account that is still unverified.
+            if (!$this->isRegistrationRequest($request)) {
                 $flashBag?->add(
                     'warning',
                     'Nejprve ověřte svou e-mailovou adresu. Zkontrolujte svoji e-mailovou schránku.'
@@ -124,6 +122,20 @@ final class LoginSubscriber implements EventSubscriberInterface
         $event->setResponse(
             new RedirectResponse($this->urlGenerator->generate('portal_dashboard'))
         );
+    }
+
+    /**
+     * Sign-up runs through the `Auth:RegistrationForm` Live Component, so the request route
+     * is the shared `ux_live_component`, not `app_register` — both spellings count.
+     */
+    private function isRegistrationRequest(?Request $request): bool
+    {
+        if (null === $request) {
+            return false;
+        }
+
+        return 'app_register' === $request->attributes->get('_route')
+            || 'Auth:RegistrationForm' === $request->attributes->get('_live_component');
     }
 
     private function handleInvitationIntent(

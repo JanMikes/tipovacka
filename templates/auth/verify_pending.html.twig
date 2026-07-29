@@ -13,22 +13,33 @@
     <span class="eyebrow mt-6 block">Ověření e-mailu</span>
     <h1 class="mt-3 text-2xl font-bold tracking-tight text-white">Zkontrolujte schránku</h1>
     <p class="mt-3 text-sm text-white/60">
-        Odeslali jsme vám ověřovací e-mail. Klikněte na odkaz v e-mailu pro aktivaci svého účtu. Odkaz je platný 7 dní.
+        Odeslali jsme vám ověřovací e-mail{% if app.user and app.user.email %} na adresu
+        <strong class="font-semibold text-white">{{ app.user.email }}</strong>{% endif %}. Klikněte na odkaz
+        v e-mailu pro aktivaci svého účtu. Odkaz je platný 7 dní.
     </p>
 
     {% if app.user %}
+        <p class="mt-3 text-sm text-white/60">
+            Dokud e-mail neověříte, zůstane zbytek aplikace zamčený — soutěže, tipy ani žebříčky zatím nejsou dostupné.
+        </p>
+
         <form method="post" action="{{ path('app_resend_verification_email') }}" class="mt-8">
             <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
             <button type="submit" class="btn btn-primary w-full">
                 <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
-                Odeslat ověřovací e-mail znovu
+                Poslat znovu
             </button>
         </form>
-    {% endif %}
 
-    <a href="{{ path('app_login') }}" class="btn btn-link mt-6 inline-flex items-center gap-1.5 text-sm">
-        <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
-        Zpět na přihlášení
-    </a>
+        <a href="{{ path('app_logout') }}" class="btn btn-link mt-6 inline-flex items-center gap-1.5 text-sm">
+            <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+            Odhlásit se
+        </a>
+    {% else %}
+        <a href="{{ path('app_login') }}" class="btn btn-link mt-6 inline-flex items-center gap-1.5 text-sm">
+            <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
+            Zpět na přihlášení
+        </a>
+    {% endif %}
 </div>
 {% endblock %}

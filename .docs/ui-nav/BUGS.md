@@ -8,7 +8,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
-| B1 | Unverified e-mail account can still use the app | TODO | — |
+| B1 | Unverified e-mail account can still use the app | DONE | — |
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | TODO | — |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | TODO | — |
 | B4 | Match detail omits a competition the user is a member of | TODO | — |
@@ -38,6 +38,53 @@ and not to break the invitation-acceptance landing pages.
 
 **Also check the write side:** the guard must cover POST actions (joining a competition, submitting a
 tip, buying credits), not only GET pages.
+
+### What was actually wrong (root cause)
+
+`App\Service\Security\RequireVerifiedEmailSubscriber` already existed — it just never ran. It
+subscribed to `kernel.request` at **priority 8, the same priority as the security firewall
+listener**, and was registered first, so `Security::getUser()` read an empty token storage on
+every real request and the guard silently no-opped. (It appeared to work in a `WebTestCase`
+because `KernelBrowser::loginUser()` primes the token storage directly — only for the *first*
+request after login, which is why nobody caught it.) Fixed by moving it to priority 7, strictly
+below the firewall.
+
+On top of that its deny-list of gated path prefixes (`/nastenka`, `/portal`, `/pripojit`,
+`/admin`) missed `/zapasy` and — the important one — `/_components/…`, the single route every
+Live Component shares, through which tips, the create-competition wizard and notification
+preferences are written.
+
+### Implementation
+
+- The guard is now an **allow-list**: anything that is not explicitly public, part of the
+  verification/escape flow, or an allow-listed `Auth:*` Live Component bounces to
+  `/overeni-ceka` with a Czech warning flash. Method-agnostic, so POST is covered by
+  construction. A future portal page is gated the day it exists; the failure mode of the
+  allow-list is a public page being over-gated, which is annoying rather than unsafe.
+- For a live-component request the UX bundle rewrites the redirect into `204` +
+  `X-Live-Redirect: 1` + `Location`, i.e. the JS client navigates to the airlock.
+- The airlock page now names the address the mail went to, says the rest of the app stays
+  locked, offers „Poslat znovu" and „Odhlásit se".
+- Covered by `tests/Integration/Auth/UnverifiedEmailAirlockTest.php`.
+
+### Assumptions made
+
+- **Invitation links.** Kept the behaviour `InvitationAcceptanceService::handleAuthenticated`
+  already implements, and allow-listed both landing routes so the guard cannot pre-empt it:
+  an **e-mail** invitation addressed to the account's own mailbox proves ownership, so it is
+  accepted *and* verifies the account (no bounce); a **shareable link** proves nothing, so the
+  landing page stores the join intent and sends the user to the airlock itself —
+  `LoginSubscriber` completes the join after verification.
+- **Account deletion** (`/portal/ucet/smazat`) stays reachable while unverified, as the item
+  asks — someone who cannot receive the mail must still be able to remove the account.
+- **Password reset** routes stay reachable: an unverified account must remain recoverable.
+- **Only the four `Auth:*` Live Components** stay reachable (registration, invitation,
+  request-reset, reset). Every other component is a portal write surface and is gated.
+- **`/` and `/prihlaseni` are unreachable while logged in + unverified** — not because of the
+  guard (both are allow-listed) but because their controllers redirect a logged-in user to
+  `/nastenka`, which then bounces to the airlock. Left as is: the destination is correct and
+  changing it would touch surfaces owned by other items.
+- **Admin is gated too.** An unverified `ROLE_ADMIN` gets no free pass.
 
 ---
 

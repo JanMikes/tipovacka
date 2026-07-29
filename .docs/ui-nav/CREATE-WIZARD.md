@@ -11,7 +11,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | W2 | Playoff option moves from step 1 to step 2 | TODO | — |
 | W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | TODO | — |
 | W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | TODO | — |
-| W5 | No success flash after sign-up | TODO | — |
+| W5 | No success flash after sign-up | DONE | — |
 | W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | TODO | — |
 
 ---
@@ -122,6 +122,20 @@ that I need to confirm the email — so if everything is successful I do not nee
 Drop the success flash on the post-registration redirect to `/overeni-ceka`; that page already
 explains the next step. **Error flashes stay.** Related to `BUGS.md` B1, which hardens that same
 airlock.
+
+### Implementation
+
+`Auth\RegistrationForm::register()` no longer adds „Registrace proběhla úspěšně…". That alone was
+not enough: `LoginSubscriber` also queues a „Nejprve ověřte svou e-mailovou adresu" warning for
+every unverified login, and its „skip during registration" check tested `_route === 'app_register'`
+— but sign-up runs through the `Auth:RegistrationForm` **Live Component**, whose route is the
+shared `ux_live_component`, so the warning slipped through. The check now also matches the
+component name, so a successful sign-up lands on `/overeni-ceka` with **no flash at all**.
+Inline form errors and the error flashes are untouched. Pinned by
+`RegistrationFlowTest::testSuccessfulRegistrationShowsNoFlash`.
+
+The invitation sign-up (`Auth:InvitationForm`) keeps its own flash — it carries extra information
+about the pending join, which the airlock page does not show. Out of W5's scope.
 
 ---
 

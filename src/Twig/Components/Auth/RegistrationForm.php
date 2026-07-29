@@ -81,8 +81,9 @@ final class RegistrationForm extends AbstractController
             throw $e;
         }
 
-        $this->addFlash('success', 'Registrace proběhla úspěšně. Zkontrolujte svoji e-mailovou schránku pro ověření.');
-
+        // No success flash on purpose (W5): the redirect target `/overeni-ceka` is a full
+        // page that already explains that the e-mail has to be confirmed, so a flash saying
+        // the same thing is noise. Error paths above keep their inline messages.
         $user = $this->userRepository->findByEmail($data->email);
         \assert($user instanceof User, 'Just-registered user must exist.');
 
