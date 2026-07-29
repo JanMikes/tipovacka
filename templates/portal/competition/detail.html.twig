@@ -3,6 +3,13 @@
 {% block title %}{{ detail.name }} — {{ brand_name }}{% endblock %}
 
 {% block body %}
+{#
+    B5: how many matches the viewer can still tip. A locked soutěž may legitimately
+    keep rows open — matches added AFTER the lock moment (typically playoffs) run to
+    their own kickoff, and the „Měnit tip" entitlement extends this viewer's window —
+    so the header must not claim tipping is over while the list still offers „Tipovat".
+#}
+{% set open_match_rows = match_rows|filter(r => r.isOpen)|length %}
 <div class="bg-radial mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     {# ───────── Header: back link · eyebrow · name + stav · role · akce ───────── #}
@@ -46,7 +53,14 @@
                             <twig:ux:icon name="lucide:clock" class="h-4 w-4 text-accent-400" />
                             Uzamčení tipů naplánováno na {{ scheduled_lock_at|date('j. n. Y H:i') }}
                         </span>
-                    {% elseif not tips_locked and lock_moment %}
+                    {% elseif tips_locked and lock_moment %}
+                        {# B5: the lock is a persistent state, not a one-shot flash — say
+                           WHEN it took effect, right next to the „Tipy uzamčeny" pilulka. #}
+                        <span class="inline-flex items-center gap-1.5 text-sm text-white/70">
+                            <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-white/50" />
+                            Tipy uzamčeny {{ lock_moment|date('j. n. Y H:i') }}{% if open_match_rows > 0 %} — u některých zápasů je tipování stále otevřené{% endif %}
+                        </span>
+                    {% elseif lock_moment %}
                         <span class="inline-flex items-center gap-1.5 text-sm text-white/50">
                             <twig:ux:icon name="lucide:hourglass" class="h-4 w-4 text-white/40" />
                             Uzávěrka tipů: {{ lock_moment|date('j. n. Y H:i') }}
@@ -173,19 +187,38 @@
         {# ───────── Hlavní sloupec: banner + zápasy ───────── #}
         <div class="space-y-4 lg:col-span-8">
 
-            {# Batch-fill all my tips at once — the banner the product owner keeps above the list. #}
+            {#
+                Batch-fill all my tips at once — the banner the product owner keeps above the list.
+                B5: it may only invite when there IS something to tip. With everything locked the
+                same spot states the fact instead, so the lock is visible without a flash message.
+            #}
             {% if is_member and not detail.matchSourceIsCompleted and not is_over %}
-                <a href="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}"
-                   class="surface-accent group flex items-center gap-4 p-5 text-white">
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                        <twig:ux:icon name="lucide:zap" class="h-6 w-6" />
-                    </span>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-base font-semibold">Tipněte si všechny zápasy najednou</p>
-                        <p class="mt-0.5 text-sm text-white/80">Vyplňte nebo upravte své tipy v jedné tabulce. Prázdná pole se přeskočí.</p>
+                {% if open_match_rows > 0 %}
+                    <a href="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}"
+                       class="surface-accent group flex items-center gap-4 p-5 text-white">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                            <twig:ux:icon name="lucide:zap" class="h-6 w-6" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-base font-semibold">Tipněte si všechny zápasy najednou</p>
+                            <p class="mt-0.5 text-sm text-white/80">Vyplňte nebo upravte své tipy v jedné tabulce. Prázdná pole se přeskočí.</p>
+                        </div>
+                        <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
+                    </a>
+                {% elseif tips_locked and match_rows|length > 0 %}
+                    <div class="card-glass flex items-center gap-4 p-5">
+                        <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/60">
+                            <twig:ux:icon name="lucide:lock" class="h-6 w-6" />
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-base font-semibold text-white">Tipování uzavřeno</p>
+                            <p class="mt-0.5 text-sm text-white/60">
+                                {% if lock_moment %}Tipy se uzamkly {{ lock_moment|date('j. n. Y H:i') }}.{% endif %}
+                                Měnit je už nejde — níže vidíte, co jste tipnul(a).
+                            </p>
+                        </div>
                     </div>
-                    <twig:ux:icon name="lucide:arrow-right" class="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
-                </a>
+                {% endif %}
             {% endif %}
 
             <section id="zapasy" class="space-y-3">
@@ -253,6 +286,7 @@
                                 :tipPrompt="row.isOpen and is_member ? '+ Zadat tip' : null"
                                 :detailUrl="path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122})"
                                 :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
+                                :tipUrl="row.isOpen and is_member ? path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
                             />
 
                             {# „Rozložení tipů" (nebo jeho paywall) — dávkově z TipStatsProvider. #}

@@ -91,6 +91,7 @@
                         :resultAway="m.isFinished ? m.awayScore : null"
                         :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
+                        :tipUrl="is_tippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
                     />
 
                     {# Rozložení tipů (or its paywall) per soutěž that includes this match. #}

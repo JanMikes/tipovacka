@@ -12,9 +12,9 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | DONE | `4e5f482` |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | DONE | `09770f4` |
-| B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
+| B5 | Locked/past-deadline state is not reflected in the UI after locking | DONE | `PENDING` |
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
-| B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | TODO | — |
+| B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `PENDING` |
 
 ---
 
@@ -348,6 +348,59 @@ is hard to understand what is going on — state of some components should be up
 The second screenshot in B4 shows the *good* case (locked competition renders an explanatory locked
 panel); make every surface behave like that.
 
+### What was already true (checked first, changed nothing)
+
+- **The tip form** (`Guess:GuessSubmitForm`) already renders the reference locked panel —
+  „Tipování uzavřeno — uzávěrka proběhla … / Netipováno." — on both the competition-scoped
+  guess page and the generic match detail. It is the good case B4 screenshotted.
+- **The competition detail header** already carries the Live / Ukončeno / **Tipy uzamčeny**
+  pilulky (item 08) and, since B2, the „Uzamčení naplánováno na …" schedule line plus
+  „Změnit uzamčení" / „Zrušit naplánování" — so the *action* already reflects reality.
+- **Match rows** already render the locked variant (`state = locked` ⇒ grey left border,
+  `Uzamčeno` / `Netipováno` pilulka) on competition detail, `/zapasy` and the Nástěnka.
+
+So B5 was NOT about adding a lock pill; it was about the surfaces that kept *inviting* after
+the lock, and about the places where an absent tip still read as a to-do.
+
+### What changed
+
+- **Detail header** — under the pilulka, the effective moment: „Tipy uzamčeny 15. 6. 2025 14:00".
+  A locked competition may legitimately keep rows open (matches added AFTER the lock run to
+  their own kickoff; the „Měnit tip" entitlement extends this viewer's window), so when the
+  viewer still has something to tip the line adds „— u některých zápasů je tipování stále
+  otevřené" instead of lying.
+- **The „Tipněte si všechny zápasy najednou" banner** only invites while at least one row is
+  open. With everything locked the same slot states the fact („Tipování uzavřeno · Tipy se
+  uzamkly … · Měnit je už nejde — níže vidíte, co jste tipnul(a)").
+- **`/moje-tipy` (batch) and `/spravovat-tipy` (on behalf)** said „Žádné nadcházející zápasy
+  k tipování." — true-ish and useless. Both now branch on the lock and name it.
+- **Match detail** — the „Nevyplněno" badge is a call to action; it now renders only while the
+  tip can still be filled. Once locked the same absence reads **„Netipováno"** in the neutral
+  locked skin, and the card drops the „you still owe a tip" accent ring. Distinct from B4's
+  scope panel: locked competitions stay in „Vaše tipy", excluded ones stay in „Proč tu nejsou
+  všechny vaše soutěže", so a user is never told both.
+- **„Tipy členů" on the competition-scoped guess page** — the disabled inputs now carry one
+  line saying why, and a member's missing tip reads „Netipováno" (locked) instead of
+  „Nevyplněno" (soon) once the deadline has passed.
+- Covered by `tests/Integration/Portal/Competition/LockedStateSurfacesTest.php` (open →
+  invites and says „Nevyplněno"; locked → header moment, banner replaced, both batch pages
+  explain, match detail says „Netipováno" with no accent ring and the locked form panel).
+
+### Assumptions made
+
+- **„Uzamčeno" stays the wording on the cross-competition rows** (`/zapasy`, Nástěnka). Those
+  rows aggregate several soutěže, so the honest statement is „the window is shut"; the
+  per-competition „Netipováno" belongs to competition detail and to the match-detail card,
+  which know exactly one soutěž. (`DashboardFlowTest` / `MatchesFlowTest` pin that wording.)
+- **A locked competition whose rows are still open keeps the batch banner.** There genuinely
+  is something to tip; hiding the shortcut would be worse than the mixed message, which the
+  header caveat and the per-row „Uzávěrka …" lines already resolve.
+- **No lock state was added to the `/souteze` cards.** The item asks for the competition
+  *header*; a lock pill on every card of a list would compete with the Live/Ukončeno state
+  those cards already carry.
+- **Nothing about a lock is notified.** Same reasoning as B2 — nothing listens to
+  `CompetitionTipsLocked` today, and inventing a delivery is out of scope.
+
 ---
 
 ## B6 — Boost can be bought for a finished competition
@@ -447,3 +500,66 @@ Per `PLAN.md`, plus: render every surface that uses `MatchRow` at desktop **and*
 each row state (tip submitted, tip missing, locked, finished with points). CSS discipline — reuse
 first, new rules at the END of the „Horizontal match row" section under a
 `/* --- B7: match row layout --- */` comment, never reorder existing rules.
+
+### Diagnosis: **not** stray children falling into an existing track — measured in a browser
+
+The item's hypothesis (extra children landing in a fixed track) is wrong: the row has exactly
+seven children and the grid had exactly seven tracks. Measured on `/souteze/{id}` at a 1440 px
+viewport (`getComputedStyle` + `getBoundingClientRect`):
+
+```
+row width 717 px  →  cols: 88px 105.98px 33.67px 96px 33.68px 100px 132px
+.tip-row-teams.home  x=245 w=34      .info inside it  x=195 w=42   ← spills 50 px LEFT
+.tip-row-teams       x=403 w=34      .info inside it  x=445 w=53   ← spills right
+```
+
+The fixed tracks + gaps cost 500 px and the pilulka's `auto` track another ~106, leaving ~111 px
+for **two** `minmax(0,1.2fr)` team tracks. The tracks collapsed correctly; what overflowed was
+their content: `.tip-row-teams` has `min-width: 0`, but its flex child `.info` does not, so it
+kept its min-content width (a `white-space: nowrap` name never shrinks) and painted over the
+pilulka on the left and over the „můj tip" box on the right. Same mechanism, both defects 1 and 2.
+
+**Why no media query can fix it.** The same component renders in columns of 632 – 1088 px, and
+competition detail is *narrower at 1440 px (717) than at 1024 px (632→852 once the aside stacks)*.
+Row width is not a function of viewport width, so the breakpoint must be the row's own.
+
+### Implementation
+
+- `.tip-row` is now a **wrapping flex row of four zones** — `[čas/kolo] [pilulka]
+  [domácí–skóre–hosté] [můj tip · akce]`. The fixture zone (`.tip-row-match`, a nested
+  `minmax(0,1fr) auto minmax(0,1fr)` grid) is the only flexing one; its `flex-basis: 360px` is
+  the wrap hint, and the end zone (`.tip-row-end`) wraps as ONE piece so „můj tip" and the
+  button never separate. Container-relative for free, no container queries, no per-page CSS.
+- `min-width: 0` on `.tip-row-teams .info` (+ ellipsis on `.role`) is the actual overflow fix —
+  long names now ellipsize inside their track.
+- The old 7-track definition and the `@media (max-width: 900px)` collapse are left untouched
+  (they are inert on a flex row); the B7 block re-asserts `justify-content: flex-end` for the
+  home side inside that media query so the fixture reads „domácí – skóre – hosté" at every width.
+- New prop **`tipUrl`** on `MatchRow`: when set, the state pilulka and the „můj tip" box become
+  links to the guessing surface (`<a class="tip-row-pill-link">` / `<a class="my-tip">`), with
+  their own `aria-label`, hover and `:focus-visible` ring. All three call sites pass it exactly
+  when tipping is open, so „CHYBÍ TIP", „+ Zadat tip" and „Tipovat →" share one destination and
+  a locked row has no dead-looking links at all. The row itself is NOT a link — no nesting.
+- The two empty `<span></span>` placeholders are gone (they only added flex gaps).
+
+Verified by driving Chrome headless over `/nastenka`, `/zapasy` and three competition details at
+1600 / 1440 / 1280 / 1100 / 1024 / 900 / 768 / 600 / 430 / 360 px — a pairwise
+bounding-box intersection check across every painted leaf of every row reports **zero overlaps**
+and zero horizontal overflow, including a stress pass that rewrites every team name to
+„FK Slovácko B (Uherské Hradiště)" / „Zbrojovka Brno B — Uherský Brod". Row states checked
+visually: tip submitted, tip missing, live, locked, finished with points, playoff.
+`tests/Integration/Portal/MatchRowTipLinksTest.php` pins the link targets on all three surfaces
+and their absence once locked.
+
+### Assumptions made
+
+- **Ellipsis, not wrapping**, for long team names — it keeps every row the same height, and the
+  existing `.tip-row-teams .name` rule already asked for it (it simply never got the chance).
+- **The end zone wrapping to a second line is the intended narrow layout**, not a defect. At
+  717 px the seven zones cannot share one line without squeezing the fixture below readability;
+  two lines (fixture on top, „můj tip" + akce right-aligned below) is what the widths allow.
+- **The pilulka is linked in every state, not only „Chybí tip"** (whenever the row is tippable):
+  „Tip odeslán" → go change it is just as useful, and one rule is easier to keep honest than a
+  per-label exception.
+- **`MatchRow` was not added to `/_design`** — it needs real `Team`/`TeamView` objects, and the
+  styleguide has no fixture plumbing; it stays covered by the three real surfaces.

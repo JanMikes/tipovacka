@@ -15,7 +15,9 @@ use App\Repository\MembershipRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\TipStatsProvider;
+use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\SportMatchVoter;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -39,6 +41,8 @@ final class SportMatchDetailController extends AbstractController
         private readonly CompetitionMatchProvider $matchProvider,
         private readonly TipStatsProvider $tipStatsProvider,
         private readonly CompetitionTeamFilterRepository $teamFilterRepository,
+        private readonly EffectiveTipDeadlineResolver $deadlineResolver,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -48,6 +52,7 @@ final class SportMatchDetailController extends AbstractController
         $this->denyAccessUnlessGranted(SportMatchVoter::VIEW, $sportMatch);
 
         $user = $this->getUser();
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $myCompetitionsForMatchSource = [];
         $excludedCompetitions = [];
 
@@ -99,6 +104,10 @@ final class SportMatchDetailController extends AbstractController
                     'id' => $competition->id,
                     'name' => $competition->name,
                     'hasGuess' => null !== $guess,
+                    // B5: the card must SHOW the locked state — an unfilled tip in a
+                    // locked competition is „Netipováno", not a call to action.
+                    'isLocked' => $this->deadlineResolver->isLocked($competition, $sportMatch, $user, $now),
+                    'deadline' => $this->deadlineResolver->deadlineFor($competition, $sportMatch, $user),
                     'stats' => $tipStats[$this->tipStatsProvider->key($competition->id, $sportMatch->id)] ?? null,
                 ];
             }

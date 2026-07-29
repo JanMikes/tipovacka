@@ -232,6 +232,18 @@
 
                 {% set can_edit = sport_match.isOpenForGuesses and (effective_deadline > date()) %}
 
+                {# B5: disabled inputs alone do not explain themselves — name the state. #}
+                {% if not can_edit %}
+                    <p class="flex items-center gap-1.5 border-b border-white/[0.06] px-5 py-3 text-xs text-white/60 sm:px-6">
+                        <twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5 shrink-0" />
+                        {% if not sport_match.isOpenForGuesses %}
+                            Tipování uzavřeno — zápas už začal nebo není aktivní. Tipy členů už zadat nejde.
+                        {% else %}
+                            Tipování uzavřeno — uzávěrka proběhla {{ effective_deadline|date('j. n. Y H:i') }}. Tipy členů už zadat nejde.
+                        {% endif %}
+                    </p>
+                {% endif %}
+
                 <ul class="divide-y divide-white/[0.06]">
                     {% for row in member_rows %}
                         <li class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
@@ -244,7 +256,12 @@
                                 {% if row.hasGuess and row.guess is null %}
                                     <twig:Pill label="Vyplněno" variant="tipped" icon="check" />
                                 {% elseif not row.hasGuess %}
-                                    <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
+                                    {# B5: „Nevyplněno" asks for action; once locked the absence is final. #}
+                                    {% if can_edit %}
+                                        <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
+                                    {% else %}
+                                        <twig:Pill label="Netipováno" variant="locked" icon="lock" />
+                                    {% endif %}
                                 {% endif %}
                             </div>
 

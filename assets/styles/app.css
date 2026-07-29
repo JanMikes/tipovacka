@@ -688,6 +688,49 @@ label.required::after {
         .tip-row-actions { justify-content: flex-start; }
     }
 
+    /* --- B7: match row layout ---
+       The 7-track grid above only fits a ~1150px row. The same component is rendered
+       in columns of 632 – 1088 px (competition detail is NARROWER at 1440px than at
+       1024px, because of the aside), so the two `minmax(0,1.2fr)` team tracks
+       collapsed to ~34px while `.info` — a flex child with the default
+       `min-width:auto` — refused to shrink and spilled over the pilulka on the left
+       and over the „můj tip" box on the right. Hence: zones that WRAP (container-
+       relative, no media query can see the column width) + `min-width:0` all the way
+       down so long names ellipsize instead of overflowing. */
+    .tip-row {
+        display: flex; flex-wrap: wrap; gap: 12px 14px;
+        grid-template-columns: none;   /* neutralises the track definition above */
+    }
+    .tip-row-when { flex: 0 0 88px; }
+    .tip-row > .pill, .tip-row-pill-link { flex: 0 0 auto; }
+    /* the fixture itself — the one zone that flexes; `flex-basis` is the wrap hint */
+    .tip-row-match {
+        flex: 1 1 360px; min-width: 0;
+        display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+        align-items: center; gap: 12px;
+    }
+    .tip-row-teams .info { min-width: 0; }
+    .tip-row-teams .role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* „můj tip" + akce stay together and wrap as one piece */
+    .tip-row-end { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 14px; }
+    .tip-row-outcome { min-width: 72px; }
+    /* B7: „Chybí tip" / „+ Zadat tip" / „Můj tip" lead to the guessing surface */
+    .tip-row-pill-link { display: inline-flex; border-radius: 6px; text-decoration: none; }
+    .tip-row-pill-link:hover .pill { filter: brightness(1.25); }
+    .tip-row-pill-link:focus-visible, a.my-tip:focus-visible {
+        outline: 2px solid var(--color-accent-400); outline-offset: 2px;
+    }
+    a.my-tip { display: block; text-decoration: none; transition: border-color 150ms var(--ease-standard), background 150ms var(--ease-standard); }
+    a.my-tip.set:hover   { border-color: rgba(62,213,152,0.70); background: rgba(62,213,152,0.14); }
+    a.my-tip.empty:hover { border-color: rgba(245,181,68,0.75); background: rgba(245,181,68,0.12); }
+    @media (max-width: 900px) {
+        /* the stacking rules above are inert on a flex row; keep home right-aligned
+           so the fixture always reads „domácí – skóre – hosté" */
+        .tip-row { gap: 12px 14px; }
+        .tip-row-teams.home { justify-content: flex-end; text-align: right; }
+        .tip-row-actions { justify-content: flex-end; }
+    }
+
     /* --- item 07: Soutěže page ---
        The inset „TVÁ POZICE / BODY" panel of a played-competition card. Everything
        else on that page reuses existing primitives: .card-glass for the cards,

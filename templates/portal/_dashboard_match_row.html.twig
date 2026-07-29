@@ -63,6 +63,7 @@
     :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
     :detailLabel="m.isTippable ? 'Tipovat' : 'Detail zápasu'"
     :tipPrompt="m.isTippable and my_home is null ? '+ Zadat tip' : null"
+    :tipUrl="m.isTippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
 />
 
 {# Rozložení tipů (or its paywall) per soutěž that includes this match. #}

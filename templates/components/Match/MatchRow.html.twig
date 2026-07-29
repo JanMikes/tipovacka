@@ -2,8 +2,15 @@
     Horizontal tip row (DS dashboard-hrac → .tip-card grid, ported to .tip-row).
     DISPLAY-ONLY: tipping happens on the match detail page; this row only links there.
 
-    Layout per `state`:  čas/kolo · pill · domácí (vlajka) · skóre-zóna · hosté (vlajka) · můj-tip / výsledek · akce
-    Left border tinted by state (tipped = zelená, locked = Uzamčeno, finished = accent).
+    Layout (B7): a wrapping flex row of four zones, so it adapts to the width of the
+    column it sits in (717 px on competition detail, 1088 px on the Nástěnka, full
+    width on mobile) — a viewport media query cannot express that, the same row is
+    NARROWER at 1440 px than at 1024 px.
+
+        [ čas/kolo ] [ pilulka ] [ domácí – skóre – hosté ] [ můj tip · akce ]
+
+    The match zone flexes; the end zone (můj tip + akce) wraps to a second line as
+    one piece when it no longer fits. Left border tinted by state.
 
     props:
       homeTeam     TeamView|Team — domácí tým (objekt: .name + monogram)
@@ -26,6 +33,9 @@
       detailLabel  string        — text odkazu (default „Detail zápasu")
       tipPrompt    string|null   — text výzvy v prázdném slotu „můj tip" (např. „+ Zadat tip");
                                    null = slot zůstane prázdný (chování ostatních seznamů)
+      tipUrl       string|null   — cíl tipování; je-li vyplněn, stavová pilulka i box
+                                   „můj tip" na něj odkazují (B7: „Chybí tip" / „+ Zadat tip"
+                                   musí vést na tipování, stejně jako akce „Tipovat →")
 #}
 {% props
     homeTeam,
@@ -46,7 +56,8 @@
     points = null,
     hitClass = null,
     detailLabel = 'Detail zápasu',
-    tipPrompt = null
+    tipPrompt = null,
+    tipUrl = null
 %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
 <div class="tip-row {{ state == 'finished' ? 'done' : (state == 'tipped' ? 'tipped' : (state == 'locked' ? 'locked' : '')) }}">
@@ -60,80 +71,99 @@
         {% if isPlayoff %}<span class="pill">Playoff</span>{% endif %}
     </div>
 
-    {# stavová pilulka #}
+    {# stavová pilulka — odkazuje na tipování, pokud je otevřené #}
     {% if pillLabel %}
-        <twig:Pill :label="pillLabel" :variant="pillVariant ?? 'neutral'" :icon="pillIcon" :dot="pillDot" />
-    {% else %}
-        <span></span>
+        {% if tipUrl %}
+            <a href="{{ tipUrl }}" class="tip-row-pill-link" aria-label="{{ pillLabel }} — přejít na tipování">
+                <twig:Pill :label="pillLabel" :variant="pillVariant ?? 'neutral'" :icon="pillIcon" :dot="pillDot" />
+            </a>
+        {% else %}
+            <twig:Pill :label="pillLabel" :variant="pillVariant ?? 'neutral'" :icon="pillIcon" :dot="pillDot" />
+        {% endif %}
     {% endif %}
 
-    {# domácí #}
-    <div class="tip-row-teams home">
-        <div class="info">
-            <div class="name">{{ homeTeam.name }}</div>
-            <div class="role">Domácí</div>
+    {# zápas: domácí · skóre/výkop · hosté #}
+    <div class="tip-row-match">
+        <div class="tip-row-teams home">
+            <div class="info">
+                <div class="name">{{ homeTeam.name }}</div>
+                <div class="role">Domácí</div>
+            </div>
+            <twig:TeamFlag :team="homeTeam" size="32" />
         </div>
-        <twig:TeamFlag :team="homeTeam" size="32" />
+
+        {% if state == 'finished' %}
+            <div class="tip-row-score">
+                {% if resultHome is not null and resultAway is not null %}
+                    <span class="num">{{ resultHome }}</span>
+                    <span class="sep">–</span>
+                    <span class="num">{{ resultAway }}</span>
+                {% else %}
+                    <span class="sep">–</span>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="tip-row-score upcoming">
+                <span class="num">{{ kickoffAt ? kickoffAt|date('H:i') : 'vs' }}</span>
+            </div>
+        {% endif %}
+
+        <div class="tip-row-teams">
+            <twig:TeamFlag :team="awayTeam" size="32" />
+            <div class="info">
+                <div class="name">{{ awayTeam.name }}</div>
+                <div class="role">Hosté</div>
+            </div>
+        </div>
     </div>
 
-    {# skóre / výkop #}
-    {% if state == 'finished' %}
-        <div class="tip-row-score">
-            {% if resultHome is not null and resultAway is not null %}
-                <span class="num">{{ resultHome }}</span>
-                <span class="sep">–</span>
-                <span class="num">{{ resultAway }}</span>
-            {% else %}
-                <span class="sep">–</span>
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="tip-row-score upcoming">
-            <span class="num">{{ kickoffAt ? kickoffAt|date('H:i') : 'vs' }}</span>
-        </div>
-    {% endif %}
-
-    {# hosté #}
-    <div class="tip-row-teams">
-        <twig:TeamFlag :team="awayTeam" size="32" />
-        <div class="info">
-            <div class="name">{{ awayTeam.name }}</div>
-            <div class="role">Hosté</div>
-        </div>
-    </div>
-
-    {# můj tip / výsledek #}
-    {% if state == 'finished' %}
-        <div>
-            {% if has_my_tip %}
-                <div class="result-tip {{ hitClass }}">{{ myHome }} : {{ myAway }}</div>
-            {% endif %}
-            {% if points is not null %}
-                <div class="mt-1 text-center text-2xl font-extrabold tabular-nums {{ points > 0 ? 'text-win' : 'text-white/40' }}">{{ points }}</div>
-                <div class="text-center text-[10px] font-semibold uppercase tracking-wider {{ points > 0 ? 'text-win/80' : 'text-white/40' }}">
-                    {% if points == 1 %}bod{% elseif points >= 2 and points <= 4 %}body{% else %}bodů{% endif %}
+    {# můj tip / výsledek + akce — zalomí se na druhý řádek vcelku #}
+    <div class="tip-row-end">
+        {% if state == 'finished' %}
+            {% if has_my_tip or points is not null %}
+                <div class="tip-row-outcome">
+                    {% if has_my_tip %}
+                        <div class="result-tip {{ hitClass }}">{{ myHome }} : {{ myAway }}</div>
+                    {% endif %}
+                    {% if points is not null %}
+                        <div class="mt-1 text-center text-2xl font-extrabold tabular-nums {{ points > 0 ? 'text-win' : 'text-white/40' }}">{{ points }}</div>
+                        <div class="text-center text-[10px] font-semibold uppercase tracking-wider {{ points > 0 ? 'text-win/80' : 'text-white/40' }}">
+                            {% if points == 1 %}bod{% elseif points >= 2 and points <= 4 %}body{% else %}bodů{% endif %}
+                        </div>
+                    {% endif %}
                 </div>
             {% endif %}
-        </div>
-    {% elseif has_my_tip %}
-        <div class="my-tip set">
-            <div class="my-tip-lbl">Můj tip</div>
-            <div class="my-tip-val">{{ myHome }} : {{ myAway }}</div>
-        </div>
-    {% elseif tipPrompt %}
-        <div class="my-tip empty">
-            <div class="my-tip-lbl">Tipnout</div>
-            <div class="my-tip-val">{{ tipPrompt }}</div>
-        </div>
-    {% else %}
-        <span></span>
-    {% endif %}
+        {% elseif has_my_tip %}
+            {% if tipUrl %}
+                <a href="{{ tipUrl }}" class="my-tip set" aria-label="Můj tip {{ myHome }} : {{ myAway }} — upravit">
+                    <div class="my-tip-lbl">Můj tip</div>
+                    <div class="my-tip-val">{{ myHome }} : {{ myAway }}</div>
+                </a>
+            {% else %}
+                <div class="my-tip set">
+                    <div class="my-tip-lbl">Můj tip</div>
+                    <div class="my-tip-val">{{ myHome }} : {{ myAway }}</div>
+                </div>
+            {% endif %}
+        {% elseif tipPrompt %}
+            {% if tipUrl %}
+                <a href="{{ tipUrl }}" class="my-tip empty" aria-label="{{ tipPrompt }}">
+                    <div class="my-tip-lbl">Tipnout</div>
+                    <div class="my-tip-val">{{ tipPrompt }}</div>
+                </a>
+            {% else %}
+                <div class="my-tip empty">
+                    <div class="my-tip-lbl">Tipnout</div>
+                    <div class="my-tip-val">{{ tipPrompt }}</div>
+                </div>
+            {% endif %}
+        {% endif %}
 
-    {# akce #}
-    <div class="tip-row-actions">
-        <a href="{{ detailUrl }}" class="btn btn-ghost btn-sm">
-            {{ detailLabel }}
-            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-        </a>
+        <div class="tip-row-actions">
+            <a href="{{ detailUrl }}" class="btn btn-ghost btn-sm">
+                {{ detailLabel }}
+                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+            </a>
+        </div>
     </div>
 </div>

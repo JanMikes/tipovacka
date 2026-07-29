@@ -21,9 +21,22 @@
     </header>
 
     {% if rows|length == 0 %}
+        {# B5: an empty table after a lock must say WHY — „žádné zápasy" would be a lie. #}
         <div class="card flex flex-col items-center gap-3 p-10 text-center">
-            <twig:ux:icon name="lucide:calendar" class="h-8 w-8 text-white/40" />
-            <p class="text-sm text-white/70">Žádné nadcházející zápasy k tipování.</p>
+            {% if tips_locked %}
+                <twig:ux:icon name="lucide:lock" class="h-8 w-8 text-white/40" />
+                <p class="text-sm font-semibold text-white">Tipování uzavřeno</p>
+                <p class="max-w-md text-sm text-white/60">
+                    {% if lock_moment %}Tipy se uzamkly {{ lock_moment|date('j. n. Y H:i') }}.{% endif %}
+                    Měnit je už nejde. Své tipy si prohlédnete u jednotlivých zápasů.
+                </p>
+                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm mt-1">
+                    <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />Zpět na soutěž
+                </a>
+            {% else %}
+                <twig:ux:icon name="lucide:calendar" class="h-8 w-8 text-white/40" />
+                <p class="text-sm text-white/70">Žádné nadcházející zápasy k tipování.</p>
+            {% endif %}
         </div>
     {% else %}
         <form method="post"

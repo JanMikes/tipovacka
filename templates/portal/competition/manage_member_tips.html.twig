@@ -58,9 +58,19 @@
             <p class="text-sm text-white/70">Vyberte tipujícího ve výběru výše.</p>
         </div>
     {% elseif rows|length == 0 %}
+        {# B5: after a lock the table is empty because tipping is closed — say so. #}
         <div class="card-glass flex flex-col items-center gap-3 p-10 text-center">
-            <twig:ux:icon name="lucide:calendar" class="h-8 w-8 text-white/40" />
-            <p class="text-sm text-white/70">Žádné nadcházející zápasy k tipování.</p>
+            {% if tips_locked %}
+                <twig:ux:icon name="lucide:lock" class="h-8 w-8 text-white/40" />
+                <p class="text-sm font-semibold text-white">Tipování uzavřeno</p>
+                <p class="max-w-md text-sm text-white/60">
+                    {% if lock_moment %}Tipy se uzamkly {{ lock_moment|date('j. n. Y H:i') }}.{% endif %}
+                    Za členy už tipovat nejde.
+                </p>
+            {% else %}
+                <twig:ux:icon name="lucide:calendar" class="h-8 w-8 text-white/40" />
+                <p class="text-sm text-white/70">Žádné nadcházející zápasy k tipování.</p>
+            {% endif %}
         </div>
     {% else %}
         <form method="post"

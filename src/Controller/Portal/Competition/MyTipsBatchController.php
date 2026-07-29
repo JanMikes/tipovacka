@@ -72,11 +72,15 @@ final class MyTipsBatchController extends AbstractController
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $rows = $this->buildRows($competition, $user, $now);
+        $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
 
         return $this->render('portal/competition/my_tips_batch.html.twig', [
             'competition' => $competition,
             'rows' => $rows,
-            'lock_moment' => $this->deadlineResolver->lockMomentFor($competition),
+            'lock_moment' => $lockMoment,
+            // B5: „no rows" has two very different causes — nothing scheduled, or
+            // the whole soutěž is locked. The empty state must say which.
+            'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
             'sport' => $competition->matchSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);

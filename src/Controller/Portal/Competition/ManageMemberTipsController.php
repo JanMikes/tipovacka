@@ -115,11 +115,16 @@ final class ManageMemberTipsController extends AbstractController
             }
         }
 
+        $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
+
         return $this->render('portal/competition/manage_member_tips.html.twig', [
             'competition' => $competition,
             'members' => $members,
             'selectedMember' => $selectedMember,
             'rows' => $rows,
+            // B5: no rows after a lock is not „nothing scheduled" — say which it is.
+            'lock_moment' => $lockMoment,
+            'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
             'sport' => $competition->matchSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);
