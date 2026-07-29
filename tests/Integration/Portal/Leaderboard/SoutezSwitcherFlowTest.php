@@ -62,28 +62,11 @@ final class SoutezSwitcherFlowTest extends WebTestCase
         self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
     }
 
-    public function testSwitcherHiddenWhenUserHasSingleCompetition(): void
-    {
-        $client = static::createClient();
-        /** @var EntityManagerInterface $em */
-        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-
-        // Admin is a member of exactly one soutěž (PUBLIC_COMPETITION) in the baseline fixtures.
-        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
-        self::assertNotNull($admin);
-        $client->loginUser($admin);
-
-        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
-        self::assertResponseIsSuccessful();
-
-        // No second soutěž → no switcher form and no option to switch to one.
-        $body = $client->getResponse()->getContent();
-        self::assertIsString($body);
-        self::assertStringNotContainsString('value="'.AppFixtures::VERIFIED_COMPETITION_ID.'"', $body);
-        self::assertStringNotContainsString('action="/zebricek"', $body);
-    }
-
     /**
+     * The single-competition (static chip) and zero-competition variants render side by side
+     * on the styleguide — see App\Tests\Integration\DesignStyleguideFlowTest and
+     * App\Tests\Unit\Twig\Components\SoutezSwitcherTest.
+     *
      * The verified user already owns VERIFIED_COMPETITION. Add them to PUBLIC_COMPETITION too
      * (and most recently, so it becomes their primary), giving them the ≥2 soutěže the
      * switcher needs.

@@ -1,6 +1,6 @@
 # Item 04 — `SoutezSwitcher` becomes a real grouped tom-select picker
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** nothing
 **Blocks:** items 05 (Žebříček) and 06 (Nástěnka) — both are driven by this control
 
@@ -94,3 +94,49 @@ description) and §4 if the controller contract changed. Document the component'
 `.docs/features/` if the pattern is reusable enough to deserve it (it is — a short doc, linked from
 `CLAUDE.md`'s Features list, matching `team-picker.md`'s style). Update the status board row to DONE +
 sha. Commit `UI: grouped tom-select competition switcher`, push to `main`.
+
+---
+
+## Assumptions made
+
+Recorded per the PLAN protocol — each is the most conservative reading of a question the item
+file did not settle.
+
+1. **`route` must be path-parameter-free; the Žebříček call site moved to the resolver route.**
+   A no-JS `<form method="get">` can only append a query string, so it can never fill a
+   competition id into a *path* placeholder — which is what
+   `route="competition_leaderboard" param="competitionId"` needed. Rather than invent a new
+   generic „switch" endpoint, `LeaderboardController` (`/zebricek`, already the nav resolver)
+   learned `?soutez=<id>` and redirects to that competition's board. The leaderboard call site
+   now passes `route="leaderboard" param="soutez"`. `?soutez=<uuid>` on the Nástěnka is
+   unchanged, as the item required. Both resolvers keep the „unknown/foreign id → primary
+   soutěž" fallback.
+
+2. **Live vs. ended is the source's `completedAt`, not „end date in the past".** The explicit
+   domain flag (`matchSourceIsCompleted`) is the signal; a source whose planned `endAt` has
+   passed but that nobody has closed still counts as „Probíhající". This also keeps the control
+   clock-free, so the grouping is deterministic under the test MockClock.
+
+3. **The logged-out feed is a prop, not a coupling.** The component accepts either
+   `list<CompetitionListItem>` (the „my soutěže" read model) or a list of the new
+   `App\Value\CompetitionSwitcherOption`, which any other read model — including the public
+   competition list — maps to in its controller via `CompetitionSwitcherOption::fromDates()`.
+   The item named `ListDiscoverableGlobalCompetitions` directly, but that query was being
+   renamed/reshaped by the concurrent „Soutěže page" item at the time; depending on its class
+   would have coupled this shared component to it. The five scalars are the contract instead.
+
+4. **The current query params of the page are not carried over on switch.** Switching soutěž
+   submits only `?<param>=<id>`; e.g. the Žebříček period tab (`?obdobi=…`) resets to the
+   default. Preserving arbitrary query state would need hidden inputs whose correctness depends
+   on the host page, and item 05 rebuilds that page anyway.
+
+5. **The dropdown caret is scoped to this control.** `app.css` already colors
+   `.ts-wrapper.single .ts-control::after`, but the app imports tom-select's *core* stylesheet,
+   which never generates that pseudo-element — so no picker in the app has a caret today. The
+   design shows the switcher as a dropdown, so the item-04 block generates the box for
+   `.soutez-switcher` only. Giving every tom-select a caret is a real improvement but a
+   cross-cutting visual change that belongs to its own item.
+
+6. **The existing `my_competitions|length > 1` guards at both call sites were left alone.** The
+   component itself renders the one-competition chip; whether a page wants it is the page's
+   call, and item 06 rebuilds the Nástěnka.

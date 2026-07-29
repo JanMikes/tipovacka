@@ -891,3 +891,11 @@ body > .ts-dropdown { z-index: 300; }
 /* `.field` lays the control out as label → select → (noscript) submit; the tom-select
    wrapper replaces the select in that column and must fill it. */
 .soutez-switcher .ts-wrapper { width: 100%; }
+/* Caret. The skin above already colors `.ts-wrapper.single .ts-control::after`, but the app
+   imports tom-select's CORE stylesheet (not `.default`), which never generates that
+   pseudo-element — so those rules are inert everywhere. The switcher reads as a dropdown in
+   the design, so generate the box here. Scoped to this control on purpose: giving every
+   tom-select in the app a caret is a separate, cross-cutting decision. */
+.soutez-switcher .ts-wrapper.single .ts-control::after {
+    content: " "; display: block; position: absolute; top: 50%; width: 0; height: 0;
+}

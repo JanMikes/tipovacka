@@ -29,6 +29,39 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Připravujeme');
     }
 
+    public function testStyleguideRendersBothSoutezSwitcherVariants(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $client->request('GET', '/_design');
+        self::assertResponseIsSuccessful();
+
+        $body = $client->getResponse()->getContent();
+        self::assertIsString($body);
+
+        // The grouped picker: live group first, finished second, source name + Prague date range.
+        self::assertStringContainsString('<optgroup label="Probíhající">', $body);
+        self::assertStringContainsString('<optgroup label="Ukončené">', $body);
+        self::assertLessThan(
+            strpos($body, '<optgroup label="Ukončené">'),
+            strpos($body, '<optgroup label="Probíhající">'),
+        );
+        self::assertStringContainsString('data-meta="2. 6. 2026 – 11. 6. 2026"', $body);
+        self::assertStringContainsString('data-sub="MS ve fotbale 2026"', $body);
+
+        // The no-JS affordance ships with the control.
+        self::assertStringContainsString('<noscript>', $body);
+
+        // Exactly one soutěž renders a static chip, not a second form.
+        self::assertSame(1, substr_count($body, 'action="/_design"'));
+        self::assertStringContainsString('Jediná soutěž', $body);
+    }
+
     public function testVerifiedNonAdminUserReceivesForbidden(): void
     {
         $client = static::createClient();
