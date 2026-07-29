@@ -9,6 +9,10 @@ Regenerate the route facts with:
 docker compose exec web bin/console debug:router --show-controllers
 ```
 
+Who may reach what is **not** regenerable from the router — since item 09 it lives in
+`tests/Integration/Security/AnonymousReachabilityTest`, keyed by controller class. Read that
+before touching security, and update it in the same commit as any new route.
+
 ---
 
 ## 1. Navigation shell
@@ -21,7 +25,7 @@ docker compose exec web bin/console debug:router --show-controllers
 
 | Variant | Primary links | Right-hand actions |
 |---|---|---|
-| `app` (logged in) | Nástěnka hráče → `portal_dashboard` · Soutěže → `public_competitions_list` · Žebříček → `portal_leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `portal_competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
+| `app` (logged in) | Nástěnka hráče → `dashboard` · Soutěže → `public_competitions_list` · Žebříček → `leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
 | `public` (logged out) | Soutěže → `public_competitions_list` | Přihlásit se · „Registrace zdarma" → `app_register` |
 
 Mobile: `mobile_nav_controller.js` toggles `.wt-mobile` panel which repeats the primary links
@@ -29,15 +33,15 @@ plus Profil / Kredity / Administrace / Odhlásit se (logged in) or Přihlásit s
 zdarma (logged out).
 
 Not in the bar (item 01 slim-down, both variants):
-- **Zápasy** (`portal_matches`, `/zapasy`) — page kept, reachable by URL only.
+- **Zápasy** (`matches`, `/zapasy`) — page kept, reachable by URL only.
 - **Funkce / Ceník / Pro firmy / FAQ** — kept in the footer, `noindex, nofollow` (see §2).
 
 Notable current quirks (candidates for this stream, not yet decided):
-- „Žebříček" is a *resolver* route (`portal_leaderboard`) that redirects to the user's primary
+- „Žebříček" is a *resolver* route (`leaderboard`) that redirects to the user's primary
   soutěž leaderboard — global-looking label, soutěž-scoped destination. Logged-out users get no
   Žebříček link at all (no public leaderboard page exists yet — item 02).
 - „Soutěže" points at the **public** `/souteze` list for logged-in users too; it is not yet
-  context-aware (item 04), and no `portal_competition_*` route lights it up as active.
+  context-aware (item 04), and no `competition_*` route lights it up as active.
 - „Kredity" only exists in the mobile menu and the avatar dropdown (via `CreditBalance`).
 - The admin area has **no link back** into the portal shell other than the brand mark.
 
@@ -52,20 +56,34 @@ itself; only the four marketing templates fill it.
 
 ## 2. Routes by area
 
-Czech URL slugs throughout. `{id}` = UUID v7.
+**Fully Czech URL space, one flat tree.** Item 09 deleted the `/portal` prefix: the audience
+boundary is no longer written in the path (except `/admin`) but in the code, as
+`#[IsGranted('ROLE_USER')]` on every controller in `src/Controller/Portal/`. `access_control`
+now holds a single rule, `^/admin → ROLE_ADMIN`.
 
-### Public / marketing (logged out, no firewall)
+**Route names carry no prefix either** — `competition_detail`, `dashboard`, `sport_match_edit`.
+The only prefixes left are `admin_*` (the admin area), `app_*` (auth + marketing) and `public_*`.
+
+> **Adding a route?** `tests/Integration/Security/AnonymousReachabilityTest` fails until you
+> declare, per controller, whether an anonymous visitor may reach it. That test — not the URL —
+> is the authoritative statement of who can see what.
+
+Legend: 🔒 = requires a login · 🛡 = ROLE_ADMIN · everything else is anonymous-reachable.
+`{id}` = UUID v7 (enforced with `Requirement::UUID`, which is what keeps `/souteze/nova` and
+`/souteze/pozvanka/{token}` from colliding with `/souteze/{id}`).
+
+### Public / marketing
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `app_home` | `/` | `home.html.twig` | |
+| `app_home` | `/` | `home.html.twig` | redirects a logged-in user to `/nastenka` |
 | `app_features` | `/funkce` | `public/features.html.twig` | **noindex, nofollow** — footer-only |
 | `app_pricing` | `/cenik` | `public/pricing.html.twig` | **noindex, nofollow** — footer-only |
 | `app_for_business` | `/pro-firmy` | `public/for_business.html.twig` | **noindex, nofollow** — footer-only |
 | `app_faq` | `/faq` | `public/faq.html.twig` | **noindex, nofollow** — footer-only |
 | `app_privacy` | `/ochrana-soukromi` | `public/privacy.html.twig` | |
 | `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` | the „Soutěže" nav target in **both** variants |
-| `public_match_sources_list_legacy` | `/turnaje` | legacy redirect | |
-| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | |
+| `public_match_sources_list_legacy` | `/turnaje` | legacy 301 → `/souteze` | deletion candidate (PLAN conventions) |
+| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | 🛡 — gated by an in-controller `denyAccessUnlessGranted('ROLE_ADMIN')`, **not** by path |
 
 ### Auth
 `app_login` `/prihlaseni` · `app_logout` `/odhlaseni` · `app_register` `/registrace` ·
@@ -74,70 +92,86 @@ Czech URL slugs throughout. `{id}` = UUID v7.
 `app_reset_password` `/reset-hesla/token/{token}` · `app_check_email` `/reset-hesla/email-odeslan`.
 Templates in `templates/auth/`, forms are Live Components in `templates/components/Auth/`.
 
-### Portal — top level
+### Player top level (🔒 all)
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `portal_dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Nástěnka hráče" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
-| `portal_matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats`. **No longer in the nav** (item 01); URL-only |
-| `portal_leaderboard` | `/portal/zebricek` | — (redirector) | Resolves to the primary soutěž's leaderboard |
-| `portal_credits` | `/portal/kredity` | `portal/credits/overview.html.twig` | + `portal_credits_buy`, `portal_credits_return` |
-| `portal_notifications` | `/portal/oznameni` | `portal/notifications/center.html.twig` | + `portal_notification_read`, `portal_notifications_read_all` |
-| `portal_profile_edit` | `/portal/profil` | `portal/profile/edit.html.twig` | + `portal_account_delete` `/portal/ucet/smazat` |
+| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Nástěnka hráče" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
+| `matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats`. **No longer in the nav** (item 01); URL-only |
+| `leaderboard` | `/zebricek` | — (redirector) | Resolves to the primary soutěž's leaderboard. Item 05 replaces it with a real page at the same URL |
+| `credits` | `/kredity` | `portal/credits/overview.html.twig` | + `credits_buy` `/kredity/koupit`, `credits_return` `/kredity/navrat` |
+| `notifications` | `/oznameni` | `portal/notifications/center.html.twig` | + `notification_read` `/oznameni/{id}/precteno`, `notifications_read_all` `/oznameni/precteno` |
+| `profile_edit` | `/profil` | `portal/profile/edit.html.twig` | |
+| `account_delete` | `/ucet/smazat` | `portal/profile/delete_confirm.html.twig` | reachable while unverified (B1 escape hatch) |
 
-### Portal — competition (soutěž) — the hub
+### Soutěž — `/souteze` (🔒 unless noted)
+The one place the flat URL space earns its keep: the public list, the invitation landing and the
+members-only hub are now the same tree, `/souteze`. They are told apart by shape, not by prefix —
+`{id}` must be a UUID, so `nova` and `pozvanka/…` can never be mistaken for a competition.
+
 | Route | Path | Template |
 |---|---|---|
-| `portal_competition_detail` | `/portal/souteze/{id}` | `portal/competition/detail.html.twig` (**576 l.** — the biggest page; sections: header + team-filter pills, Členové, Moje tipy, Pozvánky e-mailem, Žebříček panel, `Boost:Panel`, Rychlé pozvánky, Správa) |
-| `portal_competition_create` | `/portal/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
-| `portal_competition_edit` | `/portal/souteze/{id}/upravit` | `portal/competition/edit.html.twig` |
-| `portal_competition_rules` | `/portal/souteze/{id}/pravidla` | `portal/competition/rule_configuration.html.twig` |
-| `portal_competition_match_selection` | `/portal/souteze/{id}/zapasy-vyber` | `portal/competition/match_selection.html.twig` |
-| `portal_competition_my_tips_batch` | `/portal/souteze/{id}/moje-tipy` | `portal/competition/my_tips_batch.html.twig` |
-| `portal_competition_manage_member_tips` | `/portal/souteze/{id}/spravovat-tipy` | `portal/competition/manage_member_tips.html.twig` |
-| `portal_competition_premium` | `/portal/souteze/{id}/premium` | `portal/competition/premium_settings.html.twig` |
-| `portal_competition_add_anonymous_member` | `/portal/souteze/{id}/clenove/bez-emailu` | `portal/competition/add_anonymous_member.html.twig` |
-| `portal_competition_promote_anonymous_member` | `…/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
-| `portal_competition_join_by_pin` | `/pripojit` | `portal/competition/join_by_pin.html.twig` |
+| `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public** |
+| `competition_join_by_link` | `/souteze/pozvanka/{token}` | `invitation/landing.html.twig` — **public** |
+| `competition_create` | `/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
+| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` (**576 l.** — the biggest page; sections: header + team-filter pills, Členové, Moje tipy, Pozvánky e-mailem, Žebříček panel, `Boost:Panel`, Rychlé pozvánky, Správa) |
+| `competition_edit` | `/souteze/{id}/upravit` | `portal/competition/edit.html.twig` |
+| `competition_rules` | `/souteze/{id}/pravidla` | `portal/competition/rule_configuration.html.twig` |
+| `competition_match_selection` | `/souteze/{id}/zapasy-vyber` | `portal/competition/match_selection.html.twig` |
+| `competition_my_tips_batch` | `/souteze/{id}/moje-tipy` | `portal/competition/my_tips_batch.html.twig` |
+| `competition_manage_member_tips` | `/souteze/{id}/spravovat-tipy` | `portal/competition/manage_member_tips.html.twig` |
+| `competition_premium` | `/souteze/{id}/premium` | `portal/competition/premium_settings.html.twig` |
+| `competition_add_anonymous_member` | `/souteze/{id}/clenove/bez-emailu` | `portal/competition/add_anonymous_member.html.twig` |
+| `competition_promote_anonymous_member` | `/souteze/{id}/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
+| `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` |
+| `competition_join_by_pin` | `/pripojit` | `portal/competition/join_by_pin.html.twig` (+ `competition_join_by_pin_quick` `/pripojit/rychle`) |
 
-POST-only actions (no template): `…/pripojit-se` (join global), `…/opustit`, `…/smazat`,
-`…/uzamknout-tipy`, `…/odemknout-tipy`, `…/premium/zapnout`, `…/premium/prepnout-na-prispevky`,
-`…/vylepseni/koupit`, `…/pin/novy`, `…/pin/zrusit`, `…/odkaz/novy`, `…/odkaz/zrusit`,
-`…/pozvanky/odeslat`, `…/pozvanky/hromadne`, `portal_invitation_revoke`,
-`…/clenove/{userId}/odebrat`, `…/zapasy/{sportMatchId}/uzaverka`.
+POST-only actions under `/souteze/{id}/` (no template): `…/pripojit-se` (join global),
+`…/opustit`, `…/smazat`, `…/uzamknout-tipy`, `…/odemknout-tipy`, `…/premium/zapnout`,
+`…/premium/prepnout-na-prispevky`, `…/vylepseni/koupit`, `…/pin/novy`, `…/pin/zrusit`,
+`…/odkaz/novy`, `…/odkaz/zrusit`, `…/pozvanky/odeslat`, `…/pozvanky/hromadne`,
+`…/clenove/{userId}/odebrat`, `…/zapasy/{sportMatchId}/uzaverka`,
+`…/zapasy/{sportMatchId}/clenove/{memberId}/tip`, `…/spravovat-tipy/{memberId}`.
+Plus `invitation_revoke` `/pozvanky/{invitationId}/zrusit`.
 
-### Portal — leaderboard (soutěž-scoped)
+### Žebříček — soutěž-scoped (🔒)
 | Route | Path | Template |
 |---|---|---|
-| `portal_competition_leaderboard` | `/portal/souteze/{competitionId}/zebricek` | `portal/leaderboard/index.html.twig` — period tabs render from `LeaderboardTimeFilter::cases()` (`?obdobi=celkem` \| `kolo` \| `7dni`; `kolo` = „Poslední kolo", scoped by `SportMatch.round` via `CompetitionRoundResolver`, item 02) |
-| `portal_competition_leaderboard_matrix` | `…/zebricek/matice` | `portal/leaderboard/matrix.html.twig` |
-| `portal_competition_leaderboard_member` | `…/zebricek/clen/{userId}` | `portal/leaderboard/member.html.twig` |
-| `portal_competition_leaderboard_resolve_ties` | `…/zebricek/shoda` | `portal/leaderboard/resolve_ties.html.twig` |
+| `competition_leaderboard` | `/souteze/{competitionId}/zebricek` | `portal/leaderboard/index.html.twig` — period tabs render from `LeaderboardTimeFilter::cases()` (`?obdobi=celkem` \| `kolo` \| `7dni`; `kolo` = „Poslední kolo", scoped by `SportMatch.round` via `CompetitionRoundResolver`, item 02) |
+| `competition_leaderboard_matrix` | `…/zebricek/matice` | `portal/leaderboard/matrix.html.twig` |
+| `competition_leaderboard_member` | `…/zebricek/clen/{userId}` | `portal/leaderboard/member.html.twig` |
+| `competition_leaderboard_resolve_ties` | `…/zebricek/shoda` | `portal/leaderboard/resolve_ties.html.twig` |
 
-### Portal — match source (zdroj zápasů) & matches
+### Zdroj zápasů (`/turnaje`) & zápasy (`/zapasy`) — 🔒 unless noted
 | Route | Path | Template |
 |---|---|---|
-| `portal_match_source_detail` | `/portal/turnaje/{id}` | `portal/match_source/detail.html.twig` |
-| `portal_match_source_edit` | `/portal/turnaje/{id}/upravit` | `portal/match_source/edit.html.twig` |
-| `portal_sport_match_detail` | `/portal/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) |
-| `portal_sport_match_create` | `/portal/turnaje/{matchSourceId}/zapasy/novy` | `portal/sport_match/form.html.twig` |
-| `portal_sport_match_edit` | `/portal/zapasy/{id}/upravit` | `portal/sport_match/form.html.twig` |
-| `portal_sport_match_set_score` | `/portal/zapasy/{id}/skore` | `portal/sport_match/set_score.html.twig` |
-| `portal_sport_match_import` | `/portal/turnaje/{matchSourceId}/zapasy/import` | `portal/sport_match/import.html.twig` |
-| `portal_competition_sport_match_guesses` | `/portal/souteze/{competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` |
-| `portal_guess` detail | — | `portal/guess/detail.html.twig` |
+| `public_match_sources_list_legacy` | `/turnaje` | legacy 301 → `/souteze` — **public** |
+| `match_source_detail` | `/turnaje/{id}` | `portal/match_source/detail.html.twig` |
+| `match_source_edit` | `/turnaje/{id}/upravit` | `portal/match_source/edit.html.twig` |
+| `sport_match_create` | `/turnaje/{matchSourceId}/zapasy/novy` | `portal/sport_match/form.html.twig` |
+| `sport_match_import` | `/turnaje/{matchSourceId}/zapasy/import` | `portal/sport_match/import.html.twig` (+ `…/import/potvrdit`) |
+| `sport_match_template_download` | `/turnaje/zapasy/sablona.csv` | — (CSV) |
+| `sport_match_detail` | `/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) |
+| `sport_match_edit` | `/zapasy/{id}/upravit` | `portal/sport_match/form.html.twig` |
+| `sport_match_set_score` | `/zapasy/{id}/skore` | `portal/sport_match/set_score.html.twig` |
 
-Autocomplete JSON endpoints: `portal_match_source_teams` `/portal/zdroje/{id}/tymy`,
-`portal_match_source_players` `/portal/zdroje/{id}/hraci`,
-`portal_competition_source_filter_teams` `/portal/zdroje/{id}/filtr-tymy`.
+`portal/guess/detail.html.twig` is a partial rendered inside the match/tip surfaces — no route
+of its own.
+
+Autocomplete JSON endpoints (🔒): `match_source_teams` `/zdroje/{id}/tymy`,
+`match_source_players` `/zdroje/{id}/hraci`,
+`competition_source_filter_teams` `/zdroje/{id}/filtr-tymy`.
 
 POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `…/odlozit`,
 `…/presunout`, `…/smazat` (match).
 
 ### Invitations (public landing)
-`competition_accept_invitation` `/pozvanka/{token}` · `competition_join_by_link`
-`/souteze/pozvanka/{token}` → `invitation/landing.html.twig`.
+`competition_accept_invitation` `/pozvanka/{token}` → `invitation/landing.html.twig`
+(the shareable-link twin lives at `/souteze/pozvanka/{token}`, listed above).
 
-### Admin (`^/admin`, ROLE_ADMIN)
+### Ops
+`health_liveness` `/-/health-check/liveness` · `stripe_webhook` `POST /webhooks/stripe` — both public.
+
+### Admin (`^/admin`, ROLE_ADMIN) — 🛡, unchanged by item 09
 `admin_match_source_list` `/admin/turnaje` (**the admin landing** — this is where every
 „Administrace" link points) · `admin_competition_list` `/admin/souteze` ·
 `admin_global_competition_create|edit` · `admin_team_list` `/admin/tymy` (+ create/edit) ·
@@ -208,7 +242,12 @@ Listed so item files can reference them; each becomes a decision only when the p
 5. **Kredity is hidden** — reachable only from the avatar dropdown / mobile menu.
 6. **Admin is a separate shell** with no path back; „Administrace" lands on `/admin/turnaje`,
    which is arbitrary rather than an admin overview.
-7. **Match pages live under three different parents** (`/zapasy`, `/portal/zapasy/{id}`,
-   `/portal/souteze/{id}/zapasy/{id}`) with different chrome.
+7. **Match pages live under three different parents** (`/zapasy` the feed, `/zapasy/{id}` the
+   match, `/souteze/{id}/zapasy/{id}` the same match inside a soutěž) with different chrome.
+   _(Item 09 removed the `/portal` prefix, so they now at least share one tree — the chrome
+   still differs.)_
 8. **Breadcrumbs are used inconsistently** — present on competition detail and leaderboard,
    absent on most other portal pages.
+9. **„Zdroj zápasů" answers to two nouns in the URL** — `/turnaje/{id}` for the pages,
+   `/zdroje/{id}/…` for the autocomplete endpoints. Item 09 left both alone (it only deleted
+   `/portal`); unifying them is a separate decision.

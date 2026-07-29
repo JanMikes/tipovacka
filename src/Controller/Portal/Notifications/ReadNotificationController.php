@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -20,11 +21,12 @@ use Symfony\Component\Uid\Uuid;
  * another user's id simply falls through to the center.
  */
 #[Route(
-    '/portal/oznameni/{id}/precteno',
-    name: 'portal_notification_read',
+    '/oznameni/{id}/precteno',
+    name: 'notification_read',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET'],
 )]
+#[IsGranted('ROLE_USER')]
 final class ReadNotificationController extends AbstractController
 {
     public function __construct(
@@ -41,7 +43,7 @@ final class ReadNotificationController extends AbstractController
         $notification = $this->notificationRepository->findForUser(Uuid::fromString($id), $user->id);
 
         if (null === $notification) {
-            return $this->redirectToRoute('portal_notifications');
+            return $this->redirectToRoute('notifications');
         }
 
         $this->commandBus->dispatch(new MarkNotificationReadCommand(
@@ -53,6 +55,6 @@ final class ReadNotificationController extends AbstractController
             return $this->redirect($notification->url);
         }
 
-        return $this->redirectToRoute('portal_notifications');
+        return $this->redirectToRoute('notifications');
     }
 }

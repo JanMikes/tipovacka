@@ -22,7 +22,7 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Uložit změny', [
@@ -48,7 +48,7 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
         $client->submitForm('Uložit změny', ['sport_match_form[round]' => 'Osmifinále']);
         self::assertResponseRedirects();
 
@@ -58,7 +58,7 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         self::assertSame('Osmifinále', $match->round);
 
         // Blanking the field clears the round — a match without one is normal.
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/upravit');
         $client->submitForm('Uložit změny', ['sport_match_form[round]' => '']);
         self::assertResponseRedirects();
 

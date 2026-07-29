@@ -35,7 +35,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginAdmin($client);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore');
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Zapsat výsledek');
@@ -54,7 +54,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $em = $this->loginAdmin($client);
 
-        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
 
         // 1) „Probíhá" save — live score without finishing.
         $client->request('POST', $url, [
@@ -69,7 +69,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseRedirects('/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
         $em->clear();
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
@@ -99,7 +99,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseRedirects('/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
         $em->clear();
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
@@ -136,7 +136,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $em = $this->loginAdmin($client);
 
-        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
 
         $client->request('POST', $url, [
             'set_final_score_form' => [
@@ -152,7 +152,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseRedirects('/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
         $em->clear();
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
@@ -166,7 +166,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginAdmin($client);
 
-        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
 
         $client->request('POST', $url, [
             'set_final_score_form' => [
@@ -187,7 +187,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $em = $this->loginAdmin($client);
 
-        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
 
         // Organizer clicked „add goal" but left the player name blank (empty
         // minute too) — the exact production payload. This must fail validation
@@ -218,7 +218,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginAdmin($client);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_FINISHED_ID.'/skore');
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_FINISHED_ID.'/skore');
 
         self::assertResponseIsSuccessful();
         // No „Probíhá" radio — a finished match cannot go back to live.
@@ -234,7 +234,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $em = $this->loginAdmin($client);
 
         // Raw POST bypassing the UI (the toggle is not rendered at all).
-        $client->request('POST', '/portal/zapasy/'.AppFixtures::MATCH_FINISHED_ID.'/skore', [
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_FINISHED_ID.'/skore', [
             'set_final_score_form' => [
                 'state' => 'live',
                 'homeScore' => '2',
@@ -267,7 +267,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $em->clear();
 
         // The form itself is valid — only the domain layer rejects the save.
-        $client->request('POST', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore', [
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore', [
             'set_final_score_form' => [
                 'homeScore' => '1',
                 'awayScore' => '0',
@@ -283,7 +283,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client = static::createClient();
         $em = $this->loginAdmin($client);
 
-        $url = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
 
         $client->request('POST', $url, [
             'set_final_score_form' => [

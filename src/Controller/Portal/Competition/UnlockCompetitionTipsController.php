@@ -16,14 +16,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/odemknout-tipy',
-    name: 'portal_competition_unlock_tips',
+    '/souteze/{id}/odemknout-tipy',
+    name: 'competition_unlock_tips',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class UnlockCompetitionTipsController extends AbstractController
 {
     public function __construct(
@@ -43,7 +45,7 @@ final class UnlockCompetitionTipsController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_unlock_tips_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         try {
@@ -61,7 +63,7 @@ final class UnlockCompetitionTipsController extends AbstractController
             if ($previous instanceof CompetitionTipsCannotBeUnlocked) {
                 $this->addFlash('error', $previous->getMessage());
 
-                return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+                return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
             }
 
             throw $e;
@@ -69,6 +71,6 @@ final class UnlockCompetitionTipsController extends AbstractController
 
         $this->addFlash('success', 'Tipy byly odemčeny.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 }

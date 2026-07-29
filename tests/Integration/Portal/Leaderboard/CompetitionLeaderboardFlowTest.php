@@ -24,7 +24,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Žebříček');
     }
@@ -54,7 +54,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->loginUser($stranger);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseStatusCodeSame(403);
     }
 
@@ -69,7 +69,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/clen/'.AppFixtures::ADMIN_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/clen/'.AppFixtures::ADMIN_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -90,7 +90,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
 
         $client->loginUser($verified);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek/matice');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek/matice');
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -130,7 +130,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -152,7 +152,7 @@ final class CompetitionLeaderboardFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/shoda');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek/shoda');
         self::assertResponseStatusCodeSame(403);
     }
 }

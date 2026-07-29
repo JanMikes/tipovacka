@@ -6,7 +6,7 @@
 <div class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: 'Nástěnka', path: path('dashboard')},
         {label: match_source.name},
     ]" />
 
@@ -71,10 +71,10 @@
                     </div>
                     {% if is_granted('sport_match_create', match_source) %}
                         <div class="flex flex-wrap gap-2">
-                            <a href="{{ path('portal_sport_match_create', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+                            <a href="{{ path('sport_match_create', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                                 <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Přidat zápas
                             </a>
-                            <a href="{{ path('portal_sport_match_import', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-success btn-sm">
+                            <a href="{{ path('sport_match_import', {matchSourceId: match_source.id.toRfc4122}) }}" class="btn btn-success btn-sm">
                                 <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />Nahrát z Excelu
                             </a>
                         </div>
@@ -88,9 +88,9 @@
                             title="Žádné zápasy v plánu"
                             body="Přidejte první zápas ručně, nebo nahrajte celý rozpis z Excelu či CSV."
                             ctaLabel="Přidat zápas"
-                            ctaPath="{{ path('portal_sport_match_create', {matchSourceId: match_source.id.toRfc4122}) }}"
+                            ctaPath="{{ path('sport_match_create', {matchSourceId: match_source.id.toRfc4122}) }}"
                             secondaryLabel="Nahrát z Excelu/CSV"
-                            secondaryPath="{{ path('portal_sport_match_import', {matchSourceId: match_source.id.toRfc4122}) }}"
+                            secondaryPath="{{ path('sport_match_import', {matchSourceId: match_source.id.toRfc4122}) }}"
                         />
                     {% else %}
                         <twig:EmptyState
@@ -104,7 +104,7 @@
                         {% for m in matches %}
                             {%- set state = m.state.value -%}
                             <li>
-                                <a href="{{ path('portal_sport_match_detail', {id: m.id.toRfc4122}) }}" class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03] sm:gap-6">
+                                <a href="{{ path('sport_match_detail', {id: m.id.toRfc4122}) }}" class="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03] sm:gap-6">
                                     <div class="flex flex-col text-xs text-white/50 sm:w-24">
                                         <span class="font-medium text-white/70">{{ m.kickoffAt|date('d. m.') }}</span>
                                         <span>{{ m.kickoffAt|date('H:i') }}</span>
@@ -163,7 +163,7 @@
                         {% endif %}
                     </div>
                     {% if canCreateCompetition %}
-                        <a href="{{ path('portal_competition_create', {zdroj: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+                        <a href="{{ path('competition_create', {zdroj: match_source.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                             <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
                             Založit soutěž
                         </a>
@@ -176,7 +176,7 @@
                     <ul class="divide-y divide-white/[0.06]">
                         {% for g in competitions %}
                             <li>
-                                <a href="{{ path('portal_competition_detail', {id: g.competitionId.toRfc4122}) }}" class="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03]">
+                                <a href="{{ path('competition_detail', {id: g.competitionId.toRfc4122}) }}" class="flex items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03]">
                                     <div class="min-w-0">
                                         <p class="font-medium text-white">{{ g.competitionName }}</p>
                                         <p class="mt-0.5 flex items-center gap-1.5 text-xs text-white/50">
@@ -203,13 +203,13 @@
                     </header>
                     <div class="space-y-2 px-6 py-5">
                         {% if is_granted('match_source_edit', match_source) %}
-                            <a href="{{ path('portal_match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
+                            <a href="{{ path('match_source_edit', {id: match_source.id.toRfc4122}) }}" class="btn btn-ghost w-full justify-start">
                                 <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
                             </a>
                         {% endif %}
 
                         {% if is_granted('match_source_complete', match_source) %}
-                            <form method="post" action="{{ path('portal_match_source_complete', {id: match_source.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('match_source_complete', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Ukončit zdroj zápasů"
@@ -223,7 +223,7 @@
                         {% endif %}
 
                         {% if is_granted('match_source_reopen', match_source) %}
-                            <form method="post" action="{{ path('portal_match_source_reopen', {id: match_source.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('match_source_reopen', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Znovu otevřít zdroj zápasů"
@@ -237,7 +237,7 @@
                         {% endif %}
 
                         {% if is_granted('match_source_delete', match_source) %}
-                            <form method="post" action="{{ path('portal_match_source_delete', {id: match_source.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('match_source_delete', {id: match_source.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-title-value="Smazat zdroj zápasů"
                                 data-confirm-message-value="Opravdu chcete zdroj zápasů „{{ match_source.name }}“ smazat? Společně s ním zmizí všechny zápasy, soutěže i tipy."

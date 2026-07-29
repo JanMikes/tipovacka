@@ -12,7 +12,7 @@
 {% block admin_title %}Upravit globální soutěž{% endblock %}
 {% block admin_subtitle %}{{ competition.name }}{% endblock %}
 {% block admin_actions %}
-    <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+    <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
         <twig:ux:icon name="lucide:arrow-left" class="h-4 w-4" />
         Zpět na soutěž
     </a>
@@ -45,7 +45,7 @@
             <button type="submit" class="btn btn-primary"{{ fee_locked ? ' disabled' : '' }}>
                 Uložit nastavení
             </button>
-            <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+            <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                 Zrušit
             </a>
         </div>

@@ -32,14 +32,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/moje-tipy',
-    name: 'portal_competition_my_tips_batch',
+    '/souteze/{id}/moje-tipy',
+    name: 'competition_my_tips_batch',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET', 'POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class MyTipsBatchController extends AbstractController
 {
     public function __construct(
@@ -236,7 +238,7 @@ final class MyTipsBatchController extends AbstractController
             $this->addFlash('info', 'Nebyly provedeny žádné změny.');
         }
 
-        return $this->redirectToRoute('portal_competition_my_tips_batch', [
+        return $this->redirectToRoute('competition_my_tips_batch', [
             'id' => $competitionId->toRfc4122(),
         ]);
     }

@@ -59,7 +59,7 @@ final class CreateCuratedMatchSourceController extends AbstractController
                 ? 'Zdroj zápasů i globální soutěž byly vytvořeny.'
                 : 'Zdroj zápasů byl vytvořen.');
 
-            return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }
 
         return $this->render('admin/match_source/create_curated.html.twig', [

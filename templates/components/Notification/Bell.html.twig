@@ -45,7 +45,7 @@
                     {% for note in this.latest %}
                         <li>
                             <a
-                                href="{{ path('portal_notification_read', { id: note.id.toRfc4122 }) }}"
+                                href="{{ path('notification_read', { id: note.id.toRfc4122 }) }}"
                                 class="flex items-start gap-3 px-4 py-3 hover:bg-white/5 {{ note.isRead ? '' : 'bg-accent-500/[0.06]' }}"
                             >
                                 <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] {{ note.type.tone }}">
@@ -65,7 +65,7 @@
                 </ul>
             {% endif %}
 
-            <a href="{{ path('portal_notifications') }}" class="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-accent-300 hover:bg-white/5">
+            <a href="{{ path('notifications') }}" class="block border-t border-white/10 px-4 py-2.5 text-center text-sm font-semibold text-accent-300 hover:bg-white/5">
                 Zobrazit vše
             </a>
         </div>

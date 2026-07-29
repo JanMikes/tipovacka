@@ -24,7 +24,7 @@ final class AddAnonymousMemberFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/clenove/bez-emailu');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/clenove/bez-emailu');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Přidat tipujícího', [
@@ -32,7 +32,7 @@ final class AddAnonymousMemberFlowTest extends WebTestCase
             'anonymous_member_form[lastName]' => 'Strejda',
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $em->clear();
 
@@ -88,7 +88,7 @@ final class AddAnonymousMemberFlowTest extends WebTestCase
 
         $client->loginUser($stranger);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/clenove/bez-emailu');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/clenove/bez-emailu');
         self::assertResponseStatusCodeSame(403);
     }
 }

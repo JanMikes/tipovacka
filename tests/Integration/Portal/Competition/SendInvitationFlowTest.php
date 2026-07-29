@@ -24,14 +24,14 @@ final class SendInvitationFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Odeslat pozvánku', [
             'send_invitation_form[email]' => 'newguest@tipovacka.test',
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $em->clear();
         $result = $em->createQueryBuilder()
@@ -72,7 +72,7 @@ final class SendInvitationFlowTest extends WebTestCase
 
         $client->loginUser($stranger);
 
-        $client->request('POST', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/odeslat', [
+        $client->request('POST', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/odeslat', [
             'send_invitation_form' => ['email' => 'guest@tipovacka.test'],
         ]);
 

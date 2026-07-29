@@ -17,14 +17,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/premium/zapnout',
-    name: 'portal_competition_premium_enable',
+    '/souteze/{id}/premium/zapnout',
+    name: 'competition_premium_enable',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class EnablePremiumController extends AbstractController
 {
     public function __construct(
@@ -44,7 +46,7 @@ final class EnablePremiumController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_premium_enable_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         try {
@@ -58,13 +60,13 @@ final class EnablePremiumController extends AbstractController
             if ($inner instanceof InsufficientCredits) {
                 $this->addFlash('error', $inner->getMessage());
 
-                return $this->redirectToRoute('portal_credits');
+                return $this->redirectToRoute('credits');
             }
 
             if ($inner instanceof PremiumAlreadyEnabled) {
                 $this->addFlash('info', 'Soutěž už je prémiová.');
 
-                return $this->redirectToRoute('portal_competition_premium', ['id' => $competition->id->toRfc4122()]);
+                return $this->redirectToRoute('competition_premium', ['id' => $competition->id->toRfc4122()]);
             }
 
             throw $handlerFailed;
@@ -72,6 +74,6 @@ final class EnablePremiumController extends AbstractController
 
         $this->addFlash('success', 'Prémium bylo zapnuto — za členy platíte vy.');
 
-        return $this->redirectToRoute('portal_competition_premium', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_premium', ['id' => $competition->id->toRfc4122()]);
     }
 }

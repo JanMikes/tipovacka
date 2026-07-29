@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -22,7 +23,8 @@ use Symfony\Component\Uid\Uuid;
  * webhook; dispatching it here too closes the gap when the user is faster
  * than the webhook — the command is idempotent, whoever comes second no-ops.
  */
-#[Route('/portal/kredity/navrat', name: 'portal_credits_return', methods: ['GET'])]
+#[Route('/kredity/navrat', name: 'credits_return', methods: ['GET'])]
+#[IsGranted('ROLE_USER')]
 final class CreditsReturnController extends AbstractController
 {
     public function __construct(
@@ -40,13 +42,13 @@ final class CreditsReturnController extends AbstractController
         if ($request->query->getBoolean('cancelled')) {
             $this->addFlash('info', 'Platba byla zrušena. Žádné kredity nebyly připsány.');
 
-            return $this->redirectToRoute('portal_credits');
+            return $this->redirectToRoute('credits');
         }
 
         $sessionId = $request->query->getString('session_id');
 
         if ('' === $sessionId) {
-            return $this->redirectToRoute('portal_credits');
+            return $this->redirectToRoute('credits');
         }
 
         try {
@@ -56,7 +58,7 @@ final class CreditsReturnController extends AbstractController
             $this->logger->error('Ověření platby po návratu ze Stripe selhalo.', ['exception' => $e]);
             $this->addFlash('warning', 'Stav platby se nepodařilo ověřit. Jakmile ji Stripe potvrdí, kredity připíšeme automaticky.');
 
-            return $this->redirectToRoute('portal_credits');
+            return $this->redirectToRoute('credits');
         }
 
         if ($purchase instanceof CreditPurchase && $purchase->user->id->equals($user->id)) {
@@ -82,6 +84,6 @@ final class CreditsReturnController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('portal_credits');
+        return $this->redirectToRoute('credits');
     }
 }

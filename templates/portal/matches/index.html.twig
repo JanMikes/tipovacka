@@ -18,7 +18,7 @@
         {% for key, label in filters %}
             {% set is_active = key == active_filter %}
             <a
-                href="{{ path('portal_matches') }}{{ key == 'vse' ? '' : '?filtr=' ~ key }}"
+                href="{{ path('matches') }}{{ key == 'vse' ? '' : '?filtr=' ~ key }}"
                 class="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors {{ is_active ? 'border-accent-500/50 bg-accent-500/15 text-accent-200' : 'border-white/10 bg-white/[0.04] text-white/60 hover:border-white/20 hover:text-white' }}"
             >
                 {{ label }}
@@ -40,7 +40,7 @@
                 {% if active_filter == 'vse' %}
                     Jakmile se ve vašich soutěžích objeví zápasy, uvidíte je tady.
                 {% else %}
-                    Zkuste jiný filtr — třeba <a href="{{ path('portal_matches') }}" class="font-semibold text-accent-300 hover:text-accent-200">Vše</a>.
+                    Zkuste jiný filtr — třeba <a href="{{ path('matches') }}" class="font-semibold text-accent-300 hover:text-accent-200">Vše</a>.
                 {% endif %}
             </p>
         </div>
@@ -89,7 +89,7 @@
                         :pillDot="pill_dot"
                         :resultHome="m.isFinished ? m.homeScore : null"
                         :resultAway="m.isFinished ? m.awayScore : null"
-                        :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
+                        :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
                     />
 

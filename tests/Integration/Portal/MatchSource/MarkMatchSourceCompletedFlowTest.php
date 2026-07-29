@@ -23,12 +23,12 @@ final class MarkMatchSourceCompletedFlowTest extends WebTestCase
         $client->loginUser($owner);
 
         // GET detail page to get the form with CSRF token rendered
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Ukončit zdroj zápasů');
 
-        self::assertResponseRedirects('/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        self::assertResponseRedirects('/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
 
         $em->clear();
         $matchSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID));
@@ -46,17 +46,17 @@ final class MarkMatchSourceCompletedFlowTest extends WebTestCase
         $client->loginUser($owner);
 
         // Complete first…
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         $client->submitForm('Ukončit zdroj zápasů');
         self::assertResponseRedirects();
 
         // …then the management page offers the reopen toggle.
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
         self::assertAnySelectorTextContains('button', 'Znovu otevřít zdroj zápasů');
 
         $client->submitForm('Znovu otevřít zdroj zápasů');
-        self::assertResponseRedirects('/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        self::assertResponseRedirects('/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
 
         $em->clear();
         $matchSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID));

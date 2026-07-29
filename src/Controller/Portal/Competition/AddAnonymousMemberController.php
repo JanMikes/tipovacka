@@ -16,14 +16,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/clenove/bez-emailu',
-    name: 'portal_competition_add_anonymous_member',
+    '/souteze/{id}/clenove/bez-emailu',
+    name: 'competition_add_anonymous_member',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET', 'POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class AddAnonymousMemberController extends AbstractController
 {
     public function __construct(
@@ -55,7 +57,7 @@ final class AddAnonymousMemberController extends AbstractController
 
             $this->addFlash('success', 'Tipující byl přidán do soutěže.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('portal/competition/add_anonymous_member.html.twig', [

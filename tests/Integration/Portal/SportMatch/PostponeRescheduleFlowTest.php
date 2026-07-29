@@ -23,7 +23,7 @@ final class PostponeRescheduleFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $crawler = $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $crawler = $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
         self::assertResponseIsSuccessful();
 
         $postponeToken = $crawler
@@ -31,7 +31,7 @@ final class PostponeRescheduleFlowTest extends WebTestCase
             ->attr('value');
         self::assertNotNull($postponeToken);
 
-        $client->request('POST', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/odlozit', [
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/odlozit', [
             '_token' => $postponeToken,
             'new_kickoff_at' => '2025-10-10T18:00',
         ]);
@@ -42,7 +42,7 @@ final class PostponeRescheduleFlowTest extends WebTestCase
         self::assertInstanceOf(SportMatch::class, $match);
         self::assertSame(SportMatchState::Postponed, $match->state);
 
-        $crawler = $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $crawler = $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
         self::assertResponseIsSuccessful();
 
         $rescheduleToken = $crawler
@@ -50,7 +50,7 @@ final class PostponeRescheduleFlowTest extends WebTestCase
             ->attr('value');
         self::assertNotNull($rescheduleToken);
 
-        $client->request('POST', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/presunout', [
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/presunout', [
             '_token' => $rescheduleToken,
             'new_kickoff_at' => '2025-11-01T20:00',
         ]);

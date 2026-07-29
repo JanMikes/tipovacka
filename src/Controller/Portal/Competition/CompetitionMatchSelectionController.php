@@ -22,6 +22,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -30,11 +31,12 @@ use Symfony\Component\Uid\Uuid;
  * team-filter picker; All ⇒ nothing to manage (redirect back).
  */
 #[Route(
-    '/portal/souteze/{id}/zapasy-vyber',
-    name: 'portal_competition_match_selection',
+    '/souteze/{id}/zapasy-vyber',
+    name: 'competition_match_selection',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET', 'POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class CompetitionMatchSelectionController extends AbstractController
 {
     public function __construct(
@@ -65,7 +67,7 @@ final class CompetitionMatchSelectionController extends AbstractController
     {
         $this->addFlash('info', 'Tato soutěž zahrnuje všechny zápasy zdroje — výběr zápasů se nespravuje.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 
     private function manageSubset(Request $request, Competition $competition, User $user): Response
@@ -97,7 +99,7 @@ final class CompetitionMatchSelectionController extends AbstractController
                 }
             }
 
-            return $this->redirectToRoute('portal_competition_match_selection', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_match_selection', ['id' => $competition->id->toRfc4122()]);
         }
 
         $selectedIds = array_flip($this->selectionRepository->selectedMatchIds($competition->id));
@@ -153,7 +155,7 @@ final class CompetitionMatchSelectionController extends AbstractController
                 }
             }
 
-            return $this->redirectToRoute('portal_competition_match_selection', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_match_selection', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('portal/competition/match_selection.html.twig', [

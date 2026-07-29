@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/clenove/{userId}/odebrat',
-    name: 'portal_competition_remove_member',
+    '/souteze/{id}/clenove/{userId}/odebrat',
+    name: 'competition_remove_member',
     requirements: ['id' => Requirement::UUID, 'userId' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class RemoveMemberController extends AbstractController
 {
     public function __construct(
@@ -42,7 +44,7 @@ final class RemoveMemberController extends AbstractController
         if (!$this->isCsrfTokenValid($csrfId, (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new RemoveMemberCommand(
@@ -53,6 +55,6 @@ final class RemoveMemberController extends AbstractController
 
         $this->addFlash('success', 'Člen byl odebrán ze soutěže.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 }

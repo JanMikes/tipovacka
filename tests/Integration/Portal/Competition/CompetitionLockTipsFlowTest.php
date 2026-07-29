@@ -15,7 +15,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class CompetitionLockTipsFlowTest extends WebTestCase
 {
-    private const string DETAIL_URL = '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
+    private const string DETAIL_URL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
     private const string LOCK_URL = self::DETAIL_URL.'/uzamknout-tipy';
     private const string UNLOCK_URL = self::DETAIL_URL.'/odemknout-tipy';
 
@@ -142,7 +142,7 @@ final class CompetitionLockTipsFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $detailUrl = '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID;
+        $detailUrl = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID;
         $crawler = $client->request('GET', $detailUrl);
         self::assertResponseIsSuccessful();
 

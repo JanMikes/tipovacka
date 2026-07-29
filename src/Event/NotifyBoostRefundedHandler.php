@@ -39,7 +39,7 @@ final readonly class NotifyBoostRefundedHandler
         $boostLabel = BoostType::from($event->boostType)->label();
 
         $url = $this->urlGenerator->generate(
-            'portal_competition_detail',
+            'competition_detail',
             ['id' => $competition->id->toRfc4122()],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );

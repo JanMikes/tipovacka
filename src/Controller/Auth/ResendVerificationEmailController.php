@@ -44,7 +44,7 @@ final class ResendVerificationEmailController extends AbstractController
         if (null === $user || $user->isVerified) {
             $this->addFlash('info', 'Váš e-mail byl již ověřen.');
 
-            return $this->redirectToRoute('portal_dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         if (null === $user->email) {

@@ -30,6 +30,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 01 | [Navigation slim-down + noindex on de-linked marketing pages](items/01-nav-and-noindex.md) | DONE | `586d48f` |
 | 02 | [„Kolo" (round) on a match: optional input, import support, grouping](items/02-match-round.md) | DONE | `b2c83dd` |
 | 03 | [Development fixtures: a realistic, complete world](items/03-dev-fixtures.md) | DONE | `11d83aa` |
+| 09 | [Drop the `/portal` URL prefix; unify the soutěž URL space](items/09-drop-portal-prefix.md) | DONE | `PENDING` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
@@ -159,3 +160,9 @@ A fresh session with zero context can continue by:
 - **Never run `asset-map:compile`.** If assets look frozen: `rm -rf public/assets`, then
   `docker compose restart web`.
 - **No new literal prices.** Everything monetary comes from `Credits/PricingConfig`.
+- **Access is declared, not inferred from the URL** (item 09). There is no `/portal` prefix and
+  no path-based `access_control` except `^/admin`. A page that needs a login carries
+  `#[IsGranted('ROLE_USER')]` on its controller. Consequently **every new or moved route must be
+  declared in `tests/Integration/Security/AnonymousReachabilityTest`**, which is keyed by
+  controller class and fails on any route it does not know about. That test — not the URL, not
+  `security.php` — is the authoritative answer to „who can see this page".

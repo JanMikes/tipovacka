@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/zapasy/{id}/zrusit',
-    name: 'portal_sport_match_cancel',
+    '/zapasy/{id}/zrusit',
+    name: 'sport_match_cancel',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class CancelController extends AbstractController
 {
     public function __construct(
@@ -41,7 +43,7 @@ final class CancelController extends AbstractController
         if (!$this->isCsrfTokenValid('sport_match_cancel_'.$sportMatch->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new CancelSportMatchCommand(
@@ -51,6 +53,6 @@ final class CancelController extends AbstractController
 
         $this->addFlash('success', 'Zápas byl zrušen.');
 
-        return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+        return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
     }
 }

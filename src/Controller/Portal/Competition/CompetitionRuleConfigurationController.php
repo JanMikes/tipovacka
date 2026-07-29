@@ -18,9 +18,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
-#[Route('/portal/souteze/{id}/pravidla', name: 'portal_competition_rules', requirements: ['id' => Requirement::UUID])]
+#[Route('/souteze/{id}/pravidla', name: 'competition_rules', requirements: ['id' => Requirement::UUID])]
+#[IsGranted('ROLE_USER')]
 final class CompetitionRuleConfigurationController extends AbstractController
 {
     public function __construct(
@@ -63,7 +65,7 @@ final class CompetitionRuleConfigurationController extends AbstractController
 
             $this->addFlash('success', 'Pravidla soutěže byla uložena.');
 
-            return $this->redirectToRoute('portal_competition_rules', [
+            return $this->redirectToRoute('competition_rules', [
                 'id' => $competition->id->toRfc4122(),
             ]);
         }

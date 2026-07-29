@@ -19,7 +19,7 @@ final class TeamAutocompleteFlowTest extends WebTestCase
         $this->login($client, AppFixtures::ADMIN_ID);
 
         // Curated PUBLIC source → global directory; filter „Spar" → Sparta Praha with its meta.
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/tymy', ['q' => 'Spar']);
+        $client->request('GET', '/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/tymy', ['q' => 'Spar']);
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('Content-Type', 'application/json');
@@ -34,7 +34,7 @@ final class TeamAutocompleteFlowTest extends WebTestCase
         // VERIFIED_USER owns the PRIVATE source ⇒ has CREATE_MATCH.
         $this->login($client, AppFixtures::VERIFIED_USER_ID);
 
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/tymy');
+        $client->request('GET', '/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/tymy');
 
         self::assertResponseIsSuccessful();
         $names = array_column(json_decode((string) $client->getResponse()->getContent(), true), 'name');
@@ -50,7 +50,7 @@ final class TeamAutocompleteFlowTest extends WebTestCase
         $client = static::createClient();
         $this->login($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/tymy');
+        $client->request('GET', '/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/tymy');
 
         self::assertResponseStatusCodeSame(403);
     }

@@ -9,7 +9,7 @@
         <div class="rounded-xl border border-white/10 bg-white/[0.03] p-8 text-center">
             <p class="text-sm text-white/60">Tabulka je zatím prázdná. Jakmile první hráč zadá tip, objeví se tady žebříček.</p>
             {% if is_granted('competition_manage_members', this.competition) %}
-                <a href="{{ path('portal_competition_detail', {id: this.competition.id.toRfc4122}) }}" class="btn btn-primary btn-sm mt-4">
+                <a href="{{ path('competition_detail', {id: this.competition.id.toRfc4122}) }}" class="btn btn-primary btn-sm mt-4">
                     <twig:ux:icon name="lucide:users" class="h-4 w-4" />Pozvat hráče
                 </a>
             {% endif %}
@@ -43,7 +43,7 @@
                                 </td>
                             {% endif %}
                             <td>
-                                <a href="{{ path('portal_competition_leaderboard_member', {competitionId: this.competition.id.toRfc4122, userId: row.userId.toRfc4122}) }}"
+                                <a href="{{ path('competition_leaderboard_member', {competitionId: this.competition.id.toRfc4122, userId: row.userId.toRfc4122}) }}"
                                    class="flex items-center gap-3 hover:opacity-90">
                                     <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
                                     <span class="min-w-0">

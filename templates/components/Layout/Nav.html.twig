@@ -2,9 +2,9 @@
   Sticky glass top navigation. Two variants:
    - app    (authenticated): Nástěnka hráče / Soutěže / Žebříček + Vytvořit soutěž CTA + avatar dropdown
    - public (logged out):    Soutěže + Přihlásit se + Registrace zdarma
-  „Žebříček" is soutěž-scoped: it points at the `portal_leaderboard` resolver, which
+  „Žebříček" is soutěž-scoped: it points at the `leaderboard` resolver, which
   redirects to the user's primary soutěž leaderboard (or discovery if they're in none).
-  „Zápasy" (`portal_matches`) is intentionally NOT in the bar — the page stays reachable by URL.
+  „Zápasy" (`matches`) is intentionally NOT in the bar — the page stays reachable by URL.
   The marketing pages (Funkce / Ceník / Pro firmy / FAQ) are footer-only and `noindex` until rewritten.
 #}
 {% props variant = null %}
@@ -13,9 +13,9 @@
 
 {% set links = is_app
     ? [
-        { label: 'Nástěnka hráče', path: 'portal_dashboard', match: 'portal_dashboard' },
+        { label: 'Nástěnka hráče', path: 'dashboard', match: 'dashboard' },
         { label: 'Soutěže', path: 'public_competitions_list', match: 'public_competitions_list' },
-        { label: 'Žebříček', path: 'portal_leaderboard', match: 'portal_competition_leaderboard' },
+        { label: 'Žebříček', path: 'leaderboard', match: 'competition_leaderboard' },
     ]
     : [
         { label: 'Soutěže', path: 'public_competitions_list', match: 'public_competitions_list' },
@@ -24,7 +24,7 @@
 
 <header class="wtnav" data-controller="mobile-nav">
     <div class="bar">
-        <a class="brand" href="{{ is_app ? path('portal_dashboard') : path('app_home') }}" aria-label="{{ brand_name }}">
+        <a class="brand" href="{{ is_app ? path('dashboard') : path('app_home') }}" aria-label="{{ brand_name }}">
             <span class="brand-mark" aria-hidden="true">W</span>
             <span class="brand-name">{{ brand_name }}</span>
         </a>
@@ -51,7 +51,7 @@
 
                 <twig:Notification:Bell />
 
-                <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm">
+                <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm">
                     <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
                     <span class="cta-label">Vytvořit soutěž</span>
                 </a>
@@ -59,7 +59,7 @@
                 <details class="relative">
                     <summary class="avatar list-none" style="list-style:none">{{ app.user.nickname|default('?')|slice(0, 2)|upper }}</summary>
                     <div class="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-surface-2 p-1.5 shadow-xl z-[60]">
-                        <a href="{{ path('portal_profile_edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
+                        <a href="{{ path('profile_edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
                             <twig:ux:icon name="lucide:user" class="h-4 w-4" />Profil
                         </a>
                         <twig:CreditBalance />
@@ -94,8 +94,8 @@
             <a href="{{ path(link.path) }}"{{ current starts with link.match ? ' class="active"' }}>{{ link.label }}</a>
         {% endfor %}
         {% if is_app %}
-            <a href="{{ path('portal_profile_edit') }}">Profil</a>
-            <a href="{{ path('portal_credits') }}"{{ current starts with 'portal_credits' ? ' class="active"' }}>Kredity</a>
+            <a href="{{ path('profile_edit') }}">Profil</a>
+            <a href="{{ path('credits') }}"{{ current starts with 'credits' ? ' class="active"' }}>Kredity</a>
             {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_match_source_list') }}">Administrace</a>{% endif %}
             <a href="{{ path('app_logout') }}">Odhlásit se</a>
         {% else %}

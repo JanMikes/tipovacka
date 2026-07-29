@@ -166,7 +166,7 @@
                                 {% if this.isTeams %}
                                     <div data-live-ignore>
                                         <div data-controller="team-filter"
-                                             data-team-filter-url-value="{{ path('portal_competition_source_filter_teams', {id: this.selectedSource.id.toRfc4122}) }}">
+                                             data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: this.selectedSource.id.toRfc4122}) }}">
                                             <select multiple data-team-filter-target="select" class="input" aria-label="Týmy soutěže" placeholder="Vyhledat a přidat tým…">
                                                 {% for option in this.filterTeamOptions %}
                                                     <option value="{{ option.id }}" selected>{{ option.name }}</option>
@@ -408,7 +408,7 @@
                             Váš zůstatek: <strong class="text-white">{{ this.creditBalance }} kreditů</strong>
                         </span>
                         {% if monetization == 'premium' %}
-                            <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm">
+                            <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm">
                                 <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Dokoupit kredity
                             </a>
                         {% endif %}

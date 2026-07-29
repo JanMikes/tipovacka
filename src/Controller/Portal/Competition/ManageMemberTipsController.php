@@ -20,13 +20,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/spravovat-tipy',
-    name: 'portal_competition_manage_member_tips',
+    '/souteze/{id}/spravovat-tipy',
+    name: 'competition_manage_member_tips',
     requirements: ['id' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class ManageMemberTipsController extends AbstractController
 {
     public function __construct(

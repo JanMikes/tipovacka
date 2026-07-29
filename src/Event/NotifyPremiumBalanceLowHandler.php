@@ -41,7 +41,7 @@ final readonly class NotifyPremiumBalanceLowHandler
         $day = $event->occurredOn->setTimezone(new \DateTimeZone(self::PRAGUE_TIMEZONE))->format('Y-m-d');
 
         $url = $this->urlGenerator->generate(
-            'portal_credits',
+            'credits',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );

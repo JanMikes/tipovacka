@@ -63,6 +63,6 @@ final class ProfileForm extends AbstractController
 
         $this->addFlash('success', 'Profil byl úspěšně uložen.');
 
-        return $this->redirectToRoute('portal_profile_edit');
+        return $this->redirectToRoute('profile_edit');
     }
 }

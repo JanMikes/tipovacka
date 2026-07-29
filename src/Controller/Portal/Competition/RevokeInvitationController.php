@@ -16,14 +16,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/pozvanky/{invitationId}/zrusit',
-    name: 'portal_invitation_revoke',
+    '/pozvanky/{invitationId}/zrusit',
+    name: 'invitation_revoke',
     requirements: ['invitationId' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class RevokeInvitationController extends AbstractController
 {
     public function __construct(
@@ -43,7 +45,7 @@ final class RevokeInvitationController extends AbstractController
         if (!$this->isCsrfTokenValid('invitation_revoke_'.$invitation->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competitionId]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competitionId]);
         }
 
         try {
@@ -67,6 +69,6 @@ final class RevokeInvitationController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competitionId]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competitionId]);
     }
 }

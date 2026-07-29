@@ -14,7 +14,7 @@ final class HomeController extends AbstractController
     public function __invoke(): Response
     {
         if (null !== $this->getUser()) {
-            return $this->redirectToRoute('portal_dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         return $this->render('home.html.twig');

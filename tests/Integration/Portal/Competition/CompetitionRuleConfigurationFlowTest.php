@@ -22,7 +22,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Pravidla');
@@ -59,7 +59,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         self::assertNotNull($nonOwner);
         $client->loginUser($nonOwner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
 
         self::assertResponseStatusCodeSame(403);
     }
@@ -74,7 +74,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         $client->loginUser($admin);
 
         // PUBLIC_COMPETITION has exactly one fixture evaluation.
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/pravidla');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/pravidla');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('form[data-controller="confirm-recalculation"][data-confirm-recalculation-count-value="1"]');
@@ -91,7 +91,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
 
         $competitionId = AppFixtures::PUBLIC_COMPETITION_ID;
 
-        $client->request('GET', '/portal/souteze/'.$competitionId.'/pravidla');
+        $client->request('GET', '/souteze/'.$competitionId.'/pravidla');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Uložit pravidla', [
@@ -102,7 +102,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
             'competition_rule_configuration_form[rules][correct_away_goals][points]' => '1',
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.$competitionId.'/pravidla');
+        self::assertResponseRedirects('/souteze/'.$competitionId.'/pravidla');
 
         $em->clear();
 

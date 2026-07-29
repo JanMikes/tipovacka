@@ -18,14 +18,16 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/pozvanky/hromadne',
-    name: 'portal_competition_invitation_send_bulk',
+    '/souteze/{id}/pozvanky/hromadne',
+    name: 'competition_invitation_send_bulk',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SendBulkInvitationsController extends AbstractController
 {
     public function __construct(
@@ -59,14 +61,14 @@ final class SendBulkInvitationsController extends AbstractController
                 $this->flashSummary($result);
             }
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         foreach ($form->getErrors(true) as $error) {
             $this->addFlash('error', $error->getMessage());
         }
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 
     private function flashSummary(BulkInvitationResult $result): void

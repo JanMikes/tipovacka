@@ -6,8 +6,8 @@
 <div class="bg-radial mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
         {label: 'Žebříček'},
     ]" />
 
@@ -49,7 +49,7 @@
             </h1>
             <p class="mt-2 text-white/70">
                 Soutěž
-                <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
+                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
             </p>
         </div>
 
@@ -58,17 +58,17 @@
                 <twig:SoutezSwitcher
                     :competitions="my_competitions"
                     currentId="{{ competition.id.toRfc4122 }}"
-                    route="portal_competition_leaderboard"
+                    route="competition_leaderboard"
                     param="competitionId"
                     label="Žebříček soutěže"
                 />
             {% endif %}
-            <a href="{{ path('portal_competition_leaderboard_matrix', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+            <a href="{{ path('competition_leaderboard_matrix', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                 <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />
                 Tabulka
             </a>
             {% if is_granted('leaderboard_resolve_ties', competition) %}
-                <a href="{{ path('portal_competition_leaderboard_resolve_ties', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
+                <a href="{{ path('competition_leaderboard_resolve_ties', {competitionId: competition.id.toRfc4122}) }}" class="btn btn-primary btn-sm">
                     <twig:ux:icon name="lucide:list-ordered" class="h-4 w-4" />
                     Rozřadit shody
                 </a>
@@ -118,7 +118,7 @@
                     <span class="v text-win">{{ me_row.rank == 1 ? 'Vedeš' : 'Top 3' }}</span>
                 </div>
             {% endif %}
-            <a href="{{ path('portal_matches') }}" class="btn btn-ghost btn-sm ml-auto">
+            <a href="{{ path('matches') }}" class="btn btn-ghost btn-sm ml-auto">
                 Tipnout další zápas
                 <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
             </a>
@@ -134,7 +134,7 @@
        Celkem + Posledních 7 dní). #}
     <div class="lb-tabs" role="tablist" aria-label="Časové období">
         {% for f in time_filters %}
-            <a href="{{ path('portal_competition_leaderboard', {competitionId: competition.id.toRfc4122, obdobi: f.value}) }}"
+            <a href="{{ path('competition_leaderboard', {competitionId: competition.id.toRfc4122, obdobi: f.value}) }}"
                class="lb-tab{{ f.value == active_filter.value ? ' active' }}"
                role="tab" data-turbo="false"
                {{ f.value == active_filter.value ? 'aria-selected="true"' : 'aria-selected="false"' }}>{{ f.label }}</a>

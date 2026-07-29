@@ -120,7 +120,7 @@ final class LoginSubscriber implements EventSubscriberInterface
         }
 
         $event->setResponse(
-            new RedirectResponse($this->urlGenerator->generate('portal_dashboard'))
+            new RedirectResponse($this->urlGenerator->generate('dashboard'))
         );
     }
 
@@ -156,7 +156,7 @@ final class LoginSubscriber implements EventSubscriberInterface
             if ($invitation instanceof CompetitionInvitation) {
                 $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže přes pozvánku.');
                 $event->setResponse(new RedirectResponse(
-                    $this->urlGenerator->generate('portal_competition_detail', ['id' => $invitation->competition->id->toRfc4122()])
+                    $this->urlGenerator->generate('competition_detail', ['id' => $invitation->competition->id->toRfc4122()])
                 ));
 
                 return;
@@ -188,7 +188,7 @@ final class LoginSubscriber implements EventSubscriberInterface
         }
 
         $event->setResponse(
-            new RedirectResponse($this->urlGenerator->generate('portal_dashboard'))
+            new RedirectResponse($this->urlGenerator->generate('dashboard'))
         );
     }
 }

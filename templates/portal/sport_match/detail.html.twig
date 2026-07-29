@@ -7,8 +7,8 @@
     <div class="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
         <twig:Breadcrumbs :items="[
-            {label: 'Nástěnka', path: path('portal_dashboard')},
-            {label: sport_match.matchSource.name, path: path('portal_match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
+            {label: 'Nástěnka', path: path('dashboard')},
+            {label: sport_match.matchSource.name, path: path('match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
             {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name},
         ]" />
 
@@ -112,11 +112,11 @@
                                         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-500/15 text-accent-300">
                                             <twig:ux:icon name="lucide:users" class="h-4 w-4" />
                                         </span>
-                                        <a href="{{ path('portal_competition_detail', {id: g.id.toRfc4122}) }}" class="truncate font-semibold text-white transition-colors hover:text-accent-300">
+                                        <a href="{{ path('competition_detail', {id: g.id.toRfc4122}) }}" class="truncate font-semibold text-white transition-colors hover:text-accent-300">
                                             {{ g.name }}
                                         </a>
                                     </div>
-                                    <a href="{{ path('portal_competition_sport_match_guesses', {competitionId: g.id.toRfc4122, sportMatchId: sport_match.id.toRfc4122}) }}" class="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent-300 transition-colors hover:text-accent-200" title="Zobrazit tipy členů soutěže">
+                                    <a href="{{ path('competition_sport_match_guesses', {competitionId: g.id.toRfc4122, sportMatchId: sport_match.id.toRfc4122}) }}" class="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent-300 transition-colors hover:text-accent-200" title="Zobrazit tipy členů soutěže">
                                         Tipy členů
                                         <twig:ux:icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
                                     </a>
@@ -158,20 +158,20 @@
                 </header>
                 <div class="flex flex-wrap items-end gap-3 px-6 py-5">
                     {% if can_edit %}
-                        <a href="{{ path('portal_sport_match_edit', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                        <a href="{{ path('sport_match_edit', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit
                         </a>
                     {% endif %}
 
                     {% if can_score %}
-                        <a href="{{ path('portal_sport_match_set_score', {id: sport_match.id.toRfc4122}) }}" class="btn btn-success btn-sm">
+                        <a href="{{ path('sport_match_set_score', {id: sport_match.id.toRfc4122}) }}" class="btn btn-success btn-sm">
                             <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                             {{ sport_match.isFinished ? 'Upravit skóre' : 'Zadat skóre' }}
                         </a>
                     {% endif %}
 
                     {% if can_edit and (sport_match.isScheduled or sport_match.isPostponed) %}
-                        <form method="post" action="{{ path('portal_sport_match_postpone', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
+                        <form method="post" action="{{ path('sport_match_postpone', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_postpone_' ~ sport_match.id.toRfc4122) }}">
                             <div class="field">
                                 <label class="field-label" for="postpone-kickoff-{{ sport_match.id.toRfc4122 }}">Nový termín</label>
@@ -186,7 +186,7 @@
                     {% endif %}
 
                     {% if can_edit and sport_match.isPostponed %}
-                        <form method="post" action="{{ path('portal_sport_match_reschedule', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
+                        <form method="post" action="{{ path('sport_match_reschedule', {id: sport_match.id.toRfc4122}) }}" class="flex flex-wrap items-end gap-2">
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_reschedule_' ~ sport_match.id.toRfc4122) }}">
                             <div class="field">
                                 <label class="field-label" for="reschedule-kickoff-{{ sport_match.id.toRfc4122 }}">Nový termín</label>
@@ -201,7 +201,7 @@
                     {% endif %}
 
                     {% if can_cancel and not sport_match.isFinished and not sport_match.isCancelled %}
-                        <form method="post" action="{{ path('portal_sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                        <form method="post" action="{{ path('sport_match_cancel', {id: sport_match.id.toRfc4122}) }}" class="inline"
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Zrušit zápas"
@@ -215,7 +215,7 @@
                     {% endif %}
 
                     {% if can_delete %}
-                        <form method="post" action="{{ path('portal_sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
+                        <form method="post" action="{{ path('sport_match_delete', {id: sport_match.id.toRfc4122}) }}" class="inline"
                             data-controller="confirm"
                             data-confirm-title-value="Smazat zápas"
                             data-confirm-message-value="Opravdu chcete zápas {{ sport_match.homeTeam.name }} – {{ sport_match.awayTeam.name }} smazat? Všechny tipy na něj zmizí."

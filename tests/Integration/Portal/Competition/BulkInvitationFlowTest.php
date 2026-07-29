@@ -28,13 +28,13 @@ final class BulkInvitationFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('POST', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/hromadne', [
+        $client->request('POST', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/hromadne', [
             'bulk_invitation_form' => [
                 'emails' => "alice@example.com\nbob@example.com, alice@example.com",
             ],
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $em->clear();
         $invitations = $em->createQueryBuilder()
@@ -73,7 +73,7 @@ final class BulkInvitationFlowTest extends WebTestCase
         ], 'submit')->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
 
         $em->clear();
 
@@ -125,7 +125,7 @@ final class BulkInvitationFlowTest extends WebTestCase
 
         $client->loginUser($secondUser);
 
-        $client->request('POST', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/hromadne', [
+        $client->request('POST', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/hromadne', [
             'bulk_invitation_form' => ['emails' => 'someone@example.com'],
         ]);
 

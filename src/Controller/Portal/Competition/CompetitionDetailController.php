@@ -31,13 +31,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}',
-    name: 'portal_competition_detail',
+    '/souteze/{id}',
+    name: 'competition_detail',
     requirements: ['id' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class CompetitionDetailController extends AbstractController
 {
     public function __construct(
@@ -119,12 +121,12 @@ final class CompetitionDetailController extends AbstractController
         }
 
         $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
-            'action' => $this->generateUrl('portal_competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
+            'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
         ]);
 
         $bulkInvitationForm = $canManage
             ? $this->createForm(BulkInvitationFormType::class, new BulkInvitationFormData(), [
-                'action' => $this->generateUrl('portal_competition_invitation_send_bulk', ['id' => $competition->id->toRfc4122()]),
+                'action' => $this->generateUrl('competition_invitation_send_bulk', ['id' => $competition->id->toRfc4122()]),
             ])
             : null;
 

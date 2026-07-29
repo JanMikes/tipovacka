@@ -22,7 +22,7 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', AppFixtures::VERIFIED_COMPETITION_NAME);
     }
@@ -36,7 +36,7 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseIsSuccessful();
     }
 
@@ -53,7 +53,7 @@ final class CompetitionDetailFlowTest extends WebTestCase
 
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -101,7 +101,7 @@ final class CompetitionDetailFlowTest extends WebTestCase
 
         $client->loginUser($stranger);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
         self::assertResponseStatusCodeSame(403);
     }
 }

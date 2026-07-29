@@ -28,7 +28,7 @@ final class CreditsFlowTest extends WebTestCase
 
     public function testCreditsPageRequiresLogin(): void
     {
-        $this->client->request('GET', '/portal/kredity');
+        $this->client->request('GET', '/kredity');
 
         self::assertResponseRedirects();
         self::assertStringContainsString('/prihlaseni', (string) $this->client->getResponse()->headers->get('Location'));
@@ -44,7 +44,7 @@ final class CreditsFlowTest extends WebTestCase
         ));
 
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
-        $this->client->request('GET', '/portal/kredity');
+        $this->client->request('GET', '/kredity');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Kredity');
@@ -57,7 +57,7 @@ final class CreditsFlowTest extends WebTestCase
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
 
-        $this->client->request('POST', '/portal/kredity/koupit', [
+        $this->client->request('POST', '/kredity/koupit', [
             'buy_credits_form' => ['credits' => '250'],
         ]);
 
@@ -80,7 +80,7 @@ final class CreditsFlowTest extends WebTestCase
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
 
-        $this->client->request('POST', '/portal/kredity/koupit', [
+        $this->client->request('POST', '/kredity/koupit', [
             'buy_credits_form' => ['credits' => '50'],
         ]);
 
@@ -100,9 +100,9 @@ final class CreditsFlowTest extends WebTestCase
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
 
-        $this->client->request('GET', '/portal/kredity/navrat?cancelled=1');
+        $this->client->request('GET', '/kredity/navrat?cancelled=1');
 
-        self::assertResponseRedirects('/portal/kredity');
+        self::assertResponseRedirects('/kredity');
         $this->client->followRedirect();
         self::assertAnySelectorTextContains('body', 'Platba byla zrušena');
     }
@@ -125,9 +125,9 @@ final class CreditsFlowTest extends WebTestCase
         );
 
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
-        $this->client->request('GET', '/portal/kredity/navrat?session_id='.$checkout->purchase->stripeCheckoutSessionId);
+        $this->client->request('GET', '/kredity/navrat?session_id='.$checkout->purchase->stripeCheckoutSessionId);
 
-        self::assertResponseRedirects('/portal/kredity');
+        self::assertResponseRedirects('/kredity');
         $this->client->followRedirect();
         self::assertAnySelectorTextContains('body', '500 kreditů bylo připsáno');
         self::assertAnySelectorTextContains('.stat-val', '500');

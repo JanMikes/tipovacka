@@ -13,7 +13,7 @@ use Symfony\Component\Uid\Uuid;
 
 final class UpdateCompetitionFlowTest extends WebTestCase
 {
-    private const string EDIT_URL = '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/upravit';
+    private const string EDIT_URL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/upravit';
 
     public function testEditPageShowsLockInfoInsteadOfDeadlineField(): void
     {
@@ -70,7 +70,7 @@ final class UpdateCompetitionFlowTest extends WebTestCase
             'competition_form[name]' => 'Přejmenovaná parta',
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $em->clear();
         $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));

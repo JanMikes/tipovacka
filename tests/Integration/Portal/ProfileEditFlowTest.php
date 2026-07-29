@@ -19,7 +19,7 @@ final class ProfileEditFlowTest extends WebTestCase
     public function testUnauthenticatedRedirectedToLogin(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/portal/profil');
+        $client->request('GET', '/profil');
 
         self::assertResponseRedirects('/prihlaseni');
     }
@@ -29,7 +29,7 @@ final class ProfileEditFlowTest extends WebTestCase
         $client = static::createClient();
         $client->loginUser($this->getVerifiedUser($client));
 
-        $client->request('GET', '/portal/profil');
+        $client->request('GET', '/profil');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'profil');
     }
@@ -49,7 +49,7 @@ final class ProfileEditFlowTest extends WebTestCase
         ], 'save')->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/profil', $response->headers->get('Location'));
+        self::assertSame('/profil', $response->headers->get('Location'));
     }
 
     private function getVerifiedUser(KernelBrowser $client): User

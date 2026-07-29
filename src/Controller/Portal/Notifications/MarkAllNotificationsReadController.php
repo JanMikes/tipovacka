@@ -11,8 +11,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/portal/oznameni/precteno', name: 'portal_notifications_read_all', methods: ['POST'])]
+#[Route('/oznameni/precteno', name: 'notifications_read_all', methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
 final class MarkAllNotificationsReadController extends AbstractController
 {
     public function __construct(
@@ -28,13 +30,13 @@ final class MarkAllNotificationsReadController extends AbstractController
         if (!$this->isCsrfTokenValid('notifications_read_all', (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_notifications');
+            return $this->redirectToRoute('notifications');
         }
 
         $this->commandBus->dispatch(new MarkAllNotificationsReadCommand($user->id));
 
         $this->addFlash('success', 'Všechna oznámení označena jako přečtená.');
 
-        return $this->redirectToRoute('portal_notifications');
+        return $this->redirectToRoute('notifications');
     }
 }

@@ -19,13 +19,15 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/turnaje/{matchSourceId}/zapasy/novy',
-    name: 'portal_sport_match_create',
+    '/turnaje/{matchSourceId}/zapasy/novy',
+    name: 'sport_match_create',
     requirements: ['matchSourceId' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class CreateSportMatchController extends AbstractController
 {
     public function __construct(
@@ -44,7 +46,7 @@ final class CreateSportMatchController extends AbstractController
 
         $formData = new SportMatchFormData();
         $form = $this->createForm(SportMatchFormType::class, $formData, [
-            'teams_url' => $this->generateUrl('portal_match_source_teams', ['id' => $matchSource->id->toRfc4122()]),
+            'teams_url' => $this->generateUrl('match_source_teams', ['id' => $matchSource->id->toRfc4122()]),
         ]);
         $form->handleRequest($request);
 
@@ -66,7 +68,7 @@ final class CreateSportMatchController extends AbstractController
 
             $this->addFlash('success', 'Zápas byl vytvořen.');
 
-            return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         return $this->render('portal/sport_match/form.html.twig', [

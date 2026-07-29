@@ -97,7 +97,7 @@ final readonly class InvitationAcceptanceService
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
                 $this->flash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
 
-                return new RedirectResponse($this->urlGenerator->generate('portal_dashboard'));
+                return new RedirectResponse($this->urlGenerator->generate('dashboard'));
             } elseif ($inner instanceof CompetitionInvitationExpired
                 || $inner instanceof CompetitionInvitationAlreadyAccepted
                 || $inner instanceof CompetitionInvitationAlreadyRevoked
@@ -109,7 +109,7 @@ final readonly class InvitationAcceptanceService
         }
 
         return new RedirectResponse($this->urlGenerator->generate(
-            'portal_competition_detail',
+            'competition_detail',
             ['id' => $context->competitionId->toRfc4122()],
         ));
     }

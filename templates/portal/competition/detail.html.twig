@@ -6,8 +6,8 @@
 <div class="bg-radial mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: detail.matchSourceName, path: path('portal_match_source_detail', {id: detail.matchSourceId.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: detail.matchSourceName, path: path('match_source_detail', {id: detail.matchSourceId.toRfc4122})},
         {label: detail.name},
     ]" />
 
@@ -25,7 +25,7 @@
         <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/50">
             <span class="inline-flex items-center gap-1.5">
                 <twig:ux:icon name="lucide:trophy" class="h-4 w-4 text-accent-400" />
-                <a href="{{ path('portal_match_source_detail', {id: detail.matchSourceId.toRfc4122}) }}" class="transition-colors hover:text-accent-300">{{ detail.matchSourceName }}</a>
+                <a href="{{ path('match_source_detail', {id: detail.matchSourceId.toRfc4122}) }}" class="transition-colors hover:text-accent-300">{{ detail.matchSourceName }}</a>
             </span>
             <span class="inline-flex items-center gap-1.5">
                 <twig:ux:icon name="lucide:user" class="h-4 w-4 text-white/40" />{{ detail.ownerNickname }}
@@ -66,7 +66,7 @@
             {# Quick-tip CTA: batch-fill all my guesses for this competition at once.
                Only shown to members while the match_source is still running. #}
             {% if isMember and not detail.matchSourceIsCompleted %}
-                <a href="{{ path('portal_competition_my_tips_batch', {id: competition.id.toRfc4122}) }}"
+                <a href="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}"
                    class="surface-accent group flex items-center gap-4 p-5 text-white">
                     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
                         <twig:ux:icon name="lucide:zap" class="h-6 w-6" />
@@ -98,7 +98,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <twig:Avatar name="{{ member.displayName }}" size="32" rank="{{ score ? score.rank : null }}" />
-                                    <a href="{{ path('portal_competition_leaderboard_member', {competitionId: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="min-w-0 font-medium text-white transition-colors hover:text-accent-300 hover:underline">
+                                    <a href="{{ path('competition_leaderboard_member', {competitionId: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="min-w-0 font-medium text-white transition-colors hover:text-accent-300 hover:underline">
                                         <span class="block truncate">{{ member.displayName }}</span>
                                         {% if member.fullName %}<small class="block truncate text-xs font-normal text-white/50">{{ member.fullName }}</small>{% endif %}
                                     </a>
@@ -124,12 +124,12 @@
                                     </div>
                                 {% endif %}
                                 {% if is_granted('competition_manage_members', competition) and member.isAnonymous %}
-                                    <a href="{{ path('portal_competition_promote_anonymous_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300 hover:underline">
+                                    <a href="{{ path('competition_promote_anonymous_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300 hover:underline">
                                         Přidat e-mail
                                     </a>
                                 {% endif %}
                                 {% if is_granted('competition_manage_members', competition) and not member.isOwner %}
-                                    <form method="post" action="{{ path('portal_competition_remove_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline"
+                                    <form method="post" action="{{ path('competition_remove_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline"
                                         data-controller="confirm"
                                         data-confirm-title-value="Odebrat člena"
                                         data-confirm-message-value="Opravdu chcete člena {{ member.displayName }} odebrat ze soutěže? Ztratí všechny své tipy v této soutěži."
@@ -165,7 +165,7 @@
                         {% for row in my_guesses %}
                             {%- set state = row.state.value -%}
                             <li>
-                                <a href="{{ path('portal_sport_match_detail', {id: row.sportMatchId.toRfc4122}) }}" class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03] sm:gap-5">
+                                <a href="{{ path('sport_match_detail', {id: row.sportMatchId.toRfc4122}) }}" class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 px-6 py-4 transition-colors hover:bg-white/[0.03] sm:gap-5">
                                     <div class="flex w-16 flex-col text-xs text-white/50">
                                         <span class="font-medium">{{ row.kickoffAt|date('j. n.') }}</span>
                                         <span>{{ row.kickoffAt|date('H:i') }}</span>
@@ -269,7 +269,7 @@
                             <p class="mb-3 text-xs text-white/50">
                                 Někdo nechce e-mail? Přidejte ho ručně a zadávejte jeho tipy za něj. Později mu stačí přidat e-mail a pozveme ho k nastavení hesla.
                             </p>
-                            <a href="{{ path('portal_competition_add_anonymous_member', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                            <a href="{{ path('competition_add_anonymous_member', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                                 <twig:ux:icon name="lucide:user" class="h-4 w-4" />
                                 Přidat tipujícího bez e-mailu
                             </a>
@@ -286,7 +286,7 @@
                                                 <span class="font-medium text-white">{{ inv.email }}</span>
                                                 <p class="text-xs text-white/40">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('j. n. Y H:i') }} · vyprší {{ inv.expiresAt|date('j. n. Y') }}</p>
                                             </div>
-                                            <form method="post" action="{{ path('portal_invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline"
+                                            <form method="post" action="{{ path('invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline"
                                                 data-controller="confirm"
                                                 data-confirm-title-value="Zrušit pozvánku"
                                                 data-confirm-message-value="Opravdu chcete zrušit pozvánku pro {{ inv.email }}? Odkaz z e-mailu přestane fungovat."
@@ -317,7 +317,7 @@
                         <h2 class="text-sm font-semibold uppercase tracking-wider">Žebříček</h2>
                     </div>
                     <p class="mt-2 text-sm text-white/80">Podívejte se, kdo vede a kolik má bodů.</p>
-                    <a href="{{ path('portal_competition_leaderboard', {competitionId: competition.id.toRfc4122}) }}" class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/25">
+                    <a href="{{ path('competition_leaderboard', {competitionId: competition.id.toRfc4122}) }}" class="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/25">
                         Zobrazit žebříček
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>
@@ -363,7 +363,7 @@
                                         </button>
                                     </div>
                                     <div class="flex flex-wrap gap-3 text-xs">
-                                        <form method="post" action="{{ path('portal_competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
+                                        <form method="post" action="{{ path('competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"
                                             data-confirm-variant-value="warning"
                                             data-confirm-title-value="Obnovit PIN"
@@ -372,7 +372,7 @@
                                             <input type="hidden" name="_token" value="{{ csrf_token('competition_pin_regenerate_' ~ competition.id.toRfc4122) }}">
                                             <button type="submit" class="btn-link">Obnovit</button>
                                         </form>
-                                        <form method="post" action="{{ path('portal_competition_pin_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
+                                        <form method="post" action="{{ path('competition_pin_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"
                                             data-confirm-title-value="Zrušit PIN"
                                             data-confirm-message-value="PIN bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový PIN můžete kdykoli vygenerovat znovu."
@@ -384,7 +384,7 @@
                                 </div>
                             {% else %}
                                 <p class="text-sm text-white/50">PIN není aktivní.</p>
-                                <form method="post" action="{{ path('portal_competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
+                                <form method="post" action="{{ path('competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
                                     <input type="hidden" name="_token" value="{{ csrf_token('competition_pin_regenerate_' ~ competition.id.toRfc4122) }}">
                                     <button type="submit" class="btn-link">Vygenerovat PIN</button>
                                 </form>
@@ -418,7 +418,7 @@
                                         </button>
                                     </div>
                                     <div class="flex flex-wrap gap-3 text-xs">
-                                        <form method="post" action="{{ path('portal_competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
+                                        <form method="post" action="{{ path('competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"
                                             data-confirm-variant-value="warning"
                                             data-confirm-title-value="Obnovit odkaz"
@@ -427,7 +427,7 @@
                                             <input type="hidden" name="_token" value="{{ csrf_token('competition_link_regenerate_' ~ competition.id.toRfc4122) }}">
                                             <button type="submit" class="btn-link">Obnovit</button>
                                         </form>
-                                        <form method="post" action="{{ path('portal_competition_link_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
+                                        <form method="post" action="{{ path('competition_link_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
                                             data-controller="confirm"
                                             data-confirm-title-value="Zrušit odkaz"
                                             data-confirm-message-value="Odkaz bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový odkaz můžete kdykoli vygenerovat znovu."
@@ -439,7 +439,7 @@
                                 </div>
                             {% else %}
                                 <p class="text-sm text-white/50">Odkaz není aktivní.</p>
-                                <form method="post" action="{{ path('portal_competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
+                                <form method="post" action="{{ path('competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
                                     <input type="hidden" name="_token" value="{{ csrf_token('competition_link_regenerate_' ~ competition.id.toRfc4122) }}">
                                     <button type="submit" class="btn-link">Vygenerovat odkaz</button>
                                 </form>
@@ -457,28 +457,28 @@
                 </header>
                 <div class="space-y-2 px-6 py-5">
                     {% if is_granted('competition_edit', competition) %}
-                        <a href="{{ path('portal_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <a href="{{ path('competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit soutěž
                         </a>
-                        <a href="{{ path('portal_competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <a href="{{ path('competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla bodování
                         </a>
                         {% if competition.selectionMode.value == 'subset' %}
-                            <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                                 <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
                             </a>
                         {% elseif competition.selectionMode.value == 'teams' %}
-                            <a href="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                                 <twig:ux:icon name="lucide:shield-half" class="h-4 w-4" />Týmy soutěže
                             </a>
                         {% endif %}
 
                         {# Monetizace: prémium (za členy platí organizátor) ↔ příspěvky (kupuje si každý sám). #}
                         {% if competition.monetization.value == 'premium' %}
-                            <a href="{{ path('portal_competition_premium', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <a href="{{ path('competition_premium', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                                 <twig:ux:icon name="lucide:crown" class="h-4 w-4" />Prémium
                             </a>
-                            <form method="post" action="{{ path('portal_competition_switch_to_boosts', {id: competition.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('competition_switch_to_boosts', {id: competition.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Přepnout na příspěvky"
@@ -490,7 +490,7 @@
                                 </button>
                             </form>
                         {% else %}
-                            <form method="post" action="{{ path('portal_competition_premium_enable', {id: competition.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('competition_premium_enable', {id: competition.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Zapnout prémium"
@@ -504,7 +504,7 @@
                         {% endif %}
 
                         {% if not tips_locked %}
-                            <form method="post" action="{{ path('portal_competition_lock_tips', {id: competition.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('competition_lock_tips', {id: competition.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Uzamknout tipy"
@@ -516,7 +516,7 @@
                                 </button>
                             </form>
                         {% elseif can_unlock_tips %}
-                            <form method="post" action="{{ path('portal_competition_unlock_tips', {id: competition.id.toRfc4122}) }}"
+                            <form method="post" action="{{ path('competition_unlock_tips', {id: competition.id.toRfc4122}) }}"
                                 data-controller="confirm"
                                 data-confirm-variant-value="warning"
                                 data-confirm-title-value="Odemknout tipy"
@@ -531,19 +531,19 @@
                     {% endif %}
 
                     {% if isMember and not detail.matchSourceIsCompleted %}
-                        <a href="{{ path('portal_competition_my_tips_batch', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <a href="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:zap" class="h-4 w-4" />Tipnout vše najednou
                         </a>
                     {% endif %}
 
                     {% if is_granted('competition_manage_members', competition) and not competition.isGlobal %}
-                        <a href="{{ path('portal_competition_manage_member_tips', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <a href="{{ path('competition_manage_member_tips', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat za členy
                         </a>
                     {% endif %}
 
                     {% if is_granted('competition_leave', competition) %}
-                        <form method="post" action="{{ path('portal_competition_leave', {id: competition.id.toRfc4122}) }}"
+                        <form method="post" action="{{ path('competition_leave', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Opustit soutěž"
@@ -557,7 +557,7 @@
                     {% endif %}
 
                     {% if is_granted('competition_delete', competition) %}
-                        <form method="post" action="{{ path('portal_competition_delete', {id: competition.id.toRfc4122}) }}"
+                        <form method="post" action="{{ path('competition_delete', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
                             data-confirm-title-value="Smazat soutěž"
                             data-confirm-message-value="Opravdu chcete soutěž „{{ detail.name }}“ smazat? Všichni členové přijdou o své tipy a soutěž zmizí ze žebříčku."

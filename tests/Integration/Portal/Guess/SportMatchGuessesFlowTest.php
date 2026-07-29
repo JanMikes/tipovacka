@@ -23,7 +23,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -40,7 +40,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
         );
 
         self::assertResponseStatusCodeSame(403);
@@ -58,7 +58,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
         // MATCH_PLAYOFF is not among the subset competition's selected matches.
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_PLAYOFF_ID,
+            '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_PLAYOFF_ID,
         );
 
         self::assertResponseStatusCodeSame(409);
@@ -75,7 +75,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -93,7 +93,7 @@ final class SportMatchGuessesFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
         );
 
         self::assertResponseIsSuccessful();

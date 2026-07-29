@@ -24,9 +24,9 @@
 <div class="bg-radial">
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <twig:Breadcrumbs :items="[
-            {label: 'Nástěnka', path: path('portal_dashboard')},
-            {label: sport_match.matchSource.name, path: path('portal_match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
-            {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name, path: path('portal_sport_match_detail', {id: sport_match.id.toRfc4122})},
+            {label: 'Nástěnka', path: path('dashboard')},
+            {label: sport_match.matchSource.name, path: path('match_source_detail', {id: sport_match.matchSource.id.toRfc4122})},
+            {label: sport_match.homeTeam.name ~ ' vs ' ~ sport_match.awayTeam.name, path: path('sport_match_detail', {id: sport_match.id.toRfc4122})},
             {label: 'Výsledek'},
         ]" />
 
@@ -40,7 +40,7 @@
 
         <div
             data-controller="score-entry"
-            data-score-entry-players-url-value="{{ path('portal_match_source_players', {id: sport_match.matchSource.id.toRfc4122}) }}"
+            data-score-entry-players-url-value="{{ path('match_source_players', {id: sport_match.matchSource.id.toRfc4122}) }}"
             data-score-entry-home-team-id-value="{{ sport_match.homeTeam.id.toRfc4122 }}"
             data-score-entry-away-team-id-value="{{ sport_match.awayTeam.id.toRfc4122 }}"
             data-score-entry-prototype-value="{{ prototype_html|e('html_attr') }}"
@@ -195,7 +195,7 @@
                             <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                             Uložit
                         </button>
-                        <a href="{{ path('portal_sport_match_detail', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost">
+                        <a href="{{ path('sport_match_detail', {id: sport_match.id.toRfc4122}) }}" class="btn btn-ghost">
                             Zrušit
                         </a>
                     </div>

@@ -23,14 +23,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/pripojit-se',
-    name: 'portal_competition_join_global',
+    '/souteze/{id}/pripojit-se',
+    name: 'competition_join_global',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class JoinGlobalCompetitionController extends AbstractController
 {
     public function __construct(
@@ -52,7 +54,7 @@ final class JoinGlobalCompetitionController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_join_global_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         try {
@@ -88,14 +90,14 @@ final class JoinGlobalCompetitionController extends AbstractController
 
         $this->addFlash('success', 'Vítejte v soutěži! Nezapomeňte si zadat tipy.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 
     private function alreadyMember(Uuid $competitionId): RedirectResponse
     {
         $this->addFlash('info', 'Už jste členem této soutěže.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competitionId->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competitionId->toRfc4122()]);
     }
 
     private function redirectToTopUp(Uuid $competitionId, int $entryFeeCredits, Uuid $userId): RedirectResponse
@@ -110,6 +112,6 @@ final class JoinGlobalCompetitionController extends AbstractController
 
         $this->addFlash('warning', sprintf('Na vstupné potřebujete ještě %s.', CreditsWord::format($missing)));
 
-        return $this->redirectToRoute('portal_credits');
+        return $this->redirectToRoute('credits');
     }
 }

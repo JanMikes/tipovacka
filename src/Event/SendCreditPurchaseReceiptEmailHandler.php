@@ -46,7 +46,7 @@ final readonly class SendCreditPurchaseReceiptEmailHandler
         }
 
         $creditsUrl = $this->urlGenerator->generate(
-            'portal_credits',
+            'credits',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL
         );

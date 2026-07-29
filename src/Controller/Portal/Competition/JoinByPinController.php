@@ -20,8 +20,10 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/pripojit', name: 'portal_competition_join_by_pin')]
+#[Route('/pripojit', name: 'competition_join_by_pin')]
+#[IsGranted('ROLE_USER')]
 final class JoinByPinController extends AbstractController
 {
     public function __construct(
@@ -49,7 +51,7 @@ final class JoinByPinController extends AbstractController
 
                 $this->addFlash('success', 'Byl(a) jsi přidán(a) do soutěže.');
 
-                return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+                return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
             } catch (HandlerFailedException $handlerFailed) {
                 $inner = $handlerFailed->getPrevious();
 

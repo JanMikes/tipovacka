@@ -7,8 +7,8 @@
 {% block body %}
 <div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
         {label: is_teams ? 'Týmy soutěže' : 'Výběr zápasů'},
     ]" />
 
@@ -30,12 +30,12 @@
     </header>
 
     <div class="card-glass p-6 sm:p-8"{% if not is_teams %} data-controller="competition-matches"{% endif %}>
-        <form method="post" action="{{ path('portal_competition_match_selection', {id: competition.id.toRfc4122}) }}" class="space-y-4">
+        <form method="post" action="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="space-y-4">
             <input type="hidden" name="_token" value="{{ csrf_token('competition_match_selection_' ~ competition.id.toRfc4122) }}">
 
             {% if is_teams %}
                 <div class="field" data-controller="team-filter"
-                     data-team-filter-url-value="{{ path('portal_competition_source_filter_teams', {id: competition.matchSource.id.toRfc4122}) }}">
+                     data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: competition.matchSource.id.toRfc4122}) }}">
                     <label class="field-label" for="team-filter-select">Týmy</label>
                     <select multiple id="team-filter-select" name="teams[]" data-team-filter-target="select" class="input" aria-label="Týmy soutěže">
                         {% for team in filter_teams %}
@@ -50,7 +50,7 @@
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
                         Uložit týmy
                     </button>
-                    <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                    <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                         Zpět na soutěž
                     </a>
                 </div>
@@ -95,7 +95,7 @@
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
                         Uložit výběr
                     </button>
-                    <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                    <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                         Zpět na soutěž
                     </a>
                 </div>

@@ -156,7 +156,7 @@ final class NotifierTest extends IntegrationTestCase
             NotificationType::MatchAdded,
             'Nový zápas: A – B',
             'Do soutěže X přibyl zápas A – B.',
-            url: 'https://wtips.cz/portal/oznameni',
+            url: 'https://wtips.cz/oznameni',
         );
         $this->entityManager()->flush();
 
@@ -164,7 +164,7 @@ final class NotifierTest extends IntegrationTestCase
         self::assertCount(1, $rows);
         self::assertSame('Nový zápas: A – B', $rows[0]->title);
         self::assertSame('Do soutěže X přibyl zápas A – B.', $rows[0]->body);
-        self::assertSame('https://wtips.cz/portal/oznameni', $rows[0]->url);
+        self::assertSame('https://wtips.cz/oznameni', $rows[0]->url);
         self::assertSame(NotificationType::MatchAdded, $rows[0]->type);
     }
 

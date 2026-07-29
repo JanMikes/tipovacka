@@ -10,13 +10,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * The notification center: a paginated feed (unread highlighted) plus a
  * „Nastavení oznámení" tab (the {@see \App\Twig\Components\Notification\Preferences}
  * live matrix). Tab is chosen by the `tab` query param — no JS needed.
  */
-#[Route('/portal/oznameni', name: 'portal_notifications', methods: ['GET'])]
+#[Route('/oznameni', name: 'notifications', methods: ['GET'])]
+#[IsGranted('ROLE_USER')]
 final class NotificationCenterController extends AbstractController
 {
     private const int PER_PAGE = 20;

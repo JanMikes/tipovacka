@@ -2,7 +2,7 @@
 
 The single guided „Vytvořit soutěž" flow (S08) — a Live Component
 (`Competition:CreateWizard`, `src/Twig/Components/Competition/CreateWizard.php`)
-hosted by the thin `portal_competition_create` controller at `/portal/souteze/nova`
+hosted by the thin `competition_create` controller at `/souteze/nova`
 (`?zdroj={id}` preselects a source). Four steps (Základy → Pravidla → Pozvánky →
 Podpora) driven by LiveProps + LiveActions (`next` / `back` / `submit`); each step
 validates server-side before advancing. Submit dispatches ONE
@@ -70,7 +70,7 @@ choice; the **playoff toggle lives on step 2** (see below).
   `CreateCompetitionCommand` / `CreateGlobalCompetitionCommand`. The competition then
   dynamically includes every source match where a filter team plays — later-added team
   matches (playoff!) auto-join. Editable after creation on the same manage surface as
-  `subset` (`portal_competition_match_selection`).
+  `subset` (`competition_match_selection`).
 
 ## Playoff toggle lives on step 2
 

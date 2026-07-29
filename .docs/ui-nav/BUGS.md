@@ -75,7 +75,7 @@ preferences are written.
   accepted *and* verifies the account (no bounce); a **shareable link** proves nothing, so the
   landing page stores the join intent and sends the user to the airlock itself —
   `LoginSubscriber` completes the join after verification.
-- **Account deletion** (`/portal/ucet/smazat`) stays reachable while unverified, as the item
+- **Account deletion** (`/ucet/smazat`) stays reachable while unverified, as the item
   asks — someone who cannot receive the mail must still be able to remove the account.
 - **Password reset** routes stay reachable: an unverified account must remain recoverable.
 - **Only the four `Auth:*` Live Components** stay reachable (registration, invitation,
@@ -117,7 +117,7 @@ Reuse the existing `datepicker` Stimulus controller rather than introducing a ne
 
 ## B3 — tom-select dropdown clipped on „Správa tipů členů"
 
-**Report.** `/portal/souteze/{id}/spravovat-tipy` — „the input is broken, probably overflow or
+**Report.** `/souteze/{id}/spravovat-tipy` — „the input is broken, probably overflow or
 z-index issue, the options hidden."
 
 The „TIPUJÍCÍ" member picker renders as a white input whose dropdown is cut off at the bottom edge of
@@ -161,7 +161,7 @@ Two unrelated causes, both in the *shared* tom-select layer — nothing page-spe
 ### Assumptions made
 
 - **Scope widened from the reported page to all five tom-select controllers.** The item asks
-  for a root fix; `team-filter` on `/portal/souteze/{id}/zapasy-vyber` and in the create wizard
+  for a root fix; `team-filter` on `/souteze/{id}/zapasy-vyber` and in the create wizard
   sits in the same `.card-glass` and had the identical bug, so a shared-controller-only fix
   would have left known instances broken.
 - **The `.create.active` white row was fixed too** although the report only mentions the input.
@@ -178,7 +178,7 @@ Two unrelated causes, both in the *shared* tom-select layer — nothing page-spe
 
 ## B4 — Match detail omits a competition the user is a member of
 
-**Report.** After locking tips: on `/portal/zapasy/019fa008-7232-7284-aa49-b7e50684c0bc` the „Vaše
+**Report.** After locking tips: on `/zapasy/019fa008-7232-7284-aa49-b7e50684c0bc` the „Vaše
 tipy" section shows only **one** competition, while another match of the same source shows **two**.
 
 Observed (screenshots):

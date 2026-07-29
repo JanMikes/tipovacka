@@ -5,8 +5,8 @@
 {% block body %}
 <div class="mx-auto w-full max-w-md px-4 py-12 sm:px-6 lg:px-8">
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: 'Profil', path: path('portal_profile_edit')},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: 'Profil', path: path('profile_edit')},
         {label: 'Smazat účet'},
     ]" />
 
@@ -20,7 +20,7 @@
             Tato akce je <strong class="font-semibold text-white">nevratná</strong>. Váš účet a všechna přidružená data budou trvale smazána.
         </p>
 
-        <form method="post" action="{{ path('portal_account_delete') }}" class="mt-8 space-y-3">
+        <form method="post" action="{{ path('account_delete') }}" class="mt-8 space-y-3">
             <input type="hidden" name="_token" value="{{ csrf_token('delete_account') }}">
 
             <button type="submit" class="btn btn-danger btn-block">
@@ -28,7 +28,7 @@
                 Ano, smazat můj účet
             </button>
 
-            <a href="{{ path('portal_profile_edit') }}" class="btn btn-ghost btn-block">
+            <a href="{{ path('profile_edit') }}" class="btn btn-ghost btn-block">
                 Zrušit
             </a>
         </form>

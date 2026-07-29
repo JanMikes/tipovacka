@@ -5,8 +5,8 @@
 {% block body %}
 <div class="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
         {label: 'Upravit soutěž'},
     ]" />
 
@@ -83,7 +83,7 @@
                     Uložit změny
                 </button>
 
-                <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>

@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/zapasy/{id}/smazat',
-    name: 'portal_sport_match_delete',
+    '/zapasy/{id}/smazat',
+    name: 'sport_match_delete',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SoftDeleteController extends AbstractController
 {
     public function __construct(
@@ -42,7 +44,7 @@ final class SoftDeleteController extends AbstractController
         if (!$this->isCsrfTokenValid('sport_match_delete_'.$sportMatch->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new SoftDeleteSportMatchCommand(
@@ -52,6 +54,6 @@ final class SoftDeleteController extends AbstractController
 
         $this->addFlash('success', 'Zápas byl smazán.');
 
-        return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSourceId]);
+        return $this->redirectToRoute('match_source_detail', ['id' => $matchSourceId]);
     }
 }

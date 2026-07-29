@@ -5,8 +5,8 @@
 {% block body %}
 <div class="mx-auto max-w-3xl px-4 py-12 pb-32 sm:px-6 lg:px-8">
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
         {label: 'Moje tipy'},
     ]" />
 
@@ -27,7 +27,7 @@
         </div>
     {% else %}
         <form method="post"
-              action="{{ path('portal_competition_my_tips_batch', {id: competition.id.toRfc4122}) }}">
+              action="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}">
             <input type="hidden" name="_token"
                    value="{{ csrf_token('my_tips_batch_' ~ competition.id.toRfc4122 ~ '_' ~ app.user.id.toRfc4122) }}">
 

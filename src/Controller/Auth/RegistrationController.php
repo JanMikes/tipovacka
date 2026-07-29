@@ -14,7 +14,7 @@ final class RegistrationController extends AbstractController
     public function __invoke(): Response
     {
         if (null !== $this->getUser()) {
-            return $this->redirectToRoute('portal_dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         return $this->render('auth/register.html.twig');

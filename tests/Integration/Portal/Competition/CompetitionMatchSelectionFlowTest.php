@@ -22,7 +22,7 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Výběr zápasů');
         self::assertSelectorTextContains('body', 'Sparta Praha');
@@ -47,16 +47,16 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
         $token = $crawler->filter('input[name="_token"]')->attr('value');
         self::assertIsString($token);
 
-        $client->request('POST', '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber', [
+        $client->request('POST', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber', [
             '_token' => $token,
             'matches' => [AppFixtures::MATCH_PLAYOFF_ID],
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        self::assertResponseRedirects('/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
 
         $em->clear();
 
@@ -83,7 +83,7 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertNotNull($stranger);
         $client->loginUser($stranger);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
         self::assertResponseStatusCodeSame(403);
     }
 
@@ -96,7 +96,7 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy-vyber');
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy-vyber');
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
     }
 }

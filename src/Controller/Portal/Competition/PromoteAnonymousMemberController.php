@@ -17,14 +17,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/clenove/{userId}/pridat-email',
-    name: 'portal_competition_promote_anonymous_member',
+    '/souteze/{id}/clenove/{userId}/pridat-email',
+    name: 'competition_promote_anonymous_member',
     requirements: ['id' => Requirement::UUID, 'userId' => Requirement::UUID],
     methods: ['GET', 'POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class PromoteAnonymousMemberController extends AbstractController
 {
     public function __construct(
@@ -58,7 +60,7 @@ final class PromoteAnonymousMemberController extends AbstractController
 
             $this->addFlash('success', 'Pozvánka byla odeslána.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('portal/competition/promote_anonymous_member.html.twig', [

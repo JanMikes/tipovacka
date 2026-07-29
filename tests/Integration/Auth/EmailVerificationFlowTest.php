@@ -136,7 +136,7 @@ final class EmailVerificationFlowTest extends WebTestCase
         );
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
 
         $em->clear();
         $reloaded = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));

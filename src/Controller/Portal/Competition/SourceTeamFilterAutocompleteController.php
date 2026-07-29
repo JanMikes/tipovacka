@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -22,11 +23,12 @@ use Symfony\Component\Uid\Uuid;
  * team UUID because the filter stores team identities, not names.
  */
 #[Route(
-    '/portal/zdroje/{id}/filtr-tymy',
-    name: 'portal_competition_source_filter_teams',
+    '/zdroje/{id}/filtr-tymy',
+    name: 'competition_source_filter_teams',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SourceTeamFilterAutocompleteController extends AbstractController
 {
     public function __construct(

@@ -13,8 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/portal/ucet/smazat', name: 'portal_account_delete')]
+#[Route('/ucet/smazat', name: 'account_delete')]
+#[IsGranted('ROLE_USER')]
 final class AccountDeleteController extends AbstractController
 {
     public function __construct(
@@ -33,7 +35,7 @@ final class AccountDeleteController extends AbstractController
             if (!$this->isCsrfTokenValid('delete_account', (string) $request->request->get('_token', ''))) {
                 $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-                return $this->redirectToRoute('portal_account_delete');
+                return $this->redirectToRoute('account_delete');
             }
 
             $this->commandBus->dispatch(new SoftDeleteUserCommand(userId: $user->id));

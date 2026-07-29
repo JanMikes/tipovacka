@@ -15,9 +15,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
-#[Route('/portal/turnaje/{id}/upravit', name: 'portal_match_source_edit', requirements: ['id' => Requirement::UUID])]
+#[Route('/turnaje/{id}/upravit', name: 'match_source_edit', requirements: ['id' => Requirement::UUID])]
+#[IsGranted('ROLE_USER')]
 final class UpdateMatchSourceController extends AbstractController
 {
     public function __construct(
@@ -47,7 +49,7 @@ final class UpdateMatchSourceController extends AbstractController
 
             $this->addFlash('success', 'Zdroj zápasů byl uložen.');
 
-            return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }
 
         return $this->render('portal/match_source/edit.html.twig', [

@@ -28,7 +28,7 @@ final class NotificationCenterFlowTest extends WebTestCase
 
     public function testCenterRequiresLogin(): void
     {
-        $this->client->request('GET', '/portal/oznameni');
+        $this->client->request('GET', '/oznameni');
 
         self::assertResponseRedirects();
         self::assertStringContainsString('/prihlaseni', (string) $this->client->getResponse()->headers->get('Location'));
@@ -37,7 +37,7 @@ final class NotificationCenterFlowTest extends WebTestCase
     public function testFeedRendersFixtureNotifications(): void
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
-        $this->client->request('GET', '/portal/oznameni');
+        $this->client->request('GET', '/oznameni');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Oznámení');
@@ -48,7 +48,7 @@ final class NotificationCenterFlowTest extends WebTestCase
     public function testSettingsTabRendersPreferenceMatrix(): void
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
-        $this->client->request('GET', '/portal/oznameni?tab=nastaveni');
+        $this->client->request('GET', '/oznameni?tab=nastaveni');
 
         self::assertResponseIsSuccessful();
         self::assertAnySelectorTextContains('body', 'Připomínka tipů');
@@ -61,7 +61,7 @@ final class NotificationCenterFlowTest extends WebTestCase
 
         self::assertSame(1, $this->notifications()->countUnreadForUser(Uuid::fromString(AppFixtures::VERIFIED_USER_ID)));
 
-        $this->client->request('GET', '/portal/oznameni/'.AppFixtures::NOTIFICATION_UNREAD_ID.'/precteno');
+        $this->client->request('GET', '/oznameni/'.AppFixtures::NOTIFICATION_UNREAD_ID.'/precteno');
 
         self::assertResponseRedirects();
         self::assertStringContainsString('zebricek', (string) $this->client->getResponse()->headers->get('Location'));
@@ -72,11 +72,11 @@ final class NotificationCenterFlowTest extends WebTestCase
     {
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
 
-        $crawler = $this->client->request('GET', '/portal/oznameni');
-        $form = $crawler->filter('form[action="/portal/oznameni/precteno"]')->form();
+        $crawler = $this->client->request('GET', '/oznameni');
+        $form = $crawler->filter('form[action="/oznameni/precteno"]')->form();
         $this->client->submit($form);
 
-        self::assertResponseRedirects('/portal/oznameni');
+        self::assertResponseRedirects('/oznameni');
         self::assertSame(0, $this->notifications()->countUnreadForUser(Uuid::fromString(AppFixtures::VERIFIED_USER_ID)));
     }
 

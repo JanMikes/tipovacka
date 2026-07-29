@@ -22,7 +22,7 @@ final class MatchSourceDetailFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', AppFixtures::PRIVATE_SOURCE_NAME);
     }
@@ -36,7 +36,7 @@ final class MatchSourceDetailFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseIsSuccessful();
     }
 
@@ -67,7 +67,7 @@ final class MatchSourceDetailFlowTest extends WebTestCase
 
         $client->loginUser($nonOwner);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
         self::assertResponseStatusCodeSame(403);
     }
 
@@ -80,7 +80,7 @@ final class MatchSourceDetailFlowTest extends WebTestCase
         self::assertNotNull($user);
         $client->loginUser($user);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID);
+        $client->request('GET', '/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID);
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', AppFixtures::PUBLIC_SOURCE_NAME);
     }

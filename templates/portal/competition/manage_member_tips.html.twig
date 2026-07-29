@@ -5,8 +5,8 @@
 {% block body %}
 <div class="mx-auto max-w-3xl px-4 py-12 pb-32 sm:px-6 lg:px-8">
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
-        {label: competition.name, path: path('portal_competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nástěnka', path: path('dashboard')},
+        {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
         {label: 'Správa tipů členů'},
     ]" />
 
@@ -19,7 +19,7 @@
         </p>
     </header>
 
-    <form method="get" action="{{ path('portal_competition_manage_member_tips', {id: competition.id.toRfc4122}) }}"
+    <form method="get" action="{{ path('competition_manage_member_tips', {id: competition.id.toRfc4122}) }}"
           class="card-glass mb-6 p-6">
         <div class="field">
             <label for="member-select" class="field-label">Tipující</label>
@@ -64,7 +64,7 @@
         </div>
     {% else %}
         <form method="post"
-              action="{{ path('portal_competition_guess_on_behalf_batch', {
+              action="{{ path('competition_guess_on_behalf_batch', {
                   competitionId: competition.id.toRfc4122,
                   memberId: selectedMember.id.toRfc4122,
               }) }}"

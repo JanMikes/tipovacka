@@ -22,9 +22,9 @@ final class BoostFlowTest extends WebTestCase
 {
     use WebFlowHelpers;
 
-    private const string BOOSTS_DETAIL = '/portal/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
+    private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
-    private const string PREMIUM_MATCH = '/portal/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    private const string PREMIUM_MATCH = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
 
     private function grant(string $userId, int $amount): void
     {
@@ -197,6 +197,6 @@ final class BoostFlowTest extends WebTestCase
 
         // Cannot afford anything ⇒ no purchase form, but a top-up link is offered.
         self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'));
-        self::assertGreaterThanOrEqual(1, $crawler->filter('a[href="/portal/kredity"]')->count());
+        self::assertGreaterThanOrEqual(1, $crawler->filter('a[href="/kredity"]')->count());
     }
 }

@@ -7,7 +7,7 @@
 
 ## Why
 
-`templates/portal/competition/detail.html.twig` is a **576-line monolith**: members, my tips,
+`templates/competition/detail.html.twig` is a **576-line monolith**: members, my tips,
 invitations, a leaderboard CTA, boosts, PIN/link sharing and a „Správa" block all stacked vertically
 with no hierarchy. The product owner wants the page to be about *playing* — matches and standings —
 with organizer machinery moved out of the way.
@@ -28,7 +28,7 @@ members list (l. 82-150), the read-only rules card (l. 332) and the invitation/P
 (l. 219-306 and l. 334-450) moves there:
 
 - Členové (list, ranks, promote anonymous → e-mail, remove member)
-- Pravidla bodování (the read-only card **and** the link to `portal_competition_rules`)
+- Pravidla bodování (the read-only card **and** the link to `competition_rules`)
 - Upravit soutěž · Výběr zápasů / Týmy soutěže · Prémium (enable / switch to boosts)
 - Rychlé pozvánky (PIN + shareable link, with regenerate/revoke)
 - Opustit soutěž · Smazat soutěž
@@ -38,7 +38,7 @@ owes no backwards compatibility (see `PLAN.md` conventions), so you may rename, 
 routes to get a clean settings area; you may **not** drop a command, a voter or an ability the
 organizer has today.
 
-That means: if it reads better as one sectioned `/portal/souteze/{id}/nastaveni` page that absorbs
+That means: if it reads better as one sectioned `/souteze/{id}/nastaveni` page that absorbs
 the smaller forms (rules, member management, PIN/link) and links out only to the genuinely large ones
 (match selection, premium), do that and **delete** the routes you absorbed. Do not leave a
 half-migrated settings area with some things inline and some behind links for no reason.
@@ -55,11 +55,11 @@ LIVE pill, and the role badges (ORGANIZÁTOR / HRÁČ). On the right, four actio
 |---|---|---|
 | **Nastavení** | the new settings destination | `competition_edit` |
 | **Pozvat** | invitations (currently the l. 219-306 block) | `competition_manage_join_mechanics` |
-| **Tipovat za členy** | `portal_competition_manage_member_tips` | `competition_manage_members and not competition.isGlobal` |
-| **Uzamknout tipy** | `portal_competition_lock_tips` | organizer, tips not yet locked |
+| **Tipovat za členy** | `competition_manage_member_tips` | `competition_manage_members and not competition.isGlobal` |
+| **Uzamknout tipy** | `competition_lock_tips` | organizer, tips not yet locked |
 
 „Uzamknout tipy" keeps its `confirm` modal and CSRF token id (`competition_lock_tips_<uuid>`), and
-flips to „Odemknout tipy" (`portal_competition_unlock_tips`) while `can_unlock_tips` holds — the
+flips to „Odemknout tipy" (`competition_unlock_tips`) while `can_unlock_tips` holds — the
 controller already computes that. **See `BUGS.md` B2**: this button is also getting an „Ihned / V
 určený čas" choice. If B2 has not landed yet, leave the immediate behaviour untouched and do not
 pre-empt it.
@@ -70,7 +70,7 @@ bar rather than an empty toolbar.
 ## Body layout
 
 **Left / main column**
-1. The **„Tipněte si všechny zápasy najednou"** banner (`img10`) → `portal_competition_my_tips_batch`.
+1. The **„Tipněte si všechny zápasy najednou"** banner (`img10`) → `competition_my_tips_batch`.
    It exists today as the l. 66-80 `.surface-accent` CTA — restyle to the design, keep the target.
 2. The match list: tip cards with MŮJ TIP, per-match „Rozložení tipů", and per-match deadline state.
 

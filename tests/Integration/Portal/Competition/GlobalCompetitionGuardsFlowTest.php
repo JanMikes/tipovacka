@@ -24,7 +24,7 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginAdmin($client);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/spravovat-tipy');
+        $client->request('GET', '/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/spravovat-tipy');
 
         self::assertResponseStatusCodeSame(403);
     }
@@ -34,7 +34,7 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginAdmin($client);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextNotContains('body', 'Rychlé pozvánky');
@@ -51,7 +51,7 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'Rychlé pozvánky');

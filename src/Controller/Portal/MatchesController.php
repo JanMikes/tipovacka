@@ -13,8 +13,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/zapasy', name: 'portal_matches', methods: ['GET'])]
+#[Route('/zapasy', name: 'matches', methods: ['GET'])]
+#[IsGranted('ROLE_USER')]
 final class MatchesController extends AbstractController
 {
     private const string FILTER_ALL = 'vse';

@@ -17,13 +17,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/turnaje/{matchSourceId}/zapasy/import',
-    name: 'portal_sport_match_import',
+    '/turnaje/{matchSourceId}/zapasy/import',
+    name: 'sport_match_import',
     requirements: ['matchSourceId' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class BulkImportPreviewController extends AbstractController
 {
     public function __construct(
@@ -58,7 +60,7 @@ final class BulkImportPreviewController extends AbstractController
             } catch (SportMatchImportFailed $e) {
                 $this->addFlash('error', $e->getMessage());
 
-                return $this->redirectToRoute('portal_sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+                return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
             }
         }
 

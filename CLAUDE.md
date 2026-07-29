@@ -106,7 +106,8 @@ src/
 ├── Console/        # Host-cron console commands (app:premium:reconcile, app:guess-reminders:send, app:leaderboard:capture-snapshots)
 ├── Controller/     # Single-action controllers (route at class level)
 │   ├── Admin/      # ROLE_ADMIN area (^/admin firewall + voters)
-│   └── Portal/     # Authenticated user portal
+│   └── Portal/     # Authenticated user area — every class carries #[IsGranted('ROLE_USER')]
+│                   # (no /portal URL prefix; the URLs are flat and Czech)
 ├── Entity/         # Domain entities, PHP property hooks, recordThat() events (26 entities)
 ├── Enum/           # Enums (UserRole, CompetitionMonetization, CreditTransactionType, BoostType, …)
 ├── Event/          # Domain events + #[AsMessageHandler] side-effect handlers
@@ -341,7 +342,8 @@ For delete events, use `#[HasDeleteDomainEvent(EventClass::class)]` attribute on
 ### Single-Action Controllers
 
 ```php
-#[Route('/portal/places', name: 'portal_place_list')]
+#[Route('/mista', name: 'place_list')]
+#[IsGranted('ROLE_USER')]
 final class PlaceListController extends AbstractController
 {
     public function __construct(
@@ -359,6 +361,12 @@ final class PlaceListController extends AbstractController
 - Route at class level, NOT method level
 - One controller = one route = one `__invoke()` method
 - Use `final` modifier
+- **URLs are Czech and flat; there is no `/portal` prefix.** Authentication is declared on the
+  controller with `#[IsGranted('ROLE_USER')]`, not inferred from the path — `access_control`
+  holds a single rule (`^/admin → ROLE_ADMIN`). Every controller under `src/Controller/Portal/`
+  carries the attribute. A new route must also be declared in
+  `tests/Integration/Security/AnonymousReachabilityTest`, which enumerates, per controller,
+  whether an anonymous visitor may reach it — and fails on any route missing from the list.
 
 ### Forms (FormData + FormType)
 
@@ -436,7 +444,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Confirm modal](.docs/features/confirm-modal.md) — Stimulus `confirm` controller for destructive form submissions (replaces `window.confirm()`)
 - [Scorer picker](.docs/features/scorer-picker.md) — Stimulus `scorer-picker` controller: tom-select multi-picker inside a `data-live-ignore` LiveComponent island (state via hidden `data-model` input)
 - [Team picker & directory](.docs/features/team-picker.md) — first-class `Team` (hybrid scope: global admin directory / local per private source via `TeamResolver`); `team-picker` tom-select (autocomplete + create, name-based, JS-optional); contrast-safe `TeamMonogram` coin via `<twig:TeamFlag :team>`; admin directory at `/admin/tymy`
-- [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`portal_competition_create`); an **admin-only „Typ soutěže" toggle** turns it into the global-competition creator (entry fee, curated-only, skips „Pozvánky", branches to `CreateGlobalCompetitionCommand`). The „Zápasy soutěže" step offers three match-scope modes — **Všechny** / **Podle týmu** (`teams`, a multi-team `team-filter` tom-select) / **Vybrané** (`subset`, private only)
+- [Create-competition wizard](.docs/features/create-wizard.md) — `Competition:CreateWizard` Live Component: 4-step guided flow + reusable `.stepper`/`.step-num`/`.step-bar` dots (`competition_create`); an **admin-only „Typ soutěže" toggle** turns it into the global-competition creator (entry fee, curated-only, skips „Pozvánky", branches to `CreateGlobalCompetitionCommand`). The „Zápasy soutěže" step offers three match-scope modes — **Všechny** / **Podle týmu** (`teams`, a multi-team `team-filter` tom-select) / **Vybrané** (`subset`, private only)
 - [Cursor spotlight](.docs/features/cursor-spotlight.md) — cards glow & their border lights up under/near the mouse (`assets/spotlight.js` + app.css "Cursor spotlight" section; `PROXIMITY` toggle)
 
 ## Testing

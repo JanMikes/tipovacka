@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/uzamknout-tipy',
-    name: 'portal_competition_lock_tips',
+    '/souteze/{id}/uzamknout-tipy',
+    name: 'competition_lock_tips',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class LockCompetitionTipsController extends AbstractController
 {
     public function __construct(
@@ -41,7 +43,7 @@ final class LockCompetitionTipsController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_lock_tips_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new LockCompetitionTipsCommand(
@@ -51,6 +53,6 @@ final class LockCompetitionTipsController extends AbstractController
 
         $this->addFlash('success', 'Tipy byly uzamčeny.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 }

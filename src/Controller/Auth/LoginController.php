@@ -15,7 +15,7 @@ final class LoginController extends AbstractController
     public function __invoke(AuthenticationUtils $authenticationUtils): Response
     {
         if (null !== $this->getUser()) {
-            return $this->redirectToRoute('portal_dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         return $this->render('auth/login.html.twig', [

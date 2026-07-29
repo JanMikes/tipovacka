@@ -13,9 +13,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
-#[Route('/portal/turnaje/{id}/smazat', name: 'portal_match_source_delete', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+#[Route('/turnaje/{id}/smazat', name: 'match_source_delete', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
 final class SoftDeleteMatchSourceController extends AbstractController
 {
     public function __construct(
@@ -32,7 +34,7 @@ final class SoftDeleteMatchSourceController extends AbstractController
         if (!$this->isCsrfTokenValid('match_source_delete_'.$matchSource->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new SoftDeleteMatchSourceCommand(
@@ -41,6 +43,6 @@ final class SoftDeleteMatchSourceController extends AbstractController
 
         $this->addFlash('success', 'Zdroj zápasů byl smazán.');
 
-        return $this->redirectToRoute('portal_dashboard');
+        return $this->redirectToRoute('dashboard');
     }
 }

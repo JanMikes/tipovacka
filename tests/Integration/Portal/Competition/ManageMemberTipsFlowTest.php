@@ -41,19 +41,19 @@ final class ManageMemberTipsFlowTest extends WebTestCase
         $client->loginUser($owner);
 
         // Land on page without a selected member: shows selectbox, no score form yet.
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
         self::assertResponseIsSuccessful();
         self::assertGreaterThan(0, $crawler->filter('select[name="member"]')->count(), 'Member selectbox not found.');
 
         // Pick the unverified member via query param (as the <select>'s auto-submit would).
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy?member='.AppFixtures::UNVERIFIED_USER_ID,
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy?member='.AppFixtures::UNVERIFIED_USER_ID,
         );
         self::assertResponseIsSuccessful();
 
         $batchAction = sprintf(
-            '/portal/souteze/%s/spravovat-tipy/%s',
+            '/souteze/%s/spravovat-tipy/%s',
             AppFixtures::VERIFIED_COMPETITION_ID,
             AppFixtures::UNVERIFIED_USER_ID,
         );
@@ -97,7 +97,7 @@ final class ManageMemberTipsFlowTest extends WebTestCase
 
         $client->loginUser($owner);
 
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
         self::assertResponseIsSuccessful();
 
         $ownerOption = $crawler->filter('select[name="member"] option[value="'.AppFixtures::VERIFIED_USER_ID.'"]');
@@ -148,7 +148,7 @@ final class ManageMemberTipsFlowTest extends WebTestCase
 
         $client->loginUser($secondUser);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
         self::assertResponseStatusCodeSame(403);
     }
 }

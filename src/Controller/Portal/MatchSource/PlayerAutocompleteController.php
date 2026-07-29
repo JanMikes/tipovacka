@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -21,11 +22,12 @@ use Symfony\Component\Uid\Uuid;
  * voter check; the team id is server-rendered from the match on that page.
  */
 #[Route(
-    '/portal/zdroje/{id}/hraci',
-    name: 'portal_match_source_players',
+    '/zdroje/{id}/hraci',
+    name: 'match_source_players',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET'],
 )]
+#[IsGranted('ROLE_USER')]
 final class PlayerAutocompleteController extends AbstractController
 {
     public function __construct(

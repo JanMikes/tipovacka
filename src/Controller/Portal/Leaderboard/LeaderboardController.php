@@ -10,13 +10,15 @@ use App\Query\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Resolves the nav „Žebříček" item: the leaderboard is soutěž-scoped, so redirect
  * to the user's primary (most recently joined) soutěž leaderboard, or to discovery
  * when they are in no soutěž yet.
  */
-#[Route('/portal/zebricek', name: 'portal_leaderboard', methods: ['GET'])]
+#[Route('/zebricek', name: 'leaderboard', methods: ['GET'])]
+#[IsGranted('ROLE_USER')]
 final class LeaderboardController extends AbstractController
 {
     public function __construct(
@@ -32,10 +34,10 @@ final class LeaderboardController extends AbstractController
         $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(userId: $user->id));
 
         if (0 === count($myCompetitions)) {
-            return $this->redirectToRoute('portal_dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
-        return $this->redirectToRoute('portal_competition_leaderboard', [
+        return $this->redirectToRoute('competition_leaderboard', [
             'competitionId' => $myCompetitions[0]->competitionId->toRfc4122(),
         ]);
     }

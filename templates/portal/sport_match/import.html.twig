@@ -6,8 +6,8 @@
 <div class="bg-radial">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <twig:Breadcrumbs :items="[
-            {label: 'Nástěnka', path: path('portal_dashboard')},
-            {label: match_source.name, path: path('portal_match_source_detail', {id: match_source.id.toRfc4122})},
+            {label: 'Nástěnka', path: path('dashboard')},
+            {label: match_source.name, path: path('match_source_detail', {id: match_source.id.toRfc4122})},
             {label: 'Import zápasů'},
         ]" />
 
@@ -22,7 +22,7 @@
                 <strong class="font-semibold text-white">Začátek (YYYY-MM-DD HH:MM)</strong>, <strong class="font-semibold text-white">Místo (nepovinné)</strong>.
                 Volitelně i <strong class="font-semibold text-white">Kolo (nepovinné)</strong> — např. „Skupina A", „Čtvrtfinále" — a <strong class="font-semibold text-white">Playoff (nepovinné)</strong> s hodnotou ano/ne.
             </p>
-            <a href="{{ path('portal_sport_match_template_download') }}" class="btn-link inline-flex items-center gap-1.5 text-sm">
+            <a href="{{ path('sport_match_template_download') }}" class="btn-link inline-flex items-center gap-1.5 text-sm">
                 <twig:ux:icon name="lucide:download" class="h-4 w-4" />
                 Stáhnout šablonu (CSV)
             </a>
@@ -100,7 +100,7 @@
 
                     {% if preview.errors|length == 0 %}
                         <form method="post"
-                              action="{{ path('portal_sport_match_import_commit', {matchSourceId: match_source.id.toRfc4122}) }}"
+                              action="{{ path('sport_match_import_commit', {matchSourceId: match_source.id.toRfc4122}) }}"
                               class="mt-6">
                             <input type="hidden" name="_token"
                                    value="{{ csrf_token('sport_match_import_commit_' ~ match_source.id.toRfc4122) }}">

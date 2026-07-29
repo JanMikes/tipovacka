@@ -40,7 +40,7 @@ final class SoutezSwitcherFlowTest extends WebTestCase
 
         $client->loginUser($verified);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -52,7 +52,7 @@ final class SoutezSwitcherFlowTest extends WebTestCase
 
         // …and links to the other soutěž's leaderboard (the switch target).
         self::assertStringContainsString(
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek',
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek',
             $body,
         );
     }
@@ -68,14 +68,14 @@ final class SoutezSwitcherFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseIsSuccessful();
 
         // No second soutěž → no switch target link to a different competition's leaderboard.
         $body = $client->getResponse()->getContent();
         self::assertIsString($body);
         self::assertStringNotContainsString(
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek',
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek',
             $body,
         );
     }

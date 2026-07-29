@@ -23,7 +23,7 @@ final class CancelDeleteFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Zrušit zápas');
@@ -45,7 +45,7 @@ final class CancelDeleteFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Smazat');

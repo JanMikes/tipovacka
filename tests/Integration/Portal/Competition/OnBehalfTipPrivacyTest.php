@@ -23,7 +23,7 @@ final class OnBehalfTipPrivacyTest extends WebTestCase
 {
     use WebFlowHelpers;
 
-    private const string BOOSTS_DETAIL = '/portal/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
+    private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string MANAGE_TIPS = self::BOOSTS_DETAIL.'/spravovat-tipy?member='.AppFixtures::SECOND_VERIFIED_USER_ID;
     private const string COMPETITION_MATCH = self::BOOSTS_DETAIL.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
 

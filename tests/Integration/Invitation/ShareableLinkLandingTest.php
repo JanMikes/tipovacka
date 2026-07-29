@@ -92,7 +92,7 @@ final class ShareableLinkLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()
@@ -214,7 +214,7 @@ final class ShareableLinkLandingTest extends WebTestCase
         $client->loginUser($user);
         $client->request('GET', self::LINK_URL);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
     }
 
     /**

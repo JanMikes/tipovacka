@@ -8,12 +8,14 @@ use App\Service\SportMatch\SportMatchImporter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route(
-    '/portal/turnaje/zapasy/sablona.csv',
-    name: 'portal_sport_match_template_download',
+    '/turnaje/zapasy/sablona.csv',
+    name: 'sport_match_template_download',
     methods: ['GET'],
 )]
+#[IsGranted('ROLE_USER')]
 final class DownloadTemplateController extends AbstractController
 {
     public function __construct(

@@ -29,11 +29,12 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{competitionId}/zapasy/{sportMatchId}/clenove/{memberId}/tip',
-    name: 'portal_competition_guess_on_behalf',
+    '/souteze/{competitionId}/zapasy/{sportMatchId}/clenove/{memberId}/tip',
+    name: 'competition_guess_on_behalf',
     requirements: [
         'competitionId' => Requirement::UUID,
         'sportMatchId' => Requirement::UUID,
@@ -41,6 +42,7 @@ use Symfony\Component\Uid\Uuid;
     ],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SubmitGuessOnBehalfController extends AbstractController
 {
     public function __construct(
@@ -82,7 +84,7 @@ final class SubmitGuessOnBehalfController extends AbstractController
 
         $redirect = $request->request->getString(
             'redirect_to',
-            $this->generateUrl('portal_competition_sport_match_guesses', [
+            $this->generateUrl('competition_sport_match_guesses', [
                 'competitionId' => $competition->id->toRfc4122(),
                 'sportMatchId' => $sportMatch->id->toRfc4122(),
             ]),

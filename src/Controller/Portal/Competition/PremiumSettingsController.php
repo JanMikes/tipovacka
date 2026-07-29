@@ -17,13 +17,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/premium',
-    name: 'portal_competition_premium',
+    '/souteze/{id}/premium',
+    name: 'competition_premium',
     requirements: ['id' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class PremiumSettingsController extends AbstractController
 {
     public function __construct(
@@ -43,7 +45,7 @@ final class PremiumSettingsController extends AbstractController
         if (CompetitionMonetization::Premium !== $competition->monetization) {
             $this->addFlash('info', 'Prémiové nastavení je dostupné jen u prémiových soutěží.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         $formData = PremiumSettingsFormData::fromCompetition($competition);
@@ -62,7 +64,7 @@ final class PremiumSettingsController extends AbstractController
 
             $this->addFlash('success', 'Prémiové nastavení bylo uloženo.');
 
-            return $this->redirectToRoute('portal_competition_premium', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_premium', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('portal/competition/premium_settings.html.twig', [

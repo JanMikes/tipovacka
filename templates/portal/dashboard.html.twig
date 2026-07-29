@@ -32,7 +32,7 @@
                     <twig:SoutezSwitcher
                         :competitions="my_competitions"
                         currentId="{{ selected_competition.competitionId.toRfc4122 }}"
-                        route="portal_dashboard"
+                        route="dashboard"
                         param="soutez"
                         label="Zobrazená soutěž"
                     />
@@ -98,7 +98,7 @@
                         <twig:ux:icon name="lucide:trophy" class="h-5 w-5 text-accent-400" />
                         Žebříček · {{ selected_competition.competitionName }}
                     </h2>
-                    <a href="{{ path('portal_competition_leaderboard', {competitionId: selected_competition.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                    <a href="{{ path('competition_leaderboard', {competitionId: selected_competition.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                         Celý žebříček
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>
@@ -108,7 +108,7 @@
                         {% set is_me = app.user and row.userId.equals(app.user.id) %}
                         <div class="lb-row{{ is_me ? ' me' }}">
                             <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
-                            <a href="{{ path('portal_competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                            <a href="{{ path('competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
                                 <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="30" rank="{{ row.rank <= 3 ? row.rank : null }}" />
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ row.nickname }}</span>
@@ -126,7 +126,7 @@
                         <div class="border-t border-white/[0.06] py-1 text-center text-[11px] text-white/30">…</div>
                         <div class="lb-row me">
                             <span class="lb-pos">{{ mini_me_row.rank }}.</span>
-                            <a href="{{ path('portal_competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: mini_me_row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
+                            <a href="{{ path('competition_leaderboard_member', {competitionId: selected_competition.competitionId.toRfc4122, userId: mini_me_row.userId.toRfc4122}) }}" class="flex min-w-0 items-center gap-3 hover:opacity-90">
                                 <twig:Avatar name="{{ mini_me_row.fullName ?: mini_me_row.nickname }}" size="30" />
                                 <span class="flex min-w-0 items-center gap-2">
                                     <span class="truncate text-sm font-bold text-white">{{ mini_me_row.nickname }}</span>
@@ -195,7 +195,7 @@
                 </span>
                 <h3 class="text-lg font-semibold text-white">Zatím nehrajete v žádné soutěži</h3>
                 <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Založte si vlastní soutěž, nebo se přidejte k některé přes PIN či pozvánku.</p>
-                <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm mt-6">
+                <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm mt-6">
                     <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
                     Vytvořit soutěž
                 </a>
@@ -205,7 +205,7 @@
                 {% for g in my_competitions %}
                     <li>
                         <a
-                            href="{{ path('portal_competition_detail', {id: g.competitionId.toRfc4122}) }}"
+                            href="{{ path('competition_detail', {id: g.competitionId.toRfc4122}) }}"
                             class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
                         >
                             <div>
@@ -264,7 +264,7 @@
                     {% set is_private = t.kind.value == 'private' %}
                     <li>
                         <a
-                            href="{{ path('portal_match_source_detail', {id: t.id.toRfc4122}) }}"
+                            href="{{ path('match_source_detail', {id: t.id.toRfc4122}) }}"
                             class="card-glass group flex h-full flex-col justify-between p-6 transition-transform duration-200 hover:-translate-y-1"
                         >
                             <div>
@@ -364,7 +364,7 @@
                             :pillVariant="pill_variant"
                             :pillIcon="pill_icon"
                             :pillLabel="pill_label"
-                            :detailUrl="path('portal_sport_match_detail', {id: m.id.toRfc4122})"
+                            :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
                             detailLabel="Tipovat"
                         />
 
@@ -451,7 +451,7 @@
                                 :resultAway="g.actualAwayScore"
                                 :points="g.totalPoints"
                                 :hitClass="hit_class"
-                                :detailUrl="path('portal_sport_match_detail', {id: g.sportMatchId.toRfc4122})"
+                                :detailUrl="path('sport_match_detail', {id: g.sportMatchId.toRfc4122})"
                             />
                             <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">{{ g.matchSourceName }}</p>
                         </li>
@@ -531,18 +531,18 @@
 
                             <div class="mt-5">
                                 {% if c.viewerIsMember %}
-                                    <a href="{{ path('portal_competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
+                                    <a href="{{ path('competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
                                         Otevřít soutěž
                                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                                     </a>
                                 {% elseif c.entryFeeCredits > 0 and wallet_balance < c.entryFeeCredits %}
                                     <p class="mb-2 text-center text-xs text-white/50">Máte {{ wallet_balance }}/{{ c.entryFeeCredits|credits }}</p>
-                                    <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm w-full">
+                                    <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm w-full">
                                         <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
                                         Dokoupit kredity
                                     </a>
                                 {% elseif app.user.isVerified %}
-                                    <form method="post" action="{{ path('portal_competition_join_global', {id: c.competitionId.toRfc4122}) }}">
+                                    <form method="post" action="{{ path('competition_join_global', {id: c.competitionId.toRfc4122}) }}">
                                         <input type="hidden" name="_token" value="{{ csrf_token('competition_join_global_' ~ c.competitionId.toRfc4122) }}">
                                         <button type="submit" class="btn btn-primary btn-sm w-full">
                                             <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
@@ -550,7 +550,7 @@
                                         </button>
                                     </form>
                                 {% else %}
-                                    <a href="{{ path('portal_profile_edit') }}" class="btn btn-ghost btn-sm w-full">Ověřte e-mail pro připojení</a>
+                                    <a href="{{ path('profile_edit') }}" class="btn btn-ghost btn-sm w-full">Ověřte e-mail pro připojení</a>
                                 {% endif %}
                             </div>
                         </div>

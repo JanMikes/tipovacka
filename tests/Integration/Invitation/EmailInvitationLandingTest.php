@@ -105,7 +105,7 @@ final class EmailInvitationLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
 
         $em = $this->em($client);
         $em->clear();
@@ -226,7 +226,7 @@ final class EmailInvitationLandingTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID, $response->headers->get('Location'));
     }
 
     public function testCompleteRegistrationWithEmptyPasswordRejected(): void
@@ -284,7 +284,7 @@ final class EmailInvitationLandingTest extends WebTestCase
 
         $client->request('GET', self::EMAIL_TOKEN_URL);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
     }
 
     public function testAuthenticatedDifferentEmailShowsMismatchPrompt(): void

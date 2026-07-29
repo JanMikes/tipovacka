@@ -118,6 +118,6 @@ final class VerifyEmailController extends AbstractController
         $loginResponse = $this->security->login($verifiedUser, firewallName: 'main');
         $this->addFlash('success', 'E-mail byl úspěšně ověřen. Jsi přihlášen(a).');
 
-        return $loginResponse ?? $this->redirectToRoute('portal_dashboard');
+        return $loginResponse ?? $this->redirectToRoute('dashboard');
     }
 }

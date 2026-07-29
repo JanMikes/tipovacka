@@ -41,7 +41,7 @@ final class RequireVerifiedEmailSubscriber implements EventSubscriberInterface
         'app_login',
         'app_logout',
         'app_register',
-        'portal_account_delete',
+        'account_delete',
         // Password reset: an unverified account must still be recoverable.
         'app_forgot_password_request',
         'app_check_email',

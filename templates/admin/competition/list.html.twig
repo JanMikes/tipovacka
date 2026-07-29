@@ -47,7 +47,7 @@
                         <td class="px-4 py-3">{{ competition.memberCount }}</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-2 whitespace-nowrap">
-                                <a href="{{ path('portal_competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Detail</a>
+                                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Detail</a>
                                 {% if competition.isGlobal and not competition.isDeleted %}
                                     <a href="{{ path('admin_global_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Nastavení</a>
                                 {% endif %}

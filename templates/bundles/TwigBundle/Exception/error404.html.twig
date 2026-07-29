@@ -16,7 +16,7 @@
             <div class="mt-7 flex flex-wrap justify-center gap-2.5">
                 <a href="{{ path('app_home') }}" class="btn btn-primary btn-sm">Zpět na úvod</a>
                 {% if is_granted('ROLE_USER') %}
-                    <a href="{{ path('portal_profile_edit') }}" class="btn btn-ghost btn-sm">Můj profil</a>
+                    <a href="{{ path('profile_edit') }}" class="btn btn-ghost btn-sm">Můj profil</a>
                 {% else %}
                     <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm">Přihlásit se</a>
                 {% endif %}

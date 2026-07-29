@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/zapasy/{id}/odlozit',
-    name: 'portal_sport_match_postpone',
+    '/zapasy/{id}/odlozit',
+    name: 'sport_match_postpone',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class PostponeController extends AbstractController
 {
     public function __construct(
@@ -41,7 +43,7 @@ final class PostponeController extends AbstractController
         if (!$this->isCsrfTokenValid('sport_match_postpone_'.$sportMatch->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         $raw = (string) $request->request->get('new_kickoff_at', '');
@@ -50,7 +52,7 @@ final class PostponeController extends AbstractController
         if (null === $newKickoffAt) {
             $this->addFlash('error', 'Neplatný formát nového termínu.');
 
-            return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new PostponeSportMatchCommand(
@@ -61,7 +63,7 @@ final class PostponeController extends AbstractController
 
         $this->addFlash('success', 'Zápas byl odložen.');
 
-        return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+        return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
     }
 
     private function parseKickoff(string $raw): ?\DateTimeImmutable

@@ -33,7 +33,7 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginVerified($client);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek');
 
         self::assertResponseIsSuccessful();
         // The Δ column renders under the all-time tab, with the corrected tooltip.
@@ -117,14 +117,14 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         $client->loginUser($verified);
 
         // All-time tab: VERIFIED leads (10 pts) ⇒ strip AND table both show rank 1.
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek');
         self::assertResponseIsSuccessful();
         self::assertStringStartsWith('1.', trim($crawler->filter('.you-strip .pos')->text()));
         self::assertSame('1.', trim($crawler->filter('tr.lb-tr.me .lb-pos')->text()));
 
         // 7-day tab: VERIFIED has no in-window points ⇒ the table re-ranks them 2nd
         // behind ADMIN. The strip must show the SAME rank, not the all-time 1st.
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek?obdobi=7dni');
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zebricek?obdobi=7dni');
         self::assertResponseIsSuccessful();
 
         $tableRank = trim($crawler->filter('tr.lb-tr.me .lb-pos')->text());
@@ -144,7 +144,7 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginVerified($client);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek');
         $body = (string) $client->getResponse()->getContent();
 
         // Only the two implemented windows are offered as tabs.
@@ -172,7 +172,7 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek/clen/'.AppFixtures::VERIFIED_USER_ID,
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/zebricek/clen/'.AppFixtures::VERIFIED_USER_ID,
         );
 
         self::assertResponseIsSuccessful();

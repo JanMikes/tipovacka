@@ -8,7 +8,7 @@ item 04 (the grouped tom-select switcher). Item 03 (fixtures) makes it far easie
 
 ## Why
 
-„Žebříček" is a top-level nav item but today `portal_leaderboard` (`/portal/zebricek`) is only a
+„Žebříček" is a top-level nav item but today `leaderboard` (`/zebricek`) is only a
 **redirector** to whichever competition the user happens to be in — a global-looking label with a
 soutěž-scoped destination, and nothing at all for logged-out visitors. The product owner wants a real
 page, driven by the competition picker, that works signed in and signed out.
@@ -43,16 +43,20 @@ exist too.
 
 ## Routing
 
-- New public route **`/zebricek`** (outside the portal firewall) renders the page. Competition is
-  chosen with **`?soutez={uuid}`**.
+- New public route **`/zebricek`** renders the page. Competition is chosen with **`?soutez={uuid}`**.
+  Item 09 removed the `/portal` firewall prefix, so „public" is no longer a matter of which prefix
+  the path carries: the whole app sits behind one firewall and the authenticated pages carry
+  `#[IsGranted('ROLE_USER')]` on the controller. A public leaderboard therefore simply **omits**
+  that attribute — and must add its own row to
+  `tests/Integration/Security/AnonymousReachabilityTest`, which pins who may reach what.
 - The nav „Žebříček" entry points here for **both** variants. Item 01 deliberately left the
   logged-out nav without this link because the page did not exist — **add it now** (in
   `templates/components/Layout/Nav.html.twig`, both desktop and mobile lists) and update the tests
   that pin the exact link sets (`tests/Integration/Auth/NavigationTest.php`).
 - **Consolidate the leaderboard routes rather than preserving them.** There are no users yet and the
   stream owes no backwards compatibility (see `PLAN.md` conventions), so:
-  - **Delete** `portal_leaderboard` (`/portal/zebricek`) — the old redirector. Do not alias it.
-  - **Delete** `portal_competition_leaderboard` (`/portal/souteze/{competitionId}/zebricek`) and let
+  - **Delete** `leaderboard` (`/zebricek`) — the old redirector. Do not alias it.
+  - **Delete** `competition_leaderboard` (`/souteze/{competitionId}/zebricek`) and let
     `/zebricek?soutez={uuid}` be the single leaderboard URL. No redirect.
   - Move its three sub-pages under the new page so the whole feature lives in one place —
     `/zebricek/matice`, `/zebricek/clen/{userId}`, `/zebricek/shoda`, each carrying `?soutez={uuid}`
@@ -115,7 +119,7 @@ own row is far down the table, collapse the ranks in between rather than paginat
 3. All four period tabs change the numbers and are linkable (state in the URL, not only in JS).
 4. Switching competitions in the picker reloads the page scoped to it.
 5. A private competition's leaderboard is **not** reachable anonymously by UUID.
-6. `/portal/souteze/{id}/zebricek` and its `/matice`, `/clen/{userId}`, `/shoda` sub-pages still work.
+6. `/souteze/{id}/zebricek` and its `/matice`, `/clen/{userId}`, `/shoda` sub-pages still work.
 7. The nav shows „Žebříček" in both variants and `NavigationTest` is updated to match.
 
 ## Definition of done

@@ -25,15 +25,15 @@ final class RevokeInvitationFlowTest extends WebTestCase
         $client->loginUser($admin);
 
         // GET detail first — initialises session + CSRF token.
-        $crawler = $client->request('GET', '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
 
         $form = $crawler->filter(
-            'form[action="/portal/pozvanky/'.AppFixtures::PENDING_INVITATION_ID.'/zrusit"]'
+            'form[action="/pozvanky/'.AppFixtures::PENDING_INVITATION_ID.'/zrusit"]'
         )->form();
         $client->submit($form);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
 
         $em->clear();
         $invitation = $em->find(CompetitionInvitation::class, Uuid::fromString(AppFixtures::PENDING_INVITATION_ID));
@@ -68,7 +68,7 @@ final class RevokeInvitationFlowTest extends WebTestCase
 
         // Stranger has no access to the competition detail (not a member) so the button isn't rendered.
         // POST with any token — controller should treat as invalid CSRF and redirect, leaving invitation intact.
-        $client->request('POST', '/portal/pozvanky/'.AppFixtures::PENDING_INVITATION_ID.'/zrusit', [
+        $client->request('POST', '/pozvanky/'.AppFixtures::PENDING_INVITATION_ID.'/zrusit', [
             '_token' => 'invalid-token',
         ]);
 

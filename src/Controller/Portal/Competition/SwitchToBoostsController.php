@@ -14,14 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{id}/premium/prepnout-na-prispevky',
-    name: 'portal_competition_switch_to_boosts',
+    '/souteze/{id}/premium/prepnout-na-prispevky',
+    name: 'competition_switch_to_boosts',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SwitchToBoostsController extends AbstractController
 {
     public function __construct(
@@ -41,7 +43,7 @@ final class SwitchToBoostsController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_switch_to_boosts_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new SwitchToBoostsCommand(
@@ -51,6 +53,6 @@ final class SwitchToBoostsController extends AbstractController
 
         $this->addFlash('success', 'Přepnuto na příspěvky — prémiové platby za členy byly vráceny.');
 
-        return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
     }
 }

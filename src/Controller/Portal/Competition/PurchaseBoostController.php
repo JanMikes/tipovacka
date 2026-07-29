@@ -20,6 +20,7 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -28,11 +29,12 @@ use Symfony\Component\Uid\Uuid;
  * message; other domain guards flash an error and return to the origin page.
  */
 #[Route(
-    '/portal/souteze/{id}/vylepseni/koupit',
-    name: 'portal_competition_boost_purchase',
+    '/souteze/{id}/vylepseni/koupit',
+    name: 'competition_boost_purchase',
     requirements: ['id' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class PurchaseBoostController extends AbstractController
 {
     public function __construct(
@@ -77,7 +79,7 @@ final class PurchaseBoostController extends AbstractController
             if ($inner instanceof InsufficientCredits) {
                 $this->addFlash('error', $inner->getMessage().' Dokupte si prosím kredity.');
 
-                return $this->redirectToRoute('portal_credits');
+                return $this->redirectToRoute('credits');
             }
 
             if ($inner instanceof BoostNotAvailable || $inner instanceof NotAMember) {
@@ -113,8 +115,8 @@ final class PurchaseBoostController extends AbstractController
      * Return to the origin page after buying. Only SAME-SITE absolute paths are
      * accepted (no open redirect): a leading `//` or `/\` is how browsers read a
      * protocol-relative URL to another host, so both are rejected. Anything else
-     * falls back to the competition detail. The paywall lives on pages outside
-     * `/portal/` too (`/zapasy`, `/nastenka`), hence the path-wide rule.
+     * falls back to the competition detail. The paywall lives on pages outside the
+     * soutěž tree too (`/zapasy`, `/nastenka`), hence the path-wide rule.
      */
     private function resolveRedirect(Request $request, Uuid $competitionId): string
     {
@@ -127,6 +129,6 @@ final class PurchaseBoostController extends AbstractController
             return $redirectTo;
         }
 
-        return $this->generateUrl('portal_competition_detail', ['id' => $competitionId->toRfc4122()]);
+        return $this->generateUrl('competition_detail', ['id' => $competitionId->toRfc4122()]);
     }
 }

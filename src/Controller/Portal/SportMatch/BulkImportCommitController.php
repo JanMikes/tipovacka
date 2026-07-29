@@ -15,14 +15,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/turnaje/{matchSourceId}/zapasy/import/potvrdit',
-    name: 'portal_sport_match_import_commit',
+    '/turnaje/{matchSourceId}/zapasy/import/potvrdit',
+    name: 'sport_match_import_commit',
     requirements: ['matchSourceId' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class BulkImportCommitController extends AbstractController
 {
     public function __construct(
@@ -43,7 +45,7 @@ final class BulkImportCommitController extends AbstractController
         if (!$this->isCsrfTokenValid('sport_match_import_commit_'.$matchSource->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('portal_sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
         }
 
         $rows = $this->session->consume($matchSource->id);
@@ -51,7 +53,7 @@ final class BulkImportCommitController extends AbstractController
         if ([] === $rows) {
             $this->addFlash('error', 'Žádná data k importu. Nejprve nahrajte soubor.');
 
-            return $this->redirectToRoute('portal_sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new BulkImportSportMatchesCommand(
@@ -62,6 +64,6 @@ final class BulkImportCommitController extends AbstractController
 
         $this->addFlash('success', sprintf('Importováno %d zápasů.', count($rows)));
 
-        return $this->redirectToRoute('portal_match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+        return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
     }
 }

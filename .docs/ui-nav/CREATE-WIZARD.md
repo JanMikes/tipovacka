@@ -1,7 +1,7 @@
 # Create-competition wizard + copy backlog
 
 Reported by the product owner on 2026-07-29, against
-`/portal/souteze/nova?zdroj=…` (`Competition:CreateWizard`, see `.docs/features/create-wizard.md`).
+`/souteze/nova?zdroj=…` (`Competition:CreateWizard`, see `.docs/features/create-wizard.md`).
 
 Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 

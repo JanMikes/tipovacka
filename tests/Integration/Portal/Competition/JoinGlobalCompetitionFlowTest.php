@@ -32,7 +32,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $this->loginUserById($this->client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->postJoin(AppFixtures::FREE_GLOBAL_COMPETITION_ID);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID);
         self::assertTrue($this->isMember(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::FREE_GLOBAL_COMPETITION_ID));
     }
 
@@ -48,7 +48,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
         $this->postJoin(AppFixtures::GLOBAL_COMPETITION_ID);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID);
         self::assertTrue($this->isMember(AppFixtures::VERIFIED_USER_ID, AppFixtures::GLOBAL_COMPETITION_ID));
     }
 
@@ -57,7 +57,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $this->loginUserById($this->client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->postJoin(AppFixtures::GLOBAL_COMPETITION_ID);
 
-        self::assertResponseRedirects('/portal/kredity');
+        self::assertResponseRedirects('/kredity');
         $this->client->followRedirect();
         self::assertAnySelectorTextContains('body', 'Na vstupné potřebujete ještě 50 kreditů.');
 
@@ -71,7 +71,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
 
         // Insufficient join stores the return-to-competition intent in the session.
         $this->postJoin(AppFixtures::GLOBAL_COMPETITION_ID);
-        self::assertResponseRedirects('/portal/kredity');
+        self::assertResponseRedirects('/kredity');
 
         // Complete a credit purchase out-of-band (prime + fulfill back-to-back on
         // the command bus, so the fake gateway's in-memory session is not reset
@@ -98,7 +98,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         // Return from Stripe: completed purchase + stored intent send the user
         // BACK to the public discovery list, anchored on the competition (NOT the
         // detail page — its VIEW voter would 403 a not-yet-member).
-        $this->client->request('GET', '/portal/kredity/navrat?session_id='.$checkout->purchase->stripeCheckoutSessionId);
+        $this->client->request('GET', '/kredity/navrat?session_id='.$checkout->purchase->stripeCheckoutSessionId);
 
         self::assertResponseRedirects('/souteze#soutez-'.AppFixtures::GLOBAL_COMPETITION_ID);
 
@@ -124,7 +124,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $session->set('_csrf/competition_join_global_'.$competitionId, 'test-csrf');
         $session->save();
 
-        $this->client->request('POST', '/portal/souteze/'.$competitionId.'/pripojit-se', [
+        $this->client->request('POST', '/souteze/'.$competitionId.'/pripojit-se', [
             '_token' => 'test-csrf',
         ]);
     }

@@ -12,13 +12,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{competitionId}/zebricek/clen/{userId}',
-    name: 'portal_competition_leaderboard_member',
+    '/souteze/{competitionId}/zebricek/clen/{userId}',
+    name: 'competition_leaderboard_member',
     requirements: ['competitionId' => Requirement::UUID, 'userId' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class MemberBreakdownController extends AbstractController
 {
     public function __construct(

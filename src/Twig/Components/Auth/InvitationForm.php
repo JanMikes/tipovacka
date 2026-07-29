@@ -266,7 +266,7 @@ final class InvitationForm extends AbstractController
         $this->acceptanceService->flash('success', 'Registrace dokončena, vítej v soutěži!');
 
         return new RedirectResponse($this->urlGenerator->generate(
-            'portal_competition_detail',
+            'competition_detail',
             ['id' => $this->context->competitionId->toRfc4122()],
         ));
     }

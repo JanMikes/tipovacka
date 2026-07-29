@@ -53,7 +53,7 @@
                 <h3 class="text-lg font-semibold text-white">Žádné veřejné soutěže</h3>
                 {% if app.user %}
                     <p class="mx-auto mt-2 max-w-md text-sm text-white/60">Aktuálně tu nejsou žádné veřejné soutěže. Vytvořte si vlastní soutěž od začátku.</p>
-                    <a href="{{ path('portal_competition_create') }}" class="btn btn-primary btn-sm mt-6">
+                    <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm mt-6">
                         <twig:ux:icon name="lucide:circle-plus" class="h-4 w-4" />
                         Vytvořit soutěž
                     </a>
@@ -112,19 +112,19 @@
 
                             <div class="mt-5">
                                 {% if c.viewerIsMember %}
-                                    <a href="{{ path('portal_competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
+                                    <a href="{{ path('competition_detail', {id: c.competitionId.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full">
                                         Otevřít soutěž
                                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                                     </a>
                                 {% elseif app.user and app.user.isVerified %}
                                     {% if c.entryFeeCredits > 0 and wallet_balance < c.entryFeeCredits %}
                                         <p class="mb-2 text-center text-xs text-white/50">Máte {{ wallet_balance }}/{{ c.entryFeeCredits|credits }}</p>
-                                        <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm w-full">
+                                        <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm w-full">
                                             <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
                                             Dokoupit kredity
                                         </a>
                                     {% else %}
-                                        <form method="post" action="{{ path('portal_competition_join_global', {id: c.competitionId.toRfc4122}) }}">
+                                        <form method="post" action="{{ path('competition_join_global', {id: c.competitionId.toRfc4122}) }}">
                                             <input type="hidden" name="_token" value="{{ csrf_token('competition_join_global_' ~ c.competitionId.toRfc4122) }}">
                                             <button type="submit" class="btn btn-primary btn-sm w-full">
                                                 <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
@@ -147,7 +147,7 @@
     </section>
 
     {# ───── Hero CTA: create your own competition (from scratch) ───── #}
-    {% set createHref = app.user ? path('portal_competition_create') : path('app_register') %}
+    {% set createHref = app.user ? path('competition_create') : path('app_register') %}
     <section class="surface-accent relative mt-12 overflow-hidden p-6 sm:p-8">
         <div class="relative grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div class="flex items-start gap-4">

@@ -44,7 +44,7 @@ final class LandingSessionResilienceTest extends WebTestCase
         ], 'submit')->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertSame('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
 
         $em->clear();
         $memberships = $em->createQueryBuilder()

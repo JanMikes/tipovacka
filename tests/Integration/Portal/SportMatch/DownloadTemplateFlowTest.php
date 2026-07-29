@@ -21,7 +21,7 @@ final class DownloadTemplateFlowTest extends WebTestCase
         self::assertNotNull($user);
         $client->loginUser($user);
 
-        $client->request('GET', '/portal/turnaje/zapasy/sablona.csv');
+        $client->request('GET', '/turnaje/zapasy/sablona.csv');
 
         self::assertResponseIsSuccessful();
         $content = (string) $client->getResponse()->getContent();

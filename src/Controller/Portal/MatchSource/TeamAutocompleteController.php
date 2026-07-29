@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -22,11 +23,12 @@ use Symfony\Component\Uid\Uuid;
  * affordance: the form still submits a typed team NAME, resolved server-side.
  */
 #[Route(
-    '/portal/zdroje/{id}/tymy',
-    name: 'portal_match_source_teams',
+    '/zdroje/{id}/tymy',
+    name: 'match_source_teams',
     requirements: ['id' => Requirement::UUID],
     methods: ['GET'],
 )]
+#[IsGranted('ROLE_USER')]
 final class TeamAutocompleteController extends AbstractController
 {
     public function __construct(

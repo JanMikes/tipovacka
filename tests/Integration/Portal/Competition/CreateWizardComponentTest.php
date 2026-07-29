@@ -111,7 +111,7 @@ final class CreateWizardComponentTest extends WebTestCase
             ->response();
 
         self::assertSame(302, $response->getStatusCode());
-        self::assertMatchesRegularExpression('#^/portal/turnaje/[0-9a-f-]{36}$#', (string) $response->headers->get('Location'));
+        self::assertMatchesRegularExpression('#^/turnaje/[0-9a-f-]{36}$#', (string) $response->headers->get('Location'));
 
         $competition = $this->competitionByName($client, 'Hokej od začátku');
         self::assertSame(MatchSourceKind::Private, $competition->matchSource->kind);
@@ -120,7 +120,7 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertCount(1, $this->memberships($client, $competition->id));
 
         // Redirect points at the freshly created hidden source (empty-state „Přidejte zápasy").
-        self::assertSame('/portal/turnaje/'.$competition->matchSource->id->toRfc4122(), $response->headers->get('Location'));
+        self::assertSame('/turnaje/'.$competition->matchSource->id->toRfc4122(), $response->headers->get('Location'));
     }
 
     public function testCuratedSubsetCustomRulesPremiumHappyPath(): void
@@ -151,7 +151,7 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertSame(302, $response->getStatusCode());
 
         $competition = $this->competitionByName($client, 'Kurátor prémium');
-        self::assertSame('/portal/souteze/'.$competition->id->toRfc4122(), $response->headers->get('Location'));
+        self::assertSame('/souteze/'.$competition->id->toRfc4122(), $response->headers->get('Location'));
         self::assertSame(CompetitionMonetization::Premium, $competition->monetization);
         self::assertNotNull($competition->pin);
 

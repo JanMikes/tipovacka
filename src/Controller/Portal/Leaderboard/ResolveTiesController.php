@@ -19,13 +19,15 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{competitionId}/zebricek/shoda',
-    name: 'portal_competition_leaderboard_resolve_ties',
+    '/souteze/{competitionId}/zebricek/shoda',
+    name: 'competition_leaderboard_resolve_ties',
     requirements: ['competitionId' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class ResolveTiesController extends AbstractController
 {
     public function __construct(
@@ -65,7 +67,7 @@ final class ResolveTiesController extends AbstractController
 
             $this->addFlash('success', 'Rozřazení bylo uloženo.');
 
-            return $this->redirectToRoute('portal_competition_leaderboard', [
+            return $this->redirectToRoute('competition_leaderboard', [
                 'competitionId' => $competition->id->toRfc4122(),
             ]);
         }

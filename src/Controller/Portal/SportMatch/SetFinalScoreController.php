@@ -25,13 +25,15 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/zapasy/{id}/skore',
-    name: 'portal_sport_match_set_score',
+    '/zapasy/{id}/skore',
+    name: 'sport_match_set_score',
     requirements: ['id' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class SetFinalScoreController extends AbstractController
 {
     public function __construct(
@@ -130,7 +132,7 @@ final class SetFinalScoreController extends AbstractController
                     $this->addFlash('success', 'Průběžné skóre bylo uloženo.');
                 }
 
-                return $this->redirectToRoute('portal_sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+                return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
             } catch (HandlerFailedException $handlerFailed) {
                 $domainException = null;
 

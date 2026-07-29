@@ -512,14 +512,14 @@ final class CreateWizard extends AbstractController
         if ($this->fromScratch) {
             $this->addFlash('success', 'Soutěž je připravená. Teď přidejte zápasy — ručně, nebo nahrajte celý rozpis.');
 
-            return $this->redirectToRoute('portal_match_source_detail', [
+            return $this->redirectToRoute('match_source_detail', [
                 'id' => $competition->matchSource->id->toRfc4122(),
             ]);
         }
 
         $this->addFlash('success', 'Soutěž byla vytvořena. Pozvěte kamarády a můžete tipovat!');
 
-        return $this->redirectToRoute('portal_competition_detail', [
+        return $this->redirectToRoute('competition_detail', [
             'id' => $competition->id->toRfc4122(),
         ]);
     }
@@ -568,7 +568,7 @@ final class CreateWizard extends AbstractController
 
         $this->addFlash('success', 'Globální soutěž byla vytvořena. Je veřejně k nalezení a hráči se přidají za vstupné.');
 
-        return $this->redirectToRoute('portal_competition_detail', [
+        return $this->redirectToRoute('competition_detail', [
             'id' => $competition->id->toRfc4122(),
         ]);
     }

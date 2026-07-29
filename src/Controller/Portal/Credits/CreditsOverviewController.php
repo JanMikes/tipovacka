@@ -15,8 +15,10 @@ use App\Query\QueryBus;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/portal/kredity', name: 'portal_credits', methods: ['GET'])]
+#[Route('/kredity', name: 'credits', methods: ['GET'])]
+#[IsGranted('ROLE_USER')]
 final class CreditsOverviewController extends AbstractController
 {
     public function __construct(
@@ -30,7 +32,7 @@ final class CreditsOverviewController extends AbstractController
         $user = $this->getUser();
 
         $form = $this->createForm(BuyCreditsFormType::class, new BuyCreditsFormData(), [
-            'action' => $this->generateUrl('portal_credits_buy'),
+            'action' => $this->generateUrl('credits_buy'),
         ]);
 
         return $this->render('portal/credits/overview.html.twig', [

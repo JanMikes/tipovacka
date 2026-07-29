@@ -7,7 +7,7 @@ Styled confirmation dialog used before destructive form submissions (delete, rev
 Attach the `confirm` Stimulus controller to the `<form>` element. The controller intercepts submission, renders a `<dialog>`, and re-submits via `requestSubmit()` after the user confirms.
 
 ```twig
-<form method="post" action="{{ path('portal_competition_delete', {id: competition.id.toRfc4122}) }}"
+<form method="post" action="{{ path('competition_delete', {id: competition.id.toRfc4122}) }}"
     data-controller="confirm"
     data-confirm-title-value="Smazat soutěž"
     data-confirm-message-value="Opravdu chceš soutěž „{{ detail.name }}“ smazat? Všichni členové přijdou o své tipy."

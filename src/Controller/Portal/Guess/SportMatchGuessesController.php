@@ -28,13 +28,15 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{competitionId}/zapasy/{sportMatchId}',
-    name: 'portal_competition_sport_match_guesses',
+    '/souteze/{competitionId}/zapasy/{sportMatchId}',
+    name: 'competition_sport_match_guesses',
     requirements: ['competitionId' => Requirement::UUID, 'sportMatchId' => Requirement::UUID],
 )]
+#[IsGranted('ROLE_USER')]
 final class SportMatchGuessesController extends AbstractController
 {
     public function __construct(
@@ -126,7 +128,7 @@ final class SportMatchGuessesController extends AbstractController
                 CompetitionMatchDeadlineFormType::class,
                 CompetitionMatchDeadlineFormData::fromSetting($existingSetting),
                 [
-                    'action' => $this->generateUrl('portal_competition_sport_match_set_deadline', [
+                    'action' => $this->generateUrl('competition_sport_match_set_deadline', [
                         'competitionId' => $competition->id->toRfc4122(),
                         'sportMatchId' => $sportMatch->id->toRfc4122(),
                     ]),

@@ -18,8 +18,10 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/pripojit/rychle', name: 'portal_competition_join_by_pin_quick', methods: ['POST'])]
+#[Route('/pripojit/rychle', name: 'competition_join_by_pin_quick', methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
 final class QuickJoinByPinController extends AbstractController
 {
     public function __construct(
@@ -58,7 +60,7 @@ final class QuickJoinByPinController extends AbstractController
 
             $this->addFlash('success', 'Byl(a) jsi přidán(a) do soutěže.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         } catch (HandlerFailedException $handlerFailed) {
             $inner = $handlerFailed->getPrevious();
 
@@ -79,7 +81,7 @@ final class QuickJoinByPinController extends AbstractController
     private function safeRedirectTarget(string $candidate): string
     {
         if ('' === $candidate || !str_starts_with($candidate, '/') || str_starts_with($candidate, '//')) {
-            return $this->generateUrl('portal_dashboard');
+            return $this->generateUrl('dashboard');
         }
 
         return $candidate;

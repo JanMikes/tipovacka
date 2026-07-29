@@ -23,7 +23,7 @@ final class AccountDeleteFlowTest extends WebTestCase
         self::assertNotNull($user);
         $client->loginUser($user);
 
-        $client->request('GET', '/portal/ucet/smazat');
+        $client->request('GET', '/ucet/smazat');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Opravdu chcete smazat');
     }
@@ -40,7 +40,7 @@ final class AccountDeleteFlowTest extends WebTestCase
         $client->loginUser($user);
 
         // GET first to ensure session + CSRF token renders
-        $crawler = $client->request('GET', '/portal/ucet/smazat');
+        $crawler = $client->request('GET', '/ucet/smazat');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Ano, smazat můj účet');

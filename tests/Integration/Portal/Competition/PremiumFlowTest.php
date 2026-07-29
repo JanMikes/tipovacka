@@ -21,11 +21,11 @@ final class PremiumFlowTest extends WebTestCase
 {
     use WebFlowHelpers;
 
-    private const string PREMIUM_DETAIL = '/portal/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID;
+    private const string PREMIUM_DETAIL = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID;
     private const string PREMIUM_SETTINGS = self::PREMIUM_DETAIL.'/premium';
     private const string PREMIUM_SWITCH = self::PREMIUM_DETAIL.'/premium/prepnout-na-prispevky';
 
-    private const string PLAIN_DETAIL = '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
+    private const string PLAIN_DETAIL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
     private const string PLAIN_ENABLE = self::PLAIN_DETAIL.'/premium/zapnout';
 
     private function reloadCompetition(string $id): Competition
@@ -202,7 +202,7 @@ final class PremiumFlowTest extends WebTestCase
         $crawler = $client->request('GET', self::PLAIN_DETAIL);
         $client->submit($crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form());
 
-        self::assertResponseRedirects('/portal/kredity');
+        self::assertResponseRedirects('/kredity');
         $client->followRedirect();
         self::assertSelectorTextContains('body', 'Nedostatek kreditů');
 

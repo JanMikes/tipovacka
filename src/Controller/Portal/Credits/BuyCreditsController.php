@@ -22,8 +22,10 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/portal/kredity/koupit', name: 'portal_credits_buy', methods: ['POST'])]
+#[Route('/kredity/koupit', name: 'credits_buy', methods: ['POST'])]
+#[IsGranted('ROLE_USER')]
 final class BuyCreditsController extends AbstractController
 {
     public function __construct(
@@ -39,16 +41,16 @@ final class BuyCreditsController extends AbstractController
 
         $formData = new BuyCreditsFormData();
         $form = $this->createForm(BuyCreditsFormType::class, $formData, [
-            'action' => $this->generateUrl('portal_credits_buy'),
+            'action' => $this->generateUrl('credits_buy'),
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             // {CHECKOUT_SESSION_ID} is a Stripe template placeholder — appended
             // raw because generateUrl() would url-encode the braces.
-            $successUrl = $this->generateUrl('portal_credits_return', [], UrlGeneratorInterface::ABSOLUTE_URL)
+            $successUrl = $this->generateUrl('credits_return', [], UrlGeneratorInterface::ABSOLUTE_URL)
                 .'?session_id={CHECKOUT_SESSION_ID}';
-            $cancelUrl = $this->generateUrl('portal_credits_return', [], UrlGeneratorInterface::ABSOLUTE_URL)
+            $cancelUrl = $this->generateUrl('credits_return', [], UrlGeneratorInterface::ABSOLUTE_URL)
                 .'?cancelled=1';
 
             $envelope = $this->commandBus->dispatch(new InitiateCreditPurchaseCommand(

@@ -65,7 +65,7 @@ final class EditGlobalCompetitionController extends AbstractController
                 if ($handlerFailed->getPrevious() instanceof GlobalCompetitionFeeLocked) {
                     $this->addFlash('error', 'Vstupné už nelze změnit — do soutěže se připojil první hráč.');
 
-                    return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+                    return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
                 }
 
                 throw $handlerFailed;
@@ -73,7 +73,7 @@ final class EditGlobalCompetitionController extends AbstractController
 
             $this->addFlash('success', 'Nastavení globální soutěže bylo uloženo.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('admin/competition/edit_global.html.twig', [

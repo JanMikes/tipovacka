@@ -48,7 +48,7 @@ final class CreateWizardGlobalTest extends WebTestCase
         self::assertSame(302, $response->getStatusCode());
 
         $competition = $this->competitionByName($client, 'Globální liga');
-        self::assertSame('/portal/souteze/'.$competition->id->toRfc4122(), $response->headers->get('Location'));
+        self::assertSame('/souteze/'.$competition->id->toRfc4122(), $response->headers->get('Location'));
 
         self::assertTrue($competition->isGlobal);
         self::assertSame(50, $competition->entryFeeCredits);

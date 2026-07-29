@@ -37,7 +37,7 @@ final readonly class NotifyPremiumChargeUncoveredHandler
         }
 
         $url = $this->urlGenerator->generate(
-            'portal_credits',
+            'credits',
             [],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );

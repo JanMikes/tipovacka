@@ -28,9 +28,9 @@ final class TipStatsSurfacesTest extends WebTestCase
 
     private const string MATCHES_LIST = '/zapasy';
     private const string DASHBOARD = '/nastenka';
-    private const string BOOSTS_DETAIL = '/portal/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
+    private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
-    private const string MATCH_DETAIL = '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    private const string MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
     private const string COMPETITION_MATCH = self::BOOSTS_DETAIL.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
 
     /**
@@ -126,7 +126,7 @@ final class TipStatsSurfacesTest extends WebTestCase
             ->ancestors()->filter('form')->form();
         $client->submit($form);
 
-        // The paywall lives outside /portal/ too — the redirect must come back here.
+        // The paywall lives outside the soutěž tree too — the redirect must come back here.
         self::assertResponseRedirects(self::MATCHES_LIST);
         $crawler = $client->followRedirect();
         self::assertGreaterThanOrEqual(1, $crawler->filter('.dist-bar')->count());

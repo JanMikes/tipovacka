@@ -48,7 +48,7 @@ final readonly class NotifyMemberJoinedHandler
         }
 
         $url = $this->urlGenerator->generate(
-            'portal_competition_detail',
+            'competition_detail',
             ['id' => $competition->id->toRfc4122()],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );

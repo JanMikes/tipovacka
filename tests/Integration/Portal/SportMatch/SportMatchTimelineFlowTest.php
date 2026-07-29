@@ -21,7 +21,7 @@ final class SportMatchTimelineFlowTest extends WebTestCase
         self::assertNotNull($user);
         $client->loginUser($user);
 
-        $crawler = $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_FINISHED_ID);
+        $crawler = $client->request('GET', '/zapasy/'.AppFixtures::MATCH_FINISHED_ID);
 
         self::assertResponseIsSuccessful();
         self::assertAnySelectorTextContains('h2', 'Průběh zápasu');
@@ -51,7 +51,7 @@ final class SportMatchTimelineFlowTest extends WebTestCase
         self::assertNotNull($user);
         $client->loginUser($user);
 
-        $client->request('GET', '/portal/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('section h2:contains("Průběh zápasu")');
@@ -68,7 +68,7 @@ final class SportMatchTimelineFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_FINISHED_ID,
         );
 
         self::assertResponseIsSuccessful();

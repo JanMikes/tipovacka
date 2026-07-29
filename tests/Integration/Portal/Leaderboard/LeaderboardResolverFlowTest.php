@@ -22,12 +22,12 @@ final class LeaderboardResolverFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        $client->request('GET', '/portal/zebricek');
+        $client->request('GET', '/zebricek');
 
         self::assertResponseStatusCodeSame(302);
         $location = $client->getResponse()->headers->get('Location');
         self::assertIsString($location);
-        self::assertMatchesRegularExpression('#/portal/souteze/[0-9a-f-]+/zebricek$#', $location);
+        self::assertMatchesRegularExpression('#/souteze/[0-9a-f-]+/zebricek$#', $location);
     }
 
     public function testRedirectsUserWithNoSoutezToDashboard(): void
@@ -55,7 +55,7 @@ final class LeaderboardResolverFlowTest extends WebTestCase
 
         $client->loginUser($loner);
 
-        $client->request('GET', '/portal/zebricek');
+        $client->request('GET', '/zebricek');
 
         self::assertResponseRedirects('/nastenka');
     }
@@ -64,7 +64,7 @@ final class LeaderboardResolverFlowTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('GET', '/portal/zebricek');
+        $client->request('GET', '/zebricek');
 
         self::assertResponseStatusCodeSame(302);
         $location = $client->getResponse()->headers->get('Location');

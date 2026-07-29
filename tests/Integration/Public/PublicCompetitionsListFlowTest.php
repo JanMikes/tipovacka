@@ -72,9 +72,9 @@ final class PublicCompetitionsListFlowTest extends WebTestCase
         // Upfront „Máte 0/50 kreditů — dokoupit" state, NOT a bare join button that
         // would bounce to the top-up page.
         self::assertSelectorTextContains('body', 'Máte 0/'.AppFixtures::GLOBAL_COMPETITION_ENTRY_FEE.' kreditů');
-        self::assertSelectorNotExists('form[action="/portal/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/pripojit-se"]');
+        self::assertSelectorNotExists('form[action="/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/pripojit-se"]');
         // The free global still offers a direct join.
-        self::assertSelectorExists('form[action="/portal/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID.'/pripojit-se"]');
+        self::assertSelectorExists('form[action="/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID.'/pripojit-se"]');
     }
 
     public function testFinishedSourceExcludesGlobalCompetitions(): void

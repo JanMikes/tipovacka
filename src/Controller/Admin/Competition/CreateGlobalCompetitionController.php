@@ -63,7 +63,7 @@ final class CreateGlobalCompetitionController extends AbstractController
 
             $this->addFlash('success', 'Globální soutěž byla vytvořena.');
 
-            return $this->redirectToRoute('portal_competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('admin/competition/create_global.html.twig', [

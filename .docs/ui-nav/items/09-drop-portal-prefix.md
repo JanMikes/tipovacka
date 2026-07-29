@@ -1,6 +1,6 @@
 # Item 09 — Drop the `/portal` URL prefix; unify the soutěž URL space
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** `BUGS.md` **B1 must land first** — it adds a verification guard in exactly the
 security layer this item rewires. Running them concurrently will conflict.
 **Should run before or alongside:** items 05–08, which all create or move routes. Doing it after them
@@ -80,3 +80,82 @@ Per `.docs/ui-nav/PLAN.md`, and unusually strict here because the blast radius i
 `phpunit tests/` whole — it OOMs at exit 137). Then crawl the app logged out, logged in unverified,
 logged in verified, and as admin. Update `UI-MAP.md` §2 wholesale. Update the status board row to
 DONE + sha. Commit `UI: drop the /portal URL prefix`, push to `main`.
+
+---
+
+## What landed
+
+**The safety net first.** `tests/Integration/Security/AnonymousReachabilityTest` was written and
+made green **against the pre-item code**, then re-run unchanged afterwards. It is keyed by
+**controller class**, not by route name or path — precisely because those are what this item
+rewrote, while the controllers did not move. Two tests:
+
+- `testTheInventoryCoversEveryApplicationRoute` — the written-down inventory must describe the
+  router exactly. A new route whose controller is not listed fails; so does a stale entry.
+- `testAnonymousVisitorReachesExactlyTheRoutesTheInventoryAllows` — every route is actually
+  requested anonymously and classified „bounces to `/prihlaseni`" vs „is served".
+
+Writing it down first paid for itself immediately: it surfaced **two routes whose access was not
+what the config suggested**, both pre-existing and both now documented in the map —
+`app_design_styleguide` (`/_design`) is ROLE_ADMIN via an in-controller
+`denyAccessUnlessGranted`, not via any path rule; and `app_resend_verification_email` bounces an
+anonymous POST to the login page (its CSRF failure is an `AuthenticationException`).
+
+**Security mechanism — option (a), as the item recommended.** `access_control` went from 17 path
+rules to **one**:
+
+```php
+'access_control' => [
+    ['path' => '^/admin', 'roles' => 'ROLE_ADMIN'],
+],
+```
+
+and every one of the 66 controllers in `src/Controller/Portal/` gained a class-level
+`#[IsGranted('ROLE_USER')]`. The `PUBLIC_ACCESS` rules were deleted rather than rewritten — with
+no matching rule, access is already open, so they only ever documented intent, and the
+reachability test documents it far better. The „fails open if you forget the attribute" risk that
+comes with option (a) is closed at CI level by the inventory test: a new `Controller\Portal\…`
+route that nobody gated shows up as a diff in the expected map.
+
+**Why a path could no longer carry the boundary.** `/souteze` is now three audiences in one
+prefix — the public discovery list (`/souteze`), a logged-out invitation landing
+(`/souteze/pozvanka/{token}`) and the members-only hub (`/souteze/{id}`). Expressing that as
+ordered path regexes would have been exactly the implicit coupling the item set out to delete.
+The existing `Requirement::UUID` constraints are what keep the three apart in the router;
+`/souteze/nova` and `/souteze/pozvanka/…` cannot be read as a competition id.
+
+**The rename.** All 65 route names lost the `portal_` prefix (`portal_competition_detail` →
+`competition_detail`), and all 47 `/portal/…` paths lost the segment. One pass, no mixture left:
+`grep -rn "/portal\|portal_" src/ templates/ tests/ config/` is clean. The remaining prefixes are
+`admin_*`, `app_*` (auth + marketing) and `public_*`. B1's airlock allow-list needed exactly one
+edit (`portal_account_delete` → `account_delete`) — it turned out to be keyed by route **name**,
+not by path, so removing the prefix barely touched it.
+
+**Verification.** `cs:fix` → `quality` (phpstan lvl 8 + 463 unit tests) → all 15
+`tests/Integration/<subdir>` chunks + the three root-level flow tests: 767 integration tests
+green, including B1's 35-test airlock suite unchanged. Then `db:reset` with `DevFixtures` and a
+crawl of the real app as anonymous / unverified / verified / admin, plus a link-following crawl
+that requested every internal `href` and `form action` on the main pages: **zero 404s**; the only
+non-2xx are 405s (POST-only routes probed with GET) and voter 403s that predate this item.
+
+## Assumptions made
+
+- **Route names: strip the prefix, change nothing else.** `portal_competition_detail` →
+  `competition_detail`. Item 07 (which the item file says the naming should follow) is not written
+  yet, so the most conservative reading is the mechanical one. `public_competitions_list` and the
+  two `competition_*` invitation routes kept their names — they were never portal routes, and
+  renaming them is item 07's call.
+- **Path segments other than `/portal` were left alone.** `/turnaje/{id}` for a zdroj zápasů and
+  `/zdroje/{id}/tymy` for its autocomplete remain two different nouns for one concept. The item
+  asked to delete `/portal`, not to re-slug the app; recorded as pain point 9 in `UI-MAP.md`.
+- **`/turnaje` (the legacy 301 to `/souteze`) was kept.** `PLAN.md` calls it a deletion candidate,
+  but candidacy is not a decision, and it does not collide with `/turnaje/{id}` (UUID-constrained).
+- **DONE item files were not rewritten.** Items 01 and 02 mention old route names as a record of
+  what they did at the time; falsifying that history would be worse than the staleness. Living
+  docs — `UI-MAP.md`, `PLAN.md`, `BUGS.md`, `CREATE-WIZARD.md`, the open items 05 and 08, and
+  `.docs/features/*` — were updated. `.docs/rebuild/` and `.docs/redesign/` are finished-stream
+  archives and were left alone for the same reason.
+- **The Live Component endpoint's anonymous exposure was not touched.** `/_components/…` was never
+  covered by `access_control` and still is not; a component reached anonymously fails inside
+  itself. That is pre-existing behaviour, the guarantee this item owed was to preserve it exactly,
+  and hardening it is a `BUGS.md` matter rather than a URL-structure one.

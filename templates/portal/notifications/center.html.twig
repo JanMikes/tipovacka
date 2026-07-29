@@ -4,7 +4,7 @@
 
 {% block body %}
     <div class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <twig:Breadcrumbs :items="[{ label: 'Nástěnka', path: path('portal_dashboard') }, { label: 'Oznámení' }]" />
+        <twig:Breadcrumbs :items="[{ label: 'Nástěnka', path: path('dashboard') }, { label: 'Oznámení' }]" />
 
         <header class="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
             <h1 class="flex items-center gap-2.5 text-2xl font-bold tracking-tight text-white">
@@ -13,7 +13,7 @@
             </h1>
 
             {% if tab == 'feed' and unreadCount > 0 %}
-                <form method="post" action="{{ path('portal_notifications_read_all') }}">
+                <form method="post" action="{{ path('notifications_read_all') }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('notifications_read_all') }}">
                     <button type="submit" class="btn btn-ghost btn-sm">
                         <twig:ux:icon name="lucide:check-check" class="h-4 w-4" />
@@ -25,7 +25,7 @@
 
         {# ── Tabs ── #}
         <div class="mb-6 flex gap-1 border-b border-white/10">
-            <a href="{{ path('portal_notifications') }}"
+            <a href="{{ path('notifications') }}"
                class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold {{ tab == 'feed' ? 'border-accent-400 text-white' : 'border-transparent text-white/50 hover:text-white/80' }}">
                 <twig:ux:icon name="lucide:bell" class="h-4 w-4" />
                 Feed
@@ -33,7 +33,7 @@
                     <span class="rounded-full bg-accent-500/20 px-1.5 py-0.5 text-[11px] font-bold text-accent-300">{{ unreadCount }}</span>
                 {% endif %}
             </a>
-            <a href="{{ path('portal_notifications', { tab: 'nastaveni' }) }}"
+            <a href="{{ path('notifications', { tab: 'nastaveni' }) }}"
                class="flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold {{ tab == 'nastaveni' ? 'border-accent-400 text-white' : 'border-transparent text-white/50 hover:text-white/80' }}">
                 <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
                 Nastavení oznámení
@@ -55,7 +55,7 @@
                 <ul class="space-y-2">
                     {% for note in notifications %}
                         <li>
-                            <a href="{{ path('portal_notification_read', { id: note.id.toRfc4122 }) }}"
+                            <a href="{{ path('notification_read', { id: note.id.toRfc4122 }) }}"
                                class="card flex items-start gap-3 p-4 transition hover:border-white/20 {{ note.isRead ? '' : 'border-accent-500/30 bg-accent-500/[0.06]' }}">
                                 <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] {{ note.type.tone }}">
                                     <twig:ux:icon name="lucide:{{ note.type.icon }}" class="h-[18px] w-[18px]" />
@@ -78,7 +78,7 @@
                 {% if page > 1 or hasNextPage %}
                     <nav class="mt-6 flex items-center justify-between">
                         {% if page > 1 %}
-                            <a href="{{ path('portal_notifications', { page: page - 1 }) }}" class="btn btn-ghost btn-sm">
+                            <a href="{{ path('notifications', { page: page - 1 }) }}" class="btn btn-ghost btn-sm">
                                 <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
                                 Novější
                             </a>
@@ -87,7 +87,7 @@
                         {% endif %}
 
                         {% if hasNextPage %}
-                            <a href="{{ path('portal_notifications', { page: page + 1 }) }}" class="btn btn-ghost btn-sm">
+                            <a href="{{ path('notifications', { page: page + 1 }) }}" class="btn btn-ghost btn-sm">
                                 Starší
                                 <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
                             </a>

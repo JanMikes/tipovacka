@@ -20,14 +20,16 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 #[Route(
-    '/portal/souteze/{competitionId}/zapasy/{sportMatchId}/uzaverka',
-    name: 'portal_competition_sport_match_set_deadline',
+    '/souteze/{competitionId}/zapasy/{sportMatchId}/uzaverka',
+    name: 'competition_sport_match_set_deadline',
     requirements: ['competitionId' => Requirement::UUID, 'sportMatchId' => Requirement::UUID],
     methods: ['POST'],
 )]
+#[IsGranted('ROLE_USER')]
 final class SetCompetitionMatchDeadlineController extends AbstractController
 {
     public function __construct(
@@ -51,7 +53,7 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         $form = $this->createForm(CompetitionMatchDeadlineFormType::class, $formData);
         $form->handleRequest($request);
 
-        $redirect = $this->redirectToRoute('portal_competition_sport_match_guesses', [
+        $redirect = $this->redirectToRoute('competition_sport_match_guesses', [
             'competitionId' => $competition->id->toRfc4122(),
             'sportMatchId' => $sportMatch->id->toRfc4122(),
         ]);

@@ -24,7 +24,7 @@ final class PromoteAnonymousMemberFlowTest extends WebTestCase
         $client->loginUser($owner);
 
         $path = sprintf(
-            '/portal/souteze/%s/clenove/%s/pridat-email',
+            '/souteze/%s/clenove/%s/pridat-email',
             AppFixtures::VERIFIED_COMPETITION_ID,
             AppFixtures::ANONYMOUS_USER_ID,
         );
@@ -36,7 +36,7 @@ final class PromoteAnonymousMemberFlowTest extends WebTestCase
             'promote_anonymous_member_form[email]' => 'franta-promoted@example.com',
         ]);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $em->clear();
 

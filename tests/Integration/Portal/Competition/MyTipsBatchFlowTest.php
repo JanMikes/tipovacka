@@ -32,11 +32,11 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
-        $batchAction = '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy';
         $formNode = $crawler->filter(sprintf('form[action="%s"]', $batchAction));
         self::assertGreaterThan(0, $formNode->count(), 'Batch save form not found.');
 
@@ -76,7 +76,7 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $client->loginUser($outsider);
 
-        $client->request('GET', '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy');
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy');
         self::assertResponseStatusCodeSame(403);
     }
 
@@ -92,7 +92,7 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
@@ -100,7 +100,7 @@ final class MyTipsBatchFlowTest extends WebTestCase
         self::assertStringContainsString('1. poločas', (string) $client->getResponse()->getContent());
         self::assertStringContainsString('Střelce a prodloužení tipnete v detailu zápasu.', (string) $client->getResponse()->getContent());
 
-        $batchAction = '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
         $formNode = $crawler->filter(sprintf('form[action="%s"]', $batchAction));
         self::assertGreaterThan(0, $formNode->count(), 'Batch save form not found.');
 
@@ -166,11 +166,11 @@ final class MyTipsBatchFlowTest extends WebTestCase
         $client->loginUser($user);
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
-        $batchAction = '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy';
         $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
 
         // Submit unchanged — the main inputs prefill 2:1 from the stored guess.
@@ -222,11 +222,11 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
-        $batchAction = '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
         $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
         $matchId = AppFixtures::MATCH_SCHEDULED_ID;
         $form['guesses['.$matchId.'][homeScore]'] = '1';
@@ -272,11 +272,11 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
-        $batchAction = '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
         $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
         $matchId = AppFixtures::MATCH_SCHEDULED_ID;
         $form['guesses['.$matchId.'][homeScore]'] = '';
@@ -311,11 +311,11 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $crawler = $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 
-        $batchAction = '/portal/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
+        $batchAction = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
         $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
         $matchId = AppFixtures::MATCH_SCHEDULED_ID;
         $form['guesses['.$matchId.'][homeScore]'] = '2';
@@ -364,7 +364,7 @@ final class MyTipsBatchFlowTest extends WebTestCase
 
         $client->request(
             'GET',
-            '/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
+            '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy',
         );
         self::assertResponseIsSuccessful();
 

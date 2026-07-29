@@ -33,7 +33,7 @@ return App::config([
                     'login_path' => 'app_login',
                     'check_path' => 'app_login',
                     'enable_csrf' => false,
-                    'default_target_path' => 'portal_dashboard',
+                    'default_target_path' => 'dashboard',
                 ],
                 'logout' => [
                     'path' => 'app_logout',
@@ -51,24 +51,17 @@ return App::config([
                 ],
             ],
         ],
+        // Item 09 deleted the `/portal` URL prefix, so a path can no longer tell us who a
+        // page is for: `/souteze` is the public discovery list, `/souteze/pozvanka/{token}`
+        // is a logged-out invitation landing, and `/souteze/{id}` is the members-only hub —
+        // one prefix, three audiences. The authenticated boundary therefore moved into the
+        // code, as `#[IsGranted('ROLE_USER')]` on every controller in `src/Controller/Portal`
+        // (enforced route-by-route by tests/Integration/Security/AnonymousReachabilityTest).
+        //
+        // `^/admin` stays a path rule: it is a genuine, stable audience boundary and the one
+        // prefix a URL can still speak for.
         'access_control' => [
-            ['path' => '^/-/health-check/liveness', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/webhooks', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/souteze', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/pozvanka', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/turnaje', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/nastenka', 'roles' => 'ROLE_USER'],
-            ['path' => '^/zapasy', 'roles' => 'ROLE_USER'],
-            ['path' => '^/portal', 'roles' => 'ROLE_USER'],
-            ['path' => '^/pripojit', 'roles' => 'ROLE_USER'],
-            ['path' => '^/prihlaseni', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/registrace', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/reset-hesla', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/overit-email', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/overeni-ceka', 'roles' => 'PUBLIC_ACCESS'],
-            ['path' => '^/odhlaseni', 'roles' => 'PUBLIC_ACCESS'],
             ['path' => '^/admin', 'roles' => 'ROLE_ADMIN'],
-            ['path' => '^/$', 'roles' => 'PUBLIC_ACCESS'],
         ],
         'role_hierarchy' => [
             'ROLE_ADMIN' => ['ROLE_USER'],

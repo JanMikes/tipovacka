@@ -28,7 +28,7 @@ import and the form uniform and JS-optional.
   enhances the plain home/away text input into a single-select tom-select that autocompletes
   existing teams and creates a new one on free-type. Degrades to a normal text input with JS
   off (the typed name still posts and resolves server-side).
-- Autocomplete endpoint: `TeamAutocompleteController` (`GET /portal/zdroje/{id}/tymy?q=…`,
+- Autocomplete endpoint: `TeamAutocompleteController` (`GET /zdroje/{id}/tymy?q=…`,
   gated by `MatchSourceVoter::CREATE_MATCH`) → `TeamRepository::searchGlobalBySport` (curated)
   or `searchLocalBySource` (private).
 - CSV/XLSX import (`SportMatchImporter`) resolves each `Domácí`/`Hosté` name via `TeamResolver`
@@ -45,7 +45,7 @@ A separate picker for the „Podle týmu" competition scope (see
   the selected ids into an optional hidden `payload` input (the wizard's LiveProp) and, on a plain
   form (the manage page), the `<select multiple name="teams[]">` posts them directly.
 - Autocomplete endpoint: `SourceTeamFilterAutocompleteController`
-  (`GET /portal/zdroje/{id}/filtr-tymy?q=…`, gated by `MatchSourceVoter::CREATE_COMPETITION`) →
+  (`GET /zdroje/{id}/filtr-tymy?q=…`, gated by `MatchSourceVoter::CREATE_COMPETITION`) →
   `TeamRepository::searchTeamsInSource` — only teams that actually play in the source (home OR
   away of a live match), so a filter never offers a team with zero matches. Server-side
   `TeamResolver::belongsToSourceScope` re-validates on write.

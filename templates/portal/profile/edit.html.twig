@@ -6,7 +6,7 @@
 <div class="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     <twig:Breadcrumbs :items="[
-        {label: 'Nástěnka', path: path('portal_dashboard')},
+        {label: 'Nástěnka', path: path('dashboard')},
         {label: 'Profil'},
     ]" />
 
@@ -59,7 +59,7 @@
                 <p class="mt-3 text-sm leading-relaxed text-white/70">
                     Smazání účtu je nevratná akce. Přijdete o veškerá svá data.
                 </p>
-                <a href="{{ path('portal_account_delete') }}" class="btn btn-danger btn-sm mt-4">
+                <a href="{{ path('account_delete') }}" class="btn btn-danger btn-sm mt-4">
                     <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
                     Smazat účet
                 </a>

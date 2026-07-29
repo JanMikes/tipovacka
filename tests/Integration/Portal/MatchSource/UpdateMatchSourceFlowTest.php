@@ -22,14 +22,14 @@ final class UpdateMatchSourceFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/upravit');
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/upravit');
         self::assertResponseIsSuccessful();
 
         $client->submitForm('Uložit změny', [
             'match_source_form[name]' => 'Upravený turnaj',
         ]);
 
-        self::assertResponseRedirects('/portal/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
+        self::assertResponseRedirects('/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
 
         $em->clear();
         $matchSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID));

@@ -32,13 +32,13 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
     {
         yield 'nástěnka' => ['/nastenka'];
         yield 'zápasy' => ['/zapasy'];
-        yield 'profil' => ['/portal/profil'];
-        yield 'kredity' => ['/portal/kredity'];
-        yield 'oznámení' => ['/portal/oznameni'];
-        yield 'žebříček' => ['/portal/zebricek'];
-        yield 'nová soutěž' => ['/portal/souteze/nova'];
+        yield 'profil' => ['/profil'];
+        yield 'kredity' => ['/kredity'];
+        yield 'oznámení' => ['/oznameni'];
+        yield 'žebříček' => ['/zebricek'];
+        yield 'nová soutěž' => ['/souteze/nova'];
         yield 'připojení PINem' => ['/pripojit'];
-        yield 'detail soutěže' => ['/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID];
+        yield 'detail soutěže' => ['/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID];
     }
 
     #[DataProvider('gatedGetPages')]
@@ -57,11 +57,11 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
      */
     public static function gatedPostActions(): iterable
     {
-        yield 'nákup kreditů' => ['/portal/kredity/koupit', 'POST'];
-        yield 'připojení do globální soutěže' => ['/portal/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/pripojit-se', 'POST'];
+        yield 'nákup kreditů' => ['/kredity/koupit', 'POST'];
+        yield 'připojení do globální soutěže' => ['/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/pripojit-se', 'POST'];
         yield 'rychlé připojení PINem' => ['/pripojit/rychle', 'POST'];
-        yield 'opuštění soutěže' => ['/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/opustit', 'POST'];
-        yield 'označení oznámení' => ['/portal/oznameni/precteno', 'POST'];
+        yield 'opuštění soutěže' => ['/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/opustit', 'POST'];
+        yield 'označení oznámení' => ['/oznameni/precteno', 'POST'];
     }
 
     #[DataProvider('gatedPostActions')]
@@ -151,7 +151,7 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
         yield 'FAQ' => ['/faq'];
         yield 'ceník' => ['/cenik'];
         yield 'ochrana soukromí' => ['/ochrana-soukromi'];
-        yield 'smazání účtu' => ['/portal/ucet/smazat'];
+        yield 'smazání účtu' => ['/ucet/smazat'];
     }
 
     #[DataProvider('allowedPages')]
@@ -224,7 +224,7 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
         $this->loginUnverified($client);
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
 
-        self::assertResponseRedirects('/portal/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
     }
 
     /**
@@ -251,9 +251,9 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
     {
         yield 'nástěnka' => ['/nastenka'];
         yield 'zápasy' => ['/zapasy'];
-        yield 'profil' => ['/portal/profil'];
-        yield 'kredity' => ['/portal/kredity'];
-        yield 'detail soutěže' => ['/portal/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID];
+        yield 'profil' => ['/profil'];
+        yield 'kredity' => ['/kredity'];
+        yield 'detail soutěže' => ['/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID];
     }
 
     #[DataProvider('verifiedUserPages')]

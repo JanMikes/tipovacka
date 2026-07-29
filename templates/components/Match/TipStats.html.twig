@@ -72,7 +72,7 @@
         {# ───────── Locked, buyable: the whole strip is the buy trigger ───────── #}
         {% if stats.canAfford %}
             <form method="post"
-                  action="{{ path('portal_competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
+                  action="{{ path('competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
                   class="mt-2 block"
                   data-controller="confirm"
                   data-confirm-variant-value="warning"
@@ -96,7 +96,7 @@
             </form>
         {% else %}
             <div class="mt-2">
-                <a href="{{ path('portal_credits') }}" class="tip-stats-locked group">
+                <a href="{{ path('credits') }}" class="tip-stats-locked group">
                     <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                     <span class="tip-stats-copy">
                         <span class="tip-stats-eyebrow">Rozložení tipů</span>

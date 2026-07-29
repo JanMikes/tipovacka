@@ -22,7 +22,7 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         $client->loginUser($admin);
 
         // Bohemians is the home team of the finished match — two pool players.
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
+        $client->request('GET', '/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
             'team' => AppFixtures::TEAM_BOHEMIANS_ID,
         ]);
 
@@ -46,12 +46,12 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         $client->loginUser($admin);
 
         // No team id ⇒ empty roster.
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci');
+        $client->request('GET', '/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci');
         self::assertResponseIsSuccessful();
         self::assertSame([], json_decode((string) $client->getResponse()->getContent(), true));
 
         // Malformed team id ⇒ empty roster (never a 500).
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
+        $client->request('GET', '/zdroje/'.AppFixtures::PUBLIC_SOURCE_ID.'/hraci', [
             'team' => 'not-a-uuid',
         ]);
         self::assertResponseIsSuccessful();
@@ -67,7 +67,7 @@ final class PlayerAutocompleteFlowTest extends WebTestCase
         self::assertNotNull($outsider);
         $client->loginUser($outsider);
 
-        $client->request('GET', '/portal/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/hraci', [
+        $client->request('GET', '/zdroje/'.AppFixtures::PRIVATE_SOURCE_ID.'/hraci', [
             'team' => AppFixtures::TEAM_TYGRI_ID,
         ]);
 

@@ -59,7 +59,7 @@ final class NavigationTest extends WebTestCase
             [
                 ['Nástěnka hráče', '/nastenka'],
                 ['Soutěže', '/souteze'],
-                ['Žebříček', '/portal/zebricek'],
+                ['Žebříček', '/zebricek'],
             ],
             $crawler->filter('header.wtnav nav.primary a')->each(
                 static fn (Crawler $node): array => [trim($node->text()), $node->attr('href')],
@@ -113,7 +113,7 @@ final class NavigationTest extends WebTestCase
 
         $client->request('GET', '/nastenka');
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('a[href="/portal/profil"]');
+        self::assertSelectorExists('a[href="/profil"]');
         self::assertSelectorExists('a[href="/odhlaseni"]');
     }
 
