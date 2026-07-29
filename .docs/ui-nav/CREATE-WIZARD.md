@@ -7,7 +7,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
-| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | DONE | `PENDING` |
+| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | DONE | `c6cb07a` (a parallel agent's `b041ff0` swept up the two new rule classes mid-flight) |
 | W2 | Playoff option moves from step 1 to step 2 | DONE | `f69937d` |
 | W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `f69937d` |
 | W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `f69937d` |
