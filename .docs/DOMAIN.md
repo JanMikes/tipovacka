@@ -139,12 +139,18 @@ tournament; late matches must stay tippable or playoffs would be untippable.
 ### Scoring
 Base rules: exact score (5), correct outcome (3), correct home goals (1), correct away
 goals (1) — additive, an exact hit scores all four. Optional per-competition rules:
-per-period exact / per-period tendency (tendency excludes exact), overtime final score
-(input shown ONLY when the user tips a draw and the rule is enabled — regular-time score
-remains the primary evaluated result), scorer hit (points × number of correctly guessed
-scorers). Presets in UI: Standardní / Standard + střelec / Vlastní. Changing rules after
-evaluations triggers full recalculation (with confirm). Manual tie resolution by the
-manager after the competition finishes (drag & drop order) persists as rank overrides.
+the four **period** rules — per-period exact (5), per-period home goals (1), per-period
+away goals (1), per-period tendency (2; tendency alone excludes exact, the two goal rules
+do not) — the **combined after-overtime final score** (one score pair meaning „after
+prolongation *or* shootout"; input shown ONLY when the user tips a draw and the rule is
+enabled — regular-time score remains the primary evaluated result), and scorer hit
+(points × number of correctly guessed scorers). All optional rules default to disabled.
+Presets: **Standardní** (base) / **Maxi** (base + period exact/goals + overtime) /
+**Vlastní (připravujeme)** in the create wizard; the post-creation rules screen keeps
+Standardní / Standard + střelec / Vlastní. Per-rule UI copy has ONE home
+(`RulePresetProvider::RULE_COPY`). Changing rules after evaluations triggers full
+recalculation (with confirm). Manual tie resolution by the manager after the competition
+finishes (drag & drop order) persists as rank overrides.
 
 ### Sports
 Football (2 poločasy) and hockey (3 třetiny) in v1. Sport lives on the MatchSource, chosen
@@ -238,3 +244,4 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-23 | The distribution bar/paywall is a single component (`Match:TipStats`) fed by a single batch resolver (`TipStatsProvider` + `GetPickDistributions`), rendered on every match-listing surface; locked always renders (dropping the player count when nobody has tipped yet), unlocked renders only with ≥1 tip | it previously existed on one page only, so most users never saw what they could buy; batching keeps a page O(competitions) instead of O(matches × competitions) |
 | 2026-07-25 | Teams became a first-class `Team` entity (was free-text strings on `SportMatch` + `Player.teamName`). Hybrid scope: global sport-scoped **directory** for curated sources, **local** teams for private sources (derived from `matchSource === null`; two partial unique indexes). `Player` recoupled to `Team` (global team ⇒ global roster). Match commands still carry team NAMES, resolved via `TeamResolver`; the reassign guard now blocks changing a match to a DIFFERENT team once scorers/events exist (renaming a team is free). Contrast-safe monogram now, logo upload later; admin directory at `/admin/tymy`; team picker (autocomplete + create) on the match form, import badges new teams | logos/stats/"same team across matches" need a real entity; hybrid keeps office-pool names out of the shared directory; no users yet ⇒ clean cut, no backfill |
 | 2026-07-25 | Admins can create a global competition **from inside the create-competition wizard** via an admin-only „Typ soutěže" toggle (global mode: entry-fee field, curated-source-only, all matches, „Pozvánky" step skipped, monetization none/premium/boosts, rules kept), branching to the existing `CreateGlobalCompetitionCommand`; the dedicated admin page + curated-source checkbox remain. The mode is `ROLE_ADMIN`-gated at render + action and `isGlobalKind` is non-writable, so non-admins can never reach it | the global feature was fully built (S09) but its create entry point lived only in the admin area and admins looked for it where they create every other competition — the wizard — and expected to set „allowed features" (rules) + entry fee there; the wizard already collects rules + monetization, so folding global in removes the discoverability gap without a second code path |
+| 2026-07-29 | Wizard rules step (W1): **two new `periods` rules** — `period_home_goals` / `period_away_goals` (1 b, disabled by default) — mirror the whole-match per-team goal rules per period; `period_tendency` is **kept**, nothing retired. **PP and PEN are NOT split**: `SportMatch`/`Guess` keep the ONE combined overtime pair, relabelled „Celkové skóre po prodloužení / penaltách" (no columns, no migration, no form change). „Chcete tipovat také střelce utkání?" = `scorer_hit` enablement; „Dohrávat turnaj?" = the ONE existing `includePlayoff` toggle, only reworded. **Fantasy deferred** out of the wizard entirely. Presets: Standardní / Maxi / Vlastní (připravujeme, disabled) | periods deserve the same partial-credit richness as the full match, and adding rules costs no schema (`CompetitionRuleConfiguration` keys on the identifier); every other item was a naming problem, not a domain gap — a second control writing `includePlayoff` or a PP/PEN split would have been new state bought for wording |

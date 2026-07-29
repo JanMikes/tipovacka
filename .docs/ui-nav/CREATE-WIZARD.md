@@ -7,7 +7,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
-| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | TODO | — |
+| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | DONE | `PENDING` |
 | W2 | Playoff option moves from step 1 to step 2 | DONE | `f69937d` |
 | W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `f69937d` |
 | W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `f69937d` |
@@ -120,6 +120,55 @@ Answers to the recon below. **These are settled — implement them as written.**
    every other non-`base` rule, so no existing competition's scoring changes.
 
 **W1 is now fully unblocked.** Nothing in it is waiting on the product owner.
+
+### Implementation
+
+**Two new rules, nothing retired.** `src/Rule/PeriodHomeGoalsRule.php` (`period_home_goals`)
+and `src/Rule/PeriodAwayGoalsRule.php` (`period_away_goals`) — category `periods`, 1 b,
+`enabledByDefault: false`, plain `#[AsRule]` + `Rule` classes, so **no schema change** and no
+existing competition's scoring moves. They are deliberately **not** exclusive with
+`period_exact` (an exactly tipped period earns them too), mirroring the whole-match trio;
+only `period_tendency` keeps its exclusion. `period_tendency` is untouched.
+
+`CompetitionGuessFeatures::periodTips` now ORs all four `periods` rules — otherwise a
+competition that enabled only the new goal rules would render no period inputs on the tip
+form. `GuessFeatures`' docblock says so.
+
+**The duplicated `rule_copy` is gone.** It lives once in
+`RulePresetProvider::RULE_COPY`, exposed as `this.ruleCopy` by BOTH
+`Twig\Components\Scoring\RuleFields` and `Twig\Components\Competition\CreateWizard`; the two
+templates just `{% set rule_copy = this.ruleCopy %}`. The map's **key order is also the
+rendering order** within a category (`orderIdentifiers()`), because registration order is
+alphabetical-by-class and would otherwise scatter the period rules
+(`period_away_goals`, `period_exact`, `period_home_goals`, …).
+
+**Renames** (identities unchanged): `correct_away_goals` → „Tip hosté" / „Správný tip
+hostujícího týmu"; `correct_home_goals` → „Tip domácí" / „Správný tip domácího týmu";
+`correct_outcome` untouched; `exact_score` description → „bonus za obě uhodnutá skóre";
+`overtime_exact` → „Celkové skóre po prodloužení / penaltách" (decision 4 — ONE entry).
+
+**Section headings** in the wizard now phrase the two optional questions:
+`scorers` → „Chcete tipovat také střelce utkání?" (decision 3 — it *is* `scorer_hit`
+enablement), `overtime` → „Tipovat celkové skóre po prodloužení či penaltách?".
+
+**„Dohrávat turnaj?"** = the existing W2 playoff toggle, reworded only: heading „Dohrávat
+turnaj?", label „Ano, dohrajeme turnaj — zahrnout playoff zápasy", help text rewritten.
+Visibility conditions untouched (private + source + scope `all`). A test asserts the markup
+contains **exactly one** `data-model="includePlayoff"`.
+
+**Presets.** `RulePresetProvider::presets()` gained `maxi` = base + `period_exact` +
+`period_away_goals` + `period_home_goals` + `overtime_exact`; the Stimulus controller gained
+a `maxi()` action. The wizard tiles are now **Standardní (pre-selected) / Maxi / Vlastní
+(připravujeme, `disabled`)** — the old „Vlastní" default moved to Standardní, which is
+exactly what `mount()` enables. No CSS was needed: `.variant-card[disabled]` already existed.
+`Scoring:RuleFields` keeps its own Standardní / Standard + střelec / Vlastní row — that
+screen *is* the custom editor, so disabling „Vlastní" there would be wrong (see Assumptions).
+
+**Verified** beyond the suites: walked all four wizard steps in the running dev app by
+driving the Live component over HTTP, then created a competition with the Standardní rule
+set and one with the Maxi rule set and read back `/souteze/{id}/pravidla` — enablement
+matched the preset exactly in both cases (Maxi: base + the three period/overtime rules on,
+`period_tendency` + `scorer_hit` off). Both throwaway competitions were soft-deleted again.
 
 ### Deferred out of W1
 
@@ -435,3 +484,22 @@ Recorded per the orchestration protocol — conservative readings of things the 
 5. **W4 — `CompetitionMonetization::None` stays out of the private wizard.** The two given choices map
    onto Premium and Boosts; `None` was never offered privately and adding it would be the forbidden
    third state. It remains available in the admin global branch only.
+6. **W1 — the preset tiles change on the WIZARD only.** W1 is titled „Rules **step**", so
+   `Scoring:RuleFields` (the post-creation `/souteze/{id}/pravidla` screen) keeps its existing
+   Standardní / Standard + střelec / Vlastní row. Disabling „Vlastní" there would be actively wrong —
+   that page *is* the custom editor. The **renamed copy is shared**, which is what the backlog's
+   duplication warning was about. Say the word and the Maxi tile can be added there too (the preset
+   is already in PHP, so it is a three-line template change).
+7. **W1 — the two new per-period goal rules are NOT exclusive with `period_exact`.** The doc's table
+   maps them onto the whole-match `correct_home_goals`/`correct_away_goals`, which an exact score
+   also earns, so an exactly tipped period earns exact + home goals + away goals. Only
+   `period_tendency` keeps its (pre-existing) exclusion with `period_exact`. The worked example does
+   not exercise the exact case, hence this reading.
+8. **W1 — the Maxi preset does not tick `scorer_hit`.** „Chcete tipovat také střelce utkání?" is
+   listed as a separate optional question offered by *both* presets, not as preset content, so it
+   stays an independent toggle in its own („Střelci") section under that heading.
+9. **W1 — `RULE_COPY` key order drives rendering order.** Rules are registered alphabetically by
+   class name, which would have interleaved the new period rules as
+   `period_away_goals, period_exact, period_home_goals, period_tendency`. The curated order keeps the
+   pre-existing base order byte-for-byte and renders periods as exact → hosté → domácí → tendence
+   (the order the Maxi spec lists them in).

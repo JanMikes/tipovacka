@@ -72,15 +72,52 @@ choice; the **playoff toggle lives on step 2** (see below).
   matches (playoff!) auto-join. Editable after creation on the same manage surface as
   `subset` (`competition_match_selection`).
 
-## Playoff toggle lives on step 2
+## Rules step — presets and copy (W1)
 
-„Zahrnout playoff zápasy" (`includePlayoff`) sits at the bottom of step 2 („Pravidla"),
+Three preset tiles, driven by `RulePresetProvider::presets()` + the `scoring-preset`
+Stimulus controller:
+
+- **Standardní** — the four `base` rules at default points. **Pre-selected**, because it is
+  exactly what `mount()` enables.
+- **Maxi** — base + `period_exact` + `period_away_goals` + `period_home_goals` +
+  `overtime_exact`.
+- **Vlastní (připravujeme)** — rendered but `disabled` (`.variant-card[disabled]` already
+  exists). Nothing is lost: the per-rule fields below stay editable at all times.
+
+`Scoring:RuleFields` (the post-creation rules screen) keeps its own Standardní /
+Standard + střelec / Vlastní row — it *is* the custom editor, so disabling „Vlastní" there
+would be wrong.
+
+**Per-rule copy has ONE home: `RulePresetProvider::RULE_COPY`.** Both templates render
+`this.ruleCopy`; the map's key order is also the rendering order inside a category
+(registration order is alphabetical-by-class, which would scatter the period rules).
+The wizard still *shadows* the section headings with a local, sport-interpolated map that
+phrases them as questions („Tipovat také poločasy zápasu?", „Chcete tipovat také střelce
+utkání?", „Tipovat celkové skóre po prodloužení či penaltách?").
+
+Four `periods` rules exist: exact / home goals / away goals / tendency. The two goal rules
+are **not** exclusive with `period_exact` (mirroring the whole-match trio); only
+`period_tendency` excludes an exact period. All four are disabled by default, and
+`CompetitionGuessFeatures::periodTips` is true if **any** of them is enabled.
+
+PP and PEN are deliberately **not** split — one combined „Celkové skóre po prodloužení /
+penaltách" entry backed by the single `overtime_exact` rule and the single overtime score
+pair on `SportMatch`/`Guess`.
+
+## Playoff toggle lives on step 2 — „Dohrávat turnaj?"
+
+„Dohrávat turnaj?" (`includePlayoff`) sits at the bottom of step 2 („Pravidla"),
 below the scoring fields and **outside** the `scoring-preset` controller — it is not a
 scoring rule. It renders only for a **private** competition with a source and match scope
 **`all`**, because that is the only mode in which the flag does anything:
 `CompetitionMatchProvider` ignores it for `subset` (an explicitly ticked playoff match
 counts) and for `teams` (playoff always in), and `CreateCompetitionHandler` forces it to
 `true` outside mode `all`.
+
+This ONE checkbox is the whole answer to „dohrávat turnaj" — never add a second control
+writing `includePlayoff`, and never widen the visibility condition (it would promise a
+choice the provider does not honour). A test asserts the markup contains exactly one
+`data-model="includePlayoff"`.
 
 ## Step 4 — „Pozvete nás na pivo?" (private) vs „Monetizace soutěže" (global)
 
