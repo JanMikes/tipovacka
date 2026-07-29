@@ -9,13 +9,16 @@ use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionTeamFilter;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\User;
+use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
 use App\Rule\ExactScoreRule;
 use App\Rule\ScorerHitRule;
+use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -178,6 +181,155 @@ final class CreateWizardComponentTest extends WebTestCase
             ->where('u.email = :e')->setParameter('e', 'novy-hrac@example.com')
             ->getQuery()->getOneOrNullResult();
         self::assertInstanceOf(User::class, $stub);
+    }
+
+    /**
+     * W6 — step 1 exposes all THREE match-scope modes. `teams` has been wired end
+     * to end since the team-filter feature landed; this pins the wizard UI so the
+     * mode can never silently drop off the step again.
+     * W2 — and the playoff toggle is NOT on step 1 any more.
+     */
+    public function testStepOneOffersThreeMatchScopeModesWithoutPlayoffToggle(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)->render();
+
+        self::assertStringContainsString('Všechny zápasy', $html);
+        self::assertStringContainsString('Podle týmu', $html);
+        self::assertStringContainsString('Vybrat jen některé zápasy', $html);
+        self::assertStringContainsString('value="teams"', $html);
+
+        self::assertStringNotContainsString('Zahrnout playoff zápasy', $html);
+    }
+
+    /** W2 — the playoff toggle now lives on step 2 („Pravidla"). */
+    public function testPlayoffToggleLivesOnRulesStep(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Playoff v kroku 2')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Vyberte pravidla', $html);
+        self::assertStringContainsString('Zahrnout playoff zápasy', $html);
+    }
+
+    /** W3 — the skip action carries no copy duplicating the step heading. */
+    public function testInvitesStepSkipActionIsBare(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Pozvánky')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Pozvěte hráče', $html);
+        self::assertStringContainsString('>Přeskočit</button>', $html);
+        self::assertStringNotContainsString('Přeskočit — pozvat můžete kdykoli později', $html);
+    }
+
+    /** W4 — the „Pozvete nás na pivo?" copy, with „Férová soutěž" pre-selected. */
+    public function testSupportStepShowsBeerCopyWithFairCompetitionPreselected(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Na pivo')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->call('next')
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Pozvete nás na pivo?', $html);
+        self::assertStringContainsString('Tipovačka je kompletně zdarma.', $html);
+        self::assertStringContainsString('Teď už jen rozhodněte, jak budou ve vaší soutěži fungovat prémiové funkce.', $html);
+
+        // Premium XOR boosts — the two choices, no third state.
+        self::assertStringContainsString('Férová soutěž', $html);
+        self::assertStringContainsString('Chci hrát Férovou soutěž', $html);
+        self::assertStringContainsString('Volná volba Premium', $html);
+        self::assertStringContainsString('Chci ponechat rozhodnutí na hráčích', $html);
+        self::assertStringNotContainsString('Bez placených funkcí', $html);
+
+        // „Férová soutěž" (= Premium) is the recommended, pre-selected default.
+        self::assertStringContainsString('Doporučujeme', $html);
+        self::assertMatchesRegularExpression('#value="premium"[^>]*checked#', $html);
+        self::assertDoesNotMatchRegularExpression('#value="boosts"[^>]*checked#', $html);
+    }
+
+    /**
+     * W6 — the „Podle týmu" happy path: a competition scoped to Sparta includes
+     * exactly the one fixture match Sparta plays in.
+     */
+    public function testTeamsModeHappyPath(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $response = $component
+            ->set('name', 'Jen Sparta')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->set('selectionMode', 'teams')
+            ->set('selectedTeamIdsCsv', AppFixtures::TEAM_SPARTA_ID)
+            ->call('next')
+            ->call('next')
+            ->call('next')
+            ->call('submit')
+            ->response();
+
+        self::assertSame(302, $response->getStatusCode());
+
+        $competition = $this->competitionByName($client, 'Jen Sparta');
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->selectionMode);
+
+        $filters = $this->em($client)->createQueryBuilder()
+            ->select('f')->from(CompetitionTeamFilter::class, 'f')
+            ->where('f.competition = :c')->setParameter('c', $competition->id)
+            ->getQuery()->getResult();
+        self::assertCount(1, $filters);
+
+        // The provider — the single authority on membership — agrees.
+        /** @var CompetitionMatchProvider $provider */
+        $provider = $client->getContainer()->get(CompetitionMatchProvider::class);
+        $matches = $provider->matchesFor($competition);
+        self::assertCount(1, $matches);
+        self::assertSame(AppFixtures::MATCH_SCHEDULED_ID, $matches[0]->id->toRfc4122());
+    }
+
+    /** An empty team pick cannot advance past step 1. */
+    public function testTeamsModeWithZeroTeamsBlocksAdvancing(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Bez týmů')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->set('selectionMode', 'teams')
+            ->set('selectedTeamIdsCsv', '')
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Vyberte prosím alespoň jeden tým', $html);
+        self::assertStringContainsString('Krok 1 ze 4', $html);
     }
 
     // ---- helpers ----

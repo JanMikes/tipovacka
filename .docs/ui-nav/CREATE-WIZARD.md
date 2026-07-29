@@ -7,12 +7,12 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
-| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | TODO | — |
-| W2 | Playoff option moves from step 1 to step 2 | TODO | — |
-| W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | TODO | — |
-| W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | TODO | — |
+| W1 | Rules step: Standardní / Maxi / Vlastní presets + renamed rules | BLOCKED | — (recon done, awaits product owner) |
+| W2 | Playoff option moves from step 1 to step 2 | DONE | `_pending_` |
+| W3 | Step 3: drop the duplicated hint, leave only „Přeskočit" | DONE | `_pending_` |
+| W4 | Step 4: new Premium copy („Pozvete nás na pivo?") | DONE | `_pending_` |
 | W5 | No success flash after sign-up | DONE | `7b3f010` |
-| W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | TODO | — |
+| W6 | Step 1 „Zápasy soutěže" is missing the „Podle týmu" mode | DONE | `_pending_` (was already shipped — stale report, now pinned by tests) |
 
 ---
 
@@ -60,6 +60,120 @@ the Maxi extras map onto existing `#[AsRule]` rules / `CompetitionRuleConfigurat
 new domain concepts (fantasy and „dohrávat turnaj" in particular look new). Inventory
 `src/Rule/` first and report the gap before implementing.
 
+### Rule inventory (recon)
+
+Recon only — **nothing below was changed**; the renames wait on the product owner.
+
+#### How a rule is defined
+
+`#[AsRule]` (`src/Rule/AsRule.php`) is a **bare marker attribute that declares nothing**. Registration
+happens because the class implements `App\Rule\Rule`, which `config/services.php` matches with an
+`_instanceof` block tagging it `app.rule`; `RuleRegistry` indexes by identifier. All metadata
+(`identifier`, `label`, `description`, `defaultPoints`, `enabledByDefault`, `category`) are **property
+hooks on the rule class**. There is no binary/count flag — `evaluate()` returns an `int`: binary rules
+return 0/1, counting rules return a hit count.
+
+#### The 8 rules that exist today
+
+| identifier | category | pts | on by default | Wizard title (`rule_copy`) | Wizard description | Kind |
+|---|---|---|---|---|---|---|
+| `correct_home_goals` | `base` | 1 | yes | Dobrý tip skóre domácích | Trefený počet gólů domácího týmu | binary |
+| `correct_away_goals` | `base` | 1 | yes | Dobrý tip skóre hostů | Trefený počet gólů hostujícího týmu | binary |
+| `correct_outcome` | `base` | 3 | yes | Dobrý tip výsledku | Výhra / remíza / prohra | binary |
+| `exact_score` | `base` | 5 | yes | Přesný tip výsledku | Trefená obě skóre současně | binary |
+| `period_exact` | `periods` | 5 | **no** | Přesný tip části zápasu | Trefené přesné skóre poločasu či třetiny | **count** (per period) |
+| `period_tendency` | `periods` | 2 | **no** | Tendence části zápasu | Správný vítěz nebo remíza části (bez přesného skóre) | **count**; per period mutually exclusive with `period_exact` |
+| `scorer_hit` | `scorers` | 2 | **no** | Trefený střelec | Body za každého správně tipnutého střelce | **count** |
+| `overtime_exact` | `overtime` | 3 | **no** | Přesný tip po prodloužení | Trefený konečný stav po prodloužení či nájezdech | binary |
+
+Classes live one-per-file in `src/Rule/`. The rule classes carry their own PHP `label`/`description`
+(e.g. `correct_home_goals` → „Počet gólů domácí"), but those are surfaced **only** in the admin
+read-only table `templates/admin/rule/list.html.twig` and in the leaderboard breakdown; every
+configuration UI overrides them with the `rule_copy` map above.
+
+⚠️ **`rule_copy` is duplicated verbatim in two templates** —
+`templates/components/Competition/CreateWizard.html.twig:10-19` and
+`templates/components/Scoring/RuleFields.html.twig:27-36`. **Any rename in W1 must edit both**, or the
+wizard and the post-creation rules screen will disagree. Extracting it to one shared source is the
+obvious prerequisite refactor.
+
+#### Section headings
+
+`RulePresetProvider::SECTION_HEADINGS` = `base` → „Základní bodování", `periods` → „Části zápasu",
+`scorers` → „Střelci", `overtime` → „Prodloužení". The wizard **shadows** them with a local
+`section_headings` map (`CreateWizard.html.twig:20-25`) that interpolates the sport:
+`periods` → „Tipovat také {poločasy|třetiny} zápasu?", `overtime` → „Tipovat výsledek po prodloužení
+při remíze?". `RuleFields.html.twig` uses the un-interpolated PHP headings — a second place the two
+surfaces already diverge.
+
+#### Existing preset mechanism — yes, there is one, but it has only two presets
+
+`RulePresetProvider::presets()` returns exactly **two**, both computed (nothing hardcoded):
+`standard` = every `base` identifier; `scorer` = base + `scorer_hit`. There is **no „Maxi"** and **no
+„Vlastní"** in PHP. The `.variant-card` tiles + `scoring_preset` Stimulus controller
+(`assets/controllers/scoring_preset_controller.js`) expose three actions: `standard()` and `scorer()`
+apply a preset (each **re-sets every points field to its default** and ticks/unticks enablement);
+`custom()` is a **pure no-op that only highlights the tile**. So:
+
+- Adding „Maxi" = one new entry in `presets()` + one tile — cheap, *if* the rules it needs exist.
+- „Vlastní (připravujeme)" = relabel the existing no-op tile and add `disabled` (`.variant-card`
+  already has `[disabled]` styling). Note the wizard currently ships with **„Vlastní" pre-selected**,
+  while `RuleFields` pre-selects „Standardní" — disabling it means moving the wizard's default.
+
+#### What can be persisted per competition
+
+`CompetitionRuleConfiguration` (unique on `competition_id` + `rule_identifier`) stores **only**:
+`competition`, `ruleIdentifier`, `enabled` (bool), `points` (int), `updatedAt`. That is the entire
+per-competition rule state. There is **nowhere** to store a radio-group answer, a fantasy flag, or a
+„dohrávat turnaj" flag without new schema.
+
+Corollary (`src/Service/Competition/GuessFeatures.php`): **feature toggles ARE rule enablement** —
+periods ⇔ `period_exact` OR `period_tendency`, scorers ⇔ `scorer_hit`, overtime ⇔ `overtime_exact`.
+There are deliberately no duplicate flags.
+
+#### Item-by-item verdict on what W1 asks for
+
+**The four Standardní rules** — all four are exactly the `base` category, i.e. exactly what the
+existing `standard` preset already returns. All four asks are **pure copy changes, no domain work**:
+
+| Asked | identifier | Verdict |
+|---|---|---|
+| DOBRÝ TIP SKÓRE HOSTŮ → **Tip hosté** / „Správný tip hostujícího týmu" | `correct_away_goals` | rename only (both `rule_copy` maps) |
+| DOBRÝ TIP SKÓRE DOMÁCÍCH → **Tip domácí** / „Správný tip domácího týmu" | `correct_home_goals` | rename only (both maps) |
+| DOBRÝ TIP VÝSLEDKU *(unchanged)* | `correct_outcome` | no change |
+| PŘESNÝ TIP VÝSLEDKU → desc „bonus za obě uhodnutá skóre" | `exact_score` | description only |
+
+**The Maxi extras:**
+
+| Asked | Verdict |
+|---|---|
+| **Tipování části zápasu** — points for *přesný tip · skóre hostů · skóre domácích* | **PARTIAL.** `period_exact` covers „přesný tip". **Per-period home-goals and away-goals rules DO NOT EXIST** — they would be two new `#[AsRule]` classes in category `periods`. See the reconciliation note below. |
+| **Výsledek po základní hrací době** | **ALREADY EXISTS, unnamed.** Regulation time *is* the primary result — `correct_outcome` / `exact_score` already score exactly this. Likely a relabel, not a new rule. Needs PO confirmation that nothing else is meant. |
+| **Celkové skóre po PP** (prodloužení) | **NEW SCHEMA.** Today `SportMatch` and `Guess` each carry ONE combined pair `overtimeHomeScore`/`overtimeAwayScore` documented as „final score AFTER prolongation **or** shootout", scored by the single `overtime_exact`. PP and PEN are **not distinguished anywhere.** |
+| **Celkové skóre po PEN** (penalty) | **NEW SCHEMA**, same reason. Splitting PP from PEN needs new columns on **both** `SportMatch` and `Guess`, a migration, new rules, and changes to the score-entry + guess forms and their validation invariants. This is the single biggest item in W1. |
+
+**The three optional yes/no groups:**
+
+| Asked | Verdict |
+|---|---|
+| „Chcete tipovat také střelce utkání?" | **MAPS CLEANLY** — it is exactly `scorer_hit` enablement (`GuessFeatures` says feature toggles *are* rule enablement). Pure UI presentation of an existing toggle. |
+| „Budete hrát také fantasy?" | **DOES NOT EXIST — brand-new domain concept.** Zero occurrences anywhere in `src/`, `templates/`, `migrations/`, `tests/`; the only trace is an aspirational comment in `src/Entity/MatchEvent.php` and a deferred idea in DOMAIN.md. Needs a full domain design, not a wizard toggle. |
+| „Dohrávat turnaj?" | **AMBIGUOUS — needs the PO.** No such concept exists. The closest existing thing is `Competition::$includePlayoff`, which **W2 just moved onto step 2** — so if „dohrávat turnaj" means „include playoff", W1 would duplicate the W2 toggle and the two must be merged. If it means something else (e.g. keep scoring after the group stage ends), it is new. |
+
+#### „TIPOVAT TAKÉ POLOČASY ZÁPASU?" vs the requested „Tipování části zápasu"
+
+**Related but NOT the same thing.** The existing block is the `periods` section, heading
+sport-interpolated („Tipovat také poločasy/třetiny zápasu?"), containing **two** rules that are
+mutually exclusive per period: `period_exact` (exact period score) and `period_tendency` (winner of
+the period only). W1 asks for **three** point values — *přesný tip · skóre hostů · skóre domácích* —
+which is the whole-match `exact_score`/`correct_away_goals`/`correct_home_goals` trio applied per
+period. Overlap is only `period_exact` ↔ „přesný tip".
+
+So reconciling them means deciding, with the PO:
+1. do per-period **home-goals / away-goals** rules get added (2 new rule classes), and
+2. what happens to **`period_tendency`**, which W1's list does not mention at all — keep it as a
+   fourth option, or drop it (it is off by default, so dropping is cheap but is a domain decision).
+
 ---
 
 ## W2 — Playoff option moves from step 1 to step 2
@@ -67,12 +181,29 @@ new domain concepts (fantasy and „dohrávat turnaj" in particular look new). I
 „Zrušit možnost hrát playoff, v bodě 1, bude v bodě 2." Remove the playoff choice from wizard step 1;
 it belongs in step 2 instead.
 
+### Implementation
+
+The „Zahrnout playoff zápasy" checkbox moved out of step 1's „Zápasy soutěže" block and onto step 2
+(„Pravidla"), under its own „Playoff" sub-heading below the scoring fields (outside the
+`scoring-preset` controller — it is not a scoring rule). Same `data-model="includePlayoff"`, same
+copy, **same visibility conditions as before**: private (non-global) competition, a curated source
+chosen, and match scope `all`. That condition is not cosmetic —
+`CompetitionMatchProvider` only honours `includePlayoff` in mode `all` (`subset` keeps whatever was
+ticked, `teams` always includes playoff), and `CreateCompetitionHandler` forces it to `true` for any
+other mode. Step 1 is now purely the match-scope choice.
+
 ---
 
 ## W3 — Step 3: remove the duplicated hint
 
 The explanatory text at the bottom of step 3 repeats what is already written directly under the
 heading. Remove the bottom copy and leave only the „Přeskočit" action.
+
+### Implementation
+
+The duplicated copy was the **suffix on the skip button** in the wizard footer: „Přeskočit — pozvat
+můžete kdykoli později", which repeated the step heading's „Vše je nepovinné — pozvat můžete kdykoli
+později z detailu soutěže." The button now reads just „Přeskočit"; the heading is untouched.
 
 ---
 
@@ -111,6 +242,29 @@ Then the two monetization choices (this is the existing **Premium XOR boosts** d
 Map „Férová soutěž" → the competition-wide premium option, „Volná volba Premium" → the per-player
 boost option. Verify the mapping against `CompetitionMonetization` before wiring, and keep
 „Doporučujeme" on Férová soutěž as the pre-selected default.
+
+### Implementation
+
+**Mapping verified in code before wiring** (`src/Enum/CompetitionMonetization.php`), and it holds:
+
+| New copy | Enum case | Why it matches |
+|---|---|---|
+| **Férová soutěž** | `CompetitionMonetization::Premium` | Premium is the *competition-wide* option — the organizer buys for the whole group, so no individual can buy an edge, exactly what the copy promises. |
+| **Volná volba Premium** | `CompetitionMonetization::Boosts` | Boosts are the *per-player* purchases — each player decides for themselves. |
+
+No third state was invented: it stays one `monetization` column, Premium XOR boosts. The enum's
+third case `None` is **not offered in the private wizard** (it never was) — it remains reachable only
+in the admin global-competition branch, whose copy W4 does not touch.
+
+Other changes this forced:
+
+- **The default flipped from `Boosts` to `Premium`** so „Férová soutěž ⭐ Doporučujeme" is genuinely
+  pre-selected — both the `$monetization` LiveProp initialiser and the `usePrivateKind()` reset.
+- **Step 4 is now branched** global vs private. The two option cards used to be shared markup; the
+  new private copy differs enough (prose instead of feature/price bullets, a visible radio row) that
+  the admin global branch keeps its own untouched cards.
+- The submit CTA no longer switches to „Vytvořit a přispět" when Premium is selected — see
+  Assumptions.
 
 ---
 
@@ -163,3 +317,55 @@ be half-wired, fix both.
 
 Note the interaction with **W2** — the playoff option moves from step 1 to step 2, so step 1 keeps
 only the match-scope choice.
+
+### Finding — neither a regression nor a gap: the report was stale
+
+**„Podle týmu" was already shipped and already rendering.** It landed in `fd053b9` („Competition team
+filter: scope a competition to specific teams"), merged via PR #3 (`71c8e45`), which is an ancestor of
+`main`. No code change was needed to make the option appear. Verified against the running dev app:
+step 1 with a curated source renders all three radios („Všechny zápasy" / „Podle týmu" / „Vybrat jen
+některé zápasy") and picking „Podle týmu" reveals the `team-filter` tom-select island. The product
+owner was presumably looking at a build from before that merge.
+
+The `CLAUDE.md` both-methods warning was checked explicitly and `teams` **is** fully wired in
+`CompetitionMatchProvider`: `applyCompetitionMatchFilter`, `applyRowLevelCompetitionMatchFilter`
+**and** `includesIgnoringDeletion` all branch on `CompetitionMatchSelectionMode::Teams`. Nothing was
+half-wired, so nothing was changed there.
+
+What *was* missing was **test coverage** — the wizard had zero tests for the mode, which is exactly
+how a UI option can silently disappear and produce a report like this one. Now pinned in
+`tests/Integration/Portal/Competition/CreateWizardComponentTest.php`:
+
+- `testStepOneOffersThreeMatchScopeModesWithoutPlayoffToggle` — all three radios present (and, for
+  W2, the playoff toggle absent);
+- `testTeamsModeHappyPath` — creates a Sparta-scoped competition and asserts the `CompetitionTeamFilter`
+  row plus that `CompetitionMatchProvider::matchesFor()` returns exactly the one fixture match Sparta plays;
+- `testTeamsModeWithZeroTeamsBlocksAdvancing` — empty team pick cannot leave step 1.
+
+---
+
+## Assumptions made
+
+Recorded per the orchestration protocol — conservative readings of things the backlog did not settle.
+
+1. **W2 — the playoff toggle keeps its original visibility conditions.** It shows on step 2 only for a
+   private competition with a source and match scope `all`, exactly as it did on step 1. Showing it
+   unconditionally would be a lie in the other modes, since `CompetitionMatchProvider` ignores
+   `includePlayoff` for `subset`/`teams` and the handler forces it to `true` there.
+2. **W4 — decorative emoji render as the design system's lucide icons.** 🍺 → `lucide:beer` (already
+   how the heading was built), 🟡 → `lucide:crown`, ⚪ → `lucide:hand-coins`, ⭐ → `lucide:star` in the
+   „Doporučujeme" badge. All Czech wording is verbatim; only the bullets use the established icon
+   vocabulary that `CLAUDE.md` mandates for this project. Flip these to literal emoji if the PO wants.
+3. **W4 — the private step 4 now shows only the specified copy.** The old credit-balance strip,
+   „Dokoupit kredity" link, per-boost price list, the „{X} kreditů × počet hráčů" line and the
+   „Teď se nic nestrhává…" footnote were **dropped from the private branch**, because the replacement
+   copy was given as the whole of step 4 and mentions no prices. They are all **kept unchanged in the
+   admin global branch**, which W4 does not cover.
+4. **W4 — the submit button no longer reads „Vytvořit a přispět".** It previously switched to that
+   label whenever Premium was selected. With Premium now the pre-selected default and the new copy
+   explicitly deferring the decision („Pokud se **později** rozhodnete Premium aktivovat"), that label
+   would promise a payment that creation does not make. The private CTA is now always „Vytvořit
+   soutěž". The global CTA („Vytvořit globální soutěž") is unchanged.
+5. **W4 — `CompetitionMonetization::None` stays out of the private wizard.** The two given choices map
+   onto Premium and Boosts; `None` was never offered privately and adding it would be the forbidden
+   third state. It remains available in the admin global branch only.

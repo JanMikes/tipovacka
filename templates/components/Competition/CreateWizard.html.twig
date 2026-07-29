@@ -207,16 +207,8 @@
                                             </div>
                                         {% endfor %}
                                     </div>
-                                {% elseif not isGlobalKind %}
-                                    <label class="flex cursor-pointer items-start gap-3">
-                                        <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
-                                               data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
-                                        <span class="text-sm">
-                                            <span class="block font-medium text-white">Zahrnout playoff zápasy</span>
-                                            <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když je vypnete, soutěž se tipuje jen na základní část.</span>
-                                        </span>
-                                    </label>
                                 {% endif %}
+                                {# W2: the „Zahrnout playoff zápasy" toggle lives on step 2 (Pravidla) now. #}
                             </div>
                         {% endif %}
                     {% endif %}
@@ -284,6 +276,23 @@
                     </div>
                 </div>
 
+                {# W2: playoff scope, moved here from step 1. Only mode „all" honours
+                   `includePlayoff` — subset keeps whatever was ticked, teams always
+                   includes playoff (see CompetitionMatchProvider). #}
+                {% if not isGlobalKind and not fromScratch and this.selectedSource and selectionMode == 'all' %}
+                    <div class="mt-6 border-t border-white/10 pt-5">
+                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Playoff</div>
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                   data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
+                            <span class="text-sm">
+                                <span class="block font-medium text-white">Zahrnout playoff zápasy</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když je vypnete, soutěž se tipuje jen na základní část.</span>
+                            </span>
+                        </label>
+                    </div>
+                {% endif %}
+
             {# ================= KROK 3 — Pozvánky ================= #}
             {% elseif step == 3 %}
                 <div class="mb-6">
@@ -337,24 +346,17 @@
 
             {# ================= KROK 4 — Podpora ================= #}
             {% elseif step == 4 %}
-                <div class="mb-6">
-                    <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
-                    {% if isGlobalKind %}
+                {% if isGlobalKind %}
+                    {# Admin global branch — entry-fee wording, unchanged by W4. #}
+                    <div class="mb-6">
+                        <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
                         <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
                             <twig:ux:icon name="lucide:coins" class="h-6 w-6 text-draw" />
                             Monetizace soutěže
                         </h2>
                         <p class="mt-1 text-sm text-white/60">Vstupné se strhává nezávisle. Tady vyberte, jak si hráči odemknou placené funkce (nebo je nechte vypnuté).</p>
-                    {% else %}
-                        <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
-                            <twig:ux:icon name="lucide:beer" class="h-6 w-6 text-draw" />
-                            Pozvete nás na pivo?
-                        </h2>
-                        <p class="mt-1 text-sm text-white/60">Wtips je zdarma. Když nás podpoříte, můžeme ho dál vylepšovat. Vyberte, jak na to.</p>
-                    {% endif %}
-                </div>
+                    </div>
 
-                {% if isGlobalKind %}
                     {# None — a public competition is free of paid features by default. #}
                     <label class="option-card mb-3 flex cursor-pointer flex-col {{ monetization == 'none' ? 'selected' : '' }}">
                         <input type="radio" name="wizard-monetization" value="none" class="sr-only" data-model="monetization" {{ monetization == 'none' ? 'checked' }} />
@@ -364,56 +366,108 @@
                         </span>
                         <span class="mt-1 text-[13px] text-white/60">Soutěž běží jen na vstupné. Nikdo si nic nedokupuje, žádné boosty ani prémium.</span>
                     </label>
+
+                    <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                        {# Premium #}
+                        <label class="option-card relative flex cursor-pointer flex-col {{ monetization == 'premium' ? 'selected' : '' }}">
+                            <input type="radio" name="wizard-monetization" value="premium" class="sr-only" data-model="monetization" {{ monetization == 'premium' ? 'checked' }} />
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-draw" />
+                                Zaplatím za celou skupinu
+                            </span>
+                            <span class="mt-1 text-[13px] text-white/60">{{ premiumPerPlayer }} kreditů × počet hráčů, zaúčtováno při připojení.</span>
+                            <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
+                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Lišta i konkrétní tipy pro všechny</li>
+                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Stejná uzávěrka pro celou skupinu</li>
+                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Možnost měnit tip během turnaje</li>
+                            </ul>
+                        </label>
+
+                        {# Boosts #}
+                        <label class="option-card flex cursor-pointer flex-col {{ monetization == 'boosts' ? 'selected' : '' }}">
+                            <input type="radio" name="wizard-monetization" value="boosts" class="sr-only" data-model="monetization" {{ monetization == 'boosts' ? 'checked' }} />
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <twig:ux:icon name="lucide:hand-coins" class="h-5 w-5 text-accent-300" />
+                                Nechám příspěvek na jednotlivcích
+                            </span>
+                            <span class="mt-1 text-[13px] text-white/60">Soutěž je zdarma, každý hráč si může dokoupit vlastní vychytávky.</span>
+                            <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
+                                {% for boost in this.boostPrices %}
+                                    <li class="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-1.5 last:border-b-0">
+                                        <span>{{ boost.label }}</span>
+                                        <span class="font-bold text-white">{{ boost.price }} kr.</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </label>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-inset px-4 py-3">
+                        <span class="flex items-center gap-2 text-sm text-white/70">
+                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4 text-accent-300" />
+                            Váš zůstatek: <strong class="text-white">{{ this.creditBalance }} kreditů</strong>
+                        </span>
+                        {% if monetization == 'premium' %}
+                            <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm">
+                                <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Dokoupit kredity
+                            </a>
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 text-xs leading-relaxed text-white/40">Teď se nic nestrhává — jen si volbu uložíme. Platby spustíme později.</p>
+                {% else %}
+                    {# W4: „Pozvete nás na pivo?" — Premium XOR boosts, one `monetization`
+                       column (DOMAIN.md). Férová soutěž = Premium (the organizer decides
+                       for everyone, nobody buys an individual edge, pre-selected default);
+                       Volná volba Premium = Boosts (each player decides for themselves). #}
+                    <div class="mb-6">
+                        <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
+                        <h2 class="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-white">
+                            <twig:ux:icon name="lucide:beer" class="h-6 w-6 text-draw" />
+                            Pozvete nás na pivo?
+                        </h2>
+                        <div class="mt-3 space-y-3 text-sm leading-relaxed text-white/60">
+                            <p>Tipovačka je kompletně zdarma. Výsledky se zapisují automaticky, tabulka se počítá sama a vy si můžete užívat soutěž bez zbytečné administrativy.</p>
+                            <p>Vytvořili jsme ji, protože nás baví sport stejně jako vás. Neustále ji rozvíjíme, přidáváme nové funkce a chceme, aby byla nejlepší tipovačkou na trhu.</p>
+                            <p>Teď už jen rozhodněte, jak budou ve vaší soutěži fungovat prémiové funkce.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                        {# Férová soutěž = Premium #}
+                        <label class="option-card relative flex cursor-pointer flex-col {{ monetization == 'premium' ? 'selected' : '' }}">
+                            <span class="badge badge-organizer absolute right-3 top-3 flex items-center gap-1 text-[10px] uppercase tracking-wider">
+                                <twig:ux:icon name="lucide:star" class="h-3 w-3" />Doporučujeme
+                            </span>
+                            <span class="flex items-center gap-2 pr-36 text-sm font-bold text-white">
+                                <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-draw" />
+                                Férová soutěž
+                            </span>
+                            <span class="mt-2 text-[13px] leading-relaxed text-white/60">Nikdo nebude moci získat individuální výhodu zakoupením Premium funkcí. Pokud se později rozhodnete Premium aktivovat, budou dostupné všem hráčům za stejných podmínek.</span>
+                            <span class="mt-2 text-[13px] leading-relaxed text-white/60">V případě aktivace Premium rozhodujete o podpoře aplikace vy jako administrátor soutěže.</span>
+                            <span class="mt-auto flex items-center gap-2 pt-4 text-[13px] font-semibold text-white">
+                                <input type="radio" name="wizard-monetization" value="premium"
+                                       class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                       data-model="monetization" {{ monetization == 'premium' ? 'checked' }} />
+                                Chci hrát Férovou soutěž
+                            </span>
+                        </label>
+
+                        {# Volná volba Premium = Boosts #}
+                        <label class="option-card flex cursor-pointer flex-col {{ monetization == 'boosts' ? 'selected' : '' }}">
+                            <span class="flex items-center gap-2 text-sm font-bold text-white">
+                                <twig:ux:icon name="lucide:hand-coins" class="h-5 w-5 text-accent-300" />
+                                Volná volba Premium
+                            </span>
+                            <span class="mt-2 text-[13px] leading-relaxed text-white/60">Každý hráč se během soutěže rozhodne sám, zda si chce aktivovat Premium funkce a podpořit tak další vývoj aplikace.</span>
+                            <span class="mt-auto flex items-center gap-2 pt-4 text-[13px] font-semibold text-white">
+                                <input type="radio" name="wizard-monetization" value="boosts"
+                                       class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                       data-model="monetization" {{ monetization == 'boosts' ? 'checked' }} />
+                                Chci ponechat rozhodnutí na hráčích
+                            </span>
+                        </label>
+                    </div>
                 {% endif %}
-
-                <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                    {# Premium #}
-                    <label class="option-card relative flex cursor-pointer flex-col {{ monetization == 'premium' ? 'selected' : '' }}">
-                        {% if not isGlobalKind %}<span class="badge badge-organizer absolute right-3 top-3 text-[10px] uppercase tracking-wider">Doporučujeme</span>{% endif %}
-                        <input type="radio" name="wizard-monetization" value="premium" class="sr-only" data-model="monetization" {{ monetization == 'premium' ? 'checked' }} />
-                        <span class="flex items-center gap-2 text-sm font-bold text-white">
-                            <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-draw" />
-                            Zaplatím za celou skupinu
-                        </span>
-                        <span class="mt-1 text-[13px] text-white/60">{{ premiumPerPlayer }} kreditů × počet hráčů, zaúčtováno při připojení.</span>
-                        <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
-                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Lišta i konkrétní tipy pro všechny</li>
-                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Stejná uzávěrka pro celou skupinu</li>
-                            <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Možnost měnit tip během turnaje</li>
-                        </ul>
-                    </label>
-
-                    {# Boosts #}
-                    <label class="option-card flex cursor-pointer flex-col {{ monetization == 'boosts' ? 'selected' : '' }}">
-                        <input type="radio" name="wizard-monetization" value="boosts" class="sr-only" data-model="monetization" {{ monetization == 'boosts' ? 'checked' }} />
-                        <span class="flex items-center gap-2 text-sm font-bold text-white">
-                            <twig:ux:icon name="lucide:hand-coins" class="h-5 w-5 text-accent-300" />
-                            Nechám příspěvek na jednotlivcích
-                        </span>
-                        <span class="mt-1 text-[13px] text-white/60">Soutěž je zdarma, každý hráč si může dokoupit vlastní vychytávky.</span>
-                        <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
-                            {% for boost in this.boostPrices %}
-                                <li class="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-1.5 last:border-b-0">
-                                    <span>{{ boost.label }}</span>
-                                    <span class="font-bold text-white">{{ boost.price }} kr.</span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </label>
-                </div>
-
-                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-inset px-4 py-3">
-                    <span class="flex items-center gap-2 text-sm text-white/70">
-                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4 text-accent-300" />
-                        Váš zůstatek: <strong class="text-white">{{ this.creditBalance }} kreditů</strong>
-                    </span>
-                    {% if monetization == 'premium' %}
-                        <a href="{{ path('portal_credits') }}" class="btn btn-ghost btn-sm">
-                            <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Dokoupit kredity
-                        </a>
-                    {% endif %}
-                </div>
-                <p class="mt-2 text-xs leading-relaxed text-white/40">Teď se nic nestrhává — jen si volbu uložíme. Platby spustíme později.</p>
             {% endif %}
         </div>
 
@@ -428,7 +482,8 @@
             </div>
             <div class="flex items-center gap-3">
                 {% if step == 3 %}
-                    <button type="button" class="btn btn-link text-sm" data-action="live#action" data-live-action-param="next">Přeskočit — pozvat můžete kdykoli později</button>
+                    {# W3: bare „Přeskočit" — the step heading already says invites are optional. #}
+                    <button type="button" class="btn btn-link text-sm" data-action="live#action" data-live-action-param="next">Přeskočit</button>
                 {% endif %}
                 {% if not this.isLastStep %}
                     <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="next">
@@ -437,7 +492,9 @@
                 {% else %}
                     <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="submit">
                         <twig:ux:icon name="lucide:party-popper" class="h-4 w-4" />
-                        {{ isGlobalKind ? 'Vytvořit globální soutěž' : (monetization == 'premium' ? 'Vytvořit a přispět' : 'Vytvořit soutěž') }}
+                        {# W4: no „Vytvořit a přispět" any more — the new step-4 copy charges
+                           nothing at creation; Premium is activated later, if at all. #}
+                        {{ isGlobalKind ? 'Vytvořit globální soutěž' : 'Vytvořit soutěž' }}
                     </button>
                 {% endif %}
             </div>

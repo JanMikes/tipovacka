@@ -18,6 +18,9 @@ into the admin global-competition creator:
 - shows an **„Vstupné (kredity)"** field, restricts the source list to **curated only**
   (private/from-scratch is hidden — a global competition must sit on a curated source),
   and forces „all matches" (the subset picker + playoff toggle are hidden);
+- keeps its **own step-4 copy** („Monetizace soutěže", with the credit-balance strip and
+  the per-boost price list). The W4 „Pozvete nás na pivo?" rewrite applies to the private
+  branch only, so step 4 is branched global vs private;
 - **skips the „Pozvánky" step** entirely — PIN / shareable link / e-mail invites are all
   invalid for a global competition (joined only via the entry-fee flow). The step flow is
   driven by `stepSequence` (`[1,2,4]` global, `[1,2,3,4]` private); the dot stepper,
@@ -54,10 +57,10 @@ selectable source/monetization tiles.
 ## Match scope step (All / Podle týmu / Vybrané zápasy)
 
 Step 1's „Zápasy soutěže" offers three selection modes (radios bound to the
-`selectionMode` LiveProp): **Všechny zápasy** (`all` + the `includePlayoff` toggle),
-**Podle týmu** (`teams`) and **Vybrat jen některé zápasy** (`subset`, private only).
-Global (admin) mode hides `subset` and the playoff toggle — a global competition is `all`
-or `teams`.
+`selectionMode` LiveProp): **Všechny zápasy** (`all`), **Podle týmu** (`teams`) and
+**Vybrat jen některé zápasy** (`subset`, private only). Global (admin) mode hides
+`subset` — a global competition is `all` or `teams`. Step 1 is *only* the match-scope
+choice; the **playoff toggle lives on step 2** (see below).
 
 - **Podle týmu** reveals a multi-team **`team-filter`** tom-select island (see
   [team-picker](team-picker.md)) fed by the source's teams. Picks are mirrored as a
@@ -68,6 +71,31 @@ or `teams`.
   dynamically includes every source match where a filter team plays — later-added team
   matches (playoff!) auto-join. Editable after creation on the same manage surface as
   `subset` (`portal_competition_match_selection`).
+
+## Playoff toggle lives on step 2
+
+„Zahrnout playoff zápasy" (`includePlayoff`) sits at the bottom of step 2 („Pravidla"),
+below the scoring fields and **outside** the `scoring-preset` controller — it is not a
+scoring rule. It renders only for a **private** competition with a source and match scope
+**`all`**, because that is the only mode in which the flag does anything:
+`CompetitionMatchProvider` ignores it for `subset` (an explicitly ticked playoff match
+counts) and for `teams` (playoff always in), and `CreateCompetitionHandler` forces it to
+`true` outside mode `all`.
+
+## Step 4 — „Pozvete nás na pivo?" (private) vs „Monetizace soutěže" (global)
+
+The private branch offers exactly two choices, mapping onto the single `monetization`
+column (Premium XOR boosts — never a third state):
+
+- **Férová soutěž** → `CompetitionMonetization::Premium` — the competition-wide option, so
+  nobody can buy an individual edge. Carries the „Doporučujeme" badge and is the
+  **pre-selected default** (both the LiveProp initialiser and `usePrivateKind()`).
+- **Volná volba Premium** → `CompetitionMonetization::Boosts` — each player decides for
+  themselves.
+
+The private step shows no prices and no credit balance: nothing is charged at creation, so
+the CTA is always „Vytvořit soutěž". `None` is not offered privately — it is reachable only
+via the admin global branch, which keeps its original copy, price list and balance strip.
 
 ## Judgment calls
 

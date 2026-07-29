@@ -124,8 +124,14 @@ final class CreateWizard extends AbstractController
     #[LiveProp(writable: true)]
     public array $rulePoints = [];
 
+    /**
+     * Step 4 („Pozvete nás na pivo?"): Premium = „Férová soutěž", the recommended
+     * and pre-selected default — the organizer decides for the whole group, so no
+     * player can buy an individual edge. Boosts = „Volná volba Premium".
+     * The global branch resets this to None in {@see useGlobalKind}.
+     */
     #[LiveProp(writable: true)]
-    public string $monetization = CompetitionMonetization::Boosts->value;
+    public string $monetization = CompetitionMonetization::Premium->value;
 
     #[LiveProp]
     public ?string $errorMessage = null;
@@ -436,7 +442,7 @@ final class CreateWizard extends AbstractController
     public function usePrivateKind(): void
     {
         $this->isGlobalKind = false;
-        $this->monetization = CompetitionMonetization::Boosts->value;
+        $this->monetization = CompetitionMonetization::Premium->value;
         $this->errorMessage = null;
     }
 
