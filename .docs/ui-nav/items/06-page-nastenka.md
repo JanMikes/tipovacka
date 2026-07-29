@@ -66,6 +66,13 @@ page's performance.
 
 ## What to drop
 
+- **The „PŘIPOJIT SE K SOUTĚŽI" PIN bar** — product owner, 2026-07-29: *„Remove 'PŘIPOJIT SE K
+  SOUTĚŽI' from the dashboard."* It is the
+  `include('_partials/join_by_pin_form.html.twig', …)` around current l. 171-174. **Remove the
+  include from this page only** — the partial itself, the `pin_input` Stimulus controller and the
+  join route all stay, because item 07 already gives the PIN bar a permanent home on `/souteze`
+  (section 3, matching `screenshots/img13-souteze-c.png`). Joining a competition is a Soutěže-page
+  action, not something the player's home needs to advertise every day.
 - **„Moje zdroje zápasů"** (current l. 248-311) — a normal player never owns a zdroj; it belongs on
   the Soutěže page's organizer side (item 07), not here.
 - **„Objev další soutěže"** (current l. 477-561) — it is a near-duplicate of
