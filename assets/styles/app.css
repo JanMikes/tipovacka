@@ -844,3 +844,21 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
 .ts-dropdown .create { color: var(--fg-3); }
 .ts-wrapper.multi .ts-control > div { background: rgba(70,153,208,0.16); border: 1px solid rgba(70,153,208,0.32); color: #fff; border-radius: 6px; }
 select[data-controller~="tom-select"], select[data-scorer-picker-target="select"] { opacity: 0; }
+
+/* --- B3: tom-select in cards --- */
+/* Focus repainted the control white: vendor's `.ts-wrapper.single.input-active .ts-control`
+   (specificity 0,4,0) outranks the dark skin's `.ts-wrapper.single .ts-control` (0,3,0), so
+   `background:#fff` won the moment tom-select added `input-active` on focus. Re-assert the
+   dark surface with the same selector, later in the file — keep the specificity, do not trim it. */
+.ts-wrapper.single.input-active .ts-control { background: var(--color-inset); }
+/* Same story one level down: the skin above highlights `.option.active`, but the
+   „Přidat hráče …" / „Vytvořit …" row is `.create.active`, which only vendor's light
+   `.ts-dropdown .active` matched — a white strip inside an otherwise dark dropdown. */
+.ts-dropdown .create.active { background: rgba(70,153,208,0.18); color: #fff; }
+/* Dropdowns are rendered into <body> (`dropdownParent: 'body'` in every tom-select
+   controller) so a surrounding card can never crop them: cards clip (`overflow:hidden` on
+   .card-glass) and open their own stacking context (`backdrop-filter`), which cut the
+   absolutely-positioned dropdown off at the card's bottom edge. At body level the dropdown
+   needs to clear .wtnav (50), the fixed action bars (30/60) and .modal-backdrop (200) — a
+   picker inside a modal must still drop over it. */
+body > .ts-dropdown { z-index: 300; }

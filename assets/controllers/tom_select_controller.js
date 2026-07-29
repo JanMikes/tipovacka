@@ -16,6 +16,11 @@ export default class extends Controller {
         const subtitle = (data) => (data.fullName && data.nickname) ? data.fullName : '';
 
         const options = {
+            // Render the dropdown into <body>, never inside the control's own card.
+            // Cards clip (`.card-glass { overflow: hidden }`) and open a stacking context
+            // (`backdrop-filter`), which crops an in-card dropdown at the card's edge.
+            // See the "B3: tom-select in cards" block in assets/styles/app.css.
+            dropdownParent: 'body',
             allowEmptyOption: true,
             create: false,
             maxOptions: 200,

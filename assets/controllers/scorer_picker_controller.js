@@ -48,6 +48,7 @@ export default class extends Controller {
         this.sideRadioTargets.forEach((radio) => radio.addEventListener('pointerdown', this.onSidePointerDown));
 
         this.instance = new TomSelect(this.selectTarget, {
+            dropdownParent: 'body', // never let a card's overflow/stacking context crop it
             plugins: ['remove_button'],
             maxItems: this.maxValue,
             maxOptions: 200,

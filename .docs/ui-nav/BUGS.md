@@ -10,7 +10,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 |---|-------|--------|--------|
 | B1 | Unverified e-mail account can still use the app | DONE | `7b3f010` |
 | B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | TODO | — |
-| B3 | tom-select dropdown clipped on „Správa tipů členů" | TODO | — |
+| B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `PENDING` |
 | B4 | Match detail omits a competition the user is a member of | TODO | — |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
 | B6 | Boost can be bought for a competition that is already over | TODO | — |
@@ -133,6 +133,46 @@ it. Fix at the root — if other pages nest a tom-select inside a card they must
 
 Per `PLAN.md` CSS discipline: reuse existing select/dropdown classes in `assets/styles/app.css`, add
 nothing that redefines them.
+
+### Diagnosis (confirmed in a headless browser, both symptoms reproduced)
+
+Two unrelated causes, both in the *shared* tom-select layer — nothing page-specific:
+
+1. **White input = vendor CSS out-specifying the dark skin.** On focus tom-select stamps
+   `input-active` on the wrapper, and vendor's `.ts-wrapper.single.input-active .ts-control`
+   (0,4,0) beats the skin's `.ts-wrapper.single .ts-control` (0,3,0) → `background:#fff`.
+   Measured: control background flipped `rgb(12,19,33)` → `rgb(255,255,255)` on focus. The
+   skin *was* loading; the controller *did* initialise. (A third, adjacent instance of the
+   same specificity bug: the „Přidat hráče …" row is `.create.active`, matched only by
+   vendor's light `.ts-dropdown .active` — a white strip inside the dark dropdown.)
+2. **Clipping = `.card-glass { overflow: hidden }`.** The dropdown is absolutely positioned
+   inside `.ts-wrapper`, so any clipping ancestor crops it; `backdrop-filter` additionally
+   makes the card its own stacking context, so raising z-index alone would not have helped.
+
+### Fix
+
+- `assets/styles/app.css`, new `/* --- B3: tom-select in cards --- */` block at the end of the
+  tom-select section: re-assert the dark control at the vendor's specificity, dark-highlight
+  `.create.active`, and give body-level dropdowns `z-index: 300`.
+- `dropdownParent: 'body'` on **every** TomSelect construction site (`tom_select`,
+  `team_picker`, `team_filter`, `scorer_picker`, `score_entry`) — the dropdown leaves the card
+  entirely, so no ancestor's overflow or stacking context can ever crop it again.
+
+### Assumptions made
+
+- **Scope widened from the reported page to all five tom-select controllers.** The item asks
+  for a root fix; `team-filter` on `/portal/souteze/{id}/zapasy-vyber` and in the create wizard
+  sits in the same `.card-glass` and had the identical bug, so a shared-controller-only fix
+  would have left known instances broken.
+- **The `.create.active` white row was fixed too** although the report only mentions the input.
+  It is the same specificity bug, and un-clipping the dropdown made it fully visible.
+- **`z-index: 300`** puts body-level dropdowns above `.modal-backdrop` (200). No tom-select
+  lives in a modal today; the choice is so that one could, since a dropdown belongs on top of
+  the control that owns it.
+- Verified by driving Chrome headless: member picker, team-picker (match edit), score-entry
+  player picker, team-filter inside the wizard's `data-live-ignore` island (including payload
+  sync after picking) and the scorer picker on match detail — all render the dark skin and
+  drop over the content below, with zero clipping ancestors.
 
 ---
 

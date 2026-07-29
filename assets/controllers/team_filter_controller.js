@@ -26,6 +26,7 @@ export default class extends Controller {
         this.selectTarget.dataset.teamFilterReady = '1';
 
         this.select = new TomSelect(this.selectTarget, {
+            dropdownParent: 'body', // never let a card's overflow/stacking context crop it
             plugins: ['remove_button'],
             valueField: 'id',
             labelField: 'name',

@@ -25,6 +25,7 @@ export default class extends Controller {
         const current = input.value;
 
         this.select = new TomSelect(input, {
+            dropdownParent: 'body', // never let a card's overflow/stacking context crop it
             maxItems: 1,
             valueField: 'name',
             labelField: 'name',

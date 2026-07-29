@@ -180,6 +180,7 @@ export default class extends Controller {
         }
 
         new TomSelect(input, {
+            dropdownParent: 'body', // never let a card's overflow/stacking context crop it
             create: true,
             createOnBlur: true,
             persist: false,
