@@ -1,6 +1,6 @@
 # Item 11 — Match rows: one card, boosts inside it
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 10 (match detail) — **run it after**, they both touch match/tip rendering,
 `Match/TipStats` and `assets/styles/app.css`.
 
@@ -104,3 +104,88 @@ desktop and narrow widths, in each of the eight states. CSS discipline: reuse fi
 END of the section they belong to under `/* --- item 11: match card --- */`; never reorder existing
 rules. Update `UI-MAP.md` §3 and the status board row to DONE + sha. Commit
 `UI: match rows become one card with the boost strip inside`, push to `main`.
+
+---
+
+## As built
+
+`Match/MatchRow` is now the **card**, not the row:
+
+```
+.tip-row                     ← the card; keeps its border, radius, glass surface,
+  ├── .tip-row-line          ←  the spotlight hooks and now a 4 px state stripe
+  │     [ čas/kolo ] [ pilulka ] [ a.tip-row-match ] [ .tip-row-end ]   ← B7's four zones, verbatim
+  └── .tip-row-extra         ← divider + „Rozložení tipů" + a small foot note
+```
+
+- **`tipStats` is a prop** (`list<TipStats>`), so the strip is composed *inside* the component
+  from the SAME batch the pages already resolved (`TipStatsProvider`) — no second data path, no
+  per-row query. `Match/TipStats` `compact=true` may no longer be placed anywhere else.
+- **`footNote`** carries what used to be loose text under the card: „zdroj · venue" on
+  `/nastenka` + `/zapasy`, „Uzávěrka …" on competition detail.
+- The separate **„Tipovat →" action is gone**; the fixture (`a.tip-row-match`) links to the match,
+  so a locked card is still not a dead end, and the „MŮJ TIP" box keeps B7's rule (link while
+  tippable, plain text once locked).
+- **Points render as a „+5" badge** overlapping the box's corner (`.my-tip-pts`, muted at 0),
+  replacing the old „5 / bodů" block.
+- New CSS lives at the end of `@layer components` under `/* --- item 11: match card --- */`;
+  the `.tip-stats-*` family was **extended** (gold paywall, `.tip-stats-head`, `.tip-stats-note`,
+  `.tip-stats-ghost` hatched stand-in), not duplicated.
+
+**Measured, not eyeballed** (B7/B8's harness — bounding-box intersection over painted leaves plus
+horizontal-overflow checks, headless Chrome): 7 surfaces × 10 widths (1600 → 360) = 70 combinations,
+zero overlap, zero horizontal overflow, no strip outside a card, no empty divider. The one
+deliberate overlap (the points badge over its own box corner) is excluded by name.
+
+---
+
+## Assumptions made
+
+Decisions the item file did not settle, taken on the most conservative reading and recorded here.
+
+1. **OPEN QUESTION for the product owner — „Rozložení tipů" vs „DISTRIBUCE TIPŮ".** The expected
+   design labels the strip „DISTRIBUCE TIPŮ"; the app, `CLAUDE.md` and `DOMAIN.md` call it
+   **„Rozložení tipů"**. As instructed, the documented vocabulary was kept everywhere — the strip,
+   the full card (item 10), the boost description and the žebříček all say „Rozložení tipů". If the
+   product owner prefers „Distribuce tipů", it is one word in
+   `templates/components/Match/TipStats.html.twig` plus `Boost:Panel`, `DOMAIN.md` and `CLAUDE.md` —
+   but it must change in ALL of them at once, not only in the card.
+2. **The price stays in the CTA: „Odemknout za 10 kr. →", not the design's bare „Odemknout →".**
+   The item's own guard rail phrases the rule as „the „Odemknout za N kr." amount is never a
+   literal", i.e. the amount is expected to be there and to come from `Credits/PricingConfig` —
+   which it does. Dropping it would hide the cost until the confirm dialog.
+3. **The gold treatment applies to BOTH paid paywalls, not just premium.** The screenshot shows
+   „★ PRÉMIUM"; a boosts competition gets the same gold skin with a „Vylepšení" pill (sparkles
+   instead of a crown). Gold already means „paid feature" on the item-10 card (`.dist-unlock`), and
+   two different paywall colours for one feature would read as two different features. The
+   nothing-to-sell variant („Zobrazí se po uzávěrce") stays neutral grey — it sells nothing.
+4. **The strip switched from vykání to tykání** („Uvidíš, jak tipuje 6 hráčů"), matching both the
+   expected design and item 10's full card, which already said „Uvidíš, jak tipuje konkurence". The
+   verb now agrees with the count as well (1 hráč tipuje · 2–4 hráči tipují · 5+ hráčů tipuje) — the
+   old copy said „Uvidíte, jak tipuje 3 hráči".
+5. **„Netipováno" in the „MŮJ TIP" box is competition detail only.** B5 settled that the
+   cross-competition rows (`/nastenka`, `/zapasy`) keep „Uzamčeno", because a row that aggregates
+   several soutěže cannot honestly claim the viewer never tipped. So `tipMissingLabel` is a prop and
+   only competition detail — which knows exactly one soutěž — passes it. Elsewhere a locked,
+   untipped card simply has an empty end zone, exactly as before.
+6. **The fixture became the link to the match.** Removing the „Tipovat →" action would otherwise
+   leave a locked/finished card with no way to reach `/zapasy/{id}`. Wrapping the teams block in an
+   `<a>` (with an accessible name „Česko – Brazílie — Detail zápasu") keeps the target reachable
+   without a second visible button and without nesting anchors. `MatchRowTipLinksTest` was updated
+   from `.tip-row-actions a` to `a.tip-row-match`.
+7. **`state` gained a `live` value** so a running match can paint its own stripe instead of
+   borrowing the grey „locked" one, and the score slot now shows a result whenever both scores are
+   present (previously only when `finished`). A live match with no score entered still shows the
+   kickoff time — inventing a running score was not an option.
+8. **The kickoff DAY was kept above the time.** The design mock shows only „18:00"; these lists span
+   many days, so dropping the date would lose information. The meta line under it stays the round,
+   ellipsized with a `title` (the mock's „SKUPINA A · …" is the same truncation).
+9. **B7's wrap hint was re-measured, not removed.** `.tip-row-match`'s `flex-basis` went 360 → 320 px
+   because the end zone lost the ~132 px „Tipovat →" button; the zones still wrap (no media query
+   sees the column width) and long names still ellipsize. Without it every card on competition
+   detail wrapped its „MŮJ TIP" box onto a second line at 1440 px.
+10. **A footer that holds only the note carries no divider** (`.tip-row-extra.is-note-only`). A rule
+    above a single small line reads as a section break for content that is not there.
+11. **The dashboard/`/zapasy` „zdroj · venue" line moved INSIDE the card** rather than into the
+    when-zone meta: at 96 px it would have been truncated to nothing. Competition detail passes no
+    source (its header already names it) and uses the same slot for „Uzávěrka …".

@@ -139,6 +139,35 @@ final class TipStatsSurfacesTest extends WebTestCase
         self::assertGreaterThanOrEqual(1, $crawler->filter(self::VISIBLE_BAR)->count());
     }
 
+    /**
+     * Item 11 — a match and its „Rozložení tipů" are ONE card: every strip sits
+     * inside the card's `.tip-row-extra` region, never as a card of its own next
+     * to the row, and no card is left with an empty divider region.
+     */
+    public function testTheStripLivesInsideTheMatchCardOnEveryListSurface(): void
+    {
+        $client = static::createClient();
+        $this->joinAndTip(AppFixtures::VERIFIED_USER_ID);
+        $this->grant(AppFixtures::VERIFIED_USER_ID, 100);
+        $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
+
+        foreach ([self::MATCHES_LIST, self::DASHBOARD, self::BOOSTS_DETAIL] as $path) {
+            $crawler = $this->visit($client, $path);
+
+            $strips = $crawler->filter('.tip-stats-locked, .tip-stats-open');
+            self::assertGreaterThan(0, $strips->count(), sprintf('Expected a tip-stats strip on %s.', $path));
+            self::assertCount(
+                $strips->count(),
+                $crawler->filter('.tip-row-extra .tip-stats-locked, .tip-row-extra .tip-stats-open'),
+                sprintf('A tip-stats strip rendered OUTSIDE a match card on %s.', $path),
+            );
+
+            $crawler->filter('.tip-row-extra')->each(function (Crawler $node) use ($path): void {
+                self::assertNotSame('', trim($node->text()), sprintf('Empty .tip-row-extra on %s.', $path));
+            });
+        }
+    }
+
     public function testOrganizerSeesTheSamePaywallAsMembers(): void
     {
         // ADMIN owns the boosts competition; owning it grants no free visibility.

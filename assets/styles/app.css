@@ -918,6 +918,123 @@ label.required::after {
         border: 1px solid rgba(245,205,84,0.45); color: #f5cd54;
         font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
     }
+
+    /* --- item 11: match card ---
+       A match and its „Rozložení tipů" strip are ONE card now (they used to be a
+       row plus a separate paywall card, with the soutěž name loose underneath).
+       So `.tip-row` stops being the row and becomes the CARD — it keeps its
+       border, radius, glass background and the spotlight hooks — while B7's
+       wrapping four-zone row moves into `.tip-row-line`, geometry untouched.
+       Nothing here may reintroduce a viewport media query: the same card renders
+       in columns from 632 to 1088 px and competition detail is NARROWER at 1440 px
+       than at 1024 px (B7). Everything below is container-relative. */
+    .tip-row { display: block; padding: 0; }
+    .tip-row-line {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px;
+        padding: 16px 20px;
+    }
+    .tip-row-line > .pill { flex: 0 0 auto; }
+
+    /* The state stripe. EVERY state paints one (4 px), so no card is offset
+       against its neighbour by a differing left border any more. */
+    .tip-row,
+    .tip-row.open, .tip-row.tipped, .tip-row.live, .tip-row.locked, .tip-row.done {
+        border-left: 4px solid var(--border-2);
+    }
+    .tip-row.open   { border-left-color: #f5b544; }              /* tipovatelný, tip chybí */
+    .tip-row.tipped { border-left-color: var(--color-win); }     /* tip odeslán */
+    .tip-row.live   { border-left-color: var(--color-loss); }    /* právě hraje */
+    .tip-row.locked { border-left-color: var(--border-3); }      /* po uzávěrce */
+    .tip-row.done   { border-left-color: var(--color-accent-500); } /* odehráno */
+
+    /* Kolo pod časem — jeden řádek, zkrátí se výpustkou („SKUPINA A · …"). */
+    .tip-row-when { flex: 0 0 96px; }
+    .tip-row-when .round { max-width: 100%; }
+    /* B7's wrap hint, re-measured: the end zone lost the ~132px „Tipovat →" action
+       (the „MŮJ TIP" box is the only thing left in it), so the fixture may claim a
+       smaller flex-basis before the end zone drops to a second line. Everything
+       else about B7 stands — the zones still WRAP, nothing is width-queried, and
+       `min-width: 0` still ellipsizes long team names instead of overflowing. */
+    .tip-row-match { flex-basis: 320px; }
+
+    /* Dvojice týmů vede na detail zápasu — po zrušení akce „Tipovat →" je to
+       jediná cesta na detail u zápasu, který se už tipovat nedá. */
+    a.tip-row-match { color: inherit; text-decoration: none; border-radius: 10px; }
+    a.tip-row-match:hover .tip-row-teams .name { color: var(--color-accent-200); }
+    a.tip-row-match:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 4px; }
+
+    /* „MŮJ TIP" box + odznak bodů v jeho rohu. `right`/`top` jsou menší než
+       vnitřní odsazení karty (20/16 px), takže odznak nikdy nepřeteče ven. */
+    .my-tip { position: relative; }
+    .my-tip.none { border-style: dashed; border-color: var(--border-2); background: rgba(255,255,255,0.02); }
+    .my-tip.none .my-tip-lbl { color: var(--fg-4); }
+    .my-tip.none .my-tip-val { font-size: 12px; font-weight: 700; color: var(--fg-3); }
+    .my-tip-val.exact   { color: var(--color-win); }
+    .my-tip-val.partial { color: #f5cd54; }
+    .my-tip-pts {
+        position: absolute; top: -10px; right: -10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 26px; height: 22px; padding: 0 7px; border-radius: 999px;
+        border: 2px solid var(--color-surface);
+        background: var(--color-win); color: #06291d;
+        font-size: 11px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+        box-shadow: 0 4px 12px rgba(62,213,152,0.35);
+    }
+    .my-tip-pts.is-zero { background: rgba(255,255,255,0.14); color: var(--fg-2); box-shadow: none; }
+
+    /* Pata karty: „Rozložení tipů" (nebo jeho paywall) za dělící linkou, plus
+       drobná poznámka (uzávěrka / zdroj zápasů). Bez obsahu se nevykreslí — viz
+       Match/MatchRow — takže nikdy nezůstane prázdná linka. */
+    .tip-row-extra {
+        display: flex; flex-direction: column; gap: 10px;
+        padding: 12px 20px 14px; border-top: 1px solid var(--border-1);
+    }
+    /* A footer holding nothing but the note needs no divider — the line would
+       read as a section break for content that is not there. */
+    .tip-row-extra.is-note-only { border-top: none; padding-top: 0; padding-bottom: 12px; }
+    .tip-row-boost-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-4); }
+    .tip-row-note { font-size: 12px; color: var(--fg-4); }
+
+    /* The strip itself, now a member of the card: a header line that wraps, over
+       a bar. Unlocked = the real .dist-bar; locked = a gold paywall over a hatched
+       stand-in with fixed proportions (.tip-stats-ghost leaks nothing). */
+    .tip-stats-open {
+        display: flex; flex-direction: column; gap: 7px;
+        padding: 10px 14px; border-radius: 12px;
+        border: 1px solid var(--border-1); background: rgba(255,255,255,0.03);
+    }
+    .tip-stats-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; width: 100%; }
+    .tip-stats-count { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+    .tip-stats-locked {
+        flex-direction: column; align-items: stretch; gap: 10px;
+        padding: 11px 14px 12px;
+        border-color: rgba(245,205,84,0.32);
+        background-color: rgba(245,205,84,0.05);
+        background-image: none;
+    }
+    .tip-stats-locked:hover { border-color: rgba(245,205,84,0.62); background-color: rgba(245,205,84,0.10); }
+    .tip-stats-locked .tip-stats-eyebrow { color: #f5cd54; }
+    .tip-stats-locked.is-muted .tip-stats-eyebrow { color: var(--fg-3); }
+    .tip-stats-note {
+        display: inline-flex; min-width: 0; align-items: center; gap: 8px;
+        padding: 4px 12px 4px 4px; border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.07); background: rgba(9,14,26,0.55);
+    }
+    .tip-stats-note .tip-stats-teaser { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tip-stats-note .tip-stats-lock { height: 24px; width: 24px; background: rgba(245,205,84,0.92); color: #2a2000; }
+    .tip-stats-locked.is-muted .tip-stats-note .tip-stats-lock { background: rgba(255,255,255,0.08); color: var(--fg-3); }
+    .tip-stats-cta { color: #f5cd54; }
+    .tip-stats-ghost { display: flex; height: 10px; gap: 4px; }
+    .tip-stats-ghost > i {
+        display: block; height: 100%; border-radius: 3px;
+        background-image: repeating-linear-gradient(135deg, rgba(245,205,84,0.42) 0 5px, rgba(245,205,84,0.07) 5px 11px);
+    }
+    .tip-stats-ghost > .g1 { flex: 5; }
+    .tip-stats-ghost > .gx { flex: 3; }
+    .tip-stats-ghost > .g2 { flex: 4; }
+    .tip-stats-locked.is-muted .tip-stats-ghost > i {
+        background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.14) 0 5px, rgba(255,255,255,0.03) 5px 11px);
+    }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }

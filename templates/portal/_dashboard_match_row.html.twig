@@ -7,8 +7,9 @@
                       finished match, indexed by sport-match id in the controller
                       (never looked up per row).
 
-    The „Rozložení tipů" strip underneath is fed from `m.tipStats`, which
-    TipStatsProvider resolved in ONE batch for the whole page.
+    The „Rozložení tipů" strip is fed from `m.tipStats`, which TipStatsProvider
+    resolved in ONE batch for the whole page; since item 11 it renders INSIDE the
+    match card (`Match/MatchRow`), below the divider — never as a card of its own.
 #}
 {% set guess = my_tips_by_match[m.id.toRfc4122] ?? null %}
 {% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
@@ -24,7 +25,7 @@
 {% elseif m.isPostponed %}
     {% set row_state = 'locked' %}{% set pill_variant = 'warn' %}{% set pill_icon = 'triangle-alert' %}{% set pill_label = 'Odloženo' %}{% set pill_dot = false %}
 {% elseif m.isLive %}
-    {% set row_state = 'locked' %}{% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Live' %}{% set pill_dot = true %}
+    {% set row_state = 'live' %}{% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Live' %}{% set pill_dot = true %}
 {% elseif is_locked %}
     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
 {% elseif m.pendingCompetitionsCount > 0 %}
@@ -56,30 +57,14 @@
     :pillDot="pill_dot"
     :myHome="my_home"
     :myAway="my_away"
-    :resultHome="m.isFinished ? m.homeScore : null"
-    :resultAway="m.isFinished ? m.awayScore : null"
+    :resultHome="m.isFinished or m.isLive ? m.homeScore : null"
+    :resultAway="m.isFinished or m.isLive ? m.awayScore : null"
     :points="guess ? guess.totalPoints : null"
     :hitClass="guess is null ? null : (is_exact ? 'exact' : (guess.totalPoints > 0 ? 'partial' : null))"
     :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
     :detailLabel="m.isTippable ? 'Tipovat' : 'Detail zápasu'"
     :tipPrompt="m.isTippable and my_home is null ? '+ Zadat tip' : null"
     :tipUrl="m.isTippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
+    :tipStats="m.tipStats"
+    :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
 />
-
-{# Rozložení tipů (or its paywall) per soutěž that includes this match. #}
-{% for stats in m.tipStats %}
-    {% if stats.hasAnythingToShow %}
-        <div class="px-4 sm:px-5">
-            {% if m.tipStats|length > 1 %}
-                <p class="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">{{ stats.competitionName }}</p>
-            {% endif %}
-            <twig:Match:TipStats :stats="stats" />
-        </div>
-    {% endif %}
-{% endfor %}
-
-{% if m.matchSourceName or m.venue %}
-    <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-        {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
-    </p>
-{% endif %}

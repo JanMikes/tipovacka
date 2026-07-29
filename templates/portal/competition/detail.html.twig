@@ -265,43 +265,31 @@
                             {% endif %}
                         {% endif %}
 
-                        <div>
-                            <twig:Match:MatchRow
-                                :homeTeam="m.homeTeam"
-                                :awayTeam="m.awayTeam"
-                                :kickoffAt="m.kickoffAt"
-                                :round="m.round"
-                                :isPlayoff="m.isPlayoff"
-                                :state="state == 'open' ? 'open' : state"
-                                :pillVariant="pill_variant"
-                                :pillIcon="pill_icon"
-                                :pillLabel="pill_label"
-                                :pillDot="pill_dot"
-                                :myHome="g ? g.homeScore : null"
-                                :myAway="g ? g.awayScore : null"
-                                :resultHome="state == 'finished' ? m.homeScore : null"
-                                :resultAway="state == 'finished' ? m.awayScore : null"
-                                :points="state == 'finished' ? row.points : null"
-                                :hitClass="hit_class"
-                                :tipPrompt="row.isOpen and is_member ? '+ Zadat tip' : null"
-                                :detailUrl="path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122})"
-                                :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
-                                :tipUrl="row.isOpen and is_member ? path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
-                            />
-
-                            {# „Rozložení tipů" (nebo jeho paywall) — dávkově z TipStatsProvider. #}
-                            {% if row.stats %}
-                                <div class="px-4 sm:px-5">
-                                    <twig:Match:TipStats :stats="row.stats" />
-                                </div>
-                            {% endif %}
-
-                            {% if row.isOpen %}
-                                <p class="mt-1.5 px-4 text-xs text-white/35 sm:px-5">
-                                    Uzávěrka {{ row.deadline|date('j. n. Y H:i') }}
-                                </p>
-                            {% endif %}
-                        </div>
+                        <twig:Match:MatchRow
+                            :homeTeam="m.homeTeam"
+                            :awayTeam="m.awayTeam"
+                            :kickoffAt="m.kickoffAt"
+                            :round="m.round"
+                            :isPlayoff="m.isPlayoff"
+                            :state="m.state.value == 'live' ? 'live' : (state == 'open' ? 'open' : state)"
+                            :pillVariant="pill_variant"
+                            :pillIcon="pill_icon"
+                            :pillLabel="pill_label"
+                            :pillDot="pill_dot"
+                            :myHome="g ? g.homeScore : null"
+                            :myAway="g ? g.awayScore : null"
+                            :resultHome="state == 'finished' or m.state.value == 'live' ? m.homeScore : null"
+                            :resultAway="state == 'finished' or m.state.value == 'live' ? m.awayScore : null"
+                            :points="state == 'finished' ? row.points : null"
+                            :hitClass="hit_class"
+                            :tipPrompt="row.isOpen and is_member ? '+ Zadat tip' : null"
+                            :tipMissingLabel="not row.isOpen and is_member and not g ? 'Netipováno' : null"
+                            :detailUrl="path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122})"
+                            :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
+                            :tipUrl="row.isOpen and is_member ? path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
+                            :tipStats="row.stats ? [row.stats] : []"
+                            :footNote="row.isOpen ? 'Uzávěrka ' ~ row.deadline|date('j. n. Y H:i') : null"
+                        />
                     {% endfor %}
                 {% endif %}
             </section>

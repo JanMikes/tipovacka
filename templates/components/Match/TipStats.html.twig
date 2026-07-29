@@ -12,7 +12,9 @@
       stats       (TipStats)  required
       homeTeam    TeamView|Team|null  labels the bars
       awayTeam    TeamView|Team|null
-      compact     bool         true = one-line strip for rows/cards (default),
+      compact     bool         true = the strip that lives INSIDE a match card
+                               (item 11 — below the divider of `Match/MatchRow`;
+                               it must never be placed on its own again), default,
                                false = the full „Rozložení tipů" card (item 10),
                                with labelled bars carrying an absolute count AND a
                                percentage, and a paywalled twin behind a lock coin
@@ -140,22 +142,30 @@
 
 {% elseif stats.hasAnythingToShow %}
     {% set players = stats.total ~ ' ' ~ (stats.total == 1 ? 'hráč' : (stats.total <= 4 ? 'hráči' : 'hráčů')) %}
-    {# With no tips yet the count would read „0 hráčů" — tease the feature instead. #}
-    {% set teaser = stats.total > 0 ? 'Uvidíte, jak tipuje ' ~ players : 'Uvidíte, jak tipují ostatní' %}
+    {# Czech agrees the verb with the count too: 1 hráč tipuje · 2–4 hráči tipují ·
+       5+ hráčů tipuje. With no tips yet the count would read „0 hráčů" — tease the
+       feature instead. #}
+    {% set tips_verb = stats.total >= 2 and stats.total <= 4 ? 'tipují' : 'tipuje' %}
+    {% set teaser = stats.total > 0 ? 'Uvidíš, jak ' ~ tips_verb ~ ' ' ~ players : 'Uvidíš, jak tipují ostatní' %}
+    {# item 11: the paywalled strip lives INSIDE the match card. The hatched bar is
+       a stand-in for the hidden split — fixed proportions, it leaks nothing. #}
+    {% set ghost %}
+        <span class="tip-stats-ghost" aria-hidden="true"><i class="g1"></i><i class="gx"></i><i class="g2"></i></span>
+    {% endset %}
 
     {% if stats.visible %}
         {# ───────── Unlocked: the actual split ───────── #}
-        <div class="mt-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5">
-            <div class="flex items-center justify-between gap-3">
-                <p class="eyebrow">Rozložení tipů</p>
-                <span class="text-[11px] font-medium tabular-nums text-white/50">{{ players }}</span>
+        <div class="tip-stats-open">
+            <div class="tip-stats-head">
+                <p class="tip-stats-eyebrow">Rozložení tipů</p>
+                <span class="tip-stats-count">{{ players }}</span>
             </div>
-            <div class="dist-pcts mt-1.5 text-xs">
+            <div class="dist-pcts">
                 <span><span class="k1">1</span>{{ stats.homeWinPercent }} %</span>
                 <span><span class="kx">X</span>{{ stats.drawPercent }} %</span>
                 <span><span class="k2">2</span>{{ stats.awayWinPercent }} %</span>
             </div>
-            <div class="dist-bar mt-1.5">
+            <div class="dist-bar">
                 {% if stats.homeWinPercent > 0 %}<div class="b1" style="width: {{ stats.homeWinPercent }}%"></div>{% endif %}
                 {% if stats.drawPercent > 0 %}<div class="bx" style="width: {{ stats.drawPercent }}%"></div>{% endif %}
                 {% if stats.awayWinPercent > 0 %}<div class="b2" style="width: {{ stats.awayWinPercent }}%"></div>{% endif %}
@@ -167,7 +177,7 @@
         {% if stats.canAfford %}
             <form method="post"
                   action="{{ path('competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
-                  class="mt-2 block"
+                  class="block"
                   data-controller="confirm"
                   data-confirm-variant-value="warning"
                   data-confirm-title-value="Odemknout „Lišta tipů ostatních“"
@@ -177,52 +187,65 @@
                 <input type="hidden" name="type" value="tip_distribution">
                 <input type="hidden" name="_redirect" value="{{ app.request.requestUri }}">
                 <button type="submit" class="tip-stats-locked group">
-                    <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
-                    <span class="tip-stats-copy">
+                    <span class="tip-stats-head">
+                        <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
                         <span class="tip-stats-eyebrow">Rozložení tipů</span>
-                        <span class="tip-stats-teaser">{{ teaser }}</span>
+                        <span class="tip-stats-note">
+                            <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
+                            <span class="tip-stats-teaser">{{ teaser }}</span>
+                        </span>
+                        <span class="tip-stats-cta">
+                            Odemknout za {{ stats.price }} kr.
+                            <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </span>
                     </span>
-                    <span class="tip-stats-cta">
-                        Odemknout za {{ stats.price }} kr.
-                        <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </span>
+                    {{ ghost }}
                 </button>
             </form>
         {% else %}
-            <div class="mt-2">
-                <a href="{{ path('credits') }}" class="tip-stats-locked group">
-                    <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
-                    <span class="tip-stats-copy">
-                        <span class="tip-stats-eyebrow">Rozložení tipů</span>
+            <a href="{{ path('credits') }}" class="tip-stats-locked group">
+                <span class="tip-stats-head">
+                    <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
+                    <span class="tip-stats-eyebrow">Rozložení tipů</span>
+                    <span class="tip-stats-note">
+                        <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                         <span class="tip-stats-teaser">{{ teaser }}</span>
                     </span>
                     <span class="tip-stats-cta">
                         <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
                         Chybí kredity ({{ stats.balance }}/{{ stats.price }} kr.)
                     </span>
-                </a>
-            </div>
+                </span>
+                {{ ghost }}
+            </a>
         {% endif %}
 
     {% elseif stats.monetization.value == 'premium' %}
         {# ───────── Locked, premium: the organizer toggles it for everyone ───────── #}
-        <div class="tip-stats-locked is-premium mt-2">
-            <span class="tip-stats-lock is-premium"><twig:ux:icon name="lucide:crown" class="h-3.5 w-3.5" /></span>
-            <span class="tip-stats-copy">
+        <div class="tip-stats-locked is-premium">
+            <span class="tip-stats-head">
+                <span class="pill pill-warn"><twig:ux:icon name="lucide:crown" class="h-3 w-3" />Prémium</span>
                 <span class="tip-stats-eyebrow">Rozložení tipů</span>
-                <span class="tip-stats-teaser">{{ teaser }}</span>
+                <span class="tip-stats-note">
+                    <span class="tip-stats-lock is-premium"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
+                    <span class="tip-stats-teaser">{{ teaser }}</span>
+                </span>
+                <span class="tip-stats-cta is-premium">Zapíná organizátor</span>
             </span>
-            <span class="tip-stats-cta is-premium">Zapíná organizátor</span>
+            {{ ghost }}
         </div>
 
     {% else %}
         {# ───────── Locked, nothing to sell: it opens at the deadline ───────── #}
-        <div class="tip-stats-locked is-muted mt-2">
-            <span class="tip-stats-lock is-muted"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
-            <span class="tip-stats-copy">
+        <div class="tip-stats-locked is-muted">
+            <span class="tip-stats-head">
                 <span class="tip-stats-eyebrow">Rozložení tipů</span>
-                <span class="tip-stats-teaser">Zobrazí se po uzávěrce</span>
+                <span class="tip-stats-note">
+                    <span class="tip-stats-lock is-muted"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
+                    <span class="tip-stats-teaser">Zobrazí se po uzávěrce</span>
+                </span>
             </span>
+            {{ ghost }}
         </div>
     {% endif %}
 {% endif %}

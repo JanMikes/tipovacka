@@ -55,8 +55,8 @@
                 {% set is_tipped = m.guessedCompetitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
                 {% set has_pending = m.pendingCompetitionsCount > 0 %}
                 {#
-                    Stav → clean enum (live je CUT, probíhající zápas čteme jako „Uzamčeno"):
-                      finished | odloženo | locked (bez tipu a bez otevřené soutěže) |
+                    Stav → clean enum:
+                      finished | odloženo | live | locked (bez tipu a bez otevřené soutěže) |
                       pending (chybí tip v otevřené soutěži) | tipped (vše natipováno) | open (brzy)
                     Jeden pilulkový slot; zlomky (x/y) = natipováno / soutěže s otevřenou uzávěrkou.
                 #}
@@ -64,6 +64,8 @@
                     {% set row_state = 'finished' %}{% set pill_variant = 'done' %}{% set pill_icon = 'check' %}{% set pill_label = 'Ukončeno' %}{% set pill_dot = false %}
                 {% elseif m.isPostponed %}
                     {% set row_state = 'locked' %}{% set pill_variant = 'warn' %}{% set pill_icon = 'triangle-alert' %}{% set pill_label = 'Odloženo' %}{% set pill_dot = false %}
+                {% elseif m.isLive %}
+                    {% set row_state = 'live' %}{% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Live' %}{% set pill_dot = true %}
                 {% elseif is_locked %}
                     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
                 {% elseif has_pending %}
@@ -87,30 +89,14 @@
                         :pillIcon="pill_icon"
                         :pillLabel="pill_label"
                         :pillDot="pill_dot"
-                        :resultHome="m.isFinished ? m.homeScore : null"
-                        :resultAway="m.isFinished ? m.awayScore : null"
+                        :resultHome="m.isFinished or m.isLive ? m.homeScore : null"
+                        :resultAway="m.isFinished or m.isLive ? m.awayScore : null"
                         :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
                         :tipUrl="is_tippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
+                        :tipStats="m.tipStats"
+                        :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
                     />
-
-                    {# Rozložení tipů (or its paywall) per soutěž that includes this match. #}
-                    {% for stats in m.tipStats %}
-                        {% if stats.hasAnythingToShow %}
-                            <div class="px-4 sm:px-5">
-                                {% if m.tipStats|length > 1 %}
-                                    <p class="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">{{ stats.competitionName }}</p>
-                                {% endif %}
-                                <twig:Match:TipStats :stats="stats" />
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-
-                    {% if m.matchSourceName or m.venue %}
-                        <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
-                            {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
-                        </p>
-                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

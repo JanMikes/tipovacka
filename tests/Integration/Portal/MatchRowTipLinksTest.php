@@ -10,13 +10,15 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * B7 — the match row's „Chybí tip" pilulka and its „+ Zadat tip" box must lead to
- * the guessing surface, the same target as the row's „Tipovat →" action, on EVERY
- * surface that renders `Match:MatchRow`. When tipping is closed they must be inert
- * again (nothing to navigate to).
+ * the guessing surface, the same target as the fixture itself, on EVERY surface
+ * that renders `Match:MatchRow`. When tipping is closed they must be inert again
+ * (nothing to navigate to) — while the fixture keeps linking to the match, so a
+ * locked card is never a dead end (item 11 dropped the separate „Tipovat →").
  */
 final class MatchRowTipLinksTest extends WebTestCase
 {
@@ -43,8 +45,31 @@ final class MatchRowTipLinksTest extends WebTestCase
         self::assertCount(1, $promptLink);
         self::assertStringContainsString('+ Zadat tip', $promptLink->text());
 
-        // Same target as the row's action button.
-        self::assertGreaterThan(0, $crawler->filter('.tip-row-actions a[href="'.self::GUESS_URL.'"]')->count());
+        // Item 11 replaced the row's „Tipovat →" action with the fixture itself:
+        // the teams block is the link to the match, and on competition detail that
+        // is the same guessing surface.
+        self::assertGreaterThan(0, $crawler->filter('a.tip-row-match[href="'.self::GUESS_URL.'"]')->count());
+    }
+
+    /**
+     * Item 11 — a card whose competition has nothing to say about the split must
+     * not keep an empty divider row. (That the strip itself sits INSIDE the card
+     * is pinned by {@see TipStatsSurfacesTest}, which owns the fixture setup that
+     * produces one.).
+     */
+    public function testNoCardKeepsAnEmptyExtraRegion(): void
+    {
+        $client = static::createClient();
+        $this->login($client);
+
+        foreach ([self::COMPETITION_URL, '/nastenka', '/zapasy'] as $path) {
+            $crawler = $client->request('GET', $path);
+            self::assertResponseIsSuccessful();
+
+            $crawler->filter('.tip-row-extra')->each(function (Crawler $node) use ($path): void {
+                self::assertNotSame('', trim($node->text()), $path.' rendered an empty .tip-row-extra');
+            });
+        }
     }
 
     public function testDashboardAndMatchListLinkTheStatePillToTheMatchDetail(): void
