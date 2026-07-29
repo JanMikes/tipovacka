@@ -7,6 +7,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nastavení', path: path('competition_settings', {id: competition.id.toRfc4122})},
         {label: 'Přidat e-mail tipujícímu'},
     ]" />
 
@@ -33,7 +34,7 @@
                     <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
                     Odeslat pozvánku
                 </button>
-                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>

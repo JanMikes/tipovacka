@@ -42,7 +42,7 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
         self::assertSelectorTextNotContains('body', 'Tipovat za členy');
     }
 
-    public function testNonGlobalDetailStillShowsJoinMechanics(): void
+    public function testNonGlobalSettingsStillShowJoinMechanics(): void
     {
         $client = static::createClient();
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
@@ -51,10 +51,10 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
         self::assertNotNull($owner);
         $client->loginUser($owner);
 
-        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Rychlé pozvánky');
+        self::assertSelectorTextContains('body', 'Pozvánky');
         self::assertSelectorTextContains('body', 'Tipovat za členy');
     }
 

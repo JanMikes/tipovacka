@@ -60,7 +60,7 @@ final class PromoteAnonymousMemberController extends AbstractController
 
             $this->addFlash('success', 'Pozvánka byla odeslána.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('portal/competition/promote_anonymous_member.html.twig', [

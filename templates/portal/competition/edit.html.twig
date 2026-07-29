@@ -7,6 +7,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nastavení', path: path('competition_settings', {id: competition.id.toRfc4122})},
         {label: 'Upravit soutěž'},
     ]" />
 
@@ -83,7 +84,7 @@
                     Uložit změny
                 </button>
 
-                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>

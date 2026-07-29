@@ -61,14 +61,14 @@ final class SendBulkInvitationsController extends AbstractController
                 $this->flashSummary($result);
             }
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         foreach ($form->getErrors(true) as $error) {
             $this->addFlash('error', $error->getMessage());
         }
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 
     private function flashSummary(BulkInvitationResult $result): void

@@ -45,7 +45,7 @@ final class RevokeInvitationController extends AbstractController
         if (!$this->isCsrfTokenValid('invitation_revoke_'.$invitation->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competitionId]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competitionId]);
         }
 
         try {
@@ -69,6 +69,6 @@ final class RevokeInvitationController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competitionId]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competitionId]);
     }
 }

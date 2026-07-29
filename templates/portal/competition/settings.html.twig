@@ -1,0 +1,391 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nastavení — {{ detail.name }} — {{ brand_name }}{% endblock %}
+
+{% block body %}
+<div class="bg-radial mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+
+    <twig:Breadcrumbs :items="[
+        {label: 'Soutěže', path: path('competitions_list')},
+        {label: detail.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nastavení'},
+    ]" />
+
+    <header class="mb-8">
+        <p class="eyebrow mb-2">{{ detail.name }}</p>
+        <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">Nastavení soutěže</h1>
+        <p class="mt-3 max-w-2xl text-white/60">Členové, pozvánky, pravidla a správa soutěže na jednom místě.</p>
+    </header>
+
+    <div class="space-y-6">
+
+        {# ───── Správa soutěže — odkazy na velké formuláře ───── #}
+        {% if is_granted('competition_edit', competition) %}
+            <section class="card-glass overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
+                    <twig:ux:icon name="lucide:settings" class="h-5 w-5 text-accent-400" />
+                    <h2 class="text-lg font-semibold text-white">Soutěž</h2>
+                </header>
+                <div class="grid gap-2 px-6 py-5 sm:grid-cols-2">
+                    <a href="{{ path('competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <twig:ux:icon name="lucide:pencil" class="h-4 w-4" />Upravit soutěž
+                    </a>
+                    <a href="{{ path('competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                        <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla bodování
+                    </a>
+                    {% if competition.selectionMode.value == 'subset' %}
+                        <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
+                        </a>
+                    {% elseif competition.selectionMode.value == 'teams' %}
+                        <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <twig:ux:icon name="lucide:shield-half" class="h-4 w-4" />Týmy soutěže
+                        </a>
+                    {% endif %}
+
+                    {# Monetizace: prémium (za členy platí organizátor) ↔ příspěvky (kupuje si každý sám). #}
+                    {% if competition.monetization.value == 'premium' %}
+                        <a href="{{ path('competition_premium', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <twig:ux:icon name="lucide:crown" class="h-4 w-4" />Prémium
+                        </a>
+                        <form method="post" action="{{ path('competition_switch_to_boosts', {id: competition.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Přepnout na příspěvky"
+                            data-confirm-message-value="Prémium se vypne a zaplacené platby za členy se vám vrátí do peněženky. Vylepšení si pak kupuje každý hráč sám."
+                            data-confirm-confirm-label-value="Ano, přepnout">
+                            <input type="hidden" name="_token" value="{{ csrf_token('competition_switch_to_boosts_' ~ competition.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:hand-coins" class="h-4 w-4" />Přepnout na příspěvky
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ path('competition_premium_enable', {id: competition.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Zapnout prémium"
+                            data-confirm-message-value="{% if premium_enable_member_count > 0 %}Z vaší peněženky se teď strhne {{ (premium_enable_member_count * premium_per_player)|credits }} ({{ premium_per_player|credits }} × {{ premium_enable_member_count }} {{ premium_enable_member_count == 1 ? 'hráč' : (premium_enable_member_count >= 2 and premium_enable_member_count <= 4 ? 'hráči' : 'hráčů') }}). {% endif %}Zaplatíte za celou skupinu — za nově příchozí platíte při jejich připojení."
+                            data-confirm-confirm-label-value="Ano, zapnout prémium">
+                            <input type="hidden" name="_token" value="{{ csrf_token('competition_premium_enable_' ~ competition.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-ghost btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:crown" class="h-4 w-4" />Zapnout prémium
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+
+        {# ───── Členové ───── #}
+        <section class="card-glass overflow-hidden p-0">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <twig:ux:icon name="lucide:users" class="h-5 w-5 text-accent-400" />
+                    <h2 class="text-lg font-semibold text-white">Členové</h2>
+                    <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-white/70">{{ detail.members|length }}</span>
+                </div>
+                {% if is_granted('competition_manage_members', competition) and not competition.isGlobal %}
+                    <a href="{{ path('competition_manage_member_tips', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                        <twig:ux:icon name="lucide:target" class="h-4 w-4" />Tipovat za členy
+                    </a>
+                {% endif %}
+            </header>
+
+            <ul class="divide-y divide-white/[0.06]">
+            {% for member in detail.members %}
+                {% set score = score_by_user_id[member.userId.toRfc4122] ?? null %}
+                <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <twig:Avatar name="{{ member.displayName }}" size="32" rank="{{ score ? score.rank : null }}" />
+                            <a href="{{ path('leaderboard_member', {soutez: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="min-w-0 font-medium text-white transition-colors hover:text-accent-300 hover:underline">
+                                <span class="block truncate">{{ member.displayName }}</span>
+                                {% if member.fullName %}<small class="block truncate text-xs font-normal text-white/50">{{ member.fullName }}</small>{% endif %}
+                            </a>
+                            {% if member.isOwner %}
+                                <twig:Badge label="Organizátor" variant="organizer" icon="crown" />
+                            {% endif %}
+                            {% if member.isAnonymous %}
+                                <twig:Pill label="Anonymní" variant="warn" icon="user" />
+                            {% endif %}
+                        </div>
+                        <p class="mt-1 pl-10 text-xs text-white/40">Přidán {{ member.joinedAt|date('j. n. Y') }}</p>
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-3">
+                        {% if score %}
+                            <div class="text-right">
+                                <p class="text-xs font-medium uppercase tracking-wider text-white/40">
+                                    {{ score.rank }}. místo
+                                </p>
+                                <p class="text-lg font-bold tabular-nums text-white">
+                                    {{ score.totalPoints }}<span class="ml-0.5 text-xs font-medium text-white/50">b.</span>
+                                </p>
+                            </div>
+                        {% endif %}
+                        {% if is_granted('competition_manage_members', competition) and member.isAnonymous %}
+                            <a href="{{ path('competition_promote_anonymous_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300 hover:underline">
+                                Přidat e-mail
+                            </a>
+                        {% endif %}
+                        {% if is_granted('competition_manage_members', competition) and not member.isOwner %}
+                            <form method="post" action="{{ path('competition_remove_member', {id: competition.id.toRfc4122, userId: member.userId.toRfc4122}) }}" class="inline"
+                                data-controller="confirm"
+                                data-confirm-title-value="Odebrat člena"
+                                data-confirm-message-value="Opravdu chcete člena {{ member.displayName }} odebrat ze soutěže? Ztratí všechny své tipy v této soutěži."
+                                data-confirm-confirm-label-value="Ano, odebrat">
+                                <input type="hidden" name="_token" value="{{ csrf_token('competition_remove_member_' ~ competition.id.toRfc4122 ~ '_' ~ member.userId.toRfc4122) }}">
+                                <button type="submit" class="text-sm font-medium text-loss transition-colors hover:text-loss/80 hover:underline">
+                                    Odebrat
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </li>
+            {% else %}
+                <li class="px-6 py-10 text-center text-sm text-white/50">Zatím žádní členové.</li>
+            {% endfor %}
+            </ul>
+        </section>
+
+        {# ───── Pozvánky — e-mail, hromadně, bez e-mailu, PIN a odkaz ───── #}
+        {% if is_granted('competition_manage_join_mechanics', competition) %}
+            <section id="pozvanky" class="card-glass overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
+                    <twig:ux:icon name="lucide:mail" class="h-5 w-5 text-accent-400" />
+                    <h2 class="text-lg font-semibold text-white">Pozvánky</h2>
+                </header>
+
+                <div class="px-6 py-5">
+                    {{ form_start(invitationForm) }}
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div class="field min-w-[220px] flex-1">
+                                {{ form_label(invitationForm.email, null, {label_attr: {class: 'field-label mb-1.5 block'}}) }}
+                                {{ form_widget(invitationForm.email, {attr: {class: 'input'}}) }}
+                                {{ form_errors(invitationForm.email) }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
+                                Odeslat pozvánku
+                            </button>
+                        </div>
+                    {{ form_end(invitationForm) }}
+
+                    {% if bulkInvitationForm %}
+                        <details class="mt-5 border-t border-white/10 pt-5">
+                            <summary class="cursor-pointer text-sm font-semibold text-white transition-colors hover:text-accent-300">
+                                Pozvat více lidí najednou
+                            </summary>
+                            <div class="mt-3">
+                                <p class="mb-3 text-xs text-white/50">
+                                    Pro neznámé e-maily založíme prázdný účet a odešleme odkaz na dokončení registrace — pozvaný si jen zvolí heslo a rovnou se připojí.
+                                </p>
+                                {{ form_start(bulkInvitationForm) }}
+                                    <div class="space-y-3">
+                                        <div class="field">
+                                            {{ form_label(bulkInvitationForm.emails, null, {label_attr: {class: 'field-label mb-1.5 block'}}) }}
+                                            {{ form_widget(bulkInvitationForm.emails, {attr: {class: 'input'}}) }}
+                                            {{ form_errors(bulkInvitationForm.emails) }}
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <twig:ux:icon name="lucide:users" class="h-4 w-4" />
+                                            Odeslat hromadně
+                                        </button>
+                                    </div>
+                                {{ form_end(bulkInvitationForm) }}
+                            </div>
+                        </details>
+                    {% endif %}
+
+                    <div class="mt-5 border-t border-white/10 pt-5">
+                        <p class="mb-3 text-xs text-white/50">
+                            Někdo nechce e-mail? Přidejte ho ručně a zadávejte jeho tipy za něj. Později mu stačí přidat e-mail a pozveme ho k nastavení hesla.
+                        </p>
+                        <a href="{{ path('competition_add_anonymous_member', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                            <twig:ux:icon name="lucide:user" class="h-4 w-4" />
+                            Přidat tipujícího bez e-mailu
+                        </a>
+                    </div>
+
+                    {% if pendingInvitations|length > 0 %}
+                        <div class="mt-6 border-t border-white/10 pt-5">
+                            <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-white/40">Čekající pozvánky</p>
+                            <ul class="divide-y divide-white/[0.06]">
+                                {% for inv in pendingInvitations %}
+                                    <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                                        <div>
+                                            <span class="font-medium text-white">{{ inv.email }}</span>
+                                            <p class="text-xs text-white/40">Pozval {{ inv.inviterNickname }} · odesláno {{ inv.sentAt|date('j. n. Y H:i') }} · vyprší {{ inv.expiresAt|date('j. n. Y') }}</p>
+                                        </div>
+                                        <form method="post" action="{{ path('invitation_revoke', {invitationId: inv.invitationId.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zrušit pozvánku"
+                                            data-confirm-message-value="Opravdu chcete zrušit pozvánku pro {{ inv.email }}? Odkaz z e-mailu přestane fungovat."
+                                            data-confirm-confirm-label-value="Ano, zrušit">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('invitation_revoke_' ~ inv.invitationId.toRfc4122) }}">
+                                            <button type="submit" class="text-sm font-medium text-loss transition-colors hover:text-loss/80 hover:underline">
+                                                Zrušit
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    {# PIN + sdílený odkaz — «rychlé pozvánky» #}
+                    <div class="mt-6 grid gap-6 border-t border-white/10 pt-5 sm:grid-cols-2">
+                        <div>
+                            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">PIN</p>
+                            {% if detail.pin %}
+                                <div class="space-y-2">
+                                    <div class="copy-field" data-controller="copy">
+                                        <input type="text" readonly value="{{ detail.pin }}"
+                                            data-copy-target="source"
+                                            onclick="this.select()"
+                                            class="text-center font-mono text-lg tracking-[0.3em]"
+                                            aria-label="PIN soutěže">
+                                        <button type="button"
+                                            data-copy-target="button"
+                                            data-action="copy#copy"
+                                            aria-label="Kopírovat PIN">
+                                            <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                                <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                            </span>
+                                            <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                                <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                                Zkopírováno
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-3 text-xs">
+                                        <form method="post" action="{{ path('competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-variant-value="warning"
+                                            data-confirm-title-value="Obnovit PIN"
+                                            data-confirm-message-value="Vygenerujeme nový PIN a stávající přestane platit. Pokud jste starý PIN někomu poslal, přestane se s ním dát připojit."
+                                            data-confirm-confirm-label-value="Ano, obnovit">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('competition_pin_regenerate_' ~ competition.id.toRfc4122) }}">
+                                            <button type="submit" class="btn-link">Obnovit</button>
+                                        </form>
+                                        <form method="post" action="{{ path('competition_pin_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zrušit PIN"
+                                            data-confirm-message-value="PIN bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový PIN můžete kdykoli vygenerovat znovu."
+                                            data-confirm-confirm-label-value="Ano, zrušit">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('competition_pin_revoke_' ~ competition.id.toRfc4122) }}">
+                                            <button type="submit" class="btn-link text-loss hover:text-loss/80">Zrušit</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-white/50">PIN není aktivní.</p>
+                                <form method="post" action="{{ path('competition_pin_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('competition_pin_regenerate_' ~ competition.id.toRfc4122) }}">
+                                    <button type="submit" class="btn-link">Vygenerovat PIN</button>
+                                </form>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
+                                <twig:ux:icon name="lucide:share-2" class="h-3.5 w-3.5" />
+                                Odkaz
+                            </p>
+                            {% if detail.shareableLinkToken %}
+                                <div class="space-y-2">
+                                    <div class="copy-field" data-controller="copy">
+                                        <input type="text" readonly value="{{ url('competition_join_by_link', {token: detail.shareableLinkToken}) }}"
+                                            data-copy-target="source"
+                                            onclick="this.select()"
+                                            class="text-xs"
+                                            aria-label="Odkaz pro připojení">
+                                        <button type="button"
+                                            data-copy-target="button"
+                                            data-action="copy#copy"
+                                            aria-label="Kopírovat odkaz">
+                                            <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                                <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                            </span>
+                                            <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                                <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                                Zkopírováno
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-3 text-xs">
+                                        <form method="post" action="{{ path('competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-variant-value="warning"
+                                            data-confirm-title-value="Obnovit odkaz"
+                                            data-confirm-message-value="Vygenerujeme nový odkaz a ten stávající přestane fungovat. Pokud jste ho někomu poslal, nebude se přes něj dát připojit."
+                                            data-confirm-confirm-label-value="Ano, obnovit">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('competition_link_regenerate_' ~ competition.id.toRfc4122) }}">
+                                            <button type="submit" class="btn-link">Obnovit</button>
+                                        </form>
+                                        <form method="post" action="{{ path('competition_link_revoke', {id: competition.id.toRfc4122}) }}" class="inline"
+                                            data-controller="confirm"
+                                            data-confirm-title-value="Zrušit odkaz"
+                                            data-confirm-message-value="Odkaz bude zneplatněn a nikdo se podle něj nebude moct připojit. Nový odkaz můžete kdykoli vygenerovat znovu."
+                                            data-confirm-confirm-label-value="Ano, zrušit">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('competition_link_revoke_' ~ competition.id.toRfc4122) }}">
+                                            <button type="submit" class="btn-link text-loss hover:text-loss/80">Zrušit</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-sm text-white/50">Odkaz není aktivní.</p>
+                                <form method="post" action="{{ path('competition_link_regenerate', {id: competition.id.toRfc4122}) }}" class="mt-2 inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('competition_link_regenerate_' ~ competition.id.toRfc4122) }}">
+                                    <button type="submit" class="btn-link">Vygenerovat odkaz</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        {# ───── Pravidla bodování (read-only) ───── #}
+        {{ include('_partials/competition_rules.html.twig', { items: rule_items }) }}
+
+        {# ───── Opustit / smazat ───── #}
+        {% if is_granted('competition_leave', competition) or is_granted('competition_delete', competition) %}
+            <section class="card-glass overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
+                    <twig:ux:icon name="lucide:triangle-alert" class="h-5 w-5 text-loss" />
+                    <h2 class="text-lg font-semibold text-white">Nevratné kroky</h2>
+                </header>
+                <div class="space-y-2 px-6 py-5">
+                    {% if is_granted('competition_leave', competition) %}
+                        <form method="post" action="{{ path('competition_leave', {id: competition.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-variant-value="warning"
+                            data-confirm-title-value="Opustit soutěž"
+                            data-confirm-message-value="Opravdu chcete soutěž opustit? Přijdete o všechny tipy, které jste v ní zadal."
+                            data-confirm-confirm-label-value="Ano, opustit">
+                            <input type="hidden" name="_token" value="{{ csrf_token('competition_leave_' ~ competition.id.toRfc4122) }}">
+                            <button type="submit" class="flex w-full items-center gap-2 rounded-xl border border-draw/30 bg-draw/10 px-4 py-2.5 text-sm font-semibold text-draw transition-colors hover:bg-draw/20">
+                                <twig:ux:icon name="lucide:log-out" class="h-4 w-4" />Opustit soutěž
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    {% if is_granted('competition_delete', competition) %}
+                        <form method="post" action="{{ path('competition_delete', {id: competition.id.toRfc4122}) }}"
+                            data-controller="confirm"
+                            data-confirm-title-value="Smazat soutěž"
+                            data-confirm-message-value="Opravdu chcete soutěž „{{ detail.name }}“ smazat? Všichni členové přijdou o své tipy a soutěž zmizí ze žebříčku."
+                            data-confirm-confirm-label-value="Ano, smazat">
+                            <input type="hidden" name="_token" value="{{ csrf_token('competition_delete_' ~ competition.id.toRfc4122) }}">
+                            <button type="submit" class="btn btn-danger btn-sm w-full justify-start">
+                                <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat soutěž
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

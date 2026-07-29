@@ -24,6 +24,8 @@
       hitClass     string|null   — exact | partial | null (barva výsledku)
       detailUrl    string        — odkaz na detail zápasu
       detailLabel  string        — text odkazu (default „Detail zápasu")
+      tipPrompt    string|null   — text výzvy v prázdném slotu „můj tip" (např. „+ Zadat tip");
+                                   null = slot zůstane prázdný (chování ostatních seznamů)
 #}
 {% props
     homeTeam,
@@ -43,7 +45,8 @@
     resultAway = null,
     points = null,
     hitClass = null,
-    detailLabel = 'Detail zápasu'
+    detailLabel = 'Detail zápasu',
+    tipPrompt = null
 %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
 <div class="tip-row {{ state == 'finished' ? 'done' : (state == 'tipped' ? 'tipped' : (state == 'locked' ? 'locked' : '')) }}">
@@ -116,6 +119,11 @@
         <div class="my-tip set">
             <div class="my-tip-lbl">Můj tip</div>
             <div class="my-tip-val">{{ myHome }} : {{ myAway }}</div>
+        </div>
+    {% elseif tipPrompt %}
+        <div class="my-tip empty">
+            <div class="my-tip-lbl">Tipnout</div>
+            <div class="my-tip-val">{{ tipPrompt }}</div>
         </div>
     {% else %}
         <span></span>

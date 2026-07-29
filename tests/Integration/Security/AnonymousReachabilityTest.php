@@ -109,6 +109,7 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Portal\Competition\CompetitionDetailController::class => true,
         \App\Controller\Portal\Competition\CompetitionMatchSelectionController::class => true,
         \App\Controller\Portal\Competition\CompetitionRuleConfigurationController::class => true,
+        \App\Controller\Portal\Competition\CompetitionSettingsController::class => true,
         \App\Controller\Portal\Competition\CreateCompetitionController::class => true,
         \App\Controller\Portal\Competition\EnablePremiumController::class => true,
         \App\Controller\Portal\Competition\JoinByPinController::class => true,

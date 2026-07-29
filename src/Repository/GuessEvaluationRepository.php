@@ -161,4 +161,39 @@ final class GuessEvaluationRepository
 
         return $rows;
     }
+
+    /**
+     * Points one user scored on every already-evaluated match of one competition,
+     * keyed by sport match id — the batch feed of the „+N b." chip on the
+     * competition detail's match list (item 08). One query for the whole page;
+     * never resolve a row's points on its own.
+     *
+     * @return array<string, int> sport match id RFC4122 → total points
+     */
+    public function pointsByMatchForUserInCompetition(Uuid $userId, Uuid $competitionId): array
+    {
+        /** @var list<array{sportMatchId: string, points: int}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select(
+                'IDENTITY(g.sportMatch) AS sportMatchId',
+                'e.totalPoints AS points',
+            )
+            ->from(GuessEvaluation::class, 'e')
+            ->innerJoin('e.guess', 'g')
+            ->where('g.user = :userId')
+            ->andWhere('g.competition = :competitionId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('userId', $userId)
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getArrayResult();
+
+        $byMatch = [];
+
+        foreach ($rows as $row) {
+            $byMatch[$row['sportMatchId']] = (int) $row['points'];
+        }
+
+        return $byMatch;
+    }
 }

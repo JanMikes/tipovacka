@@ -9,6 +9,7 @@ use App\Enum\BoostType;
 use App\Enum\CompetitionMonetization;
 use App\Enum\CreditTransactionType;
 use App\Exception\BoostNotAvailable;
+use App\Exception\CompetitionAlreadyOver;
 use App\Exception\NotAMember;
 use App\Repository\BoostPurchaseRepository;
 use App\Repository\CompetitionRepository;
@@ -16,15 +17,16 @@ use App\Repository\CreditTransactionRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionEntitlements;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Credits\CreditWalletProvider;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
- * Buy a per-competition boost: guard (boosts-monetized, active member, not
- * already owned / superseded), then a single wallet debit + a BoostPurchase row
- * in one transaction. {@see \App\Exception\InsufficientCredits} bubbles to the
+ * Buy a per-competition boost: guard (boosts-monetized, competition not fully
+ * over, active member, not already owned / superseded), then a single wallet
+ * debit + a BoostPurchase row in one transaction. {@see \App\Exception\InsufficientCredits} bubbles to the
  * controller (friendly top-up prompt). See .docs/DOMAIN.md §Monetization.
  *
  * Superset: owning OthersTips entitles the buyer to the distribution bar, so the
@@ -43,6 +45,7 @@ final readonly class PurchaseBoostHandler
         private CreditWalletProvider $walletProvider,
         private CreditTransactionRepository $transactionRepository,
         private CompetitionEntitlements $entitlements,
+        private CompetitionMatchProvider $matchProvider,
         private ProvideIdentity $identity,
         private ClockInterface $clock,
     ) {
@@ -54,6 +57,13 @@ final readonly class PurchaseBoostHandler
 
         if (CompetitionMonetization::Boosts !== $competition->monetization) {
             throw BoostNotAvailable::becauseCompetitionIsNotBoosts();
+        }
+
+        // B6 — nothing left to unlock once every included match is settled. The
+        // UI hides the CTA, but a stale page (or a hand-crafted POST) must not
+        // be able to burn credits on it either.
+        if ($this->matchProvider->isFullyOver($competition)) {
+            throw CompetitionAlreadyOver::forBoostPurchase();
         }
 
         if (!$this->membershipRepository->hasActiveMembership($command->userId, $competition->id)) {

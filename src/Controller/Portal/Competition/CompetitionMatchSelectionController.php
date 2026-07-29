@@ -67,7 +67,7 @@ final class CompetitionMatchSelectionController extends AbstractController
     {
         $this->addFlash('info', 'Tato soutěž zahrnuje všechny zápasy zdroje — výběr zápasů se nespravuje.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 
     private function manageSubset(Request $request, Competition $competition, User $user): Response

@@ -8,6 +8,7 @@ use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\BoostPurchase;
+use App\Entity\SportMatch;
 use App\Enum\BoostType;
 use App\Tests\Support\WebFlowHelpers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -198,5 +199,67 @@ final class BoostFlowTest extends WebTestCase
         // Cannot afford anything ⇒ no purchase form, but a top-up link is offered.
         self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'));
         self::assertGreaterThanOrEqual(1, $crawler->filter('a[href="/kredity"]')->count());
+    }
+
+    // ── B6: no purchase once the competition is fully over ────────────────────
+
+    /**
+     * Settle every match the boosts competition includes, so it becomes „fully
+     * over" per {@see \App\Service\Competition\CompetitionMatchProvider::isFullyOver}
+     * — nothing Scheduled, Live or Postponed left.
+     */
+    private function finishEveryMatch(): void
+    {
+        $em = $this->testEntityManager();
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        foreach ([AppFixtures::MATCH_SCHEDULED_ID, AppFixtures::MATCH_LIVE_ID, AppFixtures::MATCH_PLAYOFF_ID] as $matchId) {
+            $match = $em->find(SportMatch::class, Uuid::fromString($matchId));
+            self::assertInstanceOf(SportMatch::class, $match);
+            $match->setFinalScore(1, 0, null, null, null, $now);
+            $match->popEvents();
+        }
+
+        $em->flush();
+        $em->clear();
+    }
+
+    public function testFinishedCompetitionOffersNoPurchaseCtaAndSaysWhy(): void
+    {
+        $client = static::createClient();
+        $this->finishEveryMatch();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+
+        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'), 'A finished competition must not offer a boost purchase.');
+        self::assertSelectorTextContains('body', 'Soutěž už skončila');
+    }
+
+    public function testBuyingInAFinishedCompetitionIsRefusedAndChargesNothing(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+
+        // Grab a valid CSRF token while the competition is still running, then
+        // settle every match — a stale page must not be able to burn credits.
+        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $token = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[name="_token"]')->first()->attr('value');
+        $this->finishEveryMatch();
+
+        $client->request('POST', self::BOOSTS_PURCHASE, [
+            '_token' => $token,
+            'type' => 'tip_change',
+            '_redirect' => self::BOOSTS_DETAIL,
+        ]);
+
+        self::assertResponseRedirects(self::BOOSTS_DETAIL);
+        $client->followRedirect();
+        self::assertSelectorTextContains('body', 'Soutěž už skončila');
+
+        self::assertNull($this->activeTipChange(AppFixtures::SECOND_VERIFIED_USER_ID));
     }
 }

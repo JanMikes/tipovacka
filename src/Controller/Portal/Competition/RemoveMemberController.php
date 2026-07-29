@@ -44,7 +44,7 @@ final class RemoveMemberController extends AbstractController
         if (!$this->isCsrfTokenValid($csrfId, (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new RemoveMemberCommand(
@@ -55,6 +55,6 @@ final class RemoveMemberController extends AbstractController
 
         $this->addFlash('success', 'Člen byl odebrán ze soutěže.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 }

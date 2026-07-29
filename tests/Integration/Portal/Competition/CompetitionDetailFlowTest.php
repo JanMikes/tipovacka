@@ -40,6 +40,10 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    /**
+     * The members list moved to „Nastavení soutěže" with item 08 — the detail page
+     * is a playing surface now. The rendering contract itself is unchanged.
+     */
     public function testMembersListShowsFullNameSubtitleWhenBothPresent(): void
     {
         $client = static::createClient();
@@ -53,7 +57,7 @@ final class CompetitionDetailFlowTest extends WebTestCase
 
         $client->loginUser($owner);
 
-        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
         self::assertResponseIsSuccessful();
 
         $body = $client->getResponse()->getContent();
@@ -74,6 +78,81 @@ final class CompetitionDetailFlowTest extends WebTestCase
             $body,
             'No subtitle for fullName-only member.',
         );
+    }
+
+    /**
+     * Item 08 — the detail page is a playing surface: „Členové", „Pravidla" and
+     * „Správa" are gone from it, and the four-item action bar leads to their new
+     * home instead.
+     */
+    public function testOrganizerSeesTheActionBarAndNoneOfTheRelocatedBlocks(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $id = AppFixtures::VERIFIED_COMPETITION_ID;
+        $crawler = $client->request('GET', '/souteze/'.$id);
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'), 'Nastavení');
+        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Pozvat');
+        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'), 'Tipovat za členy');
+        self::assertCount(1, $crawler->filter('form[action="/souteze/'.$id.'/uzamknout-tipy"]'), 'Uzamknout tipy');
+
+        // The banner the product owner asked to keep above the match list.
+        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/moje-tipy"]'));
+        self::assertSelectorTextContains('body', 'Tipněte si všechny zápasy najednou');
+
+        // Relocated blocks are gone.
+        $body = (string) $client->getResponse()->getContent();
+        self::assertStringNotContainsString('Rychlé pozvánky', $body);
+        self::assertStringNotContainsString('Pozvánky e-mailem', $body);
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/smazat"]'));
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/pin/novy"]'));
+
+        // The žebříček panel carries real rows now, not just a CTA.
+        self::assertGreaterThanOrEqual(1, $crawler->filter('.lb-row')->count());
+    }
+
+    public function testPlainMemberGetsNoActionBar(): void
+    {
+        // SECOND_VERIFIED_USER is a plain member of the boosts competition (ADMIN owns it).
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $member = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($member);
+        $client->loginUser($member);
+
+        $id = AppFixtures::BOOSTS_COMPETITION_ID;
+        $crawler = $client->request('GET', '/souteze/'.$id);
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'));
+        self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'));
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/uzamknout-tipy"]'));
+    }
+
+    public function testGlobalCompetitionHidesTipsOnBehalf(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $id = AppFixtures::GLOBAL_COMPETITION_ID;
+        $crawler = $client->request('GET', '/souteze/'.$id);
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'));
+        // …while „Pozvat" is off for globals too (they are entry-fee discovery only).
+        self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'));
     }
 
     public function testNonMemberReceivesForbidden(): void

@@ -70,7 +70,8 @@ final class UpdateCompetitionFlowTest extends WebTestCase
             'competition_form[name]' => 'Přejmenovaná parta',
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        // The edit form is reached from „Nastavení soutěže“ (item 08) and returns there.
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
 
         $em->clear();
         $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));

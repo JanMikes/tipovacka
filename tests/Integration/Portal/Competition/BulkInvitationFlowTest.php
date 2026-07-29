@@ -34,7 +34,7 @@ final class BulkInvitationFlowTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
 
         $em->clear();
         $invitations = $em->createQueryBuilder()

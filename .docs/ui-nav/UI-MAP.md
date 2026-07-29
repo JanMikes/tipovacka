@@ -115,7 +115,8 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public**, context-aware (see below) |
 | `competition_join_by_link` | `/souteze/pozvanka/{token}` | `invitation/landing.html.twig` — **public** |
 | `competition_create` | `/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
-| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` (**576 l.** — the biggest page; sections: header + team-filter pills, Členové, Moje tipy, Pozvánky e-mailem, Žebříček panel, `Boost:Panel`, Rychlé pozvánky, Správa) |
+| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` — **a playing surface** since item 08: header (back link, eyebrow „zdroj · kolo", name + Live/Ukončeno/Tipy-uzamčeny pills, role badges, team-filter pills) + a 4-item action bar (**Nastavení** `competition_edit` · **Pozvat** `competition_manage_join_mechanics` · **Tipovat za členy** `competition_manage_members and not isGlobal` · **Uzamknout/Odemknout tipy** `competition_edit`) + the „Tipněte si všechny zápasy najednou" banner + the match list (`Match:MatchRow` + `Match:TipStats` + per-match uzávěrka) + an aside with the žebříček (real rows, „Celý žebříček" → `/zebricek?soutez=`) and `Boost:Panel`. A plain member sees **no** action bar |
+| `competition_settings` | `/souteze/{id}/nastaveni` | `portal/competition/settings.html.twig` — **everything organizer** (item 08): links to the large forms (upravit / pravidla / výběr zápasů · týmy / prémium + přepnout na příspěvky), the členové list (ranks, „Přidat e-mail", „Odebrat"), the **Pozvánky** block `#pozvanky` (e-mail, hromadně, bez e-mailu, PIN, sdílený odkaz + jejich obnovit/zrušit), read-only pravidla bodování, and „Nevratné kroky" (opustit / smazat). Page-level access = `competition_view`; every block is gated by its own voter, so a plain member sees the roster + pravidla and nothing else |
 | `competition_edit` | `/souteze/{id}/upravit` | `portal/competition/edit.html.twig` |
 | `competition_rules` | `/souteze/{id}/pravidla` | `portal/competition/rule_configuration.html.twig` |
 | `competition_match_selection` | `/souteze/{id}/zapasy-vyber` | `portal/competition/match_selection.html.twig` |
@@ -126,6 +127,10 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competition_promote_anonymous_member` | `/souteze/{id}/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
 | `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` |
 | `competition_join_by_pin` | `/pripojit` | `portal/competition/join_by_pin.html.twig` (+ `competition_join_by_pin_quick` `/pripojit/rychle`) |
+
+Every action reached **from** „Nastavení" returns there (invite, bulk invite, revoke invitation,
+remove member, promote/add anonymous member, PIN + link regenerate/revoke, upravit, výběr zápasů,
+prémium switch). Lock/unlock tips, join and leave/delete stay on the detail page.
 
 POST-only actions under `/souteze/{id}/` (no template): `…/pripojit-se` (join global),
 `…/opustit`, `…/smazat`, `…/uzamknout-tipy`, `…/odemknout-tipy`, `…/premium/zapnout`,
@@ -236,7 +241,8 @@ POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `�
 variants seen: `done`, `locked`, `warn`, `soon`, `accent`, `organizer`) · `StatCard` ·
 `EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) ·
 `PremiumTeaser` · `Match/MatchRow` · `Match/TipStats` (`:stats` — **always** feed it from
-`TipStatsProvider` batch, never per-row) · `Leaderboard/Podium` · `Leaderboard/Delta`
+`TipStatsProvider` batch, never per-row) · `Match/MatchRow` also takes `tipPrompt`
+(text of the empty „můj tip" slot, e.g. „+ Zadat tip"; null = empty slot, the other lists' behaviour) · `Leaderboard/Podium` · `Leaderboard/Delta`
 (the Žebříček table itself is plain markup in `public/leaderboard.html.twig` — item 05 dropped
 the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives in the URL)
 (`:delta`, `:isNew`, variant `chip`) · `Layout/Nav` · `Layout/Footer` ·
@@ -249,7 +255,7 @@ the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives i
 **Live Components (`src/Twig/Components/`)**
 `Competition/CreateWizard` (4-step wizard, `.docs/features/create-wizard.md`) ·
 `Guess/GuessSubmitForm` · `Guess/MatchGuessesList` ·
-`Boost/BoostPanel` · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
+`Boost/BoostPanel` (owned boosts render a **jump link** to what they unlocked, unowned a purchase CTA; both disappear once the competition is fully over — B6) · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
 `Profile/ProfileForm` · `Scoring/RuleFields` · `Auth/RegistrationForm`, `Auth/InvitationForm`,
 `Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm` ·
 `SoutezSwitcher` (`:competitions`, `currentId`, `route`, `param`, `label`, `id` — the grouped
@@ -300,8 +306,9 @@ Listed so item files can reference them; each becomes a decision only when the p
    one place every relationship to a competition lives — plays in / organizes / could join —
    and „Tvé soutěže" is the organizer list the app never had. The dashboard still carries its own
    „Moje soutěže" copy of the list (item 06's business).
-2. **Competition detail is a 576-line monolith** — members, my tips, invitations, leaderboard
-   preview, boosts, management all stacked vertically with no tabbing or sectioning.
+2. ~~**Competition detail is a 576-line monolith**~~ **Fixed by item 08** („Everything →
+   Nastavení"): the detail page is now header + action bar + banner + match list + žebříček
+   (with real rows) + boosts, and every organizer control lives on `/souteze/{id}/nastaveni`.
 3. **Two parallel object lists** (soutěže + zdroje zápasů) surfaced on the dashboard with equal
    weight, though a normal player never owns a zdroj. _(Item 07 took the soutěž half off the
    dashboard's shoulders — `/souteze` is now the canonical list — but the dashboard sections

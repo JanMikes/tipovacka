@@ -96,6 +96,36 @@ class CompetitionMatchProvider implements ResetInterface
         return (int) $qb->getQuery()->getSingleScalarResult() > 0;
     }
 
+    /**
+     * Whether the competition is **fully over**: it includes at least one match
+     * and none of its included matches can still produce a result — no Scheduled,
+     * Live or Postponed one is left. Finished matches carry a final result,
+     * Cancelled ones never will, so both count as settled; a competition with an
+     * empty scope is NOT over (there is nothing to have ended).
+     *
+     * Deliberately NOT „past the last kickoff": a kicked-off match without an
+     * entered result still has standings to move. Scope always comes from this
+     * service, so every selection mode answers consistently. See
+     * .docs/DOMAIN.md §Monetization („fully over") — B6 uses it to stop boost
+     * purchases that could no longer unlock anything.
+     */
+    public function isFullyOver(Competition $competition): bool
+    {
+        return $this->matchCount($competition) > 0 && !$this->hasUnsettledMatches($competition);
+    }
+
+    /** How many matches the competition includes (any state, deleted excluded). */
+    public function matchCount(Competition $competition): int
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(SportMatch::class, 'm');
+
+        $this->applyCompetitionMatchFilter($qb, 'm', $competition);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
     public function includes(Competition $competition, SportMatch $sportMatch): bool
     {
         if (null !== $sportMatch->deletedAt) {

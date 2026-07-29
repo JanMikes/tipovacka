@@ -36,7 +36,7 @@ final class PromoteAnonymousMemberFlowTest extends WebTestCase
             'promote_anonymous_member_form[email]' => 'franta-promoted@example.com',
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
 
         $em->clear();
 

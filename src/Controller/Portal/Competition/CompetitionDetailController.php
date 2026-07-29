@@ -4,26 +4,22 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Competition;
 
+use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
-use App\Enum\CompetitionMonetization;
+use App\Enum\SportMatchState;
 use App\Enum\UserRole;
-use App\Form\BulkInvitationFormData;
-use App\Form\BulkInvitationFormType;
-use App\Form\SendInvitationFormData;
-use App\Form\SendInvitationFormType;
 use App\Query\GetCompetitionDetail\GetCompetitionDetail;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
-use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
-use App\Query\GetMyGuessesInMatchSource\GetMyGuessesInMatchSource;
-use App\Query\ListPendingInvitationsForCompetition\ListPendingInvitationsForCompetition;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionTeamFilterRepository;
+use App\Repository\GuessEvaluationRepository;
+use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Service\Competition\CompetitionRoundResolver;
 use App\Service\Competition\TipStatsProvider;
-use App\Service\Credits\PricingConfig;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
@@ -34,6 +30,12 @@ use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * The competition hub — a **playing surface** since item 08: header + action bar,
+ * the „Tipněte si všechny zápasy najednou" banner, the match list, and an aside
+ * with the žebříček and the boost benefits. Every organizer control lives behind
+ * „Nastavení" ({@see CompetitionSettingsController}).
+ */
 #[Route(
     '/souteze/{id}',
     name: 'competition_detail',
@@ -42,12 +44,18 @@ use Symfony\Component\Uid\Uuid;
 #[IsGranted('ROLE_USER')]
 final class CompetitionDetailController extends AbstractController
 {
+    /** How many žebříček rows the aside panel shows before „Celý žebříček". */
+    private const int LEADERBOARD_PREVIEW_ROWS = 7;
+
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly CompetitionTeamFilterRepository $teamFilterRepository,
         private readonly MembershipRepository $membershipRepository,
+        private readonly GuessRepository $guessRepository,
+        private readonly GuessEvaluationRepository $evaluationRepository,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly CompetitionMatchProvider $matchProvider,
+        private readonly CompetitionRoundResolver $roundResolver,
         private readonly TipStatsProvider $tipStatsProvider,
         private readonly QueryBus $queryBus,
         private readonly ClockInterface $clock,
@@ -63,6 +71,7 @@ final class CompetitionDetailController extends AbstractController
         $this->denyAccessUnlessGranted(CompetitionVoter::VIEW, $competition);
 
         $isAdmin = in_array(UserRole::ADMIN->value, $user->getRoles(), true);
+        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $detail = $this->queryBus->handle(new GetCompetitionDetail(
             competitionId: $competition->id,
@@ -70,88 +79,61 @@ final class CompetitionDetailController extends AbstractController
             viewerIsAdmin: $isAdmin,
         ));
 
-        $canInvite = $this->isGranted(CompetitionVoter::INVITE_MEMBER, $competition);
-        $canManage = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
-        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-
-        $pendingInvitations = $canInvite
-            ? $this->queryBus->handle(new ListPendingInvitationsForCompetition(
-                competitionId: $competition->id,
-                now: $now,
-            ))
-            : [];
-
-        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
-        $scoreByUserId = [];
-        foreach ($leaderboard->rows as $row) {
-            $scoreByUserId[$row->userId->toRfc4122()] = $row;
-        }
-
         $isMember = $this->membershipRepository->hasActiveMembership($user->id, $competition->id);
-        $myGuesses = $isMember
-            ? $this->queryBus->handle(new GetMyGuessesInMatchSource(
-                userId: $user->id,
-                matchSourceId: $competition->matchSource->id,
-                competitionId: $competition->id,
-            ))
-            : [];
 
-        // „Rozložení tipů" under every tipped row — resolved for the whole list in
-        // one batch (see TipStatsProvider); never per row.
-        $tipStats = [];
-
-        if ([] !== $myGuesses) {
-            $matchesById = [];
-
-            foreach ($this->matchProvider->matchesFor($competition) as $match) {
-                $matchesById[$match->id->toRfc4122()] = $match;
-            }
-
-            $rowMatches = [];
-
-            foreach ($myGuesses as $row) {
-                $match = $matchesById[$row->sportMatchId->toRfc4122()] ?? null;
-
-                if (null !== $match) {
-                    $rowMatches[] = $match;
-                }
-            }
-
-            $tipStats = $this->tipStatsProvider->forCompetition($competition, $rowMatches, $user);
-        }
-
-        $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
-            'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
-        ]);
-
-        $bulkInvitationForm = $canManage
-            ? $this->createForm(BulkInvitationFormType::class, new BulkInvitationFormData(), [
-                'action' => $this->generateUrl('competition_invitation_send_bulk', ['id' => $competition->id->toRfc4122()]),
-            ])
-            : null;
-
-        $ruleConfiguration = $this->queryBus->handle(new GetCompetitionRuleConfiguration(
-            competitionId: $competition->id,
-        ));
-
-        // Tip-locking state for the hero + management buttons: locked = the
-        // competition-level lock moment (manual lock or first kickoff) passed;
-        // a manual lock can be undone only before the first kickoff.
+        // Tip-locking state for the hero + the „Uzamknout tipy" action: locked =
+        // the competition-level lock moment (manual lock or first kickoff)
+        // passed; a manual lock can be undone only before the first kickoff.
         $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
         $firstKickoffAt = $this->deadlineResolver->firstKickoffFor($competition);
         $tipsLocked = null !== $lockMoment && $lockMoment <= $now;
         $canUnlockTips = null !== $competition->tipsLockedAt
             && (null === $firstKickoffAt || $now < $firstKickoffAt);
 
-        // „Zapnout prémium" charges the manager PREMIUM_PER_PLAYER per active
-        // non-owner member immediately — the confirm modal discloses the total.
-        $premiumEnableMemberCount = CompetitionMonetization::Premium === $competition->monetization
-            ? 0
-            : $this->membershipRepository->countActiveNonOwnerMembers($competition->id, $competition->owner->id);
-
         $filterTeams = CompetitionMatchSelectionMode::Teams === $competition->selectionMode
             ? $this->teamFilterRepository->teamViewsFor($competition->id)
             : [];
+
+        // ── The match list ──────────────────────────────────────────────────
+        // Scope comes from CompetitionMatchProvider (never re-derived), the
+        // per-match deadline from EffectiveTipDeadlineResolver, and „Rozložení
+        // tipů" from TipStatsProvider — batched for the whole page, never per row.
+        $matches = $this->matchProvider->matchesFor($competition);
+        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $matches, $user);
+        $guessesByMatch = $this->guessRepository->activeByUserInCompetitionIndexedByMatch($user->id, $competition->id);
+        $pointsByMatch = $this->evaluationRepository->pointsByMatchForUserInCompetition($user->id, $competition->id);
+        $tipStats = $this->tipStatsProvider->forCompetition($competition, $matches, $user);
+
+        $matchRows = [];
+
+        foreach ($matches as $match) {
+            $key = $match->id->toRfc4122();
+            $deadline = $deadlines[$key] ?? $match->kickoffAt;
+            $guess = $guessesByMatch[$key] ?? null;
+
+            $matchRows[] = [
+                'match' => $match,
+                'guess' => $guess,
+                'deadline' => $deadline,
+                'isOpen' => $match->isOpenForGuesses && $now < $deadline,
+                'points' => $pointsByMatch[$key] ?? null,
+                'stats' => $tipStats[$key] ?? null,
+                'state' => $this->rowState($match, null !== $guess, $match->isOpenForGuesses && $now < $deadline),
+            ];
+        }
+
+        // ── The žebříček aside ──────────────────────────────────────────────
+        $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
+        $previewRows = array_slice($leaderboard->rows, 0, self::LEADERBOARD_PREVIEW_ROWS);
+        $myRow = null;
+
+        foreach ($leaderboard->rows as $index => $row) {
+            if ($row->userId->equals($user->id) && $index >= self::LEADERBOARD_PREVIEW_ROWS) {
+                $myRow = $row;
+
+                break;
+            }
+        }
 
         return $this->render('portal/competition/detail.html.twig', [
             'competition' => $competition,
@@ -160,16 +142,32 @@ final class CompetitionDetailController extends AbstractController
             'lock_moment' => $lockMoment,
             'tips_locked' => $tipsLocked,
             'can_unlock_tips' => $canUnlockTips,
-            'premium_enable_member_count' => $premiumEnableMemberCount,
-            'premium_per_player' => PricingConfig::PREMIUM_PER_PLAYER,
-            'invitationForm' => $invitationForm->createView(),
-            'bulkInvitationForm' => $bulkInvitationForm?->createView(),
-            'pendingInvitations' => $pendingInvitations,
-            'score_by_user_id' => $scoreByUserId,
-            'my_guesses' => $myGuesses,
-            'tip_stats' => $tipStats,
-            'isMember' => $isMember,
-            'rule_items' => $ruleConfiguration->items,
+            'is_member' => $isMember,
+            'is_owner' => $user->id->equals($competition->owner->id),
+            'is_over' => $this->matchProvider->isFullyOver($competition),
+            'has_started' => null !== $firstKickoffAt && $firstKickoffAt <= $now,
+            'current_round' => $this->roundResolver->currentRound($competition),
+            'match_rows' => $matchRows,
+            'leaderboard_rows' => $previewRows,
+            'leaderboard_total' => count($leaderboard->rows),
+            'leaderboard_my_row' => $myRow,
         ]);
+    }
+
+    /**
+     * The `Match:MatchRow` state for one row: finished (result in), locked (no
+     * longer tippable), tipped (a tip is in and the window is still open) or open.
+     */
+    private function rowState(SportMatch $match, bool $hasGuess, bool $isOpen): string
+    {
+        if (SportMatchState::Finished === $match->state) {
+            return 'finished';
+        }
+
+        if (!$isOpen) {
+            return 'locked';
+        }
+
+        return $hasGuess ? 'tipped' : 'open';
     }
 }

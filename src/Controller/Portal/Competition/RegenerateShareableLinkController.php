@@ -43,7 +43,7 @@ final class RegenerateShareableLinkController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_link_regenerate_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new RegenerateShareableLinkCommand(
@@ -53,6 +53,6 @@ final class RegenerateShareableLinkController extends AbstractController
 
         $this->addFlash('success', 'Pozvánkový odkaz byl obnoven.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 }

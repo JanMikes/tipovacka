@@ -5,12 +5,23 @@
       feature      null = „Tvoje vylepšení" sidebar; 'others' = inline locked paywall for
                    concrete member tips (the distribution bar has its own surface:
                    <twig:Match:TipStats>, fed by TipStatsProvider)
+
+    B6: once the competition is fully over (`this.competitionIsOver`) nothing can be
+    bought here any more — the CTA is replaced by a one-line explanation. The command
+    handler refuses the same purchase, so this is presentation, not the guard.
 #}
 {% set p = this.panel %}
 {% if p is not null %}
     {% set mon = competition.monetization.value %}
     {% set back = app.request.pathinfo %}
+    {% set is_over = this.competitionIsOver %}
     {% set offset_label = p.tipChangeOffsetMinutes % 60 == 0 ? (p.tipChangeOffsetMinutes // 60) ~ ' h' : p.tipChangeOffsetMinutes ~ ' min' %}
+    {# Owned benefits jump to the surface they unlocked (item 08). #}
+    {% set jump_targets = {
+        tip_distribution: {url: path('competition_detail', {id: competition.id.toRfc4122}) ~ '#zapasy', label: 'Zobrazit rozložení tipů'},
+        others_tips: {url: path('leaderboard_matrix', {soutez: competition.id.toRfc4122}), label: 'Zobrazit tipy ostatních'},
+        tip_change: {url: path('competition_my_tips_batch', {id: competition.id.toRfc4122}), label: 'Upravit své tipy'},
+    } %}
 
     {% if feature is null %}
         {# ═════════ Management panel: „Tvoje vylepšení" ═════════ #}
@@ -47,11 +58,24 @@
                                         <twig:ux:icon name="lucide:check" class="h-3 w-3" />
                                         {{ superseded ? 'V balíčku' : 'Aktivní' }}
                                     </span>
-                                {% else %}
+                                {% elseif not is_over %}
                                     <span class="shrink-0 text-sm font-black tabular-nums text-[#8ac3e8]">{{ type.price }} kr.</span>
                                 {% endif %}
                             </div>
-                            {% if not owned %}
+                            {% if owned %}
+                                {# Bought ⇒ jump straight to the surface it unlocked. #}
+                                {% set jump = jump_targets[type.value] %}
+                                <div class="mt-3">
+                                    <a href="{{ jump.url }}" class="btn btn-ghost btn-sm w-full justify-between">
+                                        {{ jump.label }}
+                                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                                    </a>
+                                </div>
+                            {% elseif is_over %}
+                                <p class="mt-3 text-[12px] leading-snug text-white/45">
+                                    Soutěž už skončila — vylepšení už nemá co odemknout.
+                                </p>
+                            {% else %}
                                 <div class="mt-3">
                                     {% if p.canAfford(type) %}
                                         <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
@@ -111,7 +135,9 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    {% if p.canAfford(type) %}
+                    {% if is_over %}
+                        <p class="text-[12px] leading-snug text-white/50">Soutěž už skončila — vylepšení už nemá co odemknout.</p>
+                    {% elseif p.canAfford(type) %}
                         <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
                             data-confirm-variant-value="warning"

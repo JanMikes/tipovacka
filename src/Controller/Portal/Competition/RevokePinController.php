@@ -43,7 +43,7 @@ final class RevokePinController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_pin_revoke_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new RevokeCompetitionPinCommand(
@@ -53,6 +53,6 @@ final class RevokePinController extends AbstractController
 
         $this->addFlash('success', 'PIN byl zrušen.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 }

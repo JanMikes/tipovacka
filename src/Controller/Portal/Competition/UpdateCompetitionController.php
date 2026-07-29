@@ -62,7 +62,7 @@ final class UpdateCompetitionController extends AbstractController
 
             $this->addFlash('success', 'Soutěž byla uložena.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());

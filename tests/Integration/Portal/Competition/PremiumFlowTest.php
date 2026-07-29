@@ -14,18 +14,22 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Portal premium management: enable/switch buttons on the competition detail,
- * the premium settings page, and the switch-to-boosts action (S10 Part A).
+ * Portal premium management: enable/switch buttons on the settings page (item 08
+ * moved them off the competition detail), the premium settings page, and the
+ * switch-to-boosts action (S10 Part A).
  */
 final class PremiumFlowTest extends WebTestCase
 {
     use WebFlowHelpers;
 
     private const string PREMIUM_DETAIL = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID;
+    /** Since item 08 the monetization buttons live on the settings page, not on the detail. */
+    private const string PREMIUM_COMPETITION_SETTINGS = self::PREMIUM_DETAIL.'/nastaveni';
     private const string PREMIUM_SETTINGS = self::PREMIUM_DETAIL.'/premium';
     private const string PREMIUM_SWITCH = self::PREMIUM_DETAIL.'/premium/prepnout-na-prispevky';
 
     private const string PLAIN_DETAIL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
+    private const string PLAIN_COMPETITION_SETTINGS = self::PLAIN_DETAIL.'/nastaveni';
     private const string PLAIN_ENABLE = self::PLAIN_DETAIL.'/premium/zapnout';
 
     private function reloadCompetition(string $id): Competition
@@ -43,7 +47,7 @@ final class PremiumFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::ADMIN_ID);
 
-        $crawler = $client->request('GET', self::PREMIUM_DETAIL);
+        $crawler = $client->request('GET', self::PREMIUM_COMPETITION_SETTINGS);
         self::assertResponseIsSuccessful();
 
         self::assertCount(1, $crawler->filter('a[href="'.self::PREMIUM_SETTINGS.'"]'));
@@ -62,7 +66,7 @@ final class PremiumFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::PLAIN_DETAIL);
+        $crawler = $client->request('GET', self::PLAIN_COMPETITION_SETTINGS);
         self::assertResponseIsSuccessful();
 
         $enableForm = $crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]');
@@ -105,7 +109,7 @@ final class PremiumFlowTest extends WebTestCase
 
         $client->request('GET', self::PLAIN_DETAIL.'/premium');
 
-        self::assertResponseRedirects(self::PLAIN_DETAIL);
+        self::assertResponseRedirects(self::PLAIN_COMPETITION_SETTINGS);
         $client->followRedirect();
         self::assertSelectorTextContains('body', 'Prémiové nastavení je dostupné jen u prémiových soutěží.');
     }
@@ -115,10 +119,10 @@ final class PremiumFlowTest extends WebTestCase
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::ADMIN_ID);
 
-        $crawler = $client->request('GET', self::PREMIUM_DETAIL);
+        $crawler = $client->request('GET', self::PREMIUM_COMPETITION_SETTINGS);
         $client->submit($crawler->filter('form[action="'.self::PREMIUM_SWITCH.'"]')->form());
 
-        self::assertResponseRedirects(self::PREMIUM_DETAIL);
+        self::assertResponseRedirects(self::PREMIUM_COMPETITION_SETTINGS);
         $client->followRedirect();
         self::assertSelectorTextContains('body', 'Přepnuto na příspěvky');
 
@@ -132,7 +136,7 @@ final class PremiumFlowTest extends WebTestCase
 
         $client->request('POST', self::PREMIUM_SWITCH, ['_token' => 'invalid']);
 
-        self::assertResponseRedirects(self::PREMIUM_DETAIL);
+        self::assertResponseRedirects(self::PREMIUM_COMPETITION_SETTINGS);
         $client->followRedirect();
         self::assertSelectorTextContains('body', 'Neplatný bezpečnostní token.');
 
@@ -153,7 +157,7 @@ final class PremiumFlowTest extends WebTestCase
             adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
         ));
 
-        $crawler = $client->request('GET', self::PLAIN_DETAIL);
+        $crawler = $client->request('GET', self::PLAIN_COMPETITION_SETTINGS);
         $client->submit($crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form());
 
         self::assertResponseRedirects(self::PLAIN_DETAIL.'/premium');
@@ -167,7 +171,7 @@ final class PremiumFlowTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
         // Owner opens the enable form on a still-`none` competition (valid token).
-        $crawler = $client->request('GET', self::PLAIN_DETAIL);
+        $crawler = $client->request('GET', self::PLAIN_COMPETITION_SETTINGS);
         $form = $crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form();
 
         // Meanwhile the competition becomes premium out-of-band (a double-submit /
@@ -199,7 +203,7 @@ final class PremiumFlowTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
         // No credits granted ⇒ the group charge cannot be covered.
-        $crawler = $client->request('GET', self::PLAIN_DETAIL);
+        $crawler = $client->request('GET', self::PLAIN_COMPETITION_SETTINGS);
         $client->submit($crawler->filter('form[action="'.self::PLAIN_ENABLE.'"]')->form());
 
         self::assertResponseRedirects('/kredity');

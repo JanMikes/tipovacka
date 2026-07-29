@@ -32,7 +32,7 @@ final class AddAnonymousMemberFlowTest extends WebTestCase
             'anonymous_member_form[lastName]' => 'Strejda',
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
 
         $em->clear();
 
@@ -57,7 +57,7 @@ final class AddAnonymousMemberFlowTest extends WebTestCase
             ->getQuery()->getOneOrNullResult();
         self::assertInstanceOf(Membership::class, $membership);
 
-        // Anonymous badge + display name visible on the competition detail page.
+        // Anonymous badge + display name visible in the settings members list.
         $client->followRedirect();
         self::assertSelectorTextContains('body', 'Josef Strejda');
         self::assertSelectorTextContains('body', 'Anonymní');

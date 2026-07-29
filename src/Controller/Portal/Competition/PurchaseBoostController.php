@@ -8,6 +8,7 @@ use App\Command\PurchaseBoost\PurchaseBoostCommand;
 use App\Entity\User;
 use App\Enum\BoostType;
 use App\Exception\BoostNotAvailable;
+use App\Exception\CompetitionAlreadyOver;
 use App\Exception\InsufficientCredits;
 use App\Exception\NotAMember;
 use App\Repository\CompetitionRepository;
@@ -82,7 +83,7 @@ final class PurchaseBoostController extends AbstractController
                 return $this->redirectToRoute('credits');
             }
 
-            if ($inner instanceof BoostNotAvailable || $inner instanceof NotAMember) {
+            if ($inner instanceof BoostNotAvailable || $inner instanceof CompetitionAlreadyOver || $inner instanceof NotAMember) {
                 $this->addFlash('error', $inner->getMessage());
 
                 return $this->redirect($backTo);

@@ -7,6 +7,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nastavení', path: path('competition_settings', {id: competition.id.toRfc4122})},
         {label: 'Přidat tipujícího bez e-mailu'},
     ]" />
 
@@ -48,7 +49,7 @@
                     <twig:ux:icon name="lucide:user-round-plus" class="h-4 w-4" />
                     Přidat tipujícího
                 </button>
-                <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                     Zrušit
                 </a>
             </div>

@@ -13,7 +13,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | TODO | — |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
-| B6 | Boost can be bought for a competition that is already over | TODO | — |
+| B6 | Boost can be bought for a competition that is already over | DONE | `PENDING` |
 
 ---
 
@@ -235,3 +235,27 @@ HTTP status via `#[WithHttpStatus]`.
 **Define „fully over" precisely** and write it into `.docs/DOMAIN.md`: the natural reading is *every
 match in the competition's scope has a final result*, which is not the same as „past the last
 kickoff". Confirm with the product owner if ambiguous.
+
+### As built (with item 08)
+
+**Definition** (now in `.docs/DOMAIN.md` §Monetization + a dated decision-log row): a
+competition is **fully over** when it includes **at least one** match and **none** of its
+included matches is `Scheduled`, `Live` or `Postponed`. `Finished` carries a final result,
+`Cancelled` never will — both count as settled; an **empty scope is not over**. Deliberately
+not „past the last kickoff": a kicked-off match whose result has not been entered can still
+move the standings. It is the same settled-ness test `competition_ended` uses.
+
+**Implementation**
+- `CompetitionMatchProvider::isFullyOver()` (+ `matchCount()`) — scope always comes from the
+  one authority, so every selection mode answers consistently.
+- `PurchaseBoostHandler` throws `App\Exception\CompetitionAlreadyOver`
+  (`#[WithHttpStatus(409)]`, no `Exception` suffix) **before** any wallet movement;
+  `PurchaseBoostController` surfaces it as a flash + return to the origin page, like its
+  `BoostNotAvailable` sibling.
+- `Boost:Panel` exposes `competitionIsOver` and, in **both** shapes (the „Tvoje vylepšení"
+  sidebar and the inline paywall), replaces the price + CTA with
+  „Soutěž už skončila — vylepšení už nemá co odemknout."
+- Covered by `BoostFlowTest::testFinishedCompetitionOffersNoPurchaseCtaAndSaysWhy` and
+  `::testBuyingInAFinishedCompetitionIsRefusedAndChargesNothing` (the second one grabs a valid
+  CSRF token while the competition is still running, then settles every match — a stale page
+  must not be able to burn credits).

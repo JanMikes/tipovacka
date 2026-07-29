@@ -1,6 +1,6 @@
 # Item 08 — Competition detail: a playing surface, with everything else behind „Nastavení"
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 05 (Žebříček) is a natural pairing but not a hard dependency.
 
 ---
@@ -117,3 +117,66 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → `tests/Integration/{Porta
 locked and a finished competition, and on both monetization modes. Update `UI-MAP.md` §2/§3 and §6
 (pain point 2). Update the status board row to DONE + sha. Commit
 `UI: competition detail — playing surface + Nastavení`, push to `main`.
+
+---
+
+## Assumptions made
+
+**Route structure.** One new route, none deleted — `competition_settings`
+(`GET /souteze/{id}/nastaveni`, `CompetitionSettingsController`, declared in
+`AnonymousReachabilityTest`). It absorbs the small forms **inline** (členové + promote/remove,
+pozvánky e-mailem + hromadně, PIN, sdílený odkaz, read-only pravidla, opustit/smazat) and links
+out to the four genuinely large form pages that keep their own controller, template and tests:
+`competition_edit`, `competition_rules`, `competition_match_selection`, `competition_premium`.
+Nothing was absorbed *from* a route, so nothing had to be deleted — every POST endpoint the old
+detail page posted to (`…/pozvanky/odeslat`, `…/pin/novy`, `…/clenove/{id}/odebrat`, …) is
+unchanged and still hit from the same markup, only from a different page.
+
+**„Pozvat" is an anchor, not a second page.** The product owner's decision was
+*everything → Nastavení*, so a separate invitations page would have re-split what the decision
+merged. „Pozvat" points at `/souteze/{id}/nastaveni#pozvanky`, the block that holds e-mail,
+bulk, „bez e-mailu", PIN and the shareable link.
+
+**Who may open Nastavení.** The page itself requires `competition_view` and gates every block
+by its own voter (so a plain member reaching it by URL sees the roster + pravidla and „Opustit
+soutěž", nothing else). The *button* follows the item's table and appears only for
+`competition_edit`, so a plain member is never offered it.
+
+**Return-to-origin redirects.** Every action reached from Nastavení now redirects back to
+Nastavení instead of the detail page (invite, bulk invite, revoke invitation, remove member,
+add/promote anonymous member, PIN + link regenerate/revoke, upravit, výběr zápasů, switch to
+boosts, premium-settings guard). Lock/unlock tips, join and leave/delete still land on the
+detail page — that is where the user was. Accepting an invitation still lands a **new member**
+on the detail page (the playing surface), not on Nastavení.
+
+**Žebříček panel.** Top 7 rows from the already-loaded `GetCompetitionLeaderboard`, plus a
+„…"-separated own row when the viewer ranks below that. Rows carry rank, avatar, name, @nick,
+points and the `Leaderboard/Delta variant="chip"`. „Celý žebříček" links to
+`/zebricek?soutez=<id>` (route `leaderboard`) and each row to `leaderboard_member`; item 05 (the
+standalone Žebříček page) landed while this item was in flight, so those are its route names.
+
+**Match list.** All matches of the competition (`CompetitionMatchProvider`, never re-derived),
+each with its `EffectiveTipDeadlineResolver` deadline, my tip, the batch `TipStatsProvider`
+row, and the points scored (new batch read
+`GuessEvaluationRepository::pointsByMatchForUserInCompetition` — one query per page). The old
+„Moje tipy" collapsible listed only matches I had already tipped, so an untipped match was
+invisible; the new list shows every match with a „+ Zadat tip" prompt
+(`Match:MatchRow` gained an optional `tipPrompt` prop that renders the already-existing but
+unused `.my-tip.empty` style). No new CSS was needed for this item.
+
+**B6 — „fully over".** Defined as *the competition includes ≥1 match and none of its included
+matches is `Scheduled`, `Live` or `Postponed`* — `Finished` (has a result) and `Cancelled`
+(never will) both count as settled, an empty scope is not over. Deliberately not „past the last
+kickoff": a kicked-off match without an entered result can still move the standings. Implemented
+as `CompetitionMatchProvider::isFullyOver()` (so scope always comes from the one authority),
+enforced in `PurchaseBoostHandler` via `CompetitionAlreadyOver` (`#[WithHttpStatus(409)]`,
+surfaced by `PurchaseBoostController` as a flash + return to origin) and mirrored in
+`Boost:Panel`, which drops the price and the CTA for a one-line Czech explanation. Written into
+`.docs/DOMAIN.md` §Monetization + a dated decision-log row.
+
+**Owned-boost jump links.** „Lišta tipů ostatních" jumps to the detail page's match list
+(`#zapasy`, where the distribution bar renders), „Konkrétní tipy kolegů" to the guess matrix
+(`leaderboard_matrix`) and „Měnit tip" to `competition_my_tips_batch`.
+
+**B2 not pre-empted.** „Uzamknout tipy" keeps its immediate behaviour, its `confirm` modal and
+its `competition_lock_tips_<uuid>` CSRF token id.

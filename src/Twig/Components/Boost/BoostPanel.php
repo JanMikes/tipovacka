@@ -10,6 +10,7 @@ use App\Enum\BoostType;
 use App\Query\GetBoostPanel\GetBoostPanel;
 use App\Query\GetBoostPanel\GetBoostPanelResult;
 use App\Query\QueryBus;
+use App\Service\Competition\CompetitionMatchProvider;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
@@ -40,7 +41,18 @@ final class BoostPanel
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly Security $security,
+        private readonly CompetitionMatchProvider $matchProvider,
     ) {
+    }
+
+    /**
+     * B6 — the competition is fully over (every included match settled), so a
+     * boost bought now could no longer unlock anything. Both shapes drop the
+     * purchase CTA and say why instead. The command handler refuses too; this is
+     * only the polite half.
+     */
+    public bool $competitionIsOver {
+        get => $this->matchProvider->isFullyOver($this->competition);
     }
 
     public ?GetBoostPanelResult $panel {

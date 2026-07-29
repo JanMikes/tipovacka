@@ -9,6 +9,7 @@
     <twig:Breadcrumbs :items="[
         {label: 'Nástěnka', path: path('dashboard')},
         {label: competition.name, path: path('competition_detail', {id: competition.id.toRfc4122})},
+        {label: 'Nastavení', path: path('competition_settings', {id: competition.id.toRfc4122})},
         {label: is_teams ? 'Týmy soutěže' : 'Výběr zápasů'},
     ]" />
 
@@ -50,7 +51,7 @@
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
                         Uložit týmy
                     </button>
-                    <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                    <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                         Zpět na soutěž
                     </a>
                 </div>
@@ -95,7 +96,7 @@
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
                         Uložit výběr
                     </button>
-                    <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
+                    <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">
                         Zpět na soutěž
                     </a>
                 </div>

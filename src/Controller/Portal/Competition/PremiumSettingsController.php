@@ -45,7 +45,7 @@ final class PremiumSettingsController extends AbstractController
         if (CompetitionMonetization::Premium !== $competition->monetization) {
             $this->addFlash('info', 'Prémiové nastavení je dostupné jen u prémiových soutěží.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $formData = PremiumSettingsFormData::fromCompetition($competition);

@@ -87,7 +87,7 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testAllModeCompetitionRedirectsToDetail(): void
+    public function testAllModeCompetitionRedirectsToSettings(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -97,6 +97,6 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         $client->loginUser($admin);
 
         $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy-vyber');
-        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/nastaveni');
     }
 }

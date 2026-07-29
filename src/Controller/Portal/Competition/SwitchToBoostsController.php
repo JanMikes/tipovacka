@@ -43,7 +43,7 @@ final class SwitchToBoostsController extends AbstractController
         if (!$this->isCsrfTokenValid('competition_switch_to_boosts_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
             $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
 
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
         }
 
         $this->commandBus->dispatch(new SwitchToBoostsCommand(
@@ -53,6 +53,6 @@ final class SwitchToBoostsController extends AbstractController
 
         $this->addFlash('success', 'Přepnuto na příspěvky — prémiové platby za členy byly vráceny.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 }
