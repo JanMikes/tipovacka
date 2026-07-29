@@ -1,6 +1,6 @@
 # Item 01 — Navigation slim-down + noindex on de-linked marketing pages
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** nothing
 **Blocks:** items 02–05 (they assume the new nav)
 
@@ -99,3 +99,27 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → the relevant
 markup. Update `UI-MAP.md` §1 (the nav variants table) and §2 in the same commit. Update the status
 board row for item 01 to DONE + sha. Commit `UI: navigation slim-down + noindex marketing pages`,
 push to `main`.
+
+## Assumptions made
+
+- **The homepage keeps its two „Funkce" CTAs** (`templates/home.html.twig`, hero secondary button
+  + closing section). The item scopes the de-linking to the top bar and explicitly allows the
+  footer to keep its links, so internal links from `/` were left alone — `noindex, nofollow` on the
+  target already keeps the pages out of the index. Revisit when the homepage is rewritten.
+- **The logged-out CTA keeps its narrow-screen fallback span** (`<span class="md:hidden">Registrace</span>`
+  next to `<span class="cta-label">Registrace zdarma</span>`) — „identical button styling, only the
+  label and target change" was read as *do not touch the markup structure*.
+- **Active-state matching for „Soutěže" stays route-prefix based** (`public_competitions_list`), so
+  no `portal_competition_*` page highlights it. Making the bar aware of soutěž sub-pages is item 04's
+  business, not a silent extension here.
+- **„Zápasy" was removed from both the desktop bar and the mobile panel**, and no replacement entry
+  point was invented — the item says the page stays reachable *by URL*.
+
+## What landed
+
+- `templates/components/Layout/Nav.html.twig` — new link sets (desktop + mobile), CTA label.
+- `templates/base.html.twig` — added `{% block meta_robots %}{% endblock %}` (empty by default).
+- `templates/public/{features,pricing,for_business,faq}.html.twig` — fill it with
+  `<meta name="robots" content="noindex, nofollow">`.
+- `tests/Integration/Auth/NavigationTest.php` — locks the exact link sets (both variants), the
+  registration CTA, `/zapasy` still 200, noindex on the four pages and *not* on `/`.

@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{{ brand_name }}{% endblock %}</title>
         <meta name="description" content="{% block meta_description %}{{ brand_name }} — tipovací soutěže pro firmy, partičky i kámoše. Bez sázek, jen pro radost.{% endblock %}">
+        {# Empty by default — only de-linked pages (marketing set) fill this with a noindex robots tag. #}
+        {% block meta_robots %}{% endblock %}
 
         <meta property="og:site_name" content="{{ brand_name }}">
         <meta property="og:type" content="website">

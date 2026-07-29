@@ -27,7 +27,15 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 
 | # | Item | Status | Commit |
 |---|------|--------|--------|
-| — | _(no items yet — awaiting requirements from the product owner)_ | — | — |
+| 01 | [Navigation slim-down + noindex on de-linked marketing pages](items/01-nav-and-noindex.md) | DONE | `SHA01` |
+
+Separate sub-backlogs, each with its own board (work them after the numbered items unless the
+product owner reprioritises):
+
+| Sub-backlog | Scope | Status |
+|---|---|---|
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | TODO |
+| [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | TODO |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->
 

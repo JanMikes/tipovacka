@@ -21,19 +21,28 @@ docker compose exec web bin/console debug:router --show-controllers
 
 | Variant | Primary links | Right-hand actions |
 |---|---|---|
-| `app` (logged in) | Soutěže → `portal_dashboard` · Zápasy → `portal_matches` · Žebříček → `portal_leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `portal_competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
-| `public` (logged out) | Soutěže → `public_competitions_list` · Funkce · Ceník · Pro firmy · FAQ | Přihlásit se · „Vytvořit soutěž zdarma" |
+| `app` (logged in) | Nástěnka hráče → `portal_dashboard` · Soutěže → `public_competitions_list` · Žebříček → `portal_leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `portal_competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
+| `public` (logged out) | Soutěže → `public_competitions_list` | Přihlásit se · „Registrace zdarma" → `app_register` |
 
 Mobile: `mobile_nav_controller.js` toggles `.wt-mobile` panel which repeats the primary links
-plus Profil / Kredity / Administrace / Odhlásit se.
+plus Profil / Kredity / Administrace / Odhlásit se (logged in) or Přihlásit se / Registrace
+zdarma (logged out).
+
+Not in the bar (item 01 slim-down, both variants):
+- **Zápasy** (`portal_matches`, `/zapasy`) — page kept, reachable by URL only.
+- **Funkce / Ceník / Pro firmy / FAQ** — kept in the footer, `noindex, nofollow` (see §2).
 
 Notable current quirks (candidates for this stream, not yet decided):
-- „Soutěže" for a logged-in user points at the **dashboard**, so the label and the destination
-  disagree; the dashboard is a mixed feed (stats + soutěže + zdroje + zápasy).
 - „Žebříček" is a *resolver* route (`portal_leaderboard`) that redirects to the user's primary
-  soutěž leaderboard — global-looking label, soutěž-scoped destination.
+  soutěž leaderboard — global-looking label, soutěž-scoped destination. Logged-out users get no
+  Žebříček link at all (no public leaderboard page exists yet — item 02).
+- „Soutěže" points at the **public** `/souteze` list for logged-in users too; it is not yet
+  context-aware (item 04), and no `portal_competition_*` route lights it up as active.
 - „Kredity" only exists in the mobile menu and the avatar dropdown (via `CreditBalance`).
 - The admin area has **no link back** into the portal shell other than the brand mark.
+
+`base.html.twig` exposes `{% block meta_robots %}` (empty by default) so a page can de-index
+itself; only the four marketing templates fill it.
 
 **`templates/admin/layout.html.twig`** — separate shell for `^/admin` (own sidebar/tabs).
 
@@ -46,17 +55,17 @@ Notable current quirks (candidates for this stream, not yet decided):
 Czech URL slugs throughout. `{id}` = UUID v7.
 
 ### Public / marketing (logged out, no firewall)
-| Route | Path | Template |
-|---|---|---|
-| `app_home` | `/` | `home.html.twig` |
-| `app_features` | `/funkce` | `public/features.html.twig` |
-| `app_pricing` | `/cenik` | `public/pricing.html.twig` |
-| `app_for_business` | `/pro-firmy` | `public/for_business.html.twig` |
-| `app_faq` | `/faq` | `public/faq.html.twig` |
-| `app_privacy` | `/ochrana-soukromi` | `public/privacy.html.twig` |
-| `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` |
-| `public_match_sources_list_legacy` | `/turnaje` | legacy redirect |
-| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` |
+| Route | Path | Template | Notes |
+|---|---|---|---|
+| `app_home` | `/` | `home.html.twig` | |
+| `app_features` | `/funkce` | `public/features.html.twig` | **noindex, nofollow** — footer-only |
+| `app_pricing` | `/cenik` | `public/pricing.html.twig` | **noindex, nofollow** — footer-only |
+| `app_for_business` | `/pro-firmy` | `public/for_business.html.twig` | **noindex, nofollow** — footer-only |
+| `app_faq` | `/faq` | `public/faq.html.twig` | **noindex, nofollow** — footer-only |
+| `app_privacy` | `/ochrana-soukromi` | `public/privacy.html.twig` | |
+| `public_competitions_list` | `/souteze` | `public/competitions_list.html.twig` | the „Soutěže" nav target in **both** variants |
+| `public_match_sources_list_legacy` | `/turnaje` | legacy redirect | |
+| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | |
 
 ### Auth
 `app_login` `/prihlaseni` · `app_logout` `/odhlaseni` · `app_register` `/registrace` ·
@@ -68,8 +77,8 @@ Templates in `templates/auth/`, forms are Live Components in `templates/componen
 ### Portal — top level
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `portal_dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Soutěže" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
-| `portal_matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats` |
+| `portal_dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Nástěnka hráče" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
+| `portal_matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats`. **No longer in the nav** (item 01); URL-only |
 | `portal_leaderboard` | `/portal/zebricek` | — (redirector) | Resolves to the primary soutěž's leaderboard |
 | `portal_credits` | `/portal/kredity` | `portal/credits/overview.html.twig` | + `portal_credits_buy`, `portal_credits_return` |
 | `portal_notifications` | `/portal/oznameni` | `portal/notifications/center.html.twig` | + `portal_notification_read`, `portal_notifications_read_all` |
@@ -187,8 +196,10 @@ Rebuilt live by the `tailwind` container. **Never** run `asset-map:compile` loca
 
 Listed so item files can reference them; each becomes a decision only when the product owner says so.
 
-1. **„Soutěže" → dashboard mismatch.** No dedicated „my competitions" list page; the dashboard
-   mixes a personal summary, a competition list, a source list and a match feed in 564 lines.
+1. **No dedicated „my competitions" list page.** The dashboard mixes a personal summary, a
+   competition list, a source list and a match feed in 564 lines; nav „Soutěže" points at the
+   public `/souteze` discovery list, which is not membership-aware (item 04). _(The old
+   label/destination mismatch — „Soutěže" → dashboard — was fixed by item 01.)_
 2. **Competition detail is a 576-line monolith** — members, my tips, invitations, leaderboard
    preview, boosts, management all stacked vertically with no tabbing or sectioning.
 3. **Two parallel object lists** (soutěže + zdroje zápasů) surfaced on the dashboard with equal
