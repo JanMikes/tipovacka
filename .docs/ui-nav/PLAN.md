@@ -36,6 +36,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 08 | [Competition detail: a playing surface, with everything else behind „Nastavení"](items/08-page-competition-detail.md) (+ bug B6) | DONE | `436841f` |
 | 05 | [„Žebříček" becomes a real, standalone, publicly viewable page](items/05-page-zebricek.md) | DONE | `843a80e` |
 | 06 | [„Nástěnka hráče" (rebuild of `/nastenka`)](items/06-page-nastenka.md) | DONE | `6561d1d` |
+| 10 | [Match detail (`/zapasy/{id}`): distribution, timeline, per-match ranking](items/10-page-match-detail.md) | DONE | `6bfd659` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
