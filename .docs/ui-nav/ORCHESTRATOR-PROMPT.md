@@ -38,6 +38,16 @@ what must NOT change, acceptance criteria, and screenshot paths.
 **Save my screenshots immediately** into `.docs/ui-nav/screenshots/` and reference that path. The
 paths I paste are often volatile temp files that vanish.
 
+**Compress them on the way in.** They are committed — an item file must stay self-contained for a
+fresh clone, and a gitignored reference is a dangling one — so raw retina PNGs bloat history
+permanently. One command, ~93 % smaller, still perfectly readable:
+
+```bash
+sips -Z 1600 <file>.png >/dev/null && pngquant --quality 60-85 --force --output <file>.png <file>.png
+```
+
+Do not resize below 1600 px wide — the detail in a design mock is the whole point.
+
 ## Ask me, don't assume
 
 I would much rather answer four questions than review four wrong guesses. Use `AskUserQuestion`
