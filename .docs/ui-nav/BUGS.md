@@ -13,7 +13,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | TODO | — |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
-| B6 | Boost can be bought for a competition that is already over | DONE | `PENDING` |
+| B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 
 ---
 
