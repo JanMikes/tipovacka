@@ -60,14 +60,18 @@ final readonly class ListUserMatchesQuery
             $matchIds[] = $m->id;
         }
 
-        $competitionsByMatchSource = $this->loadUserCompetitionsByMatchSource($query->userId, array_values($matchSourceIds));
-        $guessedCompetitionsByMatch = $this->loadGuessedCompetitionsByMatch($query->userId, $matchIds);
+        $competitionsByMatchSource = $this->loadUserCompetitionsByMatchSource(
+            $query->userId,
+            array_values($matchSourceIds),
+            $query->competitionId,
+        );
+        $guessesByMatch = $this->loadGuessesByMatch($query->userId, $matchIds);
 
         // Distribution stats are per (competition, match); collect the pairs while
         // walking the list and resolve them all in ONE batch afterwards.
         /** @var array<string, array{0: Competition, 1: list<SportMatch>}> $statsPairs */
         $statsPairs = [];
-        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int}> $rows */
+        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int, myTip: ?array{home: int, away: int}}> $rows */
         $rows = [];
 
         foreach ($matches as $m) {
@@ -103,7 +107,15 @@ final readonly class ListUserMatchesQuery
                 }
             }
 
-            $guessedCompetitionIds = $guessedCompetitionsByMatch[$matchKey] ?? [];
+            $guessesHere = $guessesByMatch[$matchKey] ?? [];
+            $guessedCompetitionIds = array_keys($guessesHere);
+
+            // „Můj tip" is only unambiguous when exactly ONE of the user's competitions
+            // includes the match — two competitions can hold two different tips for it.
+            // Scoping the query (`competitionId`) always produces that single answer.
+            $myTip = 1 === count($includingCompetitions)
+                ? ($guessesHere[$competitionIds[0]] ?? null)
+                : null;
 
             $rows[] = [
                 'match' => $m,
@@ -113,6 +125,7 @@ final readonly class ListUserMatchesQuery
                 'guessedCompetitionsCount' => count(array_intersect($competitionIds, $guessedCompetitionIds)),
                 'openCompetitionsCount' => count($openCompetitionIds),
                 'pendingCompetitionsCount' => count(array_diff($openCompetitionIds, $guessedCompetitionIds)),
+                'myTip' => $myTip,
             ];
         }
 
@@ -143,6 +156,8 @@ final readonly class ListUserMatchesQuery
                 guessedCompetitionsCount: $row['guessedCompetitionsCount'],
                 openCompetitionsCount: $row['openCompetitionsCount'],
                 pendingCompetitionsCount: $row['pendingCompetitionsCount'],
+                myHomeScore: $row['myTip']['home'] ?? null,
+                myAwayScore: $row['myTip']['away'] ?? null,
                 tipStats: $this->statsFor($stats, $m, $row['competitions']),
             );
         }
@@ -189,14 +204,13 @@ final readonly class ListUserMatchesQuery
      *
      * @return array<string, list<Competition>> keyed by match source UUID → the user's active competitions
      */
-    private function loadUserCompetitionsByMatchSource(Uuid $userId, array $matchSourceIds): array
+    private function loadUserCompetitionsByMatchSource(Uuid $userId, array $matchSourceIds, ?Uuid $competitionId): array
     {
         if (0 === count($matchSourceIds)) {
             return [];
         }
 
-        /** @var list<Competition> $competitions */
-        $competitions = $this->entityManager->createQueryBuilder()
+        $qb = $this->entityManager->createQueryBuilder()
             ->select('g')
             ->from(Membership::class, 'm')
             ->innerJoin(Competition::class, 'g', 'WITH', 'g.id = m.competition')
@@ -205,9 +219,17 @@ final readonly class ListUserMatchesQuery
             ->andWhere('m.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
-            ->setParameter('matchSourceIds', $matchSourceIds)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('matchSourceIds', $matchSourceIds);
+
+        // Scoping happens HERE, on the membership side: everything downstream
+        // (which matches count as the user's, the tip-stats batch) then follows
+        // from the single soutěž without a second pass over the rows.
+        if (null !== $competitionId) {
+            $qb->andWhere('g.id = :competitionId')->setParameter('competitionId', $competitionId);
+        }
+
+        /** @var list<Competition> $competitions */
+        $competitions = $qb->getQuery()->getResult();
 
         $byMatchSource = [];
         foreach ($competitions as $competition) {
@@ -218,19 +240,21 @@ final readonly class ListUserMatchesQuery
     }
 
     /**
+     * The user's own tips on these matches, in ONE query — never per row.
+     *
      * @param list<Uuid> $matchIds
      *
-     * @return array<string, list<string>> keyed by sport match UUID → list of competition UUIDs where user has guessed
+     * @return array<string, array<string, array{home: int, away: int}>> sport match UUID → competition UUID → tip
      */
-    private function loadGuessedCompetitionsByMatch(Uuid $userId, array $matchIds): array
+    private function loadGuessesByMatch(Uuid $userId, array $matchIds): array
     {
         if (0 === count($matchIds)) {
             return [];
         }
 
-        /** @var list<array{sportMatchId: string, competitionId: string}> $rows */
+        /** @var list<array{sportMatchId: string, competitionId: string, homeScore: int, awayScore: int}> $rows */
         $rows = $this->entityManager->createQueryBuilder()
-            ->select('IDENTITY(g.sportMatch) AS sportMatchId, IDENTITY(g.competition) AS competitionId')
+            ->select('IDENTITY(g.sportMatch) AS sportMatchId, IDENTITY(g.competition) AS competitionId, g.homeScore AS homeScore, g.awayScore AS awayScore')
             ->from(Guess::class, 'g')
             ->where('g.user = :userId')
             ->andWhere('g.sportMatch IN (:matchIds)')
@@ -242,8 +266,10 @@ final readonly class ListUserMatchesQuery
 
         $byMatch = [];
         foreach ($rows as $row) {
-            $matchKey = (string) $row['sportMatchId'];
-            $byMatch[$matchKey][] = (string) $row['competitionId'];
+            $byMatch[(string) $row['sportMatchId']][(string) $row['competitionId']] = [
+                'home' => $row['homeScore'],
+                'away' => $row['awayScore'],
+            ];
         }
 
         return $byMatch;

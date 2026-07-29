@@ -23,6 +23,11 @@ final readonly class UserMatchItem
      *                                                 open — same semantics as the dashboard's UpcomingMatchItem
      * @param int            $pendingCompetitionsCount competitions where the tip is missing AND
      *                                                 tipping is still open — i.e. actionable gaps
+     * @param int|null       $myHomeScore              the viewer's own tip, but ONLY when exactly one
+     *                                                 of their competitions includes this match (two
+     *                                                 competitions may hold two different tips);
+     *                                                 always answered when the query is scoped to one
+     * @param int|null       $myAwayScore              see {@see $myHomeScore}
      */
     public function __construct(
         public Uuid $id,
@@ -45,6 +50,8 @@ final readonly class UserMatchItem
         public int $guessedCompetitionsCount,
         public int $openCompetitionsCount,
         public int $pendingCompetitionsCount,
+        public ?int $myHomeScore = null,
+        public ?int $myAwayScore = null,
         public array $tipStats = [],
     ) {
     }

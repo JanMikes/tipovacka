@@ -27,7 +27,8 @@ final class TipStatsSurfacesTest extends WebTestCase
     use WebFlowHelpers;
 
     private const string MATCHES_LIST = '/zapasy';
-    private const string DASHBOARD = '/nastenka';
+    /** The Nástěnka is soutěž-scoped since item 06 — point it at the boosts soutěž. */
+    private const string DASHBOARD = '/nastenka?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
     private const string MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;

@@ -10,9 +10,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * The „Tvoje pozice" hero card (item 06) — the one place the Nástěnka states the
+ * viewer's standing in the soutěž in focus.
+ */
 final class DashboardStatsFlowTest extends WebTestCase
 {
-    public function testMemberWithEvaluatedTipsSeesPersonalStats(): void
+    public function testMemberWithEvaluatedTipsSeesTheStandingCard(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -21,19 +25,18 @@ final class DashboardStatsFlowTest extends WebTestCase
         self::assertNotNull($admin);
         $client->loginUser($admin);
 
-        // Explicitly select PUBLIC_COMPETITION (where admin has an evaluated tip);
-        // admin also owns the S09 global competitions, which would otherwise be the
-        // default selection and have no evaluated results yet.
+        // Explicitly select PUBLIC_COMPETITION (where admin has an evaluated tip).
         $client->request('GET', '/nastenka?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
+
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Moje výsledky');
-        // Populated branch renders the per-soutěž stat cards (not the empty hint).
-        self::assertSelectorTextContains('body', 'POŘADÍ');
-        self::assertSelectorTextContains('body', 'ÚSPĚŠNOST');
-        self::assertSelectorTextContains('body', 'STREAK');
+        self::assertSelectorTextContains('.hero-rank-label', 'Tvoje pozice');
+        self::assertSelectorTextContains('.hero-rank-pool', AppFixtures::PUBLIC_COMPETITION_NAME);
+        self::assertSelectorTextContains('.hero-rank-num', '.');
+        self::assertSelectorTextContains('.hero-rank-meta', 'Body');
+        self::assertSelectorTextContains('.hero-rank-meta', 'Změna');
     }
 
-    public function testMemberWithoutEvaluatedTipsSeesEmptyHint(): void
+    public function testMemberWithoutEvaluatedTipsStillSeesTheirRank(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
@@ -44,8 +47,11 @@ final class DashboardStatsFlowTest extends WebTestCase
         $client->loginUser($verified);
 
         $client->request('GET', '/nastenka');
+
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Moje výsledky');
-        self::assertSelectorTextContains('body', 'Zatím bez výsledků');
+        self::assertSelectorTextContains('.hero-rank-pool', AppFixtures::VERIFIED_COMPETITION_NAME);
+        // Nothing evaluated yet ⇒ „Úspěšnost —", never a fabricated percentage.
+        self::assertSelectorTextContains('.hero-rank-meta', 'Úspěšnost');
+        self::assertSelectorTextContains('body', 'Zatím nemáš žádný vyhodnocený tip');
     }
 }

@@ -1,0 +1,84 @@
+{#
+    One match row of the Nástěnka (item 06) — used by both „Následující zápasy" and
+    „Odehrané zápasy", so the two never drift apart.
+
+    m                 App\Query\ListUserMatches\UserMatchItem
+    my_tips_by_match  array<string, EvaluatedGuessItem> — the viewer's own tip on a
+                      finished match, indexed by sport-match id in the controller
+                      (never looked up per row).
+
+    The „Rozložení tipů" strip underneath is fed from `m.tipStats`, which
+    TipStatsProvider resolved in ONE batch for the whole page.
+#}
+{% set guess = my_tips_by_match[m.id.toRfc4122] ?? null %}
+{% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
+{% set is_locked = not m.isFinished and not m.isPostponed and m.openCompetitionsCount == 0 and m.guessedCompetitionsCount == 0 %}
+{% set is_tipped = m.guessedCompetitionsCount > 0 and m.pendingCompetitionsCount == 0 %}
+
+{#
+    Stav → one pill slot; the fractions (x/y) count only soutěže whose uzávěrka is
+    still open, so „Tip odeslán" can never appear for a match with no tip at all.
+#}
+{% if m.isFinished %}
+    {% set row_state = 'finished' %}{% set pill_variant = 'done' %}{% set pill_icon = 'check' %}{% set pill_label = 'Ukončeno' %}{% set pill_dot = false %}
+{% elseif m.isPostponed %}
+    {% set row_state = 'locked' %}{% set pill_variant = 'warn' %}{% set pill_icon = 'triangle-alert' %}{% set pill_label = 'Odloženo' %}{% set pill_dot = false %}
+{% elseif m.isLive %}
+    {% set row_state = 'locked' %}{% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Live' %}{% set pill_dot = true %}
+{% elseif is_locked %}
+    {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
+{% elseif m.pendingCompetitionsCount > 0 %}
+    {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
+    {% set pill_label = m.openCompetitionsCount > 1 ? 'Chybí tip (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Chybí tip' %}
+{% elseif is_tipped %}
+    {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_dot = false %}
+    {% set pill_label = m.openCompetitionsCount > 1 ? 'Tip odeslán (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Tip odeslán' %}
+{% else %}
+    {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
+{% endif %}
+
+{% set is_exact = guess is not null and guess.myHomeScore == guess.actualHomeScore and guess.myAwayScore == guess.actualAwayScore %}
+{# Můj tip: the evaluated read model when the match is over (it carries the points too),
+   otherwise the tip the match feed resolved for the soutěž in focus. #}
+{% set my_home = guess ? guess.myHomeScore : m.myHomeScore %}
+{% set my_away = guess ? guess.myAwayScore : m.myAwayScore %}
+
+<twig:Match:MatchRow
+    :homeTeam="m.homeTeam"
+    :awayTeam="m.awayTeam"
+    :kickoffAt="m.kickoffAt"
+    :round="m.round"
+    :isPlayoff="m.isPlayoff"
+    :state="row_state"
+    :pillVariant="pill_variant"
+    :pillIcon="pill_icon"
+    :pillLabel="pill_label"
+    :pillDot="pill_dot"
+    :myHome="my_home"
+    :myAway="my_away"
+    :resultHome="m.isFinished ? m.homeScore : null"
+    :resultAway="m.isFinished ? m.awayScore : null"
+    :points="guess ? guess.totalPoints : null"
+    :hitClass="guess is null ? null : (is_exact ? 'exact' : (guess.totalPoints > 0 ? 'partial' : null))"
+    :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
+    :detailLabel="m.isTippable ? 'Tipovat' : 'Detail zápasu'"
+    :tipPrompt="m.isTippable and my_home is null ? '+ Zadat tip' : null"
+/>
+
+{# Rozložení tipů (or its paywall) per soutěž that includes this match. #}
+{% for stats in m.tipStats %}
+    {% if stats.hasAnythingToShow %}
+        <div class="px-4 sm:px-5">
+            {% if m.tipStats|length > 1 %}
+                <p class="mt-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">{{ stats.competitionName }}</p>
+            {% endif %}
+            <twig:Match:TipStats :stats="stats" />
+        </div>
+    {% endif %}
+{% endfor %}
+
+{% if m.matchSourceName or m.venue %}
+    <p class="mt-1.5 px-4 text-xs text-white/40 sm:px-5">
+        {{ m.matchSourceName }}{% if m.venue %} · {{ m.venue }}{% endif %}
+    </p>
+{% endif %}

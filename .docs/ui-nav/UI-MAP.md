@@ -97,7 +97,7 @@ Templates in `templates/auth/`, forms are Live Components in `templates/componen
 ### Player top level (🔒 all)
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` (564 l.) | The „Nástěnka hráče" nav target. Sections: hero headline → primary-soutěž panel with `SoutezSwitcher` + 5 `StatCard`s + mini-leaderboard → 3 global `StatCard`s → „Moje soutěže" cards → „Moje zdroje zápasů" cards → „Nadcházející zápasy" |
+| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` | The „Nástěnka hráče" nav target — **the player's home** since item 06: ONE soutěž in focus, picked with `<twig:SoutezSwitcher>` (`?soutez={uuid}`, unknown/foreign id falls back silently). Sections in order: hero (eyebrow, „Ahoj, {nickname}.", switcher, **„Tvoje pozice" `.hero-rank` card**) → „Poslední Tvoje tipy" (+ „Historie →" `leaderboard_member`) → „Moje soutěže" (**deliberately un-scoped** — the full cross-soutěž overview) → „Následující zápasy" (chips Vše/Live/Dnes/Tipovatelné/Ukončené with counts + a „SOUTĚŽ" `?zapasy=vse` widener) → „Odehrané zápasy" beside the „Žebříček" sidebar (`.lb-row`, „Celý žebříček →" `/zebricek?soutez=`). Fed by `ListUserMatches` scoped to the soutěž, so „Rozložení tipů" is one `TipStatsProvider` batch, never per row. **Gone** (item 06): the PIN bar, „Moje zdroje zápasů", „Objev další soutěže", the three count `StatCard`s |
 | `matches` | `/zapasy` | `portal/matches/index.html.twig` (119 l.) | „Vaše zápasy" — cross-competition match feed, `MatchRow` + `Match:TipStats`. **No longer in the nav** (item 01); URL-only |
 | `leaderboard` | `/zebricek` | `public/leaderboard.html.twig` | **public** (item 05) — see the Žebříček section below |
 | `credits` | `/kredity` | `portal/credits/overview.html.twig` | + `credits_buy` `/kredity/koupit`, `credits_return` `/kredity/navrat` |
@@ -265,7 +265,10 @@ each option = name + zdroj zápasů + Prague date range. Zero soutěží renders
 renders a static chip, an unknown id falls back to the first.
 See [`.docs/features/competition-switcher.md`](../features/competition-switcher.md)).
 
-**Partials** `_partials/competition_rules.html.twig`, `_partials/join_by_pin_form.html.twig`.
+**Partials** `_partials/competition_rules.html.twig`, `_partials/join_by_pin_form.html.twig`
+(**the PIN bar's only call site is `/souteze` since item 06**), plus page-scoped ones next to
+their template: `portal/_dashboard_match_row.html.twig`, `portal/_dashboard_leaderboard_row.html.twig`,
+`portal/sport_match/_timeline.html.twig`.
 
 ---
 
@@ -304,15 +307,16 @@ Listed so item files can reference them; each becomes a decision only when the p
 
 1. ~~**No dedicated „my competitions" list page.**~~ **Fixed by item 07**: `/souteze` is now the
    one place every relationship to a competition lives — plays in / organizes / could join —
-   and „Tvé soutěže" is the organizer list the app never had. The dashboard still carries its own
-   „Moje soutěže" copy of the list (item 06's business).
+   and „Tvé soutěže" is the organizer list the app never had. _(Item 06 kept a „Moje soutěže" grid
+   on the Nástěnka on purpose: it is the one section the switcher does NOT scope, so the player's
+   home still answers „where else do I play" — and every card links back into `/souteze`.)_
 2. ~~**Competition detail is a 576-line monolith**~~ **Fixed by item 08** („Everything →
    Nastavení"): the detail page is now header + action bar + banner + match list + žebříček
    (with real rows) + boosts, and every organizer control lives on `/souteze/{id}/nastaveni`.
-3. **Two parallel object lists** (soutěže + zdroje zápasů) surfaced on the dashboard with equal
-   weight, though a normal player never owns a zdroj. _(Item 07 took the soutěž half off the
-   dashboard's shoulders — `/souteze` is now the canonical list — but the dashboard sections
-   themselves still stand; retiring them is item 06.)_
+3. ~~**Two parallel object lists** (soutěže + zdroje zápasů) surfaced on the dashboard with equal
+   weight, though a normal player never owns a zdroj.~~ **Fixed by item 06**: „Moje zdroje zápasů"
+   is gone from the Nástěnka (a zdroj is an organizer object — it belongs to `/souteze` and the
+   soutěž's Nastavení), and so are the PIN bar and „Objev další soutěže", which `/souteze` owns.
 4. ~~**Žebříček nav item is soutěž-scoped** but presented as global.~~ _(Item 05: `/zebricek` is a real page in both nav variants, scoped by `?soutez` and public for global competitions.)_
 5. **Kredity is hidden** — reachable only from the avatar dropdown / mobile menu.
 6. **Admin is a separate shell** with no path back; „Administrace" lands on `/admin/turnaje`,

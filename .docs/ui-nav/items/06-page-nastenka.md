@@ -1,6 +1,6 @@
 # Item 06 — „Nástěnka hráče" (rebuild of `/nastenka`)
 
-**Status:** TODO
+**Status:** DONE
 **Depends on:** item 04 (switcher). Item 03 (fixtures) makes verification realistic.
 
 ---
@@ -97,3 +97,86 @@ Per `.docs/ui-nav/PLAN.md`: `cs:fix` → `quality` → `tests/Integration/Portal
 for: several competitions, exactly one, zero, a premium competition, a boosts competition where the
 viewer has and has not bought. Update `UI-MAP.md` §2/§3 and §6 (pain points 1 and 3 are addressed
 here). Update the status board row to DONE + sha. Commit `UI: Nástěnka hráče`, push to `main`.
+
+---
+
+## What landed
+
+- **`/nastenka` is the player's home.** `src/Controller/Portal/DashboardController.php` (still
+  `#[IsGranted('ROLE_USER')]`, route name `dashboard`, already declared in
+  `AnonymousReachabilityTest`) + a rewritten `templates/portal/dashboard.html.twig` (564 → ~320 l.)
+  with two page partials, `portal/_dashboard_match_row.html.twig` and
+  `portal/_dashboard_leaderboard_row.html.twig`, so the two match lists and the two žebříček row
+  kinds can never drift apart.
+- **Sections in the screenshots' order:** hero (eyebrow „NÁSTĚNKA", „Ahoj, {nickname}.",
+  `<twig:SoutezSwitcher route="dashboard" param="soutez">`, subtitle, and the **„Tvoje pozice"
+  `.hero-rank` card** from `img07`) → „Poslední Tvoje tipy" (+ „Historie →") → „Moje soutěže"
+  → „Následující zápasy" (chip row + „SOUTĚŽ" control) → „Odehrané zápasy" beside the
+  „Žebříček" sidebar (+ „Celý žebříček →" `/zebricek?soutez=<id>`, item 05's page).
+- **Dropped, as instructed:** the „PŘIPOJIT SE K SOUTĚŽI" PIN bar (the include only —
+  `_partials/join_by_pin_form.html.twig`, the `pin_input` controller and `/pripojit*` all stay and
+  are still rendered on `/souteze`), „Moje zdroje zápasů", „Objev další soutěže", and the three
+  count-only `StatCard`s. `ListMyOwnedMatchSources` and `ListBrowsableCompetitions` were left
+  alone — the sections moved, the read models did not die.
+- **One match feed, batched.** The page reads `ListUserMatches`, which gained an optional
+  `competitionId` scope (applied on the membership join, so the tip-stats pairs follow from it).
+  „Rozložení tipů" therefore comes from a single `TipStatsProvider::forPairs` batch — there is no
+  per-match path on this page at all. `ListUpcomingMatchesForUser` was **deleted**: the dashboard
+  was its only caller and `ListUserMatches` strictly supersedes it (so was the now-unused
+  `SportMatchRepository::listUpcomingForUser`).
+- **„Můj tip" on an upcoming row.** `UserMatchItem` gained `myHomeScore` / `myAwayScore`, filled
+  from the same single guess query, but **only when exactly one** of the viewer's soutěže includes
+  the match (two soutěže can hold two different tips) — always the case when the query is scoped.
+  Without it a row read „Tip odeslán" next to an empty „+ Zadat tip" slot.
+- **„Tvoje pozice" is shared with item 05.** `LeaderboardController`'s private `gapToRank()` and
+  its me-row loop moved into `App\Value\LeaderboardStanding` (`fromRows()` → row, playerCount,
+  gapToTop3, gapToTop5); both pages now derive the standing from the one board they already load,
+  so `/zebricek` and `/nastenka` can never contradict each other.
+- **The default soutěž now matches `/zebricek`:** the most recently joined **running** soutěž, a
+  finished one only when nothing is running. Before this the Nástěnka happily opened on a
+  completed competition while the žebříček showed a live one.
+- **CSS:** one block at the end of `@layer components`, `/* --- item 06: Nástěnka --- */` —
+  `.hero-rank*`, `.result-row*` and `.mf-bar` / `.mf-scope` / `.mf-count` / `.lb-tab.has-count`.
+  Everything else reuses `.card-glass`, `.tip-row` (Match:MatchRow), `.lb-row`/`.lb-ty`/`.lb-pos`,
+  `.lb-tabs`/`.lb-tab`, `.result-tip`, `.stat-lbl`. `.lb-tab` itself was NOT modified — the count
+  badge is an opt-in `.has-count` modifier.
+- **Tests:** `DashboardFlowTest` rewritten (11 cases — every acceptance criterion, incl. the
+  foreign-UUID fallback, both empty/one-soutěž edge states, chip counts vs rendered rows, and a
+  profiler-based guard that the query count does not scale with the match count),
+  `DashboardStatsFlowTest` retargeted at the hero card, `TipStatsSurfacesTest` now visits
+  `/nastenka?soutez=<boosts>` because the page is soutěž-scoped.
+- **Verified by rendering** (dev fixtures, `localhost:58080`): six soutěží (dev user), exactly one
+  (`miska@tipovacka.dev` → static chip, no dropdown), zero (empty state + create/join CTA),
+  premium („Sousedský pohár" — unlocked bars), boosts owned („Tipovačka MS 2026" — unlocked) and
+  boosts not owned („Fandíme Česku" — the gold „Odemknout za 10 kr." placeholder).
+
+## Assumptions made
+
+1. **„Moje soutěže" stays the full cross-soutěž list**, as the item file directs — everything else
+   on the page is scoped by the switcher. **Flagging it to the product owner** as instructed: this
+   is the one reading that leaves both the switcher and the section useful, but it does mean one
+   section on the page deliberately ignores the control at the top of it. The selected soutěž's
+   card is marked „Zobrazená" and every other card carries a „Zobrazit na nástěnce" link, so the
+   relationship between the two is at least visible.
+2. **The „SOUTĚŽ" dropdown widens, it does not re-scope.** The design shows a „Všechny soutěže"
+   dropdown in the filter bar, which would duplicate the hero switcher if it listed soutěže again.
+   It is therefore a two-option scope control on `?zapasy=` — the soutěž in focus (default) or
+   „Všechny soutěže" — affecting **only** the two match lists, and it is not rendered at all for a
+   viewer with a single soutěž. A real GET form with a „Použít" button, so it works without JS
+   (same precedent as item 05's „Seřadit").
+3. **The chips filter the whole scoped list; „Odehrané zápasy" is its own section.** „Vše" counts
+   every scoped match (upcoming first, then finished — `SportMatchRepository::listAllForUser`
+   already orders it that way), so the „Ukončené" chip and the „Odehrané zápasy" section below
+   show the same rows. The static prototype does the same thing; dropping the „Ukončené" chip the
+   item names felt like the bigger deviation.
+4. **No „Přátelé" toggle in the žebříček sidebar.** The design's „Všichni · N / Přátelé" pair needs
+   a friends concept, and the domain has none — inventing one would be a new business rule, which
+   this stream explicitly is not for. The sidebar renders the „Všichni · N" chip only.
+5. **„Historie →" points at `/zebricek/clen/{me}?soutez=<id>`** — the member breakdown, which *is*
+   the history of the viewer's tips in the soutěž in focus. It is guarded by `leaderboard_details`,
+   and the viewer is a member of the soutěž by construction, so it is always reachable from here.
+6. **„Odehrané zápasy" shows the last 5 finished matches of the soutěž**, with the viewer's own tip
+   and the points it earned joined in from the already-loaded evaluated-guess list (indexed by
+   match id in the controller — no per-row lookup).
+7. **A viewer with no row on the board yet gets no hero card** rather than a „0." placeholder; the
+   rest of the page renders normally.

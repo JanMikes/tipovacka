@@ -11,7 +11,6 @@ use App\Enum\LeaderboardSort;
 use App\Enum\LeaderboardTimeFilter;
 use App\Query\GetCompetitionCurrentRound\GetCompetitionCurrentRound;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
-use App\Query\GetCompetitionLeaderboard\LeaderboardRow;
 use App\Query\GetCompetitionMatchProgress\GetCompetitionMatchProgress;
 use App\Query\ListBrowsableCompetitions\BrowsableCompetitionItem;
 use App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions;
@@ -21,6 +20,7 @@ use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Service\Leaderboard\LeaderboardTableBuilder;
 use App\Value\CompetitionSwitcherOption;
+use App\Value\LeaderboardStanding;
 use App\Voter\LeaderboardVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -99,17 +99,8 @@ final class LeaderboardController extends AbstractController
         // windowed tab never shows a strip rank that contradicts the re-ranked
         // table. Under a window the board carries no Δ (snapshots are all-time
         // only), so the strip's „od minula" movement simply does not render there.
-        $meRow = null;
-
-        if (null !== $user) {
-            foreach ($leaderboard->rows as $row) {
-                if ($row->userId->equals($user->id)) {
-                    $meRow = $row;
-
-                    break;
-                }
-            }
-        }
+        $standing = LeaderboardStanding::fromRows($leaderboard->rows, $user?->id);
+        $meRow = $standing?->row;
 
         $currentRound = $this->queryBus->handle(new GetCompetitionCurrentRound(competitionId: $competition->id));
         $progress = $this->queryBus->handle(new GetCompetitionMatchProgress(competitionId: $competition->id));
@@ -149,8 +140,8 @@ final class LeaderboardController extends AbstractController
             'podium_rows' => $podiumRows,
             'me_row' => $meRow,
             'player_count' => count($leaderboard->rows),
-            'gap_to_top3' => self::gapToRank($leaderboard->rows, $meRow, 3),
-            'gap_to_top5' => self::gapToRank($leaderboard->rows, $meRow, 5),
+            'gap_to_top3' => $standing?->gapToTop3,
+            'gap_to_top5' => $standing?->gapToTop5,
             'current_round' => $currentRound,
             'progress' => $progress,
             'table' => $table,
@@ -263,20 +254,5 @@ final class LeaderboardController extends AbstractController
         ));
 
         return $options;
-    }
-
-    /**
-     * Points the viewer still needs to reach `$rank` („do TOP 5" / „do TOP 3"),
-     * derived from the board itself. Null once they are already there.
-     *
-     * @param list<LeaderboardRow> $rows
-     */
-    private static function gapToRank(array $rows, ?LeaderboardRow $meRow, int $rank): ?int
-    {
-        if (null === $meRow || $meRow->rank <= $rank || count($rows) < $rank) {
-            return null;
-        }
-
-        return max(0, $rows[$rank - 1]->totalPoints - $meRow->totalPoints);
     }
 }

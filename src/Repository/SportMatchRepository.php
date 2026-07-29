@@ -132,40 +132,4 @@ class SportMatchRepository
 
         return array_merge($upcoming, array_reverse($past));
     }
-
-    /**
-     * @return list<SportMatch>
-     */
-    public function listUpcomingForUser(Uuid $userId, \DateTimeImmutable $now): array
-    {
-        $membershipSubquery = $this->entityManager->createQueryBuilder()
-            ->select('1')
-            ->from(Membership::class, 'ms')
-            ->innerJoin('ms.competition', 'g')
-            ->where('ms.user = :userId')
-            ->andWhere('g.matchSource = t.id')
-            ->andWhere('ms.leftAt IS NULL')
-            ->andWhere('g.deletedAt IS NULL')
-            ->getDQL();
-
-        /** @var list<SportMatch> $result */
-        $result = $this->entityManager->createQueryBuilder()
-            ->select('m', 't')
-            ->from(SportMatch::class, 'm')
-            ->innerJoin('m.matchSource', 't')
-            ->where('m.state = :state')
-            ->andWhere('m.deletedAt IS NULL')
-            ->andWhere('m.kickoffAt >= :now')
-            ->andWhere('t.deletedAt IS NULL')
-            ->andWhere('EXISTS('.$membershipSubquery.')')
-            ->setParameter('state', SportMatchState::Scheduled)
-            ->setParameter('now', $now)
-            ->setParameter('userId', $userId)
-            ->orderBy('m.kickoffAt', 'ASC')
-            ->addOrderBy('m.id', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return $result;
-    }
 }
