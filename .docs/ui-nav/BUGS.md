@@ -9,7 +9,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | # | Title | Status | Commit |
 |---|-------|--------|--------|
 | B1 | Unverified e-mail account can still use the app | DONE | `7b3f010` |
-| B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | DONE | — |
+| B2 | „Uzamknout tipy" — allow locking now **or** at a chosen time | DONE | `4e5f482` |
 | B3 | tom-select dropdown clipped on „Správa tipů členů" | DONE | `6b1ee75` |
 | B4 | Match detail omits a competition the user is a member of | DONE | `09770f4` |
 | B5 | Locked/past-deadline state is not reflected in the UI after locking | TODO | — |
