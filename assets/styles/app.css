@@ -891,6 +891,26 @@ label.required::after {
     .dist-lock-title { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
     .dist-lock-note { max-width: 34ch; font-size: 12px; line-height: 1.5; color: var(--fg-3); }
 
+    /* --- B27: the whole paywall card is the purchase trigger --- */
+    /* `.dist-buy` is a paywall card's purchase <form>. It holds BOTH controls, so
+       the card-sized one shares the token, the price and the confirm dialog of the
+       small one — and they are siblings, never nested (item 18 / item 21's rule).
+       The form lives in the card's header, so that header must not be a containing
+       block or the stretched submit would only cover the header; the card itself is
+       `position: relative` + `overflow: hidden`, so it becomes the containing block
+       and clips the corners. */
+    .card-glass > .dist-card-head { position: static; }
+    .dist-buy > .card-stretch {
+        position: absolute; inset: 0; z-index: 1;
+        padding: 0; border: 0; background: none;
+        font-size: 0; color: transparent; cursor: pointer;
+    }
+    /* NEVER declare `display` above: `[hidden]` is what keeps the oversized target
+       off a page whose `confirm` controller never connected (the controller unhides
+       it), and an author `display` would out-specify that. */
+    .dist-buy > .card-stretch:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -3px; }
+    .dist-card:has(.dist-buy > .card-stretch:hover) { border-color: rgba(245,205,84,0.5); }
+
     /* 3. „Průběh zápasu" — pure match events: minute · dot · text. No tip counts. */
     .timeline-row { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-top: 1px solid var(--border-1); }
     .timeline-row:first-child { border-top: none; }

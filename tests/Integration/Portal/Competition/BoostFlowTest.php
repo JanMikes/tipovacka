@@ -8,6 +8,7 @@ use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\BoostPurchase;
+use App\Entity\CreditWallet;
 use App\Entity\SportMatch;
 use App\Enum\BoostType;
 use App\Tests\Support\WebFlowHelpers;
@@ -26,6 +27,8 @@ final class BoostFlowTest extends WebTestCase
     private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
     private const string PREMIUM_MATCH = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    /** Match detail scoped to the boosts soutěž — the page carrying BOTH full paywall cards (B27). */
+    private const string BOOSTS_MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
 
     private function grant(string $userId, int $amount): void
     {
@@ -35,6 +38,20 @@ final class BoostFlowTest extends WebTestCase
             note: 'Test dotace',
             adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
         ));
+    }
+
+    private function balanceOf(string $userId): int
+    {
+        $em = $this->testEntityManager();
+        $em->clear();
+
+        return (int) $em->createQueryBuilder()
+            ->select('w.balance')
+            ->from(CreditWallet::class, 'w')
+            ->where('w.user = :user')
+            ->setParameter('user', Uuid::fromString($userId))
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     private function activeTipChange(string $userId): ?BoostPurchase
@@ -187,6 +204,83 @@ final class BoostFlowTest extends WebTestCase
         self::assertGreaterThanOrEqual(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_distribution"]')->count());
         self::assertGreaterThanOrEqual(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="others_tips"]')->count());
         self::assertSelectorTextContains('body', 'Odemknout');
+    }
+
+    /**
+     * B27 — both full paywall cards of the match detail let a player buy by clicking
+     * the WHOLE card, via a submit stretched over it. Three things are pinned here:
+     *
+     * 1. that submit ships `hidden`; the `confirm` Stimulus controller unhides it on
+     *    connect, so a page whose JavaScript never ran (a throw, a failed asset
+     *    fetch, B16's `disconnect()`) keeps only the small explicit button — the big
+     *    target is the enhancement, the small one the floor;
+     * 2. nothing interactive is nested inside it (items 18/21: ONE wrapping control,
+     *    every other control a sibling);
+     * 3. it lives in the SAME form as the small button, so both share one CSRF token,
+     *    one price and one confirm dialog — they can never drift apart.
+     */
+    public function testWholeCardPaywallTargetShipsHiddenAndNestsNothingInteractive(): void
+    {
+        $client = static::createClient();
+        $this->testCommandBus()->dispatch(new JoinCompetitionByLinkCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            token: AppFixtures::BOOSTS_COMPETITION_LINK_TOKEN,
+        ));
+        $this->grant(AppFixtures::VERIFIED_USER_ID, 100);
+        $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
+
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
+        self::assertResponseIsSuccessful();
+
+        $stretched = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] button[data-confirm-target="stretch"]');
+        self::assertCount(2, $stretched, 'Both full paywall cards („Rozložení tipů" + „Pořadí za zápas") must offer the whole-card target.');
+
+        foreach ($stretched as $node) {
+            self::assertTrue($node->hasAttribute('hidden'), 'The stretched submit must ship hidden — the confirm controller enables it.');
+            self::assertSame('submit', $node->getAttribute('type'));
+        }
+
+        self::assertCount(
+            0,
+            $crawler->filter('button[data-confirm-target="stretch"] a, button[data-confirm-target="stretch"] button, button[data-confirm-target="stretch"] input, button[data-confirm-target="stretch"] [data-controller]'),
+            'Nothing interactive may be nested inside the stretched control.',
+        );
+
+        // The explicit small CTA stays — and both controls sit in one confirm form.
+        $forms = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]');
+        self::assertCount(2, $forms);
+        self::assertCount(2, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] button.dist-unlock'));
+
+        foreach ($forms as $form) {
+            self::assertSame('confirm', $form->getAttribute('data-controller'));
+            self::assertNotSame('', $form->getAttribute('data-confirm-title-value'));
+            self::assertNotSame('', $form->getAttribute('data-confirm-confirm-label-value'));
+        }
+    }
+
+    /**
+     * The dialog is UX, not a guard: a POST without a valid CSRF token must charge
+     * nothing even though the enlarged click target makes an accidental submit more
+     * likely. The stale-page and double-buy cases are pinned further down.
+     */
+    public function testPurchaseWithoutAValidCsrfTokenChargesNothing(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+
+        $client->request('POST', self::BOOSTS_PURCHASE, [
+            '_token' => 'not-a-token',
+            'type' => 'tip_change',
+            '_redirect' => self::BOOSTS_DETAIL,
+        ]);
+
+        self::assertResponseRedirects(self::BOOSTS_DETAIL);
+        $client->followRedirect();
+        self::assertSelectorTextContains('body', 'Neplatný bezpečnostní token');
+
+        self::assertNull($this->activeTipChange(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertSame(100, $this->balanceOf(AppFixtures::SECOND_VERIFIED_USER_ID));
     }
 
     public function testBrokeMemberSeesTopUpLinkInsteadOfBuyForm(): void

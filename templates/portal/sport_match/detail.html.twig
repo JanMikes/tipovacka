@@ -334,8 +334,15 @@
                     </div>
                 </section>
             {% elseif not can_see_others_tips %}
-                {# Locked twin of the distribution card: same shell, blurred skeleton, working CTA.
-                   The CTA itself is Boost:Panel — the one place boost pricing/affordability lives.
+                {# Locked twin of the distribution card, and since B27 literally the same shape:
+                   gold CTA in the top-right, a centred gold lock coin over the blurred skeleton,
+                   the pitch beneath it. The CTA is Boost:Panel in its `bare` shape — the one place
+                   boost pricing / affordability / B6 „soutěž už skončila" lives, now WITHOUT a
+                   container or a button colour of its own (nesting its inline shape here was the
+                   defect: two paywall treatments where one was intended).
+                   The tipper count is not lost — it moves into the headline slot, which is exactly
+                   what the distribution card puts there („6 hráčů tipovalo"), and the pitch moves
+                   onto the skeleton as that card's `.dist-lock-title` does.
                    Since 2026-07-30 this also covers a LIVE match (item 10 showed its tips once the
                    deadline had passed; now only a RESULT reveals them for free) — the skeleton is
                    decoration, the real tips are never rendered here. #}
@@ -351,12 +358,12 @@
                             {% endif %}
                             <h2 class="eyebrow">Pořadí za zápas</h2>
                         </div>
-                        <span class="shrink-0 text-xs font-medium tabular-nums text-white/50">
-                            {{ tipper_count }} {{ tipper_count == 1 ? 'hráč' : (tipper_count <= 4 ? 'hráči' : 'hráčů') }} s tipem
-                        </span>
+                        <twig:Boost:Panel :competition="selected_competition" feature="others" shape="bare" />
                     </header>
 
-                    <p class="dist-card-total">Uvidíš konkrétní tipy kolegů</p>
+                    <p class="dist-card-total">
+                        {{ tipper_count }} {{ tipper_count == 1 ? 'hráč' : (tipper_count <= 4 ? 'hráči' : 'hráčů') }} s tipem
+                    </p>
 
                     <div class="dist-veil">
                         <div aria-hidden="true" class="dist-skeleton space-y-4">
@@ -368,8 +375,18 @@
                             {% endfor %}
                         </div>
 
-                        <div class="dist-lock is-wide">
-                            <twig:Boost:Panel :competition="selected_competition" feature="others" />
+                        <div class="dist-lock">
+                            <span class="dist-lock-coin"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></span>
+                            <p class="dist-lock-title">Uvidíš konkrétní tipy kolegů</p>
+                            <p class="dist-lock-note">
+                                {%- if selected_competition.monetization.value == 'boosts' -%}
+                                    Konkrétní tipy všech hráčů v soutěži, jméno po jménu — i před uzávěrkou.
+                                {%- elseif selected_competition.monetization.value == 'premium' -%}
+                                    Konkrétní tipy všech hráčů v soutěži, jméno po jménu — jen pro Prémium.
+                                {%- else -%}
+                                    Konkrétní tipy ostatních hráčů se zobrazí po odehrání zápasu.
+                                {%- endif -%}
+                            </p>
                         </div>
                     </div>
                 </section>

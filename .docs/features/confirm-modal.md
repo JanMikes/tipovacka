@@ -29,9 +29,10 @@ Attach the `confirm` Stimulus controller to the `<form>` element. The controller
 
 ## Targets
 
-| Target   | Notes                                                                          |
-|----------|--------------------------------------------------------------------------------|
-| `fields` | Optional. An element inside the form that is **moved into the dialog body** on first open and revealed there — for a dialog that also asks *something* (B2: „Uzamknout tipy" → Ihned / V určený čas). |
+| Target    | Notes                                                                          |
+|-----------|--------------------------------------------------------------------------------|
+| `fields`  | Optional. An element inside the form that is **moved into the dialog body** on first open and revealed there — for a dialog that also asks *something* (B2: „Uzamknout tipy" → Ihned / V určený čas). |
+| `stretch` | Optional. A control inside the form that must exist **only while this controller is connected**. Ships `hidden`; unhidden on `connect()`, re-hidden on `disconnect()`. |
 
 ```twig
 <form method="post" action="…" id="lock-tips-{{ id }}" data-controller="confirm" …>
@@ -69,6 +70,30 @@ Contract:
   element and Stimulus then unmatch→matches forever, hanging the page.
 - Any `<form>` hosting a flatpickr needs `novalidate`: the calendar's internal hour/minute
   number inputs (`step="5"`) are form controls and would silently block submission.
+
+### `stretch` — a target that is only safe *because* the dialog opens (B27)
+
+```twig
+<form method="post" action="…" data-controller="confirm" …>
+    <input type="hidden" name="_token" value="…">
+    <button type="submit" class="dist-unlock card-raise">Odemknout za 10 kr.</button>
+    <button type="submit" data-confirm-target="stretch" class="card-stretch" hidden>Odemknout …</button>
+</form>
+```
+
+The two paywall cards on match detail make the **whole card** the purchase trigger by
+painting a submit over it (item 18's `.card-stretch`; `.dist-buy > .card-stretch` does the
+positioning). A card-sized control that spends credits is only acceptable while the confirm
+dialog is guaranteed, so it is rendered `hidden` and the controller enables it — **the big
+target is the enhancement and the small explicit button is the floor**, the inverse of the
+usual direction. JavaScript-off support is deferred (`PLAN.md` decision 0), but a controller
+that *fails to connect* renders the identical page, and this repo has hit that twice (B16,
+B25). Two rules follow:
+
+- Never declare `display` on such a control in CSS — an author `display` out-specifies
+  `[hidden]` and the oversized target would go live on a page whose JS never ran.
+- Nothing interactive may be nested inside it (items 18/21). The small CTA stays reachable
+  as a **sibling**, raised with `.card-raise`.
 
 ## When to use
 

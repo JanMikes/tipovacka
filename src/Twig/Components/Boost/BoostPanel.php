@@ -38,6 +38,18 @@ final class BoostPanel
     /** null = management panel; 'others' = inline locked paywall. */
     public ?string $feature = null;
 
+    /**
+     * How the `feature` paywall renders (B27):
+     * - 'inline' → the self-contained striped panel (it IS the whole paywall on
+     *              the tip matrix and the guess page);
+     * - 'bare'   → just the control, in the gold `.dist-unlock` vocabulary, for a
+     *              caller that already owns the card, the blurred skeleton and the
+     *              lock coin (match detail's „Pořadí za zápas"). It brings no
+     *              container and no colour of its own, so the two paywalls of a
+     *              match detail read as ONE treatment.
+     */
+    public string $shape = 'inline';
+
     public function __construct(
         private readonly QueryBus $queryBus,
         private readonly Security $security,

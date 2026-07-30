@@ -22,6 +22,16 @@ import { Controller } from '@hotwired/stimulus';
  *
  *   <div data-confirm-target="fields" hidden> …inputs… </div>
  *
+ * Optional target — a submit that must only exist WHILE this controller is
+ * connected (B27: a whole paywall card stretched over its own purchase form):
+ *
+ *   <button type="submit" data-confirm-target="stretch" class="card-stretch" hidden>…</button>
+ *
+ * It is rendered `hidden` and unhidden on connect, re-hidden on disconnect. A
+ * card-sized control that spends credits is only safe because the dialog opens
+ * first, so the big target is the ENHANCEMENT and the small explicit button is
+ * the floor — the inverse of the usual direction, on purpose.
+ *
  * The element is moved into the dialog body on first open and revealed there;
  * because the dialog lives on <body> (outside the form), every form control
  * inside it gets a `form="<the form's id>"` attribute so it is still submitted
@@ -29,7 +39,7 @@ import { Controller } from '@hotwired/stimulus';
  * correctly with the field defaults, since no dialog is ever shown then.
  */
 export default class extends Controller {
-    static targets = ['fields'];
+    static targets = ['fields', 'stretch'];
 
     static values = {
         message: String,
@@ -45,10 +55,12 @@ export default class extends Controller {
         this.fieldsAnchor = null;
         this.onSubmit = this.onSubmit.bind(this);
         this.element.addEventListener('submit', this.onSubmit);
+        this.toggleStretch(true);
     }
 
     disconnect() {
         this.element.removeEventListener('submit', this.onSubmit);
+        this.toggleStretch(false);
         // Give the fields back to the form BEFORE the dialog is destroyed —
         // see releaseFields().
         this.releaseFields();
@@ -56,6 +68,19 @@ export default class extends Controller {
             this.dialog.remove();
             this.dialog = null;
         }
+    }
+
+    /*
+     * B27 — an oversized submit (a whole card painted over its own purchase form)
+     * exists only while this controller is connected, because the dialog is the
+     * only thing that makes such a target safe. Server-side guards still apply
+     * (CSRF + the partial unique index that makes a double buy idempotent); this
+     * is about not offering an accidental click, not about securing the spend.
+     */
+    toggleStretch(enabled) {
+        this.stretchTargets.forEach((element) => {
+            element.hidden = !enabled;
+        });
     }
 
     onSubmit(event) {

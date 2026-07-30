@@ -2,9 +2,13 @@
     Boost commerce surface. See src/Twig/Components/Boost/BoostPanel.php.
     props:
       competition  (Competition)
-      feature      null = „Získej výhody" sidebar; 'others' = inline locked paywall for
+      feature      null = „Získej výhody" sidebar; 'others' = locked paywall for
                    concrete member tips (the distribution bar has its own surface:
                    <twig:Match:TipStats>, fed by TipStatsProvider)
+      shape        'inline' (default) = the striped panel that IS the whole paywall
+                   (tip matrix, guess page); 'bare' = the control only, in the gold
+                   `.dist-unlock` vocabulary, for a caller that already owns the
+                   card / skeleton / lock coin (B27, match detail)
 
     B6: once the competition is fully over (`this.competitionIsOver`) nothing can be
     bought here any more — the CTA is replaced by a one-line explanation. The command
@@ -143,9 +147,50 @@
             </section>
         {% endif %}
     {% else %}
-        {# ═════════ Inline locked paywall („Konkrétní tipy kolegů") ═════════ #}
+        {# ═════════ Locked paywall („Konkrétní tipy kolegů") ═════════ #}
         {% set type = this.featureType %}
-        {% if mon == 'boosts' %}
+        {% if shape == 'bare' %}
+            {# B27 — BARE shape: the control only, in the same gold vocabulary the
+               „Rozložení tipů" paywall uses (`.dist-unlock`), so a caller that
+               already draws the card + blurred skeleton + lock coin gets ONE
+               treatment instead of a second, differently-styled panel inside its
+               own. Pricing, affordability and B6 „soutěž už skončila" stay here —
+               that is the whole reason the caller composes this component. #}
+            {% if mon == 'boosts' and is_over %}
+                <span class="dist-unlock is-static">Soutěž už skončila</span>
+            {% elseif mon == 'boosts' and p.canAfford(type) %}
+                <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
+                    class="dist-buy"
+                    data-controller="confirm"
+                    data-confirm-variant-value="warning"
+                    data-confirm-title-value="Odemknout „{{ type.label }}“"
+                    data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
+                    data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
+                    <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
+                    <input type="hidden" name="type" value="{{ type.value }}">
+                    <input type="hidden" name="_redirect" value="{{ back }}">
+                    <button type="submit" class="dist-unlock card-raise group">
+                        Odemknout za {{ type.price }} kr.
+                        <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                    {# The whole card is the same purchase. Rendered hidden; the
+                       `confirm` controller unhides it on connect, so a page whose
+                       JavaScript never ran keeps only the explicit button above. #}
+                    <button type="submit" data-confirm-target="stretch" class="card-stretch" hidden>
+                        Odemknout „{{ type.label }}“ za {{ type.price }} kr.
+                    </button>
+                </form>
+            {% elseif mon == 'boosts' %}
+                <a href="{{ path('credits') }}" class="dist-unlock">
+                    <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
+                    Chybí kredity ({{ p.balance }}/{{ type.price }} kr.)
+                </a>
+            {% elseif mon == 'premium' %}
+                <span class="dist-unlock is-static">Zapíná organizátor</span>
+            {% endif %}
+            {# mon == 'none' → nothing to sell; the caller's note says it opens
+               once the zápas is played. #}
+        {% elseif mon == 'boosts' %}
             <section class="relative overflow-hidden rounded-2xl border border-[#8ac3e8]/25 p-5"
                 style="background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 10px, transparent 10px 20px);">
                 <div class="flex items-start gap-3">

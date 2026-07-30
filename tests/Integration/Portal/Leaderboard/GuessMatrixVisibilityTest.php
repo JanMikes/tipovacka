@@ -54,7 +54,16 @@ final class GuessMatrixVisibilityTest extends WebTestCase
     /** The unentitled viewer's OWN tip on the LIVE match — always readable. */
     private const string OWN_LIVE_TIP = '6:2';
 
+    /** Headline of `Boost:Panel`'s INLINE shape — the tip matrix's whole paywall. */
     private const string CTA_HEADLINE = 'Odemkněte konkrétní tipy kolegů';
+
+    /**
+     * Match detail composes the same paywall differently since B27: the card, the
+     * blurred skeleton and the lock coin are the page's, and `Boost:Panel` renders
+     * `shape="bare"` — the gold „Odemknout za N kr." control only. So the locked
+     * twin is pinned on THAT, not on the inline shape's headline.
+     */
+    private const string MATCH_DETAIL_CTA = 'Uvidíš konkrétní tipy kolegů';
 
     private const string MATRIX_PATH = '/zebricek/matice?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
 
@@ -274,9 +283,16 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         );
         self::assertCount(0, $crawler->filter('table.lb-table'), 'The ranking table itself must not render.');
         self::assertStringContainsString(
-            self::CTA_HEADLINE,
+            self::MATCH_DETAIL_CTA,
             self::body($client),
-            'The locked twin must carry the unlock CTA instead (Boost:Panel, feature="others").',
+            'The locked twin must carry the unlock pitch instead.',
+        );
+        // …and the bare CTA control (this viewer has no credits, so it is the
+        // „Chybí kredity" variant — still the gold `.dist-unlock` vocabulary).
+        self::assertGreaterThanOrEqual(
+            1,
+            $crawler->filter('.dist-card.is-locked .dist-unlock')->count(),
+            'The locked twin must carry the bare CTA (Boost:Panel, feature="others" shape="bare").',
         );
     }
 

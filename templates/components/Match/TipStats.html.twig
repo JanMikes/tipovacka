@@ -59,6 +59,7 @@
                 {% if stats.canAfford %}
                     <form method="post"
                           action="{{ path('competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
+                          class="dist-buy"
                           data-controller="confirm"
                           data-confirm-variant-value="warning"
                           data-confirm-title-value="Odemknout „{{ dist_boost_label }}“"
@@ -67,9 +68,17 @@
                         <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">
                         <input type="hidden" name="type" value="tip_distribution">
                         <input type="hidden" name="_redirect" value="{{ app.request.requestUri }}">
-                        <button type="submit" class="dist-unlock group">
+                        <button type="submit" class="dist-unlock card-raise group">
                             Odemknout za {{ stats.price }} kr.
                             <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                        {# B27 — the whole card is the same purchase: a submit stretched
+                           over it, a SIBLING of the button above (nothing interactive may
+                           be nested inside it). Rendered hidden and unhidden by the
+                           `confirm` controller on connect, so a page whose JavaScript never
+                           ran keeps only the explicit button. #}
+                        <button type="submit" data-confirm-target="stretch" class="card-stretch" hidden>
+                            Odemknout „{{ dist_boost_label }}“ za {{ stats.price }} kr.
                         </button>
                     </form>
                 {% else %}
