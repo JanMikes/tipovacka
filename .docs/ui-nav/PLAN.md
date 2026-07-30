@@ -43,7 +43,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | DONE | `f624743` |
 | — | Boost panel copy + „Uložit tip" / „Jak tipovali ostatní" (round 2) | DONE | `295b47c` |
 | — | Domain: the „Měnit tip" window is **per match**, not per day (round 2) | DONE | `d44539a` |
-| 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | IN PROGRESS | — |
+| 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | DONE | `287499c` |
 | 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | TODO | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
@@ -83,8 +83,20 @@ product owner reprioritises):
      the likeliest way to lose work: they are not merging branches, they are committing to the same
      working tree, so one `git commit -- <path>` sweeps the other's half-finished edit. The
      orchestrator records each sha from the agent's report instead.
-   - Never `git add -A` / `git add .` / `git commit -a`. Stage explicit paths; verify the index with
-     `git diff --cached --stat` before committing.
+   - **Commit with `git commit -o <path> [<path>…]` (`--only`). Never `git add` + `git commit`.**
+     Learned the hard way on 2026-07-30: an agent staged explicit paths, verified the index with
+     `git diff --cached --stat`, and its commit **still swept in `assets/styles/app.css`, which
+     another agent owned** — the sibling staged into the index in the window between the `git add`
+     and the `git commit`. **Verifying the index proves nothing: it is shared mutable state and
+     another process can write to it after you look.** `-o` takes exactly the named paths from the
+     working tree and ignores everything else staged, so it is index-independent. (Recovery, if it
+     happens anyway: `git reset --soft`, then re-commit with `-o`.)
+   - Never `git add -A` / `git add .` / `git commit -a`.
+   - `-o` does **not** save you when two agents edit the *same* file — it commits the working-tree
+     version of that path, other agent's hunks included. That is what file ownership is for.
+   - **Never run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites their files
+     and pulls their hunks into your working tree. Scope it to your own paths, or run `cs:check`, fix
+     your own findings by hand, and report the rest.
 
    The shared surfaces below are touched by almost every item, so they need an explicit single owner
    per round — and the CSS one conflicts *semantically*, which git will not catch:

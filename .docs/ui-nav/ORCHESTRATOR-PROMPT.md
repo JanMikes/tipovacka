@@ -75,9 +75,16 @@ answers. When you do act on your own judgement, say so explicitly and make it ch
 
 - **Never `git add -A`, `git add .`, or `git commit -a`.** An agent did this once and swept two
   others' unfinished work into its commit.
+- **`git add` + `git commit` is NOT safe either, even with explicit paths.** 2026-07-30: an agent
+  staged its own paths, verified with `git diff --cached --stat`, and still committed another agent's
+  `assets/styles/app.css` — the sibling staged into the index between the `add` and the `commit`.
+  **The index is shared mutable state; verifying it proves nothing.** Tell every agent to commit with
+  **`git commit -o <path> …`** (`--only`), which is index-independent.
 - **`git commit -- <path>` is NOT safe for a file two agents touched** — it commits the working-tree
-  version, including the other agent's hunks. If two agents share `assets/styles/app.css`, tell them
-  to stage only their own hunks (filtered `git apply --cached`) and commit the index.
+  version, including the other agent's hunks. Neither is `-o`. Nothing in git solves this; it is why
+  each shared file gets exactly one owner per round.
+- **Never let an agent run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites
+  their files into your agent's working tree.
 - Follow the board-sha convention: the work commit, then a one-line commit recording its sha.
 
 ### What actually collides
@@ -95,7 +102,12 @@ templates, distinct queries.
 - **`composer quality` does not catch Twig errors or any layout bug.** It passes on a page that
   throws at render time. Every item must load its pages.
 - **Layout bugs must be verified by measuring geometry in a browser** — bounding-box intersection
-  across painted leaves, at many widths — never by eye. Real examples from last session: a control
+  across painted leaves, at many widths — never by eye.
+- **Do not ask for `getClientRects().length` on a block element to count wrapped lines — it is always
+  1.** (I specified exactly that in item 14 and it was a check that could never fail.) Count line
+  boxes with a `Range` over the element's *contents*, clustering the rects by vertical centre. Also
+  remember `1fr` is `minmax(auto,1fr)`, so a grid track keeps a min-content floor and can starve its
+  neighbour — the fix is `min-width: 0` on the flex/grid child, which is B7's mechanism again. Real examples from last session: a control
   that grew 13.5 px on focus and displaced 21 nodes; team names overflowing because a flex child
   lacked `min-width: 0`. Both looked fine in a screenshot at one width.
 - Viewport breakpoints are often the wrong tool: competition detail is **narrower at 1440 px than at

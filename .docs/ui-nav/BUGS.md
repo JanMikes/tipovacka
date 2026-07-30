@@ -26,6 +26,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
 | B17 | Browser offers to save the password before it is confirmed | TODO | — |
 | B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
+| B20 | Public nav overflows 53 px at 320 px | TODO | — |
+| B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
 ---
@@ -1058,3 +1060,36 @@ deciding — if more than one repeats the incantation, that settles it.
 
 Out of scope: the form's internal layout, the steppers, and the button label (that is being changed to
 „Uložit tip" by the same round's copy pass).
+
+## B20 — the public nav overflows 53 px at 320 px
+
+Found by the item-14 agent while measuring the homepage, 2026-07-30 — **not its surface, so it was
+reported rather than fixed.**
+
+At a 320 px viewport `HEADER.wtnav > .bar > .actions` measures **373 px**, overflowing the page by
+53 px. It reproduces on `/ochrana-soukromi` as well as `/`, which places it in
+`templates/components/Layout/Nav.html.twig` / the `.wtnav` rules rather than in any one page. Fine
+again by 430 px.
+
+Measure it rather than eyeballing; 320 px is the narrowest width this stream checks and several other
+bugs this round were only visible there. Fix must hold for **both** nav variants (logged in and out) —
+the logged-in bar is the crowded one (brand · bell · „+" · avatar · hamburger).
+
+**Bundle with the queued chrome work** — `ROUND2.md` batch 13 (credits in the header) adds a *sixth*
+element to this same bar, and **B18** (the notification dropdown positioned off the left edge) is the
+same component. Doing them separately would mean measuring the same bar three times.
+
+## B21 — the hero headline starves the demo card; team names vanish at 1024 px
+
+Found by the item-14 agent while fixing the homepage score, 2026-07-30. **Contained, not fixed** — the
+fix is a typography decision, not a bug fix.
+
+The hero `<h1>` glues „a pak to" / „kámošům o hlavu." with `&nbsp;`, giving the left column a
+**~700 px min-content floor**. So `lg:grid-cols-[1.15fr_0.95fr]` cannot hold its declared ratio and the
+demo card collapses to ~390 px at 1280 px and ~235 px at 1024 px. Consequence, now visible because the
+score no longer wraps: team names ellipsize to „Argen…" at 1280 px and disappear entirely at 1024 px.
+
+The item-14 fix (`min-w-0` + `truncate`) makes this **degrade gracefully instead of overflowing**,
+which is why it is a separate row and not a regression. The real fix is to stop the headline claiming
+700 px — remove or move the non-breaking spaces, or allow the line to break — and that changes how the
+headline reads, so it needs the product owner's eye.
