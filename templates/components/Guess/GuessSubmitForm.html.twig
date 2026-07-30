@@ -68,6 +68,18 @@
                 {# B5: a fact, not a call to action. #}
                 <p class="guess-locked-none">Netipováno.</p>
             {% endif %}
+
+            {# Item 35 — „Počkejte si na sestavy" is sold exactly where its absence
+               bites: the tip form that just closed. The panel renders nothing unless
+               buying would really reopen THIS zápas (owner, prémium, skončená soutěž
+               and a zápas the boost cannot extend all come back empty), and the
+               moment it names comes from EffectiveTipDeadlineResolver. #}
+            <twig:Boost:Panel
+                :competitionId="this.competitionId"
+                :sportMatch="this.sportMatch"
+                feature="tip_change"
+                shape="bare"
+            />
         </div>
     {% else %}
         {% if this.errorMessage %}

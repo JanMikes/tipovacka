@@ -8,6 +8,7 @@ use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\BoostPurchase;
+use App\Entity\Competition;
 use App\Entity\CreditWallet;
 use App\Entity\SportMatch;
 use App\Enum\BoostType;
@@ -16,9 +17,16 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Portal boost commerce: the „Získej výhody" sidebar, buying from the paywall,
- * the premium pill on premium competitions, and the insufficient-credits top-up
- * link. See .docs/DOMAIN.md §Monetization.
+ * Portal boost commerce: buying from the paywalls, the premium pill on premium
+ * competitions and the insufficient-credits top-up link.
+ *
+ * Item 35 deleted the „Získej výhody" card that used to be the one place all three
+ * boosters were sold, so every test that shopped there now shops where the booster
+ * actually unlocks something — which is also the guard that made the deletion safe:
+ * see {@see testEachOfTheThreeBoostersIsStillSoldSomewhere}. The `tip_change`
+ * surfaces have their own file, {@see TipChangeShopTest}.
+ *
+ * See .docs/DOMAIN.md §Monetization.
  */
 final class BoostFlowTest extends WebTestCase
 {
@@ -32,6 +40,26 @@ final class BoostFlowTest extends WebTestCase
      * (B27). Item 22 made that scope a PATH, not a `?soutez=` on the bare match route.
      */
     private const string BOOSTS_MATCH_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    private const string BOOSTS_BATCH = self::BOOSTS_DETAIL.'/moje-tipy';
+
+    /**
+     * „Uzamknout tipy · Ihned". The fixture soutěž is created after its zdroj's
+     * first kickoff, so every zápas is late-added and tippable until its own výkop —
+     * „Měnit tip" would extend nothing and is (correctly) not offered. Locking is
+     * the ordinary state in which it does buy something.
+     */
+    private function lockTips(): void
+    {
+        $em = $this->testEntityManager();
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID));
+        self::assertInstanceOf(Competition::class, $competition);
+
+        $competition->lockTips(new \DateTimeImmutable('2025-06-15 12:00:00 UTC'));
+        $competition->popEvents();
+
+        $em->flush();
+        $em->clear();
+    }
 
     private function grant(string $userId, int $amount): void
     {
@@ -76,57 +104,81 @@ final class BoostFlowTest extends WebTestCase
             ->getOneOrNullResult();
     }
 
-    public function testMemberSeesBoostSidebarWithOwnedAndBuyStates(): void
+    /**
+     * THE guard behind item 26 §1 / item 35: deleting the shop card is only safe
+     * while every booster remains buyable somewhere. A locked zápas page carries all
+     * three at once — „Jak tipují ostatní?" on the distribution card, „Přesné tipy
+     * soupeřů" on the tips paywall, „Počkejte si na sestavy" on the closed tip form —
+     * and `/moje-tipy` carries the third one competition-wide.
+     */
+    public function testEachOfTheThreeBoostersIsStillSoldSomewhere(): void
     {
         $client = static::createClient();
-        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
-        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+        $this->testCommandBus()->dispatch(new JoinCompetitionByLinkCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            token: AppFixtures::BOOSTS_COMPETITION_LINK_TOKEN,
+        ));
+        $this->lockTips();
+        $this->grant(AppFixtures::VERIFIED_USER_ID, 100);
+        $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertSelectorTextContains('body', 'Získej výhody');
-        // SECOND_VERIFIED_USER owns OthersTips (fixture) → shown as active, not buyable.
-        // Item 23: ONE name per booster — the panel row, the confirm dialog, the ledger
-        // and /cenik all render BoostType::label(), so this is the only name there is.
-        self::assertSelectorTextContains('body', BoostType::OthersTips->label());
+        foreach (['tip_distribution', 'others_tips', 'tip_change'] as $type) {
+            self::assertGreaterThanOrEqual(
+                1,
+                $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="'.$type.'"]')->count(),
+                sprintf('„%s" must still be purchasable somewhere.', $type),
+            );
+        }
 
-        // The tip_change boost is buyable (affordable) → a purchase form is present.
-        $forms = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]');
-        self::assertGreaterThanOrEqual(1, $forms->count());
+        // Item 23: ONE name per booster, everywhere it is mentioned.
+        self::assertSelectorTextContains('body', BoostType::TipChange->label());
+
+        $crawler = $client->request('GET', self::BOOSTS_BATCH);
+        self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
     }
 
-    public function testManagerSidebarOffersEveryBoostLikeAnyOtherPlayer(): void
+    public function testTheManagerIsOfferedEveryBoosterLikeAnyOtherPlayer(): void
     {
-        // ADMIN owns BOOSTS_COMPETITION but gets no free visibility (2026-07-23):
-        // the organizer plays too, so all three boosts are offered to them as well.
+        // ADMIN owns BOOSTS_COMPETITION but gets no free visibility (2026-07-23) and
+        // no free „Měnit tip" (S10): the organizer plays too, so all three boosters
+        // are offered to them as well.
         $client = static::createClient();
+        $this->lockTips();
         $this->loginUserById($client, AppFixtures::ADMIN_ID);
         $this->grant(AppFixtures::ADMIN_ID, 100);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
         self::assertResponseIsSuccessful();
 
-        $sidebar = $crawler->filter('section form[action="'.self::BOOSTS_PURCHASE.'"]');
-        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="tip_distribution"]')->count());
-        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="others_tips"]')->count());
-        self::assertGreaterThanOrEqual(1, $sidebar->filter('input[value="tip_change"]')->count());
+        $forms = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]');
+        self::assertGreaterThanOrEqual(1, $forms->filter('input[value="tip_distribution"]')->count());
+        self::assertGreaterThanOrEqual(1, $forms->filter('input[value="others_tips"]')->count());
+        self::assertGreaterThanOrEqual(1, $forms->filter('input[value="tip_change"]')->count());
     }
 
-    public function testBuyBoostFromSidebarWritesRowAndRedirects(): void
+    public function testBuyingFromTheClosedTipFormWritesTheRowAndReturnsToTheZapas(): void
     {
         $client = static::createClient();
+        $this->lockTips();
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
-        $form = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]')->ancestors()->filter('form')->form();
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
+        $form = $crawler->filter('.guess-locked form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]')->ancestors()->filter('form')->form();
         $client->submit($form);
 
-        self::assertResponseRedirects(self::BOOSTS_DETAIL);
-        $client->followRedirect();
+        // `_redirect` carries the buyer back to the page that made the offer.
+        self::assertResponseRedirects(self::BOOSTS_MATCH_DETAIL);
+        $crawler = $client->followRedirect();
         self::assertSelectorTextContains('body', 'je aktivní');
+
+        // Criterion 4 — the tip form is open again, and nothing is being resold.
+        self::assertGreaterThanOrEqual(1, $crawler->filter('input.score-input')->count());
+        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[value="tip_change"]'));
 
         self::assertInstanceOf(BoostPurchase::class, $this->activeTipChange(AppFixtures::SECOND_VERIFIED_USER_ID));
     }
@@ -138,10 +190,11 @@ final class BoostFlowTest extends WebTestCase
         // still exactly one active OthersTips row. The boost-purchase CSRF token is
         // shared per competition, so it is grabbed from the rendered tip_change form.
         $client = static::createClient();
+        $this->lockTips();
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
         $token = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[name="_token"]')->first()->attr('value');
 
         $client->request('POST', self::BOOSTS_PURCHASE, [
@@ -291,14 +344,17 @@ final class BoostFlowTest extends WebTestCase
     public function testBrokeMemberSeesTopUpLinkInsteadOfBuyForm(): void
     {
         $client = static::createClient();
-        // SECOND_VERIFIED_USER is a BOOSTS member with 0 balance and no boosts.
+        // SECOND_VERIFIED_USER is a BOOSTS member with 0 balance who already owns
+        // OthersTips, so „Počkejte si na sestavy" is the only thing left to sell them.
+        $this->lockTips();
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $crawler = $client->request('GET', self::BOOSTS_BATCH);
         self::assertResponseIsSuccessful();
 
-        // Cannot afford anything ⇒ no purchase form, but a top-up link is offered.
+        // Cannot afford it ⇒ no purchase form, but a top-up link is offered instead.
         self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'));
+        self::assertSelectorTextContains('body', 'Chybí kredity');
         self::assertGreaterThanOrEqual(1, $crawler->filter('a[href="/kredity"]')->count());
     }
 
@@ -325,18 +381,28 @@ final class BoostFlowTest extends WebTestCase
         $em->clear();
     }
 
-    public function testFinishedCompetitionOffersNoPurchaseCtaAndSaysWhy(): void
+    /**
+     * B6 on every surface that survived item 35. The „Soutěž už skončila" sentence
+     * is no longer asserted here: once every zápas has a result the tips are free to
+     * read anyway, so no paywall renders to carry it. The refusal itself is the guard
+     * and is pinned by the test below.
+     */
+    public function testFinishedCompetitionOffersNoPurchaseCtaAnywhere(): void
     {
         $client = static::createClient();
         $this->finishEveryMatch();
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
 
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
-        self::assertResponseIsSuccessful();
-
-        self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'), 'A finished competition must not offer a boost purchase.');
-        self::assertSelectorTextContains('body', 'Soutěž už skončila');
+        foreach ([self::BOOSTS_DETAIL, self::BOOSTS_MATCH_DETAIL, self::BOOSTS_BATCH] as $url) {
+            $crawler = $client->request('GET', $url);
+            self::assertResponseIsSuccessful();
+            self::assertCount(
+                0,
+                $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'),
+                sprintf('A finished competition must not offer a boost purchase on %s.', $url),
+            );
+        }
     }
 
     public function testBuyingInAFinishedCompetitionIsRefusedAndChargesNothing(): void
@@ -347,7 +413,8 @@ final class BoostFlowTest extends WebTestCase
 
         // Grab a valid CSRF token while the competition is still running, then
         // settle every match — a stale page must not be able to burn credits.
-        $crawler = $client->request('GET', self::BOOSTS_DETAIL);
+        $this->lockTips();
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
         $token = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[name="_token"]')->first()->attr('value');
         $this->finishEveryMatch();
 

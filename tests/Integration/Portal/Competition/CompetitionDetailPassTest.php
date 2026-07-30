@@ -54,7 +54,6 @@ final class CompetitionDetailPassTest extends WebTestCase
             'banner' => mb_strpos($body, 'Tipněte si všechny zápasy najednou'),
             'tabulka' => mb_strpos($body, 'Tabulka soutěže'),
             'zebricek' => mb_strpos($body, 'id="zebricek"'),
-            'vylepseni' => mb_strpos($body, 'id="vylepseni"'),
         ];
 
         foreach ($positions as $name => $at) {
@@ -64,14 +63,18 @@ final class CompetitionDetailPassTest extends WebTestCase
         $order = array_values($positions);
         $sorted = $order;
         sort($sorted);
-        self::assertSame($sorted, $order, 'popis → Pozvat kamaráda → banner → Tabulka soutěže → Žebříček → Prémiové funkce.');
+        self::assertSame($sorted, $order, 'popis → Pozvat kamaráda → banner → Tabulka soutěže → Žebříček.');
+
+        // Item 35 removed the trailing „Získej výhody" card; the anchor it carried
+        // must be gone with it, or every link into it silently dead-ends.
+        self::assertStringNotContainsString('id="vylepseni"', $body);
 
         // The aside is gone: one column, no lg:col-span-8/4 grid any more.
         self::assertStringNotContainsString('lg:col-span-8', $body);
         self::assertStringNotContainsString('<aside', $body);
     }
 
-    public function testZebricekAndBoostPanelKeepWhatItem08GaveThem(): void
+    public function testZebricekKeepsWhatItem08GaveItAndTheBoostCardIsGone(): void
     {
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
@@ -84,9 +87,12 @@ final class CompetitionDetailPassTest extends WebTestCase
         self::assertCount(1, $crawler->filter('#zebricek a[href="/zebricek?soutez='.AppFixtures::BOOSTS_COMPETITION_ID.'"]'));
         self::assertGreaterThanOrEqual(1, $crawler->filter('#zebricek a[href^="/zebricek/clen/"]')->count());
 
-        // The boost panel, in the single column now.
-        self::assertGreaterThanOrEqual(1, $crawler->filter('#vylepseni')->count());
-        self::assertSelectorTextContains('#vylepseni', 'Získej výhody');
+        // Item 35: no shop card, no purchase form and no anchor on this page any
+        // more — every booster is sold at the thing it unlocks (see TipChangeShopTest
+        // and BoostFlowTest for where each one lives now).
+        self::assertCount(0, $crawler->filter('#vylepseni'));
+        self::assertSelectorTextNotContains('body', 'Získej výhody');
+        self::assertCount(0, $crawler->filter('form[action$="/vylepseni/koupit"]'));
     }
 
     // ── B. popis soutěže ────────────────────────────────────────────────────
@@ -335,7 +341,9 @@ final class CompetitionDetailPassTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(0, $crawler->filter('dialog[data-boost-intro-target="dialog"]'));
-        self::assertSelectorTextContains('#vylepseni', 'Vylepšení máte v ceně');
+        // Item 35 deleted the card that used to carry „Vylepšení máte v ceně"; what
+        // still matters here is that nothing is FOR SALE on a premium soutěž.
+        self::assertCount(0, $crawler->filter('form[action$="/vylepseni/koupit"]'));
     }
 
     public function testThePriceModalNeverAppearsOnAFullyOverCompetition(): void
@@ -349,7 +357,9 @@ final class CompetitionDetailPassTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(0, $crawler->filter('dialog[data-boost-intro-target="dialog"]'));
-        self::assertSelectorTextContains('body', 'Soutěž už skončila');
+        // The card that used to explain „Soutěž už skončila — vylepšení už nemá co
+        // odemknout" is gone (item 35); B6 itself is unchanged — nothing is for sale.
+        self::assertCount(0, $crawler->filter('form[action$="/vylepseni/koupit"]'));
     }
 
     public function testThePriceModalNeverAppearsForANonMember(): void

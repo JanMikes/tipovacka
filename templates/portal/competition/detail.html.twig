@@ -198,7 +198,8 @@
         ───────── Jeden sloupec (item 19) ─────────
         Item 08 dalo žebříček a vylepšení do postranního panelu; produkt to zrušil.
         Pořadí je rozhodnutí produktu (ROUND2 decision 6): [Pozvat kamaráda] →
-        banner → Tabulka soutěže (zápasy) → Žebříček → Prémiové funkce.
+        banner → Tabulka soutěže (zápasy) → Žebříček. (Item 35 sem přidanou kartu
+        „Získej výhody" zase odebral — viz konec sekce.)
     #}
     <div class="space-y-6">
 
@@ -438,15 +439,10 @@
 
         </div>
 
-        {# ───────── Prémiové funkce / vylepšení ─────────
-           Jeden monetizační model, nikdy oba (Premium XOR boosts) — komponenta si
-           sama vybere podobu podle `monetization` a po skončení soutěže nic
-           neprodává (B6). #}
-        {% if is_granted('competition_view', competition) %}
-            <div id="vylepseni">
-                <twig:Boost:Panel :competition="competition" />
-            </div>
-        {% endif %}
+        {# Karta „Získej výhody" tu byla do item 35. Vylepšení se teď prodávají u té
+           věci, kterou odemykají — „Jak tipují ostatní?" u rozložení tipů, „Přesné
+           tipy soupeřů" u žebříčku a tipů soupeřů, „Počkejte si na sestavy" u
+           uzavřeného tipovacího formuláře a na /souteze/{id}/moje-tipy. #}
     </div>
 
     {#

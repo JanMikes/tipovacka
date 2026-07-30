@@ -85,6 +85,19 @@ return App::config([
                 '$freeRevealRequiresResult' => true,
             ],
         ],
+        // „What would this player's tip deadline be if they OWNED the tip_change
+        // boost?" — a SECOND EffectiveTipDeadlineResolver whose entitlement source
+        // always says yes, so the „Počkejte si na sestavy" paywall can print the
+        // exact moment the purchase hands back without re-deriving „kickoff minus
+        // offset" anywhere. Everything else autowires, so the resolver may grow
+        // dependencies without this definition rotting. Read ONLY through
+        // App\Service\Competition\TipChangeUnlock.
+        'app.tip_deadline_resolver.tip_change_granted' => [
+            'class' => 'App\\Service\\EffectiveTipDeadlineResolver',
+            'arguments' => [
+                '$entitlements' => '@App\\Service\\Competition\\TipChangeGrantedEntitlements',
+            ],
+        ],
         'App\\Service\\Payment\\StripePaymentGateway' => [
             'arguments' => [
                 '$secretKey' => '%env(STRIPE_SECRET_KEY)%',

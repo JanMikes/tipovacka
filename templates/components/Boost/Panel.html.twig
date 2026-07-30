@@ -1,10 +1,17 @@
 {#
     Boost commerce surface. See src/Twig/Components/Boost/BoostPanel.php.
     props:
-      competition  (Competition)
-      feature      null = „Získej výhody" sidebar; 'others' = locked paywall for
-                   concrete member tips (the distribution bar has its own surface:
-                   <twig:Match:TipStats>, fed by TipStatsProvider)
+      competition  (Competition) — or `competitionId` (its UUID) when the caller
+                   only holds the id; exactly one of the two is required
+      feature      null = „Získej výhody" sidebar (item 35 removed its last call
+                   site); 'others' = locked paywall for concrete member tips (the
+                   distribution bar has its own surface: <twig:Match:TipStats>, fed
+                   by TipStatsProvider); 'tip_change' = the „Počkejte si na sestavy"
+                   paywall, which names the concrete moment the buyer gets back
+      sportMatch   'tip_change' only — the zápas whose regained uzávěrka to name.
+                   Omit it where „Měnit tip" is denied competition-wide
+                   (/souteze/{id}/moje-tipy) and the panel names the soonest zápas
+                   the boost would hand back instead.
       shape        'inline' (default) = the striped panel that IS the whole paywall
                    (tip matrix, guess page); 'bare' = the control only, in the gold
                    `.dist-unlock` vocabulary, for a caller that already owns the
@@ -14,12 +21,23 @@
     bought here any more — the CTA is replaced by a one-line explanation. The command
     handler refuses the same purchase, so this is presentation, not the guard.
 #}
+{# `competition` may have arrived as an id (a Live Component prop is a scalar), so
+   the whole template reads the resolved entity under the same name. #}
+{% set competition = this.resolvedCompetition %}
 {% set p = this.panel %}
 {% if p is not null %}
     {% set mon = competition.monetization.value %}
     {% set back = app.request.pathinfo %}
     {% set is_over = this.competitionIsOver %}
     {% set offset_label = p.tipChangeOffsetMinutes % 60 == 0 ? (p.tipChangeOffsetMinutes // 60) ~ ' h' : p.tipChangeOffsetMinutes ~ ' min' %}
+    {# The „Měnit tip" window is this competition's own tipChangeOffsetMinutes. At
+       the default 60 min BoostType::description() is exact; moved off the default,
+       its „1 hodinu" would be false — so the SAME sentence is rendered with the real
+       offset instead of a wrong canonical one (item 23). ONE variable, so the shop
+       row and the tip_change paywall can never disagree about the window. #}
+    {% set tip_change_description = p.tipChangeOffsetMinutes == 60
+        ? constant('App\\Enum\\BoostType::TipChange').description
+        : 'Chcete si počkat na soupisky? Odemkněte si možnost upravit své tipy až ' ~ offset_label ~ ' před začátkem zápasu.' %}
     {# Item 23 — there is exactly ONE name and ONE sentence per booster and both
        come from BoostType (label()/description()); the panel writes no boost prose
        of its own, so no surface can drift from the shop again. The superset note
@@ -60,15 +78,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-white">{{ type.label }}</p>
                                     <p class="mt-0.5 text-[12px] leading-snug text-white/55">
-                                        {% if type.value == 'tip_change' and p.tipChangeOffsetMinutes != 60 %}
-                                            {# The change window is this competition's own tipChangeOffsetMinutes.
-                                               At the default 60 min BoostType::description() is exact; moved off
-                                               the default, its „1 hodinu" would be false — so the SAME sentence is
-                                               rendered with the real offset instead of a wrong canonical one. #}
-                                            Chcete si počkat na soupisky? Odemkněte si možnost upravit své tipy až {{ offset_label }} před začátkem zápasu.
-                                        {% else %}
-                                            {{ type.description }}
-                                        {% endif %}
+                                        {{ type.value == 'tip_change' ? tip_change_description : type.description }}
                                     </p>
                                 </div>
                                 {% if owned %}
@@ -142,7 +152,103 @@
     {% else %}
         {# ═════════ Locked paywall („Přesné tipy soupeřů") ═════════ #}
         {% set type = this.featureType %}
-        {% if shape == 'bare' %}
+        {% if feature == 'tip_change' %}
+            {# ═════════ „Počkejte si na sestavy" (item 35) ═════════
+               Sold where „Měnit tip" is actually being denied — the locked tip form
+               of a zápas and /souteze/{id}/moje-tipy — instead of a shop card nobody
+               visits. `this.tipChangeOffer` is null unless the purchase would move
+               something, so premium, „none", an owner of the booster, a fully-over
+               soutěž (B6) and a zápas whose uzávěrka the boost could not extend all
+               render NOTHING here: an offer that changes nothing is not an offer.
+
+               The named moment is the deadline EffectiveTipDeadlineResolver itself
+               returns once the boost is owned — never „výkop mínus offset" computed
+               here, which would go stale the day the resolver's rules move. #}
+            {% set offer = this.tipChangeOffer %}
+            {% if offer is not null %}
+                {# The zápas is named only when the panel PICKED it (no `sportMatch`
+                   prop — the competition-wide surface), and the booster is named only
+                   in the `bare` shape, which has no heading to carry it. Item 23: the
+                   name always comes from BoostType::label(), never retyped. #}
+                {% set unlock_line %}
+                    {%- if shape == 'bare' -%}
+                        S vylepšením „{{ type.label }}“ můžete tipovat
+                    {%- else -%}
+                        S tímhle vylepšením můžete tipovat
+                        {%- if sportMatch is null %} {{ offer.sportMatch.homeTeam.name }} – {{ offer.sportMatch.awayTeam.name }}{% endif -%}
+                    {%- endif %}
+                    až do <strong class="font-semibold text-white">{{ offer.deadline|date('j. n. Y H:i') }}</strong>.
+                {% endset %}
+                {% if shape == 'bare' %}
+                    {# The caller (a locked tip card) already draws the box and the
+                       lock note — bring the sentence and the control, nothing else. #}
+                    <div class="mt-3 flex flex-col items-center gap-2">
+                        <p class="text-[12px] leading-snug text-white/55">{{ unlock_line }}</p>
+                        {% if p.canAfford(type) %}
+                            <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
+                                data-controller="confirm"
+                                data-confirm-variant-value="warning"
+                                data-confirm-title-value="Odemknout „{{ type.label }}“"
+                                data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.)."
+                                data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
+                                <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
+                                <input type="hidden" name="type" value="{{ type.value }}">
+                                <input type="hidden" name="_redirect" value="{{ back }}">
+                                <button type="submit" class="dist-unlock group">
+                                    Odemknout za {{ type.price }} kr.
+                                    <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                                </button>
+                            </form>
+                        {% else %}
+                            <a href="{{ path('credits') }}" class="dist-unlock">
+                                <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
+                                Chybí kredity ({{ p.balance }}/{{ type.price }} kr.)
+                            </a>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <section class="relative mt-6 overflow-hidden rounded-2xl border border-[#8ac3e8]/25 p-5"
+                        style="background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.03) 0 10px, transparent 10px 20px);">
+                        <div class="flex items-start gap-3">
+                            <span class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#8ac3e8]/15 text-[#8ac3e8]">
+                                <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
+                            </span>
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold text-white">{{ type.label }}</h3>
+                                <p class="mt-1 text-[12px] leading-snug text-white/55">{{ tip_change_description }}</p>
+                                <p class="mt-2 text-[12px] leading-snug text-white/70">{{ unlock_line }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            {% if p.canAfford(type) %}
+                                <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
+                                    data-controller="confirm"
+                                    data-confirm-variant-value="warning"
+                                    data-confirm-title-value="Odemknout „{{ type.label }}“"
+                                    data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.)."
+                                    data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
+                                    <input type="hidden" name="type" value="{{ type.value }}">
+                                    <input type="hidden" name="_redirect" value="{{ back }}">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                                        Odemknout za {{ type.price }} kr.
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <span class="text-[12px] text-white/50">Chybí kredity ({{ p.balance }} / {{ type.price }} kr.)</span>
+                                    <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm">
+                                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
+                                        Dokoupit kredity
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </section>
+                {% endif %}
+            {% endif %}
+        {% elseif shape == 'bare' %}
             {# B27 — BARE shape: the control only, in the same gold vocabulary the
                „Jak tipují ostatní?" paywall uses (`.dist-unlock`), so a caller that
                already draws the card + blurred skeleton + lock coin gets ONE
