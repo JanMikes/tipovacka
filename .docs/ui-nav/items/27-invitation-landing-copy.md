@@ -134,3 +134,25 @@ All of it in `templates/invitation/landing.html.twig`, which `{% extends 'auth/_
 
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. Push to `main`. Do not update the status board; report your sha.
+
+## Assumptions made
+
+- **The notice's inner wrapper collapsed into the one `<p>` that survived.** The markup was
+  `<div class="text-sm leading-relaxed text-white/70">` holding two `<p>`s; with one paragraph left
+  the `<div>` was pure nesting, so the classes moved onto the `<p>`. Measured identical box model
+  (Preflight zeroes `<p>` margins), so this is markup tidying, not a layout change.
+- **`context.matchSourceName` / `context.inviterNickname` were left alone**, as instructed
+  (read-then-decide). Both are still read by `InvitationContextResolver` and, under the same names,
+  by ~20 unrelated query DTOs/templates; `matchSourceName` is non-nullable on `InvitationContext`,
+  so its `{% if %}` was dead weight anyway. Nothing was deleted from the DTO.
+- **The e-mail-kind sentence went too** („Dokonči registraci nebo se přihlas a rovnou tě do soutěže
+  přidáme."), per step 3's „both kind branches" — the „expected text" leaves one sentence.
+
+### The flagged risk, answered
+
+The link/PIN explanation is **not** actually lost on the sign-up path — it is only later, at the
+moment it becomes actionable. `Twig/Components/Auth/InvitationForm.php:185` flashes
+„Registrace proběhla úspěšně. Potvrď e-mail a rovnou tě přidáme do soutěže *X*." on the redirect to
+`/overeni-ceka` (and `:225` flashes the sign-in twin, „Nejprve si ověř svou e-mailovou adresu — pak
+tě rovnou přidáme do soutěže *X*."). Both name the soutěž and render in `base.html.twig`'s flash
+strip. What is gone is the *pre*-registration promise; the *post*-registration one stands.

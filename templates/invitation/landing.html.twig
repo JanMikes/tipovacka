@@ -4,14 +4,6 @@
 
 {% block title %}{{ competition_name ? 'Připojení do soutěže ' ~ competition_name : 'Pozvánka' }} — {{ brand_name }}{% endblock %}
 
-{% block auth_panel_tagline %}
-    {% if competition_name %}
-        Za pár kliků se připojíte do soutěže {{ competition_name }} a začínáte tipovat.
-    {% else %}
-        Přijměte pozvánku a začněte tipovat s partičkou.
-    {% endif %}
-{% endblock %}
-
 {% block auth_card %}
 <div class="card-glass p-8 sm:p-10">
 
@@ -97,24 +89,9 @@
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-500/40 bg-white/5 text-accent-300">
                 <twig:ux:icon name="lucide:users" class="h-5 w-5" />
             </span>
-            <div class="text-sm leading-relaxed text-white/70">
-                <p>
-                    Chystáš se připojit do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>
-                    {% if context.matchSourceName %}
-                        ve zdroji zápasů <strong class="font-semibold text-white">{{ context.matchSourceName }}</strong>
-                    {% endif %}
-                    {% if context.inviterNickname %}
-                        od <strong class="font-semibold text-white">{{ context.inviterNickname }}</strong>
-                    {% endif %}.
-                </p>
-                <p class="mt-2 text-white/60">
-                    {%- if context.kind.value == 'email' -%}
-                        Dokonči registraci nebo se přihlas a rovnou tě do soutěže přidáme.
-                    {%- else -%}
-                        Zapamatovali jsme si to — po registraci (i po přihlášení) tě do soutěže přidáme, jakmile ověříš e-mail.
-                    {%- endif -%}
-                </p>
-            </div>
+            <p class="text-sm leading-relaxed text-white/70">
+                Chystáš se připojit do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>.
+            </p>
         </div>
 
         <twig:Auth:InvitationForm kind="{{ context.kind.value }}" token="{{ context.token }}" />

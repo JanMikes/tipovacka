@@ -31,6 +31,38 @@ final class InviteFunnelJourneyTest extends WebTestCase
 
     private const string LINK_URL = '/souteze/pozvanka/'.AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN;
 
+    /**
+     * Item 27 — the landing names the soutěž ONCE. The tagline above the card duplicated
+     * it, and the notice inside the card padded it with the zdroj zápasů, the inviter and
+     * a sentence about the join completing after verification. Only the one sentence is
+     * left; the soutěž name is the one thing on this page that must never disappear.
+     */
+    public function testTheLandingNamesTheCompetitionOnceAndNothingElse(): void
+    {
+        $client = static::createClient();
+
+        foreach ([self::LINK_URL, '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN] as $url) {
+            $crawler = $client->request('GET', $url);
+            self::assertResponseIsSuccessful();
+
+            $competitionName = self::LINK_URL === $url
+                ? AppFixtures::VERIFIED_COMPETITION_NAME
+                : AppFixtures::PUBLIC_COMPETITION_NAME;
+
+            $body = $crawler->filter('body')->text();
+
+            self::assertStringContainsString(
+                'Chystáš se připojit do soutěže '.$competitionName.'.',
+                $body,
+                'The soutěž must still be named, with the period attached.',
+            );
+            self::assertStringNotContainsString('Za pár kliků', $body, 'The duplicated tagline above the card is gone.');
+            self::assertStringNotContainsString('ve zdroji zápasů', $body);
+            self::assertStringNotContainsString('Zapamatovali jsme si', $body);
+            self::assertStringNotContainsString('rovnou tě do soutěže přidáme', $body);
+        }
+    }
+
     public function testLinkSignUpLandsInTheCompetitionAfterVerification(): void
     {
         $client = static::createClient();
