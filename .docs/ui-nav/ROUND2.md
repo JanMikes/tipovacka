@@ -348,3 +348,32 @@ Remove the PIN input from `/prihlaseni` and `/registrace`. Note this is **not** 
 8's „entering a PIN without an account must be stateful": that asks for the PIN to be enterable
 *before* an account exists and to be **remembered through** sign-up — not for a dead PIN box to sit on
 the auth forms. The two must be designed together, which is why they belong to the same agent.
+
+## Batch 13 — credits in the header
+
+> in the header i want to see my credits and clicking on it takes me to the credit buying page
+
+The viewer's credit balance becomes visible in the top bar itself and links to `credits_buy`
+(`/kredity/koupit`). Today `CreditBalance` renders only inside the avatar dropdown and the mobile
+menu — `UI-MAP.md` §6 already lists „**Kredity is hidden** — reachable only from the avatar dropdown /
+mobile menu" as a known IA pain point, so this closes it.
+
+Watch the mobile bar, which is already crowded: brand · bell · „+" · avatar · hamburger. Adding a
+sixth element needs a deliberate answer, not a squeeze — and the bar is a **sticky glass** element, so
+anything added to it is on screen at all times.
+
+## Batch 14 — the notification dropdown overflows the viewport on mobile
+
+> malformed notifications overflow on mobile
+
+Screenshot (inline, no file): with the bell open on a phone, the dropdown panel is anchored so that it
+extends **past the LEFT edge of the viewport** — the heading „Oznámení" is clipped to „ení" — while its
+right edge stops mid-screen. The panel contains „Zatím žádná oznámení." and „Zobrazit vše"; both
+render, they are just positioned off-screen. Underneath it the admin sidebar and „Nákupy kreditů"
+page are visible, i.e. this reproduces in the **admin shell** as well as the portal one.
+
+Filed as **B18**. Note the shape of the bug: the panel is presumably positioned relative to the bell
+(right-aligned to a trigger that sits near the middle-right of a narrow bar), so at phone width it
+runs off the opposite edge. Related in kind — though not in mechanism — to **B3**, where a dropdown
+was cropped by a clipping ancestor and the fix was to re-parent it to `<body>`. Do not assume the same
+cause; measure it.

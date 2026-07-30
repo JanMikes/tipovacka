@@ -25,6 +25,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B15 | An invite-link sign-up loses the competition it was invited to | TODO | — |
 | B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
 | B17 | Browser offers to save the password before it is confirmed | TODO | — |
+| B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
 
 ---
 
@@ -991,3 +992,25 @@ Reported 2026-07-30; detail in [`ROUND2.md`](ROUND2.md) batch 11.
 On `/registrace`, filling the first password field triggers the browser's save-password prompt before
 the confirmation field has been typed. Likely `autocomplete` semantics on the pair — verify in a real
 browser, and check `app_reset_password` and the profile password change for the same gap.
+
+## B18 — the notification dropdown overflows the viewport on mobile
+
+Reported 2026-07-30 with a screenshot (inline, no file); transcription in [`ROUND2.md`](ROUND2.md)
+batch 14.
+
+Opening the bell on a phone renders the panel **past the left edge of the screen** — the heading
+„Oznámení" is clipped to „ení" — while its right edge stops mid-screen. The content renders correctly;
+only the position is wrong. It reproduces in the **admin shell** too, so the fix belongs to the shared
+`Notification:Bell` component (or its CSS), not to one layout.
+
+**Diagnose, do not assume.** The likely mechanism is a panel right-aligned to a trigger that sits near
+the middle of a narrow bar, so it overflows the opposite edge. That is a *different* mechanism from
+**B3** (a dropdown cropped by a clipping ancestor, fixed with `dropdownParent: 'body'`) even though the
+symptom rhymes — read B3 so you can tell them apart, and measure rather than pattern-match.
+
+Verify at 320 / 360 / 390 / 430 px, in **both** shells, with the panel empty and with several
+notifications. Zero horizontal page overflow.
+
+**Blocked on file ownership, not on a decision**: `templates/components/Layout/Nav.html.twig` is held
+by the invite-funnel agent (B14/B15) while it strips the chrome from the airlock. Dispatch after that
+lands, together with batch 13 (credits in the header), which touches the same bar.
