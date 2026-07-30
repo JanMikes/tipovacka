@@ -41,6 +41,10 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | — | [Cursor spotlight turned off behind a master switch](../features/cursor-spotlight.md) | DONE | `3605a60` |
 | 12 | [One name for the tip split: „Rozložení tipů" everywhere](items/12-naming-rozlozeni-tipu.md) | DONE | `c3c052e` (+ `PricingConfig` docblock) |
 | 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | DONE | `f624743` |
+| — | Boost panel copy + „Uložit tip" / „Jak tipovali ostatní" (round 2) | DONE | `295b47c` |
+| — | Domain: the „Měnit tip" window is **per match**, not per day (round 2) | DONE | `d44539a` |
+| 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | IN PROGRESS | — |
+| 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | TODO | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):

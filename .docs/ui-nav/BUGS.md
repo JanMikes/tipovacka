@@ -26,7 +26,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
 | B17 | Browser offers to save the password before it is confirmed | TODO | — |
 | B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
-| B19 | Stray border with no padding around the tip form on match detail | TODO | — |
+| B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
 ---
 

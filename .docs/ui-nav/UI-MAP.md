@@ -115,7 +115,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public**, context-aware (see below) |
 | `competition_join_by_link` | `/souteze/pozvanka/{token}` | `invitation/landing.html.twig` — **public** |
 | `competition_create` | `/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
-| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` — **a playing surface** since item 08: header (back link, eyebrow „zdroj · kolo", name + Live/Ukončeno/Tipy-uzamčeny pills, role badges, team-filter pills) + a 4-item action bar (**Nastavení** `competition_edit` · **Pozvat** `competition_manage_join_mechanics` · **Tipovat za členy** `competition_manage_members and not isGlobal` · **Uzamknout/Odemknout tipy** `competition_edit`) + the „Tipněte si všechny zápasy najednou" banner + the match list (one `Match:MatchRow` **card** per match — „Rozložení tipů" and the per-match uzávěrka live inside it since item 11) + an aside with the žebříček (real rows, „Celý žebříček" → `/zebricek?soutez=`) and `Boost:Panel`. A plain member sees **no** action bar |
+| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` — **a playing surface** since item 08: header (back link, eyebrow „zdroj · kolo", name + Live/Ukončeno/Tipy-uzamčeny pills, role badges, team-filter pills) + a 4-item action bar (**Nastavení** `competition_edit` · **Pozvat** `competition_manage_join_mechanics` · **Tipovat za členy** `competition_manage_members and not isGlobal` · **Uzamknout/Odemknout tipy** `competition_edit`) + the „Tipněte si všechny zápasy najednou" banner + the match list (one `Match:MatchRow` **card** per match — „Rozložení tipů" and the per-match uzávěrka live inside it since item 11) + an aside with the žebříček (real rows, „Celý žebříček" → `/zebricek?soutez=`) and `Boost:Panel` (sidebar heading „Získej výhody" since round 2). A plain member sees **no** action bar |
 | `competition_settings` | `/souteze/{id}/nastaveni` | `portal/competition/settings.html.twig` — **everything organizer** (item 08): links to the large forms (upravit / pravidla / výběr zápasů · týmy / prémium + přepnout na příspěvky), the členové list (ranks, „Přidat e-mail", „Odebrat"), the **Pozvánky** block `#pozvanky` (e-mail, hromadně, bez e-mailu, PIN, sdílený odkaz + jejich obnovit/zrušit), read-only pravidla bodování, and „Nevratné kroky" (opustit / smazat). Page-level access = `competition_view`; every block is gated by its own voter, so a plain member sees the roster + pravidla and nothing else |
 | `competition_edit` | `/souteze/{id}/upravit` | `portal/competition/edit.html.twig` |
 | `competition_rules` | `/souteze/{id}/pravidla` | `portal/competition/rule_configuration.html.twig` |
@@ -125,7 +125,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competition_premium` | `/souteze/{id}/premium` | `portal/competition/premium_settings.html.twig` |
 | `competition_add_anonymous_member` | `/souteze/{id}/clenove/bez-emailu` | `portal/competition/add_anonymous_member.html.twig` |
 | `competition_promote_anonymous_member` | `/souteze/{id}/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
-| `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` |
+| `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` — heading „Jak tipovali ostatní" (was „Tipy soutěže", renamed round 2: the old name never said the block lists OTHER members' tips) |
 | `competition_join_by_pin` | `/pripojit` | `portal/competition/join_by_pin.html.twig` (+ `competition_join_by_pin_quick` `/pripojit/rychle`) |
 
 Every action reached **from** „Nastavení" returns there (invite, bulk invite, revoke invitation,
@@ -297,8 +297,8 @@ the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives i
 
 **Live Components (`src/Twig/Components/`)**
 `Competition/CreateWizard` (4-step wizard, `.docs/features/create-wizard.md`) ·
-`Guess/GuessSubmitForm` · `Guess/MatchGuessesList` ·
-`Boost/BoostPanel` (owned boosts render a **jump link** to what they unlocked, unowned a purchase CTA; both disappear once the competition is fully over — B6) · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
+`Guess/GuessSubmitForm` (`:bare="true"` drops its card chrome — B19; the default ships `rounded-xl border …`, so an embedded call site must say `bare`, never re-neutralise it with utilities) · `Guess/MatchGuessesList` ·
+`Boost/BoostPanel` (owned boosts render a **jump link** to what they unlocked, unowned a purchase CTA; both disappear once the competition is fully over — B6. Round 2: panel rows carry marketing headlines („Jak tipují ostatní?" / „Přesné tipy soupeřů" / „Počkejte si na sestavy") while **`BoostType::label()` still names the confirm dialog, the prémium toggles, `/cenik` and the ledger** — the headline is a label above the canonical product, not a rename) · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
 `Profile/ProfileForm` · `Scoring/RuleFields` · `Auth/RegistrationForm`, `Auth/InvitationForm`,
 `Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm` ·
 `SoutezSwitcher` (`:competitions`, `currentId`, `route`, `:routeParams`, `param`, `label`, `id` —
