@@ -27,13 +27,13 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B17 | Browser offers to save the password before it is confirmed | DONE | `26462b4` |
 | B18 | Notification dropdown overflows the viewport on mobile | DONE | `09c9d21` — right-alignment to the trigger, **not** B3's clipping |
 | B20 | Nav overflows the viewport at 320 px (every page, both variants) | DONE | `09c9d21` — three-tier degradation; 0 overflow 320→1920 px |
-| B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
+| B22 | `/kredity` renders a 523 px table at 320 px | DONE | `48ed427` — the ledger now stacks below 640 px; the report's premise was wrong (see below) |
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | DONE | `6ee485a` — was 0 of 7 competitions, now 1 (World E) |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | TODO | — |
-| B27 | Match detail: the two paywall cards do not match; confirm-before-paying is wired but reportedly unseen | TODO | — |
+| B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
 ---
@@ -1359,3 +1359,35 @@ credits — do not weaken it.
 - Measure at 1600 / 1440 / 1024 / 430 / 320 px — zero overlaps, zero horizontal overflow.
 
 **Queued behind item 21**, which owns `assets/styles/app.css`.
+
+---
+
+## Addenda from the fixes (2026-07-30)
+
+**B22 — the report's premise was wrong, and the correction is the useful part.** Horizontal scroll was
+**already** confined to the table's own `.overflow-x-auto` wrapper, so the page never overflowed at any
+width. What „a 523 px table at 320 px" actually described was that only **238 of 482 px** was visible,
+with **both number columns — the point of a ledger — parked off-screen behind a scroll with no
+affordance**. And `min-width: 0` had nothing to give: the floor *is* the sum of five column min-contents
+(„Datum" alone pins 140 px via `white-space: nowrap` over „25. 07. 2026 13:02", „Popis" 135 px) inside a
+240 px content box — B13's lesson one step further, where the track itself is the floor. Fixed by
+**stacking** below 640 px: header row dropped, each cell carrying its own `data-label`, nothing scrolling
+at all. Also learned: a Tailwind **utility always beats the component layer**, so the narrow shape needed
+those declarations moved into `.tx-table` rather than fought with `!important`.
+
+**B27 — the confirm dialog was never missing.** Driven in a real browser it fires on both CTAs with the
+right Czech copy, cancel moves no credits, confirm charges exactly once, and a double click (card body or
+the dialog's own button) still posts once. So the product owner's „there as well should be confirmation"
+was a requirement stated without exercising it — **not** another B16. Worth recording, because B16 made
+the opposite outcome entirely plausible and the diagnosis was the only way to tell.
+
+The unification went via a new **`shape="bare"`** on `Boost:Panel` — the gold `.dist-unlock` control only,
+no container and no button colour of its own — so every pricing / affordability / superset / B6 rule
+stayed exactly where it already lived. The count („N hráčů s tipem") was **not** deleted: it moved into
+the headline slot, which is what the correct card puts there, and the pitch moved onto the skeleton.
+
+The whole-card target is a submit **stretched over the card** (item 18's `.card-stretch`), a **sibling** of
+the small CTA inside the same form — one CSRF token, one price, one dialog, nothing interactive nested
+inside it. It ships `hidden` and the `confirm` controller unhides it on connect via a new `stretch`
+target, so **the big target is the enhancement and the small button is the floor**: a page whose JS never
+ran keeps only the button, and an accidental card-sized click cannot spend credits unconfirmed.
