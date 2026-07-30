@@ -1,13 +1,17 @@
 {#
-    „Žebříček" — the standalone, publicly viewable leaderboard page (item 05).
+    „Žebříček" — the standalone, publicly viewable leaderboard page (item 05),
+    stripped back to the content by item 15.
 
     Controller: src/Controller/Public/LeaderboardController.php
-    Every bit of state is a query parameter (soutez / obdobi / hledat / razeni / vse),
-    so any view of this page is linkable and the whole thing works without JavaScript.
+    Every bit of state is a query parameter (soutez / hledat), so any view of this
+    page is linkable and the whole thing works without JavaScript. There is no
+    period filter, no „Seřadit" and no expand control any more — the heading, the
+    switcher, „Tvoje pozice", the podium (desktop only), one bare name-search input
+    and then the table.
 
-    Reuses the design-system classes that were written for exactly this page and had
-    never been rendered: .you-strip, .lb-tabs, .lb-table, .lb-tr.me, .lb-ty,
-    .lb-acc-bar, .podium — plus the Leaderboard:Podium and Leaderboard:Delta components.
+    Reuses the design-system classes written for exactly this page: .you-strip,
+    .lb-table, .lb-tr.me, .lb-ty, .lb-acc-bar, .lb-search, .lb-foot, .podium —
+    plus the Leaderboard:Podium and Leaderboard:Delta components.
 #}
 {% extends 'base.html.twig' %}
 
@@ -20,53 +24,9 @@
 <div class="bg-radial">
 <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
-    {# ───── Hero ───── #}
+    {# ───── Hero — the heading and nothing else (item 15) ───── #}
     <header class="mb-8">
-        <div class="flex flex-wrap items-end justify-between gap-6">
-            <div class="min-w-0">
-                <p class="eyebrow mb-3">Soutěžní žebříček{{ competition ? ' · průběžně' }}</p>
-                <h1 class="grad-headline text-4xl font-extrabold tracking-tight sm:text-5xl"><span>Žebříček</span></h1>
-                {% if competition %}
-                    <p class="mt-3 max-w-xl text-white/60">
-                        Pořadí v soutěži
-                        <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ competition.name }}</a>
-                        — body, úspěšnost a přesné tipy. Tipy ostatních tady nenajdeš.
-                    </p>
-                {% endif %}
-            </div>
-
-            {% if competition %}
-                {# Every figure is measured; a stat with nothing real to say is not rendered. #}
-                <dl class="flex flex-wrap items-baseline gap-x-8 gap-y-4">
-                    <div>
-                        <dt class="stat-lbl !mb-1">Hráčů</dt>
-                        <dd class="text-2xl font-black tabular-nums text-white">{{ player_count }}</dd>
-                    </div>
-                    {% if progress.matchCount > 0 %}
-                        <div>
-                            <dt class="stat-lbl !mb-1">Odehráno</dt>
-                            <dd class="text-2xl font-black tabular-nums text-white">{{ progress.finishedMatchCount }} / {{ progress.matchCount }}</dd>
-                        </div>
-                    {% endif %}
-                    {% if current_round.round is not null %}
-                        <div>
-                            <dt class="stat-lbl !mb-1">Kolo</dt>
-                            <dd class="text-2xl font-black text-white">{{ current_round.round }}</dd>
-                        </div>
-                    {% endif %}
-                    <div>
-                        <dt class="stat-lbl !mb-1">Aktualizace</dt>
-                        <dd class="text-2xl font-black {{ competition.matchSource.isCompleted ? 'text-white/50' : 'text-win' }}">
-                            {%- if competition.matchSource.isCompleted -%}
-                                Ukončeno
-                            {%- else -%}
-                                <span aria-hidden="true">●</span> Live
-                            {%- endif -%}
-                        </dd>
-                    </div>
-                </dl>
-            {% endif %}
-        </div>
+        <h1 class="grad-headline text-4xl font-extrabold tracking-tight sm:text-5xl"><span>Žebříček</span></h1>
 
         {% if switcher_competitions|length > 0 or not is_logged_in %}
             <div class="mt-7 flex flex-wrap items-end justify-between gap-4">
@@ -107,12 +67,6 @@
     {% else %}
 
         {% set competition_id = competition.id.toRfc4122 %}
-        {# Shared query-parameter base: every link on this page keeps the current
-           soutěž, search and sort, and only changes the one thing it is about. #}
-        {% set base_params = {soutez: competition_id} %}
-        {% if search != '' %}{% set base_params = base_params|merge({hledat: search}) %}{% endif %}
-        {% if sort.value != 'body' %}{% set base_params = base_params|merge({razeni: sort.value}) %}{% endif %}
-        {% set current_params = base_params|merge({obdobi: active_filter.value}) %}
 
         {% if winner is not null %}
             <section class="surface-accent mb-8 p-6 sm:p-10">
@@ -190,53 +144,31 @@
                         <span class="v text-win">{{ me_row.rank == 1 ? 'Vedeš' : 'Top 3' }}</span>
                     </div>
                 {% endif %}
-                <a href="{{ path('matches') }}" class="btn btn-ghost btn-sm ml-auto">
-                    Tipnout další zápas
-                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                </a>
             </div>
         {% endif %}
 
+        {# TOP 3 podium — desktop only (item 15): on a phone it pushes the real
+           standings below the fold, so it is hidden there rather than reflowed. #}
         {% if podium_rows|length >= 3 %}
-            <p class="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[#f5cd54]">
-                Top 3 · {{ active_filter.longLabel|lower }}
-            </p>
-            <twig:Leaderboard:Podium :rows="podium_rows" />
+            <div class="hidden md:block">
+                <p class="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.14em] text-[#f5cd54]">Top 3</p>
+                <twig:Leaderboard:Podium :rows="podium_rows" />
+            </div>
         {% endif %}
 
-        {# ───── Filter bar: hledání · období · řazení ───── #}
-        <div class="lb-toolbar mb-4">
-            <form method="get" action="{{ path('leaderboard') }}" class="lb-toolbar-form">
-                <input type="hidden" name="soutez" value="{{ competition_id }}">
-                <input type="hidden" name="obdobi" value="{{ active_filter.value }}">
-                <label class="sr-only" for="lb-hledat">Najít hráče v žebříčku</label>
-                <span class="lb-search">
-                    <twig:ux:icon name="lucide:search" class="lb-search-icon h-4 w-4" />
-                    <input type="search" id="lb-hledat" name="hledat" value="{{ search }}" class="input" placeholder="Najít hráče v žebříčku…">
-                </span>
-                <label class="sr-only" for="lb-razeni">Seřadit</label>
-                <select id="lb-razeni" name="razeni" class="input lb-sort">
-                    {% for option in sort_options %}
-                        <option value="{{ option.value }}"{{ option.value == sort.value ? ' selected' }}>Seřadit: {{ option.label }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-ghost btn-sm">Použít</button>
-            </form>
-
-            {# Time-window tabs. Only implemented windows are enum cases, so only they
-               render; „Poslední kolo" is hidden when the soutěž has no round-labelled
-               match at all — a board scoped to nothing would silently lie. #}
-            <div class="lb-tabs !mb-0" role="tablist" aria-label="Časové období">
-                {% for f in time_filters %}
-                    {% if f.value != 'kolo' or current_round.round is not null %}
-                        <a href="{{ path('leaderboard', base_params|merge({obdobi: f.value})) }}"
-                           class="lb-tab{{ f.value == active_filter.value ? ' active' }}"
-                           role="tab"
-                           {{ f.value == active_filter.value ? 'aria-selected="true"' : 'aria-selected="false"' }}>{{ f.label }}</a>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
+        {# ───── The one surviving control: a bare name search, outside the card.
+           A real GET form, so it filters with JavaScript off. ───── #}
+        <form method="get" action="{{ path('leaderboard') }}" class="mb-4 flex max-w-md items-center gap-2">
+            <input type="hidden" name="soutez" value="{{ competition_id }}">
+            <label class="sr-only" for="lb-hledat">Najít hráče v žebříčku</label>
+            <span class="lb-search">
+                <twig:ux:icon name="lucide:search" class="lb-search-icon h-4 w-4" />
+                <input type="search" id="lb-hledat" name="hledat" value="{{ search }}" class="input" placeholder="Najít hráče v žebříčku…">
+            </span>
+            <button type="submit" class="btn btn-ghost btn-sm shrink-0" aria-label="Najít hráče">
+                <twig:ux:icon name="lucide:search" class="h-4 w-4" />
+            </button>
+        </form>
 
         {# ───── Table ───── #}
         <div class="card-glass">
@@ -252,7 +184,7 @@
             {% elseif table.matchedCount == 0 %}
                 <div class="p-8 text-center">
                     <p class="text-sm text-white/60">Hráč „{{ search }}" v tomhle žebříčku není.</p>
-                    <a href="{{ path('leaderboard', {soutez: competition_id, obdobi: active_filter.value}) }}" class="btn btn-ghost btn-sm mt-4">Zrušit hledání</a>
+                    <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm mt-4">Zrušit hledání</a>
                 </div>
             {% else %}
                 {% set can_open_member = is_granted('leaderboard_details', competition) %}
@@ -261,7 +193,7 @@
                         <thead class="lb-thead">
                             <tr>
                                 <th class="w-14">Pozice</th>
-                                {% if show_delta %}<th title="Změna pořadí oproti předchozímu dennímu snímku">Δ</th>{% endif %}
+                                <th title="Změna pořadí oproti předchozímu dennímu snímku">Δ</th>
                                 <th>Hráč</th>
                                 <th class="text-right">Body</th>
                                 <th class="hidden text-right sm:table-cell">Úspěšnost</th>
@@ -274,7 +206,7 @@
                             {% for entry in table.entries %}
                                 {% if entry.isGap %}
                                     <tr class="lb-gap">
-                                        <td colspan="{{ show_delta ? 8 : 7 }}">
+                                        <td colspan="8">
                                             <span>… pozice {{ entry.gapFrom }}{% if entry.gapTo != entry.gapFrom %}–{{ entry.gapTo }}{% endif %} …</span>
                                         </td>
                                     </tr>
@@ -286,9 +218,7 @@
                                             <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
                                             {% if row.isTieResolvedOverride %}<span class="ml-1 text-[10px] text-white/40" title="Rozřazeno organizátorem">(R)</span>{% endif %}
                                         </td>
-                                        {% if show_delta %}
-                                            <td><twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" /></td>
-                                        {% endif %}
+                                        <td><twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" /></td>
                                         <td>
                                             {% set player %}
                                                 <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
@@ -342,14 +272,10 @@
                     <p class="text-xs text-white/50">
                         Zobrazeno <strong class="font-bold text-white">{{ table.shownCount }} z {{ table.totalCount }}</strong>
                         {{ table.totalCount == 1 ? 'hráče' : 'hráčů' }}
-                        {%- if search != '' %} · hledání „{{ search }}"{% endif %}
+                        {%- if search != '' %} · hledání „{{ search }}"
+                        {%- elseif table.isCondensed %} · zbylé pozice najdeš hledáním{% endif %}
                     </p>
                     <div class="flex flex-wrap items-center gap-2">
-                        {% if table.isCondensed %}
-                            <a href="{{ path('leaderboard', current_params|merge({vse: 1})) }}" class="btn btn-primary btn-sm">Zobrazit celý žebříček</a>
-                        {% elseif app.request.query.get('vse') %}
-                            <a href="{{ path('leaderboard', current_params) }}" class="btn btn-ghost btn-sm">Zobrazit zkrácený žebříček</a>
-                        {% endif %}
                         {% if is_granted('leaderboard_details', competition) %}
                             <a href="{{ path('leaderboard_matrix', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm">
                                 <twig:ux:icon name="lucide:table-2" class="h-4 w-4 text-accent-400" />

@@ -113,13 +113,23 @@ DONE + sha. Commit `UI: context-aware Soutěže page`, push to `main`.
 
 Product decisions the item file did not settle, resolved conservatively:
 
-1. **The hero's scope.** „Aktivní soutěže / Hráčů celkem / Sledovaných zápasů" describe *what the
+1. ~~**The hero's scope.** „Aktivní soutěže / Hráčů celkem / Sledovaných zápasů" describe *what the
    page is about*: for a signed-in visitor their own world (competitions they play in ∪ organize),
    for an anonymous one the public list — which is the whole page they get. A visitor in nothing
-   therefore sees honest zeroes, not the platform's global totals.
-2. **The hero's sub-labels.** Computed, never constant, and omitted when they have nothing to say:
+   therefore sees honest zeroes, not the platform's global totals.~~
+   **SUPERSEDED 2026-07-30 by [item 15](15-simplify-list-pages.md).** The product owner saw two
+   different „totals" on one page depending on whether they were signed in and reversed the
+   decision: the figures are now **platform-wide, identical for everyone**.
+   `GetCompetitionsPageStats` no longer takes a `viewerId` at all, so there is nothing left to
+   scope. Private competitions are counted (a count reveals no name, owner or id).
+2. ~~**The hero's sub-labels.** Computed, never constant, and omitted when they have nothing to say:
    „N živě teď" (falling back to „N zápasů dnes" — Prague calendar day), „+N tento týden"
-   (memberships joined in the last 7 days), „Ve N turnajích" (distinct zdroje zápasů in scope).
+   (memberships joined in the last 7 days), „Ve N turnajích" (distinct zdroje zápasů in scope).~~
+   **SUPERSEDED 2026-07-30 by item 15**, which made them global too — a global card over a personal
+   sub-label would be worse than either. They are still computed, never constant, and still omitted
+   when they have nothing to say; only the scope changed. „Ve N turnajích" is now the distinct
+   zdroje zápasů **the counted matches belong to**, which is what the label under „Sledovaných
+   zápasů" actually claims.
 3. **No prize-pool language anywhere.** The design's „N Kč v banku" / „rozděleno" card meta went
    the same way as the „VÝHERNÍ BANK" hero card the product owner cut: entry fees are burned
    credits and there are no payouts (DOMAIN.md). Cards show the entry fee („Vstupné X" / „Zdarma").

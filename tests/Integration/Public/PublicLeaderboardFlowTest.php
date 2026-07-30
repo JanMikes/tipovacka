@@ -7,7 +7,6 @@ namespace App\Tests\Integration\Public;
 use App\DataFixtures\AppFixtures;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -30,8 +29,10 @@ final class PublicLeaderboardFlowTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Žebříček');
-        // A global competition (the only kind an anonymous visitor may reach).
-        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'"]');
+        // A global competition (the only kind an anonymous visitor may reach). Item
+        // 15 deleted the hero sub-text that used to link into it, so the board names
+        // its soutěž through <title> and the switcher.
+        self::assertSelectorTextContains('title', AppFixtures::GLOBAL_COMPETITION_NAME);
         // No „you" without a viewer.
         self::assertSelectorNotExists('.you-strip');
         // The logged-out hero CTA is registration, per item 01's nav decision.
@@ -50,12 +51,9 @@ final class PublicLeaderboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Žebříček');
 
-        $links = [
-            'a[href="/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'"]',
-            'a[href="/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID.'"]',
-        ];
-        $crawler = $client->getCrawler();
-        $found = array_filter($links, static fn (string $s): bool => $crawler->filter($s)->count() > 0);
+        $title = $client->getCrawler()->filter('title')->text();
+        $names = [AppFixtures::GLOBAL_COMPETITION_NAME, AppFixtures::FREE_GLOBAL_COMPETITION_NAME];
+        $found = array_filter($names, static fn (string $name): bool => str_contains($title, $name));
 
         self::assertCount(1, $found, 'The default board must be one of the public global competitions.');
     }
@@ -126,7 +124,7 @@ final class PublicLeaderboardFlowTest extends WebTestCase
         $client->request('GET', '/zebricek?soutez='.AppFixtures::GLOBAL_COMPETITION_ID);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'"]');
+        self::assertSelectorTextContains('title', AppFixtures::GLOBAL_COMPETITION_NAME);
         self::assertSelectorNotExists('.you-strip');
         self::assertSelectorNotExists('tr.lb-tr.me');
         // No per-member breakdown links and no „Tabulka tipů" — both are tip surfaces.
@@ -139,33 +137,72 @@ final class PublicLeaderboardFlowTest extends WebTestCase
     }
 
     /**
-     * @return iterable<string, array{string, string}>
+     * Item 15 stripped the hero back to the heading: no sub-text, no HRÁČŮ /
+     * ODEHRÁNO / KOLO / AKTUALIZACE stats, and no filter card — one bare name
+     * search, outside any card, and no period tabs, sort or expand control.
      */
-    public static function periodTabs(): iterable
-    {
-        yield 'celkem' => ['celkem', 'Celkem'];
-        yield 'kolo' => ['kolo', 'Poslední kolo'];
-        yield '7dni' => ['7dni', 'Týden'];
-        yield 'mesic' => ['mesic', 'Měsíc'];
-    }
-
-    /**
-     * All four windows are linkable — the state lives in `?obdobi`, never in JS only.
-     */
-    #[DataProvider('periodTabs')]
-    public function testEveryPeriodTabIsReachableByUrl(string $value, string $label): void
+    public function testTheHeroIsTheHeadingAndTheOnlyControlIsTheNameSearch(): void
     {
         $client = static::createClient();
         $this->login($client, AppFixtures::ADMIN_ID);
 
-        $crawler = $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&obdobi='.$value);
+        $crawler = $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('.lb-tab.active'), 'Exactly one period tab is active.');
-        self::assertSame($label, trim($crawler->filter('.lb-tab.active')->text()));
+        self::assertSelectorTextContains('h1', 'Žebříček');
+
+        // The hero stats and the sub-heading text are gone.
+        self::assertSelectorNotExists('.stat-lbl');
+        self::assertSelectorTextNotContains('body', 'Odehráno');
+        self::assertSelectorTextNotContains('body', 'Aktualizace');
+        self::assertSelectorTextNotContains('body', 'Tipy ostatních tady nenajdeš');
+
+        // No period tabs, no „Seřadit", no expand control — and no filter card.
+        self::assertSelectorNotExists('.lb-tab');
+        self::assertSelectorNotExists('.lb-toolbar');
+        self::assertSelectorNotExists('select#lb-razeni');
+        self::assertSelectorTextNotContains('body', 'Zobrazit celý žebříček');
+
+        // The switcher form plus the search form, and nothing else.
+        self::assertSelectorExists('input#lb-hledat');
+        self::assertCount(2, $crawler->filter('form'));
     }
 
-    public function testSearchAndSortAreLinkableAndNarrowTheTable(): void
+    /**
+     * „Tvoje pozice" survives, minus its „Tipnout další zápas" button.
+     */
+    public function testTheYouStripKeepsNoTipButton(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::VERIFIED_USER_ID);
+
+        $client->request('GET', '/zebricek?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.you-strip');
+        self::assertSelectorNotExists('.you-strip a');
+        self::assertSelectorTextNotContains('.you-strip', 'Tipnout');
+    }
+
+    /**
+     * A shared link from before item 15 must not 500 — the retired parameters are
+     * simply not read any more.
+     */
+    public function testAStaleUrlCarryingTheRetiredParametersStillRenders(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::ADMIN_ID);
+
+        $client->request(
+            'GET',
+            '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&obdobi=7dni&razeni=body&vse=1',
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('.lb-tab');
+    }
+
+    public function testSearchIsLinkableAndNarrowsTheTable(): void
     {
         $client = static::createClient();
         $this->login($client, AppFixtures::ADMIN_ID);
@@ -182,11 +219,33 @@ final class PublicLeaderboardFlowTest extends WebTestCase
         $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&hledat=zzz-nikdo');
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('body', 'v tomhle žebříčku není');
+    }
 
-        // Sorting keeps the page valid and is carried in the URL.
-        $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&razeni=streak');
+    /**
+     * The search is a real GET form, so it filters with JavaScript off. Submitting
+     * it through BrowserKit (which runs no JS at all) is that proof.
+     */
+    public function testTheSearchFormWorksWithoutJavaScript(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::ADMIN_ID);
+
+        $crawler = $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('select#lb-razeni option[value="streak"][selected]');
+
+        $searchForm = $crawler->filter('input#lb-hledat')->closest('form');
+        self::assertNotNull($searchForm);
+        $form = $searchForm->form();
+        self::assertSame('GET', $form->getMethod());
+
+        $form->setValues(['hledat' => 'zzz-nikdo']);
+        $client->submit($form);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'v tomhle žebříčku není');
+        self::assertStringContainsString('hledat=zzz-nikdo', $client->getRequest()->getUri());
+        // The soutěž survives the submit — the hidden field carries it.
+        self::assertStringContainsString(AppFixtures::PUBLIC_COMPETITION_ID, $client->getRequest()->getUri());
     }
 
     public function testTheSubPagesStillWorkForAMember(): void

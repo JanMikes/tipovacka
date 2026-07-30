@@ -128,40 +128,44 @@ final class CompetitionsListFlowTest extends WebTestCase
         self::assertSelectorNotExists('#souteze-organizuji');
     }
 
-    public function testFiltersAreQueryParamDrivenAndTheCountFollows(): void
-    {
-        $client = static::createClient();
-
-        $client->request('GET', '/souteze');
-        self::assertSelectorTextContains('#souteze-verejne', '2 z 2 soutěží');
-
-        // Every fixture competition is football ⇒ the hockey filter empties the list
-        // while the „z N" total keeps describing the unfiltered scope.
-        $client->request('GET', '/souteze?sport='.Sport::HOCKEY_ID);
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('#souteze-verejne', '0 z 2 soutěží');
-        self::assertSelectorTextNotContains('#souteze-verejne', AppFixtures::GLOBAL_COMPETITION_NAME);
-
-        // …and a name search narrows it to exactly one.
-        $client->request('GET', '/souteze?hledat=zdarma');
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('#souteze-verejne', '1 z 2 soutěží');
-        self::assertSelectorTextContains('#souteze-verejne', AppFixtures::FREE_GLOBAL_COMPETITION_NAME);
-    }
-
-    public function testTheTwoFilterBarsDoNotDisturbEachOther(): void
+    /**
+     * Item 15 removed the whole filter/search card — BOTH instances. Nothing on
+     * the page filters, and the retired parameters are simply not read.
+     */
+    public function testNeitherGridCarriesAFilterOrSearchCard(): void
     {
         $client = static::createClient();
         $this->login($client, AppFixtures::VERIFIED_USER_ID);
 
-        // The organizer bar filters by its own prefixed params only.
-        $client->request('GET', '/souteze?moje-viditelnost=verejne');
+        $client->request('GET', '/souteze');
 
         self::assertResponseIsSuccessful();
-        // „Kámoši u piva" is not global ⇒ filtered out of the organizer grid…
-        self::assertSelectorTextContains('#souteze-organizuji', '0 z 1');
-        // …while the public grid is untouched by that parameter.
+        // Both sections are present…
+        self::assertSelectorExists('#souteze-organizuji');
+        self::assertSelectorExists('#souteze-verejne');
+        // …and neither carries the bar's chips, its search field or its count.
+        self::assertSelectorNotExists('#souteze-organizuji .lb-tab');
+        self::assertSelectorNotExists('#souteze-verejne .lb-tab');
+        self::assertSelectorNotExists('input[name="hledat"]');
+        self::assertSelectorNotExists('input[name="moje-hledat"]');
+        self::assertSelectorTextNotContains('#souteze-verejne', 'z 2 soutěží');
+        // The hero's „Hledat" button went with the field it pointed at.
+        self::assertSelectorNotExists('a[href="#souteze-verejne"]');
+    }
+
+    public function testTheRetiredFilterParametersDoNothing(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::VERIFIED_USER_ID);
+
+        // Every fixture competition is football and „Kámoši u piva" is private, so
+        // before item 15 each of these emptied a grid. Now they are inert.
+        $client->request('GET', '/souteze?sport='.Sport::HOCKEY_ID.'&hledat=zzz-nikdo&moje-viditelnost=verejne');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#souteze-verejne', AppFixtures::GLOBAL_COMPETITION_NAME);
         self::assertSelectorTextContains('#souteze-verejne', AppFixtures::FREE_GLOBAL_COMPETITION_NAME);
+        self::assertSelectorTextContains('#souteze-organizuji', AppFixtures::VERIFIED_COMPETITION_NAME);
     }
 
     public function testHeroCarriesNoPrizePoolCard(): void
@@ -176,6 +180,39 @@ final class CompetitionsListFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Aktivní soutěže');
         self::assertSelectorTextContains('body', 'Hráčů celkem');
         self::assertSelectorTextContains('body', 'Sledovaných zápasů');
+    }
+
+    /**
+     * Item 15's other half: the hero figures are platform-wide, so they must be
+     * byte-identical logged in and logged out. Compared on the rendered markup of
+     * the three cards, not on the query — the template is where a viewer branch
+     * would sneak back in.
+     */
+    public function testTheHeroFiguresAreIdenticalLoggedInAndLoggedOut(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/souteze');
+        self::assertResponseIsSuccessful();
+        $anonymous = $this->statCardMarkup($client);
+
+        $this->login($client, AppFixtures::VERIFIED_USER_ID);
+        $client->request('GET', '/souteze');
+        self::assertResponseIsSuccessful();
+        $member = $this->statCardMarkup($client);
+
+        self::assertCount(3, $anonymous);
+        self::assertSame($anonymous, $member);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function statCardMarkup(KernelBrowser $client): array
+    {
+        return $client->getCrawler()
+            ->filter('header .stat')
+            ->each(static fn (\Symfony\Component\DomCrawler\Crawler $node): string => preg_replace('/\s+/u', ' ', trim($node->text())) ?? '');
     }
 
     private function login(KernelBrowser $client, string $userId): void

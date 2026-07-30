@@ -16,7 +16,6 @@ use App\Entity\Membership;
 use App\Entity\SportMatch;
 use App\Entity\Team;
 use App\Entity\User;
-use App\Enum\LeaderboardTimeFilter;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\GetCompetitionLeaderboard\LeaderboardRow;
 use App\Service\PragueCalendar;
@@ -29,11 +28,10 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
 {
     private const string PUBLIC_ID = AppFixtures::PUBLIC_COMPETITION_ID;
 
-    public function testNoSnapshotHistoryYieldsNullDeltaButShowsColumn(): void
+    public function testNoSnapshotHistoryYieldsNullDelta(): void
     {
-        $result = $this->leaderboard(LeaderboardTimeFilter::AllTime);
+        $result = $this->leaderboard();
 
-        self::assertTrue($result->showDelta, 'All-time always shows the Δ column.');
         self::assertCount(1, $result->rows);
         self::assertNull($result->rows[0]->delta, 'No history ⇒ neutral (null) delta.');
         self::assertFalse($result->rows[0]->deltaIsNew);
@@ -49,7 +47,7 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
         $this->seedSnapshot('2025-06-14', AppFixtures::ADMIN_ID, rank: 1, points: 20);
         $this->seedSnapshot('2025-06-14', AppFixtures::VERIFIED_USER_ID, rank: 3, points: 4);
 
-        $rows = $this->rowsByUser($this->leaderboard(LeaderboardTimeFilter::AllTime));
+        $rows = $this->rowsByUser($this->leaderboard());
 
         // VERIFIED climbed 3 → 1 (+2); ADMIN fell 1 → 2 (−1); SECOND is new.
         self::assertSame(2, $rows[AppFixtures::VERIFIED_USER_ID]->delta);
@@ -66,7 +64,7 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
         $this->seedSnapshot('2025-06-14', AppFixtures::ADMIN_ID, rank: 5, points: 1);
         $this->seedSnapshot('2025-06-15', AppFixtures::ADMIN_ID, rank: 1, points: 3);
 
-        $rows = $this->rowsByUser($this->leaderboard(LeaderboardTimeFilter::AllTime));
+        $rows = $this->rowsByUser($this->leaderboard());
 
         // ADMIN is sole member ⇒ current rank 1; baseline is 2025-06-14 rank 5 ⇒ +4.
         self::assertSame(4, $rows[AppFixtures::ADMIN_ID]->delta);
@@ -90,25 +88,27 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
         self::assertSame(50, $this->snapshotPoints('2025-06-14', AppFixtures::ADMIN_ID), 'Yesterday untouched.');
     }
 
-    public function testLast7DaysWindowExcludesOlderEvaluations(): void
+    /**
+     * There is exactly ONE board per competition since item 15 retired the period
+     * windows: however old the match, an evaluation on it counts.
+     */
+    public function testTheBoardIsAllTimeAndCountsEvenTheOldestEvaluation(): void
     {
-        // ADMIN keeps the fixture eval (MATCH_FINISHED, 2025-06-10, 5 days ago,
-        // in window, 3 pts) and gains an eval on a match 10 days ago (out of window).
+        // ADMIN keeps the fixture eval (MATCH_FINISHED, 2025-06-10, 3 pts) and
+        // gains one on a match 10 days back — which the old „Týden" window used to
+        // drop and the single board must not.
         $this->addOldEvaluatedGuess(AppFixtures::ADMIN_ID, kickoff: '2025-06-05 18:00:00', points: 5);
 
-        $allTime = $this->rowsByUser($this->leaderboard(LeaderboardTimeFilter::AllTime));
-        self::assertSame(8, $allTime[AppFixtures::ADMIN_ID]->totalPoints, 'Celkem = 3 + 5.');
+        $rows = $this->rowsByUser($this->leaderboard());
 
-        $window = $this->leaderboard(LeaderboardTimeFilter::Last7Days);
-        self::assertFalse($window->showDelta, 'Windowed board hides the Δ column.');
-        self::assertSame(3, $this->rowsByUser($window)[AppFixtures::ADMIN_ID]->totalPoints, 'Only the in-window match counts.');
+        self::assertSame(8, $rows[AppFixtures::ADMIN_ID]->totalPoints, 'Celkem = 3 + 5.');
+        self::assertSame(2, $rows[AppFixtures::ADMIN_ID]->evaluatedCount);
     }
 
-    private function leaderboard(LeaderboardTimeFilter $filter): \App\Query\GetCompetitionLeaderboard\CompetitionLeaderboardResult
+    private function leaderboard(): \App\Query\GetCompetitionLeaderboard\CompetitionLeaderboardResult
     {
         return $this->queryBus()->handle(new GetCompetitionLeaderboard(
             competitionId: Uuid::fromString(self::PUBLIC_ID),
-            filter: $filter,
         ));
     }
 

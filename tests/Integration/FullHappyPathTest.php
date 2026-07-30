@@ -231,7 +231,6 @@ final class FullHappyPathTest extends IntegrationTestCase
         $this->mockClock()->modify('+1 day');
         /** @var CompetitionLeaderboardResult $nextDay */
         $nextDay = $this->queryBus()->handle(new GetCompetitionLeaderboard(competitionId: $competitionId));
-        self::assertTrue($nextDay->showDelta);
         self::assertSame(0, $nextDay->rows[0]->delta);
         self::assertFalse($nextDay->rows[0]->deltaIsNew);
         self::assertSame(0, $nextDay->rows[1]->delta);

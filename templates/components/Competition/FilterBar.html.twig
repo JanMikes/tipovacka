@@ -1,13 +1,18 @@
 {#
-    THE competition filter bar — one component, both grids of /souteze (item 07).
+    The competition filter bar — built for both grids of /souteze (item 07).
+
+    ⚠ NO PRODUCTION CALL SITE since item 15: the product owner removed the whole
+    filter/search card from /souteze, both instances. The component was kept on
+    purpose and its only render is the /_design gallery, where it is labelled as
+    unused. Do not assume /souteze filters anything.
+
     Filters are plain links carrying query parameters, so a filtered view survives
     a reload and can be pasted to someone else. Each bar owns a parameter prefix
     („" for the public list, „moje-" for the organizer one) and therefore never
-    disturbs the other bar's state.
-
-    The organizer context adds „Viditelnost"; the public one omits it (a
-    discoverable competition is public by definition) and offers fewer „Stav"
-    chips (see CompetitionStateFilter::forScope).
+    disturbs the other bar's state. The organizer context adds „Viditelnost"; the
+    public one omits it (a discoverable competition is public by definition). Which
+    „Stav" chips a caller offers is now purely the caller's choice — the
+    per-context list (`CompetitionStateFilter::forScope()`) went with the bars.
 
     @var sportOptions   list<\App\Query\ListBrowsableCompetitions\SportFilterOption>
     @var stateOptions   list<\App\Enum\CompetitionStateFilter>

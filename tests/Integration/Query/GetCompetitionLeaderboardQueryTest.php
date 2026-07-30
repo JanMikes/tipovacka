@@ -370,4 +370,60 @@ final class GetCompetitionLeaderboardQueryTest extends IntegrationTestCase
         self::assertSame(0, $verifiedRow->totalPoints);
         self::assertSame(2, $verifiedRow->rank);
     }
+
+    /**
+     * Item 15 retired the „Poslední kolo" board, so the ONE remaining board is
+     * round-blind: points earned in any round — and on an unlabelled match, which
+     * belonged to no round at all — all add up.
+     */
+    public function testTheBoardIsRoundBlind(): void
+    {
+        // ADMIN already has 3 pts on MATCH_FINISHED („Základní skupina"). Add 5 on
+        // MATCH_SCHEDULED („Čtvrtfinále") and 7 on MATCH_LIVE (no round).
+        $this->addEvaluatedGuess(AppFixtures::MATCH_SCHEDULED_ID, points: 5);
+        $this->addEvaluatedGuess(AppFixtures::MATCH_LIVE_ID, points: 7);
+
+        $result = $this->queryBus()->handle(new GetCompetitionLeaderboard(
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
+        ));
+
+        self::assertSame(15, $result->rows[0]->totalPoints);
+        self::assertSame(3, $result->rows[0]->evaluatedCount);
+    }
+
+    private function addEvaluatedGuess(string $matchId, int $points): void
+    {
+        $em = $this->entityManager();
+        $now = \DateTimeImmutable::createFromInterface($this->clock()->now());
+
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertNotNull($competition);
+        $match = $em->find(SportMatch::class, Uuid::fromString($matchId));
+        self::assertInstanceOf(SportMatch::class, $match);
+
+        $guess = new Guess(
+            id: Uuid::v7(),
+            user: $admin,
+            sportMatch: $match,
+            competition: $competition,
+            homeScore: 1,
+            awayScore: 0,
+            submittedAt: $now,
+        );
+        $guess->popEvents();
+        $em->persist($guess);
+
+        $evaluation = new GuessEvaluation(id: Uuid::v7(), guess: $guess, evaluatedAt: $now);
+        $evaluation->addRulePoints(new GuessEvaluationRulePoints(
+            id: Uuid::v7(),
+            evaluation: $evaluation,
+            ruleIdentifier: 'correct_outcome',
+            points: $points,
+        ));
+        $em->persist($evaluation);
+
+        $em->flush();
+    }
 }

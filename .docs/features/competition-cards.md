@@ -37,6 +37,12 @@ or „rozděleno". The same rule is why `/souteze` has no „Výherní bank" her
 
 ## `<twig:Competition:FilterBar>`
 
+> ⚠ **No production call site since [item 15](../ui-nav/items/15-simplify-list-pages.md)
+> (2026-07-30).** The product owner removed the whole filter/search card from `/souteze` — both
+> the public and the organizer instance. The component was deliberately kept and its only render
+> is `/_design` half A, where it carries a „Bez použití" pill and says so in prose. Everything
+> below still describes how it behaves; none of it is reachable from the app.
+
 ```twig
 <twig:Competition:FilterBar
     prefix="moje-" anchor="#souteze-organizuji"
@@ -53,9 +59,10 @@ or „rozděleno". The same rule is why `/souteze` has no „Výherní bank" her
   the *whole* query string, so switching one bar never resets the other.
 - **`visibilityOptions = null` hides the „Viditelnost" group** (the public list is public by
   definition).
-- **Which „Stav" chips a context offers** comes from `CompetitionStateFilter::forScope()` —
-  discovery has no „Skončené", because a global competition over a completed source is not listed
-  at all.
+- **Which „Stav" chips a caller offers is the caller's choice.** The old per-context list
+  (`CompetitionStateFilter::forScope()`) went with the bars in item 15 — nothing decided anything
+  with it any more. The rule it encoded still holds where it matters: discovery never lists a
+  global competition over a completed source at all, so „Skončené" could never have matched there.
 - The count reads „X z Y soutěží": filtered over the unfiltered scope total.
 
 Styling reuses existing primitives only — `.card-glass` for the bar, `.lb-tabs`/`.lb-tab` for the

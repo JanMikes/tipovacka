@@ -7,6 +7,9 @@
          rendered by its REAL tag off hand-made sample DTOs (see DesignStyleguideController).
          Add or change a shared component → render it here. Never hand-copy a component's
          markup: the whole point is that this page cannot drift from production.
+         A component the app no longer renders anywhere carries the „Bez použití" pill and
+         says so in prose (Competition:FilterBar since item 15) — the gallery is the shop
+         window of SHIPPED components, so an unlabelled entry would imply it is in use.
       B. „Připravujeme / reference" — DEFERRED (🔮) design-system elements whose feature is
          not built (příspěvkové úrovně, editor střelců, notifikační zvonek + feed).
 
@@ -78,7 +81,10 @@
         </p>
         <div class="mt-4 flex flex-wrap items-center gap-2">
             <twig:Pill label="Hotovo" variant="done" />
-            <span class="text-xs text-white/40">= hotová sdílená komponenta</span>
+            <span class="text-xs text-white/40">= hotová sdílená komponenta, aplikace ji používá</span>
+            <span class="mx-1 text-white/20">·</span>
+            <twig:Pill label="Bez použití" variant="warn" />
+            <span class="text-xs text-white/40">= hotová komponenta, kterou aplikace nikde nevykresluje</span>
             <span class="mx-1 text-white/20">·</span>
             <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
             <span class="text-xs text-white/40">= odložený prvek, jen vizuální reference</span>
@@ -136,7 +142,7 @@
                 <twig:Badge label="Mimo" variant="loss" />
                 <twig:Badge label="Remíza" variant="draw" />
                 <twig:Badge label="Čeká na výsledek" variant="pending" />
-                <twig:Badge label="Firemní MS 2026" variant="competition" />
+                <twig:Badge label="Firemní liga" variant="competition" />
                 <twig:Badge label="Organizátor" variant="organizer" icon="crown" />
                 <twig:Badge label="+5 bodů" variant="points" />
             </div>
@@ -227,7 +233,7 @@
             <p class="eyebrow mb-3 mt-6">Breadcrumbs</p>
             <twig:Breadcrumbs :items="[
                 { label: 'Soutěže', path: path('competitions_list') },
-                { label: 'Firemní MS 2026', path: path('competitions_list') },
+                { label: 'Firemní liga', path: path('competitions_list') },
                 { label: 'Nastavení' },
             ]" />
         </section>
@@ -280,16 +286,21 @@
                         <twig:ux:icon name="lucide:filter" class="h-5 w-5 text-accent-300" />
                         Filtr soutěží
                     </h3>
+                    <p class="mt-1.5 max-w-xl text-sm font-semibold text-warn">
+                        Tuto komponentu aplikace nikde nevykresluje. Produkt v úpravě 15 (30. 7. 2026)
+                        odstranil celou filtrační kartu z <code class="text-white/70">/souteze</code> —
+                        z obou mřížek. Komponenta zůstala jen jako reference; tohle je její
+                        <strong class="text-white">jediné</strong> místo v celé aplikaci.
+                    </p>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         <code class="text-white/70">&lt;twig:Competition:FilterBar&gt;</code> — filtry jsou vždy parametry
                         v URL, nikdy stav v JavaScriptu, takže odfiltrovaný pohled přežije reload i sdílení.
                         Dvě lišty na jedné stránce se nehádají díky <code class="text-white/70">prefix</code>
                         (organizátorská má „moje-") a skáčou zpět na svou sekci díky <code class="text-white/70">anchor</code>.
-                        Níže je organizátorská podoba — veřejná nemá „Viditelnost" a nabízí méně chipů „Stav"
-                        (<code class="text-white/70">CompetitionStateFilter::forScope()</code>).
+                        Níže je organizátorská podoba — veřejná nemá „Viditelnost".
                     </p>
                 </div>
-                <twig:Pill label="Hotovo" variant="done" />
+                <twig:Pill label="Bez použití" variant="warn" />
             </div>
 
             <twig:Competition:FilterBar
@@ -301,7 +312,7 @@
                 :activeState="filter_bar.activeState"
                 :visibilityOptions="filter_bar.visibilityOptions"
                 :activeVisibility="filter_bar.activeVisibility"
-                search="MS 2026"
+                search="firemní"
                 :filteredCount="2"
                 :totalCount="6"
             />

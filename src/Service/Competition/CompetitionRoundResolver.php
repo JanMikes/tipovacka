@@ -46,38 +46,6 @@ final readonly class CompetitionRoundResolver
     }
 
     /**
-     * How many of the competition's matches belong to the given round, and how
-     * many of those are already finished. Both counts respect the competition's
-     * match scope.
-     *
-     * @return array{matchCount: int, finishedMatchCount: int}
-     */
-    public function roundProgress(Competition $competition, string $round): array
-    {
-        $qb = $this->entityManager->createQueryBuilder()
-            ->select(
-                'COUNT(m.id) AS matchCount',
-                'SUM(CASE WHEN m.state = :cr_finished THEN 1 ELSE 0 END) AS finishedMatchCount',
-            )
-            ->from(SportMatch::class, 'm')
-            ->andWhere('m.round = :cr_round')
-            ->andWhere('m.state != :cr_cancelled')
-            ->setParameter('cr_round', $round)
-            ->setParameter('cr_finished', SportMatchState::Finished)
-            ->setParameter('cr_cancelled', SportMatchState::Cancelled);
-
-        $this->matchProvider->applyCompetitionMatchFilter($qb, 'm', $competition);
-
-        /** @var array{matchCount: int|string, finishedMatchCount: int|string|null} $row */
-        $row = $qb->getQuery()->getSingleResult();
-
-        return [
-            'matchCount' => (int) $row['matchCount'],
-            'finishedMatchCount' => (int) ($row['finishedMatchCount'] ?? 0),
-        ];
-    }
-
-    /**
      * The round label of the latest started (`$started = true`, kickoff DESC) or
      * earliest upcoming (`$started = false`, kickoff ASC) labelled match.
      */

@@ -1,6 +1,6 @@
 # 15 — Strip the filter chrome off Žebříček and `/souteze`
 
-> **Status:** TODO
+> **Status:** DONE
 > **Depends on:** nothing. Check „Files another agent owns" before starting.
 > **Owner decision date:** 2026-07-30
 
@@ -182,6 +182,143 @@ The live ownership list is in the dispatch prompt, not here, because it changes 
 **`assets/styles/app.css` is the highest-risk file in the repo** — confirm you own it this round before
 adding a single rule.
 
+## What landed
+
+### Žebříček — what became dead once the period tabs went
+
+Deleted outright, because nothing could reach them any more:
+
+| Deleted | Why it was unreachable |
+|---|---|
+| `src/Enum/LeaderboardTimeFilter.php` | the only source of a filter was `?obdobi` |
+| `src/Enum/LeaderboardSort.php` | the only source of an order was `?razeni` |
+| `GetCompetitionLeaderboard::$filter` + `GetCompetitionLeaderboardQuery::applyPeriodFilter()` + both `WINDOW_*` constants + the `CompetitionRoundResolver` dependency | one board, no windows |
+| `CompetitionLeaderboardResult::$showDelta` | it was `AllTime === $filter`, i.e. permanently true |
+| `CompetitionLeaderboardResult::$roundLabel` | only `LastRound` ever set it |
+| `src/Query/GetCompetitionCurrentRound/` (message + handler + result) | its only caller was the KOLO hero stat |
+| `CompetitionRoundResolver::roundProgress()` | its only caller was that query |
+| `src/Query/GetCompetitionMatchProgress/` (message + handler + result) | its only caller was the ODEHRÁNO hero stat |
+| `LeaderboardTableBuilder::$sort` / `::sort()` / `$expanded`, `LeaderboardTable::$sort` | `?razeni` and `?vse` are gone |
+| `CompetitionStateFilter::forScope()` | both callers were the two `/souteze` filter bars |
+
+**Deliberately kept:**
+
+- **`CompetitionRoundResolver::currentRound()`** — competition detail renders its eyebrow („zdroj ·
+  kolo") from it, so round *resolution* is still live domain code. Its integration coverage moved
+  from `tests/Integration/Query/GetCompetitionLeaderboardRoundTest.php` (deleted with the query) to
+  the new **`tests/Integration/Service/CompetitionRoundResolverTest.php`**, retargeted at the
+  service. Round **grouping** on match lists was never touched.
+- **`CompetitionStateFilter`** the enum — `BrowsableCompetitionItem::$state` still derives a
+  competition's state from its matches and `ListBrowsableCompetitions` still accepts it as an
+  optional scope. Only `forScope()` died.
+- **`ListBrowsableCompetitions`' optional `sportId` / `visibility` / `state` / `search` params**, and
+  `BrowsableCompetitionsResult::$sportOptions` / `$filteredCount`. The controller stops *passing*
+  them, but they are the query's own tested read contract and the natural counterpart of the
+  `FilterBar` the product owner chose to keep. Nothing in production sets them.
+- **`LeaderboardTableBuilder`'s fold** — `visibleIndexes()`, `HEAD_SIZE` / `AROUND_ME` /
+  `TAIL_SIZE` / `MIN_FOLDED_RANKS` and the gap entries are byte-identical. Only the two dead
+  parameters were removed.
+
+### Pagination survived the filter removal
+
+`strana` and `moje-strana` are read exactly as before; only `sport`, `stav`, `hledat` and the
+`moje-*` filter keys stopped being read. `ListBrowsableCompetitionsQuery` already clamped an
+out-of-range page (`min(max(1, $page), $pageCount)`), so a stale deep link still lands on a real
+page — and with no filters, `totalCount > 0` now implies a non-empty page, which is why the two
+„Žádná soutěž neodpovídá filtru" empty states went with the bars.
+
+### `Competition:FilterBar` in `/_design`
+
+Three layers, so the label cannot be missed:
+
+1. the section's status pill changed from `Hotovo` to **„Bez použití"** (`variant="warn"`);
+2. a warn-coloured paragraph **above** the technical caption: „Tuto komponentu aplikace nikde
+   nevykresluje. […] tohle je její **jediné** místo v celé aplikaci.";
+3. the page header's pill legend gained a third row — „Bez použití = hotová komponenta, kterou
+   aplikace nikde nevykresluje" — and the template docblock says the same, so the next
+   component to lose its call site gets labelled the same way.
+
+The component's own docblock and `.docs/features/competition-cards.md` both open with the same
+warning. Verified rendered: all 11 chips, „Viditelnost", the sample search value and the „2 z 6
+soutěží" count are present, 11 inert links, **0** real `href`s, the form inerted — so
+`DesignStyleguideFlowTest::testNothingOnThePageCanAct` still holds (1 `<form>`, no `method="post"`).
+
+### Verification
+
+`cs:check` clean on every touched path · `composer quality` green (phpstan lvl 8 + 496 unit tests) ·
+`tests/Integration/{Query,Public,Portal,Security,Service,Auth,Invitation,Event,Command,Console,Admin,Repository,Entity,Webhook,Fixtures}`
++ `DesignStyleguideFlowTest` + `FullHappyPathTest` + `GlobalCommerceJourneyTest` all green.
+
+Measured in headless Chrome against the dev fixtures:
+
+| Page | 1440 px | 430 px |
+|---|---|---|
+| `/zebricek` anonymous | `scrollWidth == clientWidth == 1440`, overflow **0**; podium **visible** 1088×264 | overflow **0**; podium **hidden** (0×0) |
+| `/zebricek` member | overflow **0**; `.you-strip` visible 1088×89, **0** links in it | overflow **0**; `.you-strip` visible 398×89 |
+| `/souteze` anonymous | overflow **0** | overflow **0** |
+| `/souteze` member/organizer | overflow **0** | overflow **0** |
+| `/_design` admin | overflow **0** | — |
+
+- `/zebricek` still carrying `?obdobi=7dni&razeni=body&vse=1` renders **200** anonymously and as a
+  member, byte-for-byte the same page as the clean URL (0 tabs, 0 toolbars, 0 `#lb-razeni`, no
+  expand CTA).
+- **`?hledat=` with JavaScript genuinely disabled** (`window.Stimulus === undefined`): submitting
+  the real GET form navigated to `/zebricek?soutez=…&hledat=martas`, the table went 14 rows → 1,
+  the footer read „Zobrazeno 1 z 24 hráčů · hledání „martas"", and the soutěž survived the submit
+  via the hidden field. A no-match needle renders the „…v tomhle žebříčku není" branch with its
+  „Zrušit hledání" link.
+- **`/souteze` hero figures byte-identical** anonymous / member / organizer-admin: the three
+  `.stat` cards' `outerHTML` hashes to the same `sha256:17dddc93e6a18059` in all three cases
+  („Aktivní soutěže 15 · 9 živě teď", „Hráčů celkem 29 · +26 tento týden", „Sledovaných zápasů 40 ·
+  Ve 8 turnajích"). Nothing was padded or rounded.
+
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+Product decisions the item file did not settle, resolved conservatively:
+
+1. **`?vse` and the „Zobrazit celý žebříček" button really are gone**, even though the button lived
+   in the table footer rather than in the filter card the item describes. The item says so three
+   times (the fate table, the prose, and acceptance criterion 2: „`?vse=` do nothing anywhere", „no
+   expand control"), so it is settled rather than an omission. **`LeaderboardTableBuilder`'s
+   condensing is untouched** — the fold, its four size constants and the „… pozice 13–24 …"
+   separator are byte-identical; only the now-unreachable `$expanded` parameter was removed, which
+   is orphaned plumbing rather than behaviour. The consequence is that the ranks inside a folded
+   stretch are reachable **through the search** instead of through a button, which is exactly what
+   the one surviving control is for; the footer says so („· zbylé pozice najdeš hledáním", rendered
+   only when the board is actually condensed). Measured live: 14 of 24 rows shown, and searching
+   „martas" reaches rank-whatever directly.
+2. **`showDelta` was removed rather than pinned to `true`.** With no windows left it could never be
+   false, so the Δ column now always renders. Two assertions that described the windowed board
+   („windowed board hides the Δ column", „a re-ranked board carries no all-time Δ") were deleted
+   because they no longer describe anything that exists — not weakened.
+3. **The hero's platform-wide scope includes private competitions.** „Platform-wide totals" read
+   literally; only aggregate counts leave `GetCompetitionsPageStats` (no name, owner or id), so a
+   private soutěž contributes to „Hráčů celkem" without becoming visible anywhere. The alternative
+   — keeping the old anonymous scope (global competitions only) for everyone — would also have been
+   „identical for everyone" but would have called a subset a total.
+4. **The three sub-labels were made global, not dropped.** All three are naturally global („N živě
+   teď" / „N zápasů dnes", „+N tento týden" = distinct users who joined **anything** in the last 7
+   days, „Ve N turnajích" = distinct zdroje zápasů the counted matches belong to), so a global card
+   over a personal sub-label never arose. „Ve N turnajích" is now derived from the counted matches
+   rather than from the scoped competitions, which is what the label under „Sledovaných zápasů"
+   actually claims.
+5. **The hero's „Hledat" button on `/souteze` was removed.** Item 07 assumption 5 shipped it as a
+   real filter precisely because „a button that only scrolled would have been a lie"; with the
+   search field gone it would have become exactly that lie. The section it pointed at is directly
+   below.
+6. **The Žebříček hero sub-text took the only link into the soutěž with it.** That paragraph was
+   „Pořadí v soutěži <name> — …", and its `<a>` was the page's only route to
+   `/souteze/{id}`. The item names the sub-text for deletion, so it went; the soutěž is still named
+   by `<title>` and by the switcher, and „Soutěže" is one nav click away. Three tests that used
+   that link as their „which board is this?" probe now read `<title>` instead — same fact, different
+   probe.
+7. **The „Top 3" podium caption lost its period suffix** („Top 3 · celkem" → „Top 3"), since
+   `active_filter` no longer exists and there is only one period.
+8. **Desktop-only = the `md` breakpoint** (`hidden md:block`, ≥768 px). The item says „hidden on
+   phones […] shown where there is room", and `md` is this design system's phone/tablet boundary.
+   Measured absent at 430 px and present at 1440 px.
+9. **`templates/design/styleguide.html.twig`'s three „MS 2026" sample strings were renamed**
+   („Firemní MS 2026" → „Firemní liga", „Velká tipovačka MS 2026" → „Velká tipovačka", the
+   FilterBar's `search="MS 2026"` → `search="firemní"`) on the orchestrator's instruction — the
+   product owner wants no „MS 2026" anywhere. Five more occurrences lived in
+   `DesignStyleguideController`'s sample DTOs and went the same way; `/_design` now contains zero.

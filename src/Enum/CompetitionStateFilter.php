@@ -12,10 +12,12 @@ namespace App\Enum;
  * - {@see Upcoming}   — nothing has kicked off yet;
  * - {@see Running}    — anything in between.
  *
- * The public/global list never offers {@see Finished}: a global competition
- * over a completed source is not discoverable at all (it cannot be joined), so
- * the chip would always resolve to an empty list. Which chips a context offers
- * is therefore a per-context list — see {@see forScope()}.
+ * Item 15 removed both filter bars from `/souteze`, so nothing renders these as
+ * chips any more. The enum survives because {@see \App\Query\ListBrowsableCompetitions\BrowsableCompetitionItem::$state}
+ * still derives a competition's state from its matches, and
+ * {@see \App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions} still
+ * accepts it as an optional scope. The per-context chip list (`forScope()`) went
+ * with the bars — nothing decided anything with it any more.
  */
 enum CompetitionStateFilter: string
 {
@@ -27,18 +29,6 @@ enum CompetitionStateFilter: string
     public static function fromRequest(?string $value): self
     {
         return (null !== $value ? self::tryFrom($value) : null) ?? self::All;
-    }
-
-    /**
-     * @return list<self>
-     */
-    public static function forScope(CompetitionBrowseScope $scope): array
-    {
-        if (CompetitionBrowseScope::Discoverable === $scope) {
-            return [self::All, self::Upcoming, self::Running];
-        }
-
-        return self::cases();
     }
 
     public function label(): string

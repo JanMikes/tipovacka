@@ -48,8 +48,9 @@ final class SoutezSwitcherFlowTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Žebříček');
-        // The page scoped itself to the chosen soutěž — its detail link proves which one.
-        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'"]');
+        // The page scoped itself to the chosen soutěž. Item 15 deleted the hero
+        // sub-text that used to link into it, so <title> is the probe now.
+        self::assertSelectorTextContains('title', AppFixtures::VERIFIED_COMPETITION_NAME);
     }
 
     public function testForeignSoutezIdFallsBackToTheViewersOwnSoutez(): void
@@ -63,7 +64,7 @@ final class SoutezSwitcherFlowTest extends WebTestCase
         $client->request('GET', '/zebricek?soutez=de305d54-75b4-431b-adb2-eb6b9e546014');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('a[href="/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'"]');
+        self::assertSelectorTextContains('title', AppFixtures::PUBLIC_COMPETITION_NAME);
     }
 
     /**

@@ -419,8 +419,8 @@ rebuilt pages have to render.
 **These worlds are anchored to the REAL calendar** (`today ± n days`), not to the
 `2025-06-15` MockClock instant the test baseline uses. A `db:reset` therefore always
 produces a tournament that is genuinely half-played: past matches carry results,
-upcoming ones are still tippable, and „Posledních 7 dní" / „Poslední kolo" are never
-empty. Everything is created at real *now*, which is after each world's earliest
+upcoming ones are still tippable, and no read surface is ever empty. Everything is
+created at real *now*, which is after each world's earliest
 kickoff, so every match counts as **late-added** and keeps its own kickoff as the tip
 deadline (`EffectiveTipDeadlineResolver`) — i.e. the upcoming fixtures really are
 tippable in the browser.
@@ -537,8 +537,9 @@ USA · Senegal · Korea — all with a short name, country and brand color, UUID
 
 Because the live match (#8) is the latest kicked-off labelled match,
 `CompetitionRoundResolver::currentRound()` → **„Základní skupina – 3. kolo"**, which has two
-evaluated matches — so `LeaderboardTimeFilter::LastRound` („Poslední kolo") and
-`GetCompetitionCurrentRound` both return real data. „Posledních 7 dní" covers matches #6–#8.
+evaluated matches — so the round label the competition detail page shows in its eyebrow is real
+data. (Item 15 retired the leaderboard's „Poslední kolo" board and the `GetCompetitionCurrentRound`
+query; the resolver itself is still live.)
 
 Tips on the open fixtures thin out on purpose (24 / 18 / 12 / 6 tippers for #8 / #9 / #10 /
 #11), so every „Rozložení tipů" bar has a different shape.
@@ -589,8 +590,9 @@ and a list long enough that a search box earns its place.
 
 **Item 05 — Žebříček.** Open World A's board: a 24-row table with a podium, a highlighted
 own row at rank 7 that is part of a **tie**, a long tail to collapse, non-trivial accuracy
-percentages and streaks, live Δ arrows, and all three period tabs populated (Celkem /
-Poslední kolo / Posledních 7 dní). World C is the same page in its final, frozen,
+percentages and streaks and live Δ arrows. (Item 15 stripped the page's period tabs, sort and
+expand control — the board is all-time only and the one control is the name search.)
+World C is the same page in its final, frozen,
 tie-resolved state; World B is the three-row-ish small board.
 
 **Item 06 — Nástěnka hráče.** The primary dev user has a competition worth putting in focus

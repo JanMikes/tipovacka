@@ -89,7 +89,7 @@ final class DesignStyleguideController extends AbstractController
         return [
             new CompetitionListItem(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-000000000001'),
-                competitionName: 'Firemní MS 2026',
+                competitionName: 'Firemní liga',
                 matchSourceId: Uuid::fromString('01930000-0000-7000-8000-0000000000a1'),
                 matchSourceName: 'MS ve fotbale 2026',
                 matchSourceIsCompleted: false,
@@ -146,7 +146,7 @@ final class DesignStyleguideController extends AbstractController
             // Organizer · running with a live match · free.
             'organizerLive' => new BrowsableCompetitionItem(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-0000000000b1'),
-                name: 'Firemní MS 2026',
+                name: 'Firemní liga',
                 sportId: Uuid::fromString(self::SPORT_FOOTBALL),
                 sportName: 'Fotbal',
                 matchSourceName: 'MS ve fotbale 2026',
@@ -206,7 +206,7 @@ final class DesignStyleguideController extends AbstractController
             // Public discovery · not a member yet · entry fee → the „Připojit se za …" CTA.
             'publicJoinable' => new BrowsableCompetitionItem(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-0000000000b4'),
-                name: 'Velká tipovačka MS 2026',
+                name: 'Velká tipovačka',
                 sportId: Uuid::fromString(self::SPORT_FOOTBALL),
                 sportName: 'Fotbal',
                 matchSourceName: 'MS ve fotbale 2026',
@@ -277,7 +277,7 @@ final class DesignStyleguideController extends AbstractController
         return [
             'running' => new PlayingCompetitionItem(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-0000000000c1'),
-                name: 'Firemní MS 2026',
+                name: 'Firemní liga',
                 matchSourceName: 'MS ve fotbale 2026',
                 viewerIsOwner: true,
                 isFinished: false,
@@ -460,7 +460,7 @@ final class DesignStyleguideController extends AbstractController
             // Premium competition → the organizer switches it on, nothing to buy.
             'premiumLocked' => new TipStats(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-0000000000e4'),
-                competitionName: 'Firemní MS 2026',
+                competitionName: 'Firemní liga',
                 monetization: CompetitionMonetization::Premium,
                 visible: false,
                 entitled: false,
@@ -497,10 +497,12 @@ final class DesignStyleguideController extends AbstractController
     }
 
     /**
-     * Props for the one <twig:Competition:FilterBar> on the page. The organizer shape
-     * is the richer one (it is the only context with „Viditelnost" and with the
-     * „Skončené" chip), so that is what the gallery shows; the caption explains the
-     * `prefix`/`anchor` mechanism instead of rendering a second bar.
+     * Props for the one <twig:Competition:FilterBar> on the page — which is also the
+     * component's ONLY render anywhere: item 15 removed both bars from `/souteze`, so
+     * this section is labelled „Bez použití" in the gallery. The organizer shape is
+     * the richer one (it is the only context with „Viditelnost"), so that is what is
+     * shown; the caption explains the `prefix`/`anchor` mechanism instead of
+     * rendering a second bar.
      *
      * @return array{
      *     sportOptions: list<SportFilterOption>,

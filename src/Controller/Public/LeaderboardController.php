@@ -7,11 +7,7 @@ namespace App\Controller\Public;
 use App\Entity\Competition;
 use App\Entity\User;
 use App\Enum\CompetitionBrowseScope;
-use App\Enum\LeaderboardSort;
-use App\Enum\LeaderboardTimeFilter;
-use App\Query\GetCompetitionCurrentRound\GetCompetitionCurrentRound;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
-use App\Query\GetCompetitionMatchProgress\GetCompetitionMatchProgress;
 use App\Query\ListBrowsableCompetitions\BrowsableCompetitionItem;
 use App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions;
 use App\Query\ListMyCompetitions\CompetitionListItem;
@@ -42,8 +38,10 @@ use Symfony\Component\Uid\Uuid;
  * The three deeper sub-pages (matice / clen / shoda) hang off `/zebricek/…` and
  * carry the same parameter — they stay members-only.
  *
- * All of the page state lives in the URL (`soutez`, `obdobi`, `hledat`, `razeni`,
- * `vse`), so every view of this page is linkable and works without JavaScript.
+ * All of the page state lives in the URL — since item 15 stripped the filter
+ * chrome that is just `soutez` and `hledat` — so every view is linkable and works
+ * without JavaScript. There is no period filter, no sort and no expand control:
+ * the board is all-time, in rank order, condensed around the viewer.
  */
 #[Route('/zebricek', name: 'leaderboard', methods: ['GET'])]
 final class LeaderboardController extends AbstractController
@@ -88,22 +86,14 @@ final class LeaderboardController extends AbstractController
         // control never claims to show a different soutěž than the page does.
         $switcherOptions = self::withSelected($switcherOptions, $competition);
 
-        $filter = LeaderboardTimeFilter::fromRequest($request->query->getString('obdobi'));
         $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(
             competitionId: $competition->id,
-            filter: $filter,
         ));
 
-        // Everything on this page reads from ONE board resolved for the active
-        // filter — the table, the podium and the „Tvoje pozice" strip — so a
-        // windowed tab never shows a strip rank that contradicts the re-ranked
-        // table. Under a window the board carries no Δ (snapshots are all-time
-        // only), so the strip's „od minula" movement simply does not render there.
+        // The table, the podium and the „Tvoje pozice" strip all read from ONE
+        // board, so no two of them can ever disagree about a rank.
         $standing = LeaderboardStanding::fromRows($leaderboard->rows, $user?->id);
         $meRow = $standing?->row;
-
-        $currentRound = $this->queryBus->handle(new GetCompetitionCurrentRound(competitionId: $competition->id));
-        $progress = $this->queryBus->handle(new GetCompetitionMatchProgress(competitionId: $competition->id));
 
         // Top-3 podium — only meaningful once there are ≥3 players and someone has scored.
         $podiumRows = [];
@@ -111,19 +101,17 @@ final class LeaderboardController extends AbstractController
             $podiumRows = array_slice($leaderboard->rows, 0, 3);
         }
 
+        $search = trim($request->query->getString('hledat'));
+
         $table = $this->tableBuilder->build(
             rows: $leaderboard->rows,
-            search: trim($request->query->getString('hledat')),
-            sort: $request->query->getString('razeni'),
+            search: $search,
             meRow: $meRow,
-            expanded: '' !== $request->query->getString('vse'),
         );
 
-        // The winner banner is the competition's overall champion — an all-time
-        // fact — so it is only shown on the all-time board, never derived from a
-        // windowed (e.g. „Týden") re-ranking.
+        // The winner banner is the competition's overall champion.
         $winner = null;
-        if ($competition->matchSource->isCompleted && LeaderboardTimeFilter::AllTime === $filter) {
+        if ($competition->matchSource->isCompleted) {
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;
@@ -142,15 +130,8 @@ final class LeaderboardController extends AbstractController
             'player_count' => count($leaderboard->rows),
             'gap_to_top3' => $standing?->gapToTop3,
             'gap_to_top5' => $standing?->gapToTop5,
-            'current_round' => $currentRound,
-            'progress' => $progress,
             'table' => $table,
-            'show_delta' => $leaderboard->showDelta,
-            'active_filter' => $filter,
-            'time_filters' => LeaderboardTimeFilter::cases(),
-            'search' => trim($request->query->getString('hledat')),
-            'sort' => $table->sort,
-            'sort_options' => LeaderboardSort::cases(),
+            'search' => $search,
         ]);
     }
 

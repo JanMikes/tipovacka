@@ -5,13 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Portal\Leaderboard;
 
 use App\DataFixtures\AppFixtures;
-use App\Entity\Competition;
-use App\Entity\Guess;
-use App\Entity\GuessEvaluation;
-use App\Entity\GuessEvaluationRulePoints;
-use App\Entity\Membership;
-use App\Entity\SportMatch;
-use App\Entity\Team;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -36,7 +29,8 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         $client->request('GET', '/zebricek?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
 
         self::assertResponseIsSuccessful();
-        // The Δ column renders under the all-time tab, with the corrected tooltip.
+        // The Δ column always renders — the board is all-time, so the daily
+        // snapshot it is measured against always describes the same thing.
         self::assertSelectorExists(self::DELTA_HEADER);
         // ANONYMOUS_USER joined today ⇒ absent from the 2025-06-14 baseline ⇒ „nový".
         self::assertSelectorExists('.lb-delta-new');
@@ -47,112 +41,6 @@ final class LeaderboardDeltaFlowTest extends WebTestCase
         // The factually-wrong „od včera" copy is retired everywhere on the page.
         self::assertStringNotContainsString('od včera', $body);
         self::assertStringNotContainsString('včerejšku', $body);
-    }
-
-    /**
-     * Fix: under a windowed (non-Celkem) tab the „Tvoje pozice" strip must follow
-     * the re-ranked table, never keep showing the all-time rank — otherwise one
-     * screen shows two contradictory ranks for the same user.
-     */
-    public function testWindowedTabYouStripRankMatchesTableAndHidesDelta(): void
-    {
-        $client = static::createClient();
-        /** @var EntityManagerInterface $em */
-        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
-
-        // PUBLIC_COMPETITION: ADMIN holds the fixture evaluation (3 pts on
-        // MATCH_FINISHED, kickoff 2025-06-10 — inside the last-7-days window). Add
-        // VERIFIED_USER with points ONLY outside that window: 10 pts all-time
-        // (rank 1) but 0 in the last 7 days (rank 2, behind ADMIN's 3). All-time
-        // and windowed ranks therefore genuinely disagree.
-        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID));
-        self::assertNotNull($competition);
-        $verified = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
-        self::assertNotNull($verified);
-
-        $membership = new Membership(id: Uuid::v7(), competition: $competition, user: $verified, joinedAt: $now);
-        $membership->popEvents();
-        $em->persist($membership);
-
-        $homeTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SPARTA_ID));
-        self::assertNotNull($homeTeam);
-        $awayTeam = $em->find(Team::class, Uuid::fromString(AppFixtures::TEAM_SLAVIA_ID));
-        self::assertNotNull($awayTeam);
-
-        $oldMatch = new SportMatch(
-            id: Uuid::v7(),
-            matchSource: $competition->matchSource,
-            homeTeam: $homeTeam,
-            awayTeam: $awayTeam,
-            kickoffAt: new \DateTimeImmutable('2025-06-01 18:00:00', new \DateTimeZone('UTC')),
-            venue: null,
-            createdAt: $now,
-        );
-        $oldMatch->popEvents();
-        $em->persist($oldMatch);
-
-        $guess = new Guess(
-            id: Uuid::v7(),
-            user: $verified,
-            sportMatch: $oldMatch,
-            competition: $competition,
-            homeScore: 1,
-            awayScore: 0,
-            submittedAt: $now,
-        );
-        $guess->popEvents();
-        $em->persist($guess);
-
-        $evaluation = new GuessEvaluation(id: Uuid::v7(), guess: $guess, evaluatedAt: $now);
-        $evaluation->addRulePoints(new GuessEvaluationRulePoints(
-            id: Uuid::v7(),
-            evaluation: $evaluation,
-            ruleIdentifier: 'exact_score',
-            points: 10,
-        ));
-        $em->persist($evaluation);
-        $em->flush();
-
-        $client->loginUser($verified);
-
-        // All-time tab: VERIFIED leads (10 pts) ⇒ strip AND table both show rank 1.
-        $crawler = $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
-        self::assertStringStartsWith('1.', trim($crawler->filter('.you-strip .pos')->text()));
-        self::assertSame('1.', trim($crawler->filter('tr.lb-tr.me .lb-pos')->text()));
-
-        // 7-day tab: VERIFIED has no in-window points ⇒ the table re-ranks them 2nd
-        // behind ADMIN. The strip must show the SAME rank, not the all-time 1st.
-        $crawler = $client->request('GET', '/zebricek?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&obdobi=7dni');
-        self::assertResponseIsSuccessful();
-
-        $tableRank = trim($crawler->filter('tr.lb-tr.me .lb-pos')->text());
-        self::assertSame('2.', $tableRank, 'Windowed table re-ranks VERIFIED to 2nd.');
-        self::assertStringStartsWith(
-            $tableRank,
-            trim($crawler->filter('.you-strip .pos')->text()),
-            'The you-strip rank must match the windowed table, never the all-time rank.',
-        );
-        // Δ is all-time only ⇒ the column (and any „od minula" movement) is hidden.
-        self::assertSelectorNotExists(self::DELTA_HEADER);
-        self::assertStringNotContainsString('od minula', (string) $client->getResponse()->getContent());
-    }
-
-    public function testTimeFilterTabsRender(): void
-    {
-        $client = static::createClient();
-        $this->loginVerified($client);
-
-        $client->request('GET', '/zebricek?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
-        $body = (string) $client->getResponse()->getContent();
-
-        // All four windows are offered as tabs („Poslední kolo" only when the soutěž
-        // actually has a round-labelled match — VERIFIED_COMPETITION has none).
-        self::assertStringContainsString('Celkem', $body);
-        self::assertStringContainsString('>Týden</a>', $body);
-        self::assertStringContainsString('>Měsíc</a>', $body);
-        self::assertStringNotContainsString('>Poslední kolo</a>', $body);
     }
 
     public function testDashboardMiniLeaderboardRendersDeltaChip(): void

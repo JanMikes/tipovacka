@@ -25,11 +25,10 @@
                 </p>
             </div>
 
+            {# „Hledat" went with the filter cards (item 15): it existed only to reach
+               the search field that no longer exists, and a button that merely scrolls
+               would be exactly the lie item 07 refused to ship. #}
             <div class="flex shrink-0 flex-wrap items-center gap-3">
-                <a href="#souteze-verejne" class="btn btn-ghost">
-                    <twig:ux:icon name="lucide:search" class="h-4 w-4" />
-                    Hledat
-                </a>
                 {% if is_logged_in %}
                     <a href="{{ path('competition_create') }}" class="btn btn-primary">
                         <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
@@ -41,8 +40,10 @@
             </div>
         </div>
 
-        {# Every number below is measured. A sub-label is rendered only when it has
-           something real to say — never a plausible-looking constant. #}
+        {# Every number below is measured, and since item 15 every one of them is a
+           PLATFORM-WIDE total — byte-identical logged in and logged out. A sub-label
+           is rendered only when it has something real to say; small numbers on a young
+           product are correct, so nothing here is padded or rounded up. #}
         {% set competitions_meta = null %}
         {% if stats.liveCompetitionCount > 0 %}
             {% set competitions_meta = stats.liveCompetitionCount ~ ' živě teď' %}
@@ -104,43 +105,19 @@
                 <p class="mt-1.5 text-sm text-white/50">Turnaje, které spravuješ — kontroluj tipy, uzavři kolo, zvi hráče.</p>
             </div>
 
-            <twig:Competition:FilterBar
-                prefix="moje-"
-                anchor="#souteze-organizuji"
-                :sportOptions="organized.sportOptions"
-                :activeSportId="organized_filters.sport"
-                :stateOptions="organized_state_options"
-                :activeState="organized_filters.state"
-                :visibilityOptions="visibility_options"
-                :activeVisibility="organized_filters.visibility"
-                :search="organized_filters.search"
-                :filteredCount="organized.filteredCount"
-                :totalCount="organized.totalCount"
-            />
+            <ul class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {% for item in organized.items %}
+                    <li><twig:Competition:Card :item="item" context="organizer" /></li>
+                {% endfor %}
+            </ul>
 
-            {% if organized.items|length == 0 %}
-                <twig:EmptyState
-                    illustration="search"
-                    title="Žádná soutěž neodpovídá filtru"
-                    body="Zkuste zrušit filtr nebo hledat jiný název."
-                    ctaLabel="Zrušit filtry"
-                    ctaPath="{{ path('competitions_list') }}#souteze-organizuji"
-                />
-            {% else %}
-                <ul class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    {% for item in organized.items %}
-                        <li><twig:Competition:Card :item="item" context="organizer" /></li>
-                    {% endfor %}
-                </ul>
-
-                {% if organized.hasMore %}
-                    <div class="mt-6 flex justify-center">
-                        <a href="{{ path('competitions_list', app.request.query.all|merge({'moje-strana': organized.page + 1})|filter(v => v is not empty)) }}#souteze-organizuji" class="btn btn-ghost btn-sm">
-                            Zobrazit další
-                            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
-                        </a>
-                    </div>
-                {% endif %}
+            {% if organized.hasMore %}
+                <div class="mt-6 flex justify-center">
+                    <a href="{{ path('competitions_list', app.request.query.all|merge({'moje-strana': organized.page + 1})|filter(v => v is not empty)) }}#souteze-organizuji" class="btn btn-ghost btn-sm">
+                        Zobrazit další
+                        <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    </a>
+                </div>
             {% endif %}
         </section>
     {% endif %}
@@ -152,19 +129,6 @@
             <h2 class="text-2xl font-bold tracking-tight text-white">Veřejné soutěže</h2>
             <p class="mt-1.5 text-sm text-white/50">Otevřené soutěže, do kterých se může přidat kdokoli.</p>
         </div>
-
-        {% if discoverable.totalCount > 0 %}
-            <twig:Competition:FilterBar
-                anchor="#souteze-verejne"
-                :sportOptions="discoverable.sportOptions"
-                :activeSportId="discoverable_filters.sport"
-                :stateOptions="discoverable_state_options"
-                :activeState="discoverable_filters.state"
-                :search="discoverable_filters.search"
-                :filteredCount="discoverable.filteredCount"
-                :totalCount="discoverable.totalCount"
-            />
-        {% endif %}
 
         {% if discoverable.totalCount == 0 %}
             <div class="card-glass p-10 text-center">
@@ -186,14 +150,6 @@
                     </a>
                 {% endif %}
             </div>
-        {% elseif discoverable.items|length == 0 %}
-            <twig:EmptyState
-                illustration="search"
-                title="Žádná soutěž neodpovídá filtru"
-                body="Zkuste zrušit filtr nebo hledat jiný název."
-                ctaLabel="Zrušit filtry"
-                ctaPath="{{ path('competitions_list') }}#souteze-verejne"
-            />
         {% else %}
             <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {% for item in discoverable.items %}

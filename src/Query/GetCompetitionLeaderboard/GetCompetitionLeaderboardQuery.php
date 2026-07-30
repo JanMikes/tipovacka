@@ -8,36 +8,26 @@ use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
 use App\Entity\SportMatch;
-use App\Enum\LeaderboardTimeFilter;
 use App\Repository\CompetitionRepository;
 use App\Repository\LeaderboardSnapshotRepository;
 use App\Repository\LeaderboardTieResolutionRepository;
 use App\Repository\MembershipRepository;
 use App\Rule\ExactScoreRule;
 use App\Service\Competition\CompetitionMatchProvider;
-use App\Service\Competition\CompetitionRoundResolver;
 use App\Service\PragueCalendar;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\QueryBuilder;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class GetCompetitionLeaderboardQuery
 {
-    /** „Týden" rolling window length. */
-    private const string WINDOW_LAST_7_DAYS = '-7 days';
-
-    /** „Měsíc" rolling window length. */
-    private const string WINDOW_LAST_30_DAYS = '-30 days';
-
     public function __construct(
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private LeaderboardTieResolutionRepository $resolutionRepository,
         private LeaderboardSnapshotRepository $snapshotRepository,
         private CompetitionMatchProvider $matchProvider,
-        private CompetitionRoundResolver $roundResolver,
         private EntityManagerInterface $entityManager,
         private ClockInterface $clock,
     ) {
@@ -49,14 +39,6 @@ final readonly class GetCompetitionLeaderboardQuery
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-
-        // „Poslední kolo" slices by round label, not by time. Resolved ONCE here
-        // so every aggregate below sees the same round. A competition with no
-        // round-labelled match yields null — the board then simply stays
-        // unscoped (and carries no $roundLabel, so the UI can hide the tab).
-        $round = LeaderboardTimeFilter::LastRound === $query->filter
-            ? $this->roundResolver->currentRound($competition)
-            : null;
 
         $aggregatesQb = $this->entityManager->createQueryBuilder()
             ->select(
@@ -73,7 +55,6 @@ final readonly class GetCompetitionLeaderboardQuery
             ->groupBy('g.user')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($aggregatesQb, 'm', $competition);
-        $this->applyPeriodFilter($aggregatesQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, points: int, evaluated: int, scored: int}> $aggregates */
         $aggregates = $aggregatesQb->getQuery()->getArrayResult();
@@ -104,7 +85,6 @@ final readonly class GetCompetitionLeaderboardQuery
             ->setParameter('competitionId', $competition->id)
             ->setParameter('exactId', ExactScoreRule::IDENTIFIER);
         $this->matchProvider->applyCompetitionMatchFilter($exactQb, 'm', $competition);
-        $this->applyPeriodFilter($exactQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, exact: int}> $exactAggregates */
         $exactAggregates = $exactQb->getQuery()->getArrayResult();
@@ -127,7 +107,6 @@ final readonly class GetCompetitionLeaderboardQuery
             ->addOrderBy('m.kickoffAt', 'DESC')
             ->setParameter('competitionId', $competition->id);
         $this->matchProvider->applyCompetitionMatchFilter($streakQb, 'm', $competition);
-        $this->applyPeriodFilter($streakQb, 'm', $query->filter, $now, $round);
 
         /** @var list<array{userId: string, points: int}> $streakRows */
         $streakRows = $streakQb->getQuery()->getArrayResult();
@@ -151,12 +130,10 @@ final readonly class GetCompetitionLeaderboardQuery
 
         $resolutions = $this->resolutionRepository->findForCompetition($competition->id);
 
-        // Δ is all-time only: a windowed board re-ranks by windowed points, so an
-        // all-time snapshot Δ would be meaningless — the UI then hides the column.
-        $showDelta = LeaderboardTimeFilter::AllTime === $query->filter;
-        $previousRanks = $showDelta
-            ? $this->snapshotRepository->latestBefore($competition->id, PragueCalendar::day($now))
-            : [];
+        // Δ is measured against the latest daily snapshot strictly before today.
+        // The board is all-time (item 15 retired the period windows), so the
+        // snapshot and the live ranking always describe the same thing.
+        $previousRanks = $this->snapshotRepository->latestBefore($competition->id, PragueCalendar::day($now));
         $hasHistory = [] !== $previousRanks;
 
         $baseRows = [];
@@ -257,46 +234,6 @@ final readonly class GetCompetitionLeaderboardQuery
         return new CompetitionLeaderboardResult(
             rows: $finalRows,
             matchSourceCompleted: $competition->matchSource->isCompleted,
-            showDelta: $showDelta,
-            roundLabel: $round,
         );
-    }
-
-    /**
-     * „Týden" / „Měsíc": keep only evaluations whose match kicked off within the
-     * rolling 7- resp. 30-day window ending now. The boundary is an instant (both
-     * sides UTC-stored), so it is derived directly from the injected clock — the
-     * Prague framing only matters for day-labelled snapshots, not this rolling sum.
-     *
-     * „Poslední kolo": keep only evaluations on matches carrying `$round`
-     * (pre-resolved by the caller). A null `$round` means the competition has no
-     * round to scope to, so nothing is applied.
-     *
-     * All-time applies neither.
-     */
-    private function applyPeriodFilter(
-        QueryBuilder $qb,
-        string $matchAlias,
-        LeaderboardTimeFilter $filter,
-        \DateTimeImmutable $now,
-        ?string $round,
-    ): void {
-        $window = match ($filter) {
-            LeaderboardTimeFilter::Last7Days => self::WINDOW_LAST_7_DAYS,
-            LeaderboardTimeFilter::Last30Days => self::WINDOW_LAST_30_DAYS,
-            default => null,
-        };
-
-        if (null !== $window) {
-            $qb->andWhere(sprintf('%s.kickoffAt >= :lbWindowStart', $matchAlias))
-                ->setParameter('lbWindowStart', $now->modify($window));
-
-            return;
-        }
-
-        if (LeaderboardTimeFilter::LastRound === $filter && null !== $round) {
-            $qb->andWhere(sprintf('%s.round = :lbRound', $matchAlias))
-                ->setParameter('lbRound', $round);
-        }
     }
 }

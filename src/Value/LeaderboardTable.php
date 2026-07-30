@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Value;
 
-use App\Enum\LeaderboardSort;
-
 /**
- * The žebříček as the page renders it: searched, sorted, and — for a long board —
+ * The žebříček as the page renders it: searched and — for a long board —
  * condensed around the viewer instead of paginated.
  */
 final readonly class LeaderboardTable
@@ -25,7 +23,6 @@ final readonly class LeaderboardTable
         public int $totalCount,
         /** True when at least one stretch of ranks was folded away. */
         public bool $isCondensed,
-        public LeaderboardSort $sort,
     ) {
     }
 }

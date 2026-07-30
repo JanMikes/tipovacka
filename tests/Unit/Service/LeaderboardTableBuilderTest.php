@@ -11,7 +11,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The „… pozice 13–24 …" fold, the search and the „Seřadit" order — item 05.
+ * The „… pozice 13–24 …" fold and the search — item 05, minus the „Seřadit" order
+ * and the „Zobrazit celý žebříček" expansion, which item 15 removed from the page
+ * (the fold itself is untouched). Searching is now the only way past a fold, which
+ * is why the „turns the fold off" case matters more than ever.
  */
 final class LeaderboardTableBuilderTest extends TestCase
 {
@@ -58,14 +61,6 @@ final class LeaderboardTableBuilderTest extends TestCase
         self::assertCount(2, $this->gapsOf($table));
     }
 
-    public function testExpandingShowsEveryRank(): void
-    {
-        $table = $this->build($this->rows(40), expanded: true);
-
-        self::assertFalse($table->isCondensed);
-        self::assertSame(40, $table->shownCount);
-    }
-
     public function testSearchingNarrowsTheBoardAndTurnsTheFoldOff(): void
     {
         $rows = $this->rows(40);
@@ -91,22 +86,9 @@ final class LeaderboardTableBuilderTest extends TestCase
         self::assertSame(0, $this->build($rows, search: 'nikdo')->matchedCount);
     }
 
-    public function testSortingReordersRowsButNeverRewritesTheirRank(): void
+    public function testTheBoardKeepsItsRankOrder(): void
     {
-        $rows = [
-            $this->row(1, 'a', points: 30, streak: 0),
-            $this->row(2, 'b', points: 20, streak: 7),
-            $this->row(3, 'c', points: 10, streak: 3),
-        ];
-
-        $table = $this->build($rows, sort: 'streak');
-
-        self::assertSame([2, 3, 1], $this->ranksOf($table));
-    }
-
-    public function testAnUnknownSortFallsBackToPoints(): void
-    {
-        $table = $this->build($this->rows(3), sort: 'nesmysl');
+        $table = $this->build($this->rows(3));
 
         self::assertSame([1, 2, 3], $this->ranksOf($table));
     }
@@ -117,16 +99,12 @@ final class LeaderboardTableBuilderTest extends TestCase
     private function build(
         array $rows,
         string $search = '',
-        string $sort = 'body',
         ?LeaderboardRow $meRow = null,
-        bool $expanded = false,
     ): LeaderboardTable {
         return (new LeaderboardTableBuilder())->build(
             rows: $rows,
             search: $search,
-            sort: $sort,
             meRow: $meRow,
-            expanded: $expanded,
         );
     }
 

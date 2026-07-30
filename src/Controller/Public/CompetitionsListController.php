@@ -6,8 +6,6 @@ namespace App\Controller\Public;
 
 use App\Entity\User;
 use App\Enum\CompetitionBrowseScope;
-use App\Enum\CompetitionStateFilter;
-use App\Enum\CompetitionVisibilityFilter;
 use App\Query\GetCompetitionsPageStats\GetCompetitionsPageStats;
 use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions;
@@ -17,7 +15,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * „Soutěže" — the one place every relationship to a competition lives (item 07):
@@ -28,9 +25,11 @@ use Symfony\Component\Uid\Uuid;
  * degrade away instead of gating the route — see
  * `tests/Integration/Security/AnonymousReachabilityTest`.
  *
- * Filters are query params, not JS state, so a filtered view survives a reload
- * and can be shared. The public list owns the short names (`sport`, `stav`,
- * `hledat`, `strana`); the organizer list prefixes its own with `moje-`.
+ * **No filters since item 15.** The filter/search cards of both grids are gone,
+ * and with them `sport` · `stav` · `hledat` and every `moje-*` key. What survives
+ * is **pagination** — `strana` for the public grid, `moje-strana` for the
+ * organizer one — because „Zobrazit další" is not a filter and the product owner
+ * only asked for the filter card to go.
  */
 #[Route('/souteze', name: 'competitions_list', methods: ['GET'])]
 final class CompetitionsListController extends AbstractController
@@ -45,44 +44,26 @@ final class CompetitionsListController extends AbstractController
         $user = $this->getUser();
         $viewerId = $user instanceof User ? $user->id : null;
 
-        $publicSportId = $this->uuidParam($request, 'sport');
-        $publicState = CompetitionStateFilter::fromRequest($request->query->getString('stav') ?: null);
-        $publicSearch = trim($request->query->getString('hledat'));
-
         $discoverable = $this->queryBus->handle(new ListBrowsableCompetitions(
             scope: CompetitionBrowseScope::Discoverable,
             viewerId: $viewerId,
-            sportId: $publicSportId,
-            state: $publicState,
-            search: '' !== $publicSearch ? $publicSearch : null,
             page: max(1, $request->query->getInt('strana', 1)),
         ));
 
-        $stats = $this->queryBus->handle(new GetCompetitionsPageStats(viewerId: $viewerId));
+        // Platform-wide totals since item 15 — identical logged in and logged out,
+        // so the hero never tells two visitors two different truths.
+        $stats = $this->queryBus->handle(new GetCompetitionsPageStats());
 
         $playing = [];
         $organized = null;
-        $organizedSportId = null;
-        $organizedVisibility = CompetitionVisibilityFilter::All;
-        $organizedState = CompetitionStateFilter::All;
-        $organizedSearch = '';
         $walletBalance = 0;
 
         if ($user instanceof User) {
             $playing = $this->queryBus->handle(new ListMyPlayingCompetitions(userId: $user->id));
 
-            $organizedSportId = $this->uuidParam($request, 'moje-sport');
-            $organizedVisibility = CompetitionVisibilityFilter::fromRequest($request->query->getString('moje-viditelnost') ?: null);
-            $organizedState = CompetitionStateFilter::fromRequest($request->query->getString('moje-stav') ?: null);
-            $organizedSearch = trim($request->query->getString('moje-hledat'));
-
             $organized = $this->queryBus->handle(new ListBrowsableCompetitions(
                 scope: CompetitionBrowseScope::Organized,
                 viewerId: $user->id,
-                sportId: $organizedSportId,
-                visibility: $organizedVisibility,
-                state: $organizedState,
-                search: '' !== $organizedSearch ? $organizedSearch : null,
                 page: max(1, $request->query->getInt('moje-strana', 1)),
             ));
 
@@ -98,30 +79,8 @@ final class CompetitionsListController extends AbstractController
             'stats' => $stats,
             'playing_competitions' => $playing,
             'organized' => $organized,
-            'organized_filters' => [
-                'sport' => $organizedSportId,
-                'visibility' => $organizedVisibility,
-                'state' => $organizedState,
-                'search' => $organizedSearch,
-            ],
-            'organized_state_options' => CompetitionStateFilter::forScope(CompetitionBrowseScope::Organized),
-            'discoverable_state_options' => CompetitionStateFilter::forScope(CompetitionBrowseScope::Discoverable),
-            'visibility_options' => CompetitionVisibilityFilter::cases(),
             'discoverable' => $discoverable,
-            'discoverable_filters' => [
-                'sport' => $publicSportId,
-                'visibility' => CompetitionVisibilityFilter::All,
-                'state' => $publicState,
-                'search' => $publicSearch,
-            ],
             'wallet_balance' => $walletBalance,
         ]);
-    }
-
-    private function uuidParam(Request $request, string $name): ?Uuid
-    {
-        $raw = $request->query->getString($name);
-
-        return Uuid::isValid($raw) ? Uuid::fromString($raw) : null;
     }
 }
