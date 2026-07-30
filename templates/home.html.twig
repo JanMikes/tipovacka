@@ -19,10 +19,19 @@
         <div>
             <span class="eyebrow">Tipovací soutěže pro partičky</span>
 
+            {# The `&nbsp;` here are Czech typography, not decoration: a one-letter conjunction
+               („a") or preposition („o") must never be left stranded at the end of a line. Glue
+               them FORWARD only — `a&nbsp;pak`, `o&nbsp;hlavu.` — and never chain a long word into
+               the run. The <h1>'s min-content width is its longest unbreakable run, and this is a
+               `1.15fr 0.95fr` grid track (= `minmax(auto, …)`), so an over-glued headline sets a
+               floor that steals the demo card's share of the row: `kámošům&nbsp;o&nbsp;hlavu.`
+               measured 740 px against a declared 631 px column, collapsing the card to 391 px at
+               1280 px and 235 px at 1024 px until the team names vanished. B21 in
+               .docs/ui-nav/BUGS.md #}
             <h1 class="mt-4 text-[clamp(2.75rem,7vw,5.25rem)] font-black leading-[0.95] tracking-[-0.04em] text-white">
                 Tipujte,
                 <span class="grad-headline">vyhrajte</span>
-                a&nbsp;pak&nbsp;to omlátíte kámošům&nbsp;o&nbsp;hlavu.
+                a&nbsp;pak to omlátíte kámošům o&nbsp;hlavu.
             </h1>
 
             <p class="mt-6 max-w-[50ch] text-lg leading-relaxed text-white/70">
