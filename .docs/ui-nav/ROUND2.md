@@ -426,3 +426,30 @@ different product decision and would also read as near-zero today.
 Handed to the invite-funnel agent, which already owns that template. It was also asked to sweep
 `/registrace` and the invitation landings for the same pattern and to report — without touching
 `templates/home.html.twig`, which is a separate surface.
+
+## Batches 17–19 — the two list pages (specced as `items/15-simplify-list-pages.md`)
+
+> For the filters panel in žebříček — keep only player name search, it can be outside of card, just the
+> input to take less space
+> On /souteze remove the filters panel too, completely whole filters/search card
+> the numbers on /souteze in cards shows different numbers when i am logged in or not -> show always
+> the same global numbers
+
+The first line resolves the „zrušit filtry" ambiguity flagged in batch 6: it meant the **filter card**,
+which collapses to a bare name-search input.
+
+**Three further decisions taken 2026-07-30:**
+
+| Question | Decision | Consequence |
+|---|---|---|
+| Do the Žebříček period tabs stay? | **No — remove them, all-time board only** | Retires `?obdobi=`, the `LeaderboardTimeFilter` enum and the „Poslední kolo" **leaderboard** resolution built in item 02. Round *grouping* on match lists is a different feature and stays. |
+| Does the TOP 3 podium stay? | **Keep, desktop only** | Hidden on phones, where it pushes the standings below the fold. |
+| What happens to `Competition:FilterBar` once `/souteze` drops it? | **Keep the component, rendered in `/_design` only** | It must be **labelled there as having no production call site** — `/_design` half A is the gallery of *shipped* components (item 13), so an unlabelled entry would imply it is in use. |
+
+**The `/souteze` hero stats reverse item 07's assumptions 1 and 2**, which deliberately scoped those
+figures to the viewer's own world so that „a visitor in nothing sees honest zeroes, not the platform's
+global totals". The product owner wants one global set for everyone. The item requires the *sub-labels*
+to follow — a global figure over a personal sub-label („+N tento týden" counting the viewer's own
+joins) would be worse than either — and requires the numbers to stay **measured**: global totals on a
+young product are small, and this round is removing invented statistics elsewhere, so padding them
+would be self-defeating.
