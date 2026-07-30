@@ -19,7 +19,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B9 | Team picker's create row shows English „Add …" | DONE | `d0b8bd4` |
 | B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **WONTFIX** — by design (product owner, 2026-07-30) | — |
 | B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | DONE | `6ee485a` |
-| B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
+| B12 | The five pickers' „nothing found" rows are styled two different ways | DONE | `8aced30` — JS only, no CSS needed |
 | B13 | PIN and shareable-link boxes overflow their card on mobile | DONE | `77023fc` |
 | B14 | The verification airlock does not confine the user | DONE | `26462b4` — was **cosmetic**, the guard held |
 | B15 | An invite-link sign-up loses the competition it was invited to | DONE | `26462b4` — never robust, not regressed |
@@ -29,12 +29,14 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B20 | Nav overflows the viewport at 320 px (every page, both variants) | DONE | `09c9d21` — three-tier degradation; 0 overflow 320→1920 px |
 | B22 | `/kredity` renders a 523 px table at 320 px | DONE | `48ed427` — the ledger now stacks below 640 px; the report's premise was wrong (see below) |
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | DONE | `6ee485a` — was 0 of 7 competitions, now 1 (World E) |
-| B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
+| B24 | flatpickr's year renders near-black on the dark lock modal | DONE | `049989a` (+ `98a0ce6`) — B3's mechanism, one vendor over |
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
 | B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
 | B29 | Homepage demo card: team names collapse to ~15 px at 320 px | TODO | — |
+| B30 | The „Uzamknout tipy" dialog's calendar overflows its own panel at 320 px | TODO | — |
+| B31 | After `db:reset` no competition can reach the scorer picker | TODO | — |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -1465,3 +1467,48 @@ Constraints as B26/B28: `templates/home.html.twig` only, no `assets/styles/app.c
 16, B21, B26 or B28 (no „MS 2026", the accent-card CTA stays last, the `<h1>`'s two `&nbsp;` glues stay,
 and all three chips keep their measured clearances). All three chips are `hidden lg:flex`, so they are not
 in play at the widths this bug lives at.
+
+## B30 — the „Uzamknout tipy" dialog's calendar overflows its own panel at 320 px
+
+Found by the B24 agent while measuring contrast inside the dialog, 2026-07-30. **Pre-existing, and not
+B24's colour bug** — reported rather than fixed because it is a different family and a different risk.
+
+flatpickr **hard-codes `width: 307.875px`** on `.flatpickr-calendar`, `.flatpickr-rContainer`,
+`.flatpickr-days` and `.dayContainer`. Inside a 320 px dialog the calendar box measures x=81 w=308, so the
+„So" / „Ne" columns and the minutes field are cut off. `document.scrollWidth` overflow is **0** — the dialog
+itself scrolls — so the content is reachable, just awkward.
+
+This is the **B13 / B22 family**: a fixed-width child inside a container that cannot give it the room, where
+`min-width: 0` has nothing to offer because the child's width is declared outright. B22 is the closest
+precedent (there the floor was the *sum* of five column min-contents, and the fix was to restructure at a
+breakpoint rather than to fight the widths).
+
+**Care required:** the fix means overriding four vendor width declarations on a **shared widget** — the
+`datepicker` controller is used outside this dialog too. Verify every other flatpickr site after changing
+it, and mind B2's two documented traps: `static: true` **hangs the page** (it re-parents the controller's
+own element into an infinite Stimulus loop), and a flatpickr inside a `<form>` **silently blocks
+submission** unless the form carries `novalidate`.
+
+Reachable after a plain `db:reset` on „Vysočina – naše parta" (B23), which is the only competition that
+renders „Uzamknout tipy".
+
+## B31 — after `db:reset` no competition can reach the scorer picker
+
+Found by the B12 agent, 2026-07-30. **The same shape of gap as B11 and B23**, both of which cost real
+diagnostic time before they were closed.
+
+`scorer_hit` is enabled on exactly one competition — „Vybrané zápasy party" (`019bbbbb-…033`) — whose only
+two matches carry `AppFixtures`' **absolute** dates (2025-06-10, 2025-06-20). Against the real dev clock
+those are long past, so no open tip form renders and **the scorer picker cannot be reached at all** after a
+plain `composer db:reset`.
+
+The B12 agent worked around it by verifying the equivalent single-select `score_entry` player picker (same
+`no_results` renderer, same class) and reading `scorer_picker_controller.js` directly — a reasonable
+substitute, but it means one of the five pickers was not exercised in a browser.
+
+**Fix:** give a `scorer_hit`-enabled competition at least one match that is still open for tipping, anchored
+to the **real calendar** (`today + n`) like the rest of `DevFixtures` — item 03 assumption 2 is deliberate
+and must hold. Keep it in `DevFixtures` (group `dev`), **never** `AppFixtures`: item 03 assumption 1
+records that many integration tests assert exact counts over whole tables. Document it in
+`.docs/FIXTURES.md` alongside the „which world demonstrates which state" table that B11/B23 added — that
+table exists precisely so this class of gap is visible without reading PHP.
