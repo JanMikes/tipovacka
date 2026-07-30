@@ -1265,10 +1265,13 @@ that cancelling really cancels (no credits move), and that confirming charges ex
 console. If it does fire, say so plainly — „the product owner did not see it because it works" is a
 legitimate outcome and better than a speculative fix.
 
-Also verify the **no-JS** path: with scripting off the `confirm` controller cannot run, so the form posts
-directly. A one-click credit spend with no confirmation is acceptable degradation only if the server-side
-purchase is idempotent and the price is visible on the button — check what actually happens and report it
-rather than assuming it is fine.
+**The no-JS path is out of scope** — the product owner deferred JavaScript-off support on 2026-07-30
+(`PLAN.md` decision 0). But the reason that question was worth asking still applies for a different
+reason: if the `confirm` controller fails to *connect* (a JS error, a failed asset fetch, a `disconnect()`
+bug as in B16), the form posts a credit spend with no dialog and the page looks completely normal. So
+**check the console while you drive it**, and confirm the spend is guarded server-side (CSRF, and charging
+exactly once) rather than only by the dialog. `BoostFlowTest` already pins that a stale page cannot burn
+credits — do not weaken it.
 
 ### Constraints
 

@@ -183,6 +183,24 @@ A fresh session with zero context can continue by:
 
 Settled in conversation; each is now binding on this stream.
 
+0. **JavaScript-off support is DEFERRED** (product owner: *„javascript off is deferred, everyone has
+   javascript today"*). Stop spending verification effort on it: no more „disable scripting and confirm
+   the page still works" passes, and a control may rely on JS from now on.
+
+   **Nothing already built is to be undone** — the JS-free controls this stream shipped (the
+   `SoutezSwitcher` GET form, the leaderboard search, the Nástěnka filters, B25's collapse-instead-of-hide)
+   all still work and several are better code for it. This is forward-looking only.
+
+   **One caveat worth keeping, because it is not the same claim:** „everyone has JavaScript enabled" is
+   true; „everyone's JavaScript always runs" is not. A thrown error, a failed asset fetch, or a Stimulus
+   controller that fails to connect produce exactly the same page as scripting-off — and this stream has
+   two concrete instances: **B16**, where a `disconnect()` silently reduced the confirm dialog to a plain
+   submit *indistinguishable from the no-JS fallback*, and **B25**, where a reveal button left content
+   unreachable. So the JS-off pass had been doubling as a „what happens when JS fails" check. With it
+   gone, that failure mode is only caught by **the console** and by **server-side guards** — so keep
+   checking the console when driving a browser, and keep destructive actions safe on the server (CSRF,
+   idempotence) rather than relying on a dialog that may not have loaded.
+
 1. **The tip split is „Rozložení tipů" — one name, everywhere.** The product owner's mocks say
    „DISTRIBUCE TIPŮ"; the documented vocabulary wins instead. The sweep found the app had **three**
    names for one feature — „Rozložení tipů" (the section heading), „Lišta tipů ostatních" (the boost
