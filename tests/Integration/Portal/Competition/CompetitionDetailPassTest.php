@@ -14,6 +14,7 @@ use App\Service\Credits\PricingConfig;
 use App\Tests\Support\WebFlowHelpers;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -159,16 +160,15 @@ final class CompetitionDetailPassTest extends WebTestCase
 
         // B25: NOTHING is pre-hidden server-side — collapsing is the enhanced state,
         // so with JavaScript off every match is reachable.
-        foreach ($items as $item) {
-            $class = $item->getAttribute('class') ?? '';
-            self::assertStringNotContainsString('hidden', $class, 'A match row must never be hidden server-side.');
-        }
+        $items->each(function (Crawler $item): void {
+            self::assertStringNotContainsString('hidden', (string) $item->attr('class'), 'A match row must never be hidden server-side.');
+        });
 
         $toggle = $crawler->filter('#zapasy button[data-reveal-target="toggle"]');
 
         if ($toggle->count() > 0) {
             // …and the button that only works with JS is hidden until JS unhides it.
-            self::assertNotNull($toggle->getNode(0)?->getAttribute('hidden'));
+            self::assertNotNull($toggle->attr('hidden'));
             self::assertStringContainsString('Načíst všechny zápasy', $toggle->text());
         }
     }
@@ -197,10 +197,10 @@ final class CompetitionDetailPassTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
         self::assertResponseIsSuccessful();
 
-        $cards = $crawler->filter('#zapasy .tip-row');
-        self::assertGreaterThan(0, $cards->count());
-        self::assertSame($cards->count(), $crawler->filter('#zapasy .tip-row.is-dash')->count(), 'Competition detail renders the ONE card design.');
-        self::assertSame($cards->count(), $crawler->filter('#zapasy .tip-row > a.tip-row-link')->count(), 'Every card is exactly one link.');
+        $cardCount = $crawler->filter('#zapasy .tip-row')->count();
+        self::assertGreaterThan(0, $cardCount);
+        self::assertCount($cardCount, $crawler->filter('#zapasy .tip-row.is-dash'), 'Competition detail renders the ONE card design.');
+        self::assertCount($cardCount, $crawler->filter('#zapasy .tip-row > a.tip-row-link'), 'Every card is exactly one link.');
 
         // Nothing interactive may be nested inside that link (B7's rule, kept).
         self::assertCount(0, $crawler->filter('a.tip-row-link a'));

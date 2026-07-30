@@ -14,11 +14,15 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * B7 — the match row's „Chybí tip" pilulka and its „+ Zadat tip" box must lead to
- * the guessing surface, the same target as the fixture itself, on EVERY surface
- * that renders `Match:MatchRow`. When tipping is closed they must be inert again
- * (nothing to navigate to) — while the fixture keeps linking to the match, so a
- * locked card is never a dead end (item 11 dropped the separate „Tipovat →").
+ * B7 — the match card's tip affordance must lead to the guessing surface, and when
+ * tipping is closed it must go inert (nothing to navigate to) while the card still
+ * reaches the match, so a locked card is never a dead end (item 11 dropped the
+ * separate „Tipovat →").
+ *
+ * The MARKUP that satisfies this differs per variant: `/zapasy` still renders the
+ * item 11 card, where the pilulka and the „+ Zadat tip" box are the links (B7),
+ * while the Nástěnka (item 18) and competition detail (item 19) render the card as
+ * ONE link with a single „Zadat tip" bar inside it.
  */
 final class MatchRowTipLinksTest extends WebTestCase
 {
@@ -26,7 +30,16 @@ final class MatchRowTipLinksTest extends WebTestCase
     private const string GUESS_URL = self::COMPETITION_URL.'/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
     private const string MATCH_DETAIL_URL = '/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
 
-    public function testCompetitionDetailLinksBothTipAffordancesToTheGuessingSurface(): void
+    /**
+     * Item 19 — competition detail now renders the SAME card as the Nástěnka
+     * (`variant="dashboard"`, product-owner decision „one card design everywhere").
+     * So B7's two separate tip affordances are gone here too: the whole card is ONE
+     * link to the guessing surface with a single „Zadat tip" bar inside it, and
+     * nothing interactive is nested in that link. The invariant B7 was protecting —
+     * „the tip affordance leads to the guessing surface, and a locked card is never
+     * a dead end" — is what is asserted, not the markup it used to need.
+     */
+    public function testCompetitionDetailCardIsOneLinkToTheGuessingSurface(): void
     {
         $client = static::createClient();
         $this->login($client);
@@ -34,21 +47,23 @@ final class MatchRowTipLinksTest extends WebTestCase
         $crawler = $client->request('GET', self::COMPETITION_URL);
         self::assertResponseIsSuccessful();
 
-        // The state pilulka is wrapped in a link with its own accessible name…
-        $pillLink = $crawler->filter('a.tip-row-pill-link[href="'.self::GUESS_URL.'"]');
-        self::assertCount(1, $pillLink);
-        self::assertStringContainsString('Chybí tip', $pillLink->text());
-        self::assertNotNull($pillLink->attr('aria-label'));
+        // No separately-linked pilulka or „můj tip" box any more — the card is the link.
+        self::assertCount(0, $crawler->filter('#zapasy a.tip-row-pill-link'));
+        self::assertCount(0, $crawler->filter('#zapasy a.my-tip'));
 
-        // …and so is the dashed „+ Zadat tip" box.
-        $promptLink = $crawler->filter('a.my-tip.empty[href="'.self::GUESS_URL.'"]');
-        self::assertCount(1, $promptLink);
-        self::assertStringContainsString('+ Zadat tip', $promptLink->text());
+        $tippable = $crawler->filter('#zapasy a.tip-row-link[href="'.self::GUESS_URL.'"]');
+        self::assertCount(1, $tippable);
+        self::assertNotNull($tippable->attr('aria-label'));
+        self::assertCount(1, $tippable->filter('.tipd-cta'));
+        self::assertStringContainsString('Zadat tip', $tippable->filter('.tipd-cta')->text());
 
-        // Item 11 replaced the row's „Tipovat →" action with the fixture itself:
-        // the teams block is the link to the match, and on competition detail that
-        // is the same guessing surface.
-        self::assertGreaterThan(0, $crawler->filter('a.tip-row-match[href="'.self::GUESS_URL.'"]')->count());
+        // Every card is one link, and no control of any kind lives inside it.
+        $cards = $crawler->filter('#zapasy .tip-row.is-dash');
+        self::assertGreaterThan(0, $cards->count());
+        $cards->each(function (Crawler $card): void {
+            self::assertCount(1, $card->filter('a.tip-row-link'));
+            self::assertCount(0, $card->filter('a.tip-row-link a, a.tip-row-link button, a.tip-row-link input, a.tip-row-link select'));
+        });
     }
 
     /**
