@@ -7,7 +7,6 @@ namespace App\Command\SubmitGuessOnBehalf;
 use App\Entity\Guess;
 use App\Enum\UserRole;
 use App\Exception\GuessAlreadyExists;
-use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
@@ -87,12 +86,10 @@ final readonly class SubmitGuessOnBehalfHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        // Entitlements follow the TARGET member — it is their tip window.
-        $deadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $targetUser);
-
-        if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::at($deadline);
-        }
+        // Entitlements follow the TARGET member — it is their tip window. The
+        // manager gets no free pass at either end: an admin-set opening blocks
+        // on-behalf tipping exactly as it blocks the member's own.
+        $this->deadlineResolver->assertOpenForTipping($competition, $sportMatch, $targetUser, $now);
 
         $existing = $this->guessRepository->findActiveByUserMatchCompetition(
             $targetUser->id,

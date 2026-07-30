@@ -12,6 +12,7 @@ use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\GuessNotFound;
+use App\Exception\GuessNotYetOpen;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
@@ -257,6 +258,7 @@ final class MyTipsBatchController extends AbstractController
         if ($inner instanceof InvalidGuessScore
             || $inner instanceof GuessFeatureNotEnabled
             || $inner instanceof GuessDeadlinePassed
+            || $inner instanceof GuessNotYetOpen
             || $inner instanceof GuessAlreadyExists
             || $inner instanceof GuessNotFound
             || $inner instanceof NotAMember
@@ -356,7 +358,7 @@ final class MyTipsBatchController extends AbstractController
     }
 
     /**
-     * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null, deadline: \DateTimeImmutable}>
+     * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null, deadline: \DateTimeImmutable, waiting: bool, opensAt: ?\DateTimeImmutable, openingNote: ?string}>
      */
     private function buildRows(\App\Entity\Competition $competition, User $user, \DateTimeImmutable $now): array
     {
@@ -368,17 +370,20 @@ final class MyTipsBatchController extends AbstractController
 
         // The effective deadline is never later than kickoff, so filtering on
         // the deadline alone covers the "already kicked off" case too.
-        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $candidateMatches, $user);
+        $windows = $this->deadlineResolver->windowsFor($competition, $candidateMatches, $user);
 
         $rows = [];
 
         foreach ($candidateMatches as $sportMatch) {
-            $deadline = $deadlines[$sportMatch->id->toRfc4122()];
+            $window = $windows[$sportMatch->id->toRfc4122()];
 
-            if ($deadline <= $now) {
+            if ($window->isClosed($now)) {
                 continue;
             }
 
+            // A match whose tipping has not opened yet KEEPS its row (dropping it
+            // would read as „not in this soutěž") — it renders without inputs and
+            // says when it opens. The handler refuses a tip for it regardless.
             $rows[] = [
                 'match' => $sportMatch,
                 'guess' => $this->guessRepository->findActiveByUserMatchCompetition(
@@ -386,7 +391,10 @@ final class MyTipsBatchController extends AbstractController
                     $sportMatch->id,
                     $competition->id,
                 ),
-                'deadline' => $deadline,
+                'deadline' => $window->deadline,
+                'waiting' => $window->isWaiting($now),
+                'opensAt' => $window->opensAt,
+                'openingNote' => $window->openingNote,
             ];
         }
 

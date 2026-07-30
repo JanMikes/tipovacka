@@ -83,13 +83,20 @@ final readonly class SendGuessRemindersHandler
         \DateTimeImmutable $horizon,
         string $url,
     ): void {
-        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $openMatches, $user);
+        $windows = $this->deadlineResolver->windowsFor($competition, $openMatches, $user);
 
         /** @var array<string, array{count: int, earliest: \DateTimeImmutable}> $missingByDay */
         $missingByDay = [];
 
         foreach ($openMatches as $match) {
-            $deadline = $deadlines[$match->id->toRfc4122()];
+            $window = $windows[$match->id->toRfc4122()];
+            $deadline = $window->deadline;
+
+            // A tip that cannot be entered yet is not a missing tip — never nag
+            // about a match whose tipping has not opened.
+            if ($window->isWaiting($now)) {
+                continue;
+            }
 
             // Within the next 24 h and not yet passed.
             if ($deadline <= $now || $deadline > $horizon) {

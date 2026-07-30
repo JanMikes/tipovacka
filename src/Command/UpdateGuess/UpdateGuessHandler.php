@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Command\UpdateGuess;
 
 use App\Entity\Guess;
-use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\GuessNotFound;
 use App\Exception\InvalidGuessScore;
@@ -68,11 +67,7 @@ final readonly class UpdateGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->deadlineFor($guess->competition, $guess->sportMatch, $guess->user);
-
-        if (!$guess->sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::at($deadline);
-        }
+        $this->deadlineResolver->assertOpenForTipping($guess->competition, $guess->sportMatch, $guess->user, $now);
 
         // Full replace: every tip part becomes exactly what the command carries.
         $guess->updateScores(

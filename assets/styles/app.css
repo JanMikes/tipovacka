@@ -979,6 +979,7 @@ label.required::after {
     .tip-row.tipped { border-left-color: var(--color-win); }     /* tip odeslán */
     .tip-row.live   { border-left-color: var(--color-loss); }    /* právě hraje */
     .tip-row.locked { border-left-color: var(--border-3); }      /* po uzávěrce */
+    .tip-row.waiting { border-left-color: var(--border-3); }     /* tipování se teprve otevře */
     .tip-row.done   { border-left-color: var(--color-accent-500); } /* odehráno */
 
     /* „MŮJ TIP" box + odznak bodů v jeho rohu. `right`/`top` jsou menší než
@@ -1132,6 +1133,22 @@ label.required::after {
     }
     .my-tip.is-bar .my-tip-lbl { margin-bottom: 0; }
     .my-tip.is-bar .my-tip-pts { position: static; top: auto; right: auto; border: none; }
+
+    /* --- „tipování otevřeno od": the waiting card ---
+       The match STAYS in every list (hiding it would read as „not in this soutěž"),
+       it is merely dimmed and its call to action becomes an inert clock box. The
+       dimming sits on the link's inner regions, never on the card, so the state
+       stripe, the pilulka and the „Rozložení tipů" footer keep their full contrast
+       — only the parts that invite a tip recede. */
+    .tip-row.waiting .tipd-body { opacity: 0.62; }
+    .tipd-wait {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 10px 16px; border-radius: 12px;
+        border: 1px dashed var(--border-2); background: rgba(255,255,255,0.02);
+        font-size: 13px; font-weight: 700; color: var(--fg-3); text-align: center;
+    }
+    .tipd-wait-txt { display: flex; flex-direction: column; gap: 2px; }
+    .tipd-wait-note { font-size: 12px; font-weight: 500; color: var(--fg-4); }
 
     /* --- item 25: a missing tip is red, not amber ---
        A SIXTH state rather than a repaint of `open`, because `open` is also the „Brzy"

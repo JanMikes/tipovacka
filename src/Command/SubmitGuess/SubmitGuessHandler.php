@@ -6,7 +6,6 @@ namespace App\Command\SubmitGuess;
 
 use App\Entity\Guess;
 use App\Exception\GuessAlreadyExists;
-use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessFeatureNotEnabled;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
@@ -77,11 +76,7 @@ final readonly class SubmitGuessHandler
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $deadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $user);
-
-        if (!$sportMatch->isOpenForGuesses || $now >= $deadline) {
-            throw GuessDeadlinePassed::at($deadline);
-        }
+        $this->deadlineResolver->assertOpenForTipping($competition, $sportMatch, $user, $now);
 
         $existing = $this->guessRepository->findActiveByUserMatchCompetition(
             $user->id,

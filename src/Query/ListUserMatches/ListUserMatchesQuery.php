@@ -71,7 +71,7 @@ final readonly class ListUserMatchesQuery
         // walking the list and resolve them all in ONE batch afterwards.
         /** @var array<string, array{0: Competition, 1: list<SportMatch>}> $statsPairs */
         $statsPairs = [];
-        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int, competitionIds: list<Uuid>, pendingCompetitionIds: list<Uuid>, myTip: ?array{home: int, away: int}}> $rows */
+        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int, competitionIds: list<Uuid>, pendingCompetitionIds: list<Uuid>, myTip: ?array{home: int, away: int}, waitingOpensAt: ?\DateTimeImmutable, waitingNote: ?string}> $rows */
         $rows = [];
 
         foreach ($matches as $m) {
@@ -100,10 +100,27 @@ final readonly class ListUserMatchesQuery
             // Per-competition locking: the match is tippable/pending only in
             // competitions where the resolver still has it open for this user.
             $openCompetitionIds = [];
+            // …and „not open" has two very different causes. A window that has
+            // not STARTED yet is a promise, not a closed door, so the earliest
+            // opening among the soutěže that are merely waiting travels with the
+            // row — the card then says „Tipování otevřeme…" instead of „Uzamčeno".
+            $waitingOpensAt = null;
+            $waitingNote = null;
 
             foreach ($includingCompetitions as $competition) {
-                if (!$this->deadlineResolver->isLocked($competition, $m, $user, $now)) {
+                $window = $this->deadlineResolver->windowFor($competition, $m, $user);
+
+                if ($m->isOpenForGuesses && $window->isOpen($now)) {
                     $openCompetitionIds[] = $competition->id->toRfc4122();
+
+                    continue;
+                }
+
+                if ($m->isOpenForGuesses && $window->isWaiting($now)
+                    && (null === $waitingOpensAt || $window->opensAt < $waitingOpensAt)
+                ) {
+                    $waitingOpensAt = $window->opensAt;
+                    $waitingNote = $window->openingNote;
                 }
             }
 
@@ -133,6 +150,11 @@ final readonly class ListUserMatchesQuery
                 'competitionIds' => array_map(Uuid::fromString(...), $competitionIds),
                 'pendingCompetitionIds' => array_map(Uuid::fromString(...), $pendingCompetitionIds),
                 'myTip' => $myTip,
+                // Waiting only when NOTHING is tippable: a match open in one
+                // soutěž and waiting in another is simply tippable — the card
+                // links there, and the waiting one is reached from its strip.
+                'waitingOpensAt' => [] === $openCompetitionIds ? $waitingOpensAt : null,
+                'waitingNote' => [] === $openCompetitionIds ? $waitingNote : null,
             ];
         }
 
@@ -168,6 +190,8 @@ final readonly class ListUserMatchesQuery
                 myHomeScore: $row['myTip']['home'] ?? null,
                 myAwayScore: $row['myTip']['away'] ?? null,
                 tipStats: $this->statsFor($stats, $m, $row['competitions']),
+                opensAt: $row['waitingOpensAt'],
+                openingNote: $row['waitingNote'],
             );
         }
 

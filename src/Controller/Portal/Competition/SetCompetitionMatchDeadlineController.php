@@ -7,6 +7,8 @@ namespace App\Controller\Portal\Competition;
 use App\Command\SetCompetitionMatchDeadline\SetCompetitionMatchDeadlineCommand;
 use App\Entity\User;
 use App\Exception\CompetitionMatchDeadlineAfterKickoff;
+use App\Exception\CompetitionMatchOpeningAfterDeadline;
+use App\Exception\CompetitionMatchOpeningNoteWithoutTime;
 use App\Exception\MatchNotInCompetition;
 use App\Form\CompetitionMatchDeadlineFormData;
 use App\Form\CompetitionMatchDeadlineFormType;
@@ -49,8 +51,17 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
 
         $this->denyAccessUnlessGranted(CompetitionVoter::EDIT, $competition);
 
+        // The opening end is admin-only: for anyone else the fields are not
+        // built at all, so a submitted `opensAt` has nothing to bind to — and
+        // `changeOpening: false` then tells the handler to leave the stored
+        // opening untouched instead of clearing it. The handler re-checks the
+        // role, so a hand-crafted POST gets nowhere either.
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
         $formData = new CompetitionMatchDeadlineFormData();
-        $form = $this->createForm(CompetitionMatchDeadlineFormType::class, $formData);
+        $form = $this->createForm(CompetitionMatchDeadlineFormType::class, $formData, [
+            'with_opening' => $isAdmin,
+        ]);
         $form->handleRequest($request);
 
         $redirect = $this->redirectToRoute('competition_sport_match_detail', [
@@ -70,11 +81,18 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
                 competitionId: $competition->id,
                 sportMatchId: $sportMatch->id,
                 deadline: $formData->deadline,
+                changeOpening: $isAdmin,
+                opensAt: $formData->opensAt,
+                openingNote: $formData->openingNote,
             ));
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
 
-            if ($previous instanceof CompetitionMatchDeadlineAfterKickoff || $previous instanceof MatchNotInCompetition) {
+            if ($previous instanceof CompetitionMatchDeadlineAfterKickoff
+                || $previous instanceof MatchNotInCompetition
+                || $previous instanceof CompetitionMatchOpeningAfterDeadline
+                || $previous instanceof CompetitionMatchOpeningNoteWithoutTime
+            ) {
                 $this->addFlash('error', $previous->getMessage());
 
                 return $redirect;
@@ -85,7 +103,9 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
 
         $this->addFlash(
             'success',
-            null === $formData->deadline ? 'Uzávěrka byla zrušena.' : 'Uzávěrka byla uložena.',
+            null === $formData->deadline && null === $formData->opensAt
+                ? 'Nastavení tipování zápasu bylo zrušeno.'
+                : 'Nastavení tipování zápasu bylo uloženo.',
         );
 
         return $redirect;

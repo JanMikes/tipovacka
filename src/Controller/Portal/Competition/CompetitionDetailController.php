@@ -22,6 +22,7 @@ use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\CompetitionRoundResolver;
 use App\Service\Competition\TipStatsProvider;
 use App\Service\EffectiveTipDeadlineResolver;
+use App\Value\TipWindow;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -140,7 +141,7 @@ final class CompetitionDetailController extends AbstractController
         // per-match deadline from EffectiveTipDeadlineResolver, and „Rozložení
         // tipů" from TipStatsProvider — batched for the whole page, never per row.
         $matches = $this->matchProvider->matchesFor($competition);
-        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $matches, $user);
+        $windows = $this->deadlineResolver->windowsFor($competition, $matches, $user);
         $guessesByMatch = $this->guessRepository->activeByUserInCompetitionIndexedByMatch($user->id, $competition->id);
         $pointsByMatch = $this->evaluationRepository->pointsByMatchForUserInCompetition($user->id, $competition->id);
         $tipStats = $this->tipStatsProvider->forCompetition($competition, $matches, $user);
@@ -149,17 +150,22 @@ final class CompetitionDetailController extends AbstractController
 
         foreach ($matches as $match) {
             $key = $match->id->toRfc4122();
-            $deadline = $deadlines[$key] ?? $match->kickoffAt;
+            $window = $windows[$key] ?? new TipWindow(deadline: $match->kickoffAt);
             $guess = $guessesByMatch[$key] ?? null;
+            $isWaiting = $match->isOpenForGuesses && $window->isWaiting($now);
+            $isOpen = $match->isOpenForGuesses && $window->isOpen($now);
 
             $matchRows[] = [
                 'match' => $match,
                 'guess' => $guess,
-                'deadline' => $deadline,
-                'isOpen' => $match->isOpenForGuesses && $now < $deadline,
+                'deadline' => $window->deadline,
+                'isOpen' => $isOpen,
+                'isWaiting' => $isWaiting,
+                'opensAt' => $isWaiting ? $window->opensAt : null,
+                'openingNote' => $isWaiting ? $window->openingNote : null,
                 'points' => $pointsByMatch[$key] ?? null,
                 'stats' => $tipStats[$key] ?? null,
-                'state' => $this->rowState($match, null !== $guess, $match->isOpenForGuesses && $now < $deadline),
+                'state' => $this->rowState($match, null !== $guess, $isOpen, $isWaiting),
             ];
         }
 
@@ -201,13 +207,20 @@ final class CompetitionDetailController extends AbstractController
     }
 
     /**
-     * The `Match:MatchRow` state for one row: finished (result in), locked (no
-     * longer tippable), tipped (a tip is in and the window is still open) or open.
+     * The `Match:MatchRow` state for one row: finished (result in), waiting (the
+     * window has not opened yet), locked (no longer tippable), tipped (a tip is
+     * in and the window is still open) or open.
      */
-    private function rowState(SportMatch $match, bool $hasGuess, bool $isOpen): string
+    private function rowState(SportMatch $match, bool $hasGuess, bool $isOpen, bool $isWaiting): string
     {
         if (SportMatchState::Finished === $match->state) {
             return 'finished';
+        }
+
+        // Before „locked": not yet open is the opposite of too late, and a grey
+        // „Uzamčeno" would tell the player the wrong thing entirely.
+        if ($isWaiting) {
+            return 'waiting';
         }
 
         if (!$isOpen) {

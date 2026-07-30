@@ -682,6 +682,117 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         self::assertEquals($first->kickoffAt, $resolver->firstKickoffFor($competition));
     }
 
+    // ── Window opening („tipování otevřeno od", admin-set) ───────────────────
+
+    public function testWithoutAnOpeningTheWindowHasNoStart(): void
+    {
+        $competition = $this->makeCompetition();
+        $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$match]);
+
+        $window = $this->resolver()->windowFor($competition, $match);
+
+        self::assertNull($window->opensAt);
+        self::assertNull($window->openingNote);
+        self::assertTrue($window->isOpen($this->now));
+    }
+
+    public function testOpeningMakesTheMatchWaitingAndLockedUntilItArrives(): void
+    {
+        $competition = $this->makeCompetition();
+        $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$match]);
+        $this->opening($competition, $match, opensAt: '2025-06-18 09:00', note: 'Otevřeme po losu.');
+
+        $resolver = $this->resolver();
+        $window = $resolver->windowFor($competition, $match);
+
+        self::assertEquals(new \DateTimeImmutable('2025-06-18 09:00'), $window->opensAt);
+        self::assertSame('Otevřeme po losu.', $window->openingNote);
+
+        // Before the opening: waiting ⇒ locked.
+        self::assertTrue($window->isWaiting($this->now));
+        self::assertTrue($resolver->isLocked($competition, $match, null, $this->now));
+
+        // After it: open again, on the very second it arrives.
+        $justOpen = new \DateTimeImmutable('2025-06-18 09:00');
+        self::assertTrue($window->isOpen($justOpen));
+        self::assertFalse($resolver->isLocked($competition, $match, null, $justOpen));
+    }
+
+    public function testOpeningDoesNotMoveTheDeadline(): void
+    {
+        $competition = $this->makeCompetition();
+        $first = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $later = $this->makeMatch($competition, kickoff: '2025-06-25 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$first, $later]);
+        $this->opening($competition, $later, opensAt: '2025-06-18 09:00');
+
+        // Row 3 still applies: the deadline is the competition's lock moment.
+        self::assertEquals(
+            new \DateTimeImmutable('2025-06-20 18:00'),
+            $this->resolver()->deadlineFor($competition, $later),
+        );
+    }
+
+    public function testOpeningCoexistsWithADeadlineOverrideOnTheSameRow(): void
+    {
+        $competition = $this->makeCompetition();
+        $match = $this->makeMatch($competition, kickoff: '2025-06-25 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$match]);
+        $this->opening($competition, $match, opensAt: '2025-06-18 09:00', deadline: '2025-06-25 12:00');
+
+        $window = $this->resolver()->windowFor($competition, $match);
+
+        self::assertEquals(new \DateTimeImmutable('2025-06-18 09:00'), $window->opensAt);
+        self::assertEquals(new \DateTimeImmutable('2025-06-25 12:00'), $window->deadline);
+    }
+
+    /**
+     * The „Měnit tip" entitlement buys a LATER end, never an earlier start —
+     * an entitled member waits for the opening exactly like everyone else.
+     */
+    public function testEntitlementDoesNotOpenTheWindowEarly(): void
+    {
+        $competition = $this->makeCompetition();
+        $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$match]);
+        $this->opening($competition, $match, opensAt: '2025-06-18 09:00');
+        $this->canChangeTips = true;
+
+        $resolver = $this->resolver();
+        $user = $this->makeUser();
+
+        self::assertEquals(
+            new \DateTimeImmutable('2025-06-18 09:00'),
+            $resolver->windowFor($competition, $match, $user)->opensAt,
+        );
+        self::assertTrue($resolver->isLocked($competition, $match, $user, $this->now));
+    }
+
+    public function testWindowsForMatchesTheSingleResolutionForEveryMatch(): void
+    {
+        $competition = $this->makeCompetition();
+        $plain = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $waiting = $this->makeMatch($competition, kickoff: '2025-06-25 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$plain, $waiting]);
+        $this->opening($competition, $waiting, opensAt: '2025-06-18 09:00', note: 'Po losu.');
+
+        $resolver = $this->resolver();
+        $batch = $resolver->windowsFor($competition, [$plain, $waiting]);
+
+        foreach ([$plain, $waiting] as $match) {
+            $single = $resolver->windowFor($competition, $match);
+            $batched = $batch[$match->id->toRfc4122()];
+
+            self::assertEquals($single->deadline, $batched->deadline);
+            self::assertEquals($single->opensAt, $batched->opensAt);
+            self::assertSame($single->openingNote, $batched->openingNote);
+        }
+
+        self::assertSame([], $resolver->windowsFor($competition, []));
+    }
+
     // ── Fixture builders / stubs ─────────────────────────────────────────────
 
     private function resolver(): EffectiveTipDeadlineResolver
@@ -755,6 +866,24 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
             sportMatch: $match,
             deadline: new \DateTimeImmutable($deadline),
             createdAt: $this->now,
+        );
+    }
+
+    private function opening(
+        Competition $competition,
+        SportMatch $match,
+        string $opensAt,
+        ?string $deadline = null,
+        ?string $note = null,
+    ): void {
+        $this->overrides[$competition->id->toRfc4122().'|'.$match->id->toRfc4122()] = new CompetitionMatchSetting(
+            id: Uuid::v7(),
+            competition: $competition,
+            sportMatch: $match,
+            deadline: null !== $deadline ? new \DateTimeImmutable($deadline) : null,
+            createdAt: $this->now,
+            opensAt: new \DateTimeImmutable($opensAt),
+            openingNote: $note,
         );
     }
 

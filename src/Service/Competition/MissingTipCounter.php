@@ -107,15 +107,24 @@ final readonly class MissingTipCounter
             return MissingTips::none();
         }
 
-        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $untipped, $user);
+        $windows = $this->deadlineResolver->windowsFor($competition, $untipped, $user);
 
         $count = 0;
         $earliest = null;
 
         foreach ($untipped as $match) {
-            $deadline = $deadlines[$match->id->toRfc4122()] ?? null;
+            $window = $windows[$match->id->toRfc4122()] ?? null;
 
-            if (null === $deadline || $now >= $deadline) {
+            // „Chybí natipovat" must be actionable: a match whose tipping has not
+            // opened yet owes the player nothing, and its deadline must not become
+            // the „nejbližší uzávěrka" they are urged to beat.
+            if (null === $window || $window->isWaiting($now)) {
+                continue;
+            }
+
+            $deadline = $window->deadline;
+
+            if ($now >= $deadline) {
                 continue;
             }
 

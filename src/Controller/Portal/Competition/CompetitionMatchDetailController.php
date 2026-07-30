@@ -134,8 +134,12 @@ final class CompetitionMatchDetailController extends AbstractController
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $isCompetitionManager = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
-        // Per-viewer deadline for THIS user's tip-entry surfaces / displayed „Uzávěrka".
-        $effectiveDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $currentUser);
+        // Per-viewer window for THIS user's tip-entry surfaces / displayed „Uzávěrka".
+        $window = $this->deadlineResolver->windowFor($competition, $sportMatch, $currentUser);
+        $effectiveDeadline = $window->deadline;
+        // Not yet open is locked too, but the page must say WHY — and the
+        // organizer's on-behalf rows must not offer a tip that cannot be stored.
+        $isWaiting = $sportMatch->isOpenForGuesses && $window->isWaiting($now);
 
         // Visibility gate composes THIS viewer's entitlement (premium toggle / own
         // boost — per viewer) with the match's RESULT (once played, public to
@@ -179,6 +183,9 @@ final class CompetitionMatchDetailController extends AbstractController
             // `date()`: that reads the system clock, which is not the app's clock.
             'now' => $now,
             'is_locked' => $this->deadlineResolver->isLocked($competition, $sportMatch, $currentUser, $now),
+            'is_waiting' => $isWaiting,
+            'opens_at' => $window->opensAt,
+            'opening_note' => $window->openingNote,
             'has_guess' => null !== $guess,
             'my_points' => $evaluation?->totalPoints,
             'can_see_others_tips' => $canSeeOthersTips,
@@ -334,6 +341,9 @@ final class CompetitionMatchDetailController extends AbstractController
                     'competitionId' => $competition->id->toRfc4122(),
                     'sportMatchId' => $sportMatch->id->toRfc4122(),
                 ]),
+                // „Tipování otevřeno od" is admin-only — a manager's form does
+                // not carry the fields, and their save leaves them untouched.
+                'with_opening' => $this->isGranted('ROLE_ADMIN'),
             ],
         )->createView();
     }

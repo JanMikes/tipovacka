@@ -21,6 +21,7 @@ use App\Service\Competition\GuessFeatures;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Value\GuessScorerInput;
 use App\Value\PeriodScores;
+use App\Value\TipWindow;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -211,15 +212,42 @@ final class GuessSubmitForm
     }
 
     /**
+     * Tipping has not STARTED yet — locked, but for the opposite reason to a
+     * passed uzávěrka, so the card says „otevřeme v…" instead of „proběhla".
+     * The template must therefore branch on this BEFORE `isLocked`.
+     */
+    public bool $isWaiting {
+        get => $this->sportMatch->isOpenForGuesses
+            && $this->window->isWaiting(\DateTimeImmutable::createFromInterface($this->clock->now()));
+    }
+
+    public ?\DateTimeImmutable $opensAt {
+        get => $this->window->opensAt;
+    }
+
+    /** The admin's optional explanation, shown only while the match waits. */
+    public ?string $openingNote {
+        get => $this->window->openingNote;
+    }
+
+    /**
      * This viewer's effective tip deadline for the match (entitlements included)
      * — drives the „Uzávěrka" line and the cause-aware locked copy on the card.
      */
     public \DateTimeImmutable $effectiveDeadline {
+        get => $this->window->deadline;
+    }
+
+    /**
+     * This viewer's whole tip window, from the ONE authority. Resolved per read;
+     * the component is short-lived and the resolver caches per request.
+     */
+    private TipWindow $window {
         get {
             $competition = $this->competitionRepository->get(Uuid::fromString($this->competitionId));
             $user = $this->security->getUser();
 
-            return $this->deadlineResolver->deadlineFor(
+            return $this->deadlineResolver->windowFor(
                 $competition,
                 $this->sportMatch,
                 $user instanceof User ? $user : null,

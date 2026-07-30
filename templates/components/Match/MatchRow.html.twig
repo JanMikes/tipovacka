@@ -33,11 +33,18 @@
       kickoffAt    \DateTimeImmutable|null — výkop (formát „1. 6." + „20:15", Europe/Prague)
       round        string|null   — kolo / fáze (např. „Osmifinále")
       isPlayoff    bool          — zobrazí malou pilulku „Playoff" vedle kola
-      state        string        — open | missing | tipped | live | locked | finished
+      state        string        — open | missing | tipped | live | locked | waiting | finished
                                    (odvozeno na call-site); barví levý pruh karty.
                                    `missing` = tip chybí a ještě se dá zadat → červený
                                    pruh (item 25); `open` zůstává jantarový pro „Brzy",
-                                   `locked` šedý (po uzávěrce je to fakt, ne výzva)
+                                   `locked` šedý (po uzávěrce je to fakt, ne výzva),
+                                   `waiting` = tipování se teprve otevře → tlumená karta
+                                   s hodinami (viz `opensAt`)
+      opensAt      \DateTimeImmutable|null — „tipování otevřeno od" (nastavuje admin u zápasu
+                                   v soutěži). Se stavem `waiting` nahradí patu karty
+                                   neaktivním boxem s hodinami; zápas zůstává v seznamu,
+                                   jen se zatím nedá tipovat
+      openingNote  string|null   — nepovinné vysvětlení k čekání (např. „Otevřeme po losu")
       pillVariant  string|null   — varianta stavové pilulky (Pill component)
       pillLabel    string|null   — text stavové pilulky
       pillIcon     string|null   — lucide ikona pilulky
@@ -94,8 +101,14 @@
     tipUrl = null,
     tipStats = [],
     sportMatchId = null,
-    footNote = null
+    footNote = null,
+    opensAt = null,
+    openingNote = null
 %}
+{# Čekání na otevření tipování je stav karty, ne varianta paty: zápas je vidět
+   (proto se nefiltruje ze seznamů), ale nevede na tipování a v patě má místo
+   výzvy neaktivní box s hodinami. #}
+{% set is_waiting = state == 'waiting' %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
 {% set has_score = resultHome is not null and resultAway is not null %}
 {# Only strips with something to say — an empty list must leave NO divider. #}
@@ -132,7 +145,8 @@
 
 {# `finished` paints the long-standing `.done` stripe; every other state names itself. #}
 <div class="tip-row is-dash {{ state == 'finished' ? 'done' : state }}">
-    <a href="{{ tipUrl ?? detailUrl }}" class="tip-row-link" aria-label="{{ fixture_label }}">
+    {# Čeká-li se na otevření, nevede karta na tipování ani omylem. #}
+    <a href="{{ is_waiting ? detailUrl : (tipUrl ?? detailUrl) }}" class="tip-row-link" aria-label="{{ fixture_label }}">
         <div class="tipd-head">
             <span class="tipd-meta">
                 {% if round %}<span class="tipd-round" title="{{ round }}">{{ round }}</span>{% endif %}
@@ -176,8 +190,22 @@
             </span>
         </div>
 
-        {# Pata: buď můj tip, nebo JEDNA výzva „Zadat tip" (jen když se dá tipovat). #}
-        {% if has_my_tip %}
+        {# Pata: buď můj tip, nebo JEDNA výzva „Zadat tip" (jen když se dá tipovat).
+           Čekání na otevření má přednost před vším ostatním — dokud se neotevře,
+           není co nabídnout ani co ukázat jako chybějící tip. #}
+        {% if is_waiting %}
+            <span class="tipd-wait">
+                <twig:ux:icon name="lucide:clock" class="h-4 w-4 shrink-0" />
+                <span class="tipd-wait-txt">
+                    {% if opensAt %}
+                        Tipování otevřeme {{ opensAt|date('j. n.') }} v {{ opensAt|date('H:i') }}
+                    {% else %}
+                        Tipování zatím není otevřené
+                    {% endif %}
+                    {% if openingNote %}<span class="tipd-wait-note">{{ openingNote }}</span>{% endif %}
+                </span>
+            </span>
+        {% elseif has_my_tip %}
             <span class="my-tip set is-bar">
                 <span class="my-tip-lbl">Můj tip</span>
                 <span class="my-tip-val {{ hitClass }}">{{ myHome }} : {{ myAway }}</span>

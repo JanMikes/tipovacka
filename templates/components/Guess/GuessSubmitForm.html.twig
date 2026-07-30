@@ -1,6 +1,7 @@
 {#
     Wtips dark score-input block for a single match guess (Live Component).
-    Props (via `this`): sportMatch, competitionId, isLocked, existingGuess, hasExistingGuess,
+    Props (via `this`): sportMatch, competitionId, isLocked, isWaiting, opensAt, openingNote,
+    existingGuess, hasExistingGuess,
     features (per-competition rule enablement), sport, periodNumbers, showOvertimeInputs,
     scorerOptionGroups, selectedScorers.
     Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeHomeScore,
@@ -20,7 +21,19 @@
        finished match it shares the merged card with the real result (item 22 §5), so
        the two must not be confusable: the result is large, unboxed and labelled
        „Konečný výsledek"; this one is small, boxed and labelled „Váš tip". #}
-    {% if this.isLocked %}
+    {# Čekání na otevření je také „locked", ale z opačného důvodu než uzávěrka —
+       proto se větví PŘED ní a mluví o budoucnosti, ne o zmeškané příležitosti. #}
+    {% if this.isWaiting %}
+        <div class="guess-locked">
+            <p class="guess-locked-note">
+                <twig:ux:icon name="lucide:clock" class="h-4 w-4 shrink-0" />
+                Tipování tohoto zápasu otevřeme {{ this.opensAt|date('j. n. Y H:i') }}.
+            </p>
+            {% if this.openingNote %}
+                <p class="guess-locked-detail">{{ this.openingNote }}</p>
+            {% endif %}
+        </div>
+    {% elseif this.isLocked %}
         <div class="guess-locked">
             <p class="guess-locked-note">
                 <twig:ux:icon name="lucide:lock" class="h-4 w-4 shrink-0" />

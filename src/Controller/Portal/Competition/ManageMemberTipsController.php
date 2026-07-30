@@ -80,7 +80,7 @@ final class ManageMemberTipsController extends AbstractController
                     $this->matchProvider->matchesFor($competition),
                     static fn ($m) => $m->isOpenForGuesses,
                 ));
-                $deadlines = $this->deadlineResolver->deadlinesFor($competition, $candidateMatches, $selectedMember);
+                $windows = $this->deadlineResolver->windowsFor($competition, $candidateMatches, $selectedMember);
 
                 // Managing someone else's tips does NOT reveal them: the manager
                 // learns only WHETHER a tip is filled and may overwrite it, unless
@@ -100,17 +100,23 @@ final class ManageMemberTipsController extends AbstractController
 
                 foreach ($candidateMatches as $sportMatch) {
                     $matchKey = $sportMatch->id->toRfc4122();
+                    $window = $windows[$matchKey];
 
-                    if ($deadlines[$matchKey] <= $now) {
+                    if ($window->isClosed($now)) {
                         continue;
                     }
 
                     $guess = $guessesByMatch[$matchKey] ?? null;
 
+                    // A match still waiting to open keeps its row but takes no
+                    // input: an organizer gets no head start over their members.
                     $rows[] = [
                         'match' => $sportMatch,
                         'hasGuess' => null !== $guess,
                         'guess' => ($showScores[$matchKey] ?? false) ? $guess : null,
+                        'waiting' => $window->isWaiting($now),
+                        'opensAt' => $window->opensAt,
+                        'openingNote' => $window->openingNote,
                     ];
                 }
             }

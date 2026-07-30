@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
 use App\Exception\GuessFeatureNotEnabled;
+use App\Exception\GuessNotYetOpen;
 use App\Exception\InvalidGuessScore;
 use App\Exception\MatchNotInCompetition;
 use App\Exception\NotAMember;
@@ -200,6 +201,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
                 if ($inner instanceof InvalidGuessScore
                     || $inner instanceof GuessFeatureNotEnabled
                     || $inner instanceof GuessDeadlinePassed
+                    || $inner instanceof GuessNotYetOpen
                     || $inner instanceof GuessAlreadyExists
                     || $inner instanceof NotAMember
                     || $inner instanceof MatchNotInCompetition

@@ -418,6 +418,13 @@
                     isPlayoff: true, tippable: true,
                     footNote: 'Chodská liga — jaro · Městský stadion',
                 },
+                {
+                    caption: 'state="waiting" — „tipování otevřeno od" (nastavuje admin): zápas zůstává v seznamu, ale místo výzvy má hodiny a text admina',
+                    state: 'waiting', pillVariant: 'neutral', pillLabel: 'Tipování od 30. 5. 10:00', pillIcon: 'clock', pillDot: false,
+                    home: teams.home, away: teams.away, kickoff: kickoffs.playoff, round: 'Osmifinále',
+                    opensAt: kickoffs.upcoming, openingNote: 'Tipy otevřeme hned po losu skupin.',
+                    footNote: 'MS ve fotbale 2026 · Estadio Azteca',
+                },
             ] %}
 
             <ul class="flex flex-col gap-5">
@@ -445,6 +452,8 @@
                             :tipUrl="row.tippable|default(false) ? match_url : null"
                             :tipMissingLabel="row.tipMissingLabel|default(null)"
                             :tipStats="row.tipStats|default([])"
+                            :opensAt="row.opensAt|default(null)"
+                            :openingNote="row.openingNote|default(null)"
                             :footNote="row.footNote"
                         />
                     </li>

@@ -288,6 +288,10 @@
                             {% set pill_variant = 'locked' %}{% set pill_icon = 'x' %}{% set pill_label = 'Zrušeno' %}{% set pill_dot = false %}
                         {% elseif m.state.value == 'live' %}
                             {% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Právě hraje' %}{% set pill_dot = true %}
+                        {% elseif state == 'waiting' %}
+                            {# Tipování se teprve otevře — nikoli „Uzamčeno": hráč nic nezmeškal. #}
+                            {% set pill_variant = 'neutral' %}{% set pill_icon = 'clock' %}{% set pill_dot = false %}
+                            {% set pill_label = 'Tipování od ' ~ row.opensAt|date('j. n. H:i') %}
                         {% elseif state == 'locked' %}
                             {% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = g ? 'Uzamčeno' : 'Netipováno' %}{% set pill_dot = false %}
                         {% elseif state == 'tipped' %}
@@ -317,7 +321,11 @@
                            `state == 'open'` znamená na této ploše vždy „chybí tip"
                            (odložený, zrušený i probíhající zápas už není
                            `isOpenForGuesses`, takže z controlleru vyjde `locked`),
-                           proto se mapuje na červený stav `missing` (item 25). #}
+                           proto se mapuje na červený stav `missing` (item 25).
+
+                           Čekající zápas („tipování otevřeno od") ještě nemohl být
+                           natipován, takže `tipMissingLabel` musí mlčet — „Netipováno"
+                           by byla výtka za něco, co nešlo udělat. #}
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
                             :awayTeam="m.awayTeam"
@@ -335,11 +343,13 @@
                             :resultAway="state == 'finished' or m.state.value == 'live' ? m.awayScore : null"
                             :points="state == 'finished' ? row.points : null"
                             :hitClass="hit_class"
-                            :tipMissingLabel="not row.isOpen and is_member and not g ? 'Netipováno' : null"
+                            :tipMissingLabel="not row.isOpen and not row.isWaiting and is_member and not g ? 'Netipováno' : null"
                             :detailUrl="match_url"
                             :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
                             :tipUrl="row.isOpen and is_member ? match_url : null"
                             :tipStats="row.stats ? [row.stats] : []"
+                            :opensAt="row.opensAt"
+                            :openingNote="row.openingNote"
                             :footNote="row.isOpen ? 'Uzávěrka ' ~ row.deadline|date('j. n. Y H:i') : null"
                         />
                         </li>

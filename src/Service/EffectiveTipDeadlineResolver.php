@@ -8,18 +8,29 @@ use App\Entity\Competition;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Exception\GuessDeadlinePassed;
+use App\Exception\GuessNotYetOpen;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Service\Competition\CompetitionEntitlements;
 use App\Service\Competition\CompetitionMatchProvider;
+use App\Value\TipWindow;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * THE single authority answering "until when may (user U) tip match M in
- * competition C". No other surface may compare kickoffs/deadlines on its own —
- * callers only compare `now` against the returned deadline (or use
+ * THE single authority answering "when may (user U) tip match M in competition
+ * C" — BOTH ends of the window. No other surface may compare kickoffs/deadlines
+ * on its own — callers only compare `now` against the returned window (or use
  * {@see isLocked}, which additionally respects `SportMatch::$isOpenForGuesses`).
+ *
+ * The window's START (`TipWindow::$opensAt`, 2026-07-30) is the ADMIN-set
+ * „tipování otevřeno od" of {@see \App\Entity\CompetitionMatchSetting} — null on
+ * every match until an admin sets one, which is exactly the behavior that
+ * predates it. It is deliberately NOT user-dependent: entitlements extend the
+ * END of a window, never open it early, and managers/admins get no free pass
+ * (on-behalf writes are gated the same). Everything below therefore describes
+ * the deadline — the opening is a straight read of the override row.
  *
  * Model (DOMAIN.md §Tip locking): tips lock at the competition's start — the
  * earliest kickoff among its included matches, or earlier via the manager's
@@ -106,21 +117,29 @@ class EffectiveTipDeadlineResolver implements ResetInterface
     ) {
     }
 
-    public function deadlineFor(Competition $competition, SportMatch $sportMatch, ?User $user = null): \DateTimeImmutable
+    /**
+     * The whole window — the ONE call every gate should make. Costs exactly what
+     * {@see deadlineFor} costs: the opening travels on the same override row.
+     */
+    public function windowFor(Competition $competition, SportMatch $sportMatch, ?User $user = null): TipWindow
     {
         $override = $this->overrideRepository->findByCompetitionAndMatch($competition->id, $sportMatch->id);
 
-        return $this->computeDeadline($competition, $sportMatch, $override?->deadline, $user);
+        return new TipWindow(
+            deadline: $this->computeDeadline($competition, $sportMatch, $override?->deadline, $user),
+            opensAt: $override?->opensAt,
+            openingNote: $override?->openingNote,
+        );
     }
 
     /**
-     * Batch variant of {@see deadlineFor} (one override query for all matches).
+     * Batch variant of {@see windowFor} (one override query for all matches).
      *
      * @param list<SportMatch> $matches
      *
-     * @return array<string, \DateTimeImmutable> keyed by sport match id RFC4122
+     * @return array<string, TipWindow> keyed by sport match id RFC4122
      */
-    public function deadlinesFor(Competition $competition, array $matches, ?User $user = null): array
+    public function windowsFor(Competition $competition, array $matches, ?User $user = null): array
     {
         if ([] === $matches) {
             return [];
@@ -133,17 +152,48 @@ class EffectiveTipDeadlineResolver implements ResetInterface
 
         foreach ($matches as $match) {
             $key = $match->id->toRfc4122();
-            $result[$key] = $this->computeDeadline($competition, $match, ($overrides[$key] ?? null)?->deadline, $user);
+            $override = $overrides[$key] ?? null;
+
+            $result[$key] = new TipWindow(
+                deadline: $this->computeDeadline($competition, $match, $override?->deadline, $user),
+                opensAt: $override?->opensAt,
+                openingNote: $override?->openingNote,
+            );
         }
 
         return $result;
     }
 
+    public function deadlineFor(Competition $competition, SportMatch $sportMatch, ?User $user = null): \DateTimeImmutable
+    {
+        return $this->windowFor($competition, $sportMatch, $user)->deadline;
+    }
+
     /**
-     * Convenience gate: whether tipping M in C is closed for U at $now. Beyond
-     * the deadline comparison this also respects the match state — a match that
-     * is not open for guesses (live/finished/postponed/cancelled/deleted) is
-     * always locked, whatever its deadline.
+     * Batch variant of {@see deadlineFor} (one override query for all matches).
+     *
+     * @param list<SportMatch> $matches
+     *
+     * @return array<string, \DateTimeImmutable> keyed by sport match id RFC4122
+     */
+    public function deadlinesFor(Competition $competition, array $matches, ?User $user = null): array
+    {
+        return array_map(
+            static fn (TipWindow $window): \DateTimeImmutable => $window->deadline,
+            $this->windowsFor($competition, $matches, $user),
+        );
+    }
+
+    /**
+     * Convenience gate: whether tipping M in C is closed for U at $now — the
+     * answer every write path and every „can I tip this?" surface asks.
+     *
+     * Locked covers all three ways in: the match state (not open for guesses —
+     * live/finished/postponed/cancelled/deleted — is always locked, whatever the
+     * window says), the deadline having passed, and the window not having OPENED
+     * yet. The last one is why an existing caller needs no change to inherit the
+     * new gate; use {@see windowFor} where the two causes must read differently
+     * to the user („uzávěrka proběhla" vs „tipování začíná v…").
      */
     public function isLocked(Competition $competition, SportMatch $sportMatch, ?User $user, \DateTimeImmutable $now): bool
     {
@@ -151,7 +201,61 @@ class EffectiveTipDeadlineResolver implements ResetInterface
             return true;
         }
 
-        return $now >= $this->deadlineFor($competition, $sportMatch, $user);
+        return !$this->windowFor($competition, $sportMatch, $user)->isOpen($now);
+    }
+
+    /**
+     * The write-side gate, thrown rather than returned: every guess-writing
+     * handler calls exactly this, so no tip can ever be stored outside its
+     * window — a hand-crafted POST straight at a tip endpoint fails here, not
+     * merely in the UI that hid the inputs.
+     *
+     * Ordering matters for the message the player gets: „ještě nezačalo" before
+     * „už skončilo", and the match state folded into the latter (a cancelled or
+     * finished match is closed, whatever its deadline).
+     *
+     * $user is the tip's OWNER, not the editor — an on-behalf write is judged by
+     * the member's window, exactly as {@see deadlineFor} is.
+     *
+     * @throws GuessNotYetOpen     the window has not opened yet
+     * @throws GuessDeadlinePassed the window is over, or the match no longer takes tips
+     */
+    public function assertOpenForTipping(
+        Competition $competition,
+        SportMatch $sportMatch,
+        ?User $user,
+        \DateTimeImmutable $now,
+    ): void {
+        $window = $this->windowFor($competition, $sportMatch, $user);
+
+        if ($window->isWaiting($now)) {
+            \assert(null !== $window->opensAt); // isWaiting() is false without one.
+
+            throw GuessNotYetOpen::until($window->opensAt);
+        }
+
+        if (!$sportMatch->isOpenForGuesses || $window->isClosed($now)) {
+            throw GuessDeadlinePassed::at($window->deadline);
+        }
+    }
+
+    /**
+     * The deadline a per-match override WOULD produce, without storing it —
+     * how the write side validates a window (an opening must fall before the
+     * end it will actually have) before anything is persisted, instead of
+     * writing first and asking the resolver afterwards.
+     *
+     * Userless on purpose: an entitlement may only ever push the end LATER, so
+     * the userless deadline is the conservative one to validate against — a
+     * window that is empty for a plain member is a misconfiguration even if a
+     * boost holder could still squeeze into it.
+     */
+    public function deadlineWithOverride(
+        Competition $competition,
+        SportMatch $sportMatch,
+        ?\DateTimeImmutable $overrideDeadline,
+    ): \DateTimeImmutable {
+        return $this->computeDeadline($competition, $sportMatch, $overrideDeadline, null);
     }
 
     /**

@@ -36,6 +36,10 @@
     {% set row_state = 'locked' %}{% set pill_variant = 'warn' %}{% set pill_icon = 'triangle-alert' %}{% set pill_label = 'Odloženo' %}{% set pill_dot = false %}
 {% elseif m.isLive %}
     {% set row_state = 'live' %}{% set pill_variant = 'live' %}{% set pill_icon = null %}{% set pill_label = 'Live' %}{% set pill_dot = true %}
+{% elseif m.opensAt is not null %}
+    {# Tipování se teprve otevře — před „Uzamčeno", jinak by se čekání četlo jako konec. #}
+    {% set row_state = 'waiting' %}{% set pill_variant = 'neutral' %}{% set pill_icon = 'clock' %}{% set pill_dot = false %}
+    {% set pill_label = 'Tipování od ' ~ m.opensAt|date('j. n. H:i') %}
 {% elseif is_locked %}
     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
 {% elseif m.pendingCompetitionsCount > 0 %}
@@ -77,5 +81,7 @@
     :tipUrl="m.isTippable ? path('competition_sport_match_detail', {competitionId: (m.pendingCompetitionIds[0] ?? m.competitionIds[0]).toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
     :tipStats="m.tipStats"
     :sportMatchId="m.id.toRfc4122"
+    :opensAt="m.opensAt"
+    :openingNote="m.openingNote"
     :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
 />

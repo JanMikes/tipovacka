@@ -407,9 +407,21 @@
             <section class="card-glass mt-6 p-5 sm:p-6">
                 <header class="mb-4 flex items-center gap-2.5">
                     <twig:ux:icon name="lucide:hourglass" class="h-5 w-5 text-accent-300" />
-                    <h2 class="text-lg font-semibold text-white">Uzávěrka tipů pro tento zápas</h2>
+                    <h2 class="text-lg font-semibold text-white">Tipování tohoto zápasu</h2>
                 </header>
                 {{ form_start(deadline_form, {attr: {class: 'flex flex-wrap items-end gap-3'}}) }}
+                    {# „Tipování otevřeno od" je jen pro adminy — pro ostatní pole
+                       na formuláři vůbec není, takže se ho nedá poslat ani ručně. #}
+                    {% if deadline_form.opensAt is defined %}
+                        <div class="field min-w-[220px] flex-1">
+                            {{ form_label(deadline_form.opensAt, null, {label_attr: {class: 'field-label mb-1.5'}}) }}
+                            {{ form_widget(deadline_form.opensAt, {attr: {class: 'input'}}) }}
+                            {% if deadline_form.opensAt.vars.help %}
+                                <p class="mt-1 text-xs text-white/50">{{ deadline_form.opensAt.vars.help }}</p>
+                            {% endif %}
+                            {{ form_errors(deadline_form.opensAt) }}
+                        </div>
+                    {% endif %}
                     <div class="field min-w-[220px] flex-1">
                         {{ form_label(deadline_form.deadline, null, {label_attr: {class: 'field-label mb-1.5'}}) }}
                         {{ form_widget(deadline_form.deadline, {attr: {class: 'input'}}) }}
@@ -418,6 +430,16 @@
                         {% endif %}
                         {{ form_errors(deadline_form.deadline) }}
                     </div>
+                    {% if deadline_form.openingNote is defined %}
+                        <div class="field w-full">
+                            {{ form_label(deadline_form.openingNote, null, {label_attr: {class: 'field-label mb-1.5'}}) }}
+                            {{ form_widget(deadline_form.openingNote, {attr: {class: 'input'}}) }}
+                            {% if deadline_form.openingNote.vars.help %}
+                                <p class="mt-1 text-xs text-white/50">{{ deadline_form.openingNote.vars.help }}</p>
+                            {% endif %}
+                            {{ form_errors(deadline_form.openingNote) }}
+                        </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-primary">
                         <twig:ux:icon name="lucide:save" class="h-4 w-4" />
                         Uložit
@@ -444,13 +466,17 @@
 
                 {# `now` comes from the app's clock (the controller), not Twig's `date()`,
                    which reads the system clock and therefore disagrees with it. #}
-                {% set can_edit_member_tips = sport_match.isOpenForGuesses and (effective_deadline > now) %}
+                {# Čekání na otevření zavírá tipy členů úplně stejně jako uzávěrka —
+                   organizátor nemá výjimku (viz DOMAIN.md §Tip locking). #}
+                {% set can_edit_member_tips = sport_match.isOpenForGuesses and not is_waiting and (effective_deadline > now) %}
 
                 {# B5: disabled inputs alone do not explain themselves — name the state. #}
                 {% if not can_edit_member_tips %}
                     <p class="flex items-center gap-1.5 border-b border-white/[0.06] px-5 py-3 text-xs text-white/60 sm:px-6">
-                        <twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5 shrink-0" />
-                        {% if not sport_match.isOpenForGuesses %}
+                        <twig:ux:icon name="lucide:{{ is_waiting ? 'clock' : 'lock' }}" class="h-3.5 w-3.5 shrink-0" />
+                        {% if is_waiting %}
+                            Tipování otevřeme {{ opens_at|date('j. n. Y H:i') }}. Do té doby nejde zadat ani tipy členů.
+                        {% elseif not sport_match.isOpenForGuesses %}
                             Tipování uzavřeno — zápas už začal nebo není aktivní. Tipy členů už zadat nejde.
                         {% else %}
                             Tipování uzavřeno — uzávěrka proběhla {{ effective_deadline|date('j. n. Y H:i') }}. Tipy členů už zadat nejde.
