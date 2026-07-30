@@ -6,7 +6,6 @@ namespace App\Controller\Public;
 
 use App\Entity\User;
 use App\Enum\CompetitionBrowseScope;
-use App\Query\GetCompetitionsPageStats\GetCompetitionsPageStats;
 use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\ListBrowsableCompetitions\ListBrowsableCompetitions;
 use App\Query\ListMyPlayingCompetitions\ListMyPlayingCompetitions;
@@ -30,6 +29,12 @@ use Symfony\Component\Routing\Attribute\Route;
  * is **pagination** — `strana` for the public grid, `moje-strana` for the
  * organizer one — because „Zobrazit další" is not a filter and the product owner
  * only asked for the filter card to go.
+ *
+ * **No hero stat cards since item 24.** The three platform-wide figures (Aktivní
+ * soutěže / Hráčů celkem / Sledovaných zápasů) were removed from the page, so this
+ * controller no longer calls `GetCompetitionsPageStats`. That query is deliberately
+ * kept for a future surface — see its docblock — and this page is no longer one of
+ * its callers.
  */
 #[Route('/souteze', name: 'competitions_list', methods: ['GET'])]
 final class CompetitionsListController extends AbstractController
@@ -49,10 +54,6 @@ final class CompetitionsListController extends AbstractController
             viewerId: $viewerId,
             page: max(1, $request->query->getInt('strana', 1)),
         ));
-
-        // Platform-wide totals since item 15 — identical logged in and logged out,
-        // so the hero never tells two visitors two different truths.
-        $stats = $this->queryBus->handle(new GetCompetitionsPageStats());
 
         $playing = [];
         $organized = null;
@@ -76,7 +77,6 @@ final class CompetitionsListController extends AbstractController
         }
 
         return $this->render('public/competitions_list.html.twig', [
-            'stats' => $stats,
             'playing_competitions' => $playing,
             'organized' => $organized,
             'discoverable' => $discoverable,

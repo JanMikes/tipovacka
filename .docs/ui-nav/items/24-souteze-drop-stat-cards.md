@@ -95,3 +95,59 @@ page. Preserve the reasoning in the query's docblock so it survives for whatever
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. Push to `main`. Do not update the status board and do not edit
 `.docs/ui-nav/UI-MAP.md` — report what UI-MAP needs and the orchestrator lands it.
+
+---
+
+## What landed
+
+### The `<header>` spacing — measured, not eyeballed
+
+The deleted grid carried `mt-8`, and the `<header>` itself carried `mb-8`, so the CTA was 193 px
+(desktop) / 483 px (320 px) above the next block, of which the cards were 129 px / 419 px. Removing
+the row would have left **32 px** between the hero's CTA and the next section's eyebrow — while
+**every other block boundary on this page is 56 px** (`mb-14`) and the closing CTA sits 48 px below.
+32 px reads as the hero being glued to „Soutěže, kde tipuješ", so the header was moved to `mb-14`:
+the hero now uses the rhythm the page already had, and no new value was invented.
+
+Measured in headless Chrome against the dev fixtures (gap = hero-block bottom → next block top):
+
+| View | Before (cards) | After |
+|---|---|---|
+| 1440 px, anonymous | header 298 px tall · gap **193** (32 + 129 cards + 32) | header 137 px · gap **56** |
+| 320 px, anonymous | header 692 px tall · gap **483** (32 + 419 + 32) | header 241 px · gap **56** |
+| 1440 px, member/organizer | header 298 px tall · gap **193** | header 137 px · gap **56** |
+| 320 px, member/organizer | header 670 px tall · gap **483** | header 219 px · gap **56** |
+
+All four: `.stat` count 3 → **0**, no `.grid` left in the `<header>`, `scrollWidth == clientWidth`
+(zero horizontal overflow), and the three labels absent from the markup. Console clean apart from the
+pre-existing `/_wdt/…` 404 from the dev web-debug toolbar, which appears identically before the change.
+
+## Assumptions made
+
+Product/implementation decisions the item file did not settle, resolved conservatively:
+
+1. **The `<header>` went from `mb-8` to `mb-14`** rather than keeping `mb-8` (the app's usual hero
+   margin) — see the measurements above. `mb-8` was correct while a 129/419 px card row absorbed the
+   space below the CTA; with the row gone it would have made the hero the tightest boundary on a page
+   whose every other boundary is 56 px. No CSS was touched: it is a utility swap in the template, so
+   `assets/styles/app.css` (a sibling's file this round) stayed untouched.
+2. **`testTheHeroFiguresAreIdenticalLoggedInAndLoggedOut` was deleted, not weakened.** It asserted
+   `assertCount(3, …)` over `header .stat` and compared the two renderings — it described the row
+   itself, so with the row gone it describes nothing that exists (item 15's own rule: do not delete a
+   test that still describes something true; this one no longer does). Its `statCardMarkup()` helper
+   went with it. What it guaranteed survives: the query takes no viewer (structural) and
+   `GetCompetitionsPageStatsQueryTest::testTheFiguresDoNotDependOnAViewer` still pins it.
+3. **The absence is pinned twice, for a member and for an anonymous visitor**
+   (`testHeroCarriesNoStatCardRow` + `…ForAnAnonymousVisitorEither`), because the removed row was the
+   one thing on this page item 15 had proven identical in both contexts. Each asserts the three labels
+   absent, **no `.stat`**, and **no `.grid` inside the `<header>`** — the last one is what catches „the
+   cards were deleted but the container was left behind". `testHeroCarriesNoPrizePoolCard` keeps its
+   „bank" assertion (still true, still worth guarding) and lost only the three positive label asserts.
+4. **The „no call site" docblock lives on the message** (`GetCompetitionsPageStats`), as instructed,
+   with a two-line pointer to it on the handler — a reader who opens `…Query.php` first (the file with
+   the SQL, so the likelier entry point) sees the warning there too, instead of concluding it is dead.
+   `CompetitionsPageStatsResult`'s per-property comments were already accurate and were left alone.
+5. **The `QueryBus` injection stays** in `CompetitionsListController`: three other queries
+   (`ListBrowsableCompetitions` ×2, `ListMyPlayingCompetitions`, `GetCreditWallet`) still use it.
+6. **The item file's own `Status:` line was left as `TODO`** — the dispatch prompt says the status
+   board is the orchestrator's, and this line is part of it.

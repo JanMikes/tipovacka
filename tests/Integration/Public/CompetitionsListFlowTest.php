@@ -177,42 +177,40 @@ final class CompetitionsListFlowTest extends WebTestCase
         // The product owner removed „VÝHERNÍ BANK": entry fees are burned credits,
         // there are no payouts, so nothing on this page may read as a prize pool.
         self::assertSelectorTextNotContains('body', 'bank');
-        self::assertSelectorTextContains('body', 'Aktivní soutěže');
-        self::assertSelectorTextContains('body', 'Hráčů celkem');
-        self::assertSelectorTextContains('body', 'Sledovaných zápasů');
     }
 
     /**
-     * Item 15's other half: the hero figures are platform-wide, so they must be
-     * byte-identical logged in and logged out. Compared on the rendered markup of
-     * the three cards, not on the query — the template is where a viewer branch
-     * would sneak back in.
+     * Item 24 removed the three-`StatCard` row — the whole row, not the cards with
+     * an empty container left behind. `GetCompetitionsPageStats` still computes the
+     * figures (see its docblock); this page simply stopped rendering them.
      */
-    public function testTheHeroFiguresAreIdenticalLoggedInAndLoggedOut(): void
+    public function testHeroCarriesNoStatCardRow(): void
     {
         $client = static::createClient();
-
-        $client->request('GET', '/souteze');
-        self::assertResponseIsSuccessful();
-        $anonymous = $this->statCardMarkup($client);
-
         $this->login($client, AppFixtures::VERIFIED_USER_ID);
-        $client->request('GET', '/souteze');
-        self::assertResponseIsSuccessful();
-        $member = $this->statCardMarkup($client);
 
-        self::assertCount(3, $anonymous);
-        self::assertSame($anonymous, $member);
+        $client->request('GET', '/souteze');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextNotContains('body', 'Aktivní soutěže');
+        self::assertSelectorTextNotContains('body', 'Hráčů celkem');
+        self::assertSelectorTextNotContains('body', 'Sledovaných zápasů');
+        // No card, and no empty grid container either.
+        self::assertSelectorNotExists('.bg-radial header .stat');
+        self::assertSelectorNotExists('.bg-radial header .grid');
     }
 
-    /**
-     * @return list<string>
-     */
-    private function statCardMarkup(KernelBrowser $client): array
+    public function testHeroCarriesNoStatCardRowForAnAnonymousVisitorEither(): void
     {
-        return $client->getCrawler()
-            ->filter('header .stat')
-            ->each(static fn (\Symfony\Component\DomCrawler\Crawler $node): string => preg_replace('/\s+/u', ' ', trim($node->text())) ?? '');
+        $client = static::createClient();
+        $client->request('GET', '/souteze');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextNotContains('body', 'Aktivní soutěže');
+        self::assertSelectorTextNotContains('body', 'Hráčů celkem');
+        self::assertSelectorTextNotContains('body', 'Sledovaných zápasů');
+        self::assertSelectorNotExists('.bg-radial header .stat');
+        self::assertSelectorNotExists('.bg-radial header .grid');
     }
 
     private function login(KernelBrowser $client, string $userId): void

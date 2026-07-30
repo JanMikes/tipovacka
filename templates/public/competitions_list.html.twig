@@ -10,8 +10,13 @@
 <div class="bg-radial">
 <div class="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
-    {# ───── Hero ───── #}
-    <header class="mb-8">
+    {# ───── Hero ─────
+       Item 24 removed the three-`StatCard` row (Aktivní soutěže / Hráčů celkem /
+       Sledovaných zápasů) that used to sit under the CTA; the logic survives in
+       `GetCompetitionsPageStats`, which now has no call site. The header carries
+       the page's own 56 px block rhythm (`mb-14`, like every section below) instead
+       of the tighter `mb-8` it needed while the cards filled that space. #}
+    <header class="mb-14">
         <div class="flex flex-wrap items-end justify-between gap-6">
             <div class="min-w-0">
                 <p class="eyebrow mb-3">{{ is_logged_in ? 'Váš workspace' : 'Veřejné soutěže' }}</p>
@@ -38,30 +43,6 @@
                     <a href="{{ path('app_register') }}" class="btn btn-primary">Registrace zdarma</a>
                 {% endif %}
             </div>
-        </div>
-
-        {# Every number below is measured, and since item 15 every one of them is a
-           PLATFORM-WIDE total — byte-identical logged in and logged out. A sub-label
-           is rendered only when it has something real to say; small numbers on a young
-           product are correct, so nothing here is padded or rounded up. #}
-        {% set competitions_meta = null %}
-        {% if stats.liveCompetitionCount > 0 %}
-            {% set competitions_meta = stats.liveCompetitionCount ~ ' živě teď' %}
-        {% elseif stats.todayMatchCount > 0 %}
-            {% set competitions_meta = stats.todayMatchCount ~ (stats.todayMatchCount == 1 ? ' zápas' : (stats.todayMatchCount <= 4 ? ' zápasy' : ' zápasů')) ~ ' dnes' %}
-        {% endif %}
-        {% set players_meta = stats.newPlayerCount > 0 ? '+' ~ stats.newPlayerCount ~ ' tento týden' : null %}
-        {% set matches_meta = null %}
-        {% if stats.matchSourceCount == 1 %}
-            {% set matches_meta = 'V 1 turnaji' %}
-        {% elseif stats.matchSourceCount > 1 %}
-            {% set matches_meta = 'Ve ' ~ stats.matchSourceCount ~ ' turnajích' %}
-        {% endif %}
-
-        <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <twig:StatCard label="Aktivní soutěže" :value="stats.activeCompetitionCount" :meta="competitions_meta" />
-            <twig:StatCard label="Hráčů celkem" :value="stats.playerCount" :meta="players_meta" />
-            <twig:StatCard label="Sledovaných zápasů" :value="stats.matchCount" :meta="matches_meta" />
         </div>
     </header>
 

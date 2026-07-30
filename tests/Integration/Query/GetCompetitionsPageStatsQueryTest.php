@@ -11,11 +11,15 @@ use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * The hero of `/souteze` must never print a decorative number — every figure it
- * shows (and every sub-label under it) is measured here.
+ * Every figure the query reports (and every sub-label figure under it) is measured
+ * here. Since item 15 they are **platform-wide**: there is no viewer to scope them
+ * to, so every visitor would be shown the same totals.
  *
- * Since item 15 the figures are **platform-wide**: there is no viewer to scope
- * them to, so every visitor is shown the same totals.
+ * Since item 24 the query has **no call site** — `/souteze` stopped rendering the
+ * three `StatCard`s — so this test is the only thing keeping it honest. It is
+ * deliberately unchanged by that removal: whatever surface picks these figures up
+ * next inherits measured ones. Do not weaken it, and do not delete it as coverage
+ * of dead code.
  */
 final class GetCompetitionsPageStatsQueryTest extends IntegrationTestCase
 {

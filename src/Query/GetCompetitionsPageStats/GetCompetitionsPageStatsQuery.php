@@ -17,6 +17,9 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Uid\Uuid;
 
 /**
+ * ⚠ Nothing in the app dispatches this query since item 24 — read the message's
+ * docblock (`GetCompetitionsPageStats`) before assuming it is dead code.
+ *
  * Four statements, all aggregates over the WHOLE platform — the hero costs the
  * same for every visitor because it says the same thing to every visitor.
  *
