@@ -718,3 +718,47 @@ sites for the same gap — `scorer_picker` also offers creation, and `tom_select
 `no_results`).
 
 Small and self-contained; good to bundle with any other copy pass.
+
+### Survey of all five pickers (orchestrator, 2026-07-30) — the gap is exactly one renderer
+
+Done so the implementer does not have to rediscover it. `grep -n "render\|create\|no_results\|option_create"`
+over the five construction sites in `assets/controllers/`:
+
+| Controller | `create` | `option_create` | `no_results` | Verdict |
+|---|---|---|---|---|
+| `team_picker` | `(name) => ({name})` | **MISSING** ⇒ stock English „Add **…**" | Czech | **the bug** |
+| `scorer_picker` | `(input) => …` | Czech — „Přidat hráče „**X**"…" | Czech | fine |
+| `score_entry` | `true` | Czech — „Přidat hráče **X**…" | Czech | fine |
+| `tom_select` | `false` | n/a — no create row exists | Czech | fine |
+| `team_filter` | `false` | n/a — no create row exists | Czech | fine |
+
+So **only `team_picker_controller.js` is broken**, and only `option_create`. The two pickers that do
+offer creation already have Czech copy, and the two that don't can never show the row. No other stock
+renderer (`loading`, `optgroup_header`) is currently reachable with English text — but check that
+claim rather than trusting it, and say what you found.
+
+### Scope for this fix — product owner approved a copy sweep alongside it (2026-07-30)
+
+1. **The actual bug:** give `team_picker` a Czech `option_create`. „Přidat tým" is the vocabulary
+   `.docs/features/team-picker.md` uses; match it.
+2. **Make the three create/no-results strings consistent.** The two existing Czech `option_create`
+   strings already disagree with each other about quoting the typed value — „Přidat hráče „**X**"…"
+   (`scorer_picker`) vs „Přidat hráče **X**…" (`score_entry`). Pick one form, apply it to all three
+   (including the new team one), and keep the `escape(data.input)` call — **the input is
+   user-supplied and must stay escaped in every one of them.**
+3. **Check the `no_results` strings read consistently** too. They currently range from „Nic nenalezeno
+   — napište jméno nového hráče" to „Žádný tým nenalezen" to „Napište název — vytvoří se nový tým".
+   A picker that *can* create should invite creating; one that cannot should just say nothing was
+   found. Align them on that rule; do not invent new wording beyond it.
+4. **Update the feature docs** — `.docs/features/team-picker.md` and `.docs/features/scorer-picker.md`
+   — if they quote any string you change.
+
+**Out of scope:** no visual/CSS change, no behaviour change, no new picker option, and **nothing that
+touches B3's `dropdownParent: 'body'` or B8's focus-layout rules** — those are load-bearing (see B3
+and B8 above). This is copy only. Do not touch `assets/styles/app.css` at all.
+
+**Verify in a real browser, not just by reading the diff.** Type a name that matches nothing in the
+team picker (match edit, `/zapasy/{id}/upravit`) and in both player pickers (match detail scorer
+picker; `/zapasy/{id}/skore`) and confirm the create row is Czech, that picking it still creates the
+team/player, and that B3/B8 have not regressed (dropdown escapes its card; the control does not
+change height on focus). `composer quality` cannot see any of this.

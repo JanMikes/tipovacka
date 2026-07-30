@@ -38,14 +38,17 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 06 | [„Nástěnka hráče" (rebuild of `/nastenka`)](items/06-page-nastenka.md) | DONE | `6561d1d` |
 | 10 | [Match detail (`/zapasy/{id}`): distribution, timeline, per-match ranking](items/10-page-match-detail.md) | DONE | `6bfd659` |
 | 11 | [Match rows: one card, boosts inside it](items/11-match-row-card.md) | DONE | `a8b7e8b` |
+| — | [Cursor spotlight turned off behind a master switch](../features/cursor-spotlight.md) | DONE | `3605a60` |
+| 12 | [One name for the tip split: „Rozložení tipů" everywhere](items/12-naming-rozlozeni-tipu.md) | IN PROGRESS | — |
+| 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | DONE (B1–B8) |
-| [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | TODO |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B8 DONE · **B9 IN PROGRESS** |
+| [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->
 
@@ -63,9 +66,24 @@ product owner reprioritises):
 
 ### Rules
 
-1. **One item at a time, sequentially.** Never launch a second implementer while one is
-   `IN PROGRESS`. The shared surfaces below are touched by almost every item, so parallel
-   implementers conflict — and the CSS one conflicts *semantically*, which git will not catch:
+1. **2–3 implementers at a time, on provably disjoint surfaces** — amended 2026-07-30; this rule
+   used to say „one at a time, sequentially". What actually breaks is not concurrency, it is two
+   agents touching one file, so the rule is now about **file ownership, not head count**:
+   - Before dispatching, list the files each item will touch and check the lists do not intersect.
+     If they do, either give the file to exactly one item (and put the other item's needed change
+     into that item's spec — items 12/13 do this with `styleguide.html.twig`), or serialise them.
+   - **Every prompt must name the files the other in-flight agents own.** An agent cannot see its
+     siblings; if the prompt does not say it, it does not know it.
+   - **The orchestrator owns `PLAN.md` and `UI-MAP.md` while more than one agent is in flight**, and
+     agents are told not to edit them. Two agents updating the same board table in one checkout is
+     the likeliest way to lose work: they are not merging branches, they are committing to the same
+     working tree, so one `git commit -- <path>` sweeps the other's half-finished edit. The
+     orchestrator records each sha from the agent's report instead.
+   - Never `git add -A` / `git add .` / `git commit -a`. Stage explicit paths; verify the index with
+     `git diff --cached --stat` before committing.
+
+   The shared surfaces below are touched by almost every item, so they need an explicit single owner
+   per round — and the CSS one conflicts *semantically*, which git will not catch:
 
    | Surface | Why it collides |
    |---|---|
@@ -138,6 +156,28 @@ A fresh session with zero context can continue by:
    `DONE`) or it did not (reset the row to `TODO` and relaunch).
 
 ---
+
+## Product-owner decisions (2026-07-30)
+
+Settled in conversation; each is now binding on this stream.
+
+1. **The tip split is „Rozložení tipů" — one name, everywhere.** The product owner's mocks say
+   „DISTRIBUCE TIPŮ"; the documented vocabulary wins instead. The sweep found the app had **three**
+   names for one feature — „Rozložení tipů" (the section heading), „Lišta tipů ostatních" (the boost
+   that unlocks it) and „Distribuce tipů" (the homepage) — so a player was sold one name, shown a
+   second and asked to buy a third. Item 12 collapses them; the boost becomes „Rozložení tipů
+   ostatních". Enum values, CSS classes and every other identifier stay English.
+2. **`/_design` is the live component gallery, plus a marked deferred section.** This resolves the
+   contradiction between the page's own docblock („DEFERRED elements […] CUT items must NOT appear
+   here") and this file's „shop window" rule. Item 13 restructures it into two halves. The page stays
+   admin-only, unlinked, and completely inert.
+3. **The cursor spotlight stays off.** Committed as `3605a60` with an `ENABLED` master switch in
+   `assets/spotlight.js` and every CSS layer gated behind `.spotlight-on`, so re-enabling it is one
+   constant. Gating the CSS as well as the JS is the point — with only the listener off, `--mx/--my`
+   fall back to `50% 50%` and each card would still paint a static centred glow on hover.
+4. **Fantasy and the PP/PEN split remain deferred** (unchanged from `CREATE-WIZARD.md` W1). Fantasy
+   has no domain concept at all; overtime stays ONE combined score meaning „after prolongation *or*
+   shootout".
 
 ## Conventions specific to this stream
 
