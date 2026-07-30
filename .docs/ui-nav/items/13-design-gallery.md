@@ -1,6 +1,6 @@
 # 13 — `/_design` becomes the live component gallery (plus a deferred section)
 
-> **Status:** TODO
+> **Status:** DONE
 > **Depends on:** nothing. Runs concurrently with item 12 and B9 — read „Files another agent owns".
 > **Owner decision date:** 2026-07-30
 
@@ -242,4 +242,65 @@ name only shows at render time. So:
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **Half A is neutralised on its RENDERED MARKUP, by one `inert()` macro**, not per component.
+   Each half-A section is captured with `{% set %}` and piped through a single Twig `replace()`
+   map: `href="` → `data-inert-link="` + `aria-disabled`, `<form>`/`</form>` → `<div>`/`</div>`,
+   `action=`/`method=` → `data-inert-target`/`-verb`, `type="submit"` → `type="button"`,
+   `data-controller=` → `data-inert-stimulus=`. Every replacement is deliberately named so it does
+   **not** contain the string it replaces, which is what lets the test assert on the raw markup.
+   Two cheaper options were rejected: a `<fieldset disabled>` wrapper disables controls but leaves
+   ~53 real `<a href>`s live (and half A's links are the 404 risk, not its buttons), and pointing
+   the FilterBar's form at `/_design` would both keep a submittable form on the page and break the
+   existing assertion `substr_count($body, 'action="/_design"') === 1`. Result on the rendered
+   page: exactly **one** `<form>`, **zero** `method="post"`, one `type="submit"` — all three the
+   switcher's. Asserted in `testNothingOnThePageCanAct`.
+2. **The „Přepínač soutěže" section deliberately stays OUTSIDE the macro** and remains the one live
+   control on the page: its GET form targets `/_design` itself, so submitting is a harmless reload
+   of the styleguide, and the existing test asserts that real `action="/_design"`.
+3. **`Pill` has no `organizer` variant** — `organizer` is a **`Badge`** variant (`.badge-organizer`);
+   `UI-MAP.md` §3 says otherwise and this item's table inherited the error. The gallery renders the
+   nine Pill variants that actually exist (`done · tipped · success · soon · warn · accent ·
+   neutral · locked · live`) and all seven Badge variants including `organizer`.
+4. **Half B ended up with three sections, not five.** „Δ — změna pořadí" and „Přepínač soutěže"
+   already carried a **„Hotovo"** pill because both features shipped; keeping them under a
+   „Připravujeme" divider would have contradicted the acceptance criterion („each section carrying
+   the right pill"), and both components are in half A's own table. So they moved up. The Δ section
+   was also hand-written delta markup — it now renders the real `<twig:Leaderboard:Delta>` in both
+   variants, which is what „no hand-copied component markup" asks for.
+5. **`Leaderboard:Delta variant="chip"` has no „beze změny" chip** — by design it renders nothing
+   for delta 0 and for „no history". The gallery feeds all five rows to both variants; the cell
+   variant is where „0" and the neutral dot show up.
+6. **An entry fee has no home in `PricingConfig`** (it is organizer-set per competition), so the
+   card samples borrow real constants (`PREMIUM_PER_PLAYER`, `LOW_BALANCE_WARNING_THRESHOLD`)
+   rather than invent a literal credit amount. `PricingConfig` is referenced **statically** like
+   every other consumer in the codebase — it is a constants-only class, so injecting an instance
+   would buy nothing.
+7. **Half B's „Příspěvkové úrovně" now read their prices from the `pricing` Twig global.** They
+   were hard-coded 10 / 50 / 100 / 200 Kč, which contradicted `PricingConfig` (10 / 10 / 20 / 40)
+   — a styleguide showing three wrong prices next to a renamed boost is worse than no styleguide.
+8. **`Boost:Panel` is NOT in the gallery.** It is a Live Component whose `$competition` prop is a
+   `Competition` **entity** and which runs `GetBoostPanel` + `CompetitionMatchProvider` against the
+   database; there is no way to render it without fixture data, which this page forbids. Same
+   reason no other Live Component (`Guess:*`, `Notification:*`, `CreditBalance`, `CreateWizard`) is
+   there. `Match:TipStats` covers the boost paywall a player actually meets.
+9. **`compact=true` `TipStats` is only ever rendered inside a `MatchRow`**, never on its own —
+   `UI-MAP.md` §3 says the strip „must not be placed anywhere else", and the gallery obeys its own
+   documentation. The five states therefore show as „strip inside a card | full card" pairs, which
+   also gives `MatchRow` a realistic 439 px column (B7 is container-relative).
+10. **No `assets/styles/app.css` change at all.** Everything the gallery needed (section frames,
+    swatch rows, the 380 px narrow column) is Tailwind utilities in the template, so the
+    highest-risk file in the repo was left untouched this round.
+
+### Verification recorded
+
+- `composer cs:fix` clean · `composer quality` (phpstan lvl 8 + 497 unit tests) green ·
+  `DesignStyleguideFlowTest` 7 tests / 76 assertions · `tests/Integration/Security` ·
+  `tests/Integration/Portal` (242 tests) green.
+- Geometry measured in headless Chrome at **1600 / 1440 / 1280 / 1024 / 768 / 430 px**: pairwise
+  intersection over **568 painted leaves** (using `getClientRects()` fragments, not union boxes —
+  a wrapped inline element's bounding box is a lie) → **0 overlaps, 0 px horizontal overflow** at
+  every width. The only intersections found were the designed absolute decorations: the country
+  flag on the team coin, the „+5" badge in the tip box corner, and the lock veil over the blurred
+  skeleton. `.tip-row` painted at **894 / 654 / 439 / 380 / 348 px** — five container widths, not
+  five viewport widths.
+- Access unchanged: admin 200, verified non-admin 403, anonymous 302.

@@ -1,21 +1,65 @@
 {% extends 'base.html.twig' %}
 
 {#
-    DEV/ADMIN-ONLY reference styleguide for DEFERRED (🔮) design-system elements.
+    DEV/ADMIN-ONLY component gallery. TWO halves, one page (product owner, 2026-07-30):
 
-    Everything on this page is VISUAL-ONLY and INERT — no backend, no working JS, no
-    production wiring. Buttons are type="button" with NO data-action / handlers (or
-    disabled); inputs are disabled; there is NO `wtips:open-premium`, no Live wiring,
-    no dead handlers. CUT items (OAuth, in-product live match, Tweaks panel, payouts)
-    must NOT appear here. Each section is labeled „Připravujeme / reference".
+      A. „Sdílené komponenty" — every shipped shared component of templates/components/,
+         rendered by its REAL tag off hand-made sample DTOs (see DesignStyleguideController).
+         Add or change a shared component → render it here. Never hand-copy a component's
+         markup: the whole point is that this page cannot drift from production.
+      B. „Připravujeme / reference" — DEFERRED (🔮) design-system elements whose feature is
+         not built (příspěvkové úrovně, editor střelců, notifikační zvonek + feed).
 
+    Everything here is INERT. Half B is visual-only markup (buttons type="button" without
+    handlers, inputs disabled). Half A renders PRODUCTION components that contain real
+    <a href>s, a real GET <form> and the boost-purchase POST form, so every one of its
+    sections is piped through the `inert()` macro below — read its comment. There is no
+    Live wiring, no `wtips:open-premium`, no dead handler; CUT items (OAuth, in-product
+    live match, Tweaks panel, payouts) must NOT appear here.
+
+    No database: the page renders identically on an empty database.
     Gate: admin-only via `denyAccessUnlessGranted('ROLE_ADMIN')` in the controller.
     NOT linked from the production nav — URL-only reference.
 #}
 
-{% block title %}Design — reference (připravujeme) — {{ brand_name }}{% endblock %}
+{#
+    Neutralises a rendered chunk of production markup so the gallery cannot act.
+    strtr-style single pass (Twig's `replace`), applied to the FINAL markup, so it
+    catches whatever the component renders — including anything a component gains later:
+
+      href="            → data-inert-link="  + aria-disabled  (a sample UUID would 404 in-app)
+      <form … </form>   → <div … </div>      (no form left to submit, GET or POST)
+      action=/method=   → data-inert-target/-verb (nothing left to point a submit at)
+      type="submit"     → type="button"      (a submit button outside a form is a no-op)
+      data-controller=  → data-inert-stimulus (Stimulus never attaches; the „confirm" modal
+                                              of the boost paywall can never open, let alone POST)
+
+    Every replacement is named so it does NOT contain the string it replaces — that is what
+    lets the test assert „this page holds no method=\"post\" at all" on the raw markup.
+
+    Verify on the rendered markup, not on the intention — DesignStyleguideFlowTest asserts
+    the whole page holds exactly ONE <form> (the switcher's, which targets /_design itself)
+    and no `method="post"` at all.
+#}
+{% macro inert(markup) %}
+    {{- markup|replace({
+        'href="': 'aria-disabled="true" data-inert-link="',
+        '<form': '<div data-inert-form',
+        '</form>': '</div>',
+        'action="': 'data-inert-target="',
+        ' data-action="': ' data-inert-trigger="',
+        'method="post"': 'data-inert-verb="post"',
+        'method="get"': 'data-inert-verb="get"',
+        'type="submit"': 'type="button" aria-disabled="true"',
+        'data-controller="': 'data-inert-stimulus="',
+    })|raw -}}
+{% endmacro %}
+
+{% block title %}Design — reference (komponenty + připravujeme) — {{ brand_name }}{% endblock %}
 
 {% block body %}
+{% import _self as gal %}
+{% set match_url = path('sport_match_detail', {id: '01930000-0000-7000-8000-0000000000f9'}) %}
 <div class="bg-radial">
 <div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
@@ -23,30 +67,592 @@
     <header class="mb-10">
         <p class="eyebrow mb-3">Design system · interní reference</p>
         <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Design — reference (připravujeme)
+            Design — reference: komponenty a co připravujeme
         </h1>
         <p class="mt-3 max-w-2xl text-white/60">
-            Tahle stránka sdružuje <strong class="text-white/80">odložené</strong> prvky designového systému —
-            funkce, které zatím nestavíme. Slouží jako vizuální reference: vše je
-            <strong class="text-white/80">jen na ukázku a nefunkční</strong>, bez napojení na data či akce.
-            Stránka je přístupná pouze administrátorům a nikde v aplikaci na ni nevede odkaz.
+            Stránka má dvě části. Nahoře <strong class="text-white/80">sdílené komponenty</strong>, které
+            aplikace opravdu používá — vykreslené skutečnou komponentou, jen s ukázkovými daty.
+            Dole <strong class="text-white/80">odložené</strong> prvky designového systému, které zatím nestavíme.
+            Vše je <strong class="text-white/80">nefunkční</strong>: odkazy nikam nevedou, formuláře nic neodešlou,
+            nic se neukládá. Stránka je přístupná pouze administrátorům a nikde v aplikaci na ni nevede odkaz.
         </p>
         <div class="mt-4 flex flex-wrap items-center gap-2">
+            <twig:Pill label="Hotovo" variant="done" />
+            <span class="text-xs text-white/40">= hotová sdílená komponenta</span>
+            <span class="mx-1 text-white/20">·</span>
             <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
-            <span class="text-xs text-white/40">Vizuální reference · žádný backend · žádné akce</span>
+            <span class="text-xs text-white/40">= odložený prvek, jen vizuální reference</span>
         </div>
     </header>
 
+    {# ═══════════════════════════════════════════════════════════════════════════
+       ČÁST A — SDÍLENÉ KOMPONENTY
+       Každá sekce prochází makrem `inert()` výše. Jedinou výjimkou je „Přepínač
+       soutěže": jeho GET formulář míří na /_design, takže odeslání je neškodné
+       znovunačtení téhle stránky — je to jediný živý ovládací prvek na stránce.
+       ═══════════════════════════════════════════════════════════════════════════ #}
+    <div class="mb-6 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight text-white">Sdílené komponenty</h2>
+        <twig:Pill label="Hotovo" variant="done" />
+        <span class="text-xs text-white/40">templates/components/ · ukázková data, žádné akce</span>
+    </div>
+
     <div class="space-y-8">
 
-        {# ═════════ A. Premium / příspěvkové úrovně ═════════ #}
+        {# ═════════ A1. Pilulky a odznaky ═════════ #}
+        {% set section %}
         <section class="card-glass p-6 sm:p-8">
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:sparkles" class="h-5 w-5 text-accent-300" />
+                        Pilulky a odznaky
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Pill&gt;</code> je stavový štítek (Live, Uzamčeno, Hotovo),
+                        <code class="text-white/70">&lt;twig:Badge&gt;</code> ikonový odznak u jména či tipu (výhra, role).
+                        Varianty odpovídají třídám <code class="text-white/70">.pill-*</code> / <code class="text-white/70">.badge-*</code> v app.css.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <p class="eyebrow mb-3">Pill — všechny varianty</p>
+            <div class="flex flex-wrap items-center gap-2">
+                <twig:Pill label="Hotovo" variant="done" icon="check" />
+                <twig:Pill label="Tip odeslán" variant="tipped" icon="check" />
+                <twig:Pill label="Odemčeno" variant="success" icon="unlock" />
+                <twig:Pill label="Chybí tip" variant="soon" icon="circle-alert" />
+                <twig:Pill label="Vylepšení" variant="warn" icon="sparkles" />
+                <twig:Pill label="Před startem" variant="accent" />
+                <twig:Pill label="Probíhá" variant="neutral" />
+                <twig:Pill label="Uzamčeno" variant="locked" icon="lock" />
+                <twig:Pill label="Live · 2" variant="live" dot />
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">Badge — všechny varianty</p>
+            <div class="flex flex-wrap items-center gap-2">
+                <twig:Badge label="Přesně" variant="win" />
+                <twig:Badge label="Mimo" variant="loss" />
+                <twig:Badge label="Remíza" variant="draw" />
+                <twig:Badge label="Čeká na výsledek" variant="pending" />
+                <twig:Badge label="Firemní MS 2026" variant="competition" />
+                <twig:Badge label="Organizátor" variant="organizer" icon="crown" />
+                <twig:Badge label="+5 bodů" variant="points" />
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A2. Statistiky a prázdné stavy ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:trending-up" class="h-5 w-5 text-accent-300" />
+                        Statistiky a prázdné stavy
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:StatCard&gt;</code> nese jedno změřené číslo v hero sekcích
+                        (nikdy odhad), <code class="text-white/70">&lt;twig:EmptyState&gt;</code> vysvětlí prázdný seznam
+                        a nabídne jednu akci.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <p class="eyebrow mb-3">StatCard — tóny</p>
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <twig:StatCard label="Aktivní soutěže" value="3" meta="z toho 1 živě" icon="layout-grid" />
+                <twig:StatCard label="Hráčů celkem" value="214" tone="accent" icon="users" />
+                <twig:StatCard label="Přesných tipů" value="8" meta="za posledních 7 dní" tone="win" icon="target" />
+                <twig:StatCard label="Živé zápasy" value="2" tone="live" icon="activity" />
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">EmptyState</p>
+            <div class="rounded-2xl border border-white/10 bg-white/[0.02]">
+                <twig:EmptyState
+                    illustration="matches"
+                    title="Zatím tu nejsou žádné zápasy"
+                    body="Jakmile se ve vašich soutěžích objeví zápasy, uvidíte je tady."
+                    ctaLabel="Vytvořit soutěž"
+                    :ctaPath="path('competition_create')"
+                    secondaryLabel="Procházet soutěže"
+                    :secondaryPath="path('competitions_list')"
+                />
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A3. Identita a navigace ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:user" class="h-5 w-5 text-accent-300" />
+                        Identita a navigace
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Avatar&gt;</code> (iniciály; pořadí 1–3 dostane medailový přeliv),
+                        <code class="text-white/70">&lt;twig:TeamFlag&gt;</code> (mince týmu — logo, jinak kontrastní monogram
+                        z <code class="text-white/70">TeamMonogram</code> a vlaječka země),
+                        <code class="text-white/70">&lt;twig:Breadcrumbs&gt;</code> (na mobilu se scvrkne na „zpět").
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <p class="eyebrow mb-3">Avatar — pořadí 1–3 a běžný hráč</p>
+            <div class="flex flex-wrap items-center gap-4">
+                <twig:Avatar name="Marek Kulhánek" size="48" rank="1" />
+                <twig:Avatar name="Ana Pereira" size="48" rank="2" />
+                <twig:Avatar name="Tomáš Linhart" size="48" rank="3" />
+                <twig:Avatar name="Lukáš Berg" size="48" />
+                <twig:Avatar name="sofia" size="32" />
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">TeamFlag — monogram (bez loga), s vlajkou i bez ní</p>
+            <div class="flex flex-wrap items-center gap-4">
+                <twig:TeamFlag :team="teams.home" size="44" />
+                <twig:TeamFlag :team="teams.away" size="44" />
+                <twig:TeamFlag :team="teams.longHome" size="44" />
+                <twig:TeamFlag :team="teams.longAway" size="44" />
+                <twig:TeamFlag :team="teams.plain" size="44" />
+                <twig:TeamFlag :team="teams.home" size="28" />
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">Breadcrumbs</p>
+            <twig:Breadcrumbs :items="[
+                { label: 'Soutěže', path: path('competitions_list') },
+                { label: 'Firemní MS 2026', path: path('competitions_list') },
+                { label: 'Nastavení' },
+            ]" />
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A4. Karta soutěže ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:layout-grid" class="h-5 w-5 text-accent-300" />
+                        Karta soutěže
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Competition:Card&gt;</code> — jediná karta pro obě mřížky
+                        <code class="text-white/70">/souteze</code>. <code class="text-white/70">context="organizer"</code>
+                        přidá pruh „% dokončeno" a akci Spravovat, <code class="text-white/70">context="public"</code>
+                        nabídne Připojit se / Otevřít. Peníze jsou vždy <strong class="text-white/70">vstupné</strong>,
+                        nikdy výherní bank. Stav (Live / Před startem / Ukončeno) se počítá ze zápasů, nenastavuje se.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <p class="eyebrow mb-3">context="organizer" — probíhá (zdarma) · před startem (se vstupným) · ukončeno</p>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <twig:Competition:Card :item="cards.organizerLive" context="organizer" />
+                <twig:Competition:Card :item="cards.organizerUpcoming" context="organizer" />
+                <twig:Competition:Card :item="cards.organizerFinished" context="organizer" />
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">context="public" — připojit se za vstupné · už jsem členem · ukončeno</p>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <twig:Competition:Card :item="cards.publicJoinable" context="public" :walletBalance="sample_wallet_balance" />
+                <twig:Competition:Card :item="cards.publicJoined" context="public" :walletBalance="sample_wallet_balance" />
+                <twig:Competition:Card :item="cards.publicFinished" context="public" :walletBalance="sample_wallet_balance" />
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A5. Filtr soutěží ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:filter" class="h-5 w-5 text-accent-300" />
+                        Filtr soutěží
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Competition:FilterBar&gt;</code> — filtry jsou vždy parametry
+                        v URL, nikdy stav v JavaScriptu, takže odfiltrovaný pohled přežije reload i sdílení.
+                        Dvě lišty na jedné stránce se nehádají díky <code class="text-white/70">prefix</code>
+                        (organizátorská má „moje-") a skáčou zpět na svou sekci díky <code class="text-white/70">anchor</code>.
+                        Níže je organizátorská podoba — veřejná nemá „Viditelnost" a nabízí méně chipů „Stav"
+                        (<code class="text-white/70">CompetitionStateFilter::forScope()</code>).
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <twig:Competition:FilterBar
+                prefix="moje-"
+                anchor="#souteze-organizuji"
+                :sportOptions="filter_bar.sportOptions"
+                :activeSportId="filter_bar.activeSportId"
+                :stateOptions="filter_bar.stateOptions"
+                :activeState="filter_bar.activeState"
+                :visibilityOptions="filter_bar.visibilityOptions"
+                :activeVisibility="filter_bar.activeVisibility"
+                search="MS 2026"
+                :filteredCount="2"
+                :totalCount="6"
+            />
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A6. Karta „soutěže, kde tipuješ" ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:medal" class="h-5 w-5 text-accent-300" />
+                        Karta „soutěže, kde tipuješ"
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Competition:PlayingCard&gt;</code> — moje pozice v soutěži
+                        a jediná další akce, která k ní patří: „Tipuj N", dokud je co tipovat, jinak „Otevřít".
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <twig:Competition:PlayingCard :item="playing_cards.running" />
+                <twig:Competition:PlayingCard :item="playing_cards.finished" />
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A7. Karta zápasu ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:table-2" class="h-5 w-5 text-accent-300" />
+                        Karta zápasu
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Match:MatchRow&gt;</code> — jedna karta na zápas, barevný
+                        pruh vlevo podle stavu (<code class="text-white/70">open · tipped · live · locked · finished</code>).
+                        Zóny se zalamují podle šířky <strong class="text-white/70">sloupce</strong>, ne okna prohlížeče
+                        (B7), proto je poslední ukázka v úzkém kontejneru.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            {% set match_rows = [
+                {
+                    caption: 'state="open" — otevřený tip, výzva „+ Zadat tip"',
+                    state: 'open', pillVariant: 'soon', pillLabel: 'Brzy', pillIcon: null, pillDot: true,
+                    home: teams.home, away: teams.away, kickoff: kickoffs.upcoming, round: 'Základní skupina',
+                    tippable: true, tipPrompt: '+ Zadat tip',
+                    footNote: 'MS ve fotbale 2026 · Estadio Azteca',
+                },
+                {
+                    caption: 'state="tipped" — tip odeslán, uvnitř karty pruh „Rozložení tipů"',
+                    state: 'tipped', pillVariant: 'tipped', pillLabel: 'Tip odeslán', pillIcon: 'check', pillDot: false,
+                    home: teams.home, away: teams.away, kickoff: kickoffs.upcoming, round: 'Základní skupina',
+                    tippable: true, myHome: 2, myAway: 1,
+                    tipStats: [tip_stats.boostsLocked],
+                    footNote: 'Uzávěrka 2. 6. 2026 20:00',
+                },
+                {
+                    caption: 'state="live" — hraje se, skóre nahrazuje čas výkopu',
+                    state: 'live', pillVariant: 'live', pillLabel: 'Live', pillIcon: null, pillDot: true,
+                    home: teams.away, away: teams.plain, kickoff: kickoffs.live, round: 'Základní skupina',
+                    myHome: 1, myAway: 1, resultHome: 1, resultAway: 0,
+                    footNote: 'Chodská liga — jaro · Na Hrázi',
+                },
+                {
+                    caption: 'state="locked" — po uzávěrce bez tipu (B5: „Netipováno" jen v jedné soutěži)',
+                    state: 'locked', pillVariant: 'locked', pillLabel: 'Uzamčeno', pillIcon: 'lock', pillDot: false,
+                    home: teams.plain, away: teams.home, kickoff: kickoffs.upcoming, round: 'Základní skupina',
+                    tipMissingLabel: 'Netipováno',
+                    footNote: 'Uzávěrka byla 1. 6. 2026 19:00',
+                },
+                {
+                    caption: 'state="finished" — výsledek, přesný tip s odznakem „+5" a odemčené rozložení',
+                    state: 'finished', pillVariant: 'done', pillLabel: 'Ukončeno', pillIcon: 'check', pillDot: false,
+                    home: teams.home, away: teams.away, kickoff: kickoffs.past, round: 'Základní skupina',
+                    myHome: 3, myAway: 1, resultHome: 3, resultAway: 1, points: 5, hitClass: 'exact',
+                    tipStats: [tip_stats.unlocked],
+                    footNote: 'MS ve fotbale 2026 · Estadio Monumental',
+                },
+                {
+                    caption: 'playoff + dlouhé názvy týmů (jméno se ořízne třemi tečkami, karta nezmění výšku)',
+                    state: 'open', pillVariant: 'soon', pillLabel: 'Chybí tip', pillIcon: 'circle-alert', pillDot: false,
+                    home: teams.longHome, away: teams.longAway, kickoff: kickoffs.playoff, round: 'Osmifinále',
+                    isPlayoff: true, tippable: true, tipPrompt: '+ Zadat tip',
+                    footNote: 'Chodská liga — jaro · Městský stadion',
+                },
+            ] %}
+
+            <ul class="flex flex-col gap-5">
+                {% for row in match_rows %}
+                    <li>
+                        <p class="eyebrow mb-2">{{ row.caption }}</p>
+                        <twig:Match:MatchRow
+                            :homeTeam="row.home"
+                            :awayTeam="row.away"
+                            :kickoffAt="row.kickoff"
+                            :round="row.round"
+                            :isPlayoff="row.isPlayoff|default(false)"
+                            :state="row.state"
+                            :pillVariant="row.pillVariant"
+                            :pillLabel="row.pillLabel"
+                            :pillIcon="row.pillIcon"
+                            :pillDot="row.pillDot"
+                            :myHome="row.myHome|default(null)"
+                            :myAway="row.myAway|default(null)"
+                            :resultHome="row.resultHome|default(null)"
+                            :resultAway="row.resultAway|default(null)"
+                            :points="row.points|default(null)"
+                            :hitClass="row.hitClass|default(null)"
+                            :detailUrl="match_url"
+                            :tipUrl="row.tippable|default(false) ? match_url : null"
+                            :tipPrompt="row.tipPrompt|default(null)"
+                            :tipMissingLabel="row.tipMissingLabel|default(null)"
+                            :tipStats="row.tipStats|default([])"
+                            :footNote="row.footNote"
+                        />
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <p class="eyebrow mb-2 mt-6">stejná karta v úzkém sloupci (380 px) — zóny se zalomí, ne rozbijí</p>
+            <div class="max-w-[380px]">
+                <twig:Match:MatchRow
+                    :homeTeam="teams.longHome"
+                    :awayTeam="teams.longAway"
+                    :kickoffAt="kickoffs.playoff"
+                    round="Osmifinále"
+                    :isPlayoff="true"
+                    state="open"
+                    pillVariant="soon"
+                    pillLabel="Chybí tip"
+                    pillIcon="circle-alert"
+                    :detailUrl="match_url"
+                    :tipUrl="match_url"
+                    tipPrompt="+ Zadat tip"
+                    footNote="Chodská liga — jaro · Městský stadion"
+                />
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A8. Rozložení tipů ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:activity" class="h-5 w-5 text-accent-300" />
+                        Rozložení tipů
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Match:TipStats&gt;</code> — jediná plocha pro rozdělení
+                        tipů 1 / X / 2. <code class="text-white/70">compact=true</code> je pruh, který žije
+                        <strong class="text-white/70">uvnitř</strong> karty zápasu (proto je vlevo vždy v ní),
+                        <code class="text-white/70">compact=false</code> celá karta na detailu zápasu. Data vždy
+                        dávkově z <code class="text-white/70">TipStatsProvider</code>, nikdy dotaz na řádek.
+                        Prémium a vylepšení jsou dvě různé soutěže — jedna soutěž má vždy jen jeden způsob příspěvku.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            {% set tip_stats_variants = [
+                { key: 'unlocked', caption: 'odemčeno vylepšením — skutečné rozdělení tipů' },
+                { key: 'boostsLocked', caption: 'vylepšení, dá se koupit — celý pruh je nabídka k odemčení' },
+                { key: 'boostsNoCredits', caption: 'vylepšení, ale chybí kredity — vede na dokoupení' },
+                { key: 'premiumLocked', caption: 'prémium — zapíná organizátor, není co kupovat' },
+                { key: 'nothingToSell', caption: 'bez příspěvku — rozložení se prostě zobrazí po uzávěrce' },
+            ] %}
+
+            <div class="space-y-6">
+                {% for variant in tip_stats_variants %}
+                    {% set stats = attribute(tip_stats, variant.key) %}
+                    <div>
+                        <p class="eyebrow mb-2">{{ variant.caption }}</p>
+                        <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+                            <twig:Match:MatchRow
+                                :homeTeam="teams.home"
+                                :awayTeam="teams.away"
+                                :kickoffAt="kickoffs.upcoming"
+                                state="tipped"
+                                pillVariant="tipped"
+                                pillLabel="Tip odeslán"
+                                pillIcon="check"
+                                :myHome="2"
+                                :myAway="1"
+                                :detailUrl="match_url"
+                                :tipStats="[stats]"
+                            />
+                            <twig:Match:TipStats
+                                :stats="stats"
+                                :homeTeam="teams.home"
+                                :awayTeam="teams.away"
+                                :compact="false"
+                            />
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A9. Žebříček ═════════ #}
+        {% set section %}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:list-ordered" class="h-5 w-5 text-accent-300" />
+                        Žebříček — stupně vítězů a sloupec Δ
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        <code class="text-white/70">&lt;twig:Leaderboard:Podium&gt;</code> vykreslí TOP 3 (stříbro vlevo,
+                        zlato uprostřed a výš, bronz vpravo). <code class="text-white/70">&lt;twig:Leaderboard:Delta&gt;</code>
+                        je posun oproti poslednímu dennímu snímku pořadí — zisk zeleně, propad červeně, beze změny šedě,
+                        „nový" pro hráče, který v předchozím snímku nebyl. Samotná tabulka žebříčku je prostý markup
+                        na stránce <code class="text-white/70">/zebricek</code>, komponentou je jen Δ.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <twig:Leaderboard:Podium :rows="podium_rows" />
+
+            <p class="eyebrow mb-3">Delta — variant="cell" (tabulka žebříčku)</p>
+            <div class="overflow-x-auto">
+                <table class="lb-table">
+                    <thead class="lb-thead">
+                        <tr>
+                            <th class="w-12">Pozice</th>
+                            <th>Hráč</th>
+                            <th class="text-right">Δ</th>
+                            <th class="text-right">Body</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in podium_rows %}
+                            <tr class="lb-tr">
+                                <td>
+                                    <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
+                                </td>
+                                <td>
+                                    <span class="flex items-center gap-3">
+                                        <twig:Avatar name="{{ row.fullName }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
+                                        <span class="min-w-0">
+                                            <span class="block truncate text-sm font-bold text-white">{{ row.fullName }}</span>
+                                            <small class="block truncate text-[11px] font-light text-white/50">@{{ row.nickname }}</small>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td class="text-right">
+                                    <twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" />
+                                </td>
+                                <td class="text-right"><span class="lb-pts">{{ row.totalPoints }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="eyebrow mb-3 mt-6">Delta — variant="chip" (mini žebříček na nástěnce)</p>
+            <div class="flex flex-wrap items-center gap-3">
+                {% for row in podium_rows %}
+                    <span class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white/70">
+                        {{ row.nickname }}
+                        <twig:Leaderboard:Delta :delta="row.delta" :isNew="row.deltaIsNew" variant="chip" />
+                    </span>
+                {% endfor %}
+            </div>
+        </section>
+        {% endset %}
+        {{ gal.inert(section) }}
+
+        {# ═════════ A10. Přepínač soutěže ═════════
+           ZÁMĚRNĚ mimo makro `inert()`: formulář přepínače míří na /_design, takže
+           jeho odeslání je neškodné znovunačtení téhle stránky. Je to jediný živý
+           ovládací prvek na stránce (a testy se opírají o jeho skutečné action). #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                        <twig:ux:icon name="lucide:list-filter" class="h-5 w-5 text-accent-300" />
+                        Přepínač soutěže
+                    </h3>
+                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
+                        Sdílená komponenta <code class="text-white/70">&lt;twig:SoutezSwitcher&gt;</code> — vyhledávatelný
+                        výběr soutěže se skupinami „Probíhající" a „Ukončené", názvem zdroje zápasů a termínem.
+                        Funguje i bez JavaScriptu (nativní <code class="text-white/70">&lt;select&gt;</code> ve formuláři).
+                        Data níže jsou ukázková; formulář míří na tuhle stránku, takže odeslání jen znovu načte
+                        <code class="text-white/70">/_design</code>.
+                    </p>
+                </div>
+                <twig:Pill label="Hotovo" variant="done" />
+            </div>
+
+            <div class="flex flex-wrap items-end gap-6">
+                <twig:SoutezSwitcher
+                    :competitions="switcher_competitions"
+                    currentId="{{ switcher_competitions|first.competitionId.toRfc4122 }}"
+                    route="app_design_styleguide"
+                    param="soutez"
+                    label="Zobrazená soutěž"
+                    id="soutez-switcher-design"
+                />
+
+                {# jediná soutěž → statický chip, ne rozbalovací seznam #}
+                <twig:SoutezSwitcher
+                    :competitions="[switcher_competitions|first]"
+                    route="app_design_styleguide"
+                    param="soutez"
+                    label="Jediná soutěž"
+                    id="soutez-switcher-design-single"
+                />
+            </div>
+        </section>
+
+    </div>
+
+    {# ═══════════════════════════════════════════════════════════════════════════
+       ČÁST B — PŘIPRAVUJEME / REFERENCE
+       Prvky designového systému, jejichž funkce NENÍ postavená. Čistě vizuální
+       reference, bez backendu a bez akcí. CUT položky sem nepatří vůbec.
+       ═══════════════════════════════════════════════════════════════════════════ #}
+    <div class="mb-6 mt-14 flex flex-wrap items-center gap-3 border-b border-white/10 pb-4">
+        <h2 class="text-2xl font-extrabold tracking-tight text-white">Připravujeme / reference</h2>
+        <twig:Pill label="Připravujeme" variant="soon" icon="hourglass" />
+        <span class="text-xs text-white/40">odložené prvky · vizuální reference · žádný backend</span>
+    </div>
+
+    <div class="space-y-8">
+
+        {# ═════════ B1. Premium / příspěvkové úrovně ═════════ #}
+        <section class="card-glass p-6 sm:p-8">
+            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
                         <twig:ux:icon name="lucide:crown" class="h-5 w-5 text-[#f5cd54]" />
                         Prémium a příspěvky
-                    </h2>
+                    </h3>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         Dobrovolný příspěvek „na pivo" a prémiové úrovně. Odloženo do budoucí monetizační fáze —
                         zatím bez plateb a bez backendu.
@@ -63,34 +669,34 @@
                 <p class="eyebrow mb-3">Příspěvkové úrovně</p>
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
-                    {# „Pozvěte nás na pivo" — 10 Kč / hráč (doporučeno) #}
+                    {# „Pozvěte nás na pivo" — prémium za hráče (doporučeno) #}
                     <div class="relative overflow-hidden rounded-2xl border border-[#f5cd54]/45 bg-gradient-to-br from-[#f5cd54]/[0.12] to-transparent p-4">
                         <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f5cd54]/40 bg-[#f5cd54]/15 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#f5cd54]">
                             <twig:ux:icon name="lucide:star" class="h-3 w-3" />
                             Doporučujeme
                         </span>
-                        <div class="mt-3 text-2xl font-black tabular-nums tracking-tight text-white">10 Kč<span class="ml-1 text-sm font-medium text-white/50">/ hráč</span></div>
+                        <div class="mt-3 text-2xl font-black tabular-nums tracking-tight text-white">{{ pricing.premiumPerPlayer }} Kč<span class="ml-1 text-sm font-medium text-white/50">/ hráč</span></div>
                         <div class="mt-1 text-sm font-bold text-white">Pozvěte nás na pivo</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Zaplatíte za celou soutěž — cena je 10 Kč za každého hráče.</p>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Zaplatíte za celou soutěž — cena je {{ pricing.premiumPerPlayer }} Kč za každého hráče.</p>
                     </div>
 
-                    {# 50 Kč #}
+                    {# Rozložení tipů ostatních #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">50 Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Lišta tipů ostatních</div>
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipDistribution }} Kč</div>
+                        <div class="mt-1 text-sm font-bold text-white">Rozložení tipů ostatních</div>
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Uvidíte procenta, jak hlasovali kolegové.</p>
                     </div>
 
-                    {# 100 Kč #}
+                    {# Konkrétní tipy kolegů #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">100 Kč</div>
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostOthersTips }} Kč</div>
                         <div class="mt-1 text-sm font-bold text-white">Konkrétní tipy kolegů</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Lišta tipů plus konkrétní tipy soutěžících v partičce.</p>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Rozložení tipů plus konkrétní tipy soutěžících v partičce.</p>
                     </div>
 
-                    {# 200 Kč #}
+                    {# Měnit tip během turnaje #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">200 Kč</div>
+                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipChange }} Kč</div>
                         <div class="mt-1 text-sm font-bold text-white">Měnit tip během turnaje</div>
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Až hodinu před prvním zápasem dne.</p>
                     </div>
@@ -98,14 +704,14 @@
             </div>
         </section>
 
-        {# ═════════ B. Střelci zápasu + „Trefený střelec" ═════════ #}
+        {# ═════════ B2. Střelci zápasu + „Trefený střelec" ═════════ #}
         <section class="card-glass p-6 sm:p-8">
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
                         <twig:ux:icon name="lucide:target" class="h-5 w-5 text-accent-300" />
                         Střelci zápasu
-                    </h2>
+                    </h3>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         Editor střelců v dialogu „Zapsat výsledek" a bodovací pravidlo „Trefený střelec".
                         Vyžaduje nové entity a nové skórovací pravidlo — odloženo.
@@ -161,14 +767,14 @@
             </div>
         </section>
 
-        {# ═════════ C. Notifikace — zvonek + feed ═════════ #}
+        {# ═════════ B3. Notifikace — zvonek + feed ═════════ #}
         <section class="card-glass p-6 sm:p-8">
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
+                    <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
                         <twig:ux:icon name="lucide:bell" class="h-5 w-5 text-accent-300" />
                         Notifikace
-                    </h2>
+                    </h3>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         Zvonek v navigaci a feed upozornění. Zatím existuje jen e-mail — feed v aplikaci je odložený,
                         proto je zvonek v produkční navigaci skrytý.
@@ -206,115 +812,6 @@
                     </li>
                 {% endfor %}
             </ul>
-        </section>
-
-        {# ═════════ D. Δ — sloupec změny pořadí ═════════ #}
-        <section class="card-glass p-6 sm:p-8">
-            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
-                        <twig:ux:icon name="lucide:list-ordered" class="h-5 w-5 text-accent-300" />
-                        Δ — změna pořadí
-                    </h2>
-                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
-                        Sloupec „Δ" v žebříčku ukazuje posun oproti předchozímu dennímu snímku (zisk zeleně, propad červeně, beze změny šedě).
-                        Živé v žebříčku, na nástěnce i v „Tvoje pozice" — snímky pořadí se ukládají denně (S12).
-                    </p>
-                </div>
-                <twig:Pill label="Hotovo" variant="done" />
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="lb-table">
-                    <thead class="lb-thead">
-                        <tr>
-                            <th class="w-12">Pozice</th>
-                            <th>Hráč</th>
-                            <th class="text-right">Δ</th>
-                            <th class="text-right">Body</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in [
-                            { rank: 1, name: 'Marek Kulhánek', handle: '@marek', delta: 12, points: 147 },
-                            { rank: 2, name: 'Ana Pereira',     handle: '@anap',  delta: 9,  points: 142 },
-                            { rank: 3, name: 'Tomáš Linhart',   handle: '@tomasl', delta: -4, points: 138 },
-                            { rank: 4, name: 'Lukáš Berg',      handle: '@lukas', delta: 6,  points: 131 },
-                            { rank: 5, name: 'Sofia Rossi',     handle: '@sofia', delta: 0,  points: 128 },
-                        ] %}
-                            <tr class="lb-tr">
-                                <td>
-                                    <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
-                                </td>
-                                <td>
-                                    <span class="flex items-center gap-3">
-                                        <twig:Avatar name="{{ row.name }}" size="32" rank="{{ row.rank <= 3 ? row.rank : null }}" />
-                                        <span class="min-w-0">
-                                            <span class="block truncate text-sm font-bold text-white">{{ row.name }}</span>
-                                            <small class="block truncate text-[11px] font-light text-white/50">{{ row.handle }}</small>
-                                        </span>
-                                    </span>
-                                </td>
-                                <td class="text-right">
-                                    {% if row.delta > 0 %}
-                                        <span class="lb-delta-up inline-flex items-center justify-end gap-0.5">
-                                            <twig:ux:icon name="lucide:chevron-up" class="h-3.5 w-3.5" />{{ row.delta }}
-                                        </span>
-                                    {% elseif row.delta < 0 %}
-                                        <span class="lb-delta-down inline-flex items-center justify-end gap-0.5">
-                                            <twig:ux:icon name="lucide:chevron-down" class="h-3.5 w-3.5" />{{ row.delta|abs }}
-                                        </span>
-                                    {% else %}
-                                        <span class="inline-flex items-center justify-end gap-0.5 font-bold tabular-nums text-white/35">
-                                            <twig:ux:icon name="lucide:minus" class="h-3.5 w-3.5" />0
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-right"><span class="lb-pts">{{ row.points }}</span> <span class="text-[11px] font-light text-white/50">b</span></td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        {# ═════════ E. Přepínač soutěže ═════════ #}
-        <section class="card-glass p-6 sm:p-8">
-            <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
-                        <twig:ux:icon name="lucide:list-filter" class="h-5 w-5 text-accent-300" />
-                        Přepínač soutěže
-                    </h2>
-                    <p class="mt-1.5 max-w-xl text-sm text-white/50">
-                        Sdílená komponenta <code class="text-white/70">&lt;twig:SoutezSwitcher&gt;</code> — vyhledávatelný
-                        výběr soutěže se skupinami „Probíhající" a „Ukončené", názvem zdroje zápasů a termínem.
-                        Funguje i bez JavaScriptu (nativní <code class="text-white/70">&lt;select&gt;</code> ve formuláři).
-                        Data níže jsou ukázková.
-                    </p>
-                </div>
-                <twig:Pill label="Hotovo" variant="done" />
-            </div>
-
-            <div class="flex flex-wrap items-end gap-6">
-                <twig:SoutezSwitcher
-                    :competitions="switcher_competitions"
-                    currentId="{{ switcher_competitions|first.competitionId.toRfc4122 }}"
-                    route="app_design_styleguide"
-                    param="soutez"
-                    label="Zobrazená soutěž"
-                    id="soutez-switcher-design"
-                />
-
-                {# jediná soutěž → statický chip, ne rozbalovací seznam #}
-                <twig:SoutezSwitcher
-                    :competitions="[switcher_competitions|first]"
-                    route="app_design_styleguide"
-                    param="soutez"
-                    label="Jediná soutěž"
-                    id="soutez-switcher-design-single"
-                />
-            </div>
         </section>
 
     </div>
