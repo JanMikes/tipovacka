@@ -306,6 +306,9 @@
 
                         {% set match_url = path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) %}
                         <li data-reveal-target="item">
+                        {# B5: „Netipováno" (`tipMissingLabel`) jen tady — tato karta zná
+                           právě JEDNU soutěž; napříč soutěžemi (/zapasy, nástěnka) by
+                           lhala, tam zůstává „Uzamčeno" v pilulce. #}
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
                             :awayTeam="m.awayTeam"
@@ -323,14 +326,12 @@
                             :resultAway="state == 'finished' or m.state.value == 'live' ? m.awayScore : null"
                             :points="state == 'finished' ? row.points : null"
                             :hitClass="hit_class"
-                            :tipPrompt="row.isOpen and is_member ? '+ Zadat tip' : null"
                             :tipMissingLabel="not row.isOpen and is_member and not g ? 'Netipováno' : null"
                             :detailUrl="match_url"
                             :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
                             :tipUrl="row.isOpen and is_member ? match_url : null"
                             :tipStats="row.stats ? [row.stats] : []"
                             :footNote="row.isOpen ? 'Uzávěrka ' ~ row.deadline|date('j. n. Y H:i') : null"
-                            variant="dashboard"
                         />
                         </li>
                     {% endfor %}

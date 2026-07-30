@@ -78,6 +78,9 @@
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
                 {% endif %}
                 <li>
+                    {# `tipStats` is a LIST: a match can sit in several of the viewer's
+                       soutěže, so the card renders one „Rozložení tipů" strip per soutěž
+                       — all of them from ONE TipStatsProvider batch, never per row. #}
                     <twig:Match:MatchRow
                         :homeTeam="m.homeTeam"
                         :awayTeam="m.awayTeam"

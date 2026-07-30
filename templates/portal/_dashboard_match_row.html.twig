@@ -7,15 +7,13 @@
                       finished match, indexed by sport-match id in the controller
                       (never looked up per row).
 
-    The „Rozložení tipů" strip is fed from `m.tipStats`, which TipStatsProvider
-    resolved in ONE batch for the whole page; since item 11 it renders INSIDE the
-    match card (`Match/MatchRow`), below the divider — never as a card of its own.
+    The „Rozložení tipů" strip is fed from `m.tipStats` — a LIST, because a match can
+    sit in several of the viewer's soutěže — which TipStatsProvider resolved in ONE
+    batch for the whole page; since item 11 it renders INSIDE the match card
+    (`Match/MatchRow`), below the divider — never as a card of its own.
 
-    Item 18: this page — and ONLY this page — renders the card in its
-    `variant="dashboard"` shape (hlavička kolo · datum · čas · pilulka, zrcadlené
-    týmy, jediná výzva „Zadat tip" v patě, celá karta jeden odkaz). `/zapasy` and
-    competition detail deliberately keep the item 11 shape; the product owner
-    specced the redesign for the Nástěnka only.
+    The card design itself (item 18) is now the ONE design on every surface (item 21),
+    so this partial passes nothing about its looks.
 #}
 {% set guess = my_tips_by_match[m.id.toRfc4122] ?? null %}
 {% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
@@ -72,5 +70,4 @@
     :tipUrl="m.isTippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
     :tipStats="m.tipStats"
     :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
-    variant="dashboard"
 />

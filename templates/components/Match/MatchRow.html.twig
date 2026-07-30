@@ -1,21 +1,31 @@
 {#
-    ONE card per match (item 11): the match line, a divider, and the „Rozložení
-    tipů" strip INSIDE the same card — no separate paywall card underneath and no
-    loose text next to it. A coloured left accent stripe marks the state.
+    THE match card — one design on every surface (item 21). A match and its
+    „Rozložení tipů" strip(s) are ONE card (item 11): no separate paywall card
+    underneath, no loose text next to it. A coloured left accent stripe marks the
+    state, a centred header carries kolo · datum · čas + the state pilulka, the
+    mirrored team blocks flank the score (or „vs"), and the footer holds exactly
+    ONE thing — „Zadat tip", „Můj tip 2 : 1" or `tipMissingLabel`.
 
         ┌─ accent stripe
-        │ [ čas/kolo ] [ pilulka ] [ domácí – skóre – hosté ] [ MŮJ TIP (+5) ]
-        │ ────────────────────────────────────────────────────────────────────
-        │ [ Rozložení tipů / jeho paywall ]        (only when there is one)
+        │   kolo · datum · čas                            [ pilulka ]
+        │      (DOM)  DOMÁCÍ            1 : 1            Hosté (HOS)
+        │             Sokol                               HOSTÉ
+        │   ┌──────────────── Zadat tip → ────────────────┐
+        │   ─────────────────────────────────────────────────
+        │   [ Rozložení tipů / jeho paywall ]      (mimo odkaz)
         └─
 
     DISPLAY-ONLY: tipping happens on the guessing surface; this card only links there.
 
-    Layout (B7, unchanged): the match line is a wrapping flex row of four zones, so
-    it adapts to the width of the COLUMN it sits in (717 px on competition detail,
-    1088 px on the Nástěnka, full width on mobile) — a viewport media query cannot
-    express that, the same row is NARROWER at 1440 px than at 1024 px. The end zone
-    („můj tip") wraps to a second line as one piece when it no longer fits.
+    **The whole card is ONE `<a class="tip-row-link">`**, so nothing interactive may
+    be nested inside it — the pilulka is not a link and „Zadat tip" is a *styled*
+    `<span>`, not a second button. The „Rozložení tipů" strip IS a control (a buy
+    form / a link to `/kredity`), so it stays a **sibling** of that link.
+
+    Layout (B7, unchanged): every zone WRAPS, nothing is width-queried, so the card
+    adapts to the width of the COLUMN it sits in (~700 px on competition detail,
+    1088 px on the Nástěnka / `/zapasy`, 288 px on a 320 px phone) — a viewport media
+    query cannot express that, the same card is NARROWER at 1440 px than at 1024 px.
 
     props:
       homeTeam     TeamView|Team — domácí tým (objekt: .name + monogram)
@@ -37,27 +47,21 @@
       points       int|null      — získané body; vykreslí se jako odznak „+5" v rohu
                                    boxu „MŮJ TIP"
       hitClass     string|null   — exact | partial | null (barva mého tipu)
-      detailUrl    string        — odkaz na detail zápasu (celá dvojice týmů na něj vede)
+      detailUrl    string        — odkaz na detail zápasu (cíl karty, když se nedá tipovat)
       detailLabel  string        — slovní popis cíle pro čtečky (default „Detail zápasu")
-      tipPrompt    string|null   — text výzvy v prázdném slotu „můj tip" (např. „+ Zadat tip");
-                                   null = slot zůstane prázdný (chování ostatních seznamů)
-      tipMissingLabel string|null — text v neaktivním boxu, když se už tipovat nedá a tip
-                                   nikdy nevznikl (B5: „Netipováno"). Jen tam, kde řádek
-                                   zná právě JEDNU soutěž — napříč soutěžemi by lhal.
-      tipUrl       string|null   — cíl tipování; je-li vyplněn, stavová pilulka i box
-                                   „můj tip" na něj odkazují (B7: „Chybí tip" / „+ Zadat tip"
-                                   musí vést na tipování). Po uzávěrce jsou to prosté texty.
+      tipMissingLabel string|null — text v neaktivním boxu v patě, když se už tipovat nedá
+                                   a tip nikdy nevznikl (B5: „Netipováno"). Jen tam, kde
+                                   karta zná právě JEDNU soutěž (detail soutěže) — napříč
+                                   soutěžemi by lhala, tam zůstává „Uzamčeno" v pilulce.
+      tipUrl       string|null   — cíl tipování; je-li vyplněn, vede tam celá karta a v patě
+                                   se objeví jediná výzva „Zadat tip". Po uzávěrce karta
+                                   vede na detailUrl a žádnou výzvu nenabízí.
       tipStats     list<TipStats> — „Rozložení tipů" (nebo jeho paywall) za každou soutěž,
-                                   která zápas obsahuje. VŽDY dávkově z TipStatsProvider —
+                                   která zápas obsahuje — na /zapasy a nástěnce jich může
+                                   být VÍC (zápas leží v několika soutěžích hráče), každá
+                                   se svým nadpisem. VŽDY dávkově z TipStatsProvider —
                                    nikdy jeden dotaz na řádek (N+1 past v CLAUDE.md).
       footNote     string|null   — drobná poznámka na patě karty (uzávěrka, zdroj zápasů)
-      variant      string        — default | dashboard (item 18). `dashboard` je podoba
-                                   z Nástěnky: hlavička (kolo · datum · čas · pilulka),
-                                   zrcadlené bloky týmů se skóre (nebo „vs") a jediná
-                                   výzva „Zadat tip" v patě — a CELÁ karta je JEDEN
-                                   odkaz. Ostatní plochy (/zapasy, detail soutěže)
-                                   zůstávají na `default`; produkt si vyžádal nový
-                                   design jen pro Nástěnku.
 #}
 {% props
     homeTeam,
@@ -78,12 +82,10 @@
     points = null,
     hitClass = null,
     detailLabel = 'Detail zápasu',
-    tipPrompt = null,
     tipMissingLabel = null,
     tipUrl = null,
     tipStats = [],
-    footNote = null,
-    variant = 'default'
+    footNote = null
 %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
 {% set has_score = resultHome is not null and resultAway is not null %}
@@ -91,9 +93,10 @@
 {% set strips = tipStats|filter(s => s.hasAnythingToShow) %}
 {% set fixture_label = homeTeam.name ~ ' – ' ~ awayTeam.name ~ ' — ' ~ detailLabel %}
 
-{# Pata karty (jedna definice pro obě podoby): „Rozložení tipů" za dělící linkou plus
-   drobná poznámka. Bez obsahu se nevykreslí vůbec — žádná prázdná linka ani osiřelá
-   mezera. Zůstává VŽDY mimo případný odkaz karty: pruh je sám ovládací prvek. #}
+{# Pata karty: „Rozložení tipů" za dělící linkou plus drobná poznámka. Bez obsahu se
+   nevykreslí vůbec — žádná prázdná linka ani osiřelá mezera. Zůstává VŽDY mimo odkaz
+   karty: pruh je sám ovládací prvek. Soutěží může být víc než jedna (/zapasy,
+   nástěnka), pak každý pruh nese jméno své soutěže. #}
 {% set extra_region %}
     {% if strips|length > 0 or footNote %}
         <div class="tip-row-extra{{ strips|length > 0 ? '' : ' is-note-only' }}">
@@ -108,25 +111,7 @@
     {% endif %}
 {% endset %}
 
-{% if variant == 'dashboard' %}
-{#
-    ═════════ Podoba pro Nástěnku (item 18) ═════════
-
-    Celá karta je JEDEN odkaz: pilulka ani box „můj tip" už samostatně neodkazují
-    (B7 to dělalo právě proto, aby se neodkaz nevnořil do odkazu — tady je to
-    obrácené záměrně: nic interaktivního nesmí být uvnitř `a.tip-row-link`).
-    „Zadat tip" v patě je tedy jen STYLOVANÝ prvek, ne druhé tlačítko — na kartě
-    je jediná výzva k tipování. Pruh „Rozložení tipů" (sám ovládací prvek) zůstává
-    sourozencem odkazu, ne jeho potomkem.
-
-        ┌─ stavový pruh
-        │   kolo · datum · čas                            [ pilulka ]
-        │      (DOM)  DOMÁCÍ            1 : 1            Hosté (HOS)
-        │             Sokol                               HOSTÉ
-        │   ┌──────────────── Zadat tip → ────────────────┐
-        │   [ Rozložení tipů ]                     (mimo odkaz)
-        └─
-#}
+{# `finished` paints the long-standing `.done` stripe; every other state names itself. #}
 <div class="tip-row is-dash {{ state == 'finished' ? 'done' : state }}">
     <a href="{{ tipUrl ?? detailUrl }}" class="tip-row-link" aria-label="{{ fixture_label }}">
         <div class="tipd-head">
@@ -197,104 +182,3 @@
     {{ extra_region }}
 </div>
 
-{% else %}
-{# `finished` paints the long-standing `.done` stripe; every other state names itself. #}
-<div class="tip-row {{ state == 'finished' ? 'done' : state }}">
-    <div class="tip-row-line">
-        {# čas + kolo #}
-        <div class="tip-row-when">
-            {% if kickoffAt %}
-                <span class="day">{{ kickoffAt|date('j. n.') }}</span>
-                <span class="time">{{ kickoffAt|date('H:i') }}</span>
-            {% endif %}
-            {% if round %}<span class="round" title="{{ round }}">{{ round }}</span>{% endif %}
-            {% if isPlayoff %}<span class="pill">Playoff</span>{% endif %}
-        </div>
-
-        {# stavová pilulka — odkazuje na tipování, pokud je otevřené #}
-        {% if pillLabel %}
-            {% if tipUrl %}
-                <a href="{{ tipUrl }}" class="tip-row-pill-link" aria-label="{{ pillLabel }} — přejít na tipování">
-                    <twig:Pill :label="pillLabel" :variant="pillVariant ?? 'neutral'" :icon="pillIcon" :dot="pillDot" />
-                </a>
-            {% else %}
-                <twig:Pill :label="pillLabel" :variant="pillVariant ?? 'neutral'" :icon="pillIcon" :dot="pillDot" />
-            {% endif %}
-        {% endif %}
-
-        {# zápas: domácí · skóre/výkop · hosté — vede na detail zápasu #}
-        <a href="{{ detailUrl }}" class="tip-row-match" aria-label="{{ fixture_label }}">
-            <div class="tip-row-teams home">
-                <div class="info">
-                    <div class="name">{{ homeTeam.name }}</div>
-                    <div class="role">Domácí</div>
-                </div>
-                <twig:TeamFlag :team="homeTeam" size="32" />
-            </div>
-
-            {% if has_score %}
-                <div class="tip-row-score">
-                    <span class="num">{{ resultHome }}</span>
-                    <span class="sep">–</span>
-                    <span class="num">{{ resultAway }}</span>
-                </div>
-            {% elseif state == 'finished' %}
-                <div class="tip-row-score">
-                    <span class="sep">–</span>
-                </div>
-            {% else %}
-                <div class="tip-row-score upcoming">
-                    <span class="num">{{ kickoffAt ? kickoffAt|date('H:i') : 'vs' }}</span>
-                </div>
-            {% endif %}
-
-            <div class="tip-row-teams">
-                <twig:TeamFlag :team="awayTeam" size="32" />
-                <div class="info">
-                    <div class="name">{{ awayTeam.name }}</div>
-                    <div class="role">Hosté</div>
-                </div>
-            </div>
-        </a>
-
-        {# „MŮJ TIP" — jediný box místo dřívějšího čárkovaného slotu i akce „Tipovat →".
-           Body visí jako odznak v jeho rohu. Zalomí se na druhý řádek vcelku. #}
-        <div class="tip-row-end">
-            {% if has_my_tip %}
-                {% set tip_body %}
-                    <div class="my-tip-lbl">Můj tip</div>
-                    <div class="my-tip-val {{ hitClass }}">{{ myHome }} : {{ myAway }}</div>
-                    {% if points is not null %}
-                        <span class="my-tip-pts {{ points > 0 ? '' : 'is-zero' }}">{{ points > 0 ? '+' }}{{ points }}</span>
-                    {% endif %}
-                {% endset %}
-                {% if tipUrl %}
-                    <a href="{{ tipUrl }}" class="my-tip set" aria-label="Můj tip {{ myHome }} : {{ myAway }} — upravit">{{ tip_body }}</a>
-                {% else %}
-                    <div class="my-tip set">{{ tip_body }}</div>
-                {% endif %}
-            {% elseif tipPrompt %}
-                {% if tipUrl %}
-                    <a href="{{ tipUrl }}" class="my-tip empty" aria-label="{{ tipPrompt }}">
-                        <div class="my-tip-lbl">Tipnout</div>
-                        <div class="my-tip-val">{{ tipPrompt }}</div>
-                    </a>
-                {% else %}
-                    <div class="my-tip empty">
-                        <div class="my-tip-lbl">Tipnout</div>
-                        <div class="my-tip-val">{{ tipPrompt }}</div>
-                    </div>
-                {% endif %}
-            {% elseif tipMissingLabel %}
-                <div class="my-tip none">
-                    <div class="my-tip-lbl">Můj tip</div>
-                    <div class="my-tip-val">{{ tipMissingLabel }}</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    {# Uvnitř karty, za dělící linkou (definice výše — sdílí ji obě podoby). #}
-    {{ extra_region }}
-</div>
-{% endif %}

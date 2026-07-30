@@ -706,91 +706,23 @@ label.required::after {
     .modal-backdrop { position: fixed; inset: 0; background: rgba(7,11,20,0.72); backdrop-filter: blur(8px); z-index: 200; animation: fadeIn 200ms var(--ease-standard); }
     .modal-panel { background: linear-gradient(180deg,#1a2544,#141e36); border: 1px solid var(--border-3); border-radius: 20px; box-shadow: var(--shadow-xl); padding: 28px; animation: slideUp 300ms var(--ease-emphatic); }
 
-    /* ---- Horizontal tip row (Match/MatchRow) — ported from DS dashboard-hrac .tip-card grid ----
+    /* ---- The match card (Match/MatchRow) — ported from DS dashboard-hrac .tip-card ----
        NOTE: distinctly named (.tip-row, NOT .tip-card) to avoid colliding with the
-       vertical tip-card above. Values transcribed verbatim from the design system. */
+       vertical tip-card above. Item 21 retired the horizontal ROW shape this section
+       started as (its 7-track grid, its four wrapping zones and its small „můj tip"
+       box), leaving the card chrome plus the „MŮJ TIP" skin the one card still uses;
+       the card's own layout lives in the two blocks at the end of this layer. */
     .tip-row {
-        position: relative; display: grid; align-items: center; gap: 14px;
-        grid-template-columns: 88px auto minmax(0,1.2fr) 96px minmax(0,1.2fr) 100px 132px;
-        padding: 16px 20px; border: 1px solid var(--border-1); border-radius: 14px;
+        position: relative; border: 1px solid var(--border-1); border-radius: 14px;
         background: var(--glass-bg); backdrop-filter: blur(8px);
     }
-    .tip-row.tipped   { border-left: 3px solid var(--color-win); }   /* tip placed → green tint */
-    .tip-row.locked   { border-left: 3px solid var(--border-3); }    /* in-progress reads as Uzamčeno (live is CUT) */
-    .tip-row.done     { border-left: 3px solid var(--color-accent-500); }
-    .tip-row-when { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .tip-row-when .time { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tip-row-when .day  { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tip-row-when .round { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tip-row-teams { display: flex; align-items: center; gap: 10px; min-width: 0; }
-    .tip-row-teams.home { justify-content: flex-end; text-align: right; }
-    .tip-row-teams .name { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tip-row-teams .role { font-size: 9px; font-weight: 600; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.06em; }
-    .tip-row-score { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .tip-row-score .num { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-    .tip-row-score .sep { font-size: 14px; font-weight: 600; color: var(--fg-4); }
-    .tip-row-score.upcoming .num { font-size: 22px; font-weight: 700; color: var(--fg-3); }
     .my-tip { padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border-1); background: rgba(255,255,255,0.04); text-align: center; min-width: 88px; }
     .my-tip.set   { border-color: rgba(62,213,152,0.40); background: rgba(62,213,152,0.08); }
-    .my-tip.empty { border-style: dashed; border-color: rgba(245,181,68,0.40); background: rgba(245,181,68,0.06); }
     .my-tip-lbl { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 2px; }
-    .my-tip.empty .my-tip-lbl { color: #f5b544; }
     .my-tip-val { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
-    .my-tip.empty .my-tip-val { font-size: 12px; color: #f5b544; font-weight: 700; }
     .result-tip { font-size: 13px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; color: var(--fg-3); }
     .result-tip.exact   { color: var(--color-win); }
     .result-tip.partial { color: #f5cd54; }
-    .tip-row-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
-    /* below the 7-col grid, stack into a readable card (mirrors DS @media collapse) */
-    @media (max-width: 900px) {
-        .tip-row { grid-template-columns: 1fr; gap: 10px; }
-        .tip-row .pill { justify-self: start; }
-        .tip-row-teams.home { justify-content: flex-start; text-align: left; }
-        .tip-row-actions { justify-content: flex-start; }
-    }
-
-    /* --- B7: match row layout ---
-       The 7-track grid above only fits a ~1150px row. The same component is rendered
-       in columns of 632 – 1088 px (competition detail is NARROWER at 1440px than at
-       1024px, because of the aside), so the two `minmax(0,1.2fr)` team tracks
-       collapsed to ~34px while `.info` — a flex child with the default
-       `min-width:auto` — refused to shrink and spilled over the pilulka on the left
-       and over the „můj tip" box on the right. Hence: zones that WRAP (container-
-       relative, no media query can see the column width) + `min-width:0` all the way
-       down so long names ellipsize instead of overflowing. */
-    .tip-row {
-        display: flex; flex-wrap: wrap; gap: 12px 14px;
-        grid-template-columns: none;   /* neutralises the track definition above */
-    }
-    .tip-row-when { flex: 0 0 88px; }
-    .tip-row > .pill, .tip-row-pill-link { flex: 0 0 auto; }
-    /* the fixture itself — the one zone that flexes; `flex-basis` is the wrap hint */
-    .tip-row-match {
-        flex: 1 1 360px; min-width: 0;
-        display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
-        align-items: center; gap: 12px;
-    }
-    .tip-row-teams .info { min-width: 0; }
-    .tip-row-teams .role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* „můj tip" + akce stay together and wrap as one piece */
-    .tip-row-end { flex: 0 0 auto; margin-left: auto; display: flex; align-items: center; gap: 14px; }
-    .tip-row-outcome { min-width: 72px; }
-    /* B7: „Chybí tip" / „+ Zadat tip" / „Můj tip" lead to the guessing surface */
-    .tip-row-pill-link { display: inline-flex; border-radius: 6px; text-decoration: none; }
-    .tip-row-pill-link:hover .pill { filter: brightness(1.25); }
-    .tip-row-pill-link:focus-visible, a.my-tip:focus-visible {
-        outline: 2px solid var(--color-accent-400); outline-offset: 2px;
-    }
-    a.my-tip { display: block; text-decoration: none; transition: border-color 150ms var(--ease-standard), background 150ms var(--ease-standard); }
-    a.my-tip.set:hover   { border-color: rgba(62,213,152,0.70); background: rgba(62,213,152,0.14); }
-    a.my-tip.empty:hover { border-color: rgba(245,181,68,0.75); background: rgba(245,181,68,0.12); }
-    @media (max-width: 900px) {
-        /* the stacking rules above are inert on a flex row; keep home right-aligned
-           so the fixture always reads „domácí – skóre – hosté" */
-        .tip-row { gap: 12px 14px; }
-        .tip-row-teams.home { justify-content: flex-end; text-align: right; }
-        .tip-row-actions { justify-content: flex-end; }
-    }
 
     /* --- item 07: Soutěže page ---
        The inset „TVÁ POZICE / BODY" panel of a played-competition card. Everything
@@ -984,17 +916,11 @@ label.required::after {
        A match and its „Rozložení tipů" strip are ONE card now (they used to be a
        row plus a separate paywall card, with the soutěž name loose underneath).
        So `.tip-row` stops being the row and becomes the CARD — it keeps its
-       border, radius, glass background and the spotlight hooks — while B7's
-       wrapping four-zone row moves into `.tip-row-line`, geometry untouched.
+       border, radius, glass background and the spotlight hooks, and its padding
+       belongs to the regions inside it (`.tip-row-link`, `.tip-row-extra`).
        Nothing here may reintroduce a viewport media query: the same card renders
-       in columns from 632 to 1088 px and competition detail is NARROWER at 1440 px
+       in columns from ~240 to 1088 px and competition detail is NARROWER at 1440 px
        than at 1024 px (B7). Everything below is container-relative. */
-    .tip-row { display: block; padding: 0; }
-    .tip-row-line {
-        display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px;
-        padding: 16px 20px;
-    }
-    .tip-row-line > .pill { flex: 0 0 auto; }
 
     /* The state stripe. EVERY state paints one (4 px), so no card is offset
        against its neighbour by a differing left border any more. */
@@ -1007,22 +933,6 @@ label.required::after {
     .tip-row.live   { border-left-color: var(--color-loss); }    /* právě hraje */
     .tip-row.locked { border-left-color: var(--border-3); }      /* po uzávěrce */
     .tip-row.done   { border-left-color: var(--color-accent-500); } /* odehráno */
-
-    /* Kolo pod časem — jeden řádek, zkrátí se výpustkou („SKUPINA A · …"). */
-    .tip-row-when { flex: 0 0 96px; }
-    .tip-row-when .round { max-width: 100%; }
-    /* B7's wrap hint, re-measured: the end zone lost the ~132px „Tipovat →" action
-       (the „MŮJ TIP" box is the only thing left in it), so the fixture may claim a
-       smaller flex-basis before the end zone drops to a second line. Everything
-       else about B7 stands — the zones still WRAP, nothing is width-queried, and
-       `min-width: 0` still ellipsizes long team names instead of overflowing. */
-    .tip-row-match { flex-basis: 320px; }
-
-    /* Dvojice týmů vede na detail zápasu — po zrušení akce „Tipovat →" je to
-       jediná cesta na detail u zápasu, který se už tipovat nedá. */
-    a.tip-row-match { color: inherit; text-decoration: none; border-radius: 10px; }
-    a.tip-row-match:hover .tip-row-teams .name { color: var(--color-accent-200); }
-    a.tip-row-match:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 4px; }
 
     /* „MŮJ TIP" box + odznak bodů v jeho rohu. `right`/`top` jsou menší než
        vnitřní odsazení karty (20/16 px), takže odznak nikdy nepřeteče ven. */
@@ -1116,15 +1026,15 @@ label.required::after {
     .card-stretch:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -3px; }
     .card-raise { position: relative; z-index: 2; }
 
-    /* 2. The match card as the Nástěnka wants it (`Match:MatchRow variant="dashboard"`).
-       Only that page: /zapasy and competition detail keep the item 11 card, so
-       everything below is scoped to `.tip-row.is-dash` and cannot reach them.
+    /* 2. THE match card (`Match:MatchRow`) — one design on every surface since item 21,
+       which retired the older row shape; the `.is-dash` hook stayed so these rules did
+       not have to be re-scoped (and re-verified) for a cosmetic rename.
        Reused as-is: the card itself (`.tip-row` — border, radius, glass, the five
        state stripes), the „MŮJ TIP" box (`.my-tip*`, incl. the points badge) and the
        whole footer region (`.tip-row-extra`, `.tip-stats-*`).
        Container-relative like B7: no width media query anywhere — the zones simply
-       wrap, because this same card is 1088 px wide on a desktop Nástěnka and 288 px
-       on a 320 px phone. */
+       wrap, because this same card is 1088 px wide on a desktop Nástěnka or /zapasy,
+       ~700 px in competition detail's column and 288 px on a 320 px phone. */
     .tip-row.is-dash .tip-row-link {
         display: flex; flex-direction: column; gap: 14px;
         padding: 14px 18px 16px; border-radius: 10px;

@@ -94,9 +94,15 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertStringContainsString('id="hraju-01930000-0000-7000-8000-0000000000c1"', $body);
 
         // Match:MatchRow in all five states (`finished` paints the `done` stripe).
+        // Item 21 — ONE card design, so there is one gallery, not a variant per shape.
         foreach (['open', 'tipped', 'live', 'locked', 'done'] as $state) {
-            self::assertStringContainsString('class="tip-row '.$state.'"', $body);
+            self::assertStringContainsString('class="tip-row is-dash '.$state.'"', $body);
         }
+        self::assertStringNotContainsString('variant="dashboard"', $body);
+        self::assertStringNotContainsString('variant="default"', $body);
+        // A match can sit in several soutěže: then every strip renders under the name
+        // of ITS soutěž (`.tip-row-boost-label` exists only for a list of 2+).
+        self::assertSame(2, substr_count($body, 'tip-row-boost-label'));
 
         // Leaderboard:Podium + Leaderboard:Delta (both variants).
         self::assertStringContainsString('class="podium mb-8"', $body);
