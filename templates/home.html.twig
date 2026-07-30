@@ -119,7 +119,17 @@
                 </div>
             </div>
 
-            {# Floating mini cards (decoration, hidden on small screens) #}
+            {# Floating mini cards (decoration, hidden on small screens).
+
+               They are meant to overlap the card's EDGE, CORNER or empty background — never text,
+               a team name, a monogram coin, the score or the distribution bar. The only bands wide
+               enough for that are the card's own `p-7` paddings, so a chip has to hang far enough
+               out that the part still inside the card stays within ~28 px of the edge it straddles.
+               The „1. místo" chip used to sit at `top-[22%]`, which put it on the away team block
+               („Francie" + the FRA coin) at every width from 1024 px up once B21 gave the card its
+               ~130 px back; `-bottom-8` moves it onto the bottom-right corner instead — 17 px of it
+               inside the card, 13 px of clearance to the nearest legend line. B26 in
+               .docs/ui-nav/BUGS.md has the measurements. #}
             <div class="glass absolute -left-10 -top-5 hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
                 <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white" style="background:linear-gradient(135deg,#3ed598,#1f9d6e)">MK</span>
                 <div>
@@ -127,7 +137,7 @@
                     <div class="text-[10px] text-white/40">Marek vystihl skóre</div>
                 </div>
             </div>
-            <div class="glass absolute -right-6 top-[22%] hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
+            <div class="glass absolute -bottom-8 -right-6 hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
                 <twig:Pill label="1. místo" variant="success" />
                 <div class="font-black text-white">147</div>
                 <div class="text-[10px] text-white/40">/ 248</div>
