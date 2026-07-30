@@ -42,11 +42,12 @@ use Symfony\Component\Uid\Uuid;
  * multiple competitions per match source, cross-competition memberships, matches and evaluated guesses
  * so the UI can be exercised with realistic volume.
  *
- * On top of that (item 03 of the UI/nav stream) it seeds four self-contained
+ * On top of that (item 03 of the UI/nav stream) it seeds five self-contained
  * „worlds" that the rebuilt pages are developed against — a big paid GLOBAL
  * competition with a real leaderboard, a small PRIVATE premium one organized by
- * the primary dev user, a FINISHED one, and a TEAM-FILTER one. They are
- * documented world by world in `.docs/FIXTURES.md`.
+ * the primary dev user, a FINISHED one, a TEAM-FILTER one, and one that has NOT
+ * STARTED yet (B23/B11). They are documented world by world in
+ * `.docs/FIXTURES.md`.
  *
  * Not loaded in the test suite (tests request group=test).
  */
@@ -120,6 +121,24 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     public const string WINTER_SOURCE_NAME = 'Zimní pohár 2026';
     public const string WINTER_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f4';
     public const string WINTER_COMPETITION_NAME = 'Zimní pohár – parta';
+
+    /**
+     * World E — the soutěž that has NOT started yet (B23), organized by the
+     * primary dev user, premium with both visibility toggles OFF (B11 locked).
+     */
+    public const string UPCOMING_SOURCE_ID = '019aaaaa-0000-7000-8000-0000000000f4';
+    public const string UPCOMING_SOURCE_NAME = 'Pohár Vysočiny';
+    public const string UPCOMING_COMPETITION_ID = '019bbbbb-0000-7000-8000-0000000000f5';
+    public const string UPCOMING_COMPETITION_NAME = 'Vysočina – naše parta';
+
+    /**
+     * Days between „today" and World E's first kickoff — i.e. the width of the
+     * window a scheduled „Uzamknout tipy · V určený čas" has to fit into (the
+     * moment must be in the future AND before the competition start, see B2).
+     * Keep it comfortable: a competition starting in minutes cannot exercise the
+     * picker.
+     */
+    public const int UPCOMING_FIRST_KICKOFF_DAYS = 5;
 
     /**
      * The ONE deliberately unverified dev login, so the e-mail verification
@@ -460,7 +479,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     }
 
     /**
-     * The four self-contained worlds items 04–07 are developed against. Unlike the
+     * The five self-contained worlds items 04–07 are developed against. Unlike the
      * data above they are anchored to the REAL calendar (`today ± n days`), so a
      * `db:reset` always produces a tournament that is genuinely half-played: past
      * matches carry results, upcoming ones are still tippable, and the rolling
@@ -620,8 +639,22 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         // -- World C: finished competition ---------------------------------
         $this->createWinterWorld($manager, $football, $verified, $users, $today, $seededAt);
 
+        // -- World E: the competition that has not started yet -------------
+        [$upcoming, $upcomingMembers] = $this->createUpcomingWorld($manager, $football, $verified, $users, $today, $seededAt);
+
         // -- Credits -------------------------------------------------------
-        $this->createDevWallets($manager, $admin, $verified, $users[5], $worldCup, $neighbours, $neighbourMembers, $seededAt);
+        $this->createDevWallets(
+            $manager,
+            $admin,
+            $verified,
+            $users[5],
+            $worldCup,
+            [
+                [$neighbours, $neighbourMembers, '-10 days'],
+                [$upcoming, $upcomingMembers, '-8 days'],
+            ],
+            $seededAt,
+        );
     }
 
     private function createVerifiedUser(
@@ -1255,6 +1288,16 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             $this->createEvaluatedGuess($manager, $member, $matches[2], $competition, $offset % 3, ($offset + 1) % 2, $seededAt);
         }
 
+        // The fixture after it has the WHOLE group's tips, deliberately split
+        // 3 × 1 / 1 × X / 2 × 2. Premium shows the distribution to everyone here,
+        // and that match's deadline is still ahead, so this is the UNLOCKED half
+        // of the premium „Rozložení tipů" (B11) — the locked half is World E,
+        // so both are reachable without ever touching a toggle.
+        foreach ([[0, 2, 1], [1, 1, 0], [2, 3, 1], [3, 1, 1], [4, 0, 2], [5, 1, 2]] as [$offset, $homeGuess, $awayGuess]) {
+            [$member] = $plans[$offset];
+            $this->createEvaluatedGuess($manager, $member, $matches[3], $competition, $homeGuess, $awayGuess, $seededAt);
+        }
+
         return [$competition, $nonOwnerMembers];
     }
 
@@ -1376,12 +1419,187 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     }
 
     /**
+     * World E — the soutěž that has NOT started yet. Every other dev world is
+     * deliberately anchored so that it is already running, which left two states
+     * unreachable after a plain `db:reset`:
+     *
+     * - **„Uzamknout tipy" (B23)** — the action only renders while the competition
+     *   is unlocked and has not started. Here the primary dev user is the
+     *   organizer and the first kickoff is {@see UPCOMING_FIRST_KICKOFF_DAYS} days
+     *   out, so B2's „Ihned / V určený čas" modal is reachable and its picker has
+     *   a real (now … first kickoff) range to pick inside.
+     * - **the LOCKED premium „Rozložení tipů" (B11)** — monetization premium with
+     *   both visibility toggles off (the organizer paid for „Měnit tip" only) and
+     *   members who have already tipped matches whose deadline is still ahead, so
+     *   every row renders the „Prémium · Zapíná organizátor" strip with a real
+     *   player count behind it. World B is the same surface with the toggles ON
+     *   ⇒ both halves of the paywall without editing any data by hand.
+     *
+     * Side benefit: it is the only dev competition whose state is „Nadcházející"
+     * ({@see \App\Enum\CompetitionStateFilter::Upcoming}).
+     *
+     * @param array<int, User> $users
+     *
+     * @return array{Competition, list<User>} the competition and its non-owner members
+     */
+    private function createUpcomingWorld(
+        ObjectManager $manager,
+        Sport $football,
+        User $verified,
+        array $users,
+        \DateTimeImmutable $today,
+        \DateTimeImmutable $seededAt,
+    ): array {
+        // Set up a while ago (an organizer prepares a tournament in advance), but
+        // BEFORE the boost purchase the dev wallet books at −5 days: the credit
+        // history renders in date order while the ledger's running balance follows
+        // insertion order, so the two must agree or the „Zůstatek" column zig-zags.
+        $createdAt = $seededAt->modify('-9 days');
+        $firstKickoffDay = $today->modify(sprintf('+%d days', self::UPCOMING_FIRST_KICKOFF_DAYS));
+
+        $source = new MatchSource(
+            id: Uuid::fromString(self::UPCOMING_SOURCE_ID),
+            sport: $football,
+            owner: $verified,
+            kind: MatchSourceKind::Private,
+            name: self::UPCOMING_SOURCE_NAME,
+            description: 'Turnaj čtyř týmů, který teprve začne — zápasy si zadáváme sami.',
+            startAt: $firstKickoffDay->setTime(0, 0),
+            endAt: $today->modify('+12 days')->setTime(23, 59, 59),
+            createdAt: $createdAt,
+        );
+        $source->popEvents();
+        $manager->persist($source);
+
+        // LOCAL teams of the private source (TeamResolver's hybrid scope rule) —
+        // local names are unique per source only, so they can never collide with
+        // the shared global directory.
+        $teams = [];
+
+        foreach ([
+            ['Sokol Vysoké', '019ddddd-0000-7000-8000-0000000ff041'],
+            ['TJ Ždírec', '019ddddd-0000-7000-8000-0000000ff042'],
+            ['FC Přibyslav', '019ddddd-0000-7000-8000-0000000ff043'],
+            ['SK Polná', '019ddddd-0000-7000-8000-0000000ff044'],
+        ] as [$name, $id]) {
+            $teams[$name] = $this->createTeam($manager, $id, $football, $source, $name, $createdAt, null, null, null);
+        }
+
+        // EVERY kickoff is in the future — that is the whole point of this world.
+        /** @var list<array{string, string, string, int, int, int, string}> $seeds */
+        $seeds = [
+            ['0000000fd001', 'Sokol Vysoké', 'TJ Ždírec', self::UPCOMING_FIRST_KICKOFF_DAYS, 18, 0, '1. kolo'],
+            ['0000000fd002', 'FC Přibyslav', 'SK Polná', self::UPCOMING_FIRST_KICKOFF_DAYS, 20, 30, '1. kolo'],
+            ['0000000fd003', 'Sokol Vysoké', 'FC Přibyslav', 9, 18, 0, '2. kolo'],
+            ['0000000fd004', 'TJ Ždírec', 'SK Polná', 12, 19, 0, '3. kolo'],
+        ];
+
+        $matches = [];
+
+        foreach ($seeds as [$idSuffix, $home, $away, $dayOffset, $hour, $minute, $round]) {
+            $matches[] = $this->worldMatch(
+                $manager,
+                $idSuffix,
+                $source,
+                $teams[$home],
+                $teams[$away],
+                $today->modify(sprintf('+%d days', $dayOffset))->setTime($hour, $minute),
+                $round,
+                false,
+                $createdAt,
+            );
+        }
+
+        $competition = $this->createCompetition(
+            $manager,
+            id: self::UPCOMING_COMPETITION_ID,
+            matchSource: $source,
+            owner: $verified,
+            name: self::UPCOMING_COMPETITION_NAME,
+            description: 'Turnaj ještě nezačal — tipy jsou otevřené až do výkopu prvního zápasu.',
+            pin: '40000004',
+            linkToken: str_repeat('a', 48),
+            createdAt: $createdAt,
+            monetization: CompetitionMonetization::Premium,
+        );
+        // Premium, but the organizer switched ON only „Měnit tip" — both visibility
+        // toggles stay off, which is exactly what makes „Rozložení tipů" render its
+        // LOCKED premium variant for everyone, organizer included (managers get no
+        // free pass, see CompetitionEntitlements).
+        $competition->setPremiumFeatures(
+            showDistribution: false,
+            showOthersTips: false,
+            allowTipChanges: true,
+            tipChangeOffsetMinutes: 60,
+            now: $createdAt,
+        );
+        $this->provisionDefaultRules($manager, $competition, $createdAt);
+
+        /** @var list<User> $nonOwnerMembers */
+        $nonOwnerMembers = [$users[1], $users[13], $users[20], $users[24], $users[25]];
+        /** @var list<User> $members owner first — the tip plans below index into this */
+        $members = [$verified, ...$nonOwnerMembers];
+
+        $this->addMembers($manager, $competition, $members, $createdAt);
+
+        // Premium is charged per player when the organizer enables it, i.e. already
+        // (see EnablePremiumHandler). Reconciliation happens at the competition
+        // START, which is still ahead ⇒ premiumReconciledAt stays null on purpose.
+        foreach ($nonOwnerMembers as $member) {
+            $charge = new CompetitionPremiumCharge(
+                id: Uuid::v7(),
+                competition: $competition,
+                member: $member,
+                amount: PricingConfig::PREMIUM_PER_PLAYER,
+                createdAt: $createdAt,
+            );
+            $charge->markCharged($createdAt);
+            $charge->popEvents();
+            $manager->persist($charge);
+        }
+
+        // Tips already in, per match: [member offset, home, away]. Thinning
+        // participation with a deliberately different 1 / X / 2 split each time, so
+        // the locked strip quotes a believable player count on every row and the
+        // organizer surfaces have both „tipoval" and „netipoval" members. Nobody
+        // has tipped the last match at all — the „no tips yet" teaser.
+        /** @var list<list<array{int, int, int}>> $tipPlans */
+        $tipPlans = [
+            // 3 × 1 / 1 × X / 1 × 2, one member (kristy) has not tipped yet
+            [[0, 2, 1], [1, 1, 0], [2, 3, 2], [3, 1, 1], [5, 0, 2]],
+            // the whole group, dead even: 2 × 1 / 2 × X / 2 × 2
+            [[0, 2, 0], [1, 1, 0], [2, 1, 1], [3, 2, 2], [4, 0, 1], [5, 1, 3]],
+            // only three, and the dev user is NOT one of them ⇒ an „open" row
+            [[1, 3, 1], [2, 2, 0], [3, 0, 0]],
+            [],
+        ];
+
+        foreach ($tipPlans as $matchIndex => $tips) {
+            foreach ($tips as [$memberOffset, $homeGuess, $awayGuess]) {
+                $this->createEvaluatedGuess(
+                    $manager,
+                    $members[$memberOffset],
+                    $matches[$matchIndex],
+                    $competition,
+                    $homeGuess,
+                    $awayGuess,
+                    $seededAt,
+                );
+            }
+        }
+
+        return [$competition, $nonOwnerMembers];
+    }
+
+    /**
      * The credit side of the dev world. Only the two users that actually SPEND
      * anything get a wallet, and every movement is written through
      * {@see CreditWallet} so the ledger reconciles with the balance. Prices come
      * from {@see PricingConfig}; the entry fee is the competition's own.
      *
-     * @param list<User> $premiumMembers
+     * @param list<array{Competition, list<User>, string}> $premiumGroups premium competition the dev
+     *                                                                    user organizes, its charged
+     *                                                                    members, and when it was paid
      */
     private function createDevWallets(
         ObjectManager $manager,
@@ -1389,11 +1607,15 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         User $verified,
         User $boostBuyer,
         Competition $worldCup,
-        Competition $neighbours,
-        array $premiumMembers,
+        array $premiumGroups,
         \DateTimeImmutable $seededAt,
     ): void {
-        $premiumTotal = count($premiumMembers) * PricingConfig::PREMIUM_PER_PLAYER;
+        $premiumTotal = 0;
+
+        foreach ($premiumGroups as [, $premiumMembers]) {
+            $premiumTotal += count($premiumMembers) * PricingConfig::PREMIUM_PER_PLAYER;
+        }
+
         $grant = self::DEV_USER_CREDIT_BALANCE
             + self::WORLD_CUP_COMPETITION_ENTRY_FEE
             + PricingConfig::BOOST_OTHERS_TIPS
@@ -1414,15 +1636,17 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             competition: $worldCup,
         ));
 
-        foreach ($premiumMembers as $member) {
-            $manager->persist($wallet->spend(
-                Uuid::v7(),
-                PricingConfig::PREMIUM_PER_PLAYER,
-                CreditTransactionType::PremiumCharge,
-                $seededAt->modify('-10 days'),
-                competition: $neighbours,
-                relatedUser: $member,
-            ));
+        foreach ($premiumGroups as [$premiumCompetition, $premiumMembers, $paidAt]) {
+            foreach ($premiumMembers as $member) {
+                $manager->persist($wallet->spend(
+                    Uuid::v7(),
+                    PricingConfig::PREMIUM_PER_PLAYER,
+                    CreditTransactionType::PremiumCharge,
+                    $seededAt->modify($paidAt),
+                    competition: $premiumCompetition,
+                    relatedUser: $member,
+                ));
+            }
         }
 
         $manager->persist($wallet->spend(
