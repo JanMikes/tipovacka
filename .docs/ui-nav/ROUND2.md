@@ -377,3 +377,52 @@ Filed as **B18**. Note the shape of the bug: the panel is presumably positioned 
 runs off the opposite edge. Related in kind — though not in mechanism — to **B3**, where a dropdown
 was cropped by a clipping ancestor and the fix was to re-parent it to `<body>`. Do not assume the same
 cause; measure it.
+
+## Batch 15 — a much simpler public footer
+
+> In the footer i need to remove the links (when unauthenticated) „Časté otázky", „Funkce", „Ceník",
+> „Pro firmy" — make just simpler version of footer. Not „V Praze" but „Ve Frýdku-Místku", really
+> simple
+
+Target is the **`marketing`** variant of `templates/components/Layout/Footer.html.twig` — the one an
+unauthenticated visitor gets on the public pages. (The `app` variant, shown to authenticated users, is
+already a single mini row with only „Ochrana soukromí"; it needs no change beyond the city line if it
+ever grows one.)
+
+- Drop **Funkce · Ceník · Pro firmy** (the „Produkt" column) and **Časté otázky** („Společnost").
+- What survives: the brand block, **Soutěže**, the Účet column (Přihlášení / Registrace, or
+  Nástěnka / Profil), **Ochrana soukromí**, and the copyright line.
+- **„Vyrobeno v Praze." → „Vyrobeno ve Frýdku-Místku."** (`Footer.html.twig:57`).
+- „really simple" — the four-column grid is no longer justified by two surviving links. Collapse it;
+  the `app` variant is the house precedent for what simple looks like here.
+
+**Consequence to state, not to silently accept.** Those four routes are `noindex, nofollow` (item 01)
+and the footer is currently their main entry point. After this change the only path to them is a
+chain: the homepage's two „Funkce" CTAs → `/funkce` → `/cenik` → `/pro-firmy` and `/faq`. Measured:
+
+| Route | Linked from, after this change |
+|---|---|
+| `app_features` | `templates/home.html.twig` only |
+| `app_pricing` | `templates/public/features.html.twig` only |
+| `app_for_business` | `templates/public/pricing.html.twig` only |
+| `app_faq` | `templates/public/pricing.html.twig` only |
+
+Nothing 404s, so the stream's hard constraint holds. But four de-indexed pages hanging off one
+homepage CTA is a thin justification for keeping them, and **no backwards compatibility is owed —
+there are no users yet.** Deleting them outright is a live option and a decision for the product
+owner; do not take it as part of this change.
+
+## Batch 16 — fabricated numbers on the sign-in page
+
+> On sign in page there are fake numbers: 12 400+ HRÁČŮ / 340 AKTIVNÍCH SOUTĚŽÍ / 98 % DOPORUČÍ DÁL —
+> Remove this completely
+> On sign in `247 HRÁČŮ TIPUJE PRÁVĚ TEĎ` remove too
+
+`templates/auth/login.html.twig:24-51` (the three stat tiles) and `:12` (the „247 hráčů tipuje právě
+teď" live pill). Invented figures claiming a user base that does not exist, on the page where someone
+decides to sign up. Removed completely — **not** replaced with real measured counts, which would be a
+different product decision and would also read as near-zero today.
+
+Handed to the invite-funnel agent, which already owns that template. It was also asked to sweep
+`/registrace` and the invitation landings for the same pattern and to report — without touching
+`templates/home.html.twig`, which is a separate surface.
