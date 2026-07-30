@@ -57,7 +57,7 @@ product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B11, B13–B21, B23, B25 DONE · B10 **WONTFIX** (by design) · B12, B22, B24, B26–B28 DONE · B29 DONE · B30/B31 in flight |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B11, B13–B21, B23, B25 DONE · B10 **WONTFIX** (by design) · B12, B22, B24, B26–B28 DONE · B29, B31 DONE · B30 in flight |
 | [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->

@@ -36,7 +36,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
 | B29 | Homepage demo card: team names collapse to ~15 px at 320 px | DONE | `3f61e77` - three shapes; also fixed the second mock on the same page |
 | B30 | The „Uzamknout tipy" dialog's calendar overflows its own panel at 320 px | TODO | — |
-| B31 | After `db:reset` no competition can reach the scorer picker | TODO | — |
+| B31 | After `db:reset` no competition can reach the scorer picker | DONE | `5e524ff` - World B extended; third gap of this shape after B11 and B23 |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 

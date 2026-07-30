@@ -118,6 +118,16 @@ templates, distinct queries.
   lacked `min-width: 0`. Both looked fine in a screenshot at one width.
 - Viewport breakpoints are often the wrong tool: competition detail is **narrower at 1440 px than at
   1024 px** because of its aside. Prefer container-relative layout.
+- **Before asking an agent to verify a state, check a plain `db:reset` can REACH it.** This bit the
+  stream three times in one session: B23 (no competition could open the „Uzamknout tipy" modal at
+  all), B11 (the premium world rendered no „Rozlozeni tipu" surface), B31 (no competition could
+  reach the scorer picker). Each cost real diagnostic time, and B23 is a large part of why B16
+  ended in „the screenshot predates the feature" — the bug was unreproducible by construction, not
+  by chance. The recurring cause is `AppFixtures`' **absolute** 2025 dates: they are long past on
+  the real dev clock, so anything anchored to them is never open for tipping. `DevFixtures` is
+  anchored to `today +/- n` deliberately (item 03 assumption 2). `.docs/FIXTURES.md` now carries a
+  „which world demonstrates which state" lookup table — **read it when writing a verification
+  section**, and if the state is not in it, expect the agent to have to build the data first.
 - **Never run `phpunit tests/` whole** — it OOMs (exit 137). Chunk by subdirectory. PHPUnit emits
   ANSI codes, so strip them before grepping results.
 - After `composer db:reset` you **must** `docker compose restart web`, or every page 500s on stale
