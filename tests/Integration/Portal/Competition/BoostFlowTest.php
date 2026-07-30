@@ -15,7 +15,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Portal boost commerce: the „Tvoje vylepšení" sidebar, buying from the paywall,
+ * Portal boost commerce: the „Získej výhody" sidebar, buying from the paywall,
  * the premium pill on premium competitions, and the insufficient-credits top-up
  * link. See .docs/DOMAIN.md §Monetization.
  */
@@ -65,9 +65,11 @@ final class BoostFlowTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertSelectorTextContains('body', 'Tvoje vylepšení');
+        self::assertSelectorTextContains('body', 'Získej výhody');
         // SECOND_VERIFIED_USER owns OthersTips (fixture) → shown as active, not buyable.
-        self::assertSelectorTextContains('body', 'Konkrétní tipy kolegů');
+        // The panel row carries the marketing HEADLINE (ROUND2 decision 2); the canonical
+        // BoostType::label() name lives in the confirm dialog / ledger / cenik.
+        self::assertSelectorTextContains('body', 'Přesné tipy soupeřů');
 
         // The tip_change boost is buyable (affordable) → a purchase form is present.
         $forms = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]');

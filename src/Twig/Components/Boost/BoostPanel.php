@@ -16,7 +16,7 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 /**
  * Boost commerce surface. Two shapes driven by {@see $feature}:
- * - null      → the „Tvoje vylepšení" management panel (competition sidebar),
+ * - null      → the „Získej výhody" management panel (competition sidebar),
  *                listing all three boosts with owned / buy states;
  * - 'others'  → an inline LOCKED paywall shown where concrete member tips would
  *                be, with a one-click buy. (The distribution bar has its own

@@ -228,12 +228,14 @@
 
             {% set is_clearing = this.hasExistingGuess and homeScore is null and awayScore is null %}
             <button type="submit" class="btn btn-block mt-4 {{ is_clearing ? 'btn-danger' : (this.hasExistingGuess ? 'btn-edit-block' : 'btn-primary-block') }}">
+                {# One verb for saving, whether the tip is new or edited; clearing keeps its
+                   own label because it is the opposite of saving. #}
                 {% if is_clearing %}
                     <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />Smazat tip
                 {% elseif this.hasExistingGuess %}
-                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />Upravit tip
+                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />Uložit tip
                 {% else %}
-                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />Odeslat tip
+                    <twig:ux:icon name="lucide:target" class="h-4 w-4" />Uložit tip
                 {% endif %}
             </button>
         </form>

@@ -9,7 +9,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * The per-viewer boost state in a competition — feeds the paywall CTAs and the
- * „Tvoje vylepšení" sidebar. See .docs/DOMAIN.md §Monetization.
+ * „Získej výhody" sidebar. See .docs/DOMAIN.md §Monetization.
  *
  * @implements QueryMessage<GetBoostPanelResult>
  */

@@ -2,7 +2,7 @@
     Boost commerce surface. See src/Twig/Components/Boost/BoostPanel.php.
     props:
       competition  (Competition)
-      feature      null = „Tvoje vylepšení" sidebar; 'others' = inline locked paywall for
+      feature      null = „Získej výhody" sidebar; 'others' = inline locked paywall for
                    concrete member tips (the distribution bar has its own surface:
                    <twig:Match:TipStats>, fed by TipStatsProvider)
 
@@ -19,6 +19,20 @@
     {# The superset note names the included boost from BoostType::label() — one
        source for the name, so the confirm copy cannot drift (item 12). #}
     {% set dist_boost_label = constant('App\\Enum\\BoostType::TipDistribution').label %}
+    {# ROUND2 decision 2 — these headlines/pitches are PANEL COPY ONLY: a marketing
+       label above the product, never a rename. The canonical BoostType::label()
+       names („Rozložení tipů ostatních" / „Konkrétní tipy kolegů" / „Měnit tip
+       během turnaje", item 12) keep the confirm dialog, the prémium toggles,
+       /cenik and the credit ledger. #}
+    {% set boost_headlines = {
+        tip_distribution: 'Jak tipují ostatní?',
+        others_tips: 'Přesné tipy soupeřů',
+        tip_change: 'Počkejte si na sestavy',
+    } %}
+    {% set boost_pitches = {
+        tip_distribution: 'Odemkněte procentuální rozložení tipů 1 / X / 2 ostatních hráčů ve vaší soutěži. Konkrétní tipy zůstávají skryté.',
+        others_tips: 'Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži.',
+    } %}
     {# Owned benefits jump to the surface they unlocked (item 08). #}
     {% set jump_targets = {
         tip_distribution: {url: path('competition_detail', {id: competition.id.toRfc4122}) ~ '#zapasy', label: 'Zobrazit rozložení tipů'},
@@ -27,12 +41,17 @@
     } %}
 
     {% if feature is null %}
-        {# ═════════ Management panel: „Tvoje vylepšení" ═════════ #}
+        {# ═════════ Management panel: „Získej výhody" ═════════ #}
         {% if mon == 'boosts' %}
             <section class="card-glass overflow-hidden p-0">
-                <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
-                    <twig:ux:icon name="lucide:sparkles" class="h-5 w-5 text-[#8ac3e8]" />
-                    <h2 class="text-lg font-semibold text-white">Tvoje vylepšení</h2>
+                <header class="border-b border-white/10 px-6 py-4">
+                    <div class="flex items-center gap-2.5">
+                        <twig:ux:icon name="lucide:sparkles" class="h-5 w-5 text-[#8ac3e8]" />
+                        <h2 class="text-lg font-semibold text-white">Získej výhody</h2>
+                    </div>
+                    <p class="mt-2 text-[12px] leading-snug text-white/55">
+                        Za kredity si můžete odemknout výhody, které vám pomohou získat lepší přehled a větší kontrolu při tipování v soutěži.
+                    </p>
                 </header>
                 <div class="divide-y divide-white/[0.06]">
                     {% for type in this.boostTypes %}
@@ -47,12 +66,13 @@
                         <div class="px-6 py-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-white">{{ type.label }}</p>
+                                    <p class="text-sm font-bold text-white">{{ boost_headlines[type.value] }}</p>
                                     <p class="mt-0.5 text-[12px] leading-snug text-white/55">
                                         {% if type.value == 'tip_change' %}
-                                            Měnit tip až do {{ offset_label }} před prvním zápasem dne.
+                                            {# The offset is prémium-configurable, so the promise is rendered, never hard-coded. #}
+                                            Chcete si počkat na soupisky? Odemkněte si možnost upravit své tipy až {{ offset_label }} před začátkem zápasu.
                                         {% else %}
-                                            {{ type.description }}
+                                            {{ boost_pitches[type.value] }}
                                         {% endif %}
                                     </p>
                                 </div>

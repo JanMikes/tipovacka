@@ -25,7 +25,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A player buys a per-competition boost from a paywall / the „Tvoje vylepšení"
+ * A player buys a per-competition boost from a paywall / the „Získej výhody"
  * sidebar. Insufficient credits redirect to the top-up page with a friendly
  * message; other domain guards flash an error and return to the origin page.
  */
