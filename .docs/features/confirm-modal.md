@@ -50,6 +50,13 @@ Contract:
 - The dialog is appended to `<body>`, i.e. **outside** the form. The controller therefore
   stamps `form="<the form's id>"` on every control inside the target (generating an id when
   the form has none), so they are still submitted with it. Nothing to do in the template.
+- **The move is reversible, and it has to stay that way** (B16). `disconnect()` puts the
+  element back where it came from (a comment node marks the spot), re-hides it and strips the
+  `form` attributes *before* it destroys the dialog. Without that, disconnecting would delete
+  the controller's only `fields` target along with the dialog, and a later reconnect — the form
+  re-parented, its `data-controller` re-evaluated, an ancestor re-rendered — would find no
+  target and build the plain message-only dialog. That dialog is **byte-identical to the no-JS
+  fallback**, so the failure is invisible: it looks exactly like correct degradation.
 - Start the element `hidden`; the controller unhides it when it adopts it. Without JS no
   dialog is ever shown, so **the field defaults must make the plain submit do the right,
   least surprising thing** (for the lock modal: „Ihned", i.e. the pre-B2 behaviour).

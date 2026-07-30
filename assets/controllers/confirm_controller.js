@@ -41,12 +41,17 @@ export default class extends Controller {
 
     connect() {
         this.confirmed = false;
+        this.adoptedFields = null;
+        this.fieldsAnchor = null;
         this.onSubmit = this.onSubmit.bind(this);
         this.element.addEventListener('submit', this.onSubmit);
     }
 
     disconnect() {
         this.element.removeEventListener('submit', this.onSubmit);
+        // Give the fields back to the form BEFORE the dialog is destroyed —
+        // see releaseFields().
+        this.releaseFields();
         if (this.dialog) {
             this.dialog.remove();
             this.dialog = null;
@@ -153,14 +158,48 @@ export default class extends Controller {
             this.element.id = `confirm-form-${Math.random().toString(36).slice(2, 10)}`;
         }
 
+        const fields = this.fieldsTarget;
+
         // Named controls only — a picker's internal widgets (flatpickr's hour /
         // minute number inputs) carry no name and must not be re-associated.
-        this.fieldsTarget
-            .querySelectorAll('input[name], select[name], textarea[name]')
+        fields.querySelectorAll('input[name], select[name], textarea[name]')
             .forEach((control) => control.setAttribute('form', this.element.id));
 
-        this.fieldsTarget.hidden = false;
-        parent.append(this.fieldsTarget);
+        // Remember where it came from so releaseFields() can put it back exactly.
+        this.fieldsAnchor = document.createComment('confirm:fields');
+        fields.before(this.fieldsAnchor);
+
+        fields.hidden = false;
+        parent.append(fields);
+        this.adoptedFields = fields;
+    }
+
+    /*
+     * Undo adoptFields(). Without this, disconnect() would destroy the dialog
+     * WITH the adopted element inside it — and the element is the controller's
+     * only `fields` target. A later reconnect (the form re-parented, its
+     * data-controller re-evaluated, a re-render above it) would then find no
+     * target and silently build the plain message-only dialog, which is
+     * byte-identical to the documented no-JS fallback. That is B16's failure
+     * mode; a controller has to be able to connect twice.
+     */
+    releaseFields() {
+        const fields = this.adoptedFields;
+        if (!fields) {
+            return;
+        }
+        this.adoptedFields = null;
+
+        fields.hidden = true;
+        fields.querySelectorAll('input[name], select[name], textarea[name]')
+            .forEach((control) => control.removeAttribute('form'));
+
+        if (this.fieldsAnchor?.parentNode) {
+            this.fieldsAnchor.replaceWith(fields);
+        } else {
+            this.element.append(fields);
+        }
+        this.fieldsAnchor = null;
     }
 
     confirm() {
