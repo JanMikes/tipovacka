@@ -236,6 +236,7 @@ final class BoostFlowTest extends WebTestCase
         self::assertCount(2, $stretched, 'Both full paywall cards („Rozložení tipů" + „Pořadí za zápas") must offer the whole-card target.');
 
         foreach ($stretched as $node) {
+            self::assertInstanceOf(\DOMElement::class, $node);
             self::assertTrue($node->hasAttribute('hidden'), 'The stretched submit must ship hidden — the confirm controller enables it.');
             self::assertSame('submit', $node->getAttribute('type'));
         }
@@ -252,6 +253,7 @@ final class BoostFlowTest extends WebTestCase
         self::assertCount(2, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] button.dist-unlock'));
 
         foreach ($forms as $form) {
+            self::assertInstanceOf(\DOMElement::class, $form);
             self::assertSame('confirm', $form->getAttribute('data-controller'));
             self::assertNotSame('', $form->getAttribute('data-confirm-title-value'));
             self::assertNotSame('', $form->getAttribute('data-confirm-confirm-label-value'));
