@@ -1261,6 +1261,81 @@ label.required::after {
         .mc-score .num { font-size: 26px; }
         .mc-name { font-size: 13px; }
     }
+
+    /* --- „Moje tipy" batch table: one row per zápas ---------------------- */
+    /* The wide row (coin · názvy · datum on the left, the two spinners on the
+       right) only works while the row IS wide. On a phone it collapsed: the
+       names truncated to „Zbrojovk…", „vs" fell onto its own line and the datum
+       broke over three. So the row is built the other way round — MOBILE FIRST
+       it is the same mirrored fixture the match card (`.tipd-body`) and the
+       match page (`.mc-fixture`) already speak: datum above, the two teams on
+       ONE row, each spinner under its own team. Only at ≥640 px does it fold
+       out into the horizontal row that the desktop screenshot shows.
+
+       `.bt-teams` and `.bt-scores` are two SEPARATE grids, so they line up only
+       while their tracks are identical — hence the shared, FIXED `--bt-gutter`
+       centre track (same reasoning as `--mc-gutter`): `auto` would be as wide
+       as „vs" in one grid and as wide as „:" in the other, and every spinner
+       would sit half the difference off its team. `minmax(0,1fr)`, never `1fr`,
+       or the team name's min-content floor would starve the other side. */
+    .bt-row { --bt-gutter: 30px; --bt-coin: 40px; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
+    .bt-fixture { display: flex; min-width: 0; flex-direction: column; gap: 9px; }
+    /* Datum je na mobilu NAD zápasem (v DOMu zůstává za ním — čtečka chce nejdřív
+       vědět, kdo hraje), na desktopu se vrací pod názvy. */
+    .bt-when { order: -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; }
+    .bt-when > span {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 11px; font-weight: 300; letter-spacing: 0.02em; color: var(--fg-3);
+    }
+    .bt-when > span.is-wait { color: rgba(255,255,255,0.62); }
+    .bt-teams { display: grid; grid-template-columns: minmax(0,1fr) var(--bt-gutter) minmax(0,1fr); align-items: center; gap: 8px; }
+    /* Na mobilu je erb NAD názvem (jako `.mc-side` na stránce zápasu) — vedle sebe by
+       ukrojil 40 px z místa, které potřebuje název, a i „Sokol Horní" by se lámalo.
+       Hosté mají v DOMu pořadí název → erb (kvůli desktopu), `column-reverse` je tedy
+       na mobilu srovná stejně jako domácí. */
+    .bt-side { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+    .bt-side.is-away { flex-direction: column-reverse; }
+    /* Dlouhý název se na mobilu ZALOMÍ, neuřízne: „Zbrojovka / Brno B" je pořád
+       tým, „Zbrojovk…" už není nic. */
+    .bt-name {
+        min-width: 0; overflow-wrap: anywhere; text-align: center;
+        font-size: 14px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; color: #fff;
+    }
+    .bt-vs { text-align: center; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-4); }
+    .bt-controls { display: flex; flex-direction: column; gap: 10px; }
+    .bt-scores { display: grid; grid-template-columns: minmax(0,1fr) var(--bt-gutter) minmax(0,1fr); align-items: center; gap: 8px; justify-items: center; }
+    .bt-scores .colon { text-align: center; }
+    /* Palcem se míří hůř než myší — na mobilu je pole vyšší i širší. */
+    .bt-scores .score-input { width: 76px; height: 52px; font-size: 24px; }
+    .bt-periods { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; }
+    .bt-period { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--fg-3); }
+    /* Poločasy jsou nepovinné, ale pořád se do nich ťuká palcem. */
+    .bt-period .input { height: 38px; width: 52px; }
+    .bt-wait {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        border-radius: 12px; border: 1px dashed rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.02); padding: 11px 16px;
+        font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.6); text-align: center;
+    }
+
+    @media (min-width: 640px) {
+        .bt-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 16px 24px; padding: 20px 24px; }
+        .bt-fixture { flex: 1 1 auto; gap: 5px; }
+        .bt-when { order: 0; justify-content: flex-start; gap: 2px 14px; padding-left: calc(var(--bt-coin) + 9px); }
+        .bt-teams { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+        .bt-side, .bt-side.is-away { flex-direction: row; justify-content: flex-start; gap: 9px; }
+        .bt-name { overflow-wrap: normal; text-align: left; }
+        .bt-controls { align-items: flex-end; }
+        .bt-scores { display: flex; gap: 10px; }
+        .bt-scores .score-input { width: 64px; height: 46px; font-size: 22px; }
+        /* Poločasy pod sebe, ne vedle sebe: vedle sebe je pravý sloupec tak široký,
+           že si delší dvojice jmen musí zalomit řádek — a řádky vedle sebe pak
+           nevypadají jako jedna tabulka. Ve sloupci je pravá strana u všech řádků
+           stejně široká. */
+        .bt-periods { flex-direction: column; align-items: flex-end; gap: 6px; }
+        .bt-period .input { height: 32px; width: 48px; }
+        .bt-wait { padding: 12px 16px; }
+    }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
