@@ -52,6 +52,11 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 20 | [Tips are revealed by the RESULT, not the deadline (all surfaces)](items/20-tip-matrix-visibility.md) | DONE | `9303b78` |
 | 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | DONE | `ed432eb` + `c9d6a56` |
 | 24 | [`/souteze` drops the three-`StatCard` row](items/24-souteze-drop-stat-cards.md) | DONE | `b0fbe7c` |
+| 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | DONE | `2578def` |
+| 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | DONE | `7dc2ea3` |
+| 29 | [The dev wallet can no longer demonstrate „nemáte dost kreditů"](items/29-dev-wallet-after-the-price-rise.md) | TODO | — |
+| 30 | [„Chybí natipovat X zápasů" badge, on both card surfaces](items/30-nastenka-missing-tips-badge.md) | TODO — blocked on 22 + 25 | — |
+| 31 | [A secondary arrow link is a link, not a button](items/31-arrow-links-are-links.md) | TODO — blocked on 22 | — |
 | 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | IN PROGRESS | — |
 | 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | IN PROGRESS | — |
 | 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | IN PROGRESS | — |
@@ -275,6 +280,12 @@ Settled in conversation; each is now binding on this stream.
   the SVG. A missing icon is a render-time exception in dev.
 - **Never run `asset-map:compile`.** If assets look frozen: `rm -rf public/assets`, then
   `docker compose restart web`.
+- **An arrow means navigation, so it is a link — unless it is an action** (item 31, product owner
+  2026-07-30). A secondary „go see more" link carrying a `lucide:arrow-right` is styled as a **text
+  link** (accent text, inline arrow, no border, no background), never as a bordered `btn-ghost`. A
+  **primary action keeps its button chrome even with an arrow** — „Zadat tip →" and the marketing
+  hero CTAs stay buttons. The rule was deliberately scoped to the ghost family after measuring the
+  literal reading: 26 arrow-bearing buttons, of which 16 are primary/marketing CTAs.
 - **No new literal prices.** Everything monetary comes from `Credits/PricingConfig`.
 - **Access is declared, not inferred from the URL** (item 09). There is no `/portal` prefix and
   no path-based `access_control` except `^/admin`. A page that needs a login carries
