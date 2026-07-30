@@ -16,7 +16,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
-| B9 | Team picker's create row shows English „Add …" | DONE | — |
+| B9 | Team picker's create row shows English „Add …" | DONE | `d0b8bd4` |
 
 ---
 
