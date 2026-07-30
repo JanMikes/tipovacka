@@ -45,6 +45,8 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | — | Domain: the „Měnit tip" window is **per match**, not per day (round 2) | DONE | `d44539a` |
 | 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | DONE | `287499c` |
 | 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | IN PROGRESS | — |
+| 16 | [Homepage: a closing CTA that claims nothing, and no „MS 2026"](items/16-homepage-cta-and-ms2026.md) | IN PROGRESS | — |
+| 17 | [App chrome: credits in the bar, simpler footer, B18 + B20](items/17-chrome-pass.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
