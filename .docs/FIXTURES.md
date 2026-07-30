@@ -114,7 +114,8 @@ row just represents the already-paid state; tests grant the owner credits in-tes
 default rule configs (`BOOSTS_COMPETITION_RULE_*` = `019fffff-…-1a…1d`) and a shareable
 link. SECOND_VERIFIED_USER is the single non-owner member and holds one **active**
 `BoostPurchase` of type `OthersTips` (`BOOST_PURCHASE_OTHERS_TIPS_ID` =
-`019bbbbb-0000-7000-8000-0000000000e1`, `pricePaid = 20`) — the entitled viewer.
+`019bbbbb-0000-7000-8000-0000000000e1`, `pricePaid = BoostType::OthersTips->price()`,
+**35** today) — the entitled viewer.
 VERIFIED_USER is deliberately NOT a member (it stays the „single competition" user
 other count tests rely on); visibility tests join a second, non-entitled member on the
 fly (via the shareable link). **No wallet/ledger is seeded** for the purchase (would
@@ -217,7 +218,7 @@ balances grant the owner (ADMIN) credits in-test.
 
 | Constant                        | ID                                     | Competition        | User                 | Type       | Price | Active |
 |---------------------------------|----------------------------------------|--------------------|----------------------|------------|-------|--------|
-| `BOOST_PURCHASE_OTHERS_TIPS_ID` | `019bbbbb-0000-7000-8000-0000000000e1` | BOOSTS_COMPETITION | SECOND_VERIFIED_USER | OthersTips | 20    | yes    |
+| `BOOST_PURCHASE_OTHERS_TIPS_ID` | `019bbbbb-0000-7000-8000-0000000000e1` | BOOSTS_COMPETITION | SECOND_VERIFIED_USER | OthersTips | `BoostType::OthersTips->price()` (35) | yes    |
 
 Like the premium charge, this row has **no** backing wallet/ledger (keeps the whole-table
 credit asserts intact) — it just represents an already-bought boost, and drives the
@@ -454,7 +455,7 @@ Password for **every** dev/test user: `AppFixtures::DEFAULT_PASSWORD` = `passwor
 
 | Competition | Role | Standing | Monetization |
 |---|---|---|---|
-| **Tipovačka MS 2026** (World A) | member | **7th of 24**, tied on 32 b | boosts — owns „Konkrétní tipy kolegů" ⇒ **unlocked** |
+| **Tipovačka MS 2026** (World A) | member | **7th of 24**, tied on 32 b | boosts — owns „Přesné tipy soupeřů" ⇒ **unlocked** |
 | **Fandíme Česku** (World D) | member | 2nd of 6 (13 b) | boosts — owns nothing ⇒ **locked** |
 | **Sousedský pohár** (World B) | **organizer** | 1st of 6 (13 b) | premium, all toggles ON for everyone |
 | **Zimní pohár – parta** (World C) | member | tied 1st, tie resolved to 2nd | boosts, competition is over |
@@ -462,13 +463,17 @@ Password for **every** dev/test user: `AppFixtures::DEFAULT_PASSWORD` = `passwor
 | `Kámoši u piva` (AppFixtures) | organizer | — | none |
 | `VŠCHT tipovačka` (older dev data) | organizer | — | none |
 
-Credit balance: **35 kr.** (`DevFixtures::DEV_USER_CREDIT_BALANCE`) — enough for either
-cheaper boost, five short of „Měnit tip" (40 kr.), so the *insufficient credits* branch is
-one click away. The balance is derived from `Credits\PricingConfig`, never a literal. The
-seeded ledger is honest: `+185` admin grant → `−30` entry fee (World A) → `5 × −10` premium
-per player (World B) → `5 × −10` premium per player (World E) → `−20` boost (World A) =
-**35**. `martas` has a second, smaller wallet (`10 kr.` left after buying the 10 kr.
-distribution boost).
+Credit balance: **49 kr.** (`DevFixtures::DEV_USER_CREDIT_BALANCE`) — enough for either
+cheaper boost („Jak tipují ostatní?" 15 kr., „Přesné tipy soupeřů" 35 kr.), **one credit
+short of „Počkejte si na sestavy" (50 kr.)**, so the *insufficient credits* branch is one
+click away. The balance is derived from `Credits\PricingConfig`, never a literal — and
+specifically as **`BOOST_TIP_CHANGE − 1`**, not as a sum of the other two prices: a sum
+drifted past the boost it was meant to fall short of when item 23 re-set the prices, which
+is what item 29 repaired. „Dearest boost minus one credit" cannot drift. The seeded ledger
+is honest: `+214` admin grant → `−30` entry fee (World A) → `5 × −10` premium per player
+(World B) → `5 × −10` premium per player (World E) → `−35` boost (World A) = **49**.
+`martas` has a second, smaller wallet (`15 kr.` left after buying the 15 kr. distribution
+boost).
 
 > The ledger is written in one pass through `CreditWallet`, so **insertion order must match
 > chronological order** — the credits screen sorts by date but prints each row's stored
@@ -478,9 +483,12 @@ distribution boost).
 
 ## Which world demonstrates which state
 
-The reason this section exists: three times now a bug turned out to be „the fixtures cannot
-demonstrate the feature" (B11, B23, B31), and the diagnosis cost hours. Before editing data
-by hand, look here.
+The reason this section exists: **four** times now a bug turned out to be „the fixtures
+cannot demonstrate the feature" (B11, B23, B31, and item 29 — a price rise that moved the
+dev wallet past the boost it was supposed to be unable to afford), and the diagnosis cost
+hours each time. Before editing data by hand, look here. When a value here is *derived*
+(a balance, a deadline, a price), write the expression so the intent survives the next
+change of what it derives from — item 29 is what happens when it does not.
 
 | State you want to see | Where, after a plain `db:reset` |
 |---|---|
@@ -488,7 +496,8 @@ by hand, look here.
 | „Rozložení tipů" · **unlocked by premium** | **World B** — premium, all toggles on; the „2. kolo" fixture carries the whole group's tips (50 / 17 / 33) |
 | „Rozložení tipů" · **locked by premium** („Zapíná organizátor") | **World E** — premium with both visibility toggles off; all four matches, 5 / 6 / 3 / 0 tippers |
 | „Rozložení tipů" · **locked, buyable** (boost buy trigger) | **World D** — boosts, nobody owns one, dev user can afford it |
-| „Rozložení tipů" · **unlocked by an own boost** | **World A** — the dev user owns „Konkrétní tipy kolegů" |
+| „Rozložení tipů" · **unlocked by an own boost** | **World A** — the dev user owns „Přesné tipy soupeřů" |
+| Boost paywall · **both branches at once** (buy CTA *and* „Chybí kredity") | **World D** → „Získej výhody" on `/souteze/{TEAM_FILTER_COMPETITION_ID}` as `user@tipovacka.test`: the two cheaper boosts are affordable, **„Počkejte si na sestavy" (50 kr.) is not** — the dev wallet holds 49 kr. by construction (`DEV_USER_CREDIT_BALANCE`) |
 | Competition state **„Nadcházející"** | **World E** (the only one; A/B/D are Running, C is Finished) |
 | „Ukončeno" everything, incl. a resolved tie | **World C** |
 | Team-filter (`teams`) scope, „why is this match not in the competition" | **World D** |
@@ -574,6 +583,12 @@ deliberately. Six members, monetization **boosts**, and **nobody owns a boost**:
 canonical **buyable-locked** „Rozložení tipů" of the dev world (the dev user can afford it, so
 the strip renders the buy trigger, not the „chybí kredity" variant).
 
+It is therefore also the one place the **whole boost shop** shows both of its branches at
+once: „Získej výhody" on the competition detail offers „Jak tipují ostatní?" (15 kr.) and
+„Přesné tipy soupeřů" (35 kr.) with a buy CTA, and „Počkejte si na sestavy" (50 kr.) with
+„Dokoupit kredity" — because `DEV_USER_CREDIT_BALANCE` is one credit short of the dearest
+boost by construction (item 29).
+
 ### World E — „Vysočina – naše parta" · the soutěž that has NOT started
 `UPCOMING_SOURCE_ID` = `019aaaaa-0000-7000-8000-0000000000f4` ·
 `UPCOMING_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f5`
@@ -590,7 +605,7 @@ unreachable after a `db:reset` — this world exists for exactly those two (B23 
   It is also the only competition whose state is **„Nadcházející"**
   (`CompetitionStateFilter::Upcoming`).
 - **it is the LOCKED premium „Rozložení tipů".** Monetization **premium**, but the organizer
-  switched on only „Měnit tip" — `premiumShowDistribution` and `premiumShowOthersTips` are
+  switched on only „Počkejte si na sestavy" — `premiumShowDistribution` and `premiumShowOthersTips` are
   both **false**, so every match row renders the „Prémium · Zapíná organizátor" strip, for
   members *and* for the organizer (managers get no free pass, see `CompetitionEntitlements`).
   World B is the same surface with the toggles ON.

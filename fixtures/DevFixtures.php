@@ -191,12 +191,24 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     public const string TEAM_SLOVENSKO_ID = '019ddddd-0000-7000-8000-0000000ff002';
 
     /**
-     * Balance the primary dev user is LEFT with after the seeded spending: enough
-     * for either cheaper boost, deliberately short of „Měnit tip" so the
-     * insufficient-credits branch is one click away. Prices always come from
+     * Balance the primary dev user is LEFT with after the seeded spending:
+     * deliberately ONE credit short of the dearest boost („Počkejte si na
+     * sestavy"), which by construction still affords every cheaper one („Jak
+     * tipují ostatní?", „Přesné tipy soupeřů") — so BOTH halves of the boost
+     * paywall, the buy CTA and „Chybí kredity", are one click away after a plain
+     * `db:reset`.
+     *
+     * Derived from {@see PricingConfig::BOOST_TIP_CHANGE} rather than summed from
+     * the other prices ON PURPOSE. A sum silently drifts past the boost it is
+     * meant to fall short of the next time prices move — which is exactly what
+     * happened when item 23 re-set them (10/20/40 → 15/35/50) and the old
+     * `OTHERS_TIPS + TIP_DISTRIBUTION + 5` landed at 55 against a 50 kr. boost,
+     * making the insufficient-credits branch unreachable. „The dearest boost
+     * minus one credit" cannot: an integer price strictly below it stays
+     * affordable, and the boost itself never is. Prices always come from
      * {@see PricingConfig} — never a literal.
      */
-    public const int DEV_USER_CREDIT_BALANCE = PricingConfig::BOOST_OTHERS_TIPS + PricingConfig::BOOST_TIP_DISTRIBUTION + 5;
+    public const int DEV_USER_CREDIT_BALANCE = PricingConfig::BOOST_TIP_CHANGE - 1;
 
     /** Points a plan code is worth under the four default rules (see {@see guessFor}). */
     private const array PLAN_CODE_POINTS = ['e' => 10, 'o' => 3, 'h' => 1, 'm' => 0];
