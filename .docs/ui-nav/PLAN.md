@@ -51,6 +51,25 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 19 | [Competition detail: description, invite CTA, reorder, 5 matches, credits modal](items/19-page-competition-detail-pass.md) | DONE | `4a3d3a8` … `82eb31f` |
 | 20 | [Tips are revealed by the RESULT, not the deadline (all surfaces)](items/20-tip-matrix-visibility.md) | DONE | `9303b78` |
 | 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | DONE | `ed432eb` + `c9d6a56` |
+| 24 | [`/souteze` drops the three-`StatCard` row](items/24-souteze-drop-stat-cards.md) | DONE | `b0fbe7c` |
+| 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | IN PROGRESS | — |
+| 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | IN PROGRESS | — |
+| 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | IN PROGRESS | — |
+| 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | TODO — blocked on 22 | — |
+| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | TODO — blocked on 22 + 23 | — |
+
+**Round of 2026-07-30, second half.** Items 22–27 came from the product owner in one sitting, so they
+overlap heavily on three files — `templates/portal/competition/detail.html.twig`,
+`templates/components/Match/MatchRow.html.twig` and `assets/styles/app.css`. Item 22 owns all three,
+which is why 25 and 26 are **queued rather than dispatched**: they are small, and a fourth agent in
+those files is exactly how work gets swept. Ownership for this round:
+
+| Item | Owns |
+|---|---|
+| 22 | both match-detail controllers + templates, `SportMatchVoter`, `MatchRow`, `GuessSubmitForm`, `dashboard*`, `matches/index`, `competition/detail`, `styleguide` + `DesignStyleguideController`, `app.css`, `UI-MAP.md`, `competition-switcher.md` |
+| 23 | `BoostType`, `PricingConfig`, `PricingExtension`, `Boost/Panel`, `Match/TipStats`, `_boost_intro_modal`, `home`, `pricing`, `CreateWizard`, the ledger queries, `DOMAIN.md`, `CLAUDE.md` |
+| 27 | `invitation/landing.html.twig` + `tests/Integration/Invitation` |
+| orchestrator | `PLAN.md`, `BUGS.md`, `items/`, `screenshots/` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
