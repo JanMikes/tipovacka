@@ -29,12 +29,16 @@ chrome-free**: it extends `base` and renders the nav like every other page.
 
 | Variant | Primary links | Right-hand actions |
 |---|---|---|
-| `app` (logged in) | Nástěnka hráče → `dashboard` · Soutěže → `competitions_list` · Žebříček → `leaderboard` | Administrace (ROLE_ADMIN, desktop only) · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA → `competition_create` · avatar `<details>` dropdown (Profil / CreditBalance / Administrace / Odhlásit se) |
-| `public` (logged out) | Soutěže → `competitions_list` · Žebříček → `leaderboard` (item 05) | Přihlásit se · „Registrace zdarma" → `app_register` |
+| `app` (logged in) | Nástěnka hráče → `dashboard` · Soutěže → `competitions_list` · Žebříček → `leaderboard` | Administrace (ROLE_ADMIN, ≥640 px) · **`<twig:CreditBalance />` balance chip → `/kredity#dobit`** · `<twig:Notification:Bell />` · „Vytvořit soutěž" CTA (>900 px) · avatar `<details>` dropdown (>900 px: Profil / Kredity / Administrace / Odhlásit se) |
+| `public` (logged out) | Soutěže → `competitions_list` · Žebříček → `leaderboard` (item 05) | Přihlásit se (>420 px) · „Registrace zdarma" → `app_register` |
 
-Mobile: `mobile_nav_controller.js` toggles `.wt-mobile` panel which repeats the primary links
-plus Profil / Kredity / Administrace / Odhlásit se (logged in) or Přihlásit se / Registrace
-zdarma (logged out).
+Mobile: `mobile_nav_controller.js` toggles the `.wt-mobile` panel, which repeats the primary
+links plus Vytvořit soutěž / Profil / Kredity / Administrace / Odhlásit se (logged in) or
+Přihlásit se / Registrace zdarma (logged out). **The panel is where the bar's dropped actions
+live (item 17 / B20):** the bar shed the CTA labels at ≤1100 px (app variant), the avatar
+dropdown and „Vytvořit soutěž" at ≤900 px, and the wordmark plus „Přihlásit se" at ≤420 px —
+it did not fit 320 px before that (+53 px public, +7 px app). The exact link sets of both
+panels are pinned in `tests/Integration/Auth/NavigationTest`.
 
 Not in the bar (item 01 slim-down, both variants):
 - **Zápasy** (`matches`, `/zapasy`) — page kept, reachable by URL only.
@@ -49,7 +53,14 @@ Notable current quirks (candidates for this stream, not yet decided):
   an anonymous visitor (public list only) and a member (plays in / organizes / can join). Active
   state is computed from a `section` variable in `Nav.html.twig` — every `competition_*` route
   lights up „Soutěže", except `leaderboard*`, which belongs to „Žebříček".
-- „Kredity" only exists in the mobile menu and the avatar dropdown (via `CreditBalance`).
+- ~~„Kredity" only exists in the mobile menu and the avatar dropdown~~ **Fixed by item 17**:
+  the balance is a chip in the bar itself, linking to `/kredity#dobit` („Dobít kredity").
+  **`credits_buy` is POST-only** (the Stripe action), so nothing may link to it — a chip
+  pointing there would 405. `CreditBalance` renders exactly once per request and memoizes the
+  wallet read (3 SELECTs → 1).
+- The bell's panel is `.bell-panel` (app.css, nav section): an anchored 20rem dropdown above
+  900 px, a bar-wide sheet pinned to the **bar's** right edge below it (B18 — it used to be
+  pinned to the trigger, which sits mid-bar on a phone, so it ran off the left edge).
 - The admin area has **no link back** into the portal shell other than the brand mark.
 
 `base.html.twig` exposes `{% block meta_robots %}` (empty by default) so a page can de-index
@@ -374,7 +385,10 @@ Listed so item files can reference them; each becomes a decision only when the p
    is gone from the Nástěnka (a zdroj is an organizer object — it belongs to `/souteze` and the
    soutěž's Nastavení), and so are the PIN bar and „Objev další soutěže", which `/souteze` owns.
 4. ~~**Žebříček nav item is soutěž-scoped** but presented as global.~~ _(Item 05: `/zebricek` is a real page in both nav variants, scoped by `?soutez` and public for global competitions.)_
-5. **Kredity is hidden** — reachable only from the avatar dropdown / mobile menu.
+5. ~~**Kredity is hidden** — reachable only from the avatar dropdown / mobile menu.~~
+   **Fixed by item 17**: the balance is a chip in the top bar of every authenticated page and
+   one tap from „Dobít kredity". It is absent for anonymous visitors and absent on the
+   verification airlock (B14 stays chrome-free).
 6. **Admin is a separate shell** with no path back; „Administrace" lands on `/admin/turnaje`,
    which is arbitrary rather than an admin overview.
 7. **Match pages live under three different parents** (`/zapasy` the feed, `/zapasy/{id}` the

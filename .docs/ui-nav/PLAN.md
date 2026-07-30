@@ -46,14 +46,14 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | DONE | `287499c` |
 | 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | DONE | `6099926` |
 | 16 | [Homepage: a closing CTA that claims nothing, and no „MS 2026"](items/16-homepage-cta-and-ms2026.md) | DONE | `01e8dda` + `358884d` (tests) |
-| 17 | [App chrome: credits in the bar, simpler footer, B18 + B20](items/17-chrome-pass.md) | IN PROGRESS | — |
+| 17 | [App chrome: credits in the bar, simpler footer, B18 + B20](items/17-chrome-pass.md) | DONE | `09c9d21` + `90f7fb8` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B13–B17, B19 DONE · B10 **BLOCKED** (product decision) · B11/B12/B18/B20/B22/B23/B24 TODO |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B13–B20 DONE · B10 **BLOCKED** (product decision) · B11/B12/B21/B22/B23/B24 TODO |
 | [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->

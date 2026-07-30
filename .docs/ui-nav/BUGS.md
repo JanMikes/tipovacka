@@ -25,8 +25,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B15 | An invite-link sign-up loses the competition it was invited to | DONE | `26462b4` — never robust, not regressed |
 | B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | DONE | `05f0f67` — feature was reachable; a latent bug with the same symptom was fixed |
 | B17 | Browser offers to save the password before it is confirmed | DONE | `26462b4` |
-| B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
-| B20 | Public nav overflows the viewport at 320 px (**every** page, both nav variants) | TODO | — |
+| B18 | Notification dropdown overflows the viewport on mobile | DONE | `09c9d21` — right-alignment to the trigger, **not** B3's clipping |
+| B20 | Nav overflows the viewport at 320 px (every page, both variants) | DONE | `09c9d21` — three-tier degradation; 0 overflow 320→1920 px |
 | B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | TODO | — |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
