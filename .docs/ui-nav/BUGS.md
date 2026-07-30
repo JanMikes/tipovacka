@@ -18,7 +18,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
 | B9 | Team picker's create row shows English „Add …" | DONE | `d0b8bd4` |
 | B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **WONTFIX** — by design (product owner, 2026-07-30) | — |
-| B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | TODO | — |
+| B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | DONE | `6ee485a` |
 | B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
 | B13 | PIN and shareable-link boxes overflow their card on mobile | DONE | `77023fc` |
 | B14 | The verification airlock does not confine the user | DONE | `26462b4` — was **cosmetic**, the guard held |
@@ -28,7 +28,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B18 | Notification dropdown overflows the viewport on mobile | DONE | `09c9d21` — right-alignment to the trigger, **not** B3's clipping |
 | B20 | Nav overflows the viewport at 320 px (every page, both variants) | DONE | `09c9d21` — three-tier degradation; 0 overflow 320→1920 px |
 | B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
-| B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | TODO | — |
+| B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | DONE | `6ee485a` — was 0 of 7 competitions, now 1 (World E) |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | TODO | — |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
