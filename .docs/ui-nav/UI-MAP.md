@@ -130,7 +130,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competitions_list` | `/souteze` | `public/competitions_list.html.twig` — **public**, context-aware (see below) |
 | `competition_join_by_link` | `/souteze/pozvanka/{token}` | `invitation/landing.html.twig` — **public** |
 | `competition_create` | `/souteze/nova` | `portal/competition/create.html.twig` → `Competition:CreateWizard` Live Component (4 steps) |
-| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` — **a playing surface** since item 08: header (back link, eyebrow „zdroj · kolo", name + Live/Ukončeno/Tipy-uzamčeny pills, role badges, team-filter pills) + a 4-item action bar (**Nastavení** `competition_edit` · **Pozvat** `competition_manage_join_mechanics` · **Tipovat za členy** `competition_manage_members and not isGlobal` · **Uzamknout/Odemknout tipy** `competition_edit`) + the „Tipněte si všechny zápasy najednou" banner + the match list (one `Match:MatchRow` **card** per match — „Rozložení tipů" and the per-match uzávěrka live inside it since item 11) + an aside with the žebříček (real rows, „Celý žebříček" → `/zebricek?soutez=`) and `Boost:Panel` (sidebar heading „Získej výhody" since round 2). A plain member sees **no** action bar |
+| `competition_detail` | `/souteze/{id}` | `portal/competition/detail.html.twig` — **a playing surface** since item 08: header (back link, eyebrow „zdroj · kolo", name + Live/Ukončeno/Tipy-uzamčeny pills, role badges, team-filter pills) + a 4-item action bar (**Nastavení** `competition_edit` · **Pozvat** `competition_manage_join_mechanics` · **Tipovat za členy** `competition_manage_members and not isGlobal` · **Uzamknout/Odemknout tipy** `competition_edit`), then **ONE column** (item 19 dissolved the aside): **popis soutěže** (cap `Competition::DESCRIPTION_MAX_LENGTH` = 1000, escaped + `whitespace-pre-line`, renders **nothing** when empty) → **„Pozvat kamaráda"** → `/souteze/{id}/nastaveni#pozvanky`, same voter as „Pozvat" → the „Tipněte si všechny zápasy najednou" banner → **„Tabulka soutěže"** + the match list, **5 rows with „Načíst všechny zápasy (N)"** below → **Žebříček** (`#zebricek`, real rows, „Celý žebříček" → `/zebricek?soutez=`) → **`Boost:Panel`** (`#vylepseni`). The match list renders `Match:MatchRow` **`variant="dashboard"`** since item 19 — the product owner settled on one card design, so `/zapasy` is the only surface left on `default`. A plain member sees **no** action bar and no „Pozvat kamaráda". **First visit as a member of a `boosts` competition opens a `<dialog>` with the boost prices** (`_boost_intro_modal.html.twig` + `boost-intro` controller); dismissal is stamped on `Membership.boostIntroSeenAt` via `POST …/vylepseni/uvod/skryt`, and it is suppressed for a non-member, on premium/`none`, and on a fully-over competition (B6) |
 | `competition_settings` | `/souteze/{id}/nastaveni` | `portal/competition/settings.html.twig` — **everything organizer** (item 08): links to the large forms (upravit / pravidla / výběr zápasů · týmy / prémium + přepnout na příspěvky), the členové list (ranks, „Přidat e-mail", „Odebrat"), the **Pozvánky** block `#pozvanky` (e-mail, hromadně, bez e-mailu, PIN, sdílený odkaz + jejich obnovit/zrušit), read-only pravidla bodování, and „Nevratné kroky" (opustit / smazat). Page-level access = `competition_view`; every block is gated by its own voter, so a plain member sees the roster + pravidla and nothing else |
 | `competition_edit` | `/souteze/{id}/upravit` | `portal/competition/edit.html.twig` |
 | `competition_rules` | `/souteze/{id}/pravidla` | `portal/competition/rule_configuration.html.twig` |
@@ -150,7 +150,7 @@ prémium switch). Lock/unlock tips, join and leave/delete stay on the detail pag
 POST-only actions under `/souteze/{id}/` (no template): `…/pripojit-se` (join global),
 `…/opustit`, `…/smazat`, `…/uzamknout-tipy` (`lock_mode=now|at` + `lock_at`, B2),
 `…/odemknout-tipy` (also cancels a pending scheduled lock), `…/premium/zapnout`,
-`…/premium/prepnout-na-prispevky`, `…/vylepseni/koupit`, `…/pin/novy`, `…/pin/zrusit`,
+`…/premium/prepnout-na-prispevky`, `…/vylepseni/koupit`, `…/vylepseni/uvod/skryt`, `…/pin/novy`, `…/pin/zrusit`,
 `…/odkaz/novy`, `…/odkaz/zrusit`, `…/pozvanky/odeslat`, `…/pozvanky/hromadne`,
 `…/clenove/{userId}/odebrat`, `…/zapasy/{sportMatchId}/uzaverka`,
 `…/zapasy/{sportMatchId}/clenove/{memberId}/tip`, `…/spravovat-tipy/{memberId}`.
@@ -304,8 +304,9 @@ UNDER the card). There is no „Tipovat →" action any more: the fixture itself
 so a locked card is never a dead end
 
 Since item 18 the component has **two shapes, one `variant` prop**. `variant="default"` is the item 11
-card described above and is what `/zapasy` and competition detail render (unchanged, byte-for-byte).
-`variant="dashboard"` is the Nástěnka's card and **only** the Nástěnka's: a centred header (kolo · datum ·
+card described above and is what **`/zapasy`** renders — the only surface left on it.
+`variant="dashboard"` is rendered by the **Nástěnka and competition detail** (item 19, after the product
+owner settled on one design): a centred header (kolo · datum ·
 čas, state pill right-aligned — centred when it wraps to its own line on a phone), **mirrored** team blocks
 (home role-above-name, away name-above-role) around the **score, or „vs" when there is none — never a
 duplicated kickoff time**, and a full-width footer holding ONE thing: „Zadat tip" (a *styled* `<span>`, only
@@ -359,7 +360,12 @@ their template: `portal/_dashboard_match_row.html.twig`, `portal/_dashboard_lead
 `confirm_recalculation` · `copy` · `credit_amount` · `datepicker` · `orderable_list` ·
 `password_visibility` · `pin_input` · `reveal` · `score_entry` · `scorer_picker` ·
 `scoring_preset` · `team_filter` · `team_picker` · `tip_fill` · `tom_select` ·
-`competition_matches` · `wizard_matches`.
+`competition_matches` · `wizard_matches` · `boost_intro`.
+
+`reveal` **collapses, never hides** (B25): the server renders every item visible and the toggle `hidden`;
+the controller collapses to the first N on connect and unhides the button, and restores the server shape
+on disconnect. So JavaScript-off never removes content — it previously left the 6th+ match unreachable by
+any means. Both call sites (competition detail, Nástěnka) use it.
 
 `tom_select` is shared by all five pickers. Beyond the person shape (`nickname` / `fullName` /
 `unverified`) an option may carry plain `data-sub` / `data-meta` attributes — a second line and

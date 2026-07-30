@@ -30,7 +30,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | DONE | `6ee485a` — was 0 of 7 competitions, now 1 (World E) |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
-| B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | TODO | — |
+| B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
