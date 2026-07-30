@@ -1206,6 +1206,38 @@ measure at 1024 / 1280 / 1440 / 1600 px, where the two-column layout exists at a
 Note also, unchanged by B21 and not part of this: „Argentina" still ellipsizes at 430 px (70 of 82 px) in
 the single-column layout.
 
+### Decision (product owner, 2026-07-30): fix it, orchestrator's call on how
+
+> B26 - up to you, just make it not look buggy, the stats can be mock here, totally ok
+
+So the chip's **content stays** — invented figures inside a product mockup are explicitly fine
+(`ROUND2.md` batch 20 draws that line: fake numbers asserting things about the *business* are out,
+fake data inside a *picture of the product* is fine). Only the **position** is in scope.
+
+**„Not buggy" defined, so this is measurable rather than a matter of taste:**
+
+- A chip overlapping the card's **edge, corner or empty background** is the **intended** look — the other
+  two („+12 b Marek vystihl skóre" top-left, „+9 b Ana trefila výsledek" bottom-left) do exactly that and
+  read as designed. Do not remove or un-overlap them.
+- A chip overlapping **text, a team name, a team monogram coin, a score or a distribution bar** reads as
+  broken. That is the defect: `-right-6 top-[22%]` lands „1. MÍSTO 147 / 248" on the away team block.
+- So: **reposition the chip so it overlaps only card edge/background at every width where the two-column
+  layout exists** (≥ 1024 px). Below that the hero is one column and the chips behave differently — check
+  it, but the bug is the wide case.
+
+**Find the position by measuring, not by eye.** Candidate anchors will collide with different things —
+the card's top-right already carries „SKUPINA A · MD3" meta text, so straddling that corner trades one
+overlap for another. Test the options, pick the one with zero content overlap at 1024 / 1280 / 1440 /
+1600 px, and report the rects.
+
+**Check all three chips against the rule, not just this one.** B21 widened the card by ~130 px, which is
+what moved this chip onto content; the same widening may have brought the other two closer to something.
+Report their measurements too even if you change nothing.
+
+Keep it a `.glass` chip in the same visual language — this is a position change, not a redesign, and the
+hero's floating-chip look is deliberate (items 14 and 16 both protected it).
+
+
 ## B27 — the two paywall cards on match detail do not match, and the purchase confirm may not be firing
 
 Reported 2026-07-30 against `/zapasy/019fa008-7233-7603-b414-e0fb581541ef`:
