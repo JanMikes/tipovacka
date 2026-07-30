@@ -180,3 +180,56 @@ hard-codes anything) must agree with 15 / 35 / 50.
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. The index is shared mutable state and verifying it proves nothing. Push to
 `main`. Do not update the status board — report your sha and the orchestrator records it.
+
+---
+
+## Assumptions made
+
+Decisions the item file did not answer, taken the conservative way and recorded here.
+
+1. **The compact strip's label was renamed in all FIVE of its states, not the two lines the
+   item names.** The item points at `TipStats.html.twig` lines ~55 and ~174; the file actually
+   held **six** user-visible copies of „Rozložení tipů" — the `h2.eyebrow` of the full card plus
+   **five** `.tip-stats-eyebrow` spans (unlocked, locked-buyable, locked-no-credits, premium,
+   „zobrazí se po odehrání"). Renaming only the two the item cites would have left the *locked*
+   strip — the one a non-paying player actually sees — advertising the retired name. All six now
+   read „Jak tipují ostatní?".
+
+2. **`BoostType::description()` is verbatim; the panel keeps ONE dynamic branch.** The canonical
+   `TipChange` sentence promises „až 1 hodinu před začátkem zápasu", but the window is the
+   competition's own `tipChangeOffsetMinutes` (default 60, editable on the prémium settings page
+   and consumed by `EffectiveTipDeadlineResolver` for the BOOST path too). So `description()`
+   returns the string byte-for-byte (criterion 1), and `Boost/Panel.html.twig` renders it unless
+   the offset is **not** 60, in which case it renders the same sentence with the real offset
+   substituted. Replacing a false promise with a canonical one is not what „one copy everywhere"
+   is for.
+
+3. **The `Match:TipStats` confirm MESSAGE is `description()` + the transactional facts.** It used
+   to hand-write „Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „X"." The
+   descriptive half is now `description()` verbatim; the scope („Platí pro všechny zápasy v
+   soutěži „X"") and the price stay, because a booster is bought per competition and the enum
+   cannot know which one.
+
+4. **Names that can end in „?" are always quoted in generated sentences.** „Jak tipují ostatní?"
+   inside a sentence otherwise swallows the following clause. So `BoostNotAvailable::becauseSupersededByOthersTips`
+   became „Vylepšení „%s“ je už součástí vašeho vylepšení „%s“.", the panel's superset note became
+   „Obsahuje i „%s“." and the refund notification title became „Vylepšení vráceno: „%s“".
+
+5. **The prémium toggles carry the booster names** (`PremiumSettingsFormType`). They switch on
+   exactly these three boosters for everyone, and acceptance criterion 3 forbids the old names
+   anywhere in `src/`. The help texts (what changes for the MEMBERS) are unchanged.
+
+6. **`/kredity`'s own ledger now names the booster.** Criterion 4 lists it, but the row rendered
+   only „Nákup vylepšení" — `CreditTransactionItem::$boostType` was a `?string` nobody read. It is
+   now a `?BoostType` and the row renders „· {{ label }}", mirroring `/admin/kredity/transakce`.
+
+7. **Boost prose OUTSIDE the boost surfaces was updated too, from `BoostType::label()`:** the
+   admin monetization picker (`_monetization_choices.html.twig`, which listed „rozložení tipů,
+   konkrétní tipy nebo změna tipu během turnaje") and the create wizard's PRÉMIUM card bullets
+   (which said „Možnost měnit tip během turnaje"). Both are sales copy for the same three products.
+
+8. **Left alone deliberately:** the „Zobrazit rozložení tipů" jump CTA in the owned-boost panel row
+   and the lock-overlay teaser („Uvidíš, jak tipuje konkurence" + „Detailní rozpad tipů…"). The
+   first is a navigation verb, not a product name; the second varies per monetization
+   (boosts / prémium / none), so it cannot be one canonical sentence. „rozložení tipů" survives as
+   the lowercase descriptive phrase — it is inside the product owner's own sentence.

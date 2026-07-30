@@ -138,10 +138,11 @@ src/
   tipping shows only whether a member's tip is filled, never the scores.
 - **`Competition/TipVisibilityGate`** — composes the entitlement with the userless deadline: a
   viewer sees others' tips iff entitled OR past that match's deadline.
-- **`Competition/TipStatsProvider`** — batch-resolves the „Rozložení tipů" surface (bar when
-  entitled, locked buy-placeholder when not) for a whole page. Every match-listing template
+- **`Competition/TipStatsProvider`** — batch-resolves the „Jak tipují ostatní?" surface (bar
+  when entitled, locked buy-placeholder when not) for a whole page. Every match-listing template
   renders it via `<twig:Match:TipStats>`; **never resolve one per row** — the provider costs
-  O(competitions), the per-match query would be an N+1.
+  O(competitions), the per-match query would be an N+1. The surface and the booster that
+  unlocks it share ONE name, from `BoostType::label()` — see DOMAIN.md §Monetization.
 - **`EffectiveTipDeadlineResolver`** — per-match effective tip deadline: extend-only `max()` of
   competition lock / late-added kickoff / „Měnit tip" window / manager override.
 - **`Notification/Notifier`** — writes one `Notification` per delivery, honoring the user's

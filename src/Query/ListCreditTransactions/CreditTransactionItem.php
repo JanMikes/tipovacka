@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\ListCreditTransactions;
 
+use App\Enum\BoostType;
 use App\Enum\CreditPurchaseStatus;
 use App\Enum\CreditTransactionType;
 use Symfony\Component\Uid\Uuid;
@@ -21,7 +22,8 @@ final readonly class CreditTransactionItem
         public ?string $invoiceUrl,
         public ?string $invoicePdfUrl,
         public ?string $competitionName,
-        public ?string $boostType,
+        /** Which booster a `boost_purchase` / `boost_refund` row paid for — the row names it (item 23). */
+        public ?BoostType $boostType,
         public ?string $relatedUserName,
         public \DateTimeImmutable $createdAt,
     ) {

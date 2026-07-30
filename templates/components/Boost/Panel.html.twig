@@ -20,23 +20,11 @@
     {% set back = app.request.pathinfo %}
     {% set is_over = this.competitionIsOver %}
     {% set offset_label = p.tipChangeOffsetMinutes % 60 == 0 ? (p.tipChangeOffsetMinutes // 60) ~ ' h' : p.tipChangeOffsetMinutes ~ ' min' %}
-    {# The superset note names the included boost from BoostType::label() — one
-       source for the name, so the confirm copy cannot drift (item 12). #}
+    {# Item 23 — there is exactly ONE name and ONE sentence per booster and both
+       come from BoostType (label()/description()); the panel writes no boost prose
+       of its own, so no surface can drift from the shop again. The superset note
+       names the included booster the same way. #}
     {% set dist_boost_label = constant('App\\Enum\\BoostType::TipDistribution').label %}
-    {# ROUND2 decision 2 — these headlines/pitches are PANEL COPY ONLY: a marketing
-       label above the product, never a rename. The canonical BoostType::label()
-       names („Rozložení tipů ostatních" / „Konkrétní tipy kolegů" / „Měnit tip
-       během turnaje", item 12) keep the confirm dialog, the prémium toggles,
-       /cenik and the credit ledger. #}
-    {% set boost_headlines = {
-        tip_distribution: 'Jak tipují ostatní?',
-        others_tips: 'Přesné tipy soupeřů',
-        tip_change: 'Počkejte si na sestavy',
-    } %}
-    {% set boost_pitches = {
-        tip_distribution: 'Odemkněte procentuální rozložení tipů 1 / X / 2 ostatních hráčů ve vaší soutěži. Konkrétní tipy zůstávají skryté.',
-        others_tips: 'Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži.',
-    } %}
     {# Owned benefits jump to the surface they unlocked (item 08). #}
     {% set jump_targets = {
         tip_distribution: {url: path('competition_detail', {id: competition.id.toRfc4122}) ~ '#zapasy', label: 'Zobrazit rozložení tipů'},
@@ -70,13 +58,16 @@
                         <div class="px-6 py-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-white">{{ boost_headlines[type.value] }}</p>
+                                    <p class="text-sm font-bold text-white">{{ type.label }}</p>
                                     <p class="mt-0.5 text-[12px] leading-snug text-white/55">
-                                        {% if type.value == 'tip_change' %}
-                                            {# The offset is prémium-configurable, so the promise is rendered, never hard-coded. #}
+                                        {% if type.value == 'tip_change' and p.tipChangeOffsetMinutes != 60 %}
+                                            {# The change window is this competition's own tipChangeOffsetMinutes.
+                                               At the default 60 min BoostType::description() is exact; moved off
+                                               the default, its „1 hodinu" would be false — so the SAME sentence is
+                                               rendered with the real offset instead of a wrong canonical one. #}
                                             Chcete si počkat na soupisky? Odemkněte si možnost upravit své tipy až {{ offset_label }} před začátkem zápasu.
                                         {% else %}
-                                            {{ boost_pitches[type.value] }}
+                                            {{ type.description }}
                                         {% endif %}
                                     </p>
                                 </div>
@@ -109,7 +100,7 @@
                                             data-controller="confirm"
                                             data-confirm-variant-value="warning"
                                             data-confirm-title-value="Koupit „{{ type.label }}“"
-                                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
+                                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i „' ~ dist_boost_label ~ '“.' }}"
                                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
                                             <input type="hidden" name="type" value="{{ type.value }}">
@@ -147,11 +138,11 @@
             </section>
         {% endif %}
     {% else %}
-        {# ═════════ Locked paywall („Konkrétní tipy kolegů") ═════════ #}
+        {# ═════════ Locked paywall („Přesné tipy soupeřů") ═════════ #}
         {% set type = this.featureType %}
         {% if shape == 'bare' %}
             {# B27 — BARE shape: the control only, in the same gold vocabulary the
-               „Rozložení tipů" paywall uses (`.dist-unlock`), so a caller that
+               „Jak tipují ostatní?" paywall uses (`.dist-unlock`), so a caller that
                already draws the card + blurred skeleton + lock coin gets ONE
                treatment instead of a second, differently-styled panel inside its
                own. Pricing, affordability and B6 „soutěž už skončila" stay here —
@@ -164,7 +155,7 @@
                     data-controller="confirm"
                     data-confirm-variant-value="warning"
                     data-confirm-title-value="Odemknout „{{ type.label }}“"
-                    data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
+                    data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i „' ~ dist_boost_label ~ '“.' }}"
                     data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                     <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
                     <input type="hidden" name="type" value="{{ type.value }}">
@@ -198,7 +189,7 @@
                         <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
                     </span>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-white">Odemkněte konkrétní tipy kolegů</h3>
+                        <h3 class="text-sm font-bold text-white">{{ type.label }}</h3>
                         <p class="mt-1 text-[12px] leading-snug text-white/55">{{ type.description }}</p>
                     </div>
                 </div>
@@ -210,7 +201,7 @@
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Odemknout „{{ type.label }}“"
-                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
+                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i „' ~ dist_boost_label ~ '“.' }}"
                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
                             <input type="hidden" name="type" value="{{ type.value }}">

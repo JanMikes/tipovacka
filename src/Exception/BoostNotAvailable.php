@@ -34,8 +34,10 @@ final class BoostNotAvailable extends \DomainException
 
     public static function becauseSupersededByOthersTips(): self
     {
+        // Both names are quoted: since item 23 a booster name may END in a question
+        // mark („Jak tipují ostatní?"), so an unquoted one would break the sentence.
         return new self(sprintf(
-            '%s je už součástí vašeho vylepšení „%s“.',
+            'Vylepšení „%s“ je už součástí vašeho vylepšení „%s“.',
             BoostType::TipDistribution->label(),
             BoostType::OthersTips->label(),
         ));

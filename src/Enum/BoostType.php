@@ -30,21 +30,37 @@ enum BoostType: string
         };
     }
 
+    /**
+     * The ONE name of this booster, used by every surface without exception —
+     * shop row, confirm dialog, paywall, intro modal, wizard, /cenik, the credit
+     * ledger and the refund notification (item 23). There is deliberately no
+     * second „marketing headline" layer any more: a booster that reads
+     * differently where it is sold and where it is charged reads as two products.
+     */
     public function label(): string
     {
         return match ($this) {
-            self::TipDistribution => 'Rozložení tipů ostatních',
-            self::OthersTips => 'Konkrétní tipy kolegů',
-            self::TipChange => 'Měnit tip během turnaje',
+            self::TipDistribution => 'Jak tipují ostatní?',
+            self::OthersTips => 'Přesné tipy soupeřů',
+            self::TipChange => 'Počkejte si na sestavy',
         };
     }
 
+    /**
+     * The ONE sentence describing this booster. No surface may hand-write its own
+     * prose about a booster; it renders this instead.
+     *
+     * Note on {@see self::TipChange}: the window is the competition's own
+     * `tipChangeOffsetMinutes` (default 60), so a competition that moved it off
+     * the default needs the offset substituted — {@see \App\Query\GetBoostPanel\GetBoostPanelResult::$tipChangeOffsetMinutes}
+     * and the one branch in `Boost/Panel.html.twig` that uses it.
+     */
     public function description(): string
     {
         return match ($this) {
-            self::TipDistribution => 'Uvidíte anonymní procenta, jak tipovali ostatní hráči (1 / X / 2).',
-            self::OthersTips => 'Uvidíte konkrétní tipy soutěžících v partičce. Obsahuje i Rozložení tipů ostatních.',
-            self::TipChange => 'Můžete měnit svůj tip až do nastaveného času před začátkem zápasu.',
+            self::TipDistribution => 'Odemkněte procentuální rozložení tipů 1 / X / 2 ostatních hráčů ve vaší soutěži. Konkrétní tipy zůstávají skryté.',
+            self::OthersTips => 'Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži.',
+            self::TipChange => 'Chcete si počkat na soupisky? Odemkněte si možnost upravit své tipy až 1 hodinu před začátkem zápasu.',
         };
     }
 }

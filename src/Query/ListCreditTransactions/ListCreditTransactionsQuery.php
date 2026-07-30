@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\ListCreditTransactions;
 
 use App\Entity\CreditTransaction;
+use App\Enum\BoostType;
 use App\Repository\CreditTransactionRepository;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -35,7 +36,7 @@ final readonly class ListCreditTransactionsQuery
                 invoiceUrl: $t->purchase?->stripeInvoiceUrl,
                 invoicePdfUrl: $t->purchase?->stripeInvoicePdfUrl,
                 competitionName: $t->competition?->name,
-                boostType: $t->boostType,
+                boostType: null !== $t->boostType ? BoostType::tryFrom($t->boostType) : null,
                 relatedUserName: $t->relatedUser?->displayName,
                 createdAt: $t->createdAt,
             ),

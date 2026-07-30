@@ -49,14 +49,14 @@ the ledger — no Stripe call. Every movement is a typed `CreditTransaction` (en
 
 All in-app prices are constants in **`App\Service\Credits\PricingConfig`** (1 credit = 1 Kč).
 Never scatter these literals — read them from the class (or the `PricingExtension` Twig
-helper). Current values (locked, DOMAIN.md decision log 2026-07-18):
+helper). Current values (locked, DOMAIN.md decision log 2026-07-18; boost prices re-set 2026-07-30):
 
 | Constant | Value | Meaning |
 |---|---|---|
 | `PREMIUM_PER_PLAYER` | 10 | Premium: charged to the manager per player, at each join |
-| `BOOST_TIP_DISTRIBUTION` | 10 | Boost „Rozložení tipů ostatních" (anonymous distribution bar) |
-| `BOOST_OTHERS_TIPS` | 20 | Boost „Konkrétní tipy kolegů" (superset — includes the bar) |
-| `BOOST_TIP_CHANGE` | 40 | Boost „Měnit tip během turnaje" |
+| `BOOST_TIP_DISTRIBUTION` | 15 | Boost „Jak tipují ostatní?" (anonymous distribution bar) |
+| `BOOST_OTHERS_TIPS` | 35 | Boost „Přesné tipy soupeřů" (superset — includes the bar) |
+| `BOOST_TIP_CHANGE` | 50 | Boost „Počkejte si na sestavy" |
 | `LOW_BALANCE_WARNING_THRESHOLD` | 50 | Warn a premium manager below ~5 players' worth |
 
 ## Environment variables

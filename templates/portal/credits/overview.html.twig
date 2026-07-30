@@ -102,6 +102,9 @@
                                     <td class="tx-when py-3 text-white/70" data-label="Datum">{{ tx.createdAt|date('d. m. Y H:i') }}</td>
                                     <td class="tx-what py-3">
                                         <span class="font-medium text-white">{{ tx.type.label }}</span>
+                                        {# A booster row names the booster it paid for, with the same
+                                           BoostType::label() the shop and the admin ledger use (item 23). #}
+                                        {% if tx.boostType %}<span class="text-white/50"> · {{ tx.boostType.label }}</span>{% endif %}
                                         {% if tx.competitionName %}
                                             <p class="mt-0.5 text-xs leading-relaxed text-white/50">Soutěž: {{ tx.competitionName }}</p>
                                         {% endif %}

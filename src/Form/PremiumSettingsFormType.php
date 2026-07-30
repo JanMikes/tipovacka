@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Enum\BoostType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -17,20 +18,23 @@ final class PremiumSettingsFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // The prémium toggles switch on exactly the three boosters, for everyone —
+        // so they carry the boosters' ONE canonical name (item 23). The help text
+        // says what changes for the MEMBERS, which is the organizer's question.
         $builder->add('showDistribution', CheckboxType::class, [
-            'label' => 'Rozložení tipů ostatních',
+            'label' => BoostType::TipDistribution->label(),
             'required' => false,
             'help' => 'Členové uvidí anonymní přehled, jak tipuje skupina (bez jmen).',
         ]);
 
         $builder->add('showOthersTips', CheckboxType::class, [
-            'label' => 'Konkrétní tipy kolegů',
+            'label' => BoostType::OthersTips->label(),
             'required' => false,
-            'help' => 'Členové uvidí jmenovité tipy ostatních. Zahrnuje i Rozložení tipů.',
+            'help' => sprintf('Členové uvidí jmenovité tipy ostatních. Zahrnuje i „%s“.', BoostType::TipDistribution->label()),
         ]);
 
         $builder->add('allowTipChanges', CheckboxType::class, [
-            'label' => 'Měnit tip během turnaje',
+            'label' => BoostType::TipChange->label(),
             'required' => false,
             'help' => 'Členové mohou měnit tip až do nastaveného předstihu před začátkem každého zápasu.',
         ]);

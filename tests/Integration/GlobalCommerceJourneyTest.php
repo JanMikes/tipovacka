@@ -47,7 +47,7 @@ use Symfony\Component\Uid\Uuid;
  *
  * Part A: admin builds a curated football source + a global competition with a
  * 50-credit entry fee and boosts monetization; a user buys credits (fake gateway),
- * pays the entry fee, buys the „Konkrétní tipy kolegů" boost, and is then entitled
+ * pays the entry fee, buys the „Přesné tipy soupeřů" boost, and is then entitled
  * to see others' concrete tips. Asserts the exact ledger (purchase → entry_fee →
  * boost_purchase) and balances.
  *
@@ -121,7 +121,7 @@ final class GlobalCommerceJourneyTest extends IntegrationTestCase
         $entitlements = self::getContainer()->get(CompetitionEntitlements::class);
         self::assertFalse($entitlements->isEntitledToOthersTips($this->competition($competitionId), $this->user($userId)));
 
-        // 5) The user buys the OthersTips boost (20; superset — also the bar).
+        // 5) The user buys the OthersTips boost (superset — also the distribution bar).
         $bus->dispatch(new PurchaseBoostCommand(userId: $userId, competitionId: $competitionId, type: BoostType::OthersTips));
         self::assertSame(100 - 50 - PricingConfig::BOOST_OTHERS_TIPS, $this->balanceOf($userId));
 
@@ -146,8 +146,8 @@ final class GlobalCommerceJourneyTest extends IntegrationTestCase
         self::assertSame(-50, $ledger[1]->amount);
         self::assertSame(50, $ledger[1]->balanceAfter);
         self::assertSame(CreditTransactionType::BoostPurchase, $ledger[2]->type);
-        self::assertSame(-20, $ledger[2]->amount);
-        self::assertSame(30, $ledger[2]->balanceAfter);
+        self::assertSame(-PricingConfig::BOOST_OTHERS_TIPS, $ledger[2]->amount);
+        self::assertSame(50 - PricingConfig::BOOST_OTHERS_TIPS, $ledger[2]->balanceAfter);
     }
 
     public function testUserPremiumUnderfundedDowngradesRefundsAndNotifies(): void

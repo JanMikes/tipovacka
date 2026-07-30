@@ -14,6 +14,7 @@ use App\Enum\BoostType;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
 use App\Event\BoostRefunded;
+use App\Service\Credits\PricingConfig;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
@@ -88,7 +89,9 @@ final class BoostPurchaseTest extends TestCase
         self::assertTrue($boost->isActive);
         self::assertNull($boost->refundedAt);
         self::assertSame(BoostType::OthersTips, $boost->type);
-        self::assertSame(20, $boost->pricePaid);
+        // The price is whatever PricingConfig says today — the entity's job is to
+        // record what was charged, not to know a number.
+        self::assertSame(PricingConfig::BOOST_OTHERS_TIPS, $boost->pricePaid);
         self::assertCount(0, $boost->popEvents());
     }
 
@@ -107,7 +110,7 @@ final class BoostPurchaseTest extends TestCase
         self::assertSame(AppFixtures::BOOSTS_COMPETITION_ID, $events[0]->competitionId->toRfc4122());
         self::assertSame(AppFixtures::VERIFIED_USER_ID, $events[0]->userId->toRfc4122());
         self::assertSame('others_tips', $events[0]->boostType);
-        self::assertSame(20, $events[0]->amount);
+        self::assertSame(PricingConfig::BOOST_OTHERS_TIPS, $events[0]->amount);
     }
 
     public function testRefundIsIdempotent(): void

@@ -160,11 +160,16 @@
         </div>
 
         <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {# Item 23 — the boosters name and describe themselves from BoostType, so
+               the Ceník can never advertise copy the app no longer uses. #}
+            {% set dist_boost = constant('App\\Enum\\BoostType::TipDistribution') %}
+            {% set others_boost = constant('App\\Enum\\BoostType::OthersTips') %}
+            {% set change_boost = constant('App\\Enum\\BoostType::TipChange') %}
             {% set credit_prices = [
                 { title: 'Vstupné do soutěže', price: 'dle soutěže', note: 'Určuje organizátor, 0 = zdarma. Jednorázově při připojení.' },
                 { title: 'Prémium za hráče', price: pricing.premiumPerPlayer ~ ' kr.', note: 'Organizátor zaplatí za každého hráče a odemkne funkce všem.' },
-                { title: 'Rozložení tipů ostatních', price: pricing.boostTipDistribution ~ ' kr.', note: 'Anonymní rozložení tipů ostatních hráčů.' },
-                { title: 'Konkrétní tipy kolegů', price: pricing.boostOthersTips ~ ' kr.', note: 'Uvidíte, kdo co tipnul (obsahuje i rozložení tipů).' },
+                { title: dist_boost.label, price: pricing.boostTipDistribution ~ ' kr.', note: dist_boost.description },
+                { title: others_boost.label, price: pricing.boostOthersTips ~ ' kr.', note: others_boost.description },
             ] %}
             {% for cp in credit_prices %}
                 <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
@@ -176,7 +181,7 @@
         </div>
 
         <p class="mt-5 text-sm text-white/50">
-            Chcete měnit tip i během turnaje? Vylepšení „Měnit tip během turnaje“ vyjde na {{ pricing.boostTipChange }}&nbsp;kreditů za soutěž.
+            Chcete si počkat na soupisky? Vylepšení „{{ change_boost.label }}“ vyjde na {{ pricing.boostTipChange }}&nbsp;kreditů za soutěž.
         </p>
     </div>
 </section>

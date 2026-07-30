@@ -386,10 +386,12 @@
                                 Zaplatím za celou skupinu
                             </span>
                             <span class="mt-1 text-[13px] text-white/60">{{ premiumPerPlayer }} kreditů × počet hráčů, zaúčtováno při připojení.</span>
+                            {# Prémium switches the boosters on for everyone, so it names them
+                               with their ONE canonical name from BoostType::label() (item 23). #}
                             <ul class="mt-3 space-y-1.5 text-[13px] text-white/70">
-                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Rozložení i konkrétní tipy pro všechny</li>
+                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />„{{ constant('App\\Enum\\BoostType::TipDistribution').label }}“ i „{{ constant('App\\Enum\\BoostType::OthersTips').label }}“ pro všechny</li>
                                 <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Stejná uzávěrka pro celou skupinu</li>
-                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />Možnost měnit tip během turnaje</li>
+                                <li class="flex items-start gap-2"><twig:ux:icon name="lucide:check-check" class="mt-0.5 h-4 w-4 shrink-0 text-win" />„{{ constant('App\\Enum\\BoostType::TipChange').label }}“ pro všechny</li>
                             </ul>
                         </label>
 

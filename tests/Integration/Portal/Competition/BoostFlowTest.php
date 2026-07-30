@@ -84,9 +84,9 @@ final class BoostFlowTest extends WebTestCase
 
         self::assertSelectorTextContains('body', 'Získej výhody');
         // SECOND_VERIFIED_USER owns OthersTips (fixture) → shown as active, not buyable.
-        // The panel row carries the marketing HEADLINE (ROUND2 decision 2); the canonical
-        // BoostType::label() name lives in the confirm dialog / ledger / cenik.
-        self::assertSelectorTextContains('body', 'Přesné tipy soupeřů');
+        // Item 23: ONE name per booster — the panel row, the confirm dialog, the ledger
+        // and /cenik all render BoostType::label(), so this is the only name there is.
+        self::assertSelectorTextContains('body', BoostType::OthersTips->label());
 
         // The tip_change boost is buyable (affordable) → a purchase form is present.
         $forms = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]');
@@ -233,7 +233,7 @@ final class BoostFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $stretched = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] button[data-confirm-target="stretch"]');
-        self::assertCount(2, $stretched, 'Both full paywall cards („Rozložení tipů" + „Pořadí za zápas") must offer the whole-card target.');
+        self::assertCount(2, $stretched, 'Both full paywall cards („Jak tipují ostatní?" + „Pořadí za zápas") must offer the whole-card target.');
 
         foreach ($stretched as $node) {
             self::assertInstanceOf(\DOMElement::class, $node);

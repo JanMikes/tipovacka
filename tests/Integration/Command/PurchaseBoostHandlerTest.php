@@ -103,7 +103,8 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
     public function testHappyPathWritesOneLedgerRowAndOneBoostRow(): void
     {
         // SECOND_VERIFIED_USER is a member (already owns OthersTips); buys the
-        // distinct TipChange boost (40).
+        // distinct TipChange boost. Every amount below derives from PricingConfig —
+        // a price change must not need this file edited.
         $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
 
         $this->purchase(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::BOOSTS_COMPETITION_ID, BoostType::TipChange);
@@ -115,13 +116,13 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
 
         $ledger = $this->boostLedger(AppFixtures::BOOSTS_COMPETITION_ID);
         self::assertCount(1, $ledger);
-        self::assertSame(-40, $ledger[0]->amount);
+        self::assertSame(-PricingConfig::BOOST_TIP_CHANGE, $ledger[0]->amount);
         self::assertSame('tip_change', $ledger[0]->boostType);
         self::assertNotNull($ledger[0]->competition);
         self::assertSame(AppFixtures::BOOSTS_COMPETITION_ID, $ledger[0]->competition->id->toRfc4122());
         self::assertNull($ledger[0]->relatedUser);
 
-        self::assertSame(60, $this->balance(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertSame(100 - PricingConfig::BOOST_TIP_CHANGE, $this->balance(AppFixtures::SECOND_VERIFIED_USER_ID));
     }
 
     public function testWrongMonetizationIsBlocked(): void
@@ -186,8 +187,12 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
         $this->entityManager()->clear();
 
         self::assertCount(2, $this->activeBoosts(AppFixtures::VERIFIED_USER_ID, AppFixtures::BOOSTS_COMPETITION_ID));
-        // Full prices: 10 + 20 = 30 spent (no differential discount).
-        self::assertSame(70, $this->balance(AppFixtures::VERIFIED_USER_ID));
+        // Both full prices are spent — no differential discount for already owning
+        // the cheaper one.
+        self::assertSame(
+            100 - PricingConfig::BOOST_TIP_DISTRIBUTION - PricingConfig::BOOST_OTHERS_TIPS,
+            $this->balance(AppFixtures::VERIFIED_USER_ID),
+        );
     }
 
     public function testTipDistributionWhileOwningOthersTipsIsBlockedBySuperset(): void
@@ -239,12 +244,12 @@ final class PurchaseBoostHandlerTest extends IntegrationTestCase
         $this->entityManager()->clear();
 
         self::assertCount(1, $this->activeBoosts(AppFixtures::ADMIN_ID, AppFixtures::BOOSTS_COMPETITION_ID));
-        self::assertSame(60, $this->balance(AppFixtures::ADMIN_ID));
+        self::assertSame(100 - PricingConfig::BOOST_TIP_CHANGE, $this->balance(AppFixtures::ADMIN_ID));
     }
 
     public function testInsufficientCreditsWritesNoRow(): void
     {
-        // SECOND_VERIFIED_USER has balance 0 — cannot afford TipChange (40).
+        // SECOND_VERIFIED_USER has balance 0 — cannot afford TipChange at any price.
         try {
             $this->purchase(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::BOOSTS_COMPETITION_ID, BoostType::TipChange);
             self::fail('Expected InsufficientCredits.');

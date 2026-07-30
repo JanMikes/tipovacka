@@ -54,8 +54,15 @@ final class GuessMatrixVisibilityTest extends WebTestCase
     /** The unentitled viewer's OWN tip on the LIVE match — always readable. */
     private const string OWN_LIVE_TIP = '6:2';
 
-    /** Headline of `Boost:Panel`'s INLINE shape — the tip matrix's whole paywall. */
-    private const string CTA_HEADLINE = 'Odemkněte konkrétní tipy kolegů';
+    /**
+     * Headline of `Boost:Panel`'s INLINE shape — the tip matrix's whole paywall.
+     * Item 23: it IS the booster's one canonical name, so it is read from the enum
+     * rather than transcribed (a transcription is how a surface drifts from the shop).
+     */
+    private static function ctaHeadline(): string
+    {
+        return BoostType::OthersTips->label();
+    }
 
     /**
      * Match detail composes the same paywall differently since B27: the card, the
@@ -99,7 +106,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
             $body,
             'The LIVE match is not „odehráno": another member\'s tip must be absent from the MARKUP.',
         );
-        self::assertStringContainsString(self::CTA_HEADLINE, $body);
+        self::assertStringContainsString(self::ctaHeadline(), $body);
     }
 
     /**
@@ -147,7 +154,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
 
         self::assertStringContainsString(self::OWN_LIVE_TIP, $body, 'The boost reveals the live column too.');
         self::assertStringContainsString(self::OTHERS_FINISHED_TIP, $body);
-        self::assertStringNotContainsString(self::CTA_HEADLINE, $body, 'Nothing is hidden ⇒ no paywall.');
+        self::assertStringNotContainsString(self::ctaHeadline(), $body, 'Nothing is hidden ⇒ no paywall.');
     }
 
     /**
@@ -173,7 +180,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $body = self::body($client);
 
         self::assertStringNotContainsString(self::OTHERS_LIVE_TIP, $body);
-        self::assertStringContainsString(self::CTA_HEADLINE, $body, 'The organizer buys like anybody else.');
+        self::assertStringContainsString(self::ctaHeadline(), $body, 'The organizer buys like anybody else.');
     }
 
     /** State 4 — a signed-in NON-member is refused outright. Unchanged. */
@@ -253,7 +260,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $body = self::body($client);
 
         self::assertStringContainsString(self::OTHERS_FINISHED_TIP, $body);
-        self::assertStringNotContainsString(self::CTA_HEADLINE, $body);
+        self::assertStringNotContainsString(self::ctaHeadline(), $body);
         self::assertStringNotContainsString('Odemknout za', $body);
     }
 

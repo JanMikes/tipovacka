@@ -47,7 +47,7 @@ final readonly class NotifyBoostRefundedHandler
         $this->notifier->notify(
             user: $buyer,
             type: NotificationType::BoostRefunded,
-            title: sprintf('Vylepšení vráceno: %s', $boostLabel),
+            title: sprintf('Vylepšení vráceno: „%s“', $boostLabel),
             body: sprintf('Vaše vylepšení „%s" v soutěži %s bylo vráceno zpět do peněženky (%d kr.), protože soutěž přešla na prémium.', $boostLabel, $competition->name, $event->amount),
             url: $url,
             competition: $competition,

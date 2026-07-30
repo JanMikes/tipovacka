@@ -76,7 +76,7 @@ Contract:
 ```twig
 <form method="post" action="…" data-controller="confirm" …>
     <input type="hidden" name="_token" value="…">
-    <button type="submit" class="dist-unlock card-raise">Odemknout za 10 kr.</button>
+    <button type="submit" class="dist-unlock card-raise">Odemknout za 15 kr.</button>
     <button type="submit" data-confirm-target="stretch" class="card-stretch" hidden>Odemknout …</button>
 </form>
 ```

@@ -1,5 +1,5 @@
 {#
-    „Rozložení tipů" for one match inside one soutěž — the SINGLE surface used by
+    „Jak tipují ostatní?" for one match inside one soutěž — the SINGLE surface used by
     every match list. Renders off a prepared App\Value\TipStats (built in bulk by
     App\Service\Competition\TipStatsProvider — never resolve one per row):
 
@@ -15,7 +15,7 @@
       compact     bool         true = the strip that lives INSIDE a match card
                                (item 11 — below the divider of `Match/MatchRow`;
                                it must never be placed on its own again), default,
-                               false = the full „Rozložení tipů" card (item 10),
+                               false = the full „Jak tipují ostatní?" card (item 10),
                                with labelled bars carrying an absolute count AND a
                                percentage, and a paywalled twin behind a lock coin
 
@@ -23,9 +23,13 @@
 #}
 {% props stats, homeTeam = null, awayTeam = null, compact = true %}
 
-{# The boost that unlocks this surface names itself — BoostType::label() is the
-   single source, so the paywall can never drift from the shop again (item 12). #}
-{% set dist_boost_label = constant('App\\Enum\\BoostType::TipDistribution').label %}
+{# The boost that unlocks this surface names AND describes itself — BoostType is
+   the single source for both, so the paywall can never drift from the shop again
+   (items 12 + 23). The competition scope and the price are transactional context
+   the enum cannot know, so they stay here. #}
+{% set dist_boost = constant('App\\Enum\\BoostType::TipDistribution') %}
+{% set dist_boost_label = dist_boost.label %}
+{% set dist_boost_description = dist_boost.description %}
 
 {% if not compact %}
     {# ═════════ Full card (match detail) ═════════ #}
@@ -52,7 +56,7 @@
                 {% else %}
                     <twig:Pill label="Zamčeno" variant="locked" icon="lock" />
                 {% endif %}
-                <h2 class="eyebrow">Rozložení tipů</h2>
+                <h2 class="eyebrow">Jak tipují ostatní?</h2>
             </div>
 
             {% if not stats.visible and stats.purchasable %}
@@ -63,7 +67,7 @@
                           data-controller="confirm"
                           data-confirm-variant-value="warning"
                           data-confirm-title-value="Odemknout „{{ dist_boost_label }}“"
-                          data-confirm-message-value="Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
+                          data-confirm-message-value="{{ dist_boost_description }} Platí pro všechny zápasy v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
                           data-confirm-confirm-label-value="Koupit za {{ stats.price }} kr.">
                         <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">
                         <input type="hidden" name="type" value="tip_distribution">
@@ -171,7 +175,7 @@
         {# ───────── Unlocked: the actual split ───────── #}
         <div class="tip-stats-open">
             <div class="tip-stats-head">
-                <p class="tip-stats-eyebrow">Rozložení tipů</p>
+                <p class="tip-stats-eyebrow">Jak tipují ostatní?</p>
                 <span class="tip-stats-count">{{ players }}</span>
             </div>
             <div class="dist-pcts">
@@ -195,7 +199,7 @@
                   data-controller="confirm"
                   data-confirm-variant-value="warning"
                   data-confirm-title-value="Odemknout „{{ dist_boost_label }}“"
-                  data-confirm-message-value="Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
+                  data-confirm-message-value="{{ dist_boost_description }} Platí pro všechny zápasy v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
                   data-confirm-confirm-label-value="Koupit za {{ stats.price }} kr.">
                 <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">
                 <input type="hidden" name="type" value="tip_distribution">
@@ -203,7 +207,7 @@
                 <button type="submit" class="tip-stats-locked group">
                     <span class="tip-stats-head">
                         <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
-                        <span class="tip-stats-eyebrow">Rozložení tipů</span>
+                        <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
                         <span class="tip-stats-note">
                             <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                             <span class="tip-stats-teaser">{{ teaser }}</span>
@@ -220,7 +224,7 @@
             <a href="{{ path('credits') }}" class="tip-stats-locked group">
                 <span class="tip-stats-head">
                     <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
-                    <span class="tip-stats-eyebrow">Rozložení tipů</span>
+                    <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
                     <span class="tip-stats-note">
                         <span class="tip-stats-lock"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                         <span class="tip-stats-teaser">{{ teaser }}</span>
@@ -239,7 +243,7 @@
         <div class="tip-stats-locked is-premium">
             <span class="tip-stats-head">
                 <span class="pill pill-warn"><twig:ux:icon name="lucide:crown" class="h-3 w-3" />Prémium</span>
-                <span class="tip-stats-eyebrow">Rozložení tipů</span>
+                <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
                 <span class="tip-stats-note">
                     <span class="tip-stats-lock is-premium"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                     <span class="tip-stats-teaser">{{ teaser }}</span>
@@ -253,7 +257,7 @@
         {# ───────── Locked, nothing to sell: it opens once the match is played ───────── #}
         <div class="tip-stats-locked is-muted">
             <span class="tip-stats-head">
-                <span class="tip-stats-eyebrow">Rozložení tipů</span>
+                <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
                 <span class="tip-stats-note">
                     <span class="tip-stats-lock is-muted"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                     <span class="tip-stats-teaser">Zobrazí se po odehrání</span>

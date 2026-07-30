@@ -17,7 +17,7 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * „Rozložení tipů" must be present on EVERY surface that lists matches — locked
+ * „Jak tipují ostatní?" must be present on EVERY surface that lists matches — locked
  * with a one-click buy when the viewer has no entitlement, the real 1 / X / 2 bar
  * once they do. Regression cover for the 2026-07-23 report that the placeholder
  * existed only on the competition-scoped match page.
@@ -97,7 +97,9 @@ final class TipStatsSurfacesTest extends WebTestCase
                 $this->lockedStrips($crawler),
                 sprintf('Expected a locked tip-distribution placeholder with a buy form on %s.', $path),
             );
-            self::assertStringContainsString('Rozložení tipů', (string) $client->getResponse()->getContent());
+            // Item 23 — the section and the booster that unlocks it share ONE name, so
+            // the heading is read from the enum rather than transcribed here.
+            self::assertStringContainsString(BoostType::TipDistribution->label(), (string) $client->getResponse()->getContent());
         }
     }
 
@@ -140,7 +142,7 @@ final class TipStatsSurfacesTest extends WebTestCase
     }
 
     /**
-     * Item 11 — a match and its „Rozložení tipů" are ONE card: every strip sits
+     * Item 11 — a match and its „Jak tipují ostatní?" are ONE card: every strip sits
      * inside the card's `.tip-row-extra` region, never as a card of its own next
      * to the row, and no card is left with an empty divider region.
      */
