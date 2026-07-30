@@ -62,9 +62,13 @@ final class VerifyEmailController extends AbstractController
                 $user->email,
             );
         } catch (VerifyEmailExceptionInterface $e) {
-            // Log at error so Sentry picks it up — we want to spot URL-mangling
-            // (Invalid), expiry, and email-mismatch (Wrong) cases in production.
-            $this->logger->error('Email verification link rejected', [
+            // An expected outcome, not an application error: mail scanners and
+            // crawlers fetch one-time links (TIPOVACKA-K was SeznamBot), users click
+            // expired or truncated ones — and they all get a recovery page below.
+            // WARNING keeps it out of Sentry issues (only ERROR records carrying a
+            // Throwable become issues via ExceptionToSentryIssueHandler) while the
+            // exception in context still feeds the breadcrumb trail.
+            $this->logger->warning('Email verification link rejected', [
                 'exception' => $e,
                 'userId' => $userId,
                 'reason' => $e::class,

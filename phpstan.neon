@@ -25,6 +25,11 @@ parameters:
     tmpDir: var/cache/phpstan
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
+        # monolog.handler.capture is a test-env-only handler (config/packages/test/monolog.php);
+        # phpstan reads the dev container XML, which does not know it.
+        -
+            identifier: symfonyContainer.serviceNotFound
+            path: tests/Integration/Auth/EmailVerificationFlowTest.php
         # Test assertions - these are intentional and safe
         - '#Call to method PHPUnit\\Framework\\Assert::assertInstanceOf\(\) with .* will always evaluate to true#'
         # Form data is validated by Symfony Form component before this point

@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Auth;
 use App\DataFixtures\AppFixtures;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Monolog\Handler\TestHandler;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -96,6 +97,17 @@ final class EmailVerificationFlowTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Odkaz je neplatný');
         // The "Vyžádat nový" CTA must show so the user has a recovery path.
         self::assertSelectorExists('a[href="/overeni-ceka"]');
+
+        // A rejected link is an expected outcome (bots crawl one-time links, users
+        // click stale ones). Anything logged at ERROR here becomes a Sentry issue
+        // in prod — that regression was TIPOVACKA-K. Asserting the warning IS
+        // present proves the handler captures, so the no-errors assert cannot
+        // pass vacuously.
+        $capture = $client->getContainer()->get('monolog.handler.capture');
+        self::assertInstanceOf(TestHandler::class, $capture);
+        self::assertTrue($capture->hasWarningThatContains('Email verification link rejected'));
+        self::assertFalse($capture->hasErrorRecords());
+        self::assertFalse($capture->hasCriticalRecords());
     }
 
     public function testVerificationLeavesNoStaleSessionForUnknownUserId(): void
