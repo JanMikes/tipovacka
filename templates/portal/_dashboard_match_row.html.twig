@@ -14,6 +14,12 @@
 
     The card design itself (item 18) is now the ONE design on every surface (item 21),
     so this partial passes nothing about its looks.
+
+    Every link is soutěž-scoped (item 22 — the reported bug was that these cards led to
+    the bare `/zapasy/{id}`, which is the source owner's page now). The Nástěnka is
+    always scoped to exactly ONE soutěž since item 18, so `m.competitionIds` holds
+    exactly that one; a row that no soutěž of the viewer's includes never reaches this
+    partial (`ListUserMatchesQuery` skips it).
 #}
 {% set guess = my_tips_by_match[m.id.toRfc4122] ?? null %}
 {% set guessed_among_open = m.openCompetitionsCount - m.pendingCompetitionsCount %}
@@ -65,9 +71,10 @@
     :resultAway="m.isFinished or m.isLive ? m.awayScore : null"
     :points="guess ? guess.totalPoints : null"
     :hitClass="guess is null ? null : (is_exact ? 'exact' : (guess.totalPoints > 0 ? 'partial' : null))"
-    :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
+    :detailUrl="path('competition_sport_match_detail', {competitionId: m.competitionIds[0].toRfc4122, sportMatchId: m.id.toRfc4122})"
     :detailLabel="m.isTippable ? 'Zadat tip' : 'Detail zápasu'"
-    :tipUrl="m.isTippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
+    :tipUrl="m.isTippable ? path('competition_sport_match_detail', {competitionId: (m.pendingCompetitionIds[0] ?? m.competitionIds[0]).toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
     :tipStats="m.tipStats"
+    :sportMatchId="m.id.toRfc4122"
     :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
 />

@@ -31,7 +31,11 @@ final class TipStatsSurfacesTest extends WebTestCase
     private const string DASHBOARD = '/nastenka?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
-    private const string MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+    /**
+     * Item 22 retired the bare `/zapasy/{id}` as a player surface — it is the source
+     * owner's page now and carries no soutěž, so it can carry no tip split either.
+     * The match surface a player meets is the soutěž-scoped one.
+     */
     private const string COMPETITION_MATCH = self::BOOSTS_DETAIL.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
     /**
      * The unlocked split, in both of its shapes: `.dist-bar` is the compact strip under a
@@ -89,7 +93,7 @@ final class TipStatsSurfacesTest extends WebTestCase
         $this->grant(AppFixtures::VERIFIED_USER_ID, 100);
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        foreach ([self::MATCHES_LIST, self::DASHBOARD, self::BOOSTS_DETAIL, self::MATCH_DETAIL, self::COMPETITION_MATCH] as $path) {
+        foreach ([self::MATCHES_LIST, self::DASHBOARD, self::BOOSTS_DETAIL, self::COMPETITION_MATCH] as $path) {
             $crawler = $this->visit($client, $path);
 
             self::assertGreaterThanOrEqual(
@@ -115,7 +119,7 @@ final class TipStatsSurfacesTest extends WebTestCase
         ));
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        foreach ([self::MATCHES_LIST, self::BOOSTS_DETAIL, self::MATCH_DETAIL, self::COMPETITION_MATCH] as $path) {
+        foreach ([self::MATCHES_LIST, self::BOOSTS_DETAIL, self::COMPETITION_MATCH] as $path) {
             $crawler = $this->visit($client, $path);
 
             self::assertSame(0, $this->lockedStrips($crawler), sprintf('The paywall must be gone on %s.', $path));

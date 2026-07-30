@@ -23,6 +23,15 @@ final readonly class UserMatchItem
      *                                                 open — same semantics as the dashboard's UpcomingMatchItem
      * @param int            $pendingCompetitionsCount competitions where the tip is missing AND
      *                                                 tipping is still open — i.e. actionable gaps
+     * @param list<Uuid>     $competitionIds           the user's competitions that include this match, in
+     *                                                 the order the query returned them; the FIRST one is
+     *                                                 where a cross-competition card links, since item 22
+     *                                                 made every match link soutěž-scoped. The rest stay
+     *                                                 reachable through the per-soutěž tip-split strips,
+     *                                                 whose headings link per soutěž
+     * @param list<Uuid>     $pendingCompetitionIds    the subset of the above where the tip is missing AND
+     *                                                 still open; the first one is where the card's tip CTA
+     *                                                 points, so it lands where the tip is actually needed
      * @param int|null       $myHomeScore              the viewer's own tip, but ONLY when exactly one
      *                                                 of their competitions includes this match (two
      *                                                 competitions may hold two different tips);
@@ -50,6 +59,8 @@ final readonly class UserMatchItem
         public int $guessedCompetitionsCount,
         public int $openCompetitionsCount,
         public int $pendingCompetitionsCount,
+        public array $competitionIds = [],
+        public array $pendingCompetitionIds = [],
         public ?int $myHomeScore = null,
         public ?int $myAwayScore = null,
         public array $tipStats = [],

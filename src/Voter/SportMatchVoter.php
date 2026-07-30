@@ -19,12 +19,19 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * - CREATE takes a MatchSource subject (to authorize adding a match to it).
  * - Other attributes take a SportMatch subject and delegate ownership checks via its match source.
  * - VIEW delegates to MatchSourceVoter::VIEW on the underlying match source.
+ * - MANAGE is the source-side match PAGE (`/zapasy/{id}`, item 22): admin OR the match
+ *   source's owner. Deliberately laxer than the per-action attributes below — it drops
+ *   `$matchSource->isActive` and asks nothing about the match's own state, because that
+ *   page is where every management action LANDS: cancel, soft-delete and postpone all
+ *   redirect back to it, and a completed source must stay readable. The buttons inside
+ *   it keep their own stricter attributes, so an owner never meets a dead control.
  *
- * @extends Voter<'sport_match_view'|'sport_match_create'|'sport_match_edit'|'sport_match_set_score'|'sport_match_cancel'|'sport_match_delete', SportMatch|MatchSource>
+ * @extends Voter<'sport_match_view'|'sport_match_manage'|'sport_match_create'|'sport_match_edit'|'sport_match_set_score'|'sport_match_cancel'|'sport_match_delete', SportMatch|MatchSource>
  */
 final class SportMatchVoter extends Voter
 {
     public const string VIEW = 'sport_match_view';
+    public const string MANAGE = 'sport_match_manage';
     public const string CREATE = 'sport_match_create';
     public const string EDIT = 'sport_match_edit';
     public const string SET_SCORE = 'sport_match_set_score';
@@ -38,7 +45,7 @@ final class SportMatchVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        if (!in_array($attribute, [self::VIEW, self::CREATE, self::EDIT, self::SET_SCORE, self::CANCEL, self::DELETE], true)) {
+        if (!in_array($attribute, [self::VIEW, self::MANAGE, self::CREATE, self::EDIT, self::SET_SCORE, self::CANCEL, self::DELETE], true)) {
             return false;
         }
 
@@ -80,6 +87,10 @@ final class SportMatchVoter extends Voter
         \assert($subject instanceof SportMatch);
         $matchSource = $subject->matchSource;
         $isOwner = $currentUser->id->equals($matchSource->owner->id);
+
+        if (self::MANAGE === $attribute) {
+            return $isAdmin || $isOwner;
+        }
 
         if (self::EDIT === $attribute) {
             if ($subject->isCancelled || null !== $subject->deletedAt) {

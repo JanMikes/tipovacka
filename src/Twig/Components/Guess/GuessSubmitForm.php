@@ -74,6 +74,16 @@ final class GuessSubmitForm
     #[LiveProp]
     public bool $bare = false;
 
+    /**
+     * Item 22 — the surrounding card already names both teams, so the per-input
+     * labels must not repeat them; they become `sr-only` (kept, never dropped: they
+     * are the inputs' accessible names). Set it wherever the team name sits directly
+     * above the spinner it belongs to. A LiveProp, like `bare`, so the shape
+     * survives a re-render.
+     */
+    #[LiveProp]
+    public bool $showTeamLabels = true;
+
     #[LiveProp(writable: true)]
     #[Assert\GreaterThanOrEqual(0)]
     #[Assert\LessThanOrEqual(99)]

@@ -279,7 +279,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $client->loginUser($viewer);
         $crawler = $client->request(
             'GET',
-            '/zapasy/'.AppFixtures::MATCH_LIVE_ID.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID,
+            '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_LIVE_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -313,7 +313,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $client->loginUser(self::user($em, AppFixtures::SECOND_VERIFIED_USER_ID));
         $client->request(
             'GET',
-            '/zapasy/'.AppFixtures::MATCH_LIVE_ID.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID,
+            '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_LIVE_ID,
         );
 
         self::assertResponseIsSuccessful();
@@ -383,7 +383,7 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $client = static::createClient();
         $em = self::entityManager($client);
         $viewer = $this->seedBoostsWorld($em);
-        $path = '/zapasy/'.AppFixtures::MATCH_LIVE_ID.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
+        $path = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_LIVE_ID;
 
         $client->loginUser($viewer);
         $crawler = $client->request('GET', $path);

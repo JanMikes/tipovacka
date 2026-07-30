@@ -27,7 +27,8 @@ final class LockedStateSurfacesTest extends WebTestCase
     private const string DETAIL_URL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
     private const string BATCH_URL = self::DETAIL_URL.'/moje-tipy';
     private const string MANAGE_TIPS_URL = self::DETAIL_URL.'/spravovat-tipy';
-    private const string MATCH_DETAIL_URL = '/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
+    /** Item 22: the tip form lives on the soutěž-scoped match page, never on `/zapasy/{id}`. */
+    private const string MATCH_DETAIL_URL = self::DETAIL_URL.'/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
 
     public function testOpenCompetitionInvitesToTipAndSaysNothingAboutALock(): void
     {

@@ -4,188 +4,110 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Portal\SportMatch;
 
-use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
-use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
-use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\DataFixtures\AppFixtures;
 use App\Tests\Support\WebFlowHelpers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Uid\Uuid;
 
 /**
- * Item 10 — the match detail page scopes EVERY number to one soutěž, picked with
- * `<twig:SoutezSwitcher>` and carried in `?soutez=`, and gates „Pořadí za zápas"
- * with the OthersTips entitlement (via TipVisibilityGate, never by hand).
+ * Item 22 — `/zapasy/{id}` is the SOURCE-side match page: fixture, „Průběh zápasu"
+ * and „Správa zápasu", for admin OR the match source's owner (`sport_match_manage`).
+ *
+ * The gate is the part that would silently rot, so it is pinned from all three
+ * sides: a plain member 403s, a NON-admin source owner does not, an admin does not.
+ * „Gate it by ROLE_ADMIN" was the reported hypothesis and would have locked out
+ * every organizer of a from-scratch soutěž — a `private` zdroj zápasů belongs to an
+ * ordinary user, and this page is where their own management actions land.
+ *
+ * Everything player-facing moved to `/souteze/{cid}/zapasy/{mid}`; see
+ * tests/Integration/Portal/Competition/CompetitionMatchDetailFlowTest.
  */
 final class MatchDetailPageTest extends WebTestCase
 {
     use WebFlowHelpers;
 
-    private const string SCHEDULED = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
-    private const string LIVE = '/zapasy/'.AppFixtures::MATCH_LIVE_ID;
-    private const string FINISHED = '/zapasy/'.AppFixtures::MATCH_FINISHED_ID;
+    /** On PUBLIC_SOURCE, whose owner is ADMIN. */
+    private const string CURATED_MATCH = '/zapasy/'.AppFixtures::MATCH_FINISHED_ID;
+    /** On PRIVATE_SOURCE, whose owner is VERIFIED_USER — an ordinary, non-admin user. */
+    private const string PRIVATE_MATCH = '/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
 
-    /**
-     * SECOND_VERIFIED_USER is in three competitions on the curated source: PREMIUM
-     * and BOOSTS include MATCH_LIVE, SUBSET does not. The switcher offers exactly
-     * the two that include it, and the B4 panel explains the third — the same
-     * soutěž is never described by both.
-     */
-    public function testSwitcherOffersOnlyTheCompetitionsThatIncludeTheMatch(): void
+    public function testPlainMemberIsForbidden(): void
     {
         $client = static::createClient();
+        // SECOND_VERIFIED_USER is a member of two soutěže on PUBLIC_SOURCE and owns
+        // no zdroj zápasů at all — exactly the player this route is no longer for.
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::LIVE);
-        self::assertResponseIsSuccessful();
+        $client->request('GET', self::CURATED_MATCH);
 
-        $optionValues = $crawler->filter('#soutez-switcher-match option')->each(
-            static fn ($node): string => (string) $node->attr('value'),
-        );
-
-        self::assertContains(AppFixtures::PREMIUM_COMPETITION_ID, $optionValues);
-        self::assertContains(AppFixtures::BOOSTS_COMPETITION_ID, $optionValues);
-        self::assertNotContains(AppFixtures::SUBSET_COMPETITION_ID, $optionValues);
-
-        self::assertAnySelectorTextContains('h3', 'Proč tu nejsou všechny vaše soutěže');
-        self::assertAnySelectorTextContains('section', AppFixtures::SUBSET_COMPETITION_NAME);
+        self::assertResponseStatusCodeSame(403);
     }
 
-    public function testSoutezQueryParameterScopesThePage(): void
+    public function testNonAdminSourceOwnerReachesTheirOwnSourcesMatch(): void
     {
         $client = static::createClient();
-        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
-
-        $client->request('GET', self::LIVE.'?soutez='.AppFixtures::PREMIUM_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
-        self::assertAnySelectorTextContains('section', AppFixtures::PREMIUM_COMPETITION_NAME);
-
-        $client->request('GET', self::LIVE.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
-        self::assertAnySelectorTextContains('section', AppFixtures::BOOSTS_COMPETITION_NAME);
-    }
-
-    /**
-     * A foreign or unknown id falls back to a soutěž the viewer really is in —
-     * guessing a UUID must never reveal that it exists, let alone its name.
-     */
-    public function testForeignOrUnknownSoutezFallsBackWithoutLeaking(): void
-    {
-        $client = static::createClient();
-        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
-
-        // VERIFIED_COMPETITION belongs to someone else, on another source entirely.
-        $client->request('GET', self::LIVE.'?soutez='.AppFixtures::VERIFIED_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextNotContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
-        self::assertSelectorTextContains('h2', 'Váš tip');
-
-        $client->request('GET', self::LIVE.'?soutez=0197b3c4-0000-7000-8000-000000000001');
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('h2', 'Váš tip');
-    }
-
-    /**
-     * „Pořadí za zápas" reveals concrete tips, so before the deadline it needs the
-     * OthersTips entitlement. A member without it gets the locked twin + a working
-     * buy CTA — being the competition's own member buys no free pass.
-     */
-    public function testRankingIsPaywalledWithoutTheOthersTipsEntitlement(): void
-    {
-        $client = static::createClient();
-        $this->joinAndTip(AppFixtures::VERIFIED_USER_ID, 1, 0);
-        $this->grant(AppFixtures::VERIFIED_USER_ID, 100);
         $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::SCHEDULED.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
+        $client->request('GET', self::PRIVATE_MATCH);
 
-        self::assertAnySelectorTextContains('h2', 'Pořadí za zápas');
-        self::assertCount(0, $crawler->filter('table.lb-table'));
-        self::assertGreaterThanOrEqual(
-            1,
-            $crawler->filter('input[value="others_tips"]')->count(),
-            'The locked ranking must carry a working „odemknout" CTA.',
-        );
+        self::assertResponseIsSuccessful();
+        self::assertAnySelectorTextContains('h2', 'Správa zápasu');
     }
 
-    /** SECOND_VERIFIED_USER holds the OthersTips boost in the boosts competition. */
-    public function testRankingIsVisibleWithTheOthersTipsBoost(): void
+    /** …and only their own: a foreign zdroj's match is still refused. */
+    public function testNonAdminSourceOwnerIsForbiddenOnAnotherSourcesMatch(): void
     {
         $client = static::createClient();
-        $this->joinAndTip(AppFixtures::VERIFIED_USER_ID, 1, 0);
-        $this->testCommandBus()->dispatch(new SubmitGuessCommand(
-            userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
-            competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            homeScore: 2,
-            awayScore: 2,
-        ));
-        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->loginUserById($client, AppFixtures::VERIFIED_USER_ID);
 
-        $crawler = $client->request('GET', self::SCHEDULED.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID);
-        self::assertResponseIsSuccessful();
+        $client->request('GET', self::CURATED_MATCH);
 
-        self::assertCount(1, $crawler->filter('table.lb-table'));
-        // The other member's concrete tip is what the entitlement sells.
-        self::assertAnySelectorTextContains('table.lb-table', '1:0');
-        self::assertAnySelectorTextContains('table.lb-table', AppFixtures::VERIFIED_USER_NICKNAME);
-        self::assertCount(0, $crawler->filter('input[value="others_tips"]'));
+        self::assertResponseStatusCodeSame(403);
     }
 
-    /**
-     * Team form is computed from the soutěž's finished matches, and is simply
-     * absent for a team that has not played — never „V0 R0 P0".
-     */
-    public function testTeamFormIsComputedAndAbsentWhenThereIsNothingToCompute(): void
+    public function testAdminReachesAnyMatch(): void
     {
         $client = static::createClient();
         $this->loginUserById($client, AppFixtures::ADMIN_ID);
 
-        // Bohemians 2:1 Jablonec is the one finished match of the curated source.
-        $client->request('GET', self::FINISHED.'?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
+        $client->request('GET', self::CURATED_MATCH);
         self::assertResponseIsSuccessful();
-        self::assertAnySelectorTextContains('section', 'V1 R0 P0');
-        self::assertAnySelectorTextContains('section', 'V0 R0 P1');
 
-        // Sparta / Slavia have played nothing yet.
-        $client->request('GET', self::SCHEDULED.'?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
+        $client->request('GET', self::PRIVATE_MATCH);
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextNotContains('body', 'V0 R0 P0');
     }
 
-    /** The page is logged-in only and stays that way. */
     public function testAnonymousVisitorIsSentToTheLogin(): void
     {
         $client = static::createClient();
-        $client->request('GET', self::FINISHED);
+        $client->request('GET', self::CURATED_MATCH);
 
         self::assertResponseRedirects();
         self::assertStringContainsString('/prihlaseni', (string) $client->getResponse()->headers->get('Location'));
     }
 
-    private function grant(string $userId, int $amount): void
+    /**
+     * The page carries the fixture, the timeline and the management block — and
+     * nothing player-facing. Those sections are scoped to ONE soutěž, which this
+     * route does not carry; leaving them here is what made the two pages
+     * near-duplicates in the first place.
+     */
+    public function testTheSourceSidePageCarriesNoPlayerSurfaces(): void
     {
-        $this->testCommandBus()->dispatch(new AdjustUserCreditsCommand(
-            userId: Uuid::fromString($userId),
-            amount: $amount,
-            note: 'Test dotace',
-            adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
-        ));
-    }
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
 
-    private function joinAndTip(string $userId, int $home, int $away): void
-    {
-        $this->testCommandBus()->dispatch(new JoinCompetitionByLinkCommand(
-            userId: Uuid::fromString($userId),
-            token: AppFixtures::BOOSTS_COMPETITION_LINK_TOKEN,
-        ));
-        $this->testCommandBus()->dispatch(new SubmitGuessCommand(
-            userId: Uuid::fromString($userId),
-            competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            homeScore: $home,
-            awayScore: $away,
-        ));
+        $crawler = $client->request('GET', self::CURATED_MATCH);
+        self::assertResponseIsSuccessful();
+
+        self::assertAnySelectorTextContains('h2', 'Průběh zápasu');
+        self::assertAnySelectorTextContains('h2', 'Správa zápasu');
+
+        self::assertCount(0, $crawler->filter('#soutez-switcher-match'));
+        self::assertCount(0, $crawler->filter('.tip-inputs'));
+        self::assertCount(0, $crawler->filter('.tip-stats-open, .tip-stats-locked, .dist-card'));
+        $body = (string) $client->getResponse()->getContent();
+        self::assertStringNotContainsString('Váš tip', $body);
+        self::assertStringNotContainsString('Pořadí za zápas', $body);
+        self::assertStringNotContainsString('Proč tu nejsou všechny vaše soutěže', $body);
     }
 }

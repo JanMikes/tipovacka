@@ -1,16 +1,14 @@
 {#
-    Match detail (item 10) — one match, fully understood.
+    The SOURCE-side match page (item 22) — hero, „Průběh zápasu", „Správa zápasu".
 
     Controller: src/Controller/Portal/SportMatch/SportMatchDetailController.php
 
-    A match can belong to SEVERAL of the viewer's soutěže, and members, rules and
-    boost entitlements differ per soutěž — so ONE is in focus at a time, picked with
-    <twig:SoutezSwitcher> (?soutez={uuid}), and every number below is scoped to it.
-    The switcher lists the soutěže that INCLUDE this match; the B4 panel explains the
-    ones that EXCLUDE it, so the same soutěž is never described twice.
-
-    „Rozložení tipů" is the shared <twig:Match:TipStats> fed by TipStatsProvider —
-    never a second path to the same data, never a per-row query.
+    Everything player-facing (the soutěž switcher, the tip form, B4's scope panel,
+    „Rozložení tipů" and „Pořadí za zápas") moved to the soutěž-scoped page,
+    templates/portal/competition/match_detail.html.twig — every number on those
+    surfaces is scoped to ONE soutěž, and this route carries none. What is left is
+    what belongs to whoever runs the zdroj zápasů, which is also who may see it
+    (`sport_match_manage` = admin OR the source's owner).
 #}
 {% extends 'base.html.twig' %}
 
@@ -19,8 +17,6 @@
 {% block body %}
 {% set can_score = is_granted('sport_match_set_score', sport_match) %}
 {% set match_id = sport_match.id.toRfc4122 %}
-{% set home_form = team_form ? team_form.for(sport_match.homeTeam.id) : null %}
-{% set away_form = team_form ? team_form.for(sport_match.awayTeam.id) : null %}
 {% set shows_score = sport_match.isFinished or (sport_match.isLive and sport_match.homeScore is not null) %}
 
 <div class="bg-radial">
@@ -64,18 +60,11 @@
             </div>
 
             <div class="mh-teams">
-                {# Sub-label „ARG · V2 R0 P0": the team's short name plus its record over the
-                   FINISHED matches this soutěž includes. A team that has not played yet has no
-                   record at all — nothing is rendered, never „V0 R0 P0". #}
                 <div class="mh-team home">
                     <span class="mh-team-txt">
                         <span class="mh-team-name">{{ sport_match.homeTeam.name }}</span>
-                        {%- if sport_match.homeTeam.shortName or home_form -%}
-                            <span class="mh-team-sub">
-                                {{- sport_match.homeTeam.shortName -}}
-                                {%- if sport_match.homeTeam.shortName and home_form %} · {% endif -%}
-                                {%- if home_form %}V{{ home_form.wins }} R{{ home_form.draws }} P{{ home_form.losses }}{% endif -%}
-                            </span>
+                        {%- if sport_match.homeTeam.shortName -%}
+                            <span class="mh-team-sub">{{ sport_match.homeTeam.shortName }}</span>
                         {%- endif -%}
                     </span>
                     <twig:TeamFlag :team="sport_match.homeTeam" size="56" />
@@ -98,12 +87,8 @@
                     <twig:TeamFlag :team="sport_match.awayTeam" size="56" />
                     <span class="mh-team-txt">
                         <span class="mh-team-name">{{ sport_match.awayTeam.name }}</span>
-                        {%- if sport_match.awayTeam.shortName or away_form -%}
-                            <span class="mh-team-sub">
-                                {{- sport_match.awayTeam.shortName -}}
-                                {%- if sport_match.awayTeam.shortName and away_form %} · {% endif -%}
-                                {%- if away_form %}V{{ away_form.wins }} R{{ away_form.draws }} P{{ away_form.losses }}{% endif -%}
-                            </span>
+                        {%- if sport_match.awayTeam.shortName -%}
+                            <span class="mh-team-sub">{{ sport_match.awayTeam.shortName }}</span>
                         {%- endif -%}
                     </span>
                 </div>
@@ -119,281 +104,14 @@
             {% endif %}
         </section>
 
-        {# ═════════ 2. Tip form — directly below the hero ═════════ #}
-        {% if selected_competition %}
-            <section class="card-glass mt-6 p-5 sm:p-6">
-                <div class="flex flex-wrap items-end justify-between gap-4">
-                    <div class="min-w-0">
-                        <h2 class="eyebrow">Váš tip</h2>
-                        <p class="mt-1.5 text-sm text-white/55">
-                            Tipujete za soutěž
-                            <a href="{{ path('competition_detail', {id: selected_competition.id.toRfc4122}) }}"
-                               class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ selected_competition.name }}</a>.
-                            {% if effective_deadline %}
-                                <span class="whitespace-nowrap">Uzávěrka {{ effective_deadline|date('j. n. Y H:i') }}.</span>
-                            {% endif %}
-                        </p>
-                    </div>
-
-                    {# `sport_match_detail` takes only the MATCH in its path; the soutěž is a query
-                       parameter, which is what lets this plain GET form scope the page. #}
-                    <twig:SoutezSwitcher
-                        :competitions="switcher_competitions"
-                        :currentId="selected_competition.id.toRfc4122"
-                        route="sport_match_detail"
-                        :routeParams="{id: match_id}"
-                        param="soutez"
-                        label="Zobrazená soutěž"
-                        id="soutez-switcher-match"
-                        class="w-full min-w-0 sm:w-80"
-                    />
-                </div>
-
-                {# B5: „Nevyplněno" is a call to action, so it may only appear while the tip
-                   can still be filled. Past the deadline the same absence is a FACT and the
-                   form itself says „Netipováno" — no second badge for it here. #}
-                {% if not has_guess and not is_locked %}
-                    <p class="mt-4">
-                        <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
-                    </p>
-                {% endif %}
-
-                <div class="mt-4">
-                    {# B19: the form sits inside this page's own card, so it renders bare —
-                       one prop instead of a utility incantation that left the border behind. #}
-                    <twig:Guess:GuessSubmitForm
-                        id="guess-form-{{ selected_competition.id.toRfc4122 }}"
-                        sportMatch="{{ sport_match }}"
-                        competitionId="{{ selected_competition.id.toRfc4122 }}"
-                        :bare="true"
-                    />
-                </div>
-            </section>
-        {% endif %}
-
-        {# B4: a competition of yours over THIS source that does not include this match
-           — say so and say why, instead of silently omitting it. Disjoint from the
-           switcher by construction: it lists what INCLUDES the match, this what does not. #}
-        {% if excluded_competitions_for_match_source|length > 0 %}
-            <section class="card-glass mt-6 p-5">
-                <h3 class="flex items-center gap-2 text-sm font-semibold text-white">
-                    <twig:ux:icon name="lucide:info" class="h-4 w-4 text-white/40" />
-                    {% if selected_competition %}
-                        Proč tu nejsou všechny vaše soutěže
-                    {% else %}
-                        Tenhle zápas se ve vašich soutěžích netipuje
-                    {% endif %}
-                </h3>
-                <p class="mt-1 text-xs text-white/50">
-                    {{ excluded_competitions_for_match_source|length > 1 ? 'Tyto soutěže tenhle zápas nezahrnují' : 'Tato soutěž tenhle zápas nezahrnuje' }} —
-                    jste v {{ excluded_competitions_for_match_source|length > 1 ? 'nich' : 'ní' }} členem, ale tipuje se v {{ excluded_competitions_for_match_source|length > 1 ? 'nich' : 'ní' }} jen část zápasů zdroje.
-                </p>
-
-                <ul class="mt-3 space-y-2">
-                    {% for c in excluded_competitions_for_match_source %}
-                        <li class="rounded-xl border border-white/[0.06] bg-inset px-4 py-3">
-                            <a href="{{ path('competition_detail', {id: c.id.toRfc4122}) }}" class="text-sm font-semibold text-white transition-colors hover:text-accent-300">
-                                {{ c.name }}
-                            </a>
-                            <p class="mt-1 text-xs text-white/55">
-                                {%- if c.reason == 'teams' -%}
-                                    Soutěž zahrnuje jen zápasy vybraných týmů a ani jeden z nich v tomhle zápase nehraje.
-                                {%- elseif c.reason == 'subset' -%}
-                                    Soutěž zahrnuje jen ručně vybrané zápasy zdroje a tenhle mezi nimi není.
-                                {%- elseif c.reason == 'playoff' -%}
-                                    Soutěž se tipuje jen na základní část — zápasy playoff nezahrnuje.
-                                {%- else -%}
-                                    Tenhle zápas není v rozsahu zápasů této soutěže.
-                                {%- endif -%}
-                            </p>
-                            {% if c.teams is not empty %}
-                                <div class="mt-2 flex flex-wrap items-center gap-1.5">
-                                    <span class="text-[0.7rem] font-semibold uppercase tracking-wider text-white/40">Týmy soutěže</span>
-                                    {% for team in c.teams %}
-                                        <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pl-1 pr-2.5 text-xs text-white/80">
-                                            <twig:TeamFlag :team="team" size="20" />{{ team.name }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-            </section>
-        {% endif %}
-
-        {# ═════════ 3. + 4. Rozložení tipů (left) · Průběh zápasu (right) ═════════ #}
-        {% set has_timeline = not sport_match.isCancelled and match_events|length > 0 %}
-        {% if tip_stats or has_timeline %}
-            <div class="mt-6 grid grid-cols-1 items-start gap-6 {{ tip_stats and has_timeline ? 'lg:grid-cols-2' : '' }}">
-                {% if tip_stats %}
-                    <twig:Match:TipStats
-                        :stats="tip_stats"
-                        :homeTeam="sport_match.homeTeam"
-                        :awayTeam="sport_match.awayTeam"
-                        :compact="false"
-                    />
-                {% endif %}
-
-                {% if has_timeline %}
-                    {% include 'portal/sport_match/_timeline.html.twig' with {sport_match: sport_match, match_events: match_events} only %}
-                {% endif %}
+        {# ═════════ 2. Průběh zápasu ═════════ #}
+        {% if not sport_match.isCancelled and match_events|length > 0 %}
+            <div class="mt-6">
+                {% include 'portal/sport_match/_timeline.html.twig' with {sport_match: sport_match, match_events: match_events} only %}
             </div>
         {% endif %}
 
-        {# ═════════ 5. Pořadí za zápas — gated by BoostType::OthersTips ═════════ #}
-        {% if selected_competition %}
-            {% set tipper_count = tip_stats ? tip_stats.total : 0 %}
-            {% if can_see_others_tips and match_ranking and match_ranking.rows|length > 0 %}
-                {% set me_id = app.user.id.toRfc4122 %}
-                {% set is_scored_match = sport_match.isFinished and sport_match.homeScore is not null and sport_match.awayScore is not null %}
-                {% set real_outcome = is_scored_match ? (sport_match.homeScore > sport_match.awayScore ? 1 : (sport_match.homeScore < sport_match.awayScore ? -1 : 0)) : null %}
-                <section class="card-glass mt-6 p-5 sm:p-6">
-                    <header class="dist-card-head">
-                        <div class="min-w-0">
-                            <h2 class="eyebrow">Pořadí za zápas</h2>
-                            <p class="dist-card-total">
-                                {{ match_ranking.isScored ? 'Nejvíc bodů z tohoto zápasu' : 'Jak tipovali ostatní' }}
-                            </p>
-                        </div>
-                        <span class="shrink-0 text-xs font-medium tabular-nums text-white/50">
-                            {{ match_ranking.rows|length }} {{ match_ranking.rows|length == 1 ? 'hráč' : (match_ranking.rows|length <= 4 ? 'hráči' : 'hráčů') }} s tipem
-                        </span>
-                    </header>
-
-                    <div class="mt-4 overflow-x-auto">
-                        <table class="lb-table">
-                            {# Before the match is scored there are no ranks, no accuracy and no
-                               points — three columns of dashes. Drop them rather than fake them. #}
-                            <thead class="lb-thead">
-                                <tr>
-                                    {% if match_ranking.isScored %}<th class="w-14">#</th>{% endif %}
-                                    <th>Hráč</th>
-                                    <th class="text-center">Tip</th>
-                                    {% if match_ranking.isScored %}
-                                        <th class="text-center">Přesnost</th>
-                                        <th class="text-right">Body</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in match_ranking.rows %}
-                                    {% set is_me = row.userId.toRfc4122 == me_id %}
-                                    {% set is_exact = is_scored_match and row.guessHome == sport_match.homeScore and row.guessAway == sport_match.awayScore %}
-                                    {% set guess_outcome = row.guessHome > row.guessAway ? 1 : (row.guessHome < row.guessAway ? -1 : 0) %}
-                                    {% set is_outcome = is_scored_match and not is_exact and guess_outcome == real_outcome %}
-                                    <tr class="lb-tr{{ is_me ? ' me' }}">
-                                        {% if match_ranking.isScored %}
-                                            <td>
-                                                {% if row.rank is not null %}
-                                                    <span class="rank-mark">
-                                                        <span aria-hidden="true" class="rank-dot{{ row.rank <= 3 ? ' rank-' ~ row.rank }}"></span>
-                                                        <span class="lb-pos{{ row.rank <= 3 ? ' rank-' ~ row.rank }}">{{ row.rank }}.</span>
-                                                    </span>
-                                                {% else %}
-                                                    <span class="text-white/25">–</span>
-                                                {% endif %}
-                                            </td>
-                                        {% endif %}
-                                        <td>
-                                            <div class="flex items-center gap-3">
-                                                <twig:Avatar name="{{ row.fullName ?: row.nickname }}" size="32" rank="{{ row.rank is not null and row.rank <= 3 ? row.rank : null }}" />
-                                                <span class="min-w-0">
-                                                    <span class="block truncate text-sm font-bold text-white">{{ row.nickname }}{% if is_me %} <span class="text-accent-300">· Ty</span>{% endif %}</span>
-                                                    {% if row.fullName %}<small class="block truncate text-[11px] font-light text-white/50">{{ row.fullName }}</small>{% endif %}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="text-sm font-bold tabular-nums text-white">{{ row.guessHome }}:{{ row.guessAway }}</span>
-                                        </td>
-                                        {% if match_ranking.isScored %}
-                                            <td class="text-center">
-                                                {% if is_exact %}
-                                                    <span class="acc-exact">Přesně</span>
-                                                {% elseif is_outcome %}
-                                                    <span class="acc-outcome">Výsledek</span>
-                                                {% else %}
-                                                    <span class="text-white/25">–</span>
-                                                {% endif %}
-                                            </td>
-                                            <td class="text-right">
-                                                {% if row.totalPoints is null %}
-                                                    <span class="text-white/25">–</span>
-                                                {% else %}
-                                                    <span class="lb-pts {{ row.totalPoints > 0 ? 'text-win' : 'text-white/40' }}">
-                                                        {{- row.totalPoints > 0 ? '+' : '' }}{{ row.totalPoints -}}
-                                                    </span>
-                                                {% endif %}
-                                            </td>
-                                        {% endif %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            {% elseif not can_see_others_tips %}
-                {# Locked twin of the distribution card, and since B27 literally the same shape:
-                   gold CTA in the top-right, a centred gold lock coin over the blurred skeleton,
-                   the pitch beneath it. The CTA is Boost:Panel in its `bare` shape — the one place
-                   boost pricing / affordability / B6 „soutěž už skončila" lives, now WITHOUT a
-                   container or a button colour of its own (nesting its inline shape here was the
-                   defect: two paywall treatments where one was intended).
-                   The tipper count is not lost — it moves into the headline slot, which is exactly
-                   what the distribution card puts there („6 hráčů tipovalo"), and the pitch moves
-                   onto the skeleton as that card's `.dist-lock-title` does.
-                   Since 2026-07-30 this also covers a LIVE match (item 10 showed its tips once the
-                   deadline had passed; now only a RESULT reveals them for free) — the skeleton is
-                   decoration, the real tips are never rendered here. #}
-                <section class="card-glass dist-card is-locked mt-6 p-5 sm:p-6">
-                    <header class="dist-card-head">
-                        <div class="flex min-w-0 flex-wrap items-center gap-2.5">
-                            {% if selected_competition.monetization.value == 'premium' %}
-                                <twig:Pill label="Prémium" variant="warn" icon="crown" />
-                            {% elseif selected_competition.monetization.value == 'boosts' %}
-                                <twig:Pill label="Vylepšení" variant="warn" icon="sparkles" />
-                            {% else %}
-                                <twig:Pill label="Zamčeno" variant="locked" icon="lock" />
-                            {% endif %}
-                            <h2 class="eyebrow">Pořadí za zápas</h2>
-                        </div>
-                        <twig:Boost:Panel :competition="selected_competition" feature="others" shape="bare" />
-                    </header>
-
-                    <p class="dist-card-total">
-                        {{ tipper_count }} {{ tipper_count == 1 ? 'hráč' : (tipper_count <= 4 ? 'hráči' : 'hráčů') }} s tipem
-                    </p>
-
-                    <div class="dist-veil">
-                        <div aria-hidden="true" class="dist-skeleton space-y-4">
-                            {% for width in [70, 55, 62, 48] %}
-                                <div class="flex items-center gap-3">
-                                    <span class="dist-row-ghost is-short"></span>
-                                    <span class="dist-row-ghost" style="max-width: {{ width }}%"></span>
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="dist-lock">
-                            <span class="dist-lock-coin"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></span>
-                            <p class="dist-lock-title">Uvidíš konkrétní tipy kolegů</p>
-                            <p class="dist-lock-note">
-                                {%- if selected_competition.monetization.value == 'boosts' -%}
-                                    Konkrétní tipy všech hráčů v soutěži, jméno po jménu — i před uzávěrkou.
-                                {%- elseif selected_competition.monetization.value == 'premium' -%}
-                                    Konkrétní tipy všech hráčů v soutěži, jméno po jménu — jen pro Prémium.
-                                {%- else -%}
-                                    Konkrétní tipy ostatních hráčů se zobrazí po odehrání zápasu.
-                                {%- endif -%}
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            {% endif %}
-        {% endif %}
-
-        {# ═════════ Match management ═════════ #}
+        {# ═════════ 3. Správa zápasu ═════════ #}
         {% set can_edit   = is_granted('sport_match_edit', sport_match) %}
         {% set can_cancel = is_granted('sport_match_cancel', sport_match) %}
         {% set can_delete = is_granted('sport_match_delete', sport_match) %}

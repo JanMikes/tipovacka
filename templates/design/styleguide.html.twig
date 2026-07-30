@@ -62,7 +62,9 @@
 
 {% block body %}
 {% import _self as gal %}
-{% set match_url = path('sport_match_detail', {id: '01930000-0000-7000-8000-0000000000f9'}) %}
+{# Item 22: a match card always links into ONE soutěž — the gallery must not advertise
+   a route a player can no longer reach (`/zapasy/{id}` is the source owner's page now). #}
+{% set match_url = path('competition_sport_match_detail', {competitionId: '01930000-0000-7000-8000-0000000000f8', sportMatchId: '01930000-0000-7000-8000-0000000000f9'}) %}
 <div class="bg-radial">
 <div class="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
 
@@ -483,6 +485,7 @@
                 :detailUrl="match_url"
                 :tipUrl="match_url"
                 :tipStats="[tip_stats.unlocked, tip_stats.boostsLocked]"
+                sportMatchId="01930000-0000-7000-8000-0000000000f9"
                 footNote="MS ve fotbale 2026 · Estadio Azteca"
             />
         </section>

@@ -71,7 +71,7 @@ final readonly class ListUserMatchesQuery
         // walking the list and resolve them all in ONE batch afterwards.
         /** @var array<string, array{0: Competition, 1: list<SportMatch>}> $statsPairs */
         $statsPairs = [];
-        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int, myTip: ?array{home: int, away: int}}> $rows */
+        /** @var list<array{match: SportMatch, competitions: list<Competition>, isTippable: bool, competitionsCount: int, guessedCompetitionsCount: int, openCompetitionsCount: int, pendingCompetitionsCount: int, competitionIds: list<Uuid>, pendingCompetitionIds: list<Uuid>, myTip: ?array{home: int, away: int}}> $rows */
         $rows = [];
 
         foreach ($matches as $m) {
@@ -117,6 +117,11 @@ final readonly class ListUserMatchesQuery
                 ? ($guessesHere[$competitionIds[0]] ?? null)
                 : null;
 
+            // Item 22: every match link is soutěž-scoped, so the row carries WHICH
+            // soutěže — the first including one for the card, the first one still
+            // missing a tip for „Zadat tip".
+            $pendingCompetitionIds = array_values(array_diff($openCompetitionIds, $guessedCompetitionIds));
+
             $rows[] = [
                 'match' => $m,
                 'competitions' => $includingCompetitions,
@@ -124,7 +129,9 @@ final readonly class ListUserMatchesQuery
                 'competitionsCount' => count($competitionIds),
                 'guessedCompetitionsCount' => count(array_intersect($competitionIds, $guessedCompetitionIds)),
                 'openCompetitionsCount' => count($openCompetitionIds),
-                'pendingCompetitionsCount' => count(array_diff($openCompetitionIds, $guessedCompetitionIds)),
+                'pendingCompetitionsCount' => count($pendingCompetitionIds),
+                'competitionIds' => array_map(Uuid::fromString(...), $competitionIds),
+                'pendingCompetitionIds' => array_map(Uuid::fromString(...), $pendingCompetitionIds),
                 'myTip' => $myTip,
             ];
         }
@@ -156,6 +163,8 @@ final readonly class ListUserMatchesQuery
                 guessedCompetitionsCount: $row['guessedCompetitionsCount'],
                 openCompetitionsCount: $row['openCompetitionsCount'],
                 pendingCompetitionsCount: $row['pendingCompetitionsCount'],
+                competitionIds: $row['competitionIds'],
+                pendingCompetitionIds: $row['pendingCompetitionIds'],
                 myHomeScore: $row['myTip']['home'] ?? null,
                 myAwayScore: $row['myTip']['away'] ?? null,
                 tipStats: $this->statsFor($stats, $m, $row['competitions']),

@@ -84,7 +84,7 @@ final class SubmitGuessOnBehalfController extends AbstractController
 
         $redirect = $request->request->getString(
             'redirect_to',
-            $this->generateUrl('competition_sport_match_guesses', [
+            $this->generateUrl('competition_sport_match_detail', [
                 'competitionId' => $competition->id->toRfc4122(),
                 'sportMatchId' => $sportMatch->id->toRfc4122(),
             ]),

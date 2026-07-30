@@ -53,7 +53,7 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         $form = $this->createForm(CompetitionMatchDeadlineFormType::class, $formData);
         $form->handleRequest($request);
 
-        $redirect = $this->redirectToRoute('competition_sport_match_guesses', [
+        $redirect = $this->redirectToRoute('competition_sport_match_detail', [
             'competitionId' => $competition->id->toRfc4122(),
             'sportMatchId' => $sportMatch->id->toRfc4122(),
         ]);

@@ -140,7 +140,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competition_premium` | `/souteze/{id}/premium` | `portal/competition/premium_settings.html.twig` |
 | `competition_add_anonymous_member` | `/souteze/{id}/clenove/bez-emailu` | `portal/competition/add_anonymous_member.html.twig` |
 | `competition_promote_anonymous_member` | `/souteze/{id}/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
-| `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` — heading „Jak tipovali ostatní" (was „Tipy soutěže", renamed round 2: the old name never said the block lists OTHER members' tips) |
+| `competition_sport_match_detail` | `/souteze/{competitionId}/zapasy/{sportMatchId}` | `portal/competition/match_detail.html.twig` — **THE match page** since item 22 (was `competition_sport_match_guesses` → `portal/guess/detail.html.twig`); see the zápas section below |
 | `competition_join_by_pin` | `/pripojit` | `invitation/join_by_pin.html.twig` — **public** since B15 (`Controller\Invitation\JoinByPinController`), as is `competition_join_by_pin_quick` `POST /pripojit/rychle`. Reachable means *typeable*, never *joinable*: an unverified account may read the landing and join through none of it |
 
 Every action reached **from** „Nastavení" returns there (invite, bulk invite, revoke invitation,
@@ -220,37 +220,54 @@ per the PLAN's „no back-compat" convention. Only the `{id}`-scoped pages below
 | `sport_match_create` | `/turnaje/{matchSourceId}/zapasy/novy` | `portal/sport_match/form.html.twig` |
 | `sport_match_import` | `/turnaje/{matchSourceId}/zapasy/import` | `portal/sport_match/import.html.twig` (+ `…/import/potvrdit`) |
 | `sport_match_template_download` | `/turnaje/zapasy/sablona.csv` | — (CSV) |
-| `sport_match_detail` | `/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) — **one match, fully understood** since item 10 |
+| `sport_match_detail` | `/zapasy/{id}` | `portal/sport_match/detail.html.twig` (+ `_timeline.html.twig`) — **the SOURCE-side page** since item 22 |
 | `sport_match_edit` | `/zapasy/{id}/upravit` | `portal/sport_match/form.html.twig` |
 | `sport_match_set_score` | `/zapasy/{id}/skore` | `portal/sport_match/set_score.html.twig` |
 
-**`/zapasy/{id}` — the match page (item 10).** A match can belong to SEVERAL of the viewer's
-soutěže, and members, scoring rules and boost entitlements all differ per soutěž — so **one is in
-focus at a time**, chosen with `<twig:SoutezSwitcher>` (`route="sport_match_detail"`,
-`:routeParams="{id: matchId}"`, `?soutez={uuid}`, unknown/foreign id falls back silently) and
-**every number on the page is scoped to it**. Sections in order:
+**Two match pages, one for each audience (item 22).** They used to be near-duplicates; now the
+split is by who the page is FOR.
 
-1. **Hero** — status `Pill` (Naplánován / Živě / Ukončeno / Odložen / Zrušen), meta line
-   „kolo · venue · datum" (`SportMatch` has exactly ONE `round` and ONE `venue`), „Zapsat výsledek"
-   for whoever passes `sport_match_set_score`, teams + `TeamFlag` + the big score (kickoff time
-   before it), and the **team form** sub-label „ARG · V2 R0 P0" (`GetTeamForm`, one query for both
-   teams, counted over the finished matches THIS soutěž includes; absent, never zeroed).
-2. **Tip form** (`Guess:GuessSubmitForm`) with the switcher beside it, plus B4's
-   **„Proč tu nejsou všechny vaše soutěže"** panel — the switcher lists what INCLUDES the match,
-   the panel explains what EXCLUDES it, so no soutěž is ever described by both.
-3. **„Rozložení tipů"** — `<twig:Match:TipStats :compact="false">` fed by `TipStatsProvider`,
+**`/souteze/{competitionId}/zapasy/{sportMatchId}` — THE match page** (`competition_sport_match_detail`,
+`Portal\Competition\CompetitionMatchDetailController`, `portal/competition/match_detail.html.twig`).
+A match can belong to SEVERAL of the viewer's soutěže, and members, scoring rules and boost
+entitlements all differ per soutěž — so **one is in focus at a time and it is in the PATH**.
+`<twig:SoutezSwitcher>` is a plain GET form, so it can only append `?soutez={uuid}`: the page reads
+that and **302s to the chosen soutěž's own URL**, which keeps the control JS-free, the canonical URL
+path-based and the component unchanged. An unknown, foreign or EXCLUDING `?soutez=` is ignored
+(no 403, no leak). Sections in order:
+
+1. **Scope row** — „Tipujete za soutěž X" + the switcher (`route="competition_sport_match_detail"`,
+   `:routeParams="{competitionId, sportMatchId}"`).
+2. **The merged card** (`section.match-card`) — the fixture AND „Váš tip" in ONE frame: header
+   („kolo" + meta „zdroj · venue · datum · čas" + status `Pill` + „Zapsat výsledek"), then coin +
+   team name + the **team form** sub-label („SPA · V2 R0 P1", `GetTeamForm`, one query for both
+   teams, absent rather than zeroed) per side around the score or „vs", then „Váš tip" + the
+   points badge + `Guess:GuessSubmitForm` (`:bare` + `:showTeamLabels="false"`). **Each team name
+   is written exactly once**, directly above its own spinner: `.mc-fixture` and `.tip-inputs` are
+   two grids sharing one `--mc-gutter` centre track. On a FINISHED match the real result is large,
+   unboxed and labelled „Konečný výsledek" while the tip is small, boxed and labelled „Váš tip" —
+   the one thing the merge put at risk.
+3. B4's **„Proč tu nejsou všechny vaše soutěže"** panel — the switcher lists what INCLUDES the
+   match, the panel explains what EXCLUDES it, so no soutěž is ever described by both.
+4. **„Rozložení tipů"** — `<twig:Match:TipStats :compact="false">` fed by `TipStatsProvider`,
    gated by `BoostType::TipDistribution`; locked = blurred skeleton + „Odemknout →".
-4. **„Průběh zápasu"** — `_timeline.html.twig`, pure match events (minute · dot · „Gól — Messi
-   (ARG)"). **No „tipovalo N hráčů" counts** — deferred to a future fantasy feature.
-5. **„Pořadí za zápas"** — `GetMatchRanking`, gated by `BoostType::OthersTips` through
-   `TipVisibilityGate` (entitled OR past the deadline; managers/admins get no free pass). Columns
-   # · HRÁČ · TIP · PŘESNOST · BODY; before the match is scored there are no ranks/points, so those
-   three columns are dropped rather than filled with dashes. Locked = the same shell + `Boost:Panel`.
+5. **„Průběh zápasu"** — `_timeline.html.twig`, pure match events. **No „tipovalo N hráčů" counts.**
+6. **„Pořadí za zápas"** — `GetMatchRanking`, gated by `TipVisibilityGate` (entitled OR the match
+   has a RESULT; managers/admins get no free pass). Columns # · HRÁČ · TIP · PŘESNOST · BODY, and
+   under the tip its optional parts (periods · prodloužení · střelci). Before the match is scored
+   the rank/accuracy/points columns are dropped rather than filled with dashes. Locked = the same
+   shell + `Boost:Panel shape="bare"`. **Item 22 folded the old „Jak tipovali ostatní" block
+   (`Guess:MatchGuessesList`, now deleted) into this one** — two lists of the same tips is worse
+   than either alone.
+7. Organizer-only: the per-match **uzávěrka** form and **„Tipy členů"** (privacy-gated).
 
-Then „Správa zápasu" (upravit / odložit / přesunout / zrušit / smazat) for the source's owner.
-
-`portal/guess/detail.html.twig` is a partial rendered inside the match/tip surfaces — no route
-of its own.
+**`/zapasy/{id}` — the SOURCE-side page** (`sport_match_detail`, unchanged route name because 12
+management redirects land here). Only **hero + „Průběh zápasu" + „Správa zápasu"** (upravit /
+odložit / přesunout / zrušit / smazat). Gated by **`SportMatchVoter::MANAGE` = admin OR the match
+source's owner** — deliberately laxer than the per-action attributes (no `isActive`, no state
+check), because every management action redirects here and a completed source must stay readable;
+the buttons keep their own stricter attributes, so an owner never meets a dead control. A plain
+member gets 403.
 
 Autocomplete JSON endpoints (🔒): `match_source_teams` `/zdroje/{id}/tymy`,
 `match_source_players` `/zdroje/{id}/hraci`,
@@ -314,7 +331,12 @@ its own soutěž name) and `footNote` („zdroj · venue" on the cross-competiti
 competition detail). There is no „Tipovat →" action and no `tipPrompt` any more: the card itself links to
 the match, so a locked card is never a dead end. **`/zapasy` passes no `myHome`/`myAway`** (cross-
 competition: whose tip?), so it gates `tipUrl` on a tip actually **MISSING** somewhere — otherwise a card
-whose pilulka reads „Tip odeslán (2/2)" would invite a tip in the same breath (item 21). Rendered in
+whose pilulka reads „Tip odeslán (2/2)" would invite a tip in the same breath (item 21). **Every link the
+card builds is soutěž-SCOPED** (item 22): the card opens the match in the first of the viewer's soutěže
+that includes it, „Zadat tip" in the first one where the tip is actually missing, and — with the new
+`sportMatchId` prop — each „Rozložení tipů" strip HEADING links to that strip's own soutěž, which is the
+only way into the soutěže the card itself cannot point at. The component still queries nothing:
+`TipStats` already carries `competitionId`. Rendered in
 `/_design` half A in all five states, in a 380 px column and in the two-soutěže case. · `Leaderboard/Podium` · `Leaderboard/Delta`
 (the Žebříček table itself is plain markup in `public/leaderboard.html.twig` — item 05 dropped
 the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives in the URL)
@@ -328,7 +350,7 @@ it carries a „Bez použití" pill)
 
 **Live Components (`src/Twig/Components/`)**
 `Competition/CreateWizard` (4-step wizard, `.docs/features/create-wizard.md`) ·
-`Guess/GuessSubmitForm` (`:bare="true"` drops its card chrome — B19; the default ships `rounded-xl border …`, so an embedded call site must say `bare`, never re-neutralise it with utilities) · `Guess/MatchGuessesList` ·
+`Guess/GuessSubmitForm` (`:bare="true"` drops its card chrome — B19; the default ships `rounded-xl border …`, so an embedded call site must say `bare`, never re-neutralise it with utilities. `:showTeamLabels="false"` makes the per-input team labels `sr-only` — item 22's merged card names each team once, right above its own spinner. **Exactly ONE call site** since item 22: `portal/competition/match_detail.html.twig`; `/moje-tipy` and `/spravovat-tipy` use their own batch inputs) ·
 `Boost/BoostPanel` (owned boosts render a **jump link** to what they unlocked, unowned a purchase CTA; both disappear once the competition is fully over — B6. Round 2: panel rows carry marketing headlines („Jak tipují ostatní?" / „Přesné tipy soupeřů" / „Počkejte si na sestavy") while **`BoostType::label()` still names the confirm dialog, the prémium toggles, `/cenik` and the ledger** — the headline is a label above the canonical product, not a rename) · `Notification/Bell` · `Notification/Preferences` · `CreditBalance` ·
 `Profile/ProfileForm` · `Scoring/RuleFields` · `Auth/RegistrationForm`, `Auth/InvitationForm`,
 `Auth/RequestPasswordResetForm`, `Auth/ResetPasswordForm` ·
@@ -424,10 +446,11 @@ Listed so item files can reference them; each becomes a decision only when the p
    verification airlock (B14 stays chrome-free).
 6. **Admin is a separate shell** with no path back; „Administrace" lands on `/admin/turnaje`,
    which is arbitrary rather than an admin overview.
-7. **Match pages live under three different parents** (`/zapasy` the feed, `/zapasy/{id}` the
-   match, `/souteze/{id}/zapasy/{id}` the same match inside a soutěž) with different chrome.
-   _(Item 09 removed the `/portal` prefix, so they now at least share one tree — the chrome
-   still differs.)_
+7. ~~**Match pages live under three different parents**…~~ **Resolved by item 22**: there are two
+   match pages and they are for two different audiences —
+   `/souteze/{cid}/zapasy/{mid}` is the player's (everything scoped to ONE soutěž) and
+   `/zapasy/{id}` is the zdroj-zápasů owner's (fixture, průběh, správa). `/zapasy` stays the
+   cross-soutěž feed and every card on it links INTO a soutěž.
 8. **Breadcrumbs are used inconsistently** — present on competition detail and leaderboard,
    absent on most other portal pages.
 9. **„Zdroj zápasů" answers to two nouns in the URL** — `/turnaje/{id}` for the pages,

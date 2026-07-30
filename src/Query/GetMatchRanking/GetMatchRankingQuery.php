@@ -24,10 +24,15 @@ final readonly class GetMatchRankingQuery
         // The guesses drive the board — NOT the evaluations. A match that has not
         // been scored yet has no evaluation at all, and its tips must still list
         // (the deadline opens the board long before any points exist).
+        // The scorer/player fetch-joins keep the optional tip parts off the N+1 path:
+        // item 22 folded „Jak tipovali ostatní" into this board, so the rows now carry
+        // the period / overtime / scorer detail that surface used to show.
         $guessesQb = $this->entityManager->createQueryBuilder()
-            ->select('g', 'u')
+            ->select('g', 'u', 's', 'p')
             ->from(Guess::class, 'g')
             ->innerJoin('g.user', 'u')
+            ->leftJoin('g.scorers', 's')
+            ->leftJoin('s.player', 'p')
             ->innerJoin('g.sportMatch', 'm')
             ->where('g.competition = :competitionId')
             ->andWhere('g.sportMatch = :matchId')
@@ -54,6 +59,14 @@ final readonly class GetMatchRankingQuery
             $points = $pointsByGuess[$guess->id->toRfc4122()] ?? null;
             $isScored = $isScored || null !== $points;
 
+            $scorerNames = [];
+
+            foreach ($guess->scorers as $scorer) {
+                $scorerNames[] = $scorer->player->name;
+            }
+
+            sort($scorerNames);
+
             $baseRows[] = [
                 'userId' => $user->id,
                 'nickname' => $user->displayName,
@@ -61,6 +74,10 @@ final readonly class GetMatchRankingQuery
                 'guessHome' => $guess->homeScore,
                 'guessAway' => $guess->awayScore,
                 'points' => $points,
+                'periodScores' => $guess->periodScores?->toArray(),
+                'overtimeHomeScore' => $guess->overtimeHomeScore,
+                'overtimeAwayScore' => $guess->overtimeAwayScore,
+                'scorerNames' => $scorerNames,
             ];
         }
 
@@ -94,6 +111,10 @@ final readonly class GetMatchRankingQuery
                 guessHome: $row['guessHome'],
                 guessAway: $row['guessAway'],
                 totalPoints: $points,
+                periodScores: $row['periodScores'],
+                overtimeHomeScore: $row['overtimeHomeScore'],
+                overtimeAwayScore: $row['overtimeAwayScore'],
+                scorerNames: $row['scorerNames'],
             );
         }
 

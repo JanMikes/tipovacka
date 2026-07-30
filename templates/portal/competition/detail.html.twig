@@ -304,7 +304,7 @@
                             {% endif %}
                         {% endif %}
 
-                        {% set match_url = path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) %}
+                        {% set match_url = path('competition_sport_match_detail', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) %}
                         <li data-reveal-target="item">
                         {# B5: „Netipováno" (`tipMissingLabel`) jen tady — tato karta zná
                            právě JEDNU soutěž; napříč soutěžemi (/zapasy, nástěnka) by

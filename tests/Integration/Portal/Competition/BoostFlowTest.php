@@ -27,8 +27,11 @@ final class BoostFlowTest extends WebTestCase
     private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
     private const string BOOSTS_PURCHASE = self::BOOSTS_DETAIL.'/vylepseni/koupit';
     private const string PREMIUM_MATCH = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
-    /** Match detail scoped to the boosts soutěž — the page carrying BOTH full paywall cards (B27). */
-    private const string BOOSTS_MATCH_DETAIL = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
+    /**
+     * The match page scoped to the boosts soutěž — it carries BOTH full paywall cards
+     * (B27). Item 22 made that scope a PATH, not a `?soutez=` on the bare match route.
+     */
+    private const string BOOSTS_MATCH_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
 
     private function grant(string $userId, int $amount): void
     {

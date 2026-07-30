@@ -61,6 +61,11 @@
                                    být VÍC (zápas leží v několika soutěžích hráče), každá
                                    se svým nadpisem. VŽDY dávkově z TipStatsProvider —
                                    nikdy jeden dotaz na řádek (N+1 past v CLAUDE.md).
+      sportMatchId string|null   — id zápasu. Je-li vyplněné, je nadpis každého pruhu
+                                   „Rozložení tipů" ODKAZEM na stránku zápasu v té
+                                   soutěži (item 22) — jediná cesta k soutěžím, do
+                                   kterých nevede hlavní odkaz karty. Komponenta se
+                                   přitom na nic neptá: id soutěže nese TipStats.
       footNote     string|null   — drobná poznámka na patě karty (uzávěrka, zdroj zápasů)
 #}
 {% props
@@ -85,6 +90,7 @@
     tipMissingLabel = null,
     tipUrl = null,
     tipStats = [],
+    sportMatchId = null,
     footNote = null
 %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
@@ -102,7 +108,17 @@
         <div class="tip-row-extra{{ strips|length > 0 ? '' : ' is-note-only' }}">
             {% for s in strips %}
                 {% if strips|length > 1 %}
-                    <p class="tip-row-boost-label">{{ s.competitionName }}</p>
+                    {# Karta vede do JEDNÉ soutěže; ostatní jsou dostupné právě odsud,
+                       proto je nadpis pruhu odkazem na zápas v té soutěži (item 22).
+                       Je to sourozenec odkazu karty, ne vnořený odkaz. #}
+                    <p class="tip-row-boost-label">
+                        {%- if sportMatchId -%}
+                            <a href="{{ path('competition_sport_match_detail', {competitionId: s.competitionId.toRfc4122, sportMatchId: sportMatchId}) }}"
+                               class="underline decoration-white/20 underline-offset-2 transition-colors hover:text-accent-300 hover:decoration-accent-300/60">{{ s.competitionName }}</a>
+                        {%- else -%}
+                            {{ s.competitionName }}
+                        {%- endif -%}
+                    </p>
                 {% endif %}
                 <twig:Match:TipStats :stats="s" :homeTeam="homeTeam" :awayTeam="awayTeam" />
             {% endfor %}

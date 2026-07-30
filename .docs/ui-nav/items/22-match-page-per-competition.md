@@ -326,3 +326,68 @@ must survive a 320 px viewport (measure it — see Verification).
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. The index is shared mutable state and verifying it proves nothing. Push to
 `main`. Do not update the status board — report your sha and the orchestrator records it.
+
+---
+
+## Assumptions made
+
+Decisions the item file did not settle, taken on the most conservative reading and recorded here.
+
+1. **§6 vs §7 genuinely duplicated each other, so „Jak tipovali ostatní" was FOLDED INTO „Pořadí
+   za zápas".** Read side by side, `GetMatchRanking` and `GetGuessesForMatchInCompetition` list
+   the same rows — every active guess for the same (soutěž, zápas) pair, behind the same
+   `TipVisibilityGate` decision. Unscored, the ranking already *called itself* „Jak tipovali
+   ostatní" (item 10's assumption 3), i.e. the two were the same block wearing two names; scored,
+   the ranking is a strict superset (rank · přesnost · body). The only thing the folded-away block
+   had and the ranking did not was the **optional tip detail** — per-period scores, prodloužení,
+   střelci — so `MatchRankingRow` now carries those three and the table prints them under the tip
+   (fetch-joined, never an N+1). `submittedAt` was **dropped**: „when was this tip filed" says
+   nothing on a ranking table. `Guess:MatchGuessesList` (component + template) is deleted.
+2. **`GetGuessesForMatchInCompetition` is left in place, unused.** It was the folded-away block's
+   read model and now has **no production consumer**; its `BoostTipVisibilityTest` /
+   `GetGuessesForMatchInCompetitionQueryTest` still pass. It was not deleted because
+   `.docs/DOMAIN.md` names it as a `TipVisibilityGate` consumer and DOMAIN.md was owned by another
+   agent this round — deleting the query would have left that line wrong with no way to fix it.
+   **Orchestrator's call**: delete the query + its 4 DTOs and re-target the boost-visibility
+   coverage at `TipVisibilityGate`, or keep it as a read model with tests. Flagged, not decided.
+3. **The recommended `?soutez=` → 302 mechanism works; nothing else was needed.** Verified in a
+   real browser with JavaScript on: the tom-select fires the GET form, the page 302s to
+   `/souteze/<chosen>/zapasy/<match>`, and an id that is unknown, foreign OR merely EXCLUDING the
+   match falls through to the soutěž in the path (200, never 403). The component is untouched.
+4. **The switcher sits ABOVE the merged card, not beside the tip form.** §1 puts it „beside the tip
+   form", but the tip form is now inside the card the switcher would scope, and a control that
+   reloads the page has no business inside the card it changes. It is the first thing under the
+   breadcrumbs, in a „Zápas v soutěži · Tipujete za soutěž X" row.
+5. **The status pilulka keeps item 10's five states** (Naplánován / Živě / Ukončeno / Odložen /
+   Zrušen). §5's mock shows „BRZY", which is the old guess page's vocabulary; §1 names the five
+   explicitly and it is the page's specification, so it wins. Nothing is lost — the tip block
+   itself still says „Tipování uzavřeno — uzávěrka proběhla …" when the window has shut.
+6. **The card's fixture and the tip spinners are two grids sharing one centre track**
+   (`--mc-gutter`, 96 px → 72 px under 480 px), both capped at 560 px and centred. They are
+   separate components, so alignment only holds while their tracks are IDENTICAL; an `auto` centre
+   track would be as wide as the score in one and as wide as „:" in the other, and every name
+   would sit half the difference off its input. Measured: 0.0 px misalignment at 1440 / 1024 /
+   768 / 430 / 375 / 320 px.
+7. **The viewer's points badge rides the „Váš tip" eyebrow** and comes from one
+   `GuessEvaluationRepository::findByGuess` on the viewer's own guess — not from `GetMatchRanking`,
+   which is behind the entitlement gate. A viewer must always see their OWN points.
+8. **The „Rozložení tipů" strip heading is a link only where a heading exists** — i.e. when the
+   card carries MORE than one strip (`/zapasy`, the Nástěnka). On competition detail there is one
+   strip and no heading, and the page already IS that soutěž.
+9. **`/zapasy` cards link to the FIRST including soutěž** (`UserMatchItem::$competitionIds[0]`, the
+   query's own order) and „Zadat tip" to the first soutěž where the tip is actually missing
+   (`$pendingCompetitionIds[0]`). Both are new list fields on the read model; the component still
+   queries nothing.
+10. **B4's „Tenhle zápas se ve vašich soutěžích netipuje" headline is gone** — not regressed. On a
+    soutěž-scoped page the viewer is always in a soutěž that includes the match, so „no including
+    soutěž at all" is unreachable: the page itself is. The panel keeps its other headline and all
+    four reasons.
+11. **The organizer's „Tipy členů" now compares the deadline against the app's clock**, passed in
+    as `now`, instead of Twig's `date()`. `date()` reads the SYSTEM clock, which disagrees with
+    `MockClock` under test — the old template had the same bug and it surfaced the moment the
+    block moved onto a page whose lock state is asserted.
+12. **`/zapasy/{id}` after a soft-delete still renders** (`SportMatchRepository::find` does not
+    filter `deletedAt`) — unchanged behaviour, and the item asked for whatever it was to be kept.
+    Walked by hand as a NON-admin source owner: postpone → reschedule → cancel → soft-delete each
+    land on a 200. An owner of a COMPLETED source sees the page and **no** „Správa zápasu" block at
+    all, because every per-action attribute still requires `$matchSource->isActive`.

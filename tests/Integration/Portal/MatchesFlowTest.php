@@ -249,10 +249,19 @@ final class MatchesFlowTest extends WebTestCase
         $crawler = $client->request('GET', '/zapasy');
         self::assertResponseIsSuccessful();
 
-        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
-        $card = $crawler->filter('.tip-row')
-            ->reduce(static fn (Crawler $node): bool => $node->filter('a.tip-row-link[href="'.$url.'"]')->count() > 0);
+        // Item 22: the card links into ONE soutěž — whichever the query returned first
+        // — so it is found by the match, not by a hard-coded soutěž. The OTHER soutěž
+        // is reachable from its own „Rozložení tipů" strip heading (asserted below).
+        $suffix = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+        $card = $crawler->filter('.tip-row')->reduce(
+            static fn (Crawler $node): bool => $node->filter('a.tip-row-link[href$="'.$suffix.'"]')->count() > 0,
+        );
         self::assertCount(1, $card, 'Expected exactly one card for the shared match.');
+        self::assertStringEndsWith(
+            $suffix,
+            (string) $card->filter('a.tip-row-link')->attr('href'),
+            'The card must open the match INSIDE a soutěž, never the bare match route.',
+        );
 
         $strips = $card->filter('.tip-stats-open, .tip-stats-locked');
         self::assertGreaterThanOrEqual(2, $strips->count(), 'A match in several soutěže must render a strip per soutěž.');
@@ -262,6 +271,23 @@ final class MatchesFlowTest extends WebTestCase
         self::assertCount($strips->count(), $labels);
         self::assertSame($labels, array_values(array_unique($labels)));
         self::assertNotContains('', $labels);
+
+        // …and each heading is the way INTO that soutěž's match page (item 22) — the
+        // card itself can only point at one of them.
+        $stripLinks = $card->filter('.tip-row-boost-label a')->each(
+            static fn (Crawler $n): string => (string) $n->attr('href'),
+        );
+        self::assertCount(
+            $strips->count(),
+            $stripLinks,
+            'Every soutěž holding this match must be reachable from its own strip heading.',
+        );
+        self::assertSame($stripLinks, array_values(array_unique($stripLinks)));
+
+        foreach ($stripLinks as $link) {
+            self::assertStringEndsWith($suffix, $link);
+            self::assertStringStartsWith('/souteze/', $link);
+        }
 
         // …and all of them come from ONE batch: the whole list costs about the same
         // as a single-match filter would.

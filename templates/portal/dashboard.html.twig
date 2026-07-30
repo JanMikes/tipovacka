@@ -162,7 +162,7 @@
             <div class="card-glass overflow-hidden p-0">
                 {% for g in recent_guesses %}
                     {% set is_exact = g.myHomeScore == g.actualHomeScore and g.myAwayScore == g.actualAwayScore %}
-                    <a href="{{ path('sport_match_detail', {id: g.sportMatchId.toRfc4122}) }}" class="result-row">
+                    <a href="{{ path('competition_sport_match_detail', {competitionId: g.competitionId.toRfc4122, sportMatchId: g.sportMatchId.toRfc4122}) }}" class="result-row">
                         <span class="result-when">{{ g.kickoffAt|date('j. n.') }}</span>
                         <span class="result-match">
                             <twig:TeamFlag :team="g.homeTeam" size="24" />

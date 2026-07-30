@@ -6,7 +6,9 @@
     Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeHomeScore,
     overtimeAwayScore, scorersJson (hidden, written by the scorer-picker controller).
     Caller can override the wrapper via class="..."; `:bare="true"` drops the component's
-    own card chrome entirely (B19 — for call sites that already render it inside a card).
+    own card chrome entirely (B19 — for call sites that already render it inside a card),
+    and `:showTeamLabels="false"` makes the per-input team labels `sr-only` (item 22 — the
+    merged match card writes each team name once, directly above its own spinner).
 
     The scorer picker lives in a data-live-ignore island so live re-renders never
     destroy the tom-select instance; its state reaches the component through the
@@ -14,39 +16,46 @@
 #}
 <div{{ attributes.defaults(this.bare ? {} : {class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
 
+    {# The locked panel is a BOXED, modest chip — never a second big scoreline. On a
+       finished match it shares the merged card with the real result (item 22 §5), so
+       the two must not be confusable: the result is large, unboxed and labelled
+       „Konečný výsledek"; this one is small, boxed and labelled „Váš tip". #}
     {% if this.isLocked %}
-        <p class="flex items-center gap-1.5 text-sm text-white/60">
-            <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
-            {% if not this.sportMatch.isOpenForGuesses %}
-                Tipování uzavřeno — zápas už začal nebo není aktivní.
-            {% else %}
-                Tipování uzavřeno — uzávěrka proběhla {{ this.effectiveDeadline|date('j. n. Y H:i') }}.
-            {% endif %}
-        </p>
-        {% if this.existingGuess %}
-            {% set locked_guess = this.existingGuess %}
-            <p class="mt-2 text-2xl font-black tabular-nums text-white">
-                {{ locked_guess.homeScore }} : {{ locked_guess.awayScore }}
+        <div class="guess-locked">
+            <p class="guess-locked-note">
+                <twig:ux:icon name="lucide:lock" class="h-4 w-4 shrink-0" />
+                {% if not this.sportMatch.isOpenForGuesses %}
+                    Tipování uzavřeno — zápas už začal nebo není aktivní.
+                {% else %}
+                    Tipování uzavřeno — uzávěrka proběhla {{ this.effectiveDeadline|date('j. n. Y H:i') }}.
+                {% endif %}
             </p>
-            {% if locked_guess.periodScores is not null %}
-                <p class="mt-1 text-xs text-white/50">
-                    {{ this.sport.periodLabelPlural|capitalize }}:
-                    {% for p in locked_guess.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %}
+            {% if this.existingGuess %}
+                {% set locked_guess = this.existingGuess %}
+                <p class="guess-locked-score">
+                    {{ locked_guess.homeScore }} : {{ locked_guess.awayScore }}
                 </p>
+                {% if locked_guess.periodScores is not null %}
+                    <p class="guess-locked-detail">
+                        {{ this.sport.periodLabelPlural|capitalize }}:
+                        {% for p in locked_guess.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    </p>
+                {% endif %}
+                {% if locked_guess.hasOvertimeTip %}
+                    <p class="guess-locked-detail">
+                        Po prodloužení: {{ locked_guess.overtimeHomeScore }}:{{ locked_guess.overtimeAwayScore }}
+                    </p>
+                {% endif %}
+                {% if locked_guess.scorers|length > 0 %}
+                    <p class="guess-locked-detail">
+                        Střelci: {% for scorer in locked_guess.scorers %}{{ scorer.player.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    </p>
+                {% endif %}
+            {% else %}
+                {# B5: a fact, not a call to action. #}
+                <p class="guess-locked-none">Netipováno.</p>
             {% endif %}
-            {% if locked_guess.hasOvertimeTip %}
-                <p class="mt-1 text-xs text-white/50">
-                    Po prodloužení: {{ locked_guess.overtimeHomeScore }}:{{ locked_guess.overtimeAwayScore }}
-                </p>
-            {% endif %}
-            {% if locked_guess.scorers|length > 0 %}
-                <p class="mt-1 text-xs text-white/50">
-                    Střelci: {% for scorer in locked_guess.scorers %}{{ scorer.player.name }}{% if not loop.last %}, {% endif %}{% endfor %}
-                </p>
-            {% endif %}
-        {% else %}
-            <p class="mt-2 text-sm text-white/40">Netipováno.</p>
-        {% endif %}
+        </div>
     {% else %}
         {% if this.errorMessage %}
             <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-loss/30 bg-loss/10 px-3 py-2 text-sm text-loss">
@@ -74,7 +83,7 @@
         <form data-action="live#action:prevent" data-live-action-param="submit">
             <div class="tip-inputs">
                 <div class="text-center">
-                    <label class="field-label mb-1.5 block" for="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}">
+                    <label class="{{ this.showTeamLabels ? 'field-label mb-1.5 block' : 'sr-only' }}" for="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}">
                         {{ this.sportMatch.homeTeam.name }}
                     </label>
                     <input
@@ -94,7 +103,7 @@
                 <span class="colon">:</span>
 
                 <div class="text-center">
-                    <label class="field-label mb-1.5 block" for="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}">
+                    <label class="{{ this.showTeamLabels ? 'field-label mb-1.5 block' : 'sr-only' }}" for="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}">
                         {{ this.sportMatch.awayTeam.name }}
                     </label>
                     <input

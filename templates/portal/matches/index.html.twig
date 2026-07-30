@@ -90,6 +90,11 @@
                            therefore hangs on a tip actually MISSING somewhere, not merely on
                            the match being tippable; otherwise a card whose pilulka says
                            „Tip odeslán (2/2)" would invite a tip in the same breath.
+                        3. Both links are soutěž-SCOPED (item 22): the card opens the match in
+                           the FIRST soutěž of the viewer's that includes it, and „Zadat tip"
+                           opens the first one where the tip is actually missing — so the CTA
+                           lands where there is something to do. The other soutěže are reached
+                           through the „Rozložení tipů" strips, whose headings link per soutěž.
                     #}
                     <twig:Match:MatchRow
                         :homeTeam="m.homeTeam"
@@ -104,10 +109,11 @@
                         :pillDot="pill_dot"
                         :resultHome="m.isFinished or m.isLive ? m.homeScore : null"
                         :resultAway="m.isFinished or m.isLive ? m.awayScore : null"
-                        :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
+                        :detailUrl="path('competition_sport_match_detail', {competitionId: m.competitionIds[0].toRfc4122, sportMatchId: m.id.toRfc4122})"
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
-                        :tipUrl="has_pending ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
+                        :tipUrl="has_pending ? path('competition_sport_match_detail', {competitionId: m.pendingCompetitionIds[0].toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
                         :tipStats="m.tipStats"
+                        :sportMatchId="m.id.toRfc4122"
                         :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
                     />
                 </li>

@@ -17,7 +17,7 @@ end of the tom-select section in `assets/styles/app.css`. Rendered on `/_design`
 | `competitions` | `list<CompetitionListItem>` **or** `list<CompetitionSwitcherOption>` | the feed (see below) |
 | `currentId` | `string\|null` | RFC4122 id of the active soutěž |
 | `route` | `string` | route the GET form submits to — **must be reachable with no path parameter carrying the competition** |
-| `routeParams` | `array` | other path parameters of `route` (constant across every option), e.g. `{id: matchId}` on `/zapasy/{id}` |
+| `routeParams` | `array` | other path parameters of `route` (constant across every option), e.g. the match id on the soutěž-scoped match page |
 | `param` | `string` | query parameter carrying the id (default `soutez`) |
 | `label` | `string` | eyebrow label above the control (default `Soutěž`) |
 | `id` | `string` | DOM id of the `<select>`; override when one page renders two switchers |
@@ -79,12 +79,21 @@ resolver route instead:
 |---|---|---|
 | Nástěnka | `dashboard` / — / `soutez` | `/nastenka?soutez=<id>` — read by `DashboardController` |
 | Žebříček | `leaderboard` / — / `soutez` | `/zebricek?soutez=<id>` — read by `LeaderboardController` (item 05 made the page itself id-less; there is no redirect any more) |
-| Zápas | `sport_match_detail` / `{id: matchId}` / `soutez` | `/zapasy/<matchId>?soutez=<id>` — read by `SportMatchDetailController` (item 10) |
+| Zápas | `competition_sport_match_detail` / `{competitionId: <current>, sportMatchId: <match>}` / `soutez` | the form action is **the current page**; `?soutez=<id>` makes it **302 to `/souteze/<id>/zapasy/<match>`** — read by `CompetitionMatchDetailController` (item 22) |
 
 `routeParams` is the escape hatch for a route whose path carries something *other* than the
-competition — the match id above is the same for every option, so `path(route, routeParams)`
-resolves it once and the form still only appends `?soutez=`. The competition itself never goes
-in there.
+competition — the match id is the same for every option, so `path(route, routeParams)` resolves it
+once and the form still only appends `?soutez=`.
+
+**A page whose path DOES carry the competition redirects instead** (item 22 — the third pattern,
+after „query parameter" and „resolver route"). The switcher is rendered with the CURRENT
+`competitionId` in `routeParams`, so its action is the page it sits on; the page then treats
+`?soutez=` as „go to that soutěž" and **302s to that soutěž's own path-scoped URL**. The canonical
+URL stays path-based, the control stays a plain GET `<form>`, and **the component needs no change
+at all** — which is why this is preferred over teaching the component about path placeholders.
+
+The redirect is the ONLY thing that reads the parameter: an id that is unknown, foreign, or names
+a soutěž that does not include this match is simply ignored and the page stays where it is.
 
 Both apply the same rule: **an id the viewer may not see silently falls back to one they may.**
 That is deliberate leak prevention — guessing an id must never open somebody else's board — so

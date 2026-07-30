@@ -17,7 +17,9 @@ final class SportMatchTimelineFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        // Item 22 gates `/zapasy/{id}` to admin OR the match source's owner, and
+        // PUBLIC_SOURCE is ADMIN's.
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($user);
         $client->loginUser($user);
 
@@ -47,7 +49,7 @@ final class SportMatchTimelineFlowTest extends WebTestCase
         $client = static::createClient();
         /** @var EntityManagerInterface $em */
         $em = $client->getContainer()->get('doctrine.orm.entity_manager');
-        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
         self::assertNotNull($user);
         $client->loginUser($user);
 
@@ -57,7 +59,7 @@ final class SportMatchTimelineFlowTest extends WebTestCase
         self::assertSelectorNotExists('section h2:contains("Průběh zápasu")');
     }
 
-    public function testTimelineRendersOnCompetitionGuessPage(): void
+    public function testTimelineRendersOnTheSoutezScopedMatchPage(): void
     {
         $client = static::createClient();
         /** @var EntityManagerInterface $em */

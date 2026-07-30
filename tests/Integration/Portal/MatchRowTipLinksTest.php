@@ -30,7 +30,12 @@ final class MatchRowTipLinksTest extends WebTestCase
 {
     private const string COMPETITION_URL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
     private const string GUESS_URL = self::COMPETITION_URL.'/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
-    private const string MATCH_DETAIL_URL = '/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID;
+    /**
+     * Item 22 — every card link is soutěž-scoped now, on the cross-soutěž surfaces
+     * too: VERIFIED_USER's only soutěž holding this match is VERIFIED_COMPETITION, so
+     * that is the one a `/zapasy` or Nástěnka card opens.
+     */
+    private const string MATCH_DETAIL_URL = self::GUESS_URL;
 
     /**
      * Competition detail — the card links to the COMPETITION-SCOPED guessing surface.
@@ -50,9 +55,9 @@ final class MatchRowTipLinksTest extends WebTestCase
     /**
      * Item 21 — `/zapasy` renders the same card, so its pilulka stopped being a link
      * of its own (there is nothing to nest it in) and the card itself carries the one
-     * „Zadat tip" affordance, pointing at the match detail.
+     * „Zadat tip" affordance. Item 22 pointed it at the match INSIDE a soutěž.
      */
-    public function testMatchListCardIsOneLinkToTheMatchDetail(): void
+    public function testMatchListCardIsOneLinkToTheSoutezScopedMatchPage(): void
     {
         $client = static::createClient();
         $this->login($client);
