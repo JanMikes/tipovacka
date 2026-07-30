@@ -13,8 +13,10 @@ use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Item 30 — the red „Chybí natipovat N zápasů" badge, on BOTH card surfaces:
- * the Nástěnka's „Moje soutěže" grid and /souteze's „Soutěže, kde tipuješ".
+ * Item 30 — the red „Chybí N tipů" badge, on BOTH card surfaces: the Nástěnka's
+ * „Moje soutěže" grid and /souteze's „Soutěže, kde tipuješ". Item 36 shortened
+ * the copy from „Chybí natipovat N zápasů" to „Chybí N tipů" — same rule, same
+ * count, only the label got shorter.
  *
  * The point of testing them together is criterion 7: one soutěž must show one
  * number. Two implementations would drift, and this test is what would catch it.
@@ -23,7 +25,7 @@ final class MissingTipsBadgeTest extends WebTestCase
 {
     use WebFlowHelpers;
 
-    /** Criterion 1 — the badge is red (`pill-danger`) and declines „zápas" correctly. */
+    /** Criterion 1 — the badge is red (`pill-danger`) and declines „tip" correctly. */
     public function testTheBadgeRendersWithTheCzechPlural(): void
     {
         $client = static::createClient();
@@ -36,11 +38,11 @@ final class MissingTipsBadgeTest extends WebTestCase
 
         // „Kámoši u piva" has exactly one scheduled, still tippable match.
         self::assertStringContainsString('pill pill-danger', $body);
-        self::assertStringContainsString('Chybí natipovat 1 zápas', $body);
-        self::assertStringNotContainsString('Chybí natipovat 1 zápasy', $body);
+        self::assertStringContainsString('Chybí 1 tip', $body);
+        self::assertStringNotContainsString('Chybí 1 tipy', $body);
     }
 
-    /** Criterion 2 — nothing outstanding renders no badge, not a „0 zápasů" one. */
+    /** Criterion 2 — nothing outstanding renders no badge, not a „0 tipů" one. */
     public function testNoBadgeWhenNothingIsOutstanding(): void
     {
         $client = static::createClient();
@@ -55,12 +57,8 @@ final class MissingTipsBadgeTest extends WebTestCase
         ));
 
         foreach (['/nastenka', '/souteze'] as $path) {
-            $client->request('GET', $path);
-
-            self::assertResponseIsSuccessful();
-            $body = (string) $client->getResponse()->getContent();
-            self::assertStringNotContainsString('Chybí natipovat', $body, $path);
-            self::assertStringNotContainsString('0 zápasů', $body, $path);
+            self::assertSame([], $this->badges($client, $path), $path);
+            self::assertStringNotContainsString('0 tipů', (string) $client->getResponse()->getContent(), $path);
         }
     }
 
@@ -75,7 +73,7 @@ final class MissingTipsBadgeTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
         self::assertSame(
-            ['Chybí natipovat 2 zápasy', 'Chybí natipovat 2 zápasy', 'Chybí natipovat 1 zápas'],
+            ['Chybí 2 tipy', 'Chybí 2 tipy', 'Chybí 1 tip'],
             $this->badges($client, '/nastenka'),
         );
 
@@ -92,8 +90,8 @@ final class MissingTipsBadgeTest extends WebTestCase
         }
 
         // „Vybrané zápasy party" (subset) still has its one open match untipped.
-        self::assertSame(['Chybí natipovat 1 zápas'], $this->badges($client, '/nastenka'));
-        self::assertSame(['Chybí natipovat 1 zápas'], $this->badges($client, '/souteze'));
+        self::assertSame(['Chybí 1 tip'], $this->badges($client, '/nastenka'));
+        self::assertSame(['Chybí 1 tip'], $this->badges($client, '/souteze'));
     }
 
     /** Criterion 7 — the same soutěž shows the same number on both pages. */
@@ -140,8 +138,9 @@ final class MissingTipsBadgeTest extends WebTestCase
 
     /**
      * The soutěž cards' badges, in DOM order. Deliberately narrowed to the item 30
-     * label: `.pill-danger` is also item 25's „Chybí tip" on the match rows, which
-     * is a different surface answering a different question.
+     * label (a digit right after „Chybí "): `.pill-danger` is also item 25's
+     * „Chybí tip" (no number in between) on the match rows, which is a different
+     * surface answering a different question.
      *
      * @return list<string>
      */
@@ -155,7 +154,7 @@ final class MissingTipsBadgeTest extends WebTestCase
             $crawler->filter('.pill-danger')->each(
                 static fn (Crawler $node): string => trim($node->text()),
             ),
-            static fn (string $label): bool => str_starts_with($label, 'Chybí natipovat'),
+            static fn (string $label): bool => 1 === preg_match('/^Chybí \d/u', $label),
         ));
     }
 }

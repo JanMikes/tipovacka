@@ -211,11 +211,12 @@
                         <div>
                             {#
                                 Odznaky drží pravý horní roh karty. Řádek se smí zalomit
-                                (`flex-wrap` + `ml-auto`), aby dlouhé „Chybí natipovat …"
-                                na úzkém displeji spadlo pod zdroj místo do jeho textu.
-                                `max-w-full` je nutné: `.card-glass` má `overflow: hidden`,
-                                takže bez stropu by se skupina odznaků roztáhla na svou
-                                max-content šířku a na 320 px by ji karta uřízla.
+                                (`flex-wrap` + `ml-auto`), aby dlouhé „Chybí N tipů" spolu
+                                s dalšími odznaky na úzkém displeji spadlo pod zdroj místo
+                                do jeho textu. `max-w-full` je nutné: `.card-glass` má
+                                `overflow: hidden`, takže bez stropu by se skupina odznaků
+                                roztáhla na svou max-content šířku a na 320 px by ji karta
+                                uřízla.
                             #}
                             <div class="mb-3 flex flex-wrap items-start gap-x-3 gap-y-2">
                                 <p class="eyebrow min-w-0 grow basis-24 truncate">{{ g.matchSourceName }}</p>
@@ -225,7 +226,7 @@
                                     {# Jen když je co tipovat — nula se nezobrazuje vůbec (item 30). #}
                                     {% if g.missingTipCount > 0 %}
                                         <twig:Pill
-                                            label="Chybí natipovat {{ g.missingTipCount }} {{ g.missingTipCount|czech_zapas }}"
+                                            label="Chybí {{ g.missingTipCount }} {{ g.missingTipCount|czech_tip }}"
                                             variant="danger"
                                             icon="circle-alert"
                                         />

@@ -33,6 +33,22 @@ final class CzechPlural
     }
 
     /**
+     * „tip" (1) / „tipy" (2–4) / „tipů" (0, 5+) — directly-counted noun, same
+     * shape as {@see zapas}, e.g. the missing-tips badge „Chybí N tipů". Distinct
+     * from {@see tip}: that one declines „tip" as the SUBJECT of „chybí vám
+     * tip/tipy na N zápasů" (nominative, never governed by an immediately
+     * preceding numeral), so it stays a two-way split and never needs „tipů".
+     */
+    public static function tipCount(int $count): string
+    {
+        return match (true) {
+            1 === $count => 'tip',
+            $count >= 2 && $count <= 4 => 'tipy',
+            default => 'tipů',
+        };
+    }
+
+    /**
      * Genitive after a numeral („z N hráčů"): „hráče" (1) / „hráčů" (else) — e.g.
      * „1. místo z 1 hráče", „3. místo z 8 hráčů".
      */

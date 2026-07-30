@@ -268,7 +268,7 @@ final class DesignStyleguideController extends AbstractController
 
     /**
      * Samples for <twig:Competition:PlayingCard> — one competition still asking for
-     * tips (rank + round gain + the red „Chybí natipovat …" badge) and one finished
+     * tips (rank + round gain + the red „Chybí …" badge) and one finished
      * (final standing, no badge at all).
      *
      * @return array<string, PlayingCompetitionItem>

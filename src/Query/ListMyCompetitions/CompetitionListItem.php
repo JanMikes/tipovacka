@@ -20,7 +20,7 @@ final readonly class CompetitionListItem
         public ?\DateTimeImmutable $matchSourceStartAt = null,
         public ?\DateTimeImmutable $matchSourceEndAt = null,
         /**
-         * Matches the viewer has not tipped and still can — the „Chybí natipovat N zápasů"
+         * Matches the viewer has not tipped and still can — the „Chybí N tipů"
          * badge on the „Moje soutěže" cards. From
          * {@see \App\Service\Competition\MissingTipCounter}, the same service
          * `ListMyPlayingCompetitions` uses, so both card surfaces show one number per

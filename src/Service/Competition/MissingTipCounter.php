@@ -15,8 +15,8 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * THE single answer to „how many matches does this viewer still owe a tip for in
- * competition C" — the number behind the „Chybí natipovat N zápasů" badge on both
- * card surfaces (Nástěnka „Moje soutěže" and /souteze „Soutěže, kde tipuješ").
+ * competition C" — the number behind the „Chybí N tipů" badge on both card
+ * surfaces (Nástěnka „Moje soutěže" and /souteze „Soutěže, kde tipuješ").
  *
  * The rule lives in {@see forIncludedMatches} and nowhere else, so the two pages
  * can never disagree: a match counts iff
@@ -115,9 +115,9 @@ final readonly class MissingTipCounter
         foreach ($untipped as $match) {
             $window = $windows[$match->id->toRfc4122()] ?? null;
 
-            // „Chybí natipovat" must be actionable: a match whose tipping has not
-            // opened yet owes the player nothing, and its deadline must not become
-            // the „nejbližší uzávěrka" they are urged to beat.
+            // „Chybí" must be actionable: a match whose tipping has not opened yet
+            // owes the player nothing, and its deadline must not become the
+            // „nejbližší uzávěrka" they are urged to beat.
             if (null === $window || $window->isWaiting($now)) {
                 continue;
             }

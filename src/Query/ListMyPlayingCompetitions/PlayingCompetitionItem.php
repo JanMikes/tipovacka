@@ -23,7 +23,7 @@ final readonly class PlayingCompetitionItem
         public ?string $currentRound,
         public int $liveMatchCount,
         /**
-         * Matches the viewer has not tipped and still can — the „Chybí natipovat N zápasů"
+         * Matches the viewer has not tipped and still can — the „Chybí N tipů"
          * badge. From {@see \App\Service\Competition\MissingTipCounter}, the same service
          * the Nástěnka cards use, so both surfaces show one number per soutěž.
          */

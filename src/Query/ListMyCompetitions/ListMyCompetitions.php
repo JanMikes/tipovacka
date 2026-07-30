@@ -18,7 +18,7 @@ final readonly class ListMyCompetitions implements QueryMessage
          * Fill {@see CompetitionListItem::$missingTipCount} (it stays 0 otherwise).
          *
          * Opt-in because this list has three consumers and only ONE renders the
-         * „Chybí natipovat N zápasů" badge: the Nástěnka's „Moje soutěže" grid.
+         * „Chybí N tipů" badge: the Nástěnka's „Moje soutěže" grid.
          * `/zebricek` and `<twig:SoutezSwitcher>` only need names and dates, and
          * resolving the count costs the per-competition effective-deadline batch
          * ({@see \App\Service\EffectiveTipDeadlineResolver}) — measured at +14

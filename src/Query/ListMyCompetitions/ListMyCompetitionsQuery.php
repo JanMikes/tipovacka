@@ -18,8 +18,8 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  *
  * `missingTipCount` is resolved for the whole list in ONE pass through
  * {@see MissingTipCounter} (never a query per card), and by the very service
- * `ListMyPlayingCompetitions` uses, so the „Chybí natipovat N zápasů" badge shows
- * the same number for a soutěž on /nastenka and on /souteze.
+ * `ListMyPlayingCompetitions` uses, so the „Chybí N tipů" badge shows the same
+ * number for a soutěž on /nastenka and on /souteze.
  */
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class ListMyCompetitionsQuery

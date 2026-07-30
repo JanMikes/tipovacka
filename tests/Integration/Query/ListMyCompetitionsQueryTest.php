@@ -33,8 +33,9 @@ final class ListMyCompetitionsQueryTest extends IntegrationTestCase
     }
 
     /**
-     * The „Chybí natipovat N zápasů" badge (item 30). Only the Nástěnka draws it,
-     * so the count is opt-in — /zebricek and the switcher must not pay for it.
+     * The „Chybí N tipů" badge (item 30, copy shortened by item 36). Only the
+     * Nástěnka draws it, so the count is opt-in — /zebricek and the switcher must
+     * not pay for it.
      */
     public function testMissingTipCountIsResolvedOnlyWhenTheCallerAsksForIt(): void
     {

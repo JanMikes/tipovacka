@@ -26,10 +26,10 @@ use Symfony\Component\Uid\Uuid;
  * the match-scope membership test (cached in {@see CompetitionMatchProvider})
  * plus one batched deadline resolution.
  *
- * The „chybí natipovat" number comes from {@see MissingTipCounter} — the same
- * service the Nástěnka's „Moje soutěže" cards use — so one soutěž shows one
- * number on both surfaces. The matches are already loaded here, so this query
- * feeds them in rather than paying for them a second time.
+ * The „chybí" number comes from {@see MissingTipCounter} — the same service the
+ * Nástěnka's „Moje soutěže" cards use — so one soutěž shows one number on both
+ * surfaces. The matches are already loaded here, so this query feeds them in
+ * rather than paying for them a second time.
  */
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class ListMyPlayingCompetitionsQuery
