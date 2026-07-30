@@ -14,10 +14,13 @@ use App\Entity\CreditWallet;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
+use App\Entity\GuessScorer;
 use App\Entity\LeaderboardSnapshot;
 use App\Entity\LeaderboardTieResolution;
+use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
+use App\Entity\Player;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\Team;
@@ -26,7 +29,10 @@ use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\CreditTransactionType;
+use App\Enum\MatchEventType;
+use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
+use App\Rule\ScorerHitRule;
 use App\Service\Credits\PricingConfig;
 use App\Service\Team\TeamResolver;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -115,6 +121,31 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     public const string NEIGHBOURS_INVITATION_ID = '019ccccc-0000-7000-8000-0000000000f1';
     public const string NEIGHBOURS_INVITATION_EMAIL = 'soused@tipovacka.dev';
     public const string NEIGHBOURS_INVITATION_TOKEN = 'f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1';
+
+    /**
+     * World B roster (B31) — four players per LOCAL team of the Sousedská liga,
+     * keyed by team name and seeded in this order, so the guess form's „Tip na
+     * střelce" picker always has a pool to autocomplete over. World B is the ONE
+     * dev competition with `scorer_hit` enabled, and its two last fixtures are
+     * deliberately untipped, so an open form with an EMPTY picker is one click
+     * away. Rosters are short on purpose: any name outside them reaches the
+     * picker's „Přidat hráče …" create row, which lands a new {@see Player} on
+     * the LOCAL team ({@see TeamResolver}'s hybrid scope — a private source never
+     * writes into the shared directory).
+     *
+     * Player UUIDs are `019ddddd-0000-7000-8000-0000000fe0XX`, XX counting up in
+     * hex through this list.
+     *
+     * @var array<string, list<string>>
+     */
+    public const array NEIGHBOURS_ROSTERS = [
+        'Sokol Dolní' => ['Radek Bureš', 'Ondřej Klíma', 'Vlastimil Hruška', 'Jiří Vávra'],
+        'Sokol Horní' => ['Milan Toman', 'Aleš Kohout', 'Zbyněk Matoušek', 'Dalibor Hejda'],
+        'Kanonýři' => ['Ivan Zeman', 'Lubomír Cink', 'Štěpán Bažant', 'Norbert Kadlec'],
+        'Rebelové' => ['Bohuslav Kolář', 'Přemysl Šťastný', 'Květoslav Tichý', 'Oldřich Vaněk'],
+        'Dynamo Zahrádka' => ['Ctirad Beran', 'Bedřich Slavík', 'Svatopluk Marek', 'Jarmil Kopecký'],
+        'Old Boys' => ['Vojtěch Straka', 'Alois Pekař', 'Ferdinand Bláha', 'Bohumil Konečný'],
+    ];
 
     /** World C — everything played, source completed („Ukončeno" states, resolved tie). */
     public const string WINTER_SOURCE_ID = '019aaaaa-0000-7000-8000-0000000000f3';
@@ -685,16 +716,22 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         return $user;
     }
 
+    /**
+     * @param list<array{string, int}> $extraRules optional rules on top of the four defaults,
+     *                                             as [identifier, points]
+     */
     private function provisionDefaultRules(
         ObjectManager $manager,
         Competition $competition,
         \DateTimeImmutable $now,
+        array $extraRules = [],
     ): void {
         foreach ([
             ['exact_score', 5],
             ['correct_outcome', 3],
             ['correct_home_goals', 1],
             ['correct_away_goals', 1],
+            ...$extraRules,
         ] as [$identifier, $points]) {
             $manager->persist(new CompetitionRuleConfiguration(
                 id: Uuid::v7(),
@@ -855,7 +892,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         int $homeScore,
         int $awayScore,
         \DateTimeImmutable $now,
-    ): void {
+    ): Guess {
         // Historical matches: tipped shortly before kickoff. Upcoming matches (kickoff in
         // real future): clamp to real "now" so the UI doesn't render submittedAt in the future.
         $realNow = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
@@ -875,7 +912,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $manager->persist($guess);
 
         if (!$match->isFinished) {
-            return;
+            return $guess;
         }
 
         $evaluation = new GuessEvaluation(
@@ -894,6 +931,8 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         }
 
         $manager->persist($evaluation);
+
+        return $guess;
     }
 
     /**
@@ -1125,6 +1164,10 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
      * dev user: premium ON for everyone, an anonymous member (no e-mail) and a
      * pending e-mail invitation, so all three member states have UI to render.
      *
+     * It is also the ONE dev competition with the `scorer_hit` rule on, backed by
+     * a per-team roster and real goal timelines (B31) — the guess form's „Tip na
+     * střelce" picker is unreachable after a `db:reset` without it.
+     *
      * @param array<int, User> $users
      *
      * @return array{Competition, list<User>} the competition and its non-owner members
@@ -1166,6 +1209,24 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             $teams[$name] = $this->createTeam($manager, $id, $football, $source, $name, $seededAt, null, null, null);
         }
 
+        // The rosters behind the scorer picker (B31), keyed team name → player
+        // name → Player so the goal events and scorer tips below can name them.
+        /** @var array<string, array<string, Player>> $players */
+        $players = [];
+        $playerIndex = 0;
+
+        foreach (self::NEIGHBOURS_ROSTERS as $teamName => $names) {
+            foreach ($names as $playerName) {
+                $players[$teamName][$playerName] = $player = new Player(
+                    id: Uuid::fromString(sprintf('019ddddd-0000-7000-8000-0000000fe0%02x', ++$playerIndex)),
+                    team: $teams[$teamName],
+                    name: $playerName,
+                    createdAt: $seededAt,
+                );
+                $manager->persist($player);
+            }
+        }
+
         /** @var list<array{string, string, string, int, int, string, ?int, ?int}> $seeds */
         $seeds = [
             ['0000000fb001', 'Sokol Dolní', 'Kanonýři', -6, 17, '1. kolo', 3, 2],
@@ -1199,6 +1260,36 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             $matches[] = $match;
         }
 
+        // Goal timelines of the two played fixtures, so the roster is the source
+        // of truth the `scorer_hit` rule reads ({@see MatchEventRepository}) and
+        // not a decorative list. `Radek Bureš` scores twice on purpose — the rule
+        // counts a correctly tipped player ONCE, however many goals they got.
+        /** @var list<array{int, string, string, int}> $goals match index, side, player, minute */
+        $goals = [
+            [0, MatchSide::Home->value, 'Radek Bureš', 12],
+            [0, MatchSide::Home->value, 'Ondřej Klíma', 34],
+            [0, MatchSide::Away->value, 'Ivan Zeman', 51],
+            [0, MatchSide::Home->value, 'Radek Bureš', 78],
+            [0, MatchSide::Away->value, 'Štěpán Bažant', 88],
+            [1, MatchSide::Home->value, 'Bohuslav Kolář', 23],
+            [1, MatchSide::Away->value, 'Alois Pekař', 67],
+        ];
+
+        foreach ($goals as [$matchIndex, $side, $playerName, $minute]) {
+            $match = $matches[$matchIndex];
+            $team = MatchSide::Home->value === $side ? $match->homeTeam : $match->awayTeam;
+
+            $manager->persist(new MatchEvent(
+                id: Uuid::v7(),
+                sportMatch: $match,
+                type: MatchEventType::Goal,
+                side: MatchSide::from($side),
+                minute: $minute,
+                player: $players[$team->name][$playerName],
+                createdAt: $seededAt,
+            ));
+        }
+
         $competition = $this->createCompetition(
             $manager,
             id: self::NEIGHBOURS_COMPETITION_ID,
@@ -1220,7 +1311,13 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             tipChangeOffsetMinutes: 60,
             now: $seededAt,
         );
-        $this->provisionDefaultRules($manager, $competition, $seededAt);
+        // „Trefený střelec" is enabled HERE and nowhere else in the dev worlds
+        // (B31): World B is the only competition that is both still open for
+        // tipping and backed by a roster, so this is where the guess form renders
+        // its scorer picker after a plain `db:reset`.
+        $this->provisionDefaultRules($manager, $competition, $seededAt, [
+            [ScorerHitRule::IDENTIFIER, 2], // = ScorerHitRule::$defaultPoints
+        ]);
 
         // The anonymous member: no e-mail, no password, only a profile name.
         $anonymous = new User(
@@ -1293,9 +1390,35 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         // and that match's deadline is still ahead, so this is the UNLOCKED half
         // of the premium „Rozložení tipů" (B11) — the locked half is World E,
         // so both are reachable without ever touching a toggle.
+        //
+        // Some of them tipped scorers too — the dev user on BOTH sides — so the
+        // read surfaces („Střelci: …" in the tip lists and the matrix cell) show
+        // the feature and the picker opens PRE-FILLED on this fixture. Offsets
+        // without an entry keep a plain score tip, so both shapes sit on one
+        // screen; the last two fixtures stay scorer-free for the empty-picker and
+        // „Přidat hráče …" walkthrough.
+        /** @var array<int, list<array{MatchSide, string}>> $scorerTips */
+        $scorerTips = [
+            0 => [[MatchSide::Home, 'Ivan Zeman'], [MatchSide::Away, 'Květoslav Tichý']],
+            1 => [[MatchSide::Home, 'Štěpán Bažant']],
+            4 => [[MatchSide::Away, 'Bohuslav Kolář']],
+        ];
+
         foreach ([[0, 2, 1], [1, 1, 0], [2, 3, 1], [3, 1, 1], [4, 0, 2], [5, 1, 2]] as [$offset, $homeGuess, $awayGuess]) {
             [$member] = $plans[$offset];
-            $this->createEvaluatedGuess($manager, $member, $matches[3], $competition, $homeGuess, $awayGuess, $seededAt);
+            $guess = $this->createEvaluatedGuess($manager, $member, $matches[3], $competition, $homeGuess, $awayGuess, $seededAt);
+
+            foreach ($scorerTips[$offset] ?? [] as [$side, $playerName]) {
+                $team = MatchSide::Home === $side ? $matches[3]->homeTeam : $matches[3]->awayTeam;
+
+                $guess->addScorer(new GuessScorer(
+                    id: Uuid::v7(),
+                    guess: $guess,
+                    player: $players[$team->name][$playerName],
+                    side: $side,
+                    createdAt: $seededAt,
+                ));
+            }
         }
 
         return [$competition, $nonOwnerMembers];

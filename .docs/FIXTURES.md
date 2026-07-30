@@ -343,6 +343,12 @@ tests enable it per competition via `UpdateCompetitionRuleConfigurationCommand`.
 VERIFIED and PUBLIC competitions keep every optional rule off, so they double as the
 "payload part rejected" fixtures (`GuessFeatureNotEnabled`).
 
+> **Browsing, not testing?** SUBSET_COMPETITION is useless for that: its two matches carry
+> the absolute dates above, which are long past against the real dev clock, so no tip form
+> ever opens there and the scorer picker is unreachable (B31). The dev world's
+> `scorer_hit` competition is **World B — „Sousedský pohár"**; see
+> [World B is also the only place the scorer picker exists](#world-b-is-also-the-only-place-the-scorer-picker-exists-b31).
+
 ## Tie resolution
 
 `FIXTURE_TIE_RESOLUTION_ID` = `019eeeee-0000-7000-8000-000000000004` is a **reserved
@@ -472,9 +478,9 @@ distribution boost).
 
 ## Which world demonstrates which state
 
-The reason this section exists: twice now a bug turned out to be „the fixtures cannot
-demonstrate the feature" (B11, B23), and the diagnosis cost hours. Before editing data by
-hand, look here.
+The reason this section exists: three times now a bug turned out to be „the fixtures cannot
+demonstrate the feature" (B11, B23, B31), and the diagnosis cost hours. Before editing data
+by hand, look here.
 
 | State you want to see | Where, after a plain `db:reset` |
 |---|---|
@@ -488,6 +494,9 @@ hand, look here.
 | Team-filter (`teams`) scope, „why is this match not in the competition" | **World D** |
 | Anonymous member, pending e-mail invitation, on-behalf tipping | **World B** |
 | A 24-row leaderboard with podium, tie and long tail | **World A** |
+| The guess form's **scorer picker** („Tip na střelce") + its „Přidat hráče …" create row | **World B** — the ONLY competition with `scorer_hit` enabled AND a roster behind it; both „3. kolo" fixtures are untipped by everyone, so an open form with an EMPTY picker is one click away (B31) |
+| A **pre-filled** scorer picker / „…tip · Ivan Zeman, Květoslav Tichý" in the tip lists | **World B**, the „2. kolo" `Kanonýři – Rebelové` fixture — the dev user tipped a scorer on each side |
+| A **goal timeline** with real scorers (incl. one player scoring twice) | **World B**, the two played „1. kolo" fixtures — the `scorer_hit` rule's source of truth (`match_events`) |
 
 ## Map of the worlds
 
@@ -517,7 +526,32 @@ group (the „kdo ještě netipoval" state), the one after it by **everyone**, s
 deliberately `3 × 1 / 1 × X / 2 × 2`. That second one is the **UNLOCKED premium „Rozložení
 tipů"** of the dev world (World E is the locked twin) — B11, so both halves of the premium
 paywall are reachable without ever flipping a toggle.
-**Use this one for organizer/member-management states and on-behalf tipping.**
+**Use this one for organizer/member-management states and on-behalf tipping — and for
+anything scorer-related (below).**
+
+#### World B is also the only place the scorer picker exists (B31)
+
+`scorer_hit` („Trefený střelec", **2 b**) is enabled on this competition and nowhere else in
+the dev worlds, and its six LOCAL teams are the only ones with a **roster**. That combination
+is what makes the guess form render its `scorer-picker` after a plain `db:reset` — before B31
+the only `scorer_hit` competition anywhere was `AppFixtures`' „Vybrané zápasy party", whose
+matches carry absolute 2025 dates and are therefore never open against the real dev clock.
+
+| What | Where |
+|---|---|
+| Roster | 4 players per team, `DevFixtures::NEIGHBOURS_ROSTERS`, UUIDs `019ddddd-0000-7000-8000-0000000fe0XX` (XX counting up in hex through that list) |
+| Empty picker + „Přidat hráče …" create row | the two „3. kolo" fixtures (`Old Boys – Sokol Dolní` today +6, `Dynamo Zahrádka – Sokol Horní` today +9) — **nobody** has tipped them |
+| Pre-filled picker (both sides) | „2. kolo" `Kanonýři – Rebelové`: `tipovac` tipped `Ivan Zeman` (home) + `Květoslav Tichý` (away), `honza` and `kristy` one each |
+| Goal events the rule scores against | the two played „1. kolo" fixtures, 7 goals matching the 3:2 and 1:1 scorelines; `Radek Bureš` scores **twice** on purpose — a correctly tipped player counts ONCE, however many goals they got |
+
+The rosters are deliberately short so that any other name reaches the create row. Because the
+source is **private**, a free-typed name creates a **LOCAL** `Player` on that source's team
+(`TeamResolver`'s hybrid scope) — it never lands in the shared global directory. The same
+roster is what the organizer's score-entry sheet autocompletes over
+(`/zdroje/{NEIGHBOURS_SOURCE_ID}/hraci`).
+
+No seeded evaluation carries scorer points, so World B's standings are still the plain
+plan-string totals (13 / 11 / 6 / 4 / 3 / 1).
 
 ### World C — „Zimní pohár – parta" · the finished competition
 `WINTER_COMPETITION_ID` = `019bbbbb-0000-7000-8000-0000000000f4`
