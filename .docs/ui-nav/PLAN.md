@@ -44,14 +44,14 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | — | Boost panel copy + „Uložit tip" / „Jak tipovali ostatní" (round 2) | DONE | `295b47c` |
 | — | Domain: the „Měnit tip" window is **per match**, not per day (round 2) | DONE | `d44539a` |
 | 14 | [Homepage: drop invented figures, countdown, „Proč Wtips"; fix the wrapped score](items/14-homepage-cleanup.md) | DONE | `287499c` |
-| 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | TODO | — |
+| 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9 + B19 DONE · B14/B15/B16/B17 in flight · B10 **BLOCKED** (product decision) · B11/B12/B18 TODO |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B13–B17, B19 DONE · B10 **BLOCKED** (product decision) · B11/B12/B18/B20/B22/B23/B24 TODO |
 | [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->

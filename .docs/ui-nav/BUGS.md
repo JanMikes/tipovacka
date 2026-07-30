@@ -20,13 +20,16 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **BLOCKED** — needs a product decision | — |
 | B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | TODO | — |
 | B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
-| B13 | PIN and shareable-link boxes overflow their card on mobile | TODO | — |
-| B14 | The verification airlock does not confine the user | TODO | — |
-| B15 | An invite-link sign-up loses the competition it was invited to | TODO | — |
-| B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
-| B17 | Browser offers to save the password before it is confirmed | TODO | — |
+| B13 | PIN and shareable-link boxes overflow their card on mobile | DONE | `77023fc` |
+| B14 | The verification airlock does not confine the user | DONE | `26462b4` — was **cosmetic**, the guard held |
+| B15 | An invite-link sign-up loses the competition it was invited to | DONE | `26462b4` — never robust, not regressed |
+| B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | DONE | `05f0f67` — feature was reachable; a latent bug with the same symptom was fixed |
+| B17 | Browser offers to save the password before it is confirmed | DONE | `26462b4` |
 | B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
-| B20 | Public nav overflows 53 px at 320 px | TODO | — |
+| B20 | Public nav overflows the viewport at 320 px (**every** page, both nav variants) | TODO | — |
+| B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
+| B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | TODO | — |
+| B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -567,6 +570,11 @@ and their absence once locked.
 
 ### Assumptions made
 
+- **`min-width: 0` is necessary but NOT always sufficient** (added 2026-07-30 from B13). If the
+  offending child has its own *intrinsic* width — a UA-sized `<input>`, an image, a replaced element —
+  `min-width: 0` stops it overflowing the flex line but its min-content contribution still sizes the
+  track. B13 needed an explicit `width: 0` (with `flex: 1` growing it back) to zero that contribution.
+  Measure the track, not just the child.
 - **Ellipsis, not wrapping**, for long team names — it keeps every row the same height, and the
   existing `.tip-row-teams .name` rule already asked for it (it simply never got the chance).
 - **The end zone wrapping to a second line is the intended narrow layout**, not a defect. At
@@ -1093,3 +1101,45 @@ The item-14 fix (`min-w-0` + `truncate`) makes this **degrade gracefully instead
 which is why it is a separate row and not a regression. The real fix is to stop the headline claiming
 700 px — remove or move the non-breaking spaces, or allow the line to break — and that changes how the
 headline reads, so it needs the product owner's eye.
+
+---
+
+## B22 — `/kredity` renders a 523 px-wide table at 320 px
+
+Found by the B13/B16 agent while measuring, 2026-07-30 — outside its surface, so reported not fixed.
+
+The credits page’s table is 523 px wide in a 320 px viewport. Same family as B13 and B7: a table whose
+columns keep a min-content floor inside a container that cannot give them the room.
+
+Read **B13’s** finding before reaching for `min-width: 0` — it establishes that `min-width: 0` alone is
+**not sufficient** when the offending child has an intrinsic width (there, a UA `size=20` input). Measure,
+then decide between an explicit zero-width contribution, horizontal scroll confined to the table’s own
+container, or a stacked card layout at narrow widths.
+
+## B23 — after `db:reset` no competition can reach the „Uzamknout tipy" modal
+
+Found by the B13/B16 agent, 2026-07-30. **This is probably part of why B16 looked unreproducible, so it
+is worth fixing before the next lock-related report.**
+
+Every `DevFixtures` world is anchored to the **real calendar** (`today ± n days`, item 03 assumption 2),
+so after a `composer db:reset` every competition has already started ⇒ „Tipy uzamčeny" ⇒ the
+„Uzamknout tipy" button never renders. To exercise B2’s scheduled lock the agent had to push a fixture
+match’s kickoff into the future by hand and restore it afterwards.
+
+**Fix:** give `DevFixtures` at least one competition that has **not** started — an unlocked, not-yet-begun
+soutěž the organizer can still lock — and document it in `.docs/FIXTURES.md` alongside the other worlds.
+Keep it in `DevFixtures` (group `dev`), **not** `AppFixtures`: item 03 assumption 1 records that the
+shared test baseline has many tests asserting exact counts over whole tables.
+
+Related: **B11** is the same shape of gap (the premium world renders no „Rozložení tipů" surface). Both
+are „the fixtures cannot demonstrate the feature" — worth doing together.
+
+## B24 — flatpickr’s year renders near-black in the lock modal
+
+Cosmetic, pre-existing since B2, found while verifying B16 (2026-07-30) and left alone as out of scope.
+
+Inside the „Uzamknout tipy" dialog the flatpickr calendar’s year („2026") is drawn in near-black on the
+dark panel — effectively invisible. The datepicker is a vendor widget being skinned by our dark theme;
+expect the fix to be a specificity problem in the same family as **B3**, where vendor CSS out-specified
+the skin on focus. Check the month name, the weekday row and the disabled/out-of-range days too, not
+only the year, and verify inside the `<dialog>` rather than on a normal page.

@@ -17,7 +17,11 @@ before touching security, and update it in the same commit as any new route.
 
 ## 1. Navigation shell
 
-`templates/base.html.twig` → `<twig:Layout:Nav />` + `<twig:Layout:Footer />`.
+`templates/base.html.twig` → `<twig:Layout:Nav />` + `<twig:Layout:Footer />`, both wrapped in
+`{% block navigation %}` / `{% block page_footer %}` (B14) so a page can render **chrome-free**.
+`/overeni-ceka` overrides both — brand-mark-only header, no footer — so the verification airlock cannot
+advertise pages the guard will bounce the user off. **`templates/auth/_layout.html.twig` is NOT
+chrome-free**: it extends `base` and renders the nav like every other page.
 `<body data-turbo="false">` — Turbo is globally OFF; opt in per element with `data-turbo="true"`.
 
 **`templates/components/Layout/Nav.html.twig`** — sticky glass top bar, two variants driven by
@@ -97,7 +101,7 @@ Templates in `templates/auth/`, forms are Live Components in `templates/componen
 ### Player top level (🔒 all)
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` | The „Nástěnka hráče" nav target — **the player's home** since item 06: ONE soutěž in focus, picked with `<twig:SoutezSwitcher>` (`?soutez={uuid}`, unknown/foreign id falls back silently). Sections in order: hero (eyebrow, „Ahoj, {nickname}.", switcher, **„Tvoje pozice" `.hero-rank` card**) → „Poslední Tvoje tipy" (+ „Historie →" `leaderboard_member`) → „Moje soutěže" (**deliberately un-scoped** — the full cross-soutěž overview) → „Následující zápasy" (chips Vše/Live/Dnes/Tipovatelné/Ukončené with counts + a „SOUTĚŽ" `?zapasy=vse` widener) → „Odehrané zápasy" beside the „Žebříček" sidebar (`.lb-row`, „Celý žebříček →" `/zebricek?soutez=`). Fed by `ListUserMatches` scoped to the soutěž, so „Rozložení tipů" is one `TipStatsProvider` batch, never per row — and since item 11 it renders inside the match card, not as a card of its own. **Gone** (item 06): the PIN bar, „Moje zdroje zápasů", „Objev další soutěže", the three count `StatCard`s |
+| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` | The „Nástěnka hráče" nav target — **the player's home** since item 06: ONE soutěž in focus, picked with `<twig:SoutezSwitcher>` (`?soutez={uuid}`, unknown/foreign id falls back silently). Sections in order: hero (eyebrow, „Ahoj, {nickname}.", switcher, **„Tvoje pozice" `.hero-rank` card**) → „Poslední Tvoje tipy" (+ „Historie →" `leaderboard_member`) → „Moje soutěže" (**deliberately un-scoped** — the full cross-soutěž overview) → „Následující zápasy" (chips Vše/Live/Dnes/Tipovatelné/Ukončené with counts + a „SOUTĚŽ" `?zapasy=vse` widener) → „Odehrané zápasy" beside the „Žebříček" sidebar (`.lb-row`, „Celý žebříček →" `/zebricek?soutez=`). Fed by `ListUserMatches` scoped to the soutěž, so „Rozložení tipů" is one `TipStatsProvider` batch, never per row — and since item 11 it renders inside the match card, not as a card of its own. **Gone** (item 06): the PIN bar, „Moje zdroje zápasů", „Objev další soutěže", the three count `StatCard`s. **Empty state** (B15), for a viewer in no soutěž: PIN bar (primary) → „Procházet soutěže" → „Vytvoř si vlastní soutěž" (small text link) |
 | `matches` | `/zapasy` | `portal/matches/index.html.twig` | „Vaše zápasy" — cross-competition match feed, one `Match:MatchRow` **card** per match with the „Rozložení tipů" strip(s) inside it (item 11). **No longer in the nav** (item 01); URL-only |
 | `leaderboard` | `/zebricek` | `public/leaderboard.html.twig` | **public** (item 05) — see the Žebříček section below |
 | `credits` | `/kredity` | `portal/credits/overview.html.twig` | + `credits_buy` `/kredity/koupit`, `credits_return` `/kredity/navrat` |
@@ -126,7 +130,7 @@ members-only hub are now the same tree, `/souteze`. They are told apart by shape
 | `competition_add_anonymous_member` | `/souteze/{id}/clenove/bez-emailu` | `portal/competition/add_anonymous_member.html.twig` |
 | `competition_promote_anonymous_member` | `/souteze/{id}/clenove/{userId}/pridat-email` | `portal/competition/promote_anonymous_member.html.twig` |
 | `competition_sport_match_guesses` | `/souteze/{id → competitionId}/zapasy/{sportMatchId}` | via `Guess:MatchGuessesList` — heading „Jak tipovali ostatní" (was „Tipy soutěže", renamed round 2: the old name never said the block lists OTHER members' tips) |
-| `competition_join_by_pin` | `/pripojit` | `portal/competition/join_by_pin.html.twig` (+ `competition_join_by_pin_quick` `/pripojit/rychle`) |
+| `competition_join_by_pin` | `/pripojit` | `invitation/join_by_pin.html.twig` — **public** since B15 (`Controller\Invitation\JoinByPinController`), as is `competition_join_by_pin_quick` `POST /pripojit/rychle`. Reachable means *typeable*, never *joinable*: an unverified account may read the landing and join through none of it |
 
 Every action reached **from** „Nastavení" returns there (invite, bulk invite, revoke invitation,
 remove member, promote/add anonymous member, PIN + link regenerate/revoke, upravit, výběr zápasů,
@@ -151,7 +155,8 @@ only when they have something to say:
    There is **no „Výherní bank" card**: entry fees are burned credits, there are no payouts.
 2. **„Soutěže, kde tipuješ"** (`#souteze-hraju`) — `ListMyPlayingCompetitions` → one
    `<twig:Competition:PlayingCard>` each (rank / body / round gain / next action). Members only.
-3. **PIN join bar** — the existing `_partials/join_by_pin_form.html.twig`. Verified users only.
+3. **PIN join bar** — the existing `_partials/join_by_pin_form.html.twig`. Since B15 shown to
+   **anonymous visitors and verified members**; hidden only while a logged-in account is unverified.
 4. **„Tvé soutěže"** (`#souteze-organizuji`) — organizer scope. Rendered only when the viewer owns
    something.
 5. **Veřejné soutěže** (`#souteze-verejne`) — the discoverable global competitions.
@@ -316,7 +321,7 @@ Components are deliberately absent** — they need entities and DB queries, whic
 `Match/TipStats` covers the boost paywall a player actually meets.
 
 **Partials** `_partials/competition_rules.html.twig`, `_partials/join_by_pin_form.html.twig`
-(**the PIN bar's only call site is `/souteze` since item 06**), plus page-scoped ones next to
+(call sites since B15: **`/souteze`, `home.html.twig` and the Nástěnka empty state**), plus page-scoped ones next to
 their template: `portal/_dashboard_match_row.html.twig`, `portal/_dashboard_leaderboard_row.html.twig`,
 `portal/sport_match/_timeline.html.twig`.
 

@@ -302,7 +302,12 @@ owner reports actually getting through, not merely being bounced back.
    differs, or a route slipped the allow-list.
 
 Either way the airlock should render **without** the nav's primary links and CTA, as its own bare
-shell (`templates/auth/_layout.html.twig` is the existing precedent for a chrome-free page).
+shell.
+
+> **Correction 2026-07-30 (mine).** This batch claimed `templates/auth/_layout.html.twig` was "the
+> existing precedent for a chrome-free page". **It is not** - it extends `base.html.twig` and renders
+> the nav like every other page. There was no chrome-free precedent; the implementer had to create
+> one (`{% block navigation %}` / `{% block page_footer %}` in `base.html.twig`).
 
 ## Batch 10 — „Uzamknout tipy" offers no date (**B2 appears not to work**)
 
@@ -455,3 +460,20 @@ to follow — a global figure over a personal sub-label („+N tento týden" cou
 joins) would be worse than either — and requires the numbers to stay **measured**: global totals on a
 young product are small, and this round is removing invented statistics elsewhere, so padding them
 would be self-defeating.
+
+## Batch 20 - the homepage mockups may keep their invented data
+
+> This one is marketing material just mock itself, here it is okay
+
+Asked whether "no mock/fake data anywhere" reached the homepage's two product mockups - the demo
+match card (Argentina-Francie, "Tipy 248 hracu", a 58/22/20 % split) and the demo leaderboard - the
+product owner **kept them**. So the rule has a boundary worth writing down:
+
+- **Not allowed:** invented figures presented as facts *about the business* - adoption counts,
+  player totals, recommendation rates, live-activity pills, countdowns. Those were removed from the
+  homepage (item 14) and the sign-in page (batch 16).
+- **Allowed:** invented data *inside a picture of the product*, where it is self-evidently an
+  illustration of the interface rather than a claim about adoption.
+
+`/_design` half A is the same case and is additionally admin-only and labelled inert, so its sample
+DTOs are unaffected. `DevFixtures` is dev-only and never in question.
