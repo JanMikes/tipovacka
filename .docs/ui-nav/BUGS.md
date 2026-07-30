@@ -35,8 +35,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
 | B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
 | B29 | Homepage demo card: team names collapse to ~15 px at 320 px | DONE | `3f61e77` - three shapes; also fixed the second mock on the same page |
-| B30 | The lock dialog calendar overflows its own panel at 320 px | DONE | `e0e4c4a` - four vendor widths made relative; exposed and fixed a second header defect |
-| B31 | After `db:reset` no competition can reach the scorer picker | DONE | `5e524ff` - World B extended; third gap of this shape after B11 and B23 |
+| B30 | The lock dialog calendar overflows its own panel at 320 px | DONE | `e0e4c4a` + `847b749` - four vendor widths made relative; exposed and fixed a second header defect; re-measured, four comment numbers corrected |
+| B31 | After `db:reset` no competition can reach the scorer picker | DONE | `5e524ff` - World B extended; third gap of this shape after B11 and B23; re-verified, `FIXTURES.md` needed no correction |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -1513,6 +1513,61 @@ records that many integration tests assert exact counts over whole tables. Docum
 `.docs/FIXTURES.md` alongside the „which world demonstrates which state" table that B11/B23 added — that
 table exists precisely so this class of gap is visible without reading PHP.
 
+### B31 as built (2026-07-30, `5e524ff`) — and independently verified
+
+**World B („Sousedský pohár") was extended rather than a sixth world added**: it is already private /
+from-scratch, organized by the primary dev user, and had four fixtures still open, so no competition
+count on `/nastenka`, `/souteze`, the switcher or the ledger moved. It got a **6 × 4 roster**, the
+**`scorer_hit`** rule (2 b, via a new `$extraRules` argument of `provisionDefaultRules()`), **goal
+timelines** on the two played fixtures, and **scorer tips on one „2. kolo" fixture** — leaving both
+„3. kolo" fixtures untipped so the *empty* picker is one click away. All in `DevFixtures` (group `dev`),
+anchored to `today ± n` (item 03 assumptions 1 + 2). **No migration** — no schema change was involved.
+
+Re-verified after a plain `composer db:reset` + `docker compose restart web`, in the database and in a
+browser as `user@tipovacka.test`:
+
+- **Roster** — 24 players = 6 teams × 4, UUIDs `019ddddd-…-0000000fe001` … `fe018` (hex, so `0x18` = 24),
+  every one **LOCAL** (`teams.match_source_id` = the private source). Matches `.docs/FIXTURES.md`.
+- **Empty picker** on *both* „3. kolo" fixtures — `Old Boys – Sokol Dolní` (2026-08-05 = today +6) and
+  `Dynamo Zahrádka – Sokol Horní` (2026-08-08 = today +9), 0 guesses on either. Renders with
+  `items: []`, `payload: "[]"`, two `<optgroup>`s of exactly the 4 players of *that* fixture's teams.
+- **Autocomplete** is scoped to those two rosters (10 dropdown rows = 2 group headers + 8 players);
+  typing `Vojt` narrows to `["Old Boys", "Vojtěch Straka"]`.
+- **Czech create row** — „Přidat hráče „Zdeněk Nováček"…" and the empty row „Nic nenalezeno — napište
+  jméno nového hráče". **B9 / B12 have not regressed.**
+- **A free-typed name creates a LOCAL player** — picked on the *away* side, saved („Tip uložen."),
+  and the row landed on `Sokol Dolní` **of the private source**, with **0** global players of that
+  name. `TeamResolver`'s hybrid scope holds. (Test artefacts deleted afterwards; the fixtures are back
+  to 24 players and 0 guesses on both „3. kolo" fixtures.)
+- **Pre-filled picker** on „2. kolo" `Kanonýři – Rebelové` — two chips, „Ivan Zeman / Kanonýři" +
+  „Květoslav Tichý / Rebelové", payload `[{side:"home",name:"Ivan Zeman"},{side:"away",…}]`. In the
+  database `honza` → `Štěpán Bažant` (home) and `kristy` → `Bohuslav Kolář` (away), one each — exactly
+  what `FIXTURES.md` documents.
+- **Read surface** — `/zebricek/matice` carries `title="Střelci: Ivan Zeman, Květoslav Tichý"` (plus
+  the other members'). Note it is a **tooltip**, not inline text.
+- **Goal timeline** on both played „1. kolo" fixtures: 12' 34' 51' 78' 88' on the 3:2 and 23' 67' on
+  the 1:1 = **7 goals matching the scorelines**, and `Radek Bureš` appears **twice** as documented.
+- **B3** — the dropdown's parent is `body` and it is clipped by **no** ancestor (`clippedBy: null`).
+- **B8** — the `.ts-control` box is **44.000 px high before focus and 44.000 px after**, width 748 px
+  unchanged: **Δh = 0.000**. Measured, not eyeballed.
+- **Standings unchanged** — World B is still **13 / 11 / 6 / 4 / 3 / 1**, and
+  `guess_evaluation_rule_points` holds rows for `correct_outcome`, `exact_score`,
+  `correct_home_goals`, `correct_away_goals` and **nothing** for `scorer_hit`. So „no seeded evaluation
+  carries scorer points" is **true**, and `FIXTURES.md` is right about it.
+- **`.docs/FIXTURES.md` needed no correction** — every new row (fixture names, the +6 / +9 dates, the
+  UUID pattern, who tipped whom, the double scorer, the standings) checked out against the database.
+
+### Assumptions made (B31 re-verification)
+
+- **`scorer_hit` is deliberately on two competitions now** — World B and `AppFixtures`' „Vybrané zápasy
+  party". The latter stays enabled (removing it would change the test baseline); it is simply
+  unreachable in a browser, which is what B31 was about.
+- **The read surface being a `title` tooltip is treated as sufficient**, since that is how the matrix
+  shows every extra tip part. Not changed here.
+- **My browser walk mutated the dev database** (one guess + one player) and the artefacts were deleted
+  by id afterwards rather than by a second `db:reset`, verified back to 24 players / 0 guesses on the
+  two „3. kolo" fixtures.
+
 ### B30 as built (2026-07-30)
 
 The four hard-coded vendor widths became relative **without** a breakpoint restructure, an `!important`,
@@ -1524,8 +1579,10 @@ for the inline one it resolves against the dialog column and shrinks to 214 px.
 
 **Two things the fix uncovered:**
 
-1. **`.flatpickr-days` overhung the calendar's border box by ~2 px, clipping „Ne" at EVERY width** —
-   including 1440 px. Pre-existing, unreported, fixed for free.
+1. **`.flatpickr-days` overhung the calendar by 2.00 px at EVERY width** — including 1440 px.
+   Pre-existing, unreported, fixed for free. (Corrected on re-measurement, see below: 2.00 px past
+   the calendar's *padding* box, which is the `overflow: hidden` clip edge; 1.00 px past its border
+   box. And it was the „Ne" **cell band** that lost those 2 px, never the „Ne" **label**.)
 2. **Shrinking the calendar exposed the header**, which then wrapped „2026" onto a second line and clipped
    it against the months bar — **visually undoing B24 one commit after B24 landed**. Fixed with a
    **container query** on `.flatpickr-months`, deliberately not a media query: the picker is shared and
@@ -1537,3 +1594,80 @@ re-checked at 320 / 390 / 1440 px — all keep the vendor 307.9 px box, seven we
 days per row, zero document overflow, console clean. B2's traps intact (`static: true` not reintroduced,
 `novalidate` untouched); B24's year still 9.86:1 at every width; the full schedule flow re-run at 320 px
 and 1440 px with Prague → UTC persistence confirmed in the database, then cancelled.
+
+### B30 independently re-measured (2026-07-30, `847b749`)
+
+A second agent re-verified the shipped CSS from scratch, taking the baseline by **deleting the six
+declarations from the live CSSOM** rather than by swapping the file (same DOM, no repo churn). **The
+code is right; four numbers in its comment were not**, and the comment is what the next reader trusts,
+so `847b749` corrects them. Code untouched.
+
+The fix itself, measured inside the open dialog on „Vysočina – naše parta":
+
+| | before (rules stripped) | after |
+|---|---|---|
+| 320 px — calendar box | x=81 **w=307.88** right=388.88 (panel right **320**) | x=81 **w=214.00** right=295 |
+| 320 px — descendants outside the panel | **30** (worst +68.9 px) | **0** |
+| 320 px — runs of text **ink** outside the panel | **14** („Ne" +56.6, „So" +11.9, „5" +52.2 …) | **0** |
+| 320 px — minutes field | right=387.9, **67.9 px outside** | right=294.0, inside |
+| 320 px — leaves with `scrollWidth > width` | 0 | **0** |
+| day grid, every width | 42 cells / 6 rows / 7 per row | unchanged |
+| 360 px | 22 outside, 7 ink outside | 0 / 0 |
+| **390 px and up** | **0 outside** — a 307.88 px calendar clears a 390 px panel by 1.1 px | 0 |
+| ≥ 430 px, inline picker | 307.88 | **307.88 — the fix is a no-op here** |
+| document `scrollWidth` overflow | **0** at every width (the dialog scrolls) | 0 |
+
+**Where the earlier account was wrong** (all four are wording, not behaviour):
+
+1. „320 − 2×24 padding − 40 icon − 16 gap" = **216**; the measured column *and* the calendar's border
+   box are both **214.00**. The 2 px is `.modal-panel`'s **1 px border on each side**.
+2. „~2 px past the calendar's own **border box**" → **1.00 px** past the border box, **2.00 px** past
+   the **padding** box. Since the skin sets `overflow: hidden` and overflow clips at the padding box,
+   2.00 px genuinely were cut. Right magnitude, wrong box.
+3. „**clipping „Ne"** at EVERY width" → **overstated**. Clipped: **2.02 px of the „Ne" cell's band**.
+   The „Ne" **glyphs** cleared the clip edge by **11.25 px** and the last day column's numbers by
+   **11.4…15.7 px**, identically at 320 px and 1440 px. **No text was ever cut at any width.** This is
+   B29's ink-vs-box lesson pointing the other way: there a Range said „fine" while the box was
+   clipped; here box arithmetic said „clipped" while the ink was fine. Both measurements, every time.
+4. The header's „„Červenec" 89.5 + 6ch year 70 + two 34 px arrows want 227.5 px" → the arrows are
+   **absolutely positioned in vendor's 12.5 % gutters and contribute nothing**. The real constraint is
+   `.flatpickr-current-month { width: 75% }`: at the 212 px band a 320 px viewport leaves, that box is
+   **159.00 px** while month + year measure **89.48 + 69.96 = 159.44 px** — it misses by **0.44 px**.
+   The stated accounting would break at a 227.4 px band (≈ a 335 px viewport), yet 330 px measures
+   **one** line box. So the *conclusion* („320 px is the only width in 320…1440 that fails") survives;
+   the arithmetic behind it did not.
+
+**The header wrap is real** and was measured by deleting *only* the container-query pair: **two line
+boxes at 300 / 310 / 320 px**, with the year's box hanging **13.38 px below the months bar**; **one**
+line box from 330 px (band 222) up. As shipped: **one line box at 300, 310, 320, 330, 340, 350, 360,
+390, 430 and 1440 px**, and B24's year at **9.86:1 at every one of them** (`--fg-2`, unchanged by the
+115 % font-size step; `scrollWidth` 50 vs 49.66 px visible = rounding, not truncation). The 236 px
+threshold sits **23.4 px** above the measured 212.6 px floor.
+
+**Shared-widget check, 9 floating pickers over 7 pages** (match detail odložit, zdroj zápasů upravit
+×2, nový zápas, zápas upravit, per-match uzávěrka, admin nový zdroj ×2, admin zdroj upravit), each at
+320 / 390 / 1440 px, each compared against its own stripped baseline: **calendar box 307.875 px in
+both states, everywhere** — 7 weekday columns, 42 cells, 7 per row, 0 document overflow. One
+qualification: their **inner** `.flatpickr-days` / `.dayContainer` do change, 307.875 → 305.875, i.e.
+they stop overhanging too. So „the floating pickers are untouched" is true of the calendar box, not of
+the whole widget — and it is the same 2 px the record above claims as a win at every width.
+
+**Flow re-run** at 320 px and 1440 px: day clicked in the grid inside the dialog, minute nudged with
+flatpickr's own arrow (19 → 24, `step=5`), confirm submitted (HTTP 200 — so `novalidate` is still
+doing its job and B2's traps are not back), „Uzamčení tipů je naplánováno na 31. 7. 2026 16:24."
+rendered, then „Zrušit naplánování" restored the pre-state. Picking **today** is correctly refused
+with „Čas uzamčení musí být v budoucnosti." Console clean except `_wdt/*` 404s (the profiler bar after
+a cache clear, unrelated).
+
+### Assumptions made (B30 re-verification)
+
+- **The „dialog panel" is `dialog.confirm-dialog`'s border box.** Its padding is the designed breathing
+  room, so a descendant inside the border box but over the padding is not a bug; nothing measured came
+  near that line anyway (worst case after the fix: the weekday band ends 0.02 px past the clip edge,
+  a subpixel rounding sliver).
+- **Below 320 px is out of scope**, per this stream's floor (B20). 300 / 310 px were measured only to
+  locate the header threshold; the fix improves them too (a floating picker would also shrink below a
+  308 px viewport, which is a gain, not a regression).
+- **The baseline was taken by CSSOM deletion, not a file swap.** Equivalent for cascade purposes here
+  (the six declarations are the last ones for those selectors) and it avoids writing to a repo another
+  session was committing from — which had already bitten this round.
