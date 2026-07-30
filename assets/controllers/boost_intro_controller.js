@@ -29,18 +29,30 @@ export default class extends Controller {
     connect() {
         this.persisted = false;
         this.onClose = this.onClose.bind(this);
+        this.onBackdropClick = this.onBackdropClick.bind(this);
 
         if (!this.hasDialogTarget || typeof this.dialogTarget.showModal !== 'function') {
             return;
         }
 
         this.dialogTarget.addEventListener('close', this.onClose);
+        // A native modal <dialog> closes on Esc but NOT on a backdrop click, so the
+        // „click outside" dismissal has to be wired by hand — exactly as
+        // confirm_controller.js does it, for one dialog vocabulary, not two.
+        this.dialogTarget.addEventListener('click', this.onBackdropClick);
         this.dialogTarget.showModal();
     }
 
     disconnect() {
         if (this.hasDialogTarget) {
             this.dialogTarget.removeEventListener('close', this.onClose);
+            this.dialogTarget.removeEventListener('click', this.onBackdropClick);
+        }
+    }
+
+    onBackdropClick(event) {
+        if (event.target === this.dialogTarget) {
+            this.dialogTarget.close();
         }
     }
 

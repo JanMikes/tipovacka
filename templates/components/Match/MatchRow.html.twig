@@ -51,15 +51,6 @@
                                    která zápas obsahuje. VŽDY dávkově z TipStatsProvider —
                                    nikdy jeden dotaz na řádek (N+1 past v CLAUDE.md).
       footNote     string|null   — drobná poznámka na patě karty (uzávěrka, zdroj zápasů)
-      cardUrl      string|null   — „zápasy na proklik" (item 19): je-li vyplněn, celá KARTA
-                                   vede na tento cíl. Nemění vzhled ani jediný prvek — je to
-                                   rozprostřený odkaz NAD kartou (`.card-stretch`, poslední
-                                   v DOM), takže se nic interaktivního nevnoří do odkazu
-                                   (B7) a stávající odkazy uvnitř (pilulka, dvojice týmů,
-                                   „můj tip", pruh „Rozložení tipů") zůstávají nad ním.
-                                   Platí jen pro `variant="default"` — podoba `dashboard`
-                                   je odkazem sama. Bez něj se karta vykreslí byte za byte
-                                   jako dřív (/zapasy, /_design).
       variant      string        — default | dashboard (item 18). `dashboard` je podoba
                                    z Nástěnky: hlavička (kolo · datum · čas · pilulka),
                                    zrcadlené bloky týmů se skóre (nebo „vs") a jediná
@@ -92,8 +83,7 @@
     tipUrl = null,
     tipStats = [],
     footNote = null,
-    variant = 'default',
-    cardUrl = null
+    variant = 'default'
 %}
 {% set has_my_tip = myHome is not null and myAway is not null %}
 {% set has_score = resultHome is not null and resultAway is not null %}
@@ -209,7 +199,7 @@
 
 {% else %}
 {# `finished` paints the long-standing `.done` stripe; every other state names itself. #}
-<div class="tip-row {{ state == 'finished' ? 'done' : state }}{{ cardUrl ? ' card-clickable' : '' }}">
+<div class="tip-row {{ state == 'finished' ? 'done' : state }}">
     <div class="tip-row-line">
         {# čas + kolo #}
         <div class="tip-row-when">
@@ -306,16 +296,5 @@
 
     {# Uvnitř karty, za dělící linkou (definice výše — sdílí ji obě podoby). #}
     {{ extra_region }}
-
-    {#
-        „Zápasy musí fungovat na proklik" (item 19). Odkaz se rozprostře NAD kartou
-        a musí být poslední v DOM; vše interaktivní uvnitř je nad ním (CSS, oddíl
-        item 19), takže dosavadní odkazy fungují dál a nic se nevnořilo do odkazu.
-        Pro čtečky i klávesnici je skrytý: pojmenovaný odkaz na týž cíl už na kartě
-        je (dvojice týmů), druhý by jen zdvojil tabulátorovou zastávku.
-    #}
-    {% if cardUrl %}
-        <a href="{{ cardUrl }}" class="card-stretch" aria-hidden="true" tabindex="-1"></a>
-    {% endif %}
 </div>
 {% endif %}

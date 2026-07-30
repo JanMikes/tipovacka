@@ -304,8 +304,6 @@
                             {% endif %}
                         {% endif %}
 
-                        {# `cardUrl` = „Zápasy musí fungovat na proklik": celá karta vede na
-                           zápas v této soutěži — týž cíl, na který vedou i odkazy uvnitř. #}
                         {% set match_url = path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) %}
                         <li data-reveal-target="item">
                         <twig:Match:MatchRow
@@ -332,7 +330,7 @@
                             :tipUrl="row.isOpen and is_member ? match_url : null"
                             :tipStats="row.stats ? [row.stats] : []"
                             :footNote="row.isOpen ? 'Uzávěrka ' ~ row.deadline|date('j. n. Y H:i') : null"
-                            :cardUrl="match_url"
+                            variant="dashboard"
                         />
                         </li>
                     {% endfor %}

@@ -205,4 +205,75 @@ part and say what is unverified.
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **Only ONE migration was needed, not two.** `competitions.description` **already existed** — the
+   column came over with the `user_groups → competitions` rename (S01, `Version20260718120000`), the
+   entity already had `public private(set) ?string $description` with a `updateDetails()` behaviour
+   method, `competition_edit` already edited it and `detail.html.twig` already rendered it. What was
+   actually missing: the **create wizard**, the **admin global create form** and a **cap**. So the
+   only generated migration is `Version20260730105845` (`memberships.boost_intro_seen_at`), and
+   `doctrine:migrations:diff` produces nothing further.
+2. **Length cap = 1000 characters**, as `Competition::DESCRIPTION_MAX_LENGTH` — one domain constant
+   that the FormData `#[Assert\Length]`s, the wizard's own validation and every `maxlength=` read.
+   The column is TEXT, so the limit is a product decision, not a storage one: it is a description
+   under a heading, not an article.
+3. **The description is set where the NAME is set.** Create wizard (step 1), `competition_edit`, and
+   the **admin global CREATE** form. It is deliberately **not** on `admin_global_competition_edit`:
+   that form holds only the two **fee-locked** terms (vstupné + monetizace) and disables itself
+   completely once the first player joins, so a description field there would silently stop saving.
+   The owning admin edits it on `competition_edit`, which they may reach (`CompetitionVoter::EDIT`
+   grants an admin) and where the name lives too. Putting it there would have meant widening
+   `UpdateGlobalCompetitionCommand` and refining the fee-lock — a domain change this item does not
+   need.
+4. **Line breaks survive without `|nl2br`.** The paragraph keeps `whitespace-pre-line`, which
+   preserves newlines in CSS and adds **no** markup at all — strictly safer than `|nl2br` on an
+   escaped value. Asserted with a `<script>`+quote payload
+   (`CompetitionDetailPassTest::testDescriptionIsEscaped`).
+5. **The match card: `variant="dashboard"`.** Settled by the product owner mid-implementation („one
+   card design everywhere"), which superseded two earlier positions. The first implementation added
+   an opt-in `cardUrl` prop to `variant="default"` that painted item 18's `.card-stretch` link over
+   the card (measured, verified, and **backed out** when the decision landed). `MatchRow.html.twig`
+   and `app.css` are therefore **byte-identical to their pre-item-19 state** — proven with
+   `git diff ab1356f`— and the whole change is ONE word at ONE call site. `/zapasy` renders 33 cards
+   with **zero** `is-dash`, `/_design` still shows both shapes (7 + 12).
+   - `tipMissingLabel` („Netipováno") **does** survive the variant — pinned by
+     `testALockedUntippedMatchStillSaysNetipovanoOnThisPage`.
+   - `footNote` („Uzávěrka …") survives — pinned by `testTheUzaverkaFootNoteStillRendersInsideTheCard`.
+   - `tipPrompt` is now inert on this page (the variant renders its own „Zadat tip" footer instead),
+     which is the same affordance as before. The prop is still passed, harmlessly.
+   - **Stale comment left deliberately**: `MatchRow.html.twig`'s props docblock still says the new
+     design is „jen pro Nástěnku" and that competition detail stays on `default`. Correcting it was
+     out of bounds for this item (the component belongs to the follow-up unification item); the exact
+     replacement text is in the implementer's report.
+6. **B25 fixed in the shared `reveal` controller, not per page** — option (a) from the bug: the server
+   renders **every** row visible and the toggle `hidden`; `connect()` collapses to 5 and unhides the
+   button, `disconnect()` restores the server shape. So „collapsed" is the enhanced state and
+   JavaScript can only ever *remove* rows from view, never make them unreachable. Both call sites
+   (competition detail, Nástěnka) were migrated to the new contract — the Nástěnka had the identical
+   hole, and leaving it would have meant two contracts for one controller. Verified with scripting
+   **genuinely** disabled (`setJavaScriptEnabled(false)`): 12/12 and 6/6 rows painted, the button
+   still `hidden`, no dialog opened.
+7. **The modal is suppressed in four states**, asserted: non-member · already dismissed · monetization
+   ≠ `boosts` (so **premium** and `none` both) · fully over (B6). Premium is the product owner's own
+   reasoning: a premium player **cannot buy a boost at all**, so a price list there advertises the
+   unpurchasable — Premium XOR boosts as a user-visible consequence.
+8. **Dismissal state lives on `Membership.boostIntroSeenAt`** (nullable timestamp, idempotent
+   `markBoostIntroSeen()`): per user per competition, in the database, so „survives a fresh session"
+   is true by construction rather than by luck. All three dismissals (✕ · „Pochopil jsem, již
+   nezobrazovat" · Esc/backdrop) funnel through the dialog's `close` event, which is the **single**
+   place the form is submitted — there is no way to close it without the dismissal sticking. Walked
+   in a real browser four times (✕, button, Esc, a real backdrop click), each time with a separate
+   browser context for step 4.
+   A native modal `<dialog>` does **not** close on a backdrop click by itself, so the „click outside"
+   path is wired by hand exactly as `confirm_controller.js` does it — one dialog vocabulary, not two
+   (`.confirm-dialog` + `.modal-panel`, no new CSS at all).
+9. **No CSS was added by this item in the end.** `assets/styles/app.css` is untouched relative to
+   pre-item-19, so there is no `/* --- item 19 --- */` block to review.
+10. **The page's own column got wider, and the card is container-relative (B7).** Measured card widths
+    after the reorder: **1088 px at 1600 and 1440** (`max-w-6xl` caps the column), **960 at 1024**,
+    **398 at 430**, **288 at 320** — the whole range item 18 verified for this variant. Zero overlaps
+    and zero horizontal overflow at all five widths (painted-leaf pairwise intersection, fragments via
+    `getClientRects()`).
+11. **Fixtures**: nothing was missing. `DevFixtures` already gives a `boosts` competition the primary
+    dev user is a member of with no boosts owned (World D „Fandíme Česku") **and** already sets a
+    description on it, and `boost_intro_seen_at` starts null everywhere, so a plain `db:reset` reaches
+    the modal. Resetting the stamp between browser walks was a one-line `UPDATE`.
