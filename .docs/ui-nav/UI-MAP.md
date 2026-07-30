@@ -148,11 +148,12 @@ Plus `invitation_revoke` `/pozvanky/{invitationId}/zrusit`.
 **`/souteze` — the context-aware hub (item 07).** One public route, five sections that appear
 only when they have something to say:
 
-1. **Hero** — eyebrow („Váš workspace" / „Veřejné soutěže"), „Hledat" + „Vytvořit soutěž"
-   („Registrace zdarma" logged out), and three `StatCard`s fed by `GetCompetitionsPageStats`:
-   Aktivní soutěže / Hráčů celkem / Sledovaných zápasů. **Every figure and sub-label is measured**
-   — the scope is the viewer's own world (member of ∪ organizes) or, anonymously, the public list.
-   There is **no „Výherní bank" card**: entry fees are burned credits, there are no payouts.
+1. **Hero** — eyebrow („Váš workspace" / „Veřejné soutěže"), „Vytvořit soutěž" („Registrace zdarma"
+   logged out), and three `StatCard`s fed by `GetCompetitionsPageStats`: Aktivní soutěže / Hráčů celkem
+   / Sledovaných zápasů. **Every figure and sub-label is measured, and since item 15 every one is a
+   platform-wide total — byte-identical logged in and logged out** (the query takes no viewer). There is
+   **no „Výherní bank" card** and **no „Hledat" button** (it pointed at a search field that no longer
+   exists). There is no filter or search card anywhere on this page.
 2. **„Soutěže, kde tipuješ"** (`#souteze-hraju`) — `ListMyPlayingCompetitions` → one
    `<twig:Competition:PlayingCard>` each (rank / body / round gain / next action). Members only.
 3. **PIN join bar** — the existing `_partials/join_by_pin_form.html.twig`. Since B15 shown to
@@ -161,13 +162,11 @@ only when they have something to say:
    something.
 5. **Veřejné soutěže** (`#souteze-verejne`) — the discoverable global competitions.
 
-Sections 4 and 5 share **one** query (`ListBrowsableCompetitions`, scoped by
-`CompetitionBrowseScope`), **one** card (`<twig:Competition:Card>`, `context="organizer"|"public"`)
-and **one** filter bar (`<twig:Competition:FilterBar>`). Filters are query params, never JS state:
-the public bar owns `sport` · `stav` · `hledat` · `strana`, the organizer bar prefixes its own with
-`moje-` (and adds `moje-viditelnost`), so the two never disturb each other and any filtered view is
-shareable. `CompetitionStateFilter::forScope()` decides which „Stav" chips a context offers —
-discovery has no „Skončené" because a global competition over a completed source is not listed at all.
+Sections 4 and 5 share **one** query (`ListBrowsableCompetitions`, scoped by `CompetitionBrowseScope`)
+and **one** card (`<twig:Competition:Card>`, `context="organizer"|"public"`). **Item 15 removed both
+filter bars.** The only query params the page reads are `strana` and `moje-strana` (pagination —
+„Zobrazit další", out-of-range clamps). `Competition:FilterBar` still exists but has **no production
+call site**; it renders only in `/_design`, labelled „Bez použití".
 
 ### Žebříček — `/zebricek` (item 05)
 The whole feature lives under one path now. The soutěž is **always** a query parameter
@@ -181,15 +180,16 @@ GET form) scope any of these pages.
 | `leaderboard_member` | `/zebricek/clen/{userId}` | `portal/leaderboard/member.html.twig` | 🔒 + `leaderboard_details` |
 | `leaderboard_resolve_ties` | `/zebricek/shoda` | `portal/leaderboard/resolve_ties.html.twig` | 🔒 + `leaderboard_resolve_ties` |
 
-The page: hero (HRÁČŮ / ODEHRÁNO / KOLO / AKTUALIZACE, every figure measured) → switcher →
-„Tvoje pozice" (`.you-strip`, members only) → TOP 3 podium → filter bar → table → footer.
-**All state is in the URL**, so every view is linkable and JavaScript-free:
-`?obdobi=celkem|kolo|7dni|mesic` (`LeaderboardTimeFilter`, tabs render from `cases()`;
-„Poslední kolo" is hidden when the soutěž has no round-labelled match), `?hledat=` (search),
-`?razeni=body|uspesnost|presne|streak` (`LeaderboardSort` — display order only, POZICE always
-shows the real rank), `?vse=1` (expand). A long board is **condensed, not paginated**:
-`Service/Leaderboard/LeaderboardTableBuilder` folds the ranks between the head, the viewer's
-neighbourhood and the tail into a „… pozice 13–24 …" separator.
+The page (item 15 stripped it back to the content): heading „Žebříček" → switcher → „Tvoje pozice"
+(`.you-strip`, members only, **no tip button**) → TOP 3 podium (**desktop only**, `hidden md:block`) →
+**one bare name-search input, outside any card** → table → footer. **All state is in the URL** and the
+page is JavaScript-free: `?soutez=` and `?hledat=` are the only parameters left. There are **no period
+tabs, no sort and no expand control** — `?obdobi=`, `?razeni=` and `?vse=` are gone, along with
+`LeaderboardTimeFilter`, `LeaderboardSort`, `GetCompetitionCurrentRound` and
+`GetCompetitionMatchProgress`. The board is **all-time only**, so the Δ column always renders. A long
+board is **condensed, not paginated**: `Service/Leaderboard/LeaderboardTableBuilder` folds the ranks
+between the head, the viewer's neighbourhood and the tail into a „… pozice 13–24 …" separator, and the
+search is how a viewer reaches somebody inside a folded stretch (the footer says so).
 
 **Authorization** is `LeaderboardVoter`, and it has two attributes now:
 `leaderboard_view` = member/owner/admin **or anybody at all when `Competition.isGlobal`**;
@@ -296,8 +296,9 @@ the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives i
 (`:delta`, `:isNew`, variant `chip`) · `Layout/Nav` · `Layout/Footer` ·
 `Competition/Card` (`:item` = `BrowsableCompetitionItem`, `context="organizer"|"public"`,
 `:walletBalance` — **the** competition card, shared by the organizer and the public grid) ·
-`Competition/FilterBar` (`prefix`, `anchor`, `:sportOptions`, `:stateOptions`,
-`:visibilityOptions` — **the** competition filter bar, query-param driven) ·
+`Competition/FilterBar` (`prefix`, `anchor`, `:sportOptions`, `:stateOptions`, `:visibilityOptions` —
+query-param driven; **no production call site since item 15**, rendered only in `/_design` half A where
+it carries a „Bez použití" pill)
 `Competition/PlayingCard` (`:item` = `PlayingCompetitionItem` — standing + next action).
 
 **Live Components (`src/Twig/Components/`)**
