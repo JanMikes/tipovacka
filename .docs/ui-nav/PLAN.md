@@ -50,7 +50,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 18 | [Nástěnka: quick actions, clickable cards, new match-card design](items/18-page-nastenka-pass.md) | DONE | `3e0cffc` + `096546b` + `11184db` |
 | 19 | [Competition detail: description, invite CTA, reorder, 5 matches, credits modal](items/19-page-competition-detail-pass.md) | DONE | `4a3d3a8` … `82eb31f` |
 | 20 | [Tips are revealed by the RESULT, not the deadline (all surfaces)](items/20-tip-matrix-visibility.md) | DONE | `9303b78` |
-| 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | IN PROGRESS | — |
+| 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | DONE | `ed432eb` + `c9d6a56` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
