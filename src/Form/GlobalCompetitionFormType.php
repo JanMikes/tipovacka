@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
@@ -13,6 +14,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\EnumType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -44,6 +46,20 @@ final class GlobalCompetitionFormType extends AbstractType
             $builder->add('name', TextType::class, [
                 'label' => 'Název soutěže',
                 'attr' => ['placeholder' => 'Např. Tipovačka Ligy mistrů'],
+            ]);
+
+            // Item 19: the description travels with the name — both are set here
+            // and edited afterwards on `competition_edit`, which the owning admin
+            // may reach. This form otherwise holds only the fee-locked terms.
+            $builder->add('description', TextareaType::class, [
+                'label' => 'Popis soutěže',
+                'required' => false,
+                'help' => 'Nepovinné. Uvidí ho hráči v detailu soutěže.',
+                'attr' => [
+                    'placeholder' => 'Stručný popis soutěže…',
+                    'rows' => 3,
+                    'maxlength' => Competition::DESCRIPTION_MAX_LENGTH,
+                ],
             ]);
         }
 

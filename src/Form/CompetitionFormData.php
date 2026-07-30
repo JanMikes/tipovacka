@@ -17,6 +17,10 @@ final class CompetitionFormData
     )]
     public string $name = '';
 
+    #[Assert\Length(
+        max: Competition::DESCRIPTION_MAX_LENGTH,
+        maxMessage: 'Popis soutěže nesmí být delší než {{ limit }} znaků.',
+    )]
     public ?string $description = null;
 
     public bool $withPin = false;

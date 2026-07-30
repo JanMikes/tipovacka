@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Entity\Competition;
 use App\Entity\MatchSource;
 use App\Enum\CompetitionMatchSelectionMode;
 use Symfony\Component\Form\AbstractType;
@@ -33,11 +34,13 @@ final class CompetitionFormType extends AbstractType
         ]);
 
         $builder->add('description', TextareaType::class, [
-            'label' => 'Popis',
+            'label' => 'Popis soutěže',
             'required' => false,
+            'help' => 'Nepovinné. Uvidí ho členové v detailu soutěže.',
             'attr' => [
                 'placeholder' => 'Stručný popis soutěže…',
                 'rows' => 3,
+                'maxlength' => Competition::DESCRIPTION_MAX_LENGTH,
             ],
         ]);
 

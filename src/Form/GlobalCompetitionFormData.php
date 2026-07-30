@@ -19,6 +19,13 @@ final class GlobalCompetitionFormData
     #[Assert\Length(max: 160, maxMessage: 'Název soutěže nesmí být delší než {{ limit }} znaků.')]
     public string $name = '';
 
+    /** Only used on create — like the name, the description is edited on `competition_edit` afterwards. */
+    #[Assert\Length(
+        max: Competition::DESCRIPTION_MAX_LENGTH,
+        maxMessage: 'Popis soutěže nesmí být delší než {{ limit }} znaků.',
+    )]
+    public ?string $description = null;
+
     #[Assert\NotNull(message: 'Zadejte prosím vstupné.')]
     #[Assert\GreaterThanOrEqual(value: 0, message: 'Vstupné nesmí být záporné.')]
     public int $entryFeeCredits = 0;
@@ -30,6 +37,7 @@ final class GlobalCompetitionFormData
         $formData = new self();
         $formData->matchSource = $competition->matchSource;
         $formData->name = $competition->name;
+        $formData->description = $competition->description;
         $formData->entryFeeCredits = $competition->entryFeeCredits;
         $formData->monetization = $competition->monetization;
 

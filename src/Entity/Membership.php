@@ -23,6 +23,15 @@ class Membership implements EntityWithEvents
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $leftAt = null;
 
+    /**
+     * When this member dismissed the first-visit „co si můžu odemknout" modal on
+     * the competition detail page (item 19). Per user per competition, which is
+     * exactly what a column on the membership is. Null = never seen it, so the
+     * modal is still due; a timestamp (not a boolean) also records WHEN.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $boostIntroSeenAt = null;
+
     public bool $isActive {
         get => null === $this->leftAt;
     }
@@ -62,6 +71,21 @@ class Membership implements EntityWithEvents
             userId: $this->user->id,
             occurredOn: $now,
         ));
+    }
+
+    /**
+     * The member closed the first-visit boost-price modal (any of its three
+     * dismissals — ✕, „Pochopil jsem", Esc/backdrop). Idempotent: the first
+     * moment wins, so a lost response can never move the stamp. Records no
+     * event — a „has seen it" marker, not a domain fact.
+     */
+    public function markBoostIntroSeen(\DateTimeImmutable $now): void
+    {
+        if (null !== $this->boostIntroSeenAt) {
+            return;
+        }
+
+        $this->boostIntroSeenAt = $now;
     }
 
     public function removeBy(Uuid $removedByUserId, \DateTimeImmutable $now): void

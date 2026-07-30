@@ -53,6 +53,7 @@ final readonly class GlobalCompetitionComposer
         MatchSource $matchSource,
         User $admin,
         string $name,
+        ?string $description,
         int $entryFeeCredits,
         CompetitionMonetization $monetization,
         array $ruleChanges,
@@ -75,7 +76,7 @@ final readonly class GlobalCompetitionComposer
             matchSource: $matchSource,
             owner: $admin,
             name: $name,
-            description: null,
+            description: $description,
             pin: null,
             // Global competitions are joined via the entry-fee flow ONLY — never a
             // PIN or shareable link (a token would be a fee-free back door). Mirror

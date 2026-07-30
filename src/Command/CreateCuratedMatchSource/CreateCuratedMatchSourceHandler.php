@@ -58,6 +58,9 @@ final readonly class CreateCuratedMatchSourceHandler
                 matchSource: $matchSource,
                 admin: $admin,
                 name: $name,
+                // The source's own description describes the fixture list, not the
+                // competition — the admin writes the competition's own on its edit form.
+                description: null,
                 entryFeeCredits: $command->globalCompetitionEntryFee,
                 monetization: $command->globalCompetitionMonetization,
                 ruleChanges: [],

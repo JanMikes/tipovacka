@@ -69,6 +69,10 @@ final class CreateWizard extends AbstractController
     #[LiveProp(writable: true)]
     public string $name = '';
 
+    /** „Popis soutěže" (item 19) — optional, capped at {@see Competition::DESCRIPTION_MAX_LENGTH}. */
+    #[LiveProp(writable: true)]
+    public string $description = '';
+
     #[LiveProp(writable: true)]
     public bool $fromScratch = false;
 
@@ -497,6 +501,7 @@ final class CreateWizard extends AbstractController
             $envelope = $this->commandBus->dispatch(new CreateCompetitionCommand(
                 ownerId: $user->id,
                 name: trim($this->name),
+                description: $this->trimmedDescription(),
                 matchSourceId: $source?->id,
                 sportId: $this->fromScratch ? Uuid::fromString($this->sportId) : null,
                 fromScratch: $this->fromScratch,
@@ -563,6 +568,7 @@ final class CreateWizard extends AbstractController
                 matchSourceId: $source->id,
                 name: trim($this->name),
                 entryFeeCredits: max(0, $this->entryFeeCredits),
+                description: $this->trimmedDescription(),
                 monetization: CompetitionMonetization::from($this->monetization),
                 ruleChanges: $this->ruleChanges(),
                 selectionMode: $this->isTeams ? CompetitionMatchSelectionMode::Teams : CompetitionMatchSelectionMode::All,
@@ -584,6 +590,14 @@ final class CreateWizard extends AbstractController
         ]);
     }
 
+    /** Empty textarea ⇒ NULL in the database, never an empty string. */
+    private function trimmedDescription(): ?string
+    {
+        $description = trim($this->description);
+
+        return '' === $description ? null : $description;
+    }
+
     private function validateStep(int $step): bool
     {
         return match ($step) {
@@ -596,6 +610,12 @@ final class CreateWizard extends AbstractController
     {
         if ('' === trim($this->name)) {
             $this->errorMessage = 'Zadejte prosím název soutěže.';
+
+            return false;
+        }
+
+        if (mb_strlen(trim($this->description)) > Competition::DESCRIPTION_MAX_LENGTH) {
+            $this->errorMessage = sprintf('Popis soutěže nesmí být delší než %d znaků.', Competition::DESCRIPTION_MAX_LENGTH);
 
             return false;
         }

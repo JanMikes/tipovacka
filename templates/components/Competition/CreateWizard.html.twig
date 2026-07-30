@@ -91,6 +91,15 @@
                                data-model="norender|name" value="{{ name }}" maxlength="160" />
                     </div>
 
+                    {# Popis soutěže (item 19) — nepovinný, uvidí ho členové v detailu soutěže. #}
+                    <div class="field">
+                        <label class="field-label" for="wizard-description">Popis soutěže</label>
+                        <textarea id="wizard-description" class="input" rows="3" placeholder="Stručný popis soutěže…"
+                                  data-model="norender|description"
+                                  maxlength="{{ constant('App\\Entity\\Competition::DESCRIPTION_MAX_LENGTH') }}">{{ description }}</textarea>
+                        <p class="text-xs leading-relaxed text-white/50">Nepovinné. Uvidí ho členové v detailu soutěže.</p>
+                    </div>
+
                     {% if isGlobalKind %}
                         <div class="field">
                             <label class="field-label" for="wizard-entry-fee">Vstupné (kredity)</label>

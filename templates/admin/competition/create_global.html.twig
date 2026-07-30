@@ -31,6 +31,12 @@
             {{ form_widget(form.name) }}
             {{ form_errors(form.name) }}
         </div>
+        <div class="field">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description, {attr: {class: 'input'}}) }}
+            {{ form_help(form.description) }}
+            {{ form_errors(form.description) }}
+        </div>
         <div class="field sm:max-w-xs">
             {{ form_label(form.entryFeeCredits) }}
             {{ form_widget(form.entryFeeCredits) }}

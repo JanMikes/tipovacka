@@ -38,6 +38,7 @@ final readonly class CreateGlobalCompetitionHandler
             matchSource: $matchSource,
             admin: $admin,
             name: $command->name,
+            description: $command->description,
             entryFeeCredits: $command->entryFeeCredits,
             monetization: $command->monetization,
             ruleChanges: $command->ruleChanges,

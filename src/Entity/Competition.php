@@ -40,6 +40,14 @@ class Competition implements EntityWithEvents, SoftDeletable
     use HasEvents;
     use SoftDeletes;
 
+    /**
+     * „Popis soutěže" cap (item 19). A TEXT column, so the limit is a product
+     * decision, not a storage one: it is a description shown under the heading
+     * of the detail page, not an article. Every write surface validates against
+     * this one constant (create wizard, competition_edit, admin global create).
+     */
+    public const int DESCRIPTION_MAX_LENGTH = 1000;
+
     #[ORM\Column(length: 160)]
     public private(set) string $name;
 

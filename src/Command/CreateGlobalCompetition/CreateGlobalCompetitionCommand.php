@@ -25,6 +25,7 @@ final readonly class CreateGlobalCompetitionCommand
         public Uuid $matchSourceId,
         public string $name,
         public int $entryFeeCredits,
+        public ?string $description = null,
         public CompetitionMonetization $monetization = CompetitionMonetization::None,
         public array $ruleChanges = [],
         public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,

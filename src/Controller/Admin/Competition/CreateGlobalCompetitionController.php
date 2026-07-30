@@ -56,6 +56,7 @@ final class CreateGlobalCompetitionController extends AbstractController
                 matchSourceId: $formData->matchSource->id,
                 name: $formData->name,
                 entryFeeCredits: $formData->entryFeeCredits,
+                description: '' === trim((string) $formData->description) ? null : trim((string) $formData->description),
                 monetization: $formData->monetization,
             ));
 
