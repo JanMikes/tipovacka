@@ -93,20 +93,51 @@ Product owner: *„here is the promised match card — note the CTA is malformed
   fixture. Since date and time move into the header, the centre slot shows the **score when one
   exists** and otherwise the `vs` separator, **not** a duplicated kickoff time.
 
-## ⚠ `Match:MatchRow` is shared by FOUR surfaces
+## ⚠ `Match:MatchRow` is shared — but this redesign is Nástěnka-only
 
-It renders on **competition detail**, **`/zapasy`**, **the Nástěnka** and **match detail**. B7's
-definition of done is binding here: *„It is shared. Fix it once in the component/CSS and verify **every**
-surface — a per-page patch is not acceptable."*
+**Corrected 2026-07-30 after the product owner narrowed the scope:**
 
-So the redesign lands in the component and **applies everywhere**. Verify all four. Two per-surface
-facts that must survive:
+> In this case consider separate components per page because they have different context/meaning OR one
+> component but context aware -> you decide what is better for you but since i specced it i expect to
+> change it on that page
 
-- **`tipMissingLabel` („Netipováno") is competition-detail only** — B5 settled that cross-competition
-  rows keep „Uzamčeno", because a row aggregating several soutěže cannot honestly claim the viewer never
+So the new card design lands on **`/nastenka` only**. `/zapasy` and competition detail keep today's card
+**byte-for-byte**. This removes the „most likely to break something you did not ask about" risk that the
+original version of this item carried.
+
+**Orchestrator decision: ONE component with an explicit `variant` prop** (`variant="dashboard"`, default
+= today's layout), not two components. The expensive parts are shared and must stay shared — B7's four
+wrapping zones and container-relative behaviour, `min-width: 0` + ellipsis on team names, the five
+`state` stripes, the `tipStats` batching contract, the accessible names. A second component duplicates
+all of that *and* duplicates the 7-width × 6-state geometry verification burden forever. The per-surface
+differences are **already** props (`tipMissingLabel`, `footNote`, `tipPrompt`), so context-awareness is
+the existing pattern, not a new one. And if the design is later wanted elsewhere it becomes one word per
+call site.
+
+Keep the branch as **one clearly-marked block**, not conditionals sprinkled through the markup. If the
+two layouts turn out to share so little that the branch exceeds what a second component would cost, split
+it and record why.
+
+**The call sites are THREE production surfaces plus the gallery, not four.** Grepped 2026-07-30:
+`portal/_dashboard_match_row.html.twig` (Nástěnka), `portal/matches/index.html.twig` (`/zapasy`),
+`portal/competition/detail.html.twig`, and `design/styleguide.html.twig` (`/_design`, item 13).
+**Match detail does NOT render `MatchRow`** — it uses `Guess:GuessSubmitForm` and the full `TipStats`
+card. B7's definition of done and item 11 both list match detail as a call site; **that is stale**, and
+the first version of this item repeated the error.
+
+Show the new variant in `/_design` too — that page is the live gallery of shipped components.
+
+Two per-surface facts that must survive:
+
+- **`tipMissingLabel` („Netipováno") is competition-detail only** — B5 settled that cross-competition rows
+  keep „Uzamčeno", because a row aggregating several soutěže cannot honestly claim the viewer never
   tipped. Do not push it onto the Nástěnka.
 - **`tipStats` must stay batched** — always from the page's `TipStatsProvider` batch, never one query per
   row. That is the documented N+1 trap in `CLAUDE.md`.
+
+**Both Nástěnka sections get the new design.** `_dashboard_match_row.html.twig` is shared by „Následující
+zápasy" and „Odehrané zápasy" — item 06 made them share it „so the two never drift apart". The footer CTA
+is conditional on the match being tippable, so a finished card simply has no footer.
 
 ## Out of scope
 
@@ -126,8 +157,9 @@ facts that must survive:
 - [ ] No soutěž roletka; `?zapasy=` does nothing and no dead plumbing reads it.
 - [ ] Filters render as chips ≥ the desktop breakpoint and as a dropdown below it, both driving the same `?filtr=` param, **both working with JavaScript off**.
 - [ ] The match card matches the mock's structure, is **one** link, and shows „Zadat tip" only when tippable.
-- [ ] All four `MatchRow` surfaces render correctly in every state: open · tipped · live · locked · finished-with-points · playoff.
-- [ ] Zero overlaps and zero horizontal overflow on all four surfaces at **1600 / 1440 / 1280 / 1024 / 768 / 430 / 320 px**.
+- [ ] The Nástěnka card matches the mock; **`/zapasy` and competition detail render byte-for-byte as before** (prove it, e.g. a rendered-HTML diff).
+- [ ] All three production `MatchRow` surfaces plus `/_design` render correctly in every state: open · tipped · live · locked · finished-with-points · playoff.
+- [ ] Zero overlaps and zero horizontal overflow on all three surfaces at **1600 / 1440 / 1280 / 1024 / 768 / 430 / 320 px**.
 - [ ] „Rozložení tipů" still resolves in ONE batch per page (assert the query count, as `DashboardFlowTest` already does).
 
 ## Verification
@@ -144,7 +176,7 @@ Never `phpunit tests/` whole — it OOMs (exit 137). Chunk; strip ANSI codes bef
 
 **`composer quality` cannot see any of this.** Measure geometry in a real browser:
 
-- Pairwise bounding-box intersection across painted leaves on all four surfaces at the widths above —
+- Pairwise bounding-box intersection across painted leaves on all three surfaces at the widths above —
   **zero overlaps, zero horizontal overflow**. This is the harness B7 and B8 used; B7 found a control
   overflowing because a flex child lacked `min-width: 0`, and B13 later established that `min-width: 0`
   is **necessary but not sufficient** when a child has an intrinsic width.
