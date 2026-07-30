@@ -1,57 +1,35 @@
 {#
   Site footer. variant:
-   - marketing : 4-column dark footer (public pages)
-   - app       : single-row mini footer (authenticated pages)
-  NOTE (redesign): marketing links to Funkce/Ceník/Pro firmy/FAQ are added in
-  Phase 3 once those routes exist. For now only existing routes are linked.
+   - marketing : public pages — brand + one row of links (item 17: was a four-column
+                 grid; Funkce / Ceník / Pro firmy / Časté otázky are no longer linked,
+                 the pages themselves stay reachable by URL)
+   - app       : single-row mini footer (authenticated pages), the house precedent for
+                 „really simple" that the marketing one now follows
 #}
 {% props variant = 'app' %}
 
 {% if variant == 'marketing' %}
     <footer class="wtfoot">
-        <div class="mx-auto w-full max-w-[80rem] px-6 py-14">
-            <div class="grid gap-10 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-                <div>
-                    <div class="flex items-center gap-2.5 text-white">
-                        <span class="brand-mark" aria-hidden="true">W</span>
-                        <span class="text-lg font-black tracking-tight">{{ brand_name }}</span>
-                    </div>
-                    <p class="mt-4 max-w-xs text-sm leading-relaxed text-white/60">
-                        Tipovací soutěže pro firmy, partičky i klubové komunity. Bez sázek, jen pro radost a vychloubání.
-                    </p>
-                </div>
-                <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Produkt</h3>
-                    <ul class="mt-4 space-y-2 text-sm">
-                        <li><a href="{{ path('app_features') }}" class="text-white/70 transition-colors hover:text-white">Funkce</a></li>
-                        <li><a href="{{ path('app_pricing') }}" class="text-white/70 transition-colors hover:text-white">Ceník</a></li>
-                        <li><a href="{{ path('app_for_business') }}" class="text-white/70 transition-colors hover:text-white">Pro firmy</a></li>
-                        <li><a href="{{ path('competitions_list') }}" class="text-white/70 transition-colors hover:text-white">Soutěže</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Účet</h3>
-                    <ul class="mt-4 space-y-2 text-sm">
-                        {% if not app.user %}
-                            <li><a href="{{ path('app_login') }}" class="text-white/70 transition-colors hover:text-white">Přihlášení</a></li>
-                            <li><a href="{{ path('app_register') }}" class="text-white/70 transition-colors hover:text-white">Registrace</a></li>
-                        {% else %}
-                            <li><a href="{{ path('dashboard') }}" class="text-white/70 transition-colors hover:text-white">Nástěnka</a></li>
-                            <li><a href="{{ path('profile_edit') }}" class="text-white/70 transition-colors hover:text-white">Profil</a></li>
-                        {% endif %}
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">Společnost</h3>
-                    <ul class="mt-4 space-y-2 text-sm">
-                        <li><a href="{{ path('app_faq') }}" class="text-white/70 transition-colors hover:text-white">Časté otázky</a></li>
-                        <li><a href="{{ path('app_privacy') }}" class="text-white/70 transition-colors hover:text-white">Ochrana soukromí</a></li>
-                    </ul>
-                </div>
+        <div class="mx-auto w-full max-w-[80rem] px-6 py-10">
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                {# No brand-mark coin: `.brand-mark` is styled only inside `.wtnav`, so down
+                   here it always rendered as a stray „W" next to the wordmark. #}
+                <a href="{{ path('app_home') }}" class="text-lg font-black tracking-tight text-white">{{ brand_name }}</a>
+                <nav class="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+                    <a href="{{ path('competitions_list') }}" class="text-white/70 transition-colors hover:text-white">Soutěže</a>
+                    {% if not app.user %}
+                        <a href="{{ path('app_login') }}" class="text-white/70 transition-colors hover:text-white">Přihlášení</a>
+                        <a href="{{ path('app_register') }}" class="text-white/70 transition-colors hover:text-white">Registrace</a>
+                    {% else %}
+                        <a href="{{ path('dashboard') }}" class="text-white/70 transition-colors hover:text-white">Nástěnka</a>
+                        <a href="{{ path('profile_edit') }}" class="text-white/70 transition-colors hover:text-white">Profil</a>
+                    {% endif %}
+                    <a href="{{ path('app_privacy') }}" class="text-white/70 transition-colors hover:text-white">Ochrana soukromí</a>
+                </nav>
             </div>
-            <div class="mt-12 flex flex-col gap-1 border-t border-white/5 pt-6 text-xs text-white/40 sm:flex-row sm:justify-between">
+            <div class="mt-8 flex flex-col gap-1 border-t border-white/5 pt-6 text-xs text-white/40 sm:flex-row sm:justify-between">
                 <span>© {{ "now"|date("Y") }} {{ brand_name }}. Vše hraje, nic se nesází.</span>
-                <span>Vyrobeno v Praze.</span>
+                <span>Vyrobeno ve Frýdku-Místku.</span>
             </div>
         </div>
     </footer>
