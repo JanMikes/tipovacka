@@ -17,6 +17,9 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
 | B9 | Team picker's create row shows English „Add …" | DONE | `d0b8bd4` |
+| B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **BLOCKED** — needs a product decision | — |
+| B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | TODO | — |
+| B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
 
 ---
 
@@ -844,3 +847,68 @@ Per picker: `getBoundingClientRect()` on the control plus the rect of every othe
   empty background produces no event at document level either, so it is a harness quirk, not the app.
   Chip add/remove was therefore proven with real clicks on the scorer picker (same plugin, same config)
   and with a dispatched click on the team filter itself.
+
+---
+
+## B10 — a player choosing „Volná volba Premium" is never told what the boosts are or cost
+
+Found by the item 12 agent while renaming the boost, 2026-07-30. **Not a regression — this is a
+direct consequence of a decision the product owner already approved**, which is why it is `BLOCKED`
+rather than `TODO`: it needs the product owner to say whether they still want it that way.
+
+**What happens.** On step 4 of the create-competition wizard the organizer picks between „Férová
+soutěž" (`CompetitionMonetization::Premium`) and „Volná volba Premium" (`…::Boosts`). Choosing the
+latter means *every player decides for themselves whether to buy boosts*. But the private branch of
+that step names **no boost and no price at all** — `CreateWizard::boostPrices` is rendered **only**
+in the admin/global branch. So the organizer commits their whole competition to the per-player
+funding model without being shown what the players will be asked to buy or for how much.
+
+**Why it is like that.** `CREATE-WIZARD.md` W4, „Assumptions made" #3: the replacement copy the
+product owner supplied („Pozvete nás na pivo?") *was* the whole of step 4 and mentions no prices, so
+the old credit-balance strip, the per-boost price list and the „Teď se nic nestrhává…" footnote were
+dropped from the private branch and kept only in the global one. That was the correct reading of the
+instruction. The side effect only becomes visible now that someone looked at the two branches side by
+side.
+
+**The decision needed.** Either:
+- (a) leave it — the organizer is choosing a *policy*, not making a purchase, and the prices are one
+  click away on `/cenik`; or
+- (b) add a compact, price-carrying line to the „Volná volba Premium" card (amounts from
+  `Credits/PricingConfig`, never literals — and now that the boost is „Rozložení tipů ostatních", the
+  name interpolates cleanly, see item 12).
+
+Do not guess between them. If (b), the copy must not reintroduce the strip W4 deliberately removed.
+
+## B11 — the premium fixture world renders no „Rozložení tipů" surface
+
+Found by the item 12 agent, 2026-07-30, while trying to eyeball the premium paywall.
+
+`Prémiová firemní liga` (the `AppFixtures` premium-monetized competition) produces **zero**
+„Rozložení tipů" strips — no match in its scope yields one. So the one fixture world that exists to
+demonstrate premium cannot demonstrate the feature premium unlocks. Verifying the premium paywall by
+hand currently requires flipping World B's premium toggles off, looking, and flipping them back — the
+item 12 agent did exactly that, and restored them (verified back to `t/t`).
+
+**Fix:** give the premium world matches that produce a distribution (members with tips on an
+in-scope, pre-deadline match), so the locked *and* unlocked premium states are both reachable from a
+plain `composer db:reset`. `.docs/FIXTURES.md` documents which world demonstrates what and must be
+updated in the same commit. Note the constraint recorded in item 03's assumptions: this belongs in
+`DevFixtures` (group `dev`) unless the integration suite genuinely needs it — `AppFixtures` is the
+shared *test* baseline and many tests assert exact counts over whole tables.
+
+## B12 — the pickers' „nothing found" rows are styled two different ways
+
+Flagged by the B9 agent as explicitly out of its (copy-only) scope, 2026-07-30.
+
+`team_picker` and `team_filter` style their `no_results` element with Tailwind utilities
+(`px-3 py-2 text-sm text-white/40`); `tom_select`, `scorer_picker` and `score_entry` use the dark
+skin's `.no-results` class. The two render with different padding and colour, so the same „nothing
+found" state looks like two different components depending on which picker you opened.
+
+**Fix:** pick one — almost certainly the skin's `.no-results`, since that is the shared vocabulary —
+and align all five. This *is* a visual change, so it needs the measured verification the other picker
+items used (B8's before/after geometry harness) and must not regress B3 (`dropdownParent: 'body'`,
+`z-index: 300`, the `.create.active` dark highlight) or B8 (zero height change on focus).
+
+Small, but touches `assets/styles/app.css` — the highest-risk file in the repo — so it needs sole
+ownership of that file for its round.
