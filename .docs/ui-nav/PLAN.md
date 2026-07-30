@@ -55,12 +55,14 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | DONE | `2578def` |
 | 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | DONE | `7dc2ea3` |
 | 29 | [The dev wallet can no longer demonstrate „nemáte dost kreditů"](items/29-dev-wallet-after-the-price-rise.md) | DONE | `61794ab` |
-| 30 | [„Chybí natipovat X zápasů" badge, on both card surfaces](items/30-nastenka-missing-tips-badge.md) | TODO — blocked on 22 + 25 | — |
-| 31 | [A secondary arrow link is a link, not a button](items/31-arrow-links-are-links.md) | TODO — blocked on 22 | — |
+| 30 | [„Chybí natipovat X zápasů" badge, on both card surfaces](items/30-nastenka-missing-tips-badge.md) | TODO — blocked on 25 | — |
+| 31 | [A secondary arrow link is a link, not a button](items/31-arrow-links-are-links.md) | IN PROGRESS | — |
 | 28 | [No boost intro on the join landing](items/28-no-boost-intro-on-the-join-landing.md) | DONE | `5c59521` |
-| 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | IN PROGRESS | — |
-| 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | TODO — blocked on 22 | — |
-| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | TODO — blocked on 22 + 23 | — |
+| 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | DONE | `876e674` |
+| 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | IN PROGRESS | — |
+| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | TODO — blocked on 25 + 31 | — |
+| 32 | [CI red: a boost refund assertion expects the old price](items/32-ci-red-boost-refund-amount.md) | IN PROGRESS | — |
+| 33 | [`GetGuessesForMatchInCompetition` has no consumer left](items/33-orphaned-guesses-read-model.md) | TODO | — |
 
 **Round of 2026-07-30, second half.** Items 22–27 came from the product owner in one sitting, so they
 overlap heavily on three files — `templates/portal/competition/detail.html.twig`,
