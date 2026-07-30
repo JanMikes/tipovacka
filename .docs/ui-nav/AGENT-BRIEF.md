@@ -34,6 +34,13 @@ toggle a class, or capture the baseline before you edit.
 - **`composer quality` does not catch Twig errors, layout, colour or copy.** It passes on a page that
   throws at render time. **Load the page.** Check the **browser console** — since JS-off support is
   deferred, a Stimulus controller that fails to connect is only visible there.
+- **Drive headless Chrome yourself; do not rely on the `claude-in-chrome` extension.** It has
+  repeatedly reported itself not connected in this environment, and several agents lost their whole
+  verification pass to that before falling back. Headless (puppeteer/playwright against
+  `localhost:58080`) works, gives you `getComputedStyle`, geometry **and** the console, and is where
+  every measured result in this stream actually came from. A `curl` round-trip proves the server
+  rendered without an exception — it proves **nothing** about the console or about layout. If that is
+  all you managed, say so plainly rather than calling it verified.
 - **Run only the test chunks your change can plausibly break**, plus any the item names. Do not run a
   standard list out of habit. **Never `phpunit tests/` whole — it OOMs (exit 137).** PHPUnit emits
   ANSI codes; strip them before grepping.
