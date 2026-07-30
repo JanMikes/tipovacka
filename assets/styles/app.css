@@ -1105,6 +1105,46 @@ label.required::after {
     }
     .my-tip.is-bar .my-tip-lbl { margin-bottom: 0; }
     .my-tip.is-bar .my-tip-pts { position: static; top: auto; right: auto; border: none; }
+
+    /* --- B22: the credits ledger („Historie transakcí" on /kredity) --- */
+    /* Measured cause: the table's min-content floor is the SUM of five column
+       min-contents — 482 px at 320 px, of which „Datum" pins 140 px on its own
+       (`white-space: nowrap` over „25. 07. 2026 13:02") and „Popis" 135 px — inside
+       a 240 px content box. `min-width: 0` has nothing to give: the track IS the
+       floor (B13's lesson, one step further). Horizontal scroll was ALREADY confined
+       to the table's own `.overflow-x-auto` wrapper, so the page never overflowed;
+       what the report describes is that only 238 of 482 px was visible, with both
+       number columns — the point of a ledger — off-screen behind a scroll with no
+       affordance. So on a phone the row STACKS and nothing scrolls at all: the
+       header row is dropped and each cell carries its own label from `data-label`.
+       Column gap / alignment / nowrap live here rather than as utilities, so the
+       narrow shape can override them (a Tailwind utility always wins over this
+       layer, which would otherwise force `!important`). */
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th { text-align: left; white-space: nowrap; }
+    .tx-table th, .tx-table td { padding-right: 16px; }
+    .tx-table th:last-child, .tx-table td:last-child { padding-right: 0; }
+    .tx-table .tx-when { white-space: nowrap; }
+    .tx-table .tx-num, .tx-table .tx-doc { text-align: right; }
+    @media (max-width: 640px) {
+        .tx-table thead { display: none; }
+        .tx-table, .tx-table tbody, .tx-table tr, .tx-table td { display: block; }
+        .tx-table tr { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .tx-table tr:last-child { border-bottom: none; }
+        /* label left, value right — the numbers stay right-aligned, which is what a
+           ledger wants, and flex makes the utility `text-right` a no-op here. */
+        .tx-table td { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 3px 0; }
+        .tx-table td::before {
+            content: attr(data-label);
+            flex: none; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--fg-3);
+        }
+        /* Date = the row's eyebrow, description = its headline: both self-evident,
+           so neither repeats its column name. */
+        .tx-table .tx-what { display: block; padding-bottom: 6px; }
+        .tx-table .tx-what::before, .tx-table .tx-when::before { content: none; }
+        .tx-table .tx-when { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; }
+    }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
