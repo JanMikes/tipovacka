@@ -14,7 +14,7 @@ final class PricingConfig
     /** Premium: manager pays per player, charged at each join. */
     public const int PREMIUM_PER_PLAYER = 10;
 
-    /** Boost „Lišta tipů ostatních" (anonymous distribution bar). */
+    /** Boost „Rozložení tipů ostatních" (anonymous distribution bar). */
     public const int BOOST_TIP_DISTRIBUTION = 10;
 
     /** Boost „Konkrétní tipy kolegů" (includes the distribution bar). */

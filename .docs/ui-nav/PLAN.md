@@ -39,7 +39,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 10 | [Match detail (`/zapasy/{id}`): distribution, timeline, per-match ranking](items/10-page-match-detail.md) | DONE | `6bfd659` |
 | 11 | [Match rows: one card, boosts inside it](items/11-match-row-card.md) | DONE | `a8b7e8b` |
 | — | [Cursor spotlight turned off behind a master switch](../features/cursor-spotlight.md) | DONE | `3605a60` |
-| 12 | [One name for the tip split: „Rozložení tipů" everywhere](items/12-naming-rozlozeni-tipu.md) | IN PROGRESS | — |
+| 12 | [One name for the tip split: „Rozložení tipů" everywhere](items/12-naming-rozlozeni-tipu.md) | DONE | `c3c052e` (+ `PricingConfig` docblock) |
 | 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
