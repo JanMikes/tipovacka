@@ -9,6 +9,7 @@ use App\DataFixtures\AppFixtures;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Uid\Uuid;
 
@@ -143,6 +144,53 @@ final class BulkSetTipOpeningCommandTest extends IntegrationTestCase
         // MATCH_PRIVATE_SCHEDULED kicks off 2025-06-20 19:00 UTC.
         self::assertEquals(new \DateTimeImmutable('2025-06-20 19:00:00'), $set->deadline);
         self::assertEquals(new \DateTimeImmutable('2025-06-16 10:00:00'), $set->opensAt);
+    }
+
+    /**
+     * Deadline-only pass (no --opens-at, restricted with --only): the tool's way
+     * to lift the competition-wide lock off a match that must stay tippable to
+     * its own kickoff, without giving it an opening.
+     */
+    public function testDeadlineOnlyPassLeavesTheOpeningAlone(): void
+    {
+        $competitionId = Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+
+        $this->tester()->execute([
+            '--opens-at' => '2025-06-16 12:00',
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--apply' => true,
+        ]);
+
+        $this->tester()->execute([
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--only' => [AppFixtures::MATCH_SCHEDULED_ID],
+            '--deadline-own-kickoff' => true,
+            '--apply' => true,
+        ]);
+
+        $this->entityManager()->clear();
+
+        $set = $this->settingRepository()->findByCompetitionAndMatch($competitionId, $matchId);
+        self::assertNotNull($set);
+        self::assertEquals(new \DateTimeImmutable('2025-06-20 18:00:00'), $set->deadline, 'Deadline pinned to the own kickoff.');
+        self::assertEquals(new \DateTimeImmutable('2025-06-16 10:00:00'), $set->opensAt, 'The stored opening must survive a deadline-only pass.');
+
+        // --only really restricted the sweep: a sibling keeps the first pass's state.
+        $sibling = $this->settingRepository()->findByCompetitionAndMatch(
+            $competitionId,
+            Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+        );
+        self::assertNotNull($sibling);
+        self::assertNull($sibling->deadline);
+    }
+
+    public function testWithoutEitherEndTheCommandRefusesToRun(): void
+    {
+        $tester = $this->tester();
+        $tester->execute(['--editor' => AppFixtures::ADMIN_ID]);
+
+        self::assertSame(Command::INVALID, $tester->getStatusCode());
     }
 
     public function testNonAdminEditorIsRefused(): void

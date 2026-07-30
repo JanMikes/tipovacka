@@ -73,7 +73,8 @@ final class BulkSetTipOpeningCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('opens-at', null, InputOption::VALUE_REQUIRED, 'When tipping opens, in Europe/Prague local time (e.g. "2026-07-31 20:00")')
+            ->addOption('opens-at', null, InputOption::VALUE_REQUIRED, 'When tipping opens, in Europe/Prague local time (e.g. "2026-07-31 20:00"). Omit to touch the deadline end only.')
+            ->addOption('only', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Restrict to these sport match UUIDs (repeatable). Default: every match.')
             ->addOption('editor', null, InputOption::VALUE_REQUIRED, 'UUID of the ADMIN user performing the change')
             ->addOption('note', null, InputOption::VALUE_REQUIRED, 'Optional Czech text shown while a match waits', '')
             ->addOption('except', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Sport match UUID to leave tippable (repeatable)')
@@ -88,25 +89,36 @@ final class BulkSetTipOpeningCommand extends Command
         $opensAtRaw = $input->getOption('opens-at');
         $editorRaw = $input->getOption('editor');
 
-        if (!is_string($opensAtRaw) || '' === $opensAtRaw || !is_string($editorRaw) || !Uuid::isValid($editorRaw)) {
-            $io->error('--opens-at (Prague local time) and --editor (admin user UUID) are both required.');
+        if (!is_string($editorRaw) || !Uuid::isValid($editorRaw)) {
+            $io->error('--editor (admin user UUID) is required.');
 
             return Command::INVALID;
         }
 
-        try {
-            $opensAt = new \DateTimeImmutable($opensAtRaw, new \DateTimeZone(self::INPUT_TIMEZONE));
-        } catch (\Exception) {
-            $io->error(sprintf('Could not read "%s" as a date and time.', $opensAtRaw));
+        $ownKickoffDeadline = true === $input->getOption('deadline-own-kickoff');
+        $opensAtUtc = null;
+
+        // No --opens-at = touch the deadline end only, leaving any stored opening
+        // alone (the command then makes sense only together with the deadline flag).
+        if (is_string($opensAtRaw) && '' !== $opensAtRaw) {
+            try {
+                $opensAt = new \DateTimeImmutable($opensAtRaw, new \DateTimeZone(self::INPUT_TIMEZONE));
+            } catch (\Exception) {
+                $io->error(sprintf('Could not read "%s" as a date and time.', $opensAtRaw));
+
+                return Command::INVALID;
+            }
+
+            $opensAtUtc = $opensAt->setTimezone(new \DateTimeZone('UTC'));
+        } elseif (!$ownKickoffDeadline) {
+            $io->error('Nothing to do: pass --opens-at, or --deadline-own-kickoff, or both.');
 
             return Command::INVALID;
         }
 
-        $opensAtUtc = $opensAt->setTimezone(new \DateTimeZone('UTC'));
         $editorId = Uuid::fromString($editorRaw);
         $note = is_string($input->getOption('note')) ? trim($input->getOption('note')) : '';
         $apply = true === $input->getOption('apply');
-        $ownKickoffDeadline = true === $input->getOption('deadline-own-kickoff');
 
         /** @var list<string> $exceptRaw */
         $exceptRaw = $input->getOption('except');
@@ -122,10 +134,27 @@ final class BulkSetTipOpeningCommand extends Command
             $except[Uuid::fromString($value)->toRfc4122()] = true;
         }
 
-        $io->title($apply ? 'Nastavuji otevření tipování' : 'Zkušební běh (nic se nezapisuje)');
+        /** @var list<string> $onlyRaw */
+        $onlyRaw = $input->getOption('only');
+        $only = [];
+
+        foreach ($onlyRaw as $value) {
+            if (!Uuid::isValid($value)) {
+                $io->error(sprintf('--only "%s" is not a UUID.', $value));
+
+                return Command::INVALID;
+            }
+
+            $only[Uuid::fromString($value)->toRfc4122()] = true;
+        }
+
+        $io->title($apply ? 'Nastavuji tipovací okno' : 'Zkušební běh (nic se nezapisuje)');
         $io->definitionList(
-            ['Otevřít tipování' => sprintf('%s Prague = %s UTC', $opensAt->format('j. n. Y H:i'), $opensAtUtc->format('Y-m-d H:i'))],
+            ['Otevřít tipování' => null === $opensAtUtc
+                ? '(nemění se)'
+                : sprintf('%s Prague = %s UTC', $opensAtUtc->setTimezone(new \DateTimeZone(self::INPUT_TIMEZONE))->format('j. n. Y H:i'), $opensAtUtc->format('Y-m-d H:i'))],
             ['Text během čekání' => '' === $note ? '(žádný)' : $note],
+            ['Jen zápasy' => [] === $only ? '(všechny)' : implode(', ', array_keys($only))],
             ['Výjimky (zápasy)' => [] === $except ? '(žádné)' : implode(', ', array_keys($except))],
             ['Uzávěrka zápasu' => $ownKickoffDeadline
                 ? 'nastaví se na VÝKOP daného zápasu (ruší uzamčení celé soutěže při startu)'
@@ -144,6 +173,7 @@ final class BulkSetTipOpeningCommand extends Command
                 $note,
                 $editorId,
                 $except,
+                $only,
                 $apply,
                 $ownKickoffDeadline,
                 $skipped,
@@ -188,16 +218,18 @@ final class BulkSetTipOpeningCommand extends Command
 
     /**
      * @param array<string, true> $except
+     * @param array<string, true> $only
      * @param list<string>        $skipped
      *
      * @return array{0: int, 1: int, 2: int}
      */
     private function walkCompetition(
         Competition $competition,
-        \DateTimeImmutable $opensAtUtc,
+        ?\DateTimeImmutable $opensAtUtc,
         string $note,
         Uuid $editorId,
         array $except,
+        array $only,
         bool $apply,
         bool $ownKickoffDeadline,
         array &$skipped,
@@ -208,6 +240,10 @@ final class BulkSetTipOpeningCommand extends Command
 
         foreach ($this->matchProvider->matchesFor($competition) as $sportMatch) {
             $key = $sportMatch->id->toRfc4122();
+
+            if ([] !== $only && !isset($only[$key])) {
+                continue;
+            }
 
             if (isset($except[$key])) {
                 ++$exempt;
@@ -229,7 +265,9 @@ final class BulkSetTipOpeningCommand extends Command
                 $deadline = $sportMatch->kickoffAt;
             }
 
-            if ($this->deadlineResolver->deadlineWithOverride($competition, $sportMatch, $deadline) <= $opensAtUtc) {
+            if (null !== $opensAtUtc
+                && $this->deadlineResolver->deadlineWithOverride($competition, $sportMatch, $deadline) <= $opensAtUtc
+            ) {
                 ++$skippedHere;
                 $skipped[] = sprintf('%s — %s', $competition->name, self::label($sportMatch));
 
@@ -242,7 +280,9 @@ final class BulkSetTipOpeningCommand extends Command
                     competitionId: $competition->id,
                     sportMatchId: $sportMatch->id,
                     deadline: $deadline,
-                    changeOpening: true,
+                    // Without --opens-at the opening end is not part of this write
+                    // at all, so a stored opening survives a deadline-only pass.
+                    changeOpening: null !== $opensAtUtc,
                     opensAt: $opensAtUtc,
                     openingNote: '' === $note ? null : $note,
                 ));
