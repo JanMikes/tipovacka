@@ -419,6 +419,20 @@ label.required::after {
     .copy-field button:hover { background: rgba(70,153,208,0.1); color: var(--color-accent-300); }
     .copy-field button.copied { color: var(--color-accent-300); }
 
+    /* --- B13: the copy field has to shrink to its cell --- */
+    /* Same trap as B7. The <input> kept the intrinsic width of its `size`
+       attribute (~254 px), which made the whole field 301 px wide whatever the
+       cell offered — on a phone it burst out of the card and took the copy button
+       with it. `min-width: 0` alone is not enough: it stops the item overflowing
+       the flex line but the field's own MIN-CONTENT is still the input's intrinsic
+       width, so an `auto` grid track (the base, un-`grid-cols-*` one) still sizes
+       to 301 px. An explicit `width: 0` zeroes that contribution; `flex: 1` above
+       grows the input back to whatever is actually available.
+       The value that no longer fits is ellipsized — the full string stays in
+       `input.value`, so „kopírovat" and click-to-select are untouched. */
+    .copy-field input { width: 0; min-width: 0; text-overflow: ellipsis; }
+    .copy-field button { flex: none; }
+
     /* ---- 8-box PIN input ---- */
     .pin-inputs { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
     .pin-inputs .pin-sep { color: var(--fg-4); font-weight: 900; padding: 0 3px; }
