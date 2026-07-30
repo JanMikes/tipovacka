@@ -54,7 +54,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 24 | [`/souteze` drops the three-`StatCard` row](items/24-souteze-drop-stat-cards.md) | DONE | `b0fbe7c` |
 | 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | DONE | `2578def` |
 | 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | DONE | `7dc2ea3` |
-| 29 | [The dev wallet can no longer demonstrate „nemáte dost kreditů"](items/29-dev-wallet-after-the-price-rise.md) | TODO | — |
+| 29 | [The dev wallet can no longer demonstrate „nemáte dost kreditů"](items/29-dev-wallet-after-the-price-rise.md) | DONE | `61794ab` |
 | 30 | [„Chybí natipovat X zápasů" badge, on both card surfaces](items/30-nastenka-missing-tips-badge.md) | TODO — blocked on 22 + 25 | — |
 | 31 | [A secondary arrow link is a link, not a button](items/31-arrow-links-are-links.md) | TODO — blocked on 22 | — |
 | 28 | [No boost intro on the join landing](items/28-no-boost-intro-on-the-join-landing.md) | DONE | `5c59521` |
@@ -133,6 +133,14 @@ product owner reprioritises):
      index; nothing protects the working tree from another process restoring it.
    - `-o` does **not** save you when two agents edit the *same* file — it commits the working-tree
      version of that path, other agent's hunks included. That is what file ownership is for.
+   - **File ownership is not the only shared state — the DATABASE and the `web` container are shared
+     too.** `composer db:reset` drops every connection and reloads the fixtures for *everyone*;
+     `docker compose restart web` bounces the app under any sibling driving a browser. On 2026-07-30
+     an agent's `db:reset` failed with „database is being accessed by other users", so it restarted
+     `web` to force the connections shut — while another agent was mid-verification. Nothing was
+     lost, but that was luck rather than design. **Only one agent may hold the database at a time.**
+     Before dispatching, ask not only „do their file lists intersect?" but „do they both need
+     `db:reset`, and is one of them driving a browser right now?" — if so, serialise them.
    - **Never run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites their files
      and pulls their hunks into your working tree. Scope it to your own paths, or run `cs:check`, fix
      your own findings by hand, and report the rest.
