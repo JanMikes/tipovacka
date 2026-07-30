@@ -122,6 +122,18 @@ product owner reprioritises):
      working tree and ignores everything else staged, so it is index-independent. (Recovery, if it
      happens anyway: `git reset --soft`, then re-commit with `-o`.)
    - Never `git add -A` / `git add .` / `git commit -a`.
+   - **Never restore a file from HEAD to take a "before" measurement, and never run a tree-wide
+     `git restore` / `git checkout .` / `git stash`.** This is what actually destroyed work on
+     2026-07-30, and it took most of the day to attribute because the commits carried a *different*
+     `Claude-Session` trailer — which looked like a second person in the repo and was not. It was
+     this stream's own agents: a `/clear` ends the orchestrator's **conversation**, not the agents it
+     already dispatched, so they keep running and keep committing under the old conversation's id.
+     One of them said so outright: *„I briefly overwrote `assets/styles/app.css` with the HEAD
+     version to take a baseline"* — and its sibling watched a finished, measured edit vanish with a
+     clean `git status` and no commit containing it.
+     **To measure a before/after, do not touch the file.** Delete or override the rules in the live
+     CSSOM, toggle a class, or copy the file to the scratchpad and read it there. `-o` protects the
+     index; nothing protects the working tree from another process restoring it.
    - `-o` does **not** save you when two agents edit the *same* file — it commits the working-tree
      version of that path, other agent's hunks included. That is what file ownership is for.
    - **Never run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites their files

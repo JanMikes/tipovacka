@@ -85,7 +85,34 @@ answers. When you do act on your own judgement, say so explicitly and make it ch
   each shared file gets exactly one owner per round.
 - **Never let an agent run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites
   their files into your agent's working tree.
+- **Never let an agent restore a file from HEAD to take a "before" measurement**, and never let one
+  run a tree-wide `git restore` / `git checkout .` / `git stash`. **This is the one that actually
+  destroyed work on 2026-07-30**, and I misdiagnosed it for hours as "another session is writing to
+  this repo" — see below. To measure before/after, override the rules in the live CSSOM or copy the
+  file to the scratchpad; never mutate the tree a sibling is working in.
 - Follow the board-sha convention: the work commit, then a one-line commit recording its sha.
+
+### `/clear` does not stop the agents — and their commits look like somebody else's
+
+A `/clear` ends the orchestrator's **conversation**, not the subagents it already dispatched. They
+keep running, keep editing the working tree, and keep committing — carrying the **old conversation's
+`Claude-Session` trailer**, because that is a per-conversation constant.
+
+On 2026-07-30 that produced a genuinely misleading picture. A fresh orchestrator read the board
+(„B30/B31 in flight"), saw uncommitted work in the tree, concluded the previous session's agents had
+died without committing, and dispatched a new agent onto the same two files. Both then ran
+concurrently on `assets/styles/app.css`. When commits appeared under a different session id, the
+obvious inference — „the product owner has a second session open" — was **wrong**, and it cost a
+correction from them to fix. There was only ever one Claude Code instance and one orchestrator's
+agents.
+
+So, on any cold start:
+1. `git status` **before** reading the board — the board can say „in flight" for work sitting
+   uncommitted in the tree.
+2. `git log --format='%h %ad %s' --date=format:'%H:%M' -15` — if commits are still *arriving*, the
+   previous conversation's agents are alive. **Wait for them, do not re-dispatch their items.**
+3. A `Claude-Session` trailer that is not yours means „an earlier conversation of this same
+   session", not „another person". Do not reason about a second author.
 
 ### What actually collides
 
