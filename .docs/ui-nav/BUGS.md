@@ -20,6 +20,11 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **BLOCKED** — needs a product decision | — |
 | B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | TODO | — |
 | B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
+| B13 | PIN and shareable-link boxes overflow their card on mobile | TODO | — |
+| B14 | The verification airlock does not confine the user | TODO | — |
+| B15 | An invite-link sign-up loses the competition it was invited to | TODO | — |
+| B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
+| B17 | Browser offers to save the password before it is confirmed | TODO | — |
 
 ---
 
@@ -912,3 +917,77 @@ items used (B8's before/after geometry harness) and must not regress B3 (`dropdo
 
 Small, but touches `assets/styles/app.css` — the highest-risk file in the repo — so it needs sole
 ownership of that file for its round.
+
+---
+
+## B13 — PIN and shareable-link boxes overflow their card on mobile
+
+Reported with a screenshot (inline, no file), 2026-07-30. Full transcription in
+[`ROUND2.md`](ROUND2.md) batch 7.
+
+On `/souteze/{id}/nastaveni#pozvanky` at phone width, the **PIN** value box (`7 5 3 2 6 6 2 1`) and the
+**ODKAZ** box (`https://wtips.cz/souteze/pozvanka/8dbe…`) both run past the right edge of their card
+and are clipped by the viewport; the URL is cut mid-string with no ellipsis. „Obnovit" / „Zrušit"
+below each render correctly.
+
+**Diagnose, don't guess.** A plausible cause is a fixed-width or `min-width` input inside a flex/grid
+cell without `min-width: 0` — the same mechanism as B7, where a flex child kept its min-content width
+and overflowed. Verify by **measuring** (bounding boxes vs. the card's content box), not by eye.
+Whatever the cause, the fix must hold at 320–430 px and must not regress the „copy" affordance.
+
+## B14 — the verification airlock does not confine the user
+
+Reported 2026-07-30: *„Tohle je to ověření, kde bych neměl mít možnost nikam kliknout … now i am able
+to click anywhere and go through"*. Detail in [`ROUND2.md`](ROUND2.md) batch 9.
+
+`/overeni-ceka` renders the **full navigation** and the product owner reports actually reaching other
+pages. **Establish which of two very different explanations is true** before fixing: (1) cosmetic —
+the guard bounces every click but the chrome makes the app look navigable; or (2) the B1 guard has
+regressed and pages are genuinely reachable. B1 fixed `RequireVerifiedEmailSubscriber` (priority 8 → 7,
+deny-list → allow-list); if (2), find out how it broke and add the regression test that would have
+caught it. Either way the airlock renders without nav links or CTA.
+
+## B15 — an invite-link sign-up loses the competition it was invited to
+
+**The most serious defect of round 2.** Reported 2026-07-30 with a screenshot; detail in
+[`ROUND2.md`](ROUND2.md) batch 8.
+
+A user opened a shareable invite link to „Lipina", registered (the page **promised** the join),
+verified the e-mail — and landed on „Zatím nehraješ v žádné soutěži". **The join silently did not
+happen.** Every link-invited sign-up is currently losing its competition.
+
+B1's assumptions say this path is supposed to work already („the landing page stores the join intent
+and sends the user to the airlock itself — `LoginSubscriber` completes the join after verification"),
+so **find out whether it regressed or was never wired for this entry point**, and say which.
+
+Scope also covers what the same report asks for:
+- After verification the user lands on the **competition detail**, not the Nástěnka.
+- **Stateful join intent before any account exists** — an anonymous visitor following an invite link
+  *or entering a PIN* is told which competition they are about to join, that intent survives sign-up
+  **and** sign-in, and they land in the competition afterwards. The PIN half is new work:
+  `competition_join_by_pin` is `🔒` today, so an anonymous visitor cannot enter a PIN at all.
+- **Empty-state priority on `/nastenka`** for a user in no competition: **1. PIN join (primary) ·
+  2. Procházet soutěže · 3. Vytvořit soutěž (third, smaller)**. Today there is no PIN affordance there
+  and „Vytvořit soutěž" is primary.
+- **Remove the useless PIN inputs from `/prihlaseni` and `/registrace`** (batch 12) — the same flow,
+  so the same agent.
+
+## B16 — „Uzamknout tipy" shows no date option, though B2 shipped one
+
+Reported 2026-07-30 with a screenshot; detail in [`ROUND2.md`](ROUND2.md) batch 10.
+
+The modal shows only the old immediate-lock message and „Ano, uzamknout" — **no „Ihned" / „V určený
+čas" pair and no datepicker**, although B2 (`4e5f482`) built exactly that and production is current.
+
+**Do not rebuild B2. Diagnose why its UI is not reaching the screen.** The mechanism is the `confirm`
+controller's optional **`fields` target**, which JS moves into the dialog; a silent JS failure is
+indistinguishable from B2's documented no-JS fallback („Without JS the form posts „Ihned""). Read B2's
+„As built" and `.docs/features/confirm-modal.md` first, then report which explanation was true.
+
+## B17 — the browser offers to save the password before it is confirmed
+
+Reported 2026-07-30; detail in [`ROUND2.md`](ROUND2.md) batch 11.
+
+On `/registrace`, filling the first password field triggers the browser's save-password prompt before
+the confirmation field has been typed. Likely `autocomplete` semantics on the pair — verify in a real
+browser, and check `app_reset_password` and the profile password change for the same gap.
