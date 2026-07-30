@@ -32,7 +32,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
-| B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | TODO | — |
+| B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
+| B28 | The hero's OTHER two floating chips also sit on content | TODO | — |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -1391,3 +1392,40 @@ the small CTA inside the same form — one CSRF token, one price, one dialog, no
 inside it. It ships `hidden` and the `confirm` controller unhides it on connect via a new `stretch`
 target, so **the big target is the enhancement and the small button is the floor**: a page whose JS never
 ran keeps only the button, and an accidental card-sized click cannot spend credits unconfirmed.
+
+## B28 — the hero's other two floating chips also sit on content
+
+Found while fixing **B26**, 2026-07-30, by measuring all three chips against the *full* content inventory
+rather than only team names and coins. **Left alone deliberately** — the grant to move an anchor was scoped
+to one chip, and B26's own row told the agent not to un-overlap the others.
+
+**B26's row contained a false premise, which is mine.** It asserted that the other two chips „do exactly
+that and read as designed", i.e. overlap only the card's edge or background. Measurement says otherwise:
+
+- **„+9 b Ana trefila výsledek"** (`-left-14 bottom-[14%]`) — **flagrant.** At 1280/1440/1600 px it covers
+  **„Tipy 248 hráčů" over 80 of its 87 px at the text's full height**, the **`.dist-bar` at its full 8 px
+  height**, and the legend's first item. At 1024 px it covers the bar plus **both** legend lines at full
+  height. The distribution bar visibly runs behind the glass.
+- **„+12 b Marek vystihl skóre"** (`-left-10 -top-5`) — **marginal.** Its bottom edge dips **6.4 px** into
+  the „Živě · 67'" pill's 25 px box and grazes the pill's text ink by **0.4 px** (0.3 px at 1024) — across
+  the pill's whole 85 px width.
+
+So by the rule B26 established — *edge and background overlap is the designed look, text/coin/score/bar
+overlap reads as broken* — two of the three chips are still broken, and the product owner's instruction
+was „just make it not look buggy".
+
+**Fix:** move both anchors into a band that holds a chip without content, exactly as B26 did. The B26 agent
+suggests pushing „Ana" into the bottom-padding band (`bottom-8`-ish, or `-left-20`) and „Marek" to `-top-6`.
+Both are two-token changes in `templates/home.html.twig`. **Measure, do not adopt those suggestions on
+trust** — B26 tested four anchors at ten widths and rejected the obvious mirror position because it left
+only 3.9 px of clearance to „SKUPINA A · MD3", one copy change away from the same bug.
+
+Constraints, all as B26: keep them `.glass` chips with the same content and visual language (invented
+figures inside a product mockup are fine — `ROUND2.md` batch 20); do not remove them; **do not touch
+`assets/styles/app.css`**; do not undo items 14, 16 or B21 (no „MS 2026", the accent-card CTA stays last,
+the hero `<h1>`'s two remaining `&nbsp;` glues stay). All three chips are `hidden lg:flex`, so 768 px and
+below is `display: none` and unaffected.
+
+Also noted by that agent and **chip-independent** (proved by deleting all three chips and re-measuring):
+„Argentina" still ellipsizes by 12 px at **1024 px only** (`w=69.8` vs `scrollWidth=82`) — B21 residue at
+that one width, not caused by any chip.
