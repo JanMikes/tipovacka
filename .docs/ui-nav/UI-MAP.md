@@ -112,7 +112,7 @@ Templates in `templates/auth/`, forms are Live Components in `templates/componen
 ### Player top level (🔒 all)
 | Route | Path | Template | Notes |
 |---|---|---|---|
-| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` | The „Nástěnka hráče" nav target — **the player's home** since item 06: ONE soutěž in focus, picked with `<twig:SoutezSwitcher>` (`?soutez={uuid}`, unknown/foreign id falls back silently). Sections in order: hero (eyebrow, „Ahoj, {nickname}.", switcher, **„Tvoje pozice" `.hero-rank` card**) → „Poslední Tvoje tipy" (+ „Historie →" `leaderboard_member`) → „Moje soutěže" (**deliberately un-scoped** — the full cross-soutěž overview) → „Následující zápasy" (chips Vše/Live/Dnes/Tipovatelné/Ukončené with counts + a „SOUTĚŽ" `?zapasy=vse` widener) → „Odehrané zápasy" beside the „Žebříček" sidebar (`.lb-row`, „Celý žebříček →" `/zebricek?soutez=`). Fed by `ListUserMatches` scoped to the soutěž, so „Rozložení tipů" is one `TipStatsProvider` batch, never per row — and since item 11 it renders inside the match card, not as a card of its own. **Gone** (item 06): the PIN bar, „Moje zdroje zápasů", „Objev další soutěže", the three count `StatCard`s. **Empty state** (B15), for a viewer in no soutěž: PIN bar (primary) → „Procházet soutěže" → „Vytvoř si vlastní soutěž" (small text link) |
+| `dashboard` | `/nastenka` | `portal/dashboard.html.twig` | The „Nástěnka hráče" nav target — **the player's home** since item 06, and since item 18 **quick actions for ONE soutěž**: the hero no longer lists the sections, it says what the page is („Na této obrazovce můžeš přepínat mezi jednotlivými soutěžemi…", no link). The soutěž is picked with `<twig:SoutezSwitcher>` (`?soutez={uuid}`, unknown/foreign id falls back silently) and the scope is now **always** that one soutěž — item 18 deleted the „SOUTĚŽ" roletka (`?zapasy=vse`), the only widener there was; the cross-soutěž feed is `/zapasy`. Sections in order: hero (eyebrow, „Ahoj, {nickname}.", switcher, **„Tvoje pozice" `.hero-rank` card + „Zobrazit celou tabulku"** arrow button → `/zebricek?soutez=`) → „Poslední Tvoje tipy" (+ „Historie →" `leaderboard_member` and a **„Tipovat zápasy v soutěži"** button → `/souteze/{id}/moje-tipy`) → „Moje soutěže" (**deliberately un-scoped** — the full cross-soutěž overview; each card is clickable **as a whole** via a stretched `.card-stretch` link with „Zobrazit na nástěnce" raised above it as `.card-raise`, no „Otevřít soutěž" link any more, and **„Všechny soutěže" sits BELOW the grid**) → „Následující zápasy" (**filters in two shapes over one `?filtr=`**: `.lb-tab` chips ≥ 768 px, a native `.mf-scope` roletka with a „Použít" submit below it — both work with JavaScript off) → „Odehrané zápasy" beside the „Žebříček" sidebar (`.lb-row`, „Celý žebříček →" `/zebricek?soutez=`). Both match lists render `Match:MatchRow` **`variant="dashboard"`** (item 18) — the only surface that does. Fed by `ListUserMatches` scoped to the soutěž, so „Rozložení tipů" is one `TipStatsProvider` batch, never per row. **Gone** (item 06): the PIN bar, „Moje zdroje zápasů", „Objev další soutěže", the three count `StatCard`s. **Empty state** (B15), for a viewer in no soutěž: PIN bar (primary) → „Procházet soutěže" → „Vytvoř si vlastní soutěž" (small text link) |
 | `matches` | `/zapasy` | `portal/matches/index.html.twig` | „Vaše zápasy" — cross-competition match feed, one `Match:MatchRow` **card** per match with the „Rozložení tipů" strip(s) inside it (item 11). **No longer in the nav** (item 01); URL-only |
 | `leaderboard` | `/zebricek` | `public/leaderboard.html.twig` | **public** (item 05) — see the Žebříček section below |
 | `credits` | `/kredity` | `portal/credits/overview.html.twig` | + `credits_buy` `/kredity/koupit`, `credits_return` `/kredity/navrat` |
@@ -301,7 +301,21 @@ cannot claim it, see B5), `points` (rendered as the „+5" badge over the box's 
 `tipStats` (`list<TipStats>` **from the page's batch**) and `footNote` („zdroj · venue" on the
 cross-competition lists, „Uzávěrka …" on competition detail — this is what used to be loose text
 UNDER the card). There is no „Tipovat →" action any more: the fixture itself links to the match,
-so a locked card is never a dead end · `Leaderboard/Podium` · `Leaderboard/Delta`
+so a locked card is never a dead end
+
+Since item 18 the component has **two shapes, one `variant` prop**. `variant="default"` is the item 11
+card described above and is what `/zapasy` and competition detail render (unchanged, byte-for-byte).
+`variant="dashboard"` is the Nástěnka's card and **only** the Nástěnka's: a centred header (kolo · datum ·
+čas, state pill right-aligned — centred when it wraps to its own line on a phone), **mirrored** team blocks
+(home role-above-name, away name-above-role) around the **score, or „vs" when there is none — never a
+duplicated kickoff time**, and a full-width footer holding ONE thing: „Zadat tip" (a *styled* `<span>`, only
+while `tipUrl` is set and no tip exists), the „MŮJ TIP 2 : 1" bar with the points badge inline, or
+`tipMissingLabel`. **The whole card is ONE `<a class="tip-row-link">`**, so the pill and the tip box are NOT
+links there — this deliberately reverses B7's „the row itself is NOT a link", and the „Rozložení tipů" strip
+therefore stays a **sibling** of that link (it is itself a control; nothing interactive may be nested inside
+an `<a>`). `tipPrompt` is ignored by this variant. Both variants share B7's zones/ellipsis, the five state
+stripes, the `tipStats` batching contract and the footer region, which is defined once in the component.
+Both are rendered in `/_design` half A. · `Leaderboard/Podium` · `Leaderboard/Delta`
 (the Žebříček table itself is plain markup in `public/leaderboard.html.twig` — item 05 dropped
 the `Leaderboard:CompetitionLeaderboard` Live Component, whose state now lives in the URL)
 (`:delta`, `:isNew`, variant `chip`) · `Layout/Nav` · `Layout/Footer` ·
@@ -363,6 +377,11 @@ tokens → `@layer base` → `@layer utilities` → `@layer components` (buttons
 / `.wt-mobile`, selects, pills, `.grad-headline`, `.stepper`/`.step-num`/`.step-bar`, delta
 chips) → cursor spotlight → misc sections. Dark design system throughout; surfaces are
 `bg-surface-1/2/3`, accent is `accent-300/200`.
+
+Item 18 added a small shared pattern at the end of the component layer: `.card-clickable` +
+`.card-stretch` (a link painted over a whole card, last in the DOM) + `.card-raise` (the one control
+that must stay reachable above it) — the way a card becomes clickable as a whole **without nesting
+interactive elements**.
 
 Rebuilt live by the `tailwind` container. **Never** run `asset-map:compile` locally.
 

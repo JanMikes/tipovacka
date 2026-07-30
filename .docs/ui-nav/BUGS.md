@@ -30,6 +30,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B22 | `/kredity` renders a 523 px table at 320 px | TODO | — |
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | TODO | — |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
+| B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | TODO | — |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -1143,3 +1144,24 @@ dark panel — effectively invisible. The datepicker is a vendor widget being sk
 expect the fix to be a specificity problem in the same family as **B3**, where vendor CSS out-specified
 the skin on focus. Check the month name, the weekday row and the disabled/out-of-range days too, not
 only the year, and verify inside the `<dialog>` rather than on a normal page.
+
+## B25 — with JavaScript off, „Zobrazit další" hides matches unreachably
+
+Found by the item-18 agent while verifying the Nástěnka's filters without JavaScript, 2026-07-30.
+**Pre-existing since item 06**, outside that item's scope, so it was reported rather than fixed.
+
+„Následující zápasy" renders the first 5 matches and hides the rest behind a „Zobrazit další (N)" button
+driven by the `reveal` Stimulus controller. With scripting disabled the hidden rows carry `hidden` and the
+button does nothing, so **the 6th and later matches cannot be reached at all** — not by scrolling, not by
+any URL. Competition detail now uses the same 5-plus-„Načíst všechny zápasy" pattern (`ROUND2.md` batch 2),
+so check both.
+
+This matters more than a normal progressive-enhancement nit because **this stream has deliberately kept
+every other control JS-free**: the soutěž switcher is a real GET form (item 04), the leaderboard search and
+the Nástěnka filters are real GET forms (items 05, 15, 18), and the create wizard degrades. A reveal button
+is the one place where turning JS off removes *content* rather than convenience.
+
+**Options, cheapest first:** render all rows and let the button only collapse (so „hidden" is the enhanced
+state, not the default); or make it a real link (`?vse=1`-style) that renders the full list server-side, the
+shape item 05 used before its expand control was retired. Do **not** fix it by removing the truncation —
+the product owner asked for exactly 5 with a load-more.
