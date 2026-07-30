@@ -157,7 +157,7 @@
                                     {# Tip exists but this manager may not see it — filled/not-filled only. #}
                                     <twig:Pill label="Vyplněno" variant="tipped" icon="check" />
                                 {% elseif not row.hasGuess %}
-                                    <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
+                                    <twig:Pill label="Nevyplněno" variant="danger" icon="circle-alert" />
                                 {% endif %}
                                 <div class="flex items-center gap-2.5">
                                     <input type="number"

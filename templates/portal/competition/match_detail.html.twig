@@ -159,7 +159,7 @@
                        tip can still be filled. Past the deadline the same absence is a FACT
                        and the form itself says „Netipováno". #}
                     {% if not has_guess and not is_locked %}
-                        <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
+                        <twig:Pill label="Nevyplněno" variant="danger" icon="circle-alert" />
                     {% endif %}
                 </div>
 
@@ -470,7 +470,19 @@
                                 {% if row.hasGuess and row.guess is null %}
                                     <twig:Pill label="Vyplněno" variant="tipped" icon="check" />
                                 {% elseif not row.hasGuess %}
-                                    {# B5: „Nevyplněno" asks for action; once locked the absence is final. #}
+                                    {# B5: „Nevyplněno" asks for action; once locked the absence is final.
+                                       Item 34: kept `soon` here on purpose — `can_edit_member_tips` is built
+                                       from the ORGANIZER's own effective_deadline (line 138 of the
+                                       controller), not this row's member. Under Boosts monetization a
+                                       manager who personally owns an active `tip_change` boost (allowed —
+                                       PurchaseBoostHandler grants it to any active member, owner included)
+                                       gets a later deadline than a member without one, so this can still
+                                       read „Nevyplněno" after THAT member's own window has actually closed.
+                                       The submit handler is safe (SubmitGuessOnBehalfHandler resolves the
+                                       deadline against the TARGET member and rejects late writes), so this
+                                       is a display-only bug, not a data one — flip to `danger` once the
+                                       gate is computed per member (mirroring ManageMemberTipsController's
+                                       deadlinesFor($competition, $candidateMatches, $selectedMember)). #}
                                     {% if can_edit_member_tips %}
                                         <twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert" />
                                     {% else %}
