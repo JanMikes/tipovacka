@@ -33,7 +33,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
-| B28 | The hero's OTHER two floating chips also sit on content | TODO | — |
+| B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
+| B29 | Homepage demo card: team names collapse to ~15 px at 320 px | TODO | — |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
@@ -1429,3 +1430,38 @@ below is `display: none` and unaffected.
 Also noted by that agent and **chip-independent** (proved by deleting all three chips and re-measuring):
 „Argentina" still ellipsizes by 12 px at **1024 px only** (`w=69.8` vs `scrollWidth=82`) — B21 residue at
 that one width, not caused by any chip.
+
+## B29 — the homepage demo card's team names collapse at narrow widths
+
+Found by the B26 agent and confirmed independently by the B28 agent, 2026-07-30. **Proved
+chip-independent twice**, by deleting all three floating chips and re-measuring: byte-identical with and
+without them, so it is not B26/B28 residue.
+
+In the hero's demo match card, the team names ellipsize in the single-column layout:
+
+| width | „Argentina" | note |
+|---|---|---|
+| 1024 px | 69.8 px of 82 — **12 px clipped** | two-column layout, the one width where it survives the column split badly |
+| 430 px | **12 px clipped** | single column |
+| 320 px | **~15 px total** — both names | effectively unreadable |
+
+This is **B21 residue**: B21 gave the demo card ~130 px back at the wide widths and added `min-w-0` +
+`truncate` so long names degrade gracefully instead of overflowing — which was the right call then, and is
+why this shows as an ellipsis rather than a layout break. But at 320 px a name reduced to ~15 px is not
+graceful degradation; on a phone it reads as broken, which is the standard the product owner set for
+**B26** („just make it not look buggy").
+
+**Worth noting what this is and is not.** It is a *marketing mockup* on the landing page, not a real match
+list — the production card (`Match:MatchRow`, item 21) was measured down to **238 px** with zero wrapped
+names. So this is confined to `templates/home.html.twig`'s hero illustration.
+
+**Fix direction (measure, do not assume):** the hero card's fixture block keeps a three-column
+`[1fr auto 1fr]` shape at every width, so at 320 px the score and coins take the room. Options include
+stacking the fixture below ~430 px, shortening to the teams' short names / monograms at narrow widths, or
+reducing the score's type scale there. Do **not** remove `min-w-0`/`truncate` — that is what stops it
+overflowing outright.
+
+Constraints as B26/B28: `templates/home.html.twig` only, no `assets/styles/app.css`, do not undo items 14,
+16, B21, B26 or B28 (no „MS 2026", the accent-card CTA stays last, the `<h1>`'s two `&nbsp;` glues stay,
+and all three chips keep their measured clearances). All three chips are `hidden lg:flex`, so they are not
+in play at the widths this bug lives at.
