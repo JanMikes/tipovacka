@@ -1314,6 +1314,23 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
 .numInputWrapper span.arrowUp::after { border-bottom-color: var(--fg-3); }
 .numInputWrapper span.arrowDown::after { border-top-color: var(--fg-3); }
 
+/* --- B24: the year is near-black in the „Uzamknout tipy" dialog --- */
+/* B3's mechanism again, one vendor further: flatpickr disables the year input whenever
+   minDate and maxDate fall in the same year — which is exactly the lock modal's shape (now →
+   the first kickoff). Vendor then paints it through
+   `.flatpickr-current-month input.cur-year[disabled]` (specificity 0,3,1), which outranks the
+   skin's `.flatpickr-current-month input.cur-year` (0,2,1), so „2026" rendered
+   rgba(0,0,0,0.5) on the dark header: measured contrast 1.07:1 — invisible next to a white
+   „Červenec" at 18.6:1. Re-assert at vendor's own specificity, later in the file, both
+   selectors it uses. `-webkit-text-fill-color` too: on a disabled <input> it wins over
+   `color` in Chromium/WebKit, so setting only `color` would leave the year unchanged.
+   Deliberately `--fg-2` and not `#fff`: the year really is fixed in this dialog, so it reads
+   as a label rather than a control — but at 9.5:1, not 1.07:1. */
+.flatpickr-current-month input.cur-year[disabled],
+.flatpickr-current-month input.cur-year[disabled]:hover {
+    color: var(--fg-2); -webkit-text-fill-color: var(--fg-2); opacity: 1;
+}
+
 /* ==========================================================================
    Tom Select — dark skin (loaded on top of vendor tom-select.min.css)
    ========================================================================== */
