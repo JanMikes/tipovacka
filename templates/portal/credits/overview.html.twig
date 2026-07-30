@@ -35,7 +35,9 @@
                 <twig:StatCard label="Aktuální zůstatek" value="{{ wallet.balance }}" meta="kreditů" icon="wallet" tone="accent" />
             </div>
 
-            <div class="card-glass p-6" data-controller="credit-amount">
+            {# The bar's credit chip links straight here (item 17) — `credits_buy` itself is
+               the POST-only Stripe action, so this card is the buying page. #}
+            <div id="dobit" class="card-glass p-6 scroll-mt-24" data-controller="credit-amount">
                 <h2 class="text-lg font-bold tracking-tight text-white">Dobít kredity</h2>
                 <p class="mt-1 text-xs leading-relaxed text-white/50">Platba kartou přes Stripe, fakturu dostanete e-mailem. Minimum je 100 kreditů.</p>
 

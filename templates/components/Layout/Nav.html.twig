@@ -34,7 +34,7 @@
     ]
 %}
 
-<header class="wtnav" data-controller="mobile-nav">
+<header class="wtnav {{ is_app ? 'is-app' : 'is-public' }}" data-controller="mobile-nav">
     <div class="bar">
         <a class="brand" href="{{ is_app ? path('dashboard') : path('app_home') }}" aria-label="{{ brand_name }}">
             <span class="brand-mark" aria-hidden="true">W</span>
@@ -61,20 +61,30 @@
                     </a>
                 {% endif %}
 
+                {# Item 17: the wallet balance lives in the bar itself now, one tap from
+                   dobití. Same component as before — it just moved out of the dropdown. #}
+                <twig:CreditBalance />
+
                 <twig:Notification:Bell />
 
-                <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm">
+                {# Both of these are repeated verbatim by the hamburger panel below, so
+                   they are what gives way when the bar runs out of room (B20). #}
+                <a href="{{ path('competition_create') }}" class="btn btn-primary btn-sm nav-in-menu" title="Vytvořit soutěž" aria-label="Vytvořit soutěž">
                     <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
                     <span class="cta-label">Vytvořit soutěž</span>
                 </a>
 
-                <details class="relative">
+                <details class="relative nav-in-menu">
                     <summary class="avatar list-none" style="list-style:none">{{ app.user.nickname|default('?')|slice(0, 2)|upper }}</summary>
                     <div class="absolute right-0 mt-2 w-48 rounded-xl border border-white/10 bg-surface-2 p-1.5 shadow-xl z-[60]">
                         <a href="{{ path('profile_edit') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
                             <twig:ux:icon name="lucide:user" class="h-4 w-4" />Profil
                         </a>
-                        <twig:CreditBalance />
+                        {# The balance itself sits in the bar (item 17) — this row is only
+                           the way to the page, so it triggers no second wallet query. #}
+                        <a href="{{ path('credits') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
+                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />Kredity
+                        </a>
                         {% if is_granted('ROLE_ADMIN') %}
                             <a href="{{ path('admin_match_source_list') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-accent-300 hover:bg-white/5 hover:text-white">
                                 <twig:ux:icon name="lucide:shield" class="h-4 w-4" />Administrace
@@ -86,10 +96,15 @@
                     </div>
                 </details>
             {% else %}
-                <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm">Přihlásit se</a>
+                {# „Přihlásit se" is in the hamburger panel too, so on a phone the bar keeps
+                   only the primary CTA (B20). #}
+                <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm nav-phone-hide">Přihlásit se</a>
                 <a href="{{ path('app_register') }}" class="btn btn-primary btn-sm">
+                    {# .cta-short shows exactly when .cta-label hides — the old `md:hidden`
+                       flipped at 768 while .cta-label hides at 900, which left the button
+                       with NO label at all between 768 and 900 px. #}
                     <span class="cta-label">Registrace zdarma</span>
-                    <span class="md:hidden">Registrace</span>
+                    <span class="cta-short">Registrace</span>
                 </a>
             {% endif %}
 
@@ -106,6 +121,9 @@
             <a href="{{ path(link.path) }}"{{ section == link.key ? ' class="active"' }}>{{ link.label }}</a>
         {% endfor %}
         {% if is_app %}
+            {# „Vytvořit soutěž" leaves the bar below 900 px (B20) — the panel is where it
+               lands, spelled out rather than a bare „+". #}
+            <a href="{{ path('competition_create') }}"{{ current starts with 'competition_create' ? ' class="active"' }}>Vytvořit soutěž</a>
             <a href="{{ path('profile_edit') }}">Profil</a>
             <a href="{{ path('credits') }}"{{ current starts with 'credits' ? ' class="active"' }}>Kredity</a>
             {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin_match_source_list') }}">Administrace</a>{% endif %}

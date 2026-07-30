@@ -1,6 +1,14 @@
-{# Wallet balance chip for the nav — links to the credits page. #}
-<a href="{{ path('credits') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/80 hover:bg-white/5 hover:text-white">
-    <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-    Kredity
-    <span class="ml-auto rounded-md bg-accent-500/15 px-1.5 py-0.5 font-mono text-xs font-semibold text-accent-300">{{ this.balance }}</span>
+{#
+  Wallet balance chip in the top bar (item 17). The single source of truth for the balance
+  in the chrome — the avatar dropdown and the hamburger panel only link to the page, so
+  this component still renders exactly once per request (one wallet SELECT).
+  `credits_buy` (/kredity/koupit) is POST-only — it is the Stripe checkout action — so the
+  chip points at the credits page and its „Dobít kredity" card, which holds that form.
+#}
+<a href="{{ path('credits') }}#dobit"
+   class="credit-chip"
+   title="Kredity — dobít"
+   aria-label="Kredity: {{ this.balance }}. Dobít kredity.">
+    <twig:ux:icon name="lucide:wallet" class="h-4 w-4 text-accent-300" />
+    <span>{{ this.balance }}</span>
 </a>

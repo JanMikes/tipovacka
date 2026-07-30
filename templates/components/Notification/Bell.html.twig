@@ -30,7 +30,10 @@
             aria-label="Zavřít oznámení"
         ></button>
 
-        <div class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-white/10 bg-surface-2 shadow-xl">
+        {# B18: position lives in `.bell-panel` (app.css, nav section) — a 20rem panel
+           right-aligned to a trigger in the middle of a phone-width bar hung off the LEFT
+           edge of the viewport, so below 900 px it becomes a bar-wide sheet instead. #}
+        <div class="bell-panel rounded-xl border border-white/10 bg-surface-2 shadow-xl">
             <div class="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
                 <span class="text-sm font-bold text-white">Oznámení</span>
                 {% if this.unreadCount > 0 %}

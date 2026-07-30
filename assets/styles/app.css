@@ -651,6 +651,53 @@ label.required::after {
         .wtnav .wt-mobile { display: none !important; }
     }
 
+    /* --- item 17: chrome pass --- */
+    /* (A) Credits in the bar. The wallet balance used to be reachable only from the
+       avatar dropdown and the hamburger (UI-MAP §6.5 „Kredity is hidden"). The chip is
+       the SAME `CreditBalance` component moved into the bar — the dropdown row lost its
+       balance, so the component still renders exactly once per request (one SELECT). */
+    .wtnav .credit-chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border-radius: 10px; background: var(--glass-bg); border: 1px solid var(--border-2); color: var(--fg-2); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-decoration: none; }
+    .wtnav .credit-chip:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .wtnav .credit-chip:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 2px; }
+    /* (D) B20 — the bar did not fit 320 px even BEFORE the chip: 373 px of .actions on a
+       public page (+53), +7 px on an app page. Something has to give way, in this order:
+       the two long CTA labels (≤1100), then everything the hamburger panel already
+       repeats — the avatar dropdown and „Vytvořit soutěž" (≤900) — then the wordmark and
+       the secondary „Přihlásit se" (≤420). The brand mark, the balance, the bell and the
+       hamburger never leave. */
+    .wtnav .cta-short { display: none; }
+    @media (max-width: 1100px) {
+        /* Only the app bar is this crowded: brand · links · Administrace · balance ·
+           bell · CTA · avatar. The public bar keeps „Registrace zdarma" down to 900. */
+        .wtnav.is-app .cta-label { display: none; }
+    }
+    @media (max-width: 900px) {
+        .wtnav .actions { gap: 10px; }
+        .wtnav .cta-short { display: inline; }
+        .wtnav .nav-in-menu { display: none; }
+    }
+    @media (max-width: 420px) {
+        .wtnav .bar { padding: 0 14px; gap: 10px; }
+        .wtnav .brand-name { display: none; }
+        .wtnav .nav-phone-hide { display: none; }
+    }
+    /* (B) B18 — the bell panel is a fixed 20rem box that was right-aligned to a trigger
+       sitting in the MIDDLE of a narrow bar, so it hung off the LEFT edge of the viewport
+       (measured x = −153.4 px at 320 px, heading „Oznámení" starting at −136 px). Nothing
+       clipped it — a clipping ancestor is B3's mechanism, not this one. Below the
+       hamburger breakpoint the panel becomes a bar-wide sheet pinned under the bar; above
+       it the trigger is far enough right that the anchored dropdown always fits. */
+    .bell-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: 20rem; overflow: hidden; }
+    @media (max-width: 900px) {
+        /* Pinned to the bar's right edge instead of the trigger, so it can never depend on
+           what else the bar happens to hold; `min()` keeps it inside the narrowest phone.
+           `.wtnav`'s backdrop-filter makes it the containing block for fixed children and
+           it is a full-width sticky bar at the top, so the insets resolve against the
+           viewport either way; 60px is the bar's height here (cf. .wt-mobile). The height
+           cap matters because a fixed panel cannot be scrolled into view. */
+        .bell-panel { position: fixed; top: 60px; right: 10px; width: min(20rem, calc(100% - 20px)); max-height: calc(100dvh - 70px); overflow-y: auto; }
+    }
+
     /* ---- Footers ---- */
     .wtfoot { border-top: 1px solid var(--border-1); background: #07101e; color: var(--fg-2); }
     .app-foot { border-top: 1px solid var(--border-1); color: var(--fg-4); }
