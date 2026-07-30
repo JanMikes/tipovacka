@@ -179,6 +179,29 @@ product owner reprioritises):
 5. **Every item ends with the board updated** — status `DONE` + commit sha, in the same commit.
 6. **Nothing is "done" until it renders.** Verification is part of the item, not optional.
 
+### Dispatch economy (2026-07-30, product owner: „they work too slow")
+
+Measured across that day: a copy item ran ~12 min, a fixtures item ~11, but a two-item style dispatch
+ran **98 minutes** and a copy-and-price sweep 34. The cost was not thinking — it was verification
+applied at one depth regardless of risk, plus a ~1000-word hazard preamble retyped into every prompt.
+
+Four rules, in order of how much time they buy back:
+
+1. **Verification is tiered, not uniform** — see the table in
+   [`AGENT-BRIEF.md`](AGENT-BRIEF.md). A colour swap needs one computed-colour read at one width, not
+   a multi-width bounding-box sweep. **The full geometry pass stays mandatory for layout changes**:
+   every layout bug this stream found (B7, B13, B21, B29, B30, item 22's card) came from it, and none
+   was visible in a screenshot.
+2. **The boilerplate lives in `AGENT-BRIEF.md`.** Prompts say „read the brief" and then carry only
+   what is specific to the item — which files a sibling owns, what to watch for, what to report.
+3. **Match the model to the work.** A three-call-site variant swap does not need the same tier as a
+   39-file restructure.
+4. **One item per agent unless file ownership forces otherwise.** Bundling 25+31 serialised two small
+   items behind one another for no benefit; they only shared files by accident of timing.
+
+What is NOT to be cut: loading the page (`composer quality` cannot see a template that throws), the
+browser console, and the query-count check on anything touching a list.
+
 ### Definition of done (applies to every item unless the item says otherwise)
 
 ```bash
