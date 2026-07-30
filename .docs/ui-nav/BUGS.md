@@ -1245,6 +1245,47 @@ models, so gold is the target, not blue.
 The count („1 hráč s tipem") should not simply be deleted to free the top-right corner — decide where it
 goes and say so.
 
+### Part 1b — the whole paywall card is the click target
+
+Product owner, 2026-07-30:
+
+> as well those cards whole clickable with the confirmation -> make the whole card clickable instead of
+> just the portion of it
+
+So on **both** full paywall cards the entire card is the purchase trigger, and it opens the same confirm
+dialog the button opens today. Scope: the two **full** paywall cards on match detail. Use item 18's
+established pattern — the stretched target painted over the card (`.card-stretch` / `.card-raise`) — except
+here the stretched element is a **form submit**, not a link. Same rule applies and it is not negotiable:
+**nothing interactive may end up nested inside the stretched control**; anything that must stay clickable
+is raised above it.
+
+**⚠ This makes the missing-confirm failure mode materially worse, and the fix must account for it.**
+A small button that spends credits without a dialog is a bad click. A whole card that does it is an
+*accidental* click — the target is now hundreds of times larger, and the blurred skeleton behind it looks
+like content rather than a button. Combined with Part 2's finding (the confirm is wired but its firing is
+unverified) and the **B16** precedent (a `disconnect()` silently reduced the same controller to a plain
+submit, looking exactly like the no-JS path), the whole-card target must **not** be live unless the
+confirm is:
+
+- **Make the stretched target depend on the `confirm` controller having connected** — e.g. the controller
+  itself enables/attaches it, so a page where the JS never ran keeps only the explicit button. This
+  inverts the usual enhancement direction on purpose: the *big* target is the enhancement, the *small*
+  one is the floor. JavaScript-off support is deferred (`PLAN.md` decision 0), but a controller that
+  fails to connect is a different thing and this stream has hit it twice.
+- **Verify server-side that a purchase is guarded and charges exactly once** regardless of the dialog.
+  `BoostFlowTest` already pins that a stale page cannot burn credits — do not weaken it; add to it.
+- Report what an accidental click actually does end-to-end, and what happens on a double click.
+
+**Deliberately NOT in scope: the compact „Rozložení tipů" strip inside a match card.** That strip is a
+sibling of the card's own wrapping link (items 18/21), which navigates to the match. Making the strip a
+second large target with a *different* action, immediately adjacent to the first, would be worse than the
+current small button — two big neighbouring targets where one buys credits and the other navigates. Leave
+it as it is and say if you disagree; the product owner said „those cards", meaning the two full ones.
+
+**`/_design` must stay inert.** The gallery renders these paywalls, and a stretched submit is exactly the
+kind of thing its `inert()` macro exists to neutralise — `DesignStyleguideFlowTest::testNothingOnThePageCanAct`
+asserts the page holds no `method="post"` and exactly one form. Keep it green.
+
 ### Part 2 — the confirm is already wired; find out why it was not seen
 
 **Do not „add confirmation". It exists on every purchase path.** Verified in the templates:
