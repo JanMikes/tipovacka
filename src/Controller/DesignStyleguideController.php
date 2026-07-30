@@ -440,7 +440,7 @@ final class DesignStyleguideController extends AbstractController
                 price: $price,
                 balance: $balance,
             ),
-            // Same, but the wallet cannot cover it → „Chybí kredity".
+            // Same, but the wallet cannot cover it → the SAME CTA, pointing at dobití.
             'boostsNoCredits' => new TipStats(
                 competitionId: Uuid::fromString('01930000-0000-7000-8000-0000000000e3'),
                 competitionName: 'Sousedská liga',

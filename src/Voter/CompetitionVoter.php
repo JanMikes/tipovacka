@@ -13,7 +13,7 @@ use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 /**
- * @extends Voter<'competition_view'|'competition_edit'|'competition_delete'|'competition_manage_members'|'competition_manage_join_mechanics'|'competition_join'|'competition_join_global'|'competition_leave'|'competition_invite_member', Competition>
+ * @extends Voter<'competition_view'|'competition_edit'|'competition_delete'|'competition_manage_members'|'competition_manage_join_mechanics'|'competition_share_join_link'|'competition_join'|'competition_join_global'|'competition_leave'|'competition_invite_member', Competition>
  */
 final class CompetitionVoter extends Voter
 {
@@ -23,6 +23,15 @@ final class CompetitionVoter extends Voter
     public const string MANAGE_MEMBERS = 'competition_manage_members';
     /** PIN / shareable link / e-mail invite / anonymous member — all disabled for global competitions. */
     public const string MANAGE_JOIN_MECHANICS = 'competition_manage_join_mechanics';
+    /**
+     * SEE and pass on the PIN / shareable link. Every member may do this — a partička
+     * grows because the players invite their friends, not because the organizer is the
+     * only one holding the code. The organizer still CONTROLS it: whether a PIN and a
+     * link exist at all, and revoking or regenerating either, stays
+     * {@see self::MANAGE_JOIN_MECHANICS}. Same preconditions otherwise, so a deleted,
+     * finished or global competition is never recruited into.
+     */
+    public const string SHARE_JOIN_LINK = 'competition_share_join_link';
     public const string JOIN = 'competition_join';
     public const string JOIN_GLOBAL = 'competition_join_global';
     public const string LEAVE = 'competition_leave';
@@ -41,6 +50,7 @@ final class CompetitionVoter extends Voter
             self::DELETE,
             self::MANAGE_MEMBERS,
             self::MANAGE_JOIN_MECHANICS,
+            self::SHARE_JOIN_LINK,
             self::JOIN,
             self::JOIN_GLOBAL,
             self::LEAVE,
@@ -67,6 +77,10 @@ final class CompetitionVoter extends Voter
             self::DELETE => $isAdmin || $isOwner,
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
             self::MANAGE_JOIN_MECHANICS => ($isAdmin || $isOwner)
+                && $subject->isNotDeleted
+                && !$subject->matchSource->isCompleted
+                && !$subject->isGlobal,
+            self::SHARE_JOIN_LINK => ($isAdmin || $isMember)
                 && $subject->isNotDeleted
                 && !$subject->matchSource->isCompleted
                 && !$subject->isGlobal,

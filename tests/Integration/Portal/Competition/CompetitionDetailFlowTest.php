@@ -99,8 +99,9 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'), 'Nastavení');
-        // Two now (item 19): the action bar's „Pozvat" and the „Pozvat kamaráda"
-        // CTA above the banner — both point at the ONE invitation block (item 08).
+        // Two now (item 19): the action bar's „Pozvat" and „Spravovat pozvánky" in the
+        // („Pozvat kamaráda") share card — both point at the ONE invitation block
+        // (item 08). The card itself is every member's; only these two links are not.
         self::assertCount(2, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Pozvat + Pozvat kamaráda');
         self::assertSelectorTextContains('body', 'Pozvat kamaráda');
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'), 'Tipovat za členy');
@@ -138,6 +139,33 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'));
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'));
         self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/uzamknout-tipy"]'));
+    }
+
+    /**
+     * Sharing is NOT an organizer privilege: a plain member gets the join link (and
+     * the PIN, where one exists) so they can pull their friends in themselves. What
+     * stays organizer-only is the CONTROL — regenerating, revoking, e-mail invites.
+     */
+    public function testPlainMemberCanShareTheJoinLink(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $member = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($member);
+        $client->loginUser($member);
+
+        $id = AppFixtures::BOOSTS_COMPETITION_ID;
+        $crawler = $client->request('GET', '/souteze/'.$id);
+        self::assertResponseIsSuccessful();
+
+        $body = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Pozvat kamaráda', $body);
+        self::assertStringContainsString(AppFixtures::BOOSTS_COMPETITION_LINK_TOKEN, $body);
+        // …but none of the controls that regenerate or revoke it.
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/odkaz/novy"]'));
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/pin/novy"]'));
+        self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'));
     }
 
     public function testGlobalCompetitionHidesTipsOnBehalf(): void

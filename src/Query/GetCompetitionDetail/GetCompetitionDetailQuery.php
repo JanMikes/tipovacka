@@ -23,7 +23,14 @@ final readonly class GetCompetitionDetailQuery
         $competition = $this->competitionRepository->get($query->competitionId);
         $memberships = $this->membershipRepository->findActiveByCompetition($competition->id);
 
-        $canSeeSecrets = $query->viewerIsAdmin || $competition->owner->id->equals($query->viewerId);
+        // The PIN and the shareable link are a MEMBER's to pass on, not the organizer's
+        // to hoard: a partička grows because the players invite their friends. The
+        // organizer keeps the control — whether either exists, and revoking or
+        // regenerating them (CompetitionVoter::MANAGE_JOIN_MECHANICS). A global
+        // competition recruits from /souteze, so it never hands its codes out here.
+        $isMember = $competition->owner->id->equals($query->viewerId)
+            || array_any($memberships, static fn (Membership $m): bool => $m->user->id->equals($query->viewerId));
+        $canSeeSecrets = !$competition->isGlobal && ($query->viewerIsAdmin || $isMember);
 
         $members = array_map(
             static function (Membership $m): CompetitionMemberListItem {

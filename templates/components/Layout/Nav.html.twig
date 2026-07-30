@@ -96,9 +96,15 @@
                     </div>
                 </details>
             {% else %}
-                {# „Přihlásit se" is in the hamburger panel too, so on a phone the bar keeps
-                   only the primary CTA (B20). #}
-                <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm nav-phone-hide">Přihlásit se</a>
+                {# „Přihlásit se" used to drop out of the bar below 420 px, leaving a phone
+                   with the registration CTA only — a returning player then had to open the
+                   hamburger to sign in. It now stays in the bar at every width and merely
+                   shortens to „Přihlásit", the same .cta-label/.cta-short pair the
+                   registration CTA uses. #}
+                <a href="{{ path('app_login') }}" class="btn btn-ghost btn-sm">
+                    <span class="cta-label">Přihlásit se</span>
+                    <span class="cta-short">Přihlásit</span>
+                </a>
                 <a href="{{ path('app_register') }}" class="btn btn-primary btn-sm">
                     {# .cta-short shows exactly when .cta-label hides — the old `md:hidden`
                        flipped at 768 while .cta-label hides at 900, which left the button

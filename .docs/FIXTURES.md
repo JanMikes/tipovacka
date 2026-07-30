@@ -497,7 +497,7 @@ change of what it derives from — item 29 is what happens when it does not.
 | „Rozložení tipů" · **locked by premium** („Zapíná organizátor") | **World E** — premium with both visibility toggles off; all four matches, 5 / 6 / 3 / 0 tippers |
 | „Rozložení tipů" · **locked, buyable** (boost buy trigger) | **World D** — boosts, nobody owns one, dev user can afford it |
 | „Rozložení tipů" · **unlocked by an own boost** | **World A** — the dev user owns „Přesné tipy soupeřů" |
-| Boost paywall · **both branches at once** (buy CTA *and* „Chybí kredity") | **World D** → „Získej výhody" on `/souteze/{TEAM_FILTER_COMPETITION_ID}` as `user@tipovacka.test`: the two cheaper boosts are affordable, **„Počkejte si na sestavy" (50 kr.) is not** — the dev wallet holds 49 kr. by construction (`DEV_USER_CREDIT_BALANCE`) |
+| Boost paywall · **both branches at once** (buy dialog *and* the dobití route) | **World D** → „Získej výhody" on `/souteze/{TEAM_FILTER_COMPETITION_ID}` as `user@tipovacka.test`: the two cheaper boosts are affordable, **„Počkejte si na sestavy" (50 kr.) is not** — the dev wallet holds 49 kr. by construction (`DEV_USER_CREDIT_BALANCE`) |
 | Competition state **„Nadcházející"** | **World E** (the only one; A/B/D are Running, C is Finished) |
 | „Ukončeno" everything, incl. a resolved tie | **World C** |
 | Team-filter (`teams`) scope, „why is this match not in the competition" | **World D** |
@@ -581,13 +581,14 @@ Czech/Slovak fixtures are in — three played plus the Osmifinále one that auto
 playoff-always-in rule — so „why is this match not in that competition" can be reproduced
 deliberately. Six members, monetization **boosts**, and **nobody owns a boost**: this is the
 canonical **buyable-locked** „Rozložení tipů" of the dev world (the dev user can afford it, so
-the strip renders the buy trigger, not the „chybí kredity" variant).
+the strip's CTA opens the confirm dialog rather than routing through dobití).
 
 It is therefore also the one place the **whole boost shop** shows both of its branches at
 once: „Získej výhody" on the competition detail offers „Jak tipují ostatní?" (15 kr.) and
-„Přesné tipy soupeřů" (35 kr.) with a buy CTA, and „Počkejte si na sestavy" (50 kr.) with
-„Dokoupit kredity" — because `DEV_USER_CREDIT_BALANCE` is one credit short of the dearest
-boost by construction (item 29).
+„Přesné tipy soupeřů" (35 kr.) as an affordable purchase, and „Počkejte si na sestavy"
+(50 kr.) as the unaffordable one — because `DEV_USER_CREDIT_BALANCE` is one credit short of
+the dearest boost by construction (item 29). Both branches carry the **same** CTA and price
+(item 23); only the unaffordable one leads to `/kredity#dobit` instead of the confirm dialog.
 
 ### World E — „Vysočina – naše parta" · the soutěž that has NOT started
 `UPCOMING_SOURCE_ID` = `019aaaaa-0000-7000-8000-0000000000f4` ·

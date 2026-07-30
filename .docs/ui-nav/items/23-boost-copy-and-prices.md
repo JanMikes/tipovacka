@@ -242,3 +242,11 @@ Decisions the item file did not answer, taken the conservative way and recorded 
    > overlay now renders `label()` + `description()`; the veiled „Pořadí za zápas" card on match
    > detail gained the booster's name, which it had never carried. See the 2026-07-30 decision-log
    > row in `.docs/DOMAIN.md`. The jump-CTA half of this assumption stands.
+
+9. **ONE CTA per booster, affordable or not** (product call, 2026-07-30). The six paywall
+   surfaces rendered „Chybí kredity (40/50 kr.)" — and the shop row a „Dokoupit kredity"
+   button — whenever the wallet was short, which is a second CTA vocabulary for the very
+   product this item exists to unify. All of them now render the SAME control and the SAME
+   price as the affordable branch („Odemknout za 50 kr.", „Koupit za 50 kr." in the shop
+   row); only the destination differs — `/kredity#dobit` instead of the confirm dialog. The
+   balance is not repeated in the CTA: `/kredity` shows it, and the bar chip always did.

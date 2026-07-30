@@ -352,10 +352,13 @@ final class BoostFlowTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_BATCH);
         self::assertResponseIsSuccessful();
 
-        // Cannot afford it ⇒ no purchase form, but a top-up link is offered instead.
+        // Cannot afford it ⇒ no purchase form. The CTA is nevertheless the SAME offer
+        // („Odemknout za N kr.", never „Chybí kredity") — only its destination differs:
+        // it routes through dobití instead of opening the confirm dialog.
         self::assertCount(0, $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"]'));
-        self::assertSelectorTextContains('body', 'Chybí kredity');
-        self::assertGreaterThanOrEqual(1, $crawler->filter('a[href="/kredity"]')->count());
+        self::assertSelectorTextContains('body', 'Odemknout za');
+        self::assertStringNotContainsString('Chybí kredity', (string) $client->getResponse()->getContent());
+        self::assertGreaterThanOrEqual(1, $crawler->filter('a[href^="/kredity"]')->count());
     }
 
     // ── B6: no purchase once the competition is fully over ────────────────────

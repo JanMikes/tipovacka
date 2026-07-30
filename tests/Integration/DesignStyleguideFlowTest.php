@@ -132,8 +132,11 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertStringContainsString('class="dist-bar"', $body);
         // Locked: the decorative ghost fill plus each paywall's own copy.
         self::assertStringContainsString('dist-ghost-fill', $body);
-        self::assertStringContainsString('Odemknout za', $body);       // boosts, affordable
-        self::assertStringContainsString('Chybí kredity', $body);      // boosts, broke
+        // Affordable and broke render the SAME CTA — the broke one only links to
+        // dobití — so „Chybí kredity" must not survive anywhere on the gallery.
+        self::assertStringContainsString('Odemknout za', $body);
+        self::assertStringNotContainsString('Chybí kredity', $body);
+        self::assertStringContainsString('/kredity#dobit', $body);     // boosts, broke
         self::assertStringContainsString('Zapíná organizátor', $body); // premium
         self::assertStringContainsString('Zobrazí se po odehrání', $body); // nothing to sell
 

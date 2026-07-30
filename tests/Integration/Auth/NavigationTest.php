@@ -59,6 +59,12 @@ final class NavigationTest extends WebTestCase
         // button rendered with NO label at all between those two widths.
         self::assertSelectorExists('header.wtnav .actions a.btn-primary[href="/registrace"] .cta-label');
         self::assertSelectorExists('header.wtnav .actions a.btn-primary[href="/registrace"] .cta-short');
+        // Signing in is the OTHER door and must not hide behind the hamburger on a
+        // phone: it stays in the bar at every width and only shortens to „Přihlásit"
+        // (same two-label trick), so `nav-phone-hide` may never come back here.
+        self::assertSelectorExists('header.wtnav .actions a[href="/prihlaseni"] .cta-label');
+        self::assertSelectorExists('header.wtnav .actions a[href="/prihlaseni"] .cta-short');
+        self::assertSelectorNotExists('header.wtnav .actions a[href="/prihlaseni"].nav-phone-hide');
         // The wallet is nobody's business until you have one.
         self::assertSelectorNotExists('header.wtnav .credit-chip');
         self::assertSelectorNotExists('header.wtnav a[href^="/kredity"]');
