@@ -34,7 +34,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
 | B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
-| B29 | Homepage demo card: team names collapse to ~15 px at 320 px | TODO | — |
+| B29 | Homepage demo card: team names collapse to ~15 px at 320 px | DONE | `3f61e77` - three shapes; also fixed the second mock on the same page |
 | B30 | The „Uzamknout tipy" dialog's calendar overflows its own panel at 320 px | TODO | — |
 | B31 | After `db:reset` no competition can reach the scorer picker | TODO | — |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
