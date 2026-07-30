@@ -129,8 +129,20 @@
                („Francie" + the FRA coin) at every width from 1024 px up once B21 gave the card its
                ~130 px back; `-bottom-8` moves it onto the bottom-right corner instead — 17 px of it
                inside the card, 13 px of clearance to the nearest legend line. B26 in
-               .docs/ui-nav/BUGS.md has the measurements. #}
-            <div class="glass absolute -left-10 -top-5 hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
+               .docs/ui-nav/BUGS.md has the measurements.
+
+               The two LEFT chips are anchored the same way (B28). Their horizontal band is useless:
+               a 165 px chip would have to hang ~144 px out to keep its inside part within the 29 px
+               left padding, and that lands it on the hero paragraph at 1024 px. So they straddle a
+               HORIZONTAL edge instead — the card's only content-free bands are the 29 px above the
+               „Živě · 67'" pill and the 30 px below the last legend line, and both stay 29/30 px at
+               every width because the card is auto-height. Keep ~15 px of chip inside and ~14 px of
+               clearance; a chip is 55 px tall, so each 4 px (one Tailwind step) trades one for one. #}
+
+            {# `-top-10` = 15 px inside the card, 13.7 px above the „Živě · 67'" pill's box.
+               `-top-5` dipped 6.3 px into that box; `-top-6` (B28's suggested value) still dips
+               2.3 px; `-top-8` clears it by only 5.7 px — one copy change from re-breaking. #}
+            <div class="glass absolute -left-10 -top-10 hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
                 <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white" style="background:linear-gradient(135deg,#3ed598,#1f9d6e)">MK</span>
                 <div>
                     <div class="font-black text-win">+12 b</div>
@@ -142,7 +154,11 @@
                 <div class="font-black text-white">147</div>
                 <div class="text-[10px] text-white/40">/ 248</div>
             </div>
-            <div class="glass absolute -left-14 bottom-[14%] hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
+            {# `-bottom-10` = 15 px inside the card, 14.7 px below the last legend line's ink.
+               `bottom-[14%]` put the chip on „Tipy 248 hráčů", the whole 8 px of the .dist-bar and
+               the legend; `-left-20` does NOT fix that (it still covers the bar and legend 1 at
+               every width), and `-bottom-8` clears the legend by only 6.7 px. #}
+            <div class="glass absolute -bottom-10 -left-14 hidden items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-xs lg:flex">
                 <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white" style="background:linear-gradient(135deg,#ff5d7a,#c8324d)">AP</span>
                 <div>
                     <div class="font-black text-loss">+9 b</div>
