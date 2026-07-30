@@ -159,11 +159,13 @@
                 {% endif %}
 
                 <div class="mt-4">
+                    {# B19: the form sits inside this page's own card, so it renders bare —
+                       one prop instead of a utility incantation that left the border behind. #}
                     <twig:Guess:GuessSubmitForm
                         id="guess-form-{{ selected_competition.id.toRfc4122 }}"
                         sportMatch="{{ sport_match }}"
                         competitionId="{{ selected_competition.id.toRfc4122 }}"
-                        class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"
+                        :bare="true"
                     />
                 </div>
             </section>

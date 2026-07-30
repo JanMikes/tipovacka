@@ -5,13 +5,14 @@
     scorerOptionGroups, selectedScorers.
     Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeHomeScore,
     overtimeAwayScore, scorersJson (hidden, written by the scorer-picker controller).
-    Caller can override the wrapper via class="...".
+    Caller can override the wrapper via class="..."; `:bare="true"` drops the component's
+    own card chrome entirely (B19 — for call sites that already render it inside a card).
 
     The scorer picker lives in a data-live-ignore island so live re-renders never
     destroy the tom-select instance; its state reaches the component through the
     hidden scorersJson input (data-model + dispatched input events).
 #}
-<div{{ attributes.defaults({class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
+<div{{ attributes.defaults(this.bare ? {} : {class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
 
     {% if this.isLocked %}
         <p class="flex items-center gap-1.5 text-sm text-white/60">

@@ -63,6 +63,17 @@ final class GuessSubmitForm
     #[LiveProp]
     public string $competitionId = '';
 
+    /**
+     * B19 — render without the component's own card chrome (border/background/
+     * padding/rounding). Set it on call sites that already wrap the form in a
+     * card of their own; the alternative was every such call site repeating a
+     * `!rounded-none !bg-transparent !p-0 …` utility incantation, which silently
+     * left the border behind. A LiveProp (not a plain prop) so the bare shape
+     * survives live re-renders.
+     */
+    #[LiveProp]
+    public bool $bare = false;
+
     #[LiveProp(writable: true)]
     #[Assert\GreaterThanOrEqual(0)]
     #[Assert\LessThanOrEqual(99)]
