@@ -19,6 +19,14 @@ final readonly class CompetitionListItem
         public \DateTimeImmutable $joinedAt,
         public ?\DateTimeImmutable $matchSourceStartAt = null,
         public ?\DateTimeImmutable $matchSourceEndAt = null,
+        /**
+         * Matches the viewer has not tipped and still can — the „Chybí natipovat N zápasů"
+         * badge on the „Moje soutěže" cards. From
+         * {@see \App\Service\Competition\MissingTipCounter}, the same service
+         * `ListMyPlayingCompetitions` uses, so both card surfaces show one number per
+         * soutěž. Defaults to 0 so the switcher's hand-built options stay valid.
+         */
+        public int $missingTipCount = 0,
     ) {
     }
 }

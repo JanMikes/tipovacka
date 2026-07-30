@@ -9,12 +9,11 @@ use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
-use App\Entity\User;
 use App\Enum\SportMatchState;
 use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
-use App\Service\EffectiveTipDeadlineResolver;
+use App\Service\Competition\MissingTipCounter;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -26,6 +25,11 @@ use Symfony\Component\Uid\Uuid;
  * are four cross-competition aggregates, and the only per-competition work is
  * the match-scope membership test (cached in {@see CompetitionMatchProvider})
  * plus one batched deadline resolution.
+ *
+ * The „chybí natipovat" number comes from {@see MissingTipCounter} — the same
+ * service the Nástěnka's „Moje soutěže" cards use — so one soutěž shows one
+ * number on both surfaces. The matches are already loaded here, so this query
+ * feeds them in rather than paying for them a second time.
  */
 #[AsMessageHandler(bus: 'query.bus')]
 final readonly class ListMyPlayingCompetitionsQuery
@@ -35,7 +39,7 @@ final readonly class ListMyPlayingCompetitionsQuery
         private UserRepository $userRepository,
         private EntityManagerInterface $entityManager,
         private CompetitionMatchProvider $matchProvider,
-        private EffectiveTipDeadlineResolver $deadlineResolver,
+        private MissingTipCounter $missingTipCounter,
         private ClockInterface $clock,
     ) {
     }
@@ -75,7 +79,7 @@ final readonly class ListMyPlayingCompetitionsQuery
             ));
 
             $currentRound = $this->currentRound($included, $now);
-            $pending = $this->pendingTips($competition, $included, $guessedPairs[$key] ?? [], $user, $now);
+            $missing = $this->missingTipCounter->forIncludedMatches($competition, $included, $guessedPairs[$key] ?? [], $user, $now);
             $viewerPoints = $pointsByCompetitionAndUser[$key][$query->userId->toRfc4122()] ?? 0;
 
             $rank = 1;
@@ -98,57 +102,13 @@ final readonly class ListMyPlayingCompetitionsQuery
                 roundPoints: null !== $currentRound ? ($roundPoints[$key][$currentRound] ?? 0) : 0,
                 currentRound: $currentRound,
                 liveMatchCount: count(array_filter($included, static fn (SportMatch $m): bool => $m->isLive)),
-                pendingTipCount: $pending['count'],
-                nextDeadlineAt: $pending['deadline'],
+                missingTipCount: $missing->count,
+                nextDeadlineAt: $missing->earliestDeadline,
                 nextKickoffAt: $this->nextKickoff($included, $now),
             );
         }
 
         return $items;
-    }
-
-    /**
-     * @param list<SportMatch>    $included
-     * @param array<string, true> $guessedMatchIds
-     *
-     * @return array{count: int, deadline: \DateTimeImmutable|null}
-     */
-    private function pendingTips(
-        Competition $competition,
-        array $included,
-        array $guessedMatchIds,
-        User $user,
-        \DateTimeImmutable $now,
-    ): array {
-        $open = array_values(array_filter(
-            $included,
-            static fn (SportMatch $m): bool => $m->isOpenForGuesses && !isset($guessedMatchIds[$m->id->toRfc4122()]),
-        ));
-
-        if ([] === $open) {
-            return ['count' => 0, 'deadline' => null];
-        }
-
-        $deadlines = $this->deadlineResolver->deadlinesFor($competition, $open, $user);
-
-        $count = 0;
-        $earliest = null;
-
-        foreach ($open as $match) {
-            $deadline = $deadlines[$match->id->toRfc4122()] ?? null;
-
-            if (null === $deadline || $now >= $deadline) {
-                continue;
-            }
-
-            ++$count;
-
-            if (null === $earliest || $deadline < $earliest) {
-                $earliest = $deadline;
-            }
-        }
-
-        return ['count' => $count, 'deadline' => $earliest];
     }
 
     /**

@@ -268,7 +268,8 @@ final class DesignStyleguideController extends AbstractController
 
     /**
      * Samples for <twig:Competition:PlayingCard> — one competition still asking for
-     * tips (rank + round gain + „Tipuj N") and one finished (final standing).
+     * tips (rank + round gain + the red „Chybí natipovat …" badge) and one finished
+     * (final standing, no badge at all).
      *
      * @return array<string, PlayingCompetitionItem>
      */
@@ -287,7 +288,7 @@ final class DesignStyleguideController extends AbstractController
                 roundPoints: 9,
                 currentRound: 'Osmifinále',
                 liveMatchCount: 1,
-                pendingTipCount: 3,
+                missingTipCount: 3,
                 nextDeadlineAt: new \DateTimeImmutable('2026-06-02 18:00:00', new \DateTimeZone('UTC')),
                 nextKickoffAt: new \DateTimeImmutable('2026-06-02 18:00:00', new \DateTimeZone('UTC')),
             ),
@@ -303,7 +304,7 @@ final class DesignStyleguideController extends AbstractController
                 roundPoints: 0,
                 currentRound: null,
                 liveMatchCount: 0,
-                pendingTipCount: 0,
+                missingTipCount: 0,
                 nextDeadlineAt: null,
                 nextKickoffAt: null,
             ),

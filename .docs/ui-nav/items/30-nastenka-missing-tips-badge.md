@@ -160,3 +160,48 @@ second must not resurrect it.
 
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. Push to `main`. Do not update the status board; report your sha.
+
+## Assumptions made
+
+1. **The count on `ListMyCompetitions` is opt-in (`withMissingTipCounts`), not always-on.** The item
+   says to put the number on `CompetitionListItem`, and it is there — but that query has **three**
+   consumers, not the one the item names: `DashboardController`, `Public/LeaderboardController`
+   (`/zebricek`) and, through both, `<twig:SoutezSwitcher>`. Resolving the count unconditionally
+   measured **+14 statements on `/zebricek`**, a page that never draws the badge. So the message
+   carries a flag, the Nástěnka sets it, and `/zebricek` is byte-for-byte unchanged at 18 queries.
+   Ordering and membership semantics are untouched, as „What must NOT change" requires.
+
+2. **„Tipuj X →" was ALREADY the missing-tip count — the item's warning is wrong for this codebase.**
+   The item says the badge's number „is NOT the number that was in „Tipuj 16"" and asks not to assume
+   either way. Checked: `ListMyPlayingCompetitionsQuery::pendingTips()` already computed *included
+   ∧ open for guesses ∧ untipped ∧ deadline still ahead* — exactly the badge's rule. That method was
+   lifted verbatim into `Service/Competition/MissingTipCounter::forIncludedMatches()` and is now the
+   ONE implementation both queries call. The badge therefore shows the same number the deleted link
+   did, and criterion 7 holds by construction rather than by coincidence.
+
+3. **`PlayingCard` lost three links, not one.** The item deletes „Tipuj X →". The card also carried an
+   `<a>` around its `<h3>` title and an „Otevřít →" link in the else branch — both pointing at the very
+   competition detail the stretched link now covers. A `.card-stretch` may not sit over nested
+   interactive content, so both went as well, replaced by the same inert arrow marker the Nástěnka
+   card already uses („Nefunkční prvek — jen značka, že karta sama je proklik"). After the change the
+   card holds exactly one `<a>`, pinned by `MissingTipsBadgeTest`.
+
+4. **The badge joins the card's existing top-right badge row; it is not absolutely positioned.** „the
+   top-right corner of the card, where nothing sits today" is **stale**: both cards already render
+   pills there — „Vlastník"/„Ukončen" on the Nástěnka, „Live"/„Ukončeno"/„Organizuješ" on `/souteze`.
+   Flow layout is also the only construction in which the badge provably cannot land on the title;
+   an absolutely-positioned one would have to be re-measured at every width. No `app.css` rule was
+   needed (that file belonged to another item this round).
+
+5. **`max-w-full` on the badge group is load-bearing, not decoration.** `.card-glass` sets
+   `overflow: hidden`, so a `shrink-0 flex-wrap` group takes its max-content width and the card
+   silently **clips** it. Measured at 320 px: three of four badge-bearing cards were cut off before
+   the cap, zero after — with the longest realistic label („CHYBÍ NATIPOVAT 12 ZÁPASŮ") and at
+   320/390/430/768/1024/1280/1440 px, on both surfaces.
+
+6. **`pendingTipCount` → `missingTipCount`.** Two names for one number is how the two surfaces would
+   have drifted; the DTO field, the component and the gallery sample all say what it means now.
+
+7. **Defensive footer copy.** With `missingTipCount > 0` a deadline always exists (it is the `min()`
+   over the very matches that were counted), but the `{% if %}` stays and falls back to „Zbývá
+   natipovat" rather than rendering an empty line.

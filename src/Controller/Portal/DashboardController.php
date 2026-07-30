@@ -66,8 +66,14 @@ final class DashboardController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
+        // `withMissingTipCounts` because the „Moje soutěže" grid draws the red
+        // „Chybí natipovat N zápasů" badge — resolved once for the whole list, never
+        // per card. The other consumers of this query do not ask for it.
         /** @var list<CompetitionListItem> $myCompetitions */
-        $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(userId: $user->id));
+        $myCompetitions = $this->queryBus->handle(new ListMyCompetitions(
+            userId: $user->id,
+            withMissingTipCounts: true,
+        ));
 
         if ([] === $myCompetitions) {
             return $this->render('portal/dashboard.html.twig', [

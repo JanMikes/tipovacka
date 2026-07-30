@@ -11,7 +11,8 @@ use Twig\TwigFilter;
 /**
  * Exposes {@see CzechPlural} to templates so Czech declension has ONE source of
  * truth across PHP and Twig. `{{ count }} {{ count|czech_unread }}` →
- * „1 nepřečtené" / „3 nepřečtená" / „7 nepřečtených".
+ * „1 nepřečtené" / „3 nepřečtená" / „7 nepřečtených"; `{{ count|czech_zapas }}` →
+ * „1 zápas" / „3 zápasy" / „7 zápasů".
  */
 final class CzechPluralExtension extends AbstractExtension
 {
@@ -22,6 +23,7 @@ final class CzechPluralExtension extends AbstractExtension
     {
         return [
             new TwigFilter('czech_unread', CzechPlural::neprectene(...)),
+            new TwigFilter('czech_zapas', CzechPlural::zapas(...)),
         ];
     }
 }

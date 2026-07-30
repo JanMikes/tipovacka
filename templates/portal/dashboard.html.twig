@@ -209,11 +209,27 @@
                     #}
                     <div class="card-glass card-clickable flex h-full flex-col justify-between p-5 sm:p-6{{ is_selected ? ' border-accent-500/40' }}">
                         <div>
-                            <div class="mb-3 flex items-start justify-between gap-3">
-                                <p class="eyebrow min-w-0 truncate">{{ g.matchSourceName }}</p>
-                                <div class="flex shrink-0 flex-wrap items-center gap-1.5">
+                            {#
+                                Odznaky drží pravý horní roh karty. Řádek se smí zalomit
+                                (`flex-wrap` + `ml-auto`), aby dlouhé „Chybí natipovat …"
+                                na úzkém displeji spadlo pod zdroj místo do jeho textu.
+                                `max-w-full` je nutné: `.card-glass` má `overflow: hidden`,
+                                takže bez stropu by se skupina odznaků roztáhla na svou
+                                max-content šířku a na 320 px by ji karta uřízla.
+                            #}
+                            <div class="mb-3 flex flex-wrap items-start gap-x-3 gap-y-2">
+                                <p class="eyebrow min-w-0 grow basis-24 truncate">{{ g.matchSourceName }}</p>
+                                <div class="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1.5">
                                     {% if g.isOwner %}<twig:Badge label="Vlastník" variant="organizer" icon="crown" />{% endif %}
                                     {% if g.matchSourceIsCompleted %}<twig:Pill label="Ukončen" variant="done" />{% endif %}
+                                    {# Jen když je co tipovat — nula se nezobrazuje vůbec (item 30). #}
+                                    {% if g.missingTipCount > 0 %}
+                                        <twig:Pill
+                                            label="Chybí natipovat {{ g.missingTipCount }} {{ g.missingTipCount|czech_zapas }}"
+                                            variant="danger"
+                                            icon="circle-alert"
+                                        />
+                                    {% endif %}
                                 </div>
                             </div>
                             <h3 class="text-lg font-bold leading-tight tracking-tight text-white">{{ g.competitionName }}</h3>

@@ -45,7 +45,7 @@ final class ListMyPlayingCompetitionsQueryTest extends IntegrationTestCase
         $before = $this->onlyItem(AppFixtures::VERIFIED_USER_ID);
 
         // „Kámoši u piva" has exactly one scheduled match, still tippable.
-        self::assertSame(1, $before->pendingTipCount);
+        self::assertSame(1, $before->missingTipCount);
         self::assertNotNull($before->nextDeadlineAt);
         self::assertNotNull($before->nextKickoffAt);
 
@@ -59,7 +59,7 @@ final class ListMyPlayingCompetitionsQueryTest extends IntegrationTestCase
 
         $after = $this->onlyItem(AppFixtures::VERIFIED_USER_ID);
 
-        self::assertSame(0, $after->pendingTipCount);
+        self::assertSame(0, $after->missingTipCount);
         self::assertNull($after->nextDeadlineAt);
         // The kickoff is still ahead — only the „něco k tipnutí" prompt is gone.
         self::assertNotNull($after->nextKickoffAt);

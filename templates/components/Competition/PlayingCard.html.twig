@@ -1,7 +1,8 @@
 {#
     „Soutěže, kde tipuješ" card (item 07): the viewer's standing in one
-    competition plus the single next action that belongs to it — „Tipuj N" while
-    something is still open, „Otevřít" otherwise.
+    competition, with the whole card as ONE link to it (item 30 — the „Tipuj N"
+    link that used to sit in the footer is gone, so nothing interactive is nested
+    under the stretched link any more).
 
     @var item \App\Query\ListMyPlayingCompetitions\PlayingCompetitionItem
 #}
@@ -10,22 +11,42 @@
 {% set id = item.competitionId.toRfc4122 %}
 {% set detailUrl = path('competition_detail', {id: id}) %}
 
-<div class="card-glass flex h-full flex-col justify-between p-5 sm:p-6" id="hraju-{{ id }}">
+{#
+    Celá karta vede do soutěže. Není to <a> okolo obsahu, ale rozprostřený odkaz
+    NAD ním (`.card-stretch`, poslední v DOM) — stejný vzor jako „Moje soutěže"
+    na nástěnce (item 18).
+#}
+<div class="card-glass card-clickable flex h-full flex-col justify-between p-5 sm:p-6" id="hraju-{{ id }}">
     <div>
-        <div class="mb-3 flex items-start justify-between gap-3">
-            <p class="eyebrow min-w-0 truncate">{{ item.matchSourceName }}</p>
-            {% if item.liveMatchCount > 0 %}
-                <twig:Pill label="Live" variant="live" dot />
-            {% elseif item.isFinished %}
-                <twig:Pill label="Ukončeno" variant="locked" />
-            {% elseif item.viewerIsOwner %}
-                <twig:Pill label="Organizuješ" variant="accent" />
-            {% endif %}
+        {#
+            Odznaky drží pravý horní roh karty. Řádek se smí zalomit (`flex-wrap`
+            + `ml-auto`), aby dlouhé „Chybí natipovat …" na úzkém displeji spadlo
+            pod zdroj místo do jeho textu. `max-w-full` je nutné: `.card-glass` má
+            `overflow: hidden`, takže bez stropu by se skupina odznaků roztáhla na
+            svou max-content šířku a na 320 px by ji karta uřízla.
+        #}
+        <div class="mb-3 flex flex-wrap items-start gap-x-3 gap-y-2">
+            <p class="eyebrow min-w-0 grow basis-24 truncate">{{ item.matchSourceName }}</p>
+            <div class="ml-auto flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1.5">
+                {% if item.liveMatchCount > 0 %}
+                    <twig:Pill label="Live" variant="live" dot />
+                {% elseif item.isFinished %}
+                    <twig:Pill label="Ukončeno" variant="locked" />
+                {% elseif item.viewerIsOwner %}
+                    <twig:Pill label="Organizuješ" variant="accent" />
+                {% endif %}
+                {# Jen když je co tipovat — nula se nezobrazuje vůbec (item 30). #}
+                {% if item.missingTipCount > 0 %}
+                    <twig:Pill
+                        label="Chybí natipovat {{ item.missingTipCount }} {{ item.missingTipCount|czech_zapas }}"
+                        variant="danger"
+                        icon="circle-alert"
+                    />
+                {% endif %}
+            </div>
         </div>
 
-        <h3 class="text-lg font-bold leading-tight tracking-tight text-white">
-            <a href="{{ detailUrl }}" class="transition-colors hover:text-accent-200">{{ item.name }}</a>
-        </h3>
+        <h3 class="text-lg font-bold leading-tight tracking-tight text-white">{{ item.name }}</h3>
 
         <div class="cmp-standing mt-4">
             <div>
@@ -44,11 +65,15 @@
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div class="min-w-0">
-            {% if item.pendingTipCount > 0 %}
+            {# Jen datum — počet zápasů nese odznak v rohu, a ten počítá to, co chybí. #}
+            {% if item.missingTipCount > 0 %}
                 <p class="text-xs uppercase tracking-wider text-white/40">Tipuj do</p>
                 <p class="truncate text-sm text-white/70">
-                    {% if item.nextDeadlineAt %}{{ item.nextDeadlineAt|date('j. n. H:i') }} · {% endif %}
-                    {{ item.pendingTipCount }} {% if item.pendingTipCount == 1 %}zápas{% elseif item.pendingTipCount <= 4 %}zápasy{% else %}zápasů{% endif %}
+                    {%- if item.nextDeadlineAt -%}
+                        {{ item.nextDeadlineAt|date('j. n. H:i') }}
+                    {%- else -%}
+                        Zbývá natipovat
+                    {%- endif -%}
                 </p>
             {% elseif item.isFinished %}
                 <p class="text-xs uppercase tracking-wider text-white/40">Soutěž</p>
@@ -67,14 +92,13 @@
             {% endif %}
         </div>
 
-        {% if item.pendingTipCount > 0 %}
-            <a href="{{ path('competition_my_tips_batch', {id: id}) }}" class="shrink-0 text-sm font-bold text-accent-300 transition-colors hover:text-accent-200">
-                Tipuj {{ item.pendingTipCount }} <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
-            </a>
-        {% else %}
-            <a href="{{ detailUrl }}" class="shrink-0 text-sm font-bold text-accent-300 transition-colors hover:text-accent-200">
-                Otevřít <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
-            </a>
-        {% endif %}
+        {# Nefunkční prvek — jen značka, že karta sama je proklik. #}
+        <span class="shrink-0 text-accent-300" aria-hidden="true">
+            <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+        </span>
     </div>
+
+    <a href="{{ detailUrl }}"
+       class="card-stretch"
+       aria-label="Otevřít soutěž {{ item.name }}"></a>
 </div>

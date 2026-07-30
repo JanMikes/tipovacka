@@ -22,8 +22,12 @@ final readonly class PlayingCompetitionItem
         /** Round label of the competition's current kolo/fáze, null when its matches carry none. */
         public ?string $currentRound,
         public int $liveMatchCount,
-        /** Matches still open for the viewer to tip and not yet tipped. */
-        public int $pendingTipCount,
+        /**
+         * Matches the viewer has not tipped and still can — the „Chybí natipovat N zápasů"
+         * badge. From {@see \App\Service\Competition\MissingTipCounter}, the same service
+         * the Nástěnka cards use, so both surfaces show one number per soutěž.
+         */
+        public int $missingTipCount,
         /** The earliest deadline among those — the „Tipuj do …" moment. */
         public ?\DateTimeImmutable $nextDeadlineAt,
         /** Kickoff of the next match ahead, whether or not it is still tippable. */
