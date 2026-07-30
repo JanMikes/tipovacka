@@ -61,7 +61,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | DONE | `876e674` |
 | 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | IN PROGRESS | — |
 | 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | TODO — blocked on 25 + 31 | — |
-| 32 | [CI red: a boost refund assertion expects the old price](items/32-ci-red-boost-refund-amount.md) | IN PROGRESS | — |
+| 32 | [CI red: a boost refund assertion expects the old price](items/32-ci-red-boost-refund-amount.md) | DONE | `3f733a5` |
 | 33 | [`GetGuessesForMatchInCompetition` has no consumer left](items/33-orphaned-guesses-read-model.md) | TODO | — |
 
 **Round of 2026-07-30, second half.** Items 22–27 came from the product owner in one sitting, so they
