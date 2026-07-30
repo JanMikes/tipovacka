@@ -47,6 +47,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 15 | [Strip the filter chrome off Žebříček and `/souteze`](items/15-simplify-list-pages.md) | DONE | `6099926` |
 | 16 | [Homepage: a closing CTA that claims nothing, and no „MS 2026"](items/16-homepage-cta-and-ms2026.md) | DONE | `01e8dda` + `358884d` (tests) |
 | 17 | [App chrome: credits in the bar, simpler footer, B18 + B20](items/17-chrome-pass.md) | DONE | `09c9d21` + `90f7fb8` |
+| 18 | [Nástěnka: quick actions, clickable cards, new match-card design](items/18-page-nastenka-pass.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
