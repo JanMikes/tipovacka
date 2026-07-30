@@ -6,7 +6,9 @@ namespace App\Controller\Portal\Competition;
 
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
+use App\Enum\CompetitionMonetization;
 use App\Enum\SportMatchState;
 use App\Enum\UserRole;
 use App\Query\GetCompetitionDetail\GetCompetitionDetail;
@@ -79,7 +81,25 @@ final class CompetitionDetailController extends AbstractController
             viewerIsAdmin: $isAdmin,
         ));
 
-        $isMember = $this->membershipRepository->hasActiveMembership($user->id, $competition->id);
+        $membership = $this->membershipRepository->findActiveMembership($user->id, $competition->id);
+        $isMember = null !== $membership;
+        $isFullyOver = $this->matchProvider->isFullyOver($competition);
+
+        // ── The first-visit boost-price modal (item 19, closes B10) ─────────
+        // Four suppressions, all deliberate:
+        //   • not a member        — nothing to sell them, and nothing to stamp
+        //     (only an admin ever reaches this page as a non-member);
+        //   • already dismissed   — the stamp lives on the membership, so the
+        //     dismissal survives a fresh session by construction;
+        //   • monetization ≠ boosts — on a PREMIUM competition the player cannot
+        //     buy boosts at all (the organizer pays for everyone), so a price
+        //     list would advertise the unpurchasable; `none` sells nothing either.
+        //     Premium XOR boosts, as a user-visible consequence;
+        //   • fully over (B6)     — a boost bought now could unlock nothing.
+        $showBoostIntro = $isMember
+            && null === $membership->boostIntroSeenAt
+            && CompetitionMonetization::Boosts === $competition->monetization
+            && !$isFullyOver;
 
         // Tip-locking state for the hero + the „Uzamknout tipy" action: locked =
         // the competition-level lock moment (manual lock or first kickoff)
@@ -154,7 +174,9 @@ final class CompetitionDetailController extends AbstractController
             'now' => $now,
             'is_member' => $isMember,
             'is_owner' => $user->id->equals($competition->owner->id),
-            'is_over' => $this->matchProvider->isFullyOver($competition),
+            'is_over' => $isFullyOver,
+            'show_boost_intro' => $showBoostIntro,
+            'boost_types' => BoostType::cases(),
             'has_started' => null !== $firstKickoffAt && $firstKickoffAt <= $now,
             'current_round' => $this->roundResolver->currentRound($competition),
             'match_rows' => $matchRows,

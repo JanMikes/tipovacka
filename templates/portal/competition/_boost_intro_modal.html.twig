@@ -1,0 +1,72 @@
+{#
+    První návštěva soutěže s vylepšeními — „tabulka kreditů" (item 19, uzavírá B10).
+
+    Kdo ho uvidí, rozhoduje CONTROLLER (`show_boost_intro`): jen člen soutěže s
+    monetizací `boosts`, která ještě neskončila, a jen dokud si ho neodklikl.
+    Na prémiové soutěži se nezobrazí nikdy — tam si hráč vylepšení koupit NEMŮŽE
+    (Premium XOR boosts), takže by nabízel neprodejné.
+
+    Ceny pocházejí z BoostType::price(), tedy z Credits/PricingConfig — v šabloně
+    není ani jedno číslo. Odklik ve všech třech podobách (✕ / tlačítko / Esc a
+    kliknutí mimo) posílá TÝŽ formulář; viz assets/controllers/boost_intro_controller.js.
+
+    Bez JavaScriptu se dialog neotevře a stránka se nijak nemění (zavřený
+    <dialog> je `display: none`).
+#}
+<div data-controller="boost-intro">
+    <dialog data-boost-intro-target="dialog" class="confirm-dialog modal-panel w-full max-w-lg p-0" aria-labelledby="boost-intro-title">
+        <div class="p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="eyebrow mb-1">Vylepšení za kredity</p>
+                    <h2 id="boost-intro-title" class="text-lg font-bold tracking-tight text-white">
+                        Co si můžete v téhle soutěži odemknout
+                    </h2>
+                </div>
+                <button type="button"
+                        data-action="boost-intro#dismiss"
+                        aria-label="Zavřít"
+                        class="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/5 hover:text-white">
+                    <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+                </button>
+            </div>
+
+            <p class="mt-2 text-sm leading-relaxed text-white/60">
+                V téhle soutěži si každý rozhoduje sám. Za kredity si můžete odemknout výhody,
+                které vám dají lepší přehled — nic z toho není povinné.
+            </p>
+
+            <ul class="mt-5 divide-y divide-white/[0.06] overflow-hidden rounded-xl border border-white/10 bg-inset">
+                {% for type in boost_types %}
+                    <li class="flex items-start justify-between gap-4 px-4 py-3">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-white">{{ type.label }}</p>
+                            <p class="mt-0.5 text-[12px] leading-snug text-white/55">{{ type.description }}</p>
+                        </div>
+                        <span class="shrink-0 text-sm font-black tabular-nums text-accent-200">{{ type.price }} kr.</span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <p class="mt-3 text-xs text-white/40">
+                1 kredit = 1 Kč. Koupit je můžete kdykoli níže na téhle stránce v sekci „Získej výhody“.
+            </p>
+
+            {#
+                Jediná cesta, jak se odklik uloží — controller ji odešle při zavření
+                dialogu, ať se zavřel jakkoli. Bez JS se sem hráč nedostane (dialog
+                se neotevře), takže obyčejný submit je jen záložní chování.
+            #}
+            <form method="post"
+                  action="{{ path('competition_boost_intro_seen', {id: competition.id.toRfc4122}) }}"
+                  data-boost-intro-target="form"
+                  class="mt-6 flex justify-end">
+                <input type="hidden" name="_token" value="{{ csrf_token('boost_intro_seen_' ~ competition.id.toRfc4122) }}">
+                <button type="submit" data-action="boost-intro#dismiss" class="btn btn-primary btn-sm">
+                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                    Pochopil jsem, již nezobrazovat
+                </button>
+            </form>
+        </div>
+    </dialog>
+</div>
