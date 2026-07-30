@@ -1252,6 +1252,8 @@ Product owner, 2026-07-30:
 > as well those cards whole clickable with the confirmation -> make the whole card clickable instead of
 > just the portion of it
 
+**Ship the two as ONE unit** (product owner, 2026-07-30: *"you should implement the modal together with whole clickable which is okay"*). The whole-card target and a **working, verified** confirm dialog land in the same commit. If Part 2 finds the confirm is not firing, **fix that first** - do not land the enlarged target and leave the dialog for a follow-up, because the enlarged target is only safe *because* of the dialog.
+
 So on **both** full paywall cards the entire card is the purchase trigger, and it opens the same confirm
 dialog the button opens today. Scope: the two **full** paywall cards on match detail. Use item 18's
 established pattern — the stretched target painted over the card (`.card-stretch` / `.card-raise`) — except
