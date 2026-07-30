@@ -62,9 +62,10 @@
 {% else %}
 
     {% set competition_id = selected_competition.competitionId.toRfc4122 %}
-    {# Every link on this page keeps the soutěž in focus and only changes its own knob. #}
+    {# Every link on this page keeps the soutěž in focus and only changes its own knob.
+       The page is ALWAYS scoped to one soutěž (item 18 deleted the „SOUTĚŽ" roletka);
+       the cross-soutěž feed lives at /zapasy. #}
     {% set base_params = {soutez: competition_id} %}
-    {% if shows_all_competitions %}{% set base_params = base_params|merge({zapasy: 'vse'}) %}{% endif %}
 
     {# ───── Hero ───── #}
     <header class="mb-10 grid items-end gap-8 lg:grid-cols-[1fr_360px]">
@@ -250,8 +251,13 @@
     <section class="mb-12" data-controller="reveal" data-reveal-visible-value="{{ matches_visible }}">
         <h2 class="mb-4 text-xl font-bold tracking-tight text-white sm:text-2xl">Následující zápasy</h2>
 
+        {#
+            Jedny filtry, dvě podoby (rozhodnutí produktu): chipy od desktopu, na mobilu
+            roletka. Obojí je čistý odkaz / GET formulář nad stejným `?filtr=`, takže
+            fungují i s vypnutým JavaScriptem — roletka má vlastní tlačítko „Použít".
+        #}
         <div class="mf-bar mb-4">
-            <div class="lb-tabs !mb-0 flex-wrap">
+            <div class="lb-tabs !mb-0 hidden flex-wrap md:flex">
                 {% for key, label in filters %}
                     {% set is_active = key == active_filter %}
                     <a href="{{ path('dashboard', base_params|merge({filtr: key == 'vse' ? null : key})) }}"
@@ -262,20 +268,16 @@
                 {% endfor %}
             </div>
 
-            {# „SOUTĚŽ": the one control that widens the two match lists past the
-               switcher's scope. A real GET form, so it works without JavaScript. #}
-            {% if my_competitions|length > 1 %}
-                <form method="get" action="{{ path('dashboard') }}" class="mf-scope">
-                    <input type="hidden" name="soutez" value="{{ competition_id }}">
-                    {% if active_filter != 'vse' %}<input type="hidden" name="filtr" value="{{ active_filter }}">{% endif %}
-                    <label class="stat-lbl !mb-0" for="dashboard-zapasy">Soutěž</label>
-                    <select id="dashboard-zapasy" name="zapasy" class="input">
-                        <option value=""{{ shows_all_competitions ? '' : ' selected' }}>{{ selected_competition.competitionName }}</option>
-                        <option value="vse"{{ shows_all_competitions ? ' selected' : '' }}>Všechny soutěže</option>
-                    </select>
-                    <button type="submit" class="btn btn-ghost btn-sm">Použít</button>
-                </form>
-            {% endif %}
+            <form method="get" action="{{ path('dashboard') }}" class="mf-scope md:hidden">
+                <input type="hidden" name="soutez" value="{{ competition_id }}">
+                <label class="stat-lbl !mb-0" for="dashboard-filtr">Filtr</label>
+                <select id="dashboard-filtr" name="filtr" class="input">
+                    {% for key, label in filters %}
+                        <option value="{{ key }}"{{ key == active_filter ? ' selected' : '' }}>{{ label }} ({{ counts[key] }})</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-ghost btn-sm">Použít</button>
+            </form>
         </div>
 
         {% if matches|length == 0 %}

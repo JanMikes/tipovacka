@@ -147,8 +147,6 @@ final class DashboardFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(0, $crawler->filter('#soutez-switcher-dashboard'));
         self::assertStringContainsString(AppFixtures::VERIFIED_COMPETITION_NAME, (string) $client->getResponse()->getContent());
-        // …and with one soutěž the „SOUTĚŽ" scope control has nothing to widen to.
-        self::assertCount(0, $crawler->filter('select[name="zapasy"]'));
     }
 
     public function testSeveralCompetitionsRenderTheDropdown(): void
@@ -160,7 +158,60 @@ final class DashboardFlowTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('#soutez-switcher-dashboard'));
-        self::assertCount(1, $crawler->filter('select[name="zapasy"]'));
+    }
+
+    /**
+     * Item 18 — the „SOUTĚŽ" roletka is gone, so the Nástěnka is ALWAYS scoped to the
+     * soutěž in focus. `?zapasy=vse` must be inert: no control, and no match from
+     * another soutěž leaking into the lists.
+     */
+    public function testCompetitionScopeRoletkaIsGoneAndZapasyParamIsInert(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+
+        $scoped = '/nastenka?soutez='.AppFixtures::PREMIUM_COMPETITION_ID;
+        $crawler = $client->request('GET', $scoped);
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('select[name="zapasy"]'));
+        $withParam = $client->request('GET', $scoped.'&zapasy=vse');
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $withParam->filter('select[name="zapasy"]'));
+
+        // The same page either way — the parameter changes nothing at all.
+        self::assertCount(
+            $crawler->filter('[data-reveal-target="item"]')->count(),
+            $withParam->filter('[data-reveal-target="item"]'),
+        );
+    }
+
+    /**
+     * Item 18 — one filter state, two shapes: chips from the desktop breakpoint up, a
+     * roletka below it. Both are plain HTML over the same `?filtr=`, so both work with
+     * JavaScript off (the roletka carries its own „Použít" submit).
+     */
+    public function testFiltersRenderAsChipsAndAsANoJsDropdown(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+
+        $crawler = $client->request('GET', '/nastenka?soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'&filtr=ukoncene');
+        self::assertResponseIsSuccessful();
+
+        self::assertCount(5, $crawler->filter('.lb-tab.has-count'));
+        self::assertCount(1, $crawler->filter('.lb-tab.has-count.active'));
+
+        $select = $crawler->filter('form.mf-scope[action="/nastenka"] select#dashboard-filtr');
+        self::assertCount(1, $select);
+        self::assertCount(5, $select->filter('option'));
+        self::assertSame('ukoncene', $select->filter('option[selected]')->attr('value'));
+        // No JavaScript needed: the roletka carries its own always-visible submit.
+        self::assertCount(1, $crawler->filter('form.mf-scope button[type="submit"]'));
+        // The soutěž in focus survives the submit, or the roletka would reset the page.
+        self::assertSame(
+            AppFixtures::PUBLIC_COMPETITION_ID,
+            $crawler->filter('form.mf-scope input[name="soutez"]')->attr('value'),
+        );
     }
 
     /** Acceptance criterion 5: every chip renders exactly as many rows as it counts. */

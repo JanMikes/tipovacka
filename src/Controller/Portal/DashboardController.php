@@ -29,6 +29,10 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * all follow from it. „Moje soutěže" is the deliberate exception — it stays the
  * full cross-soutěž overview, not a filtered echo of the switcher.
  *
+ * The scope is ALWAYS that one soutěž: item 18 deleted the „SOUTĚŽ" roletka
+ * (`?zapasy=vse`), which was the only control that widened the two match lists,
+ * so the page keeps the promise its hero makes. The cross-soutěž feed is /zapasy.
+ *
  * An unknown or foreign `?soutez=` **falls back** to the viewer's default soutěž
  * instead of 403-ing. That is leak prevention, not laziness: guessing a UUID must
  * never reveal that it exists, let alone anything inside it.
@@ -42,9 +46,6 @@ final class DashboardController extends AbstractController
     private const string FILTER_TODAY = 'dnes';
     private const string FILTER_TIPPABLE = 'tipovatelne';
     private const string FILTER_FINISHED = 'ukoncene';
-
-    /** „Zobrazit všechny soutěže" in the match filter bar — widens the two match lists only. */
-    private const string SCOPE_ALL = 'vse';
 
     private const string TIMEZONE = 'Europe/Prague';
 
@@ -77,15 +78,12 @@ final class DashboardController extends AbstractController
 
         $selectedCompetition = self::resolveSelected($myCompetitions, $request->query->getString('soutez'));
 
-        // The match lists are scoped by the switcher; the „SOUTĚŽ" control in the
-        // filter bar is the one way to widen them back to every soutěž at once.
-        $scope = $request->query->getString('zapasy');
-        $showsAllCompetitions = self::SCOPE_ALL === $scope && count($myCompetitions) > 1;
-
+        // Always ONE soutěž (item 18 deleted the „SOUTĚŽ" widener): the page promises
+        // quick actions for the soutěž in focus, and the cross-soutěž feed is /zapasy.
         /** @var list<UserMatchItem> $matches */
         $matches = $this->queryBus->handle(new ListUserMatches(
             userId: $user->id,
-            competitionId: $showsAllCompetitions ? null : $selectedCompetition->competitionId,
+            competitionId: $selectedCompetition->competitionId,
         ));
 
         $counts = $this->countsByFilter($matches);
@@ -109,7 +107,7 @@ final class DashboardController extends AbstractController
 
         /** @var list<EvaluatedGuessItem> $evaluatedGuesses */
         $evaluatedGuesses = $this->queryBus->handle(new ListRecentEvaluatedGuessesForUser(userId: $user->id));
-        $evaluatedGuesses = self::scopeGuesses($evaluatedGuesses, $selectedCompetition, $showsAllCompetitions);
+        $evaluatedGuesses = self::scopeGuesses($evaluatedGuesses, $selectedCompetition);
 
         $playedMatches = array_values(array_filter($matches, static fn (UserMatchItem $m): bool => $m->isFinished));
 
@@ -133,7 +131,6 @@ final class DashboardController extends AbstractController
                 self::FILTER_FINISHED => 'Ukončené',
             ],
             'active_filter' => $activeFilter,
-            'shows_all_competitions' => $showsAllCompetitions,
         ]);
     }
 
@@ -207,12 +204,8 @@ final class DashboardController extends AbstractController
      *
      * @return list<EvaluatedGuessItem>
      */
-    private static function scopeGuesses(array $guesses, CompetitionListItem $selected, bool $showsAllCompetitions): array
+    private static function scopeGuesses(array $guesses, CompetitionListItem $selected): array
     {
-        if ($showsAllCompetitions) {
-            return $guesses;
-        }
-
         return array_values(array_filter(
             $guesses,
             static fn (EvaluatedGuessItem $g): bool => $g->competitionId->equals($selected->competitionId),
