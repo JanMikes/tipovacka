@@ -41,6 +41,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 | B32 | „Tipy členů" judges each member's deadline by the VIEWER's clock, not theirs | TODO | — |
 | B33 | Every `<dialog>` except the rules modal lets the page scroll away underneath | TODO | — |
+| B34 | B6's „Soutěž už skončila" sentence lost its last surface | TODO | — |
+| B35 | `Boost:Panel`'s `feature=null` shape has no call site left | TODO | — |
 
 ---
 
@@ -1714,3 +1716,38 @@ destructive submit) and `boost_intro`. Decide whether the freeze belongs in thos
 for is consistency and that a scrolled-away confirm dialog is worse than a scrolled-away rules list;
 the argument against is that `confirm` is short-lived and its own tests pin its behaviour. Reuse item
 26's mechanism rather than writing a second one.
+
+## B34 — B6's „Soutěž už skončila" sentence lost its last surface
+
+Reported by the item 35 implementer, 2026-07-30, as a consequence of its own change (`503ec4a`).
+
+B6 gave a finished competition a polite explanation instead of a dead CTA: „Soutěž už skončila —
+vylepšení už nemá co odemknout." That string was reachable only through the „Získej výhody" card
+(now deleted) and the `others` paywalls — and once a competition is fully over, every match has a
+result, tips are free to read, and no paywall renders at all. So the sentence is now unreachable.
+
+**The refusal itself is intact and still pinned**: `PurchaseBoostHandler` throws
+`CompetitionAlreadyOver` before any wallet movement, and `BoostFlowTest` still covers a stale page
+trying to burn credits. This is about the *explanation*, not the guard.
+
+**Decide, do not assume:** a finished competition arguably needs no boost copy at all now — nothing
+invites the purchase any more, so the sentence answered a question nobody is being asked. If that is
+right, B34 closes as WONTFIX with a line in B6 recording that its UI half was superseded. If a player
+can still arrive somewhere expecting to buy, that surface needs the sentence back.
+
+## B35 — `Boost:Panel`'s `feature=null` shape has no call site left
+
+Reported by the item 35 implementer, 2026-07-30. Item 26 + 35 deleted the „Získej výhody" card, which
+was the only caller of `Boost:Panel` in its default (`feature = null`) shape. The component's other
+shapes are all live: `feature="others"` (`inline` on the žebříček matrix, `bare` on match detail) and
+the new `feature="tip_change"` (`bare` on the locked tip form, `inline` on `/souteze/{id}/moje-tipy`).
+
+So a chunk of that component — the whole „shop" rendering, its owned-boost list and its jump links —
+is now dead code. The implementer left it deliberately: deleting a component branch is not a copy
+item's business.
+
+**Two honest options.** Delete the branch (`PLAN.md`'s „prefer the clean end-state" — no back-compat
+is owed), or keep it against a future „boost shop" surface and say so in the docblock, the way item 24
+kept `GetCompetitionsPageStats` and item 15 kept `Competition:FilterBar`. **The difference that
+decides it: those two were kept because the product owner intends to reuse them.** Nobody has said
+that here. Ask before deleting — a component branch is cheaper to keep than a query.

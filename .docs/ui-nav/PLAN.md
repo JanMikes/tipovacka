@@ -60,8 +60,8 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 28 | [No boost intro on the join landing](items/28-no-boost-intro-on-the-join-landing.md) | DONE | `5c59521` |
 | 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | DONE | `876e674` |
 | 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | DONE | `6165577` |
-| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | **PARTIAL** — §2 + §3 done, §1 needs a decision | `4ee32d2` |
-| 35 | [Sell the `tip_change` boost where it bites, and name the date](items/35-tip-change-shop-and-the-date.md) | IN PROGRESS | — |
+| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | DONE | `4ee32d2` + `503ec4a` (§1 via item 35) |
+| 35 | [Sell the `tip_change` boost where it bites, and name the date](items/35-tip-change-shop-and-the-date.md) | DONE | `503ec4a` |
 | 36 | [The missing-tips badge says „Chybí 3 tipy"](items/36-shorten-the-missing-tips-badge.md) | DONE | `b72034c` |
 | 34 | [„Nevyplněno" is red too](items/34-nevyplneno-goes-red.md) | DONE (2 of 3 sites; the third is B32) | `1b32665` |
 | 32 | [CI red: a boost refund assertion expects the old price](items/32-ci-red-boost-refund-amount.md) | DONE | `3f733a5` |
