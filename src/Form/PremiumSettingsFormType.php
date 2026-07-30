@@ -18,7 +18,7 @@ final class PremiumSettingsFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->add('showDistribution', CheckboxType::class, [
-            'label' => 'Lišta tipů ostatních',
+            'label' => 'Rozložení tipů ostatních',
             'required' => false,
             'help' => 'Členové uvidí anonymní přehled, jak tipuje skupina (bez jmen).',
         ]);
@@ -26,7 +26,7 @@ final class PremiumSettingsFormType extends AbstractType
         $builder->add('showOthersTips', CheckboxType::class, [
             'label' => 'Konkrétní tipy kolegů',
             'required' => false,
-            'help' => 'Členové uvidí jmenovité tipy ostatních. Zahrnuje i Lištu tipů.',
+            'help' => 'Členové uvidí jmenovité tipy ostatních. Zahrnuje i Rozložení tipů.',
         ]);
 
         $builder->add('allowTipChanges', CheckboxType::class, [

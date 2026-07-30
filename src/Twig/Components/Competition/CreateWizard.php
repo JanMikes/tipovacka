@@ -11,6 +11,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Query\GetCreditWallet\GetCreditWallet;
@@ -358,9 +359,9 @@ final class CreateWizard extends AbstractController
     /** @var list<array{label: string, price: int}> */
     public array $boostPrices {
         get => [
-            ['label' => 'Lišta tipů ostatních', 'price' => PricingConfig::BOOST_TIP_DISTRIBUTION],
-            ['label' => 'Konkrétní tipy kolegů', 'price' => PricingConfig::BOOST_OTHERS_TIPS],
-            ['label' => 'Měnit tip během turnaje', 'price' => PricingConfig::BOOST_TIP_CHANGE],
+            ['label' => BoostType::TipDistribution->label(), 'price' => PricingConfig::BOOST_TIP_DISTRIBUTION],
+            ['label' => BoostType::OthersTips->label(), 'price' => PricingConfig::BOOST_OTHERS_TIPS],
+            ['label' => BoostType::TipChange->label(), 'price' => PricingConfig::BOOST_TIP_CHANGE],
         ];
     }
 

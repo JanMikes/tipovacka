@@ -163,4 +163,28 @@ one, World A/B unlocked).
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **`src/Service/Credits/PricingConfig.php:17` was left as it is** — its docblock still reads
+   `/** Boost „Lišta tipů ostatních" (anonymous distribution bar). */`. The acceptance criteria
+   ask for a clean `grep` *and* for an empty `PricingConfig` diff, and the dispatching brief said
+   „your item must leave `PricingConfig` completely untouched". Leaving it is the conservative
+   reading (a comment cannot change a price, but touching the pricing file at all was explicitly
+   forbidden), so it is reported as an accounted-for hit rather than fixed. **One line for whoever
+   next opens that file** — it is the only stale occurrence left in `src/`.
+2. **Four occurrences the item table did not list were renamed too**, on the „grep is the
+   acceptance test" rule — all four are user-facing Czech copy for the same feature:
+   `src/Form/PremiumSettingsFormType.php` (the premium toggle's label + help),
+   `src/Exception/BoostNotAvailable.php` (the „superseded by OthersTips" message),
+   `src/Twig/Components/Competition/CreateWizard.php` (`boostPrices` labels),
+   `templates/public/pricing.html.twig` (the credit-price card, the „obsahuje i lištu tipů" note and
+   the FAQ's „distribuce tipů") and `templates/components/Competition/CreateWizard.html.twig`
+   (the premium bullet „Lišta i konkrétní tipy pro všechny" → „Rozložení i konkrétní tipy…").
+3. **The literals now read from `BoostType`** where it cost no plumbing: the two
+   `Match:TipStats` confirm titles and the two `Boost:Panel` confirm messages resolve the name via
+   `constant('App\\Enum\\BoostType::TipDistribution').label` (the repo already uses `constant()` in
+   `Auth/InvitationForm.html.twig`), and `BoostNotAvailable` + `CreateWizard::boostPrices` call
+   `BoostType::…->label()` directly. This is why the drift happened, and it is now impossible in
+   those five places. The new name is grammatically stable in the accusative („Obsahuje i Rozložení
+   tipů ostatních."), which the old „Lištu" was not — that is what made the interpolation viable.
+4. **`.docs/DOMAIN.md` decision-log rows 2026-07-18 / -19 / -23 keep the old name** — they are the
+   dated record of what was decided then (item 09's precedent). Only the living sections (glossary +
+   §Monetization) were renamed, plus a new dated row.

@@ -16,6 +16,9 @@
     {% set back = app.request.pathinfo %}
     {% set is_over = this.competitionIsOver %}
     {% set offset_label = p.tipChangeOffsetMinutes % 60 == 0 ? (p.tipChangeOffsetMinutes // 60) ~ ' h' : p.tipChangeOffsetMinutes ~ ' min' %}
+    {# The superset note names the included boost from BoostType::label() — one
+       source for the name, so the confirm copy cannot drift (item 12). #}
+    {% set dist_boost_label = constant('App\\Enum\\BoostType::TipDistribution').label %}
     {# Owned benefits jump to the surface they unlocked (item 08). #}
     {% set jump_targets = {
         tip_distribution: {url: path('competition_detail', {id: competition.id.toRfc4122}) ~ '#zapasy', label: 'Zobrazit rozložení tipů'},
@@ -82,7 +85,7 @@
                                             data-controller="confirm"
                                             data-confirm-variant-value="warning"
                                             data-confirm-title-value="Koupit „{{ type.label }}“"
-                                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
+                                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
                                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
                                             <input type="hidden" name="type" value="{{ type.value }}">
@@ -142,7 +145,7 @@
                             data-controller="confirm"
                             data-confirm-variant-value="warning"
                             data-confirm-title-value="Odemknout „{{ type.label }}“"
-                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i Lištu tipů ostatních.' }}"
+                            data-confirm-message-value="Za {{ type.price }} kr. z vašeho zůstatku ({{ p.balance }} kr.). {{ type.value == 'others_tips' ? 'Obsahuje i ' ~ dist_boost_label ~ '.' }}"
                             data-confirm-confirm-label-value="Koupit za {{ type.price }} kr.">
                             <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ competition.id.toRfc4122) }}">
                             <input type="hidden" name="type" value="{{ type.value }}">

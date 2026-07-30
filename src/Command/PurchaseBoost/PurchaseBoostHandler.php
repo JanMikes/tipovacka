@@ -91,7 +91,7 @@ final readonly class PurchaseBoostHandler
 
         // Don't sell a visibility boost to a buyer already entitled to it for free.
         // A manager/admin is auto-entitled to see the distribution bar + others'
-        // tips, so charging them for Lišta/Konkrétní would just burn their credits.
+        // tips, so charging them for TipDistribution/OthersTips would just burn credits.
         // tip_change is NOT auto-granted to managers (subject to the tip freeze),
         // so it stays buyable by the owner. See .docs/DOMAIN.md §Monetization.
         if (

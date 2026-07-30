@@ -163,8 +163,8 @@
             {% set credit_prices = [
                 { title: 'Vstupné do soutěže', price: 'dle soutěže', note: 'Určuje organizátor, 0 = zdarma. Jednorázově při připojení.' },
                 { title: 'Prémium za hráče', price: pricing.premiumPerPlayer ~ ' kr.', note: 'Organizátor zaplatí za každého hráče a odemkne funkce všem.' },
-                { title: 'Lišta tipů ostatních', price: pricing.boostTipDistribution ~ ' kr.', note: 'Anonymní rozložení tipů ostatních hráčů.' },
-                { title: 'Konkrétní tipy kolegů', price: pricing.boostOthersTips ~ ' kr.', note: 'Uvidíte, kdo co tipnul (obsahuje i lištu tipů).' },
+                { title: 'Rozložení tipů ostatních', price: pricing.boostTipDistribution ~ ' kr.', note: 'Anonymní rozložení tipů ostatních hráčů.' },
+                { title: 'Konkrétní tipy kolegů', price: pricing.boostOthersTips ~ ' kr.', note: 'Uvidíte, kdo co tipnul (obsahuje i rozložení tipů).' },
             ] %}
             {% for cp in credit_prices %}
                 <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
@@ -193,7 +193,7 @@
             {
                 icon: 'lucide:users',
                 title: 'Kdy začnu platit?',
-                body: 'Zatím nijak — placené plány teprve chystáme. Až je spustíme, budou pro party nad 5 hráčů a vlastní pravidla. Free zůstane zdarma navždy a distribuce tipů je součástí i tak.'
+                body: 'Zatím nijak — placené plány teprve chystáme. Až je spustíme, budou pro party nad 5 hráčů a vlastní pravidla. Free zůstane zdarma navždy a rozložení tipů je součástí i tak.'
             },
             {
                 icon: 'lucide:circle-help',

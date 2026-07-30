@@ -33,7 +33,7 @@ enum BoostType: string
     public function label(): string
     {
         return match ($this) {
-            self::TipDistribution => 'Lišta tipů ostatních',
+            self::TipDistribution => 'Rozložení tipů ostatních',
             self::OthersTips => 'Konkrétní tipy kolegů',
             self::TipChange => 'Měnit tip během turnaje',
         };
@@ -43,7 +43,7 @@ enum BoostType: string
     {
         return match ($this) {
             self::TipDistribution => 'Uvidíte anonymní procenta, jak tipovali ostatní hráči (1 / X / 2).',
-            self::OthersTips => 'Uvidíte konkrétní tipy soutěžících v partičce. Obsahuje i Lištu tipů ostatních.',
+            self::OthersTips => 'Uvidíte konkrétní tipy soutěžících v partičce. Obsahuje i Rozložení tipů ostatních.',
             self::TipChange => 'Můžete měnit svůj tip až do nastaveného času před prvním zápasem dne.',
         };
     }

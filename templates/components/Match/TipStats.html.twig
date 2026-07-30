@@ -23,6 +23,10 @@
 #}
 {% props stats, homeTeam = null, awayTeam = null, compact = true %}
 
+{# The boost that unlocks this surface names itself — BoostType::label() is the
+   single source, so the paywall can never drift from the shop again (item 12). #}
+{% set dist_boost_label = constant('App\\Enum\\BoostType::TipDistribution').label %}
+
 {% if not compact %}
     {# ═════════ Full card (match detail) ═════════ #}
     {# Czech agrees the noun AND the verb with the count: 1 hráč tipoval · 2–4 hráči
@@ -56,7 +60,7 @@
                           action="{{ path('competition_boost_purchase', {id: stats.competitionId.toRfc4122}) }}"
                           data-controller="confirm"
                           data-confirm-variant-value="warning"
-                          data-confirm-title-value="Odemknout „Lišta tipů ostatních“"
+                          data-confirm-title-value="Odemknout „{{ dist_boost_label }}“"
                           data-confirm-message-value="Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
                           data-confirm-confirm-label-value="Koupit za {{ stats.price }} kr.">
                         <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">
@@ -180,7 +184,7 @@
                   class="block"
                   data-controller="confirm"
                   data-confirm-variant-value="warning"
-                  data-confirm-title-value="Odemknout „Lišta tipů ostatních“"
+                  data-confirm-title-value="Odemknout „{{ dist_boost_label }}“"
                   data-confirm-message-value="Uvidíte anonymní rozložení tipů (1 / X / 2) u všech zápasů v soutěži „{{ stats.competitionName }}“. Za {{ stats.price }} kr. z vašeho zůstatku ({{ stats.balance }} kr.)."
                   data-confirm-confirm-label-value="Koupit za {{ stats.price }} kr.">
                 <input type="hidden" name="_token" value="{{ csrf_token('boost_purchase_' ~ stats.competitionId.toRfc4122) }}">

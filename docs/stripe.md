@@ -54,7 +54,7 @@ helper). Current values (locked, DOMAIN.md decision log 2026-07-18):
 | Constant | Value | Meaning |
 |---|---|---|
 | `PREMIUM_PER_PLAYER` | 10 | Premium: charged to the manager per player, at each join |
-| `BOOST_TIP_DISTRIBUTION` | 10 | Boost „Lišta tipů ostatních" (anonymous distribution bar) |
+| `BOOST_TIP_DISTRIBUTION` | 10 | Boost „Rozložení tipů ostatních" (anonymous distribution bar) |
 | `BOOST_OTHERS_TIPS` | 20 | Boost „Konkrétní tipy kolegů" (superset — includes the bar) |
 | `BOOST_TIP_CHANGE` | 40 | Boost „Měnit tip během turnaje" |
 | `LOW_BALANCE_WARNING_THRESHOLD` | 50 | Warn a premium manager below ~5 players' worth |

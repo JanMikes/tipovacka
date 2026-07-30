@@ -34,6 +34,10 @@ final class BoostNotAvailable extends \DomainException
 
     public static function becauseSupersededByOthersTips(): self
     {
-        return new self('Lišta tipů ostatních je už součástí vašeho vylepšení „Konkrétní tipy kolegů“.');
+        return new self(sprintf(
+            '%s je už součástí vašeho vylepšení „%s“.',
+            BoostType::TipDistribution->label(),
+            BoostType::OthersTips->label(),
+        ));
     }
 }
