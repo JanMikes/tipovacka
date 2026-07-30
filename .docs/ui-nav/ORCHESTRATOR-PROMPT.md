@@ -167,14 +167,44 @@ you decided yourself, and keep it short. I do not need the full agent transcript
 decisions, the surprises, and what needs my answer. If an agent's finding corrects something you or
 I previously said, say so plainly and move on.
 
-## Open threads as of 2026-07-30
+## Open threads
 
-- **B9** — the team picker's create row shows tom-select's stock English „Add …";
-  `team_picker_controller.js` overrides `no_results` but not `option_create`. Check the other four
-  picker sites for the same gap.
-- **`/_design`** was never extended with the new competition card + filter-bar components.
-- **Naming**: my mocks say „DISTRIBUCE TIPŮ", the app and docs say „Rozložení tipů". Ask me which,
-  then make it consistent in all five places at once (the strip, the match-detail card,
-  `Boost:Panel`, `DOMAIN.md`, `CLAUDE.md`).
-- **Deferred features**: Fantasy (no domain concept exists at all), and splitting PP from PEN
-  (currently one combined overtime score).
+Keep this section true — a cold start reads it as the current frontier, so a stale entry costs a
+subagent real time. Delete a thread when it lands; do not leave it as history (the board and the
+per-item „Assumptions made" sections are the history).
+
+**As of 2026-07-30, all four threads this file used to list are closed** — recorded here once,
+because three of them looked open in the prose long after they had shipped:
+
+- ~~**B9**, the team picker's English „Add …" create row~~ — DONE (`d0b8bd4`). The survey of the
+  other four picker sites is in `BUGS.md` §B9; the copy of all five was then unified by B12
+  (`8aced30`).
+- ~~**`/_design` never got the competition card + filter bar**~~ — DONE by item 13 (`f624743`).
+  Both render in half A; `Competition:FilterBar` carries a „Bez použití" pill, since item 15
+  removed its only production call site.
+- ~~**Naming: „DISTRIBUCE TIPŮ" vs „Rozložení tipů"**~~ — settled by item 12 (`c3c052e`): the
+  documented vocabulary won, in all five places at once, and the decision is in `DOMAIN.md`'s log.
+  The shipped app had had **three** names for one feature.
+- **Deferred features** (still deferred, by decision — not a thread to pick up): Fantasy, which has
+  no domain concept at all, and splitting PP from PEN (overtime stays ONE combined score meaning
+  „after prolongation *or* shootout"). See `PLAN.md` decision 4.
+
+### The hazard that section was written about
+
+An edit arriving from **another Claude Code session working in this same checkout** described B30 and
+B31 as sitting uncommitted in the working tree, awaiting a single agent to land them. By the time it was
+read that was already false — both had landed from their own agents (`e0e4c4a`, `5e524ff`). The general
+lesson it drew is right and worth keeping; the specifics were a snapshot of a moment.
+
+**Two concurrency hazards, both observed on 2026-07-30, both beyond what `git commit -o` protects:**
+
+1. **`-o` protects the INDEX, not the WORKING TREE.** The B30 agent had a fully measured `app.css` edit
+   silently disappear mid-run: `git status` showed the file unmodified, its rules gone, and no commit
+   anywhere contained them. Something outside that agent ran a `git restore` / `checkout` on the path.
+   It re-applied and committed within a minute. So: **commit the moment a change verifies**, and
+   **re-check `git status` before declaring done** — a clean tree at the end can mean „committed" or
+   „silently discarded", and only the log tells you which.
+2. **More than one session may be writing to this repo.** Check `git log --format='%h %(trailers:key=Claude-Session,valueonly)'`
+   when something surprising appears. On a cold start, run `git status` **before** reading the board:
+   the board can say „in flight" for work that is actually sitting uncommitted in the tree, and
+   dispatching a fresh agent onto those files would overwrite it.

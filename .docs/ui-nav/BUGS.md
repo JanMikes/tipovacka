@@ -35,7 +35,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | DONE | `db7311b` — moved to the bottom-right padding band |
 | B28 | The hero's OTHER two floating chips also sit on content | DONE | `af8eb32` — both moved to horizontal edge bands |
 | B29 | Homepage demo card: team names collapse to ~15 px at 320 px | DONE | `3f61e77` - three shapes; also fixed the second mock on the same page |
-| B30 | The „Uzamknout tipy" dialog's calendar overflows its own panel at 320 px | TODO | — |
+| B30 | The lock dialog calendar overflows its own panel at 320 px | DONE | `e0e4c4a` - four vendor widths made relative; exposed and fixed a second header defect |
 | B31 | After `db:reset` no competition can reach the scorer picker | DONE | `5e524ff` - World B extended; third gap of this shape after B11 and B23 |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
@@ -1512,3 +1512,28 @@ and must hold. Keep it in `DevFixtures` (group `dev`), **never** `AppFixtures`: 
 records that many integration tests assert exact counts over whole tables. Document it in
 `.docs/FIXTURES.md` alongside the „which world demonstrates which state" table that B11/B23 added — that
 table exists precisely so this class of gap is visible without reading PHP.
+
+### B30 as built (2026-07-30)
+
+The four hard-coded vendor widths became relative **without** a breakpoint restructure, an `!important`,
+or any change to the dialog: `.flatpickr-calendar` **keeps** `width: 307.875px` and merely gains
+`max-width: 100%`, and the three inner containers become `flex: 1 1 0` / `width: 100%` with `min-width: 0`.
+That is what makes it safe on a **shared** widget — for a floating picker `max-width: 100%` resolves
+against a viewport-sized containing block and never binds (measured 307.9 px even at a 320 px viewport);
+for the inline one it resolves against the dialog column and shrinks to 214 px.
+
+**Two things the fix uncovered:**
+
+1. **`.flatpickr-days` overhung the calendar's border box by ~2 px, clipping „Ne" at EVERY width** —
+   including 1440 px. Pre-existing, unreported, fixed for free.
+2. **Shrinking the calendar exposed the header**, which then wrapped „2026" onto a second line and clipped
+   it against the months bar — **visually undoing B24 one commit after B24 landed**. Fixed with a
+   **container query** on `.flatpickr-months`, deliberately not a media query: the picker is shared and
+   sized by its box, never by the viewport. That is the B13 / B22 lesson applied before it could bite.
+
+Verified with a **0.5 px sweep of the container from 140 → 480 px** (681 widths, both arrows painted):
+nothing breaks above 163 px ≈ a 267 px viewport. **All ten flatpickr call sites across seven pages** were
+re-checked at 320 / 390 / 1440 px — all keep the vendor 307.9 px box, seven weekday columns inside, seven
+days per row, zero document overflow, console clean. B2's traps intact (`static: true` not reintroduced,
+`novalidate` untouched); B24's year still 9.86:1 at every width; the full schedule flow re-run at 320 px
+and 1440 px with Prague → UTC persistence confirmed in the database, then cancelled.
