@@ -103,6 +103,12 @@ templates, distinct queries.
   throws at render time. Every item must load its pages.
 - **Layout bugs must be verified by measuring geometry in a browser** — bounding-box intersection
   across painted leaves, at many widths — never by eye.
+- **A `Range` measures text INK, and ink is not clipped by `overflow`** (learned in B29). So a Range
+  alone cannot detect a truncated element: it reported 82.5 px for a name whose box had collapsed to
+  15.1 px. To catch clipping you need the **element box `width` vs its `scrollWidth`** — and even
+  `scrollWidth` is not enough on its own, because once the box drops below the text it reports the
+  text rather than the box (B29 saw it read 74 / 70 / 60 for one name at different widths). Ask for
+  **both**: Range ink for position and overlap, box width vs scrollWidth for truncation.
 - **Do not ask for `getClientRects().length` on a block element to count wrapped lines — it is always
   1.** (I specified exactly that in item 14 and it was a check that could never fail.) Count line
   boxes with a `Range` over the element's *contents*, clustering the rects by vertical centre. Also
