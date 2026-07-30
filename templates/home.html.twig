@@ -79,9 +79,31 @@
                 {# Match row. The score must never wrap (whitespace-nowrap) and the two team blocks
                    must be allowed to shrink below their min-content width (min-w-0 + truncate),
                    otherwise they squeeze the score out of its track — the B7 mechanism, see
-                   .docs/ui-nav/BUGS.md #}
-                <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
-                    <div class="flex min-w-0 flex-row-reverse items-center gap-3 text-right">
+                   .docs/ui-nav/BUGS.md
+
+                   THREE SHAPES, because the card's width is not a function of the viewport's:
+                   it is 288 px at 320, 720 px at 768, but only 405 px at 1024 (the two-column
+                   hero) before reaching 521 px at 1280. A three-column `[1fr auto 1fr]` fixture
+                   needs `coin + gap + name` on BOTH sides plus the 80 px score, i.e. ~373 px of
+                   content, so it cannot hold „Argentina" below ~430 px of card. B21's min-w-0 +
+                   truncate kept that from overflowing, but at 320 px it left both names at 15 px
+                   of ellipsis, which is not graceful degradation (B29).
+
+                     · base (< 640 px, card ≤ 398 px) — the fixture STACKS into three rows, so a
+                       name gets the card's full inner width (192 px at 320 px) minus the coin.
+                     · sm (≥ 640 px) — three columns again, but each side stacks its coin ABOVE
+                       the name (the production card's `.tipd-side` shape), which frees the
+                       36 px coin + 12 px gap for the name. That is what makes 1024 px fit:
+                       118 px of track against a name that needs 82 px.
+                     · xl (≥ 1280 px) — the designed mirrored shape, coin beside the name. Only
+                       reachable once the card is ≥ 521 px wide, where it measurably fits.
+
+                   Do NOT collapse the sm step into the base one: keeping three columns while
+                   only stacking the coin (i.e. the sm shape at 320 px) makes the name box
+                   fit-content inside a 64 px track — it overflows the card by 6 px instead of
+                   ellipsizing, which is the very regression min-w-0/truncate exists to prevent. #}
+                <div class="flex flex-col gap-3 py-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
+                    <div class="flex min-w-0 items-center gap-3 sm:flex-col sm:gap-1.5 sm:text-center xl:flex-row-reverse xl:gap-3 xl:text-right">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/20 text-[11px] font-black tracking-tight text-white" style="background:linear-gradient(135deg,#75AADB 0%,#75AADB 50%,#F6B40E 50%,#F6B40E 100%)">ARG</span>
                         <div class="min-w-0">
                             <div class="truncate text-base font-bold text-white">Argentina</div>
@@ -91,7 +113,7 @@
                     <div class="whitespace-nowrap text-center text-[3.25rem] font-black leading-[0.95] tracking-[-0.04em] text-white tabular-nums">
                         2<span class="mx-1.5 align-[6px] text-2xl text-white/40">–</span>1
                     </div>
-                    <div class="flex min-w-0 items-center gap-3">
+                    <div class="flex min-w-0 items-center gap-3 sm:flex-col sm:gap-1.5 sm:text-center xl:flex-row xl:gap-3 xl:text-left">
                         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/20 text-[11px] font-black tracking-tight text-white" style="background:linear-gradient(135deg,#002654 0%,#002654 50%,#ED2939 50%,#ED2939 100%)">FRA</span>
                         <div class="min-w-0">
                             <div class="truncate text-base font-bold text-white">Francie</div>
@@ -295,9 +317,14 @@
                         <twig:Pill label="Živě · 67'" variant="live" dot />
                         <span class="text-[11px] uppercase tracking-[0.08em] text-white/40">Skupina C · MD4</span>
                     </div>
-                    {# Same no-wrap / min-w-0 rule as the hero fixture above #}
-                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2">
-                        <div class="flex min-w-0 flex-row-reverse items-center gap-3 text-right">
+                    {# Same no-wrap / min-w-0 rule as the hero fixture above, and the same B29
+                       stack below sm — „Německo" lost 14 px at 430 px and both names collapsed to
+                       8 px at 320 px here too. This card needs only ONE breakpoint, not the hero's
+                       three: it is never narrower than 514 px from 640 px up (it does not sit in
+                       the hero's squeezed second column), so the three-column shape is kept
+                       byte-identical there. #}
+                    <div class="flex flex-col gap-3 py-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
+                        <div class="flex min-w-0 items-center gap-3 sm:flex-row-reverse sm:text-right">
                             <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-white/20 text-[11px] font-black text-white" style="background:linear-gradient(135deg,#11457e,#0a2a4f)">CZE</span>
                             <span class="truncate text-base font-bold text-white">Česko</span>
                         </div>
