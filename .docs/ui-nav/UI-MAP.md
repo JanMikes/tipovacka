@@ -85,7 +85,7 @@ Legend: 🔒 = requires a login · 🛡 = ROLE_ADMIN · everything else is anony
 | `app_faq` | `/faq` | `public/faq.html.twig` | **noindex, nofollow** — footer-only |
 | `app_privacy` | `/ochrana-soukromi` | `public/privacy.html.twig` | |
 | `competitions_list` | `/souteze` | `public/competitions_list.html.twig` | the „Soutěže" nav target in **both** variants — **context-aware** since item 07, see the soutěž section |
-| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | 🛡 — gated by an in-controller `denyAccessUnlessGranted('ROLE_ADMIN')`, **not** by path |
+| `app_design_styleguide` | `/_design` | `design/styleguide.html.twig` | 🛡 — gated by an in-controller `denyAccessUnlessGranted('ROLE_ADMIN')`, **not** by path — the two-half component gallery (item 13): half A the live shared components, half B the deferred elements; entirely inert, no DB |
 
 ### Auth
 `app_login` `/prihlaseni` · `app_logout` `/odhlaseni` · `app_register` `/registrace` ·
@@ -263,8 +263,10 @@ POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `�
 ## 3. Shared Twig components (`templates/components/`)
 
 **Presentational (template-only, `{% props %}`)**
-`Avatar` (name, size, rank) · `Badge` (label, variant, icon) · `Pill` (label, variant, icon —
-variants seen: `done`, `locked`, `warn`, `soon`, `accent`, `organizer`) · `StatCard` ·
+`Avatar` (name, size, rank) · `Pill` (label, variant, icon, dot — the **nine** variants defined in
+`app.css`: `done` · `tipped` · `success` · `soon` · `warn` · `accent` · `neutral` · `locked` ·
+`live`) · `Badge` (label, variant, icon — `win` · `loss` · `draw` · `pending` · `competition` ·
+`organizer` · `points`) · `StatCard` ·
 `EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) ·
 `PremiumTeaser` · `Match/TipStats` (`:stats` — **always** feed it from
 `TipStatsProvider` batch, never per-row; `compact=true` is the strip that lives INSIDE a match
@@ -307,6 +309,11 @@ Any other path parameter of the route — e.g. the match id on `/zapasy/{id}` (i
 each option = name + zdroj zápasů + Prague date range. Zero soutěží renders nothing, one
 renders a static chip, an unknown id falls back to the first.
 See [`.docs/features/competition-switcher.md`](../features/competition-switcher.md)).
+
+**Every presentational component above is rendered live in half A of `/_design`** (item 13), through
+its real tag off literal sample DTOs, so the gallery cannot drift from production. The **Live
+Components are deliberately absent** — they need entities and DB queries, which that page forbids;
+`Match/TipStats` covers the boost paywall a player actually meets.
 
 **Partials** `_partials/competition_rules.html.twig`, `_partials/join_by_pin_form.html.twig`
 (**the PIN bar's only call site is `/souteze` since item 06**), plus page-scoped ones next to

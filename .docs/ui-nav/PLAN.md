@@ -40,7 +40,7 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 11 | [Match rows: one card, boosts inside it](items/11-match-row-card.md) | DONE | `a8b7e8b` |
 | — | [Cursor spotlight turned off behind a master switch](../features/cursor-spotlight.md) | DONE | `3605a60` |
 | 12 | [One name for the tip split: „Rozložení tipů" everywhere](items/12-naming-rozlozeni-tipu.md) | DONE | `c3c052e` (+ `PricingConfig` docblock) |
-| 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | IN PROGRESS | — |
+| 13 | [`/_design` becomes the live component gallery](items/13-design-gallery.md) | DONE | `f624743` |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
@@ -200,8 +200,18 @@ Settled in conversation; each is now binding on this stream.
   composing existing components. Introduce a new component only when nothing fits, and when
   you do, add it to `templates/components/` and document it in `.docs/features/` if it is a
   reusable pattern.
-- **The styleguide page `/_design` is the shop window.** If you add or change a shared
-  component, render it there (`templates/design/styleguide.html.twig`).
+- **The styleguide page `/_design` is the shop window — and it has two halves** (item 13).
+  Half A „Sdílené komponenty" is the live gallery: if you add or change a shared component,
+  render it there with its **real** tag (`templates/design/styleguide.html.twig`), fed by a
+  private `sample…()` method on `DesignStyleguideController`. Never hand-copy a component's
+  markup, and never query the database — the page must render on an empty one. Half B
+  „Připravujeme / reference" is for design-system elements whose feature is **not** built.
+  The whole page stays admin-only, unlinked and inert: half A is piped through the template's
+  `inert()` macro, which strips every `href`, `<form>`, submit button and Stimulus hook, so a
+  sample UUID can never 404 and the boost paywall can never POST. If you touch that macro, keep
+  `DesignStyleguideFlowTest::testNothingOnThePageCanAct` green — it asserts the page holds
+  exactly **one** `<form>` (the switcher's, targeting `/_design` itself) and **no**
+  `method="post"`.
 - **Icons must be imported before use** — `bin/console ux:icons:import lucide:<name>`, commit
   the SVG. A missing icon is a render-time exception in dev.
 - **Never run `asset-map:compile`.** If assets look frozen: `rm -rf public/assets`, then
