@@ -26,6 +26,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B16 | „Uzamknout tipy" shows no date option, though B2 shipped one | TODO | — |
 | B17 | Browser offers to save the password before it is confirmed | TODO | — |
 | B18 | Notification dropdown overflows the viewport on mobile | TODO | — |
+| B19 | Stray border with no padding around the tip form on match detail | TODO | — |
 
 ---
 
@@ -1014,3 +1015,46 @@ notifications. Zero horizontal page overflow.
 **Blocked on file ownership, not on a decision**: `templates/components/Layout/Nav.html.twig` is held
 by the invite-funnel agent (B14/B15) while it strips the chrome from the airlock. Dispatch after that
 lands, together with batch 13 (credits in the header), which touches the same bar.
+
+## B19 — stray border with no padding around the tip form on match detail
+
+Reported 2026-07-30 on `/zapasy/{id}`: *„weird border design, no spacing, probably the border should
+not be there on match detail."*
+
+Screenshot: [`screenshots/bug-b19-tip-card-border.png`](screenshots/bug-b19-tip-card-border.png) — the
+„VÁŠ TIP" card contains a second, sharp-cornered bordered rectangle hugging the score steppers and the
+„Upravit tip" button, with no padding between that border and its contents.
+
+### Cause — found, not guessed (verify, then fix)
+
+`templates/components/Guess/GuessSubmitForm.html.twig:14` gives the component root a card's chrome by
+default:
+
+```twig
+<div{{ attributes.defaults({class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
+```
+
+The match-detail call site (`templates/portal/sport_match/detail.html.twig:161-167`) already knows the
+component must render bare inside the page's own card, and overrides it:
+
+```twig
+class="!rounded-none !bg-transparent !p-0 !shadow-none !ring-0"
+```
+
+That list neutralises rounding, background, padding, shadow and ring — **but not `border`**. So the
+border survives while `!p-0` removes the space inside it, which is precisely „border, no spacing", and
+`!rounded-none` is why the leftover border has sharp corners.
+
+### Fix
+
+The one-token fix is to add `!border-0` to the override. **Prefer the structural fix if it is cheap**:
+a component that ships card chrome by default and expects every embedded call site to remember a
+five-utility incantation will drift again — the next call site will forget a different token. Consider
+a `bare` prop (or a variant) on `Guess:GuessSubmitForm` that turns the chrome off in one word, and use
+it here. Whichever you choose, say why.
+
+**Check the other call sites** of `Guess:GuessSubmitForm` for the same half-neutralised chrome before
+deciding — if more than one repeats the incantation, that settles it.
+
+Out of scope: the form's internal layout, the steppers, and the button label (that is being changed to
+„Uložit tip" by the same round's copy pass).
