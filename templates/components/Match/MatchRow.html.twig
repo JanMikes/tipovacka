@@ -194,16 +194,18 @@
            Čekání na otevření má přednost před vším ostatním — dokud se neotevře,
            není co nabídnout ani co ukázat jako chybějící tip. #}
         {% if is_waiting %}
+            {# Ikona patří k PRVNÍMU řádku, ne k celému bloku: s poznámkou pod ním
+               by uprostřed dvou řádků visela mezi větami, ke kterým nepatří. #}
             <span class="tipd-wait">
-                <twig:ux:icon name="lucide:clock" class="h-4 w-4 shrink-0" />
-                <span class="tipd-wait-txt">
+                <span class="tipd-wait-line">
+                    <twig:ux:icon name="lucide:clock" class="h-4 w-4 shrink-0" />
                     {% if opensAt %}
                         Tipování otevřeme {{ opensAt|date('j. n.') }} v {{ opensAt|date('H:i') }}
                     {% else %}
                         Tipování zatím není otevřené
                     {% endif %}
-                    {% if openingNote %}<span class="tipd-wait-note">{{ openingNote }}</span>{% endif %}
                 </span>
+                {% if openingNote %}<span class="tipd-wait-note">{{ openingNote }}</span>{% endif %}
             </span>
         {% elseif has_my_tip %}
             <span class="my-tip set is-bar">

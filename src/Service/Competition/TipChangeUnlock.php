@@ -23,11 +23,15 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * it for free.
  *
  * An offer is returned ONLY when the purchase would move something: the match
- * still takes tips, the regained deadline is in the future, and it is strictly
- * later than what the viewer already has. „No offer" is therefore the correct
- * answer for a match whose deadline is already its own kickoff (a late-added
- * match, or the competition's very first one) — the boost has nothing to extend
- * there, so it must not be sold as if it had.
+ * still takes tips, the regained deadline is in the future, and EITHER it is
+ * strictly later than what the viewer already has OR the match is still waiting
+ * for its „tipování otevřeno od" (the boost lifts that too, so „cannot tip at
+ * all" → „can tip now" is a gain even with an unchanged deadline).
+ *
+ * „No offer" is therefore still the correct answer for an already-open match
+ * whose deadline is its own kickoff (a late-added match, or the competition's
+ * very first one) — the boost has nothing to move there, so it must not be sold
+ * as if it had.
  */
 final readonly class TipChangeUnlock
 {
@@ -50,9 +54,20 @@ final readonly class TipChangeUnlock
             return null;
         }
 
-        $unlocked = $this->resolverAsIfEntitled->deadlineFor($competition, $sportMatch, $user);
+        $unlockedWindow = $this->resolverAsIfEntitled->windowFor($competition, $sportMatch, $user);
+        $unlocked = $unlockedWindow->deadline;
 
-        if ($unlocked <= $now || $unlocked <= $this->resolver->deadlineFor($competition, $sportMatch, $user)) {
+        if ($unlocked <= $now) {
+            return null;
+        }
+
+        $current = $this->resolver->windowFor($competition, $sportMatch, $user);
+
+        // The boost buys either end. Extending the deadline is the classic gain;
+        // lifting a „tipování otevřeno od" that has not arrived yet is the other,
+        // and it is a gain even when the deadline does not move an inch — the
+        // viewer goes from „cannot tip at all" to „can tip now".
+        if ($unlocked <= $current->deadline && !$current->isWaiting($now)) {
             return null;
         }
 
@@ -81,16 +96,22 @@ final readonly class TipChangeUnlock
 
         // Batched on purpose: one per-match override query for the whole
         // competition instead of one per row.
-        $unlockedDeadlines = $this->resolverAsIfEntitled->deadlinesFor($competition, $matches, $user);
-        $currentDeadlines = $this->resolver->deadlinesFor($competition, $matches, $user);
+        $unlockedWindows = $this->resolverAsIfEntitled->windowsFor($competition, $matches, $user);
+        $currentWindows = $this->resolver->windowsFor($competition, $matches, $user);
 
         $best = null;
 
         foreach ($matches as $match) {
             $key = $match->id->toRfc4122();
-            $unlocked = $unlockedDeadlines[$key];
+            $unlocked = $unlockedWindows[$key]->deadline;
+            $current = $currentWindows[$key];
 
-            if ($unlocked <= $now || $unlocked <= $currentDeadlines[$key]) {
+            if ($unlocked <= $now) {
+                continue;
+            }
+
+            // Either end counts — see forMatch().
+            if ($unlocked <= $current->deadline && !$current->isWaiting($now)) {
                 continue;
             }
 

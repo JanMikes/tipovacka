@@ -1142,12 +1142,14 @@ label.required::after {
        — only the parts that invite a tip recede. */
     .tip-row.waiting .tipd-body { opacity: 0.62; }
     .tipd-wait {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
         padding: 10px 16px; border-radius: 12px;
         border: 1px dashed var(--border-2); background: rgba(255,255,255,0.02);
         font-size: 13px; font-weight: 700; color: var(--fg-3); text-align: center;
     }
-    .tipd-wait-txt { display: flex; flex-direction: column; gap: 2px; }
+    /* The clock belongs to the MOMENT, so it sits on that line — centred against
+       both lines it would hang between two sentences it does not belong to. */
+    .tipd-wait-line { display: flex; align-items: center; justify-content: center; gap: 8px; }
     .tipd-wait-note { font-size: 12px; font-weight: 500; color: var(--fg-4); }
 
     /* --- item 25: a missing tip is red, not amber ---

@@ -749,10 +749,10 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
     }
 
     /**
-     * The „Měnit tip" entitlement buys a LATER end, never an earlier start —
-     * an entitled member waits for the opening exactly like everyone else.
+     * „Počkejte si na sestavy" buys BOTH ends (2026-07-30): it lifts the opening
+     * as well as extending the deadline, so a buyer tips a waiting match at once.
      */
-    public function testEntitlementDoesNotOpenTheWindowEarly(): void
+    public function testEntitlementLiftsTheOpening(): void
     {
         $competition = $this->makeCompetition();
         $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
@@ -763,11 +763,33 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $resolver = $this->resolver();
         $user = $this->makeUser();
 
+        self::assertNull($resolver->windowFor($competition, $match, $user)->opensAt);
+        self::assertFalse($resolver->isLocked($competition, $match, $user, $this->now));
+
+        // Everyone else still waits — the lift is the entitlement's, not the match's.
         self::assertEquals(
             new \DateTimeImmutable('2025-06-18 09:00'),
-            $resolver->windowFor($competition, $match, $user)->opensAt,
+            $resolver->windowFor($competition, $match)->opensAt,
         );
-        self::assertTrue($resolver->isLocked($competition, $match, $user, $this->now));
+        self::assertTrue($resolver->isLocked($competition, $match, null, $this->now));
+    }
+
+    /**
+     * The visibility gate reads the window WITHOUT a user, so lifting an opening
+     * for a buyer must not leak into what anybody may SEE.
+     */
+    public function testTheUserlessWindowKeepsTheOpening(): void
+    {
+        $competition = $this->makeCompetition();
+        $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$match]);
+        $this->opening($competition, $match, opensAt: '2025-06-18 09:00');
+        $this->canChangeTips = true;
+
+        self::assertEquals(
+            new \DateTimeImmutable('2025-06-18 09:00'),
+            $this->resolver()->windowsFor($competition, [$match])[$match->id->toRfc4122()]->opensAt,
+        );
     }
 
     public function testWindowsForMatchesTheSingleResolutionForEveryMatch(): void
