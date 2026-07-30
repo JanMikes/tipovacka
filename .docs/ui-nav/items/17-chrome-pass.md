@@ -1,6 +1,6 @@
 # 17 — App chrome: credits in the bar, a simpler footer, and two overflow bugs
 
-> **Status:** TODO
+> **Status:** DONE — `09c9d21` (A + B18 + B20), `90f7fb8` (C, the footer)
 > **Depends on:** B14/B15 (`26462b4`), which added `{% block navigation %}` / `{% block page_footer %}`
 > to `base.html.twig` and made the airlock chrome-free. Do not undo that.
 > **Owner decision date:** 2026-07-30
@@ -153,4 +153,50 @@ sensible commits (chrome/credits, B18, footer) rather than one lump.
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+- **The chip links to `/kredity#dobit`, not to `credits_buy`.** `credits_buy`
+  (`/kredity/koupit`) is **POST-only** — it is the Stripe checkout action
+  (`BuyCreditsController`), so a `<a href>` to it would answer **405**, which the stream's
+  „nothing may 404/500 from inside the app" constraint forbids. The buying *page* is
+  `/kredity`, whose „Dobít kredity" card holds that very form; the card got `id="dobit"`
+  (+ `scroll-mt-24`) so the chip lands on it. Verified by clicking: `/kredity#dobit` with
+  the card in view at 320 and 1440 px.
+- **What gives way in the bar, in order** (B20 + the sixth element):
+  1. **≤1100 px, app bar only** — the „Administrace" and „Vytvořit soutěž" labels
+     (`.wtnav.is-app .cta-label`); both keep an icon plus `title`/`aria-label`.
+  2. **≤900 px** (the existing hamburger breakpoint) — the **avatar dropdown** and the
+     **„Vytvořit soutěž" CTA**, because the hamburger panel repeats everything they hold.
+     The panel therefore gained a spelled-out „Vytvořit soutěž" entry. Actions gap 14 → 10.
+  3. **≤420 px** — the **wordmark** (`.brand-name`; the mark stays and still links home,
+     the airlock's brand-mark-only header is the house precedent) and the secondary
+     **„Přihlásit se"** in the public bar, which the panel also carries. Bar padding 18 → 14.
+  The brand mark, the balance, the bell and the hamburger never leave.
+- **The chip shows the number only** — wallet icon + balance, no „kr." / „kreditů". The unit
+  would cost ~30 px in a row that had none to spare; the accessible name says it in full
+  („Kredity: 35. Dobít kredity.") and `title="Kredity — dobít"` covers the mouse.
+- **The balance left the avatar dropdown** rather than appearing in two places: the dropdown
+  row and the hamburger entry are now plain links to `/kredity`. `CreditBalance` renders
+  **exactly once** per request, so the bar costs no extra query.
+- **`CreditBalance` memoizes its query.** Measured with the getter instrumented: the wallet
+  was read **3×** per authenticated page BEFORE this item (Twig resolves a hooked property
+  twice per `{{ this.balance }}` and `expose_public_props` reads it once more) and would have
+  been 5× with the chip's two accesses. Memoized per instance it is **1×**. Safe under
+  FrankenPHP worker mode because Twig components are `Shared: no` — a fresh instance per
+  render, so no value can leak between requests or users.
+- **B18's narrow panel is pinned to the bar's right edge, not to the bell.** Anchoring it to
+  the trigger is exactly what broke it, and the trigger's position depends on what else the
+  bar holds — pinning to the edge cannot break again when the bar changes. It also gets
+  `max-height: calc(100dvh - 70px)`, because a `fixed` panel cannot be scrolled into view
+  (checked at 320×480: 410 px tall, fully inside).
+- **The footer keeps the copyright line verbatim**, „Vše hraje, nic se nesází." included —
+  the item lists it as kept. The four-column grid's **marketing paragraph** („Tipovací
+  soutěže pro firmy … Bez sázek, jen pro radost a vychloubání.") was dropped: „really
+  simple" is the request, and the `app` variant — the stated precedent — carries no such copy.
+- **The footer's brand coin was dropped too.** `.brand-mark` is styled only inside `.wtnav`,
+  so in the footer it had always rendered as a stray unstyled „W" beside the wordmark.
+  Duplicating the eight declarations under `.wtfoot` would have been the alternative; the
+  simpler footer is the point of the item.
+- **A latent bug in the same bar was fixed in passing** (measured, not reported): between
+  **768 and 900 px** the public „Registrace zdarma" button rendered with **no label at all**
+  — a 30 px empty pill — because the fallback span was `md:hidden` (flips at 768) while
+  `.cta-label` hides at 900. Both labels now share one breakpoint via `.cta-short`, pinned by
+  `NavigationTest`.
