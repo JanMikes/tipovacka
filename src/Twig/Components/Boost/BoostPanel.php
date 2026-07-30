@@ -26,7 +26,7 @@ use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
  *
  * Premium competitions get features from the manager (not per-player), so the
  * paywall becomes a „✓ PRÉMIUM" note; `none` competitions that merely hide tips
- * before the deadline show a plain lock note (nothing to buy).
+ * until a match is played show a plain lock note (nothing to buy).
  *
  * See .docs/DOMAIN.md §Monetization.
  */

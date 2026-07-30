@@ -17,7 +17,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 /**
  * Members only, and gated by `leaderboard_details` rather than `leaderboard_view`:
- * this page shows TIPS, which the public board never does.
+ * this page shows TIPS, which the public board never does. `leaderboard_details`
+ * already means exactly „member or admin" — i.e. „každý, kdo v soutěži hraje" —
+ * so item 20 needed no new attribute and no loosening: widening the page to every
+ * member is what the attribute already said. `leaderboard_view` would be wrong
+ * (it lets an anonymous visitor read a global competition's board), and
+ * `/zebricek/clen/{userId}` leans on `leaderboard_details` too.
+ *
+ * What the page may SHOW is decided per match, not per page (item 20): finished
+ * matches are readable by any member, scheduled and live ones only with the
+ * entitlement. The page therefore always renders, and offers the unlock CTA for
+ * the columns it withholds.
  */
 #[Route('/zebricek/matice', name: 'leaderboard_matrix', methods: ['GET'])]
 #[IsGranted('ROLE_USER')]

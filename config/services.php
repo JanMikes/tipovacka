@@ -75,6 +75,16 @@ return App::config([
                 '$managersSeeTipsForFree' => false,
             ],
         ],
+        // Other players' tips — concrete AND the anonymous 1 / X / 2 distribution —
+        // become free to read only once a match HAS A FINAL RESULT, never merely
+        // „past its tip deadline" (2026-07-30; a kickoff that passed without the
+        // match being played must not reveal anything). Flip to false to restore the
+        // deadline reveal on every surface at once; nothing else needs touching.
+        'App\\Service\\Competition\\TipVisibilityGate' => [
+            'arguments' => [
+                '$freeRevealRequiresResult' => true,
+            ],
+        ],
         'App\\Service\\Payment\\StripePaymentGateway' => [
             'arguments' => [
                 '$secretKey' => '%env(STRIPE_SECRET_KEY)%',

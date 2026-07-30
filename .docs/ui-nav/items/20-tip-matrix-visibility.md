@@ -1,6 +1,6 @@
 # 20 — Tabulka tipů: reachable by members, revealed per match
 
-> **Status:** TODO
+> **Status:** DONE (see „Rescope" below — the shared rule changed mid-flight)
 > **Depends on:** item 05 (which built `/zebricek` and its voter split), S10's monetization gates.
 > **Owner decision date:** 2026-07-30
 
@@ -130,6 +130,68 @@ outage killed five agents mid-task today — commit early, and if you are cut of
 - `.docs/ui-nav/PLAN.md`, `UI-MAP.md`, `BUGS.md`, `ROUND2.md` — the orchestrator's. Report deltas as exact
   text. **You own `.docs/DOMAIN.md` this round** — write the rule and the decision-log row yourself.
 
+## Rescope — mid-implementation, by the product owner (2026-07-30)
+
+Everything above was written for a **matrix-only** stricter question. The product owner then
+gave the rule explicitly and asked for it **everywhere**:
+
+> show when: the match has score (ended) or player has booster or it is premium competition and
+> organizer allowed it, otherwise does not show — and yes, consistency is important across platform
+
+…and, on the distribution:
+
+> yes, consistency, not a deadline but has a score, decision for now might change later
+
+So the **shared** rule changed, and the „every other surface behaves exactly as before"
+criterion above is **void**. The reasoning that made this a correctness change rather than a
+taste one: „past the deadline" trusts the SCHEDULE. A kickoff that passes without the match
+being played (an organizer late to postpone) revealed every tip for a match still to come, and
+a late-added match's deadline is its own kickoff — so postpone-then-reschedule could reopen
+tipping *after* that reveal. A match without a score cannot leak whatever its schedule says.
+
+**As built:**
+
+- `TipVisibilityGate` decides in ONE private method (`revealedWithoutEntitlement`) for concrete
+  tips and the distribution alike; `TipStatsProvider` stopped composing its own answer and now
+  asks the gate (it also lost its deadline + clock dependencies, so a match list is one query
+  lighter per competition).
+- The knob: `TipVisibilityGate::$freeRevealRequiresResult` (default `true`), wired in
+  `config/services.php` exactly like `CompetitionEntitlements::$managersSeeTipsForFree`.
+  `tests/Integration/Service/TipVisibilityGateTest` pins BOTH settings, so the alternative
+  cannot rot.
+- Copy followed the rule: „po uzávěrce" → „po odehrání zápasu" in `Boost:Panel`,
+  `Match:TipStats` (incl. the state pill „Po uzávěrce" → „Odehráno") and the styleguide caption.
+- **Undone from the matrix-only version:** the second gate method
+  (`othersTipsVisibleInMatrixByMatch`) and the `lockedNote` prop that let the matrix override
+  `Boost:Panel`'s „zobrazí se po uzávěrce" copy — both pointless once the shared rule moved.
+  Kept: the per-column `MatrixMatchColumn::$othersHidden` + `hiddenMatchCount`, the CTA block,
+  the per-cell lock copy, and the whole test file (its „other surface" test flipped from
+  „still reveals" to „hides too", and three more surfaces joined it).
+- This **reverses item 10 §5's** design note that „Pořadí za zápas" is unlocked on a LIVE match
+  because its deadline has passed (its reference screenshots showed exactly that). The section
+  still renders; its tips now sit behind the locked twin + CTA unless the viewer is entitled.
+  Item 10 §3's distribution card behaves the same way, and its assumption 5 „PO UZÁVĚRCE" pill
+  is now „ODEHRÁNO".
+
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **`leaderboard_details` guards the page, unchanged.** The item assumed a member without an
+   entitlement was refused wholesale; in fact `leaderboard_details` already meant „member or
+   admin" (the refusal was per-cell, not per-page), so „every member may open it" needed **no
+   voter change at all**. `leaderboard_view` would have been wrong — it lets an anonymous
+   visitor read a *global* competition's board, and „každý" = any member. Nothing was widened.
+2. **„Has a result" = `SportMatchState::Finished`, not „a score is set".** A LIVE match can
+   carry a live score (`updateLiveScore`), so „has score" is read as the settled final result —
+   the same test `Finished` already means everywhere else.
+3. **A fully-over competition needs no B6 branch in the matrix.** „Fully over" means no match
+   is Scheduled/Live/Postponed, and Cancelled matches are not rendered as columns at all — so
+   every remaining column is finished, nothing is hidden and the CTA does not render. B6's
+   „soutěž už skončila" copy stays reachable through `Boost:Panel`'s other placements.
+4. **The matrix still shows WHETHER a member tipped a hidden match** (a lock icon in the cell
+   vs an em dash), never the scores. That matches the 2026-07-23 on-behalf decision (filled /
+   not-filled is not a leak) and is unchanged from before.
+5. **„Rozložení tipů" on the nástěnka / `/zapasy` now waits for the result too.** It is the
+   same gate, so unentitled viewers see the ghost strip on live matches. Flagged as
+   monetization-adjacent: it makes the boost *more* valuable, never less, and is revertible via
+   the knob without touching the concrete-tip rule (they share one method, so a future split
+   would need a second knob — deliberately not built).

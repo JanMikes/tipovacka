@@ -6,7 +6,7 @@
       visible                → the 1 / X / 2 split
       boosts, not entitled   → locked placeholder; clicking it opens the buy modal
       premium, not entitled  → the organizer switches this on for everyone
-      none, not entitled     → plain note: it appears after the deadline
+      none, not entitled     → plain note: it appears once the match is played
 
     props:
       stats       (TipStats)  required
@@ -43,7 +43,8 @@
                 {% elseif stats.visible and stats.entitled and mon == 'boosts' %}
                     <twig:Pill label="Odemčeno" variant="success" icon="check" />
                 {% elseif stats.visible %}
-                    <twig:Pill label="Po uzávěrce" variant="neutral" icon="unlock" />
+                    {# Visible without an entitlement ⇒ the match is played (item 20). #}
+                    <twig:Pill label="Odehráno" variant="neutral" icon="unlock" />
                 {% elseif mon == 'premium' %}
                     <twig:Pill label="Prémium" variant="warn" icon="crown" />
                 {% elseif mon == 'boosts' %}
@@ -136,7 +137,7 @@
                         {%- elseif mon == 'premium' -%}
                             Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2 — jen pro Prémium.
                         {%- else -%}
-                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2, se zobrazí po uzávěrce.
+                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2, se zobrazí po odehrání zápasu.
                         {%- endif -%}
                     </p>
                 </div>
@@ -240,13 +241,13 @@
         </div>
 
     {% else %}
-        {# ───────── Locked, nothing to sell: it opens at the deadline ───────── #}
+        {# ───────── Locked, nothing to sell: it opens once the match is played ───────── #}
         <div class="tip-stats-locked is-muted">
             <span class="tip-stats-head">
                 <span class="tip-stats-eyebrow">Rozložení tipů</span>
                 <span class="tip-stats-note">
                     <span class="tip-stats-lock is-muted"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
-                    <span class="tip-stats-teaser">Zobrazí se po uzávěrce</span>
+                    <span class="tip-stats-teaser">Zobrazí se po odehrání</span>
                 </span>
             </span>
             {{ ghost }}

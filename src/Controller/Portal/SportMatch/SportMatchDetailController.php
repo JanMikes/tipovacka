@@ -49,7 +49,8 @@ use Symfony\Component\Uid\Uuid;
  * Nothing here decides visibility on its own: the distribution comes from
  * {@see TipStatsProvider} (the one batched path every match list uses) and the
  * ranking from {@see TipVisibilityGate}, which composes the viewer's entitlement
- * with the match's userless deadline.
+ * with the match's RESULT — an unplayed match's tips stay behind the CTA however
+ * long ago its deadline passed (2026-07-30, reverses item 10's live-match reveal).
  */
 #[Route(
     '/zapasy/{id}',
@@ -155,6 +156,8 @@ final class SportMatchDetailController extends AbstractController
 
         // „Pořadí za zápas" reveals other players' concrete tips, which is exactly
         // what BoostType::OthersTips sells — so the gate, never a hand-rolled check.
+        // Since 2026-07-30 that means entitled OR the match has a result: a LIVE
+        // match shows the locked twin unless the viewer is entitled.
         $canSeeOthersTips = $this->visibilityGate->canSeeOthersTips($selected, $user, $sportMatch);
         $view['can_see_others_tips'] = $canSeeOthersTips;
         $view['match_ranking'] = $canSeeOthersTips

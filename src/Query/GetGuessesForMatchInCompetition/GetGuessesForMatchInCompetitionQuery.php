@@ -31,8 +31,9 @@ final readonly class GetGuessesForMatchInCompetitionQuery
         );
 
         // Per-viewer visibility: this viewer's entitlement (premium toggle / own
-        // boost) OR the match's userless deadline having passed. A viewer with the
-        // OthersTips boost sees concrete tips before the deadline; others do not.
+        // boost) OR the match having a final result. A viewer with the OthersTips
+        // boost sees concrete tips while the match is still ahead; others wait for
+        // the result — never merely for the deadline (2026-07-30).
         $competition = $this->competitionRepository->get($query->competitionId);
         $sportMatch = $this->sportMatchRepository->get($query->sportMatchId);
         $viewer = $this->userRepository->find($query->viewerId);

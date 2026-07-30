@@ -12,30 +12,29 @@ use App\Enum\CompetitionMonetization;
 use App\Query\GetPickDistributions\GetPickDistributions;
 use App\Query\QueryBus;
 use App\Repository\CreditWalletRepository;
-use App\Service\EffectiveTipDeadlineResolver;
 use App\Value\TipStats;
-use Psr\Clock\ClockInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * Resolves the „Rozložení tipů" surface for a whole page in a BOUNDED number of
  * queries, whatever the number of matches × competitions on it:
  *
- *   1 × distributions (batched)  +  1 × boost ownership (batched)
- *   +  1 × wallet  +  1 × deadline overrides per competition.
+ *   1 × distributions (batched)  +  1 × boost ownership (batched)  +  1 × wallet.
  *
  * Every match list in the portal renders this, so a per-match resolve would be a
  * textbook N+1 — always go through {@see forPairs} (or {@see forCompetition}),
  * never through the single-match query in a loop.
+ *
+ * WHETHER the split is readable is not decided here: {@see TipVisibilityGate}
+ * owns that one rule for every surface (entitled, or the match has a result).
  */
 final readonly class TipStatsProvider
 {
     public function __construct(
         private QueryBus $queryBus,
         private CompetitionEntitlements $entitlements,
-        private EffectiveTipDeadlineResolver $deadlineResolver,
+        private TipVisibilityGate $visibilityGate,
         private CreditWalletRepository $walletRepository,
-        private ClockInterface $clock,
     ) {
     }
 
@@ -96,18 +95,16 @@ final readonly class TipStatsProvider
             $balance = $this->walletRepository->findByUserId($viewer->id)->balance ?? 0;
         }
 
-        $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $result = [];
 
         foreach ($competitionMatches as [$competition, $matches]) {
             $entitled = null !== $viewer && $this->entitlements->isEntitledToDistribution($competition, $viewer);
-            // Userless deadlines: past a match's deadline the split is public to
-            // everyone, exactly as TipVisibilityGate composes it per match.
-            $deadlines = $this->deadlineResolver->deadlinesFor($competition, $matches);
+            // One rule, one home: entitled, or the match has a final result. Batched
+            // per competition so a page stays O(competitions).
+            $visibleByMatch = $this->visibilityGate->distributionVisibleByMatch($competition, $viewer, $matches);
 
             foreach ($matches as $match) {
-                $deadline = $deadlines[$match->id->toRfc4122()] ?? null;
-                $visible = $entitled || (null !== $deadline && $now >= $deadline);
+                $visible = $visibleByMatch[$match->id->toRfc4122()] ?? false;
                 $distribution = $distributions->for($competition->id, $match->id);
 
                 $result[$this->key($competition->id, $match->id)] = new TipStats(

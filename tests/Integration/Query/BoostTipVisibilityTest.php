@@ -19,9 +19,10 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Per-viewer tip visibility in a `boosts` competition: the OthersTips holder
- * (SECOND_VERIFIED_USER, fixture) sees concrete tips before the deadline; a
- * member without the boost (VERIFIED_USER, joined here) does not; post-deadline
- * everyone sees. See .docs/DOMAIN.md §Tips visibility + the 2026-07-19 decision.
+ * (SECOND_VERIFIED_USER, fixture) sees concrete tips while a match is still ahead;
+ * a member without the boost (VERIFIED_USER, joined here) does not; once a match
+ * HAS A FINAL RESULT everyone sees. The deadline is not a door (2026-07-30) — see
+ * .docs/DOMAIN.md §Tips visibility.
  */
 final class BoostTipVisibilityTest extends IntegrationTestCase
 {
@@ -75,7 +76,7 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
         return $byUser;
     }
 
-    public function testOthersTipsHolderSeesConcreteTipsBeforeDeadline(): void
+    public function testOthersTipsHolderSeesConcreteTipsBeforeTheMatchIsPlayed(): void
     {
         $this->seedScheduledTips();
 
@@ -87,7 +88,7 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
         self::assertSame(0, $items[self::PLAIN]->awayScore);
     }
 
-    public function testNonEntitledMemberDoesNotSeeOthersTipsBeforeDeadline(): void
+    public function testNonEntitledMemberDoesNotSeeOthersTipsBeforeTheMatchIsPlayed(): void
     {
         $this->seedScheduledTips();
 
@@ -96,19 +97,19 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
         // Own tip visible…
         self::assertFalse($items[self::PLAIN]->hidden);
         self::assertTrue($items[self::PLAIN]->isMine);
-        // …but the holder's tip is hidden (no boost, before the deadline).
+        // …but the holder's tip is hidden (no boost, no result yet).
         self::assertTrue($items[self::HOLDER]->hidden);
         self::assertNull($items[self::HOLDER]->homeScore);
     }
 
-    public function testAfterDeadlineEveryoneSees(): void
+    public function testOnceTheMatchHasAResultEveryoneSees(): void
     {
-        // MATCH_FINISHED (2025-06-10) is past its deadline for everyone. Seed tips
+        // MATCH_FINISHED carries a final result, so it is public. Seed tips
         // directly (the submit command would reject a past-deadline match).
         $this->persistGuess(self::HOLDER, 2, 2);
         $this->persistGuess(self::PLAIN, 1, 0);
 
-        // The non-entitled viewer still sees everyone's concrete tips post-deadline.
+        // The non-entitled viewer sees everyone's concrete tips once it is played.
         $items = $this->guessesFor(self::PLAIN, AppFixtures::MATCH_FINISHED_ID);
 
         self::assertFalse($items[self::HOLDER]->hidden);

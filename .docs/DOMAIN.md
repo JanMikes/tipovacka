@@ -123,10 +123,43 @@ same settled-ness test the `competition_ended` notification gate uses (`hasUnset
 `CompetitionAlreadyOver` so a stale page cannot burn credits either.
 
 ### Tips visibility
-Before a match's tip deadline, others' tips are hidden. Entitlements (premium toggle or
-boost) unlock: distribution bar (anonymous percentages) and/or concrete member tips.
-After the deadline everything is visible to everyone. *Why*: fairness (no copying),
+**Other players' tips are readable iff the viewer is ENTITLED, or the match HAS A FINAL
+RESULT.** Entitlement = the premium toggle the organizer switched on for everyone, or this
+viewer's own boost; it unlocks the distribution bar (anonymous percentages) and/or the
+concrete member tips. The free half is the **result** („odehráno" = `SportMatchState::Finished`,
+a score entered), and it opens the tips to everyone, members and — where a page is public —
+non-members alike. Each viewer always sees their OWN tips. *Why*: fairness (no copying),
 monetizable curiosity.
+
+**The tip DEADLINE plays no part in this decision** (2026-07-30; until then the rule was
+„entitled OR past deadline"). A deadline is an intention, a result is a fact, and two holes
+followed from trusting the intention:
+
+- a kickoff passes and the match is **not played** — an organizer late to postpone — so the
+  deadline is behind us and every tip became readable for a match still to be played;
+- a **late-added** match's deadline is its own kickoff (`EffectiveTipDeadlineResolver` row 2),
+  so postpone-then-reschedule could **reopen tipping after such a reveal had happened** —
+  copyable tips by accident of admin timing.
+
+The result test closes both without asking anyone to be punctual. (What was never broken:
+tips do not silently reopen — a non-late-added match keeps `deadline = lock moment` wherever
+its kickoff moves, and the postpone/delete handlers pin `tipsLockedAt` so a lock moment is
+reached only once.)
+
+One rule, one home: `TipVisibilityGate` — concrete tips **and** the distribution, every
+surface (`/zapasy`, nástěnka, competition detail, match detail's „Pořadí za zápas", the
+`/zebricek/matice` matrix, on-behalf tipping). No other place may compare `now` against a
+deadline to decide visibility. **The decision is explicitly revisitable through one knob:**
+`TipVisibilityGate::$freeRevealRequiresResult` (wired in `config/services.php`) — `false`
+restores the deadline reveal everywhere at once, and a test pins that alternative so it
+cannot rot. This reverses ui-nav item 10's „a LIVE match's „Pořadí za zápas" is unlocked
+because its deadline passed": the section still renders, its tips sit behind the CTA.
+
+**Who may open the matrix.** `/zebricek/matice` („Tabulka tipů") is reachable by **any
+member** (`leaderboard_details` = member or admin, unchanged and NOT widened; anonymous
+visitors are refused) and decides readability **per match**: finished columns are readable,
+the rest carry a lock and one `Boost:Panel` unlock CTA. A managed/owned competition buys no
+free pass.
 
 **The organizer is not privileged.** A manager (and a system admin) buys the same
 entitlements as everyone else — they play too, so a free look would be an in-game
@@ -272,3 +305,4 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-30 | **One name for the tip split: „Rozložení tipů" everywhere**; the boost that unlocks it is „Rozložení tipů ostatních". „Lišta tipů" / „Lišta tipů ostatních" and „Distribuce tipů" are retired as user-facing copy (ui-nav item 12). Czech copy only — `BoostType::TipDistribution`, the `tip_distribution` value, `PricingConfig::BOOST_TIP_DISTRIBUTION`, `TipStats`/`TipStatsProvider` and the `.dist-*` classes are unchanged, so no migration and no behaviour change; the four hard-coded copies of the boost name in `Match:TipStats` + `Boost:Panel` now read `BoostType::label()` | the shipped app had THREE names for one feature — the match page said „Rozložení tipů", the paywall sold „Lišta tipů ostatních" and the homepage advertised „Distribuce tipů" — so the thing a player was asked to buy read as a different feature from the thing it unlocks. The product owner's mocks say „DISTRIBUCE TIPŮ"; the documented vocabulary wins instead |
 | 2026-07-30 | **The „Měnit tip" window is PER MATCH**: with the entitlement a tip stays changeable until `tipChangeOffsetMinutes` (default 60) before **that match's own kickoff**, replacing „before the day's first competition match" (2026-07-18 row). One line in `EffectiveTipDeadlineResolver::entitledDeadline` (the Prague-day grouping is gone); no schema change, the offset stays prémium-configurable. Copy follows: the boost panel sells „upravit své tipy až 1 hodinu před začátkem zápasu", `BoostType::description()` and the prémium-settings help texts drop „prvním zápasem dne" | the product owner chose the copy over the documented rule (*„yes the booster allows 1h before each match"*) — waiting for the lineups of the 21:00 match is exactly what the boost is bought for, and the day-first rule closed that window at 13:00 because an unrelated afternoon fixture kicked off first. It is strictly **extending**: the two rules coincide for the day's first match and per-match is later for every subsequent one, so the extend-only `max()` composition (2026-07-19 row) holds and no player loses a window they had |
 | 2026-07-30 | **Pending join intent is durable, not session-scoped.** A visitor reaches a soutěž three ways — **e-mail invitation**, **shareable link**, **PIN**. Only the e-mail invitation proves the visitor owns the mailbox it was addressed to, so only it verifies the account on acceptance; a link and a PIN prove nothing about identity, so the intended join is *recorded* (`User.pendingJoinKind` / `pendingJoinToken`) and honoured at the first login the account is allowed to join on, i.e. after verification. All three name the soutěž **before any account exists** and all three end on the competition detail. The PIN landing (`/pripojit`) becomes **public**: reachable means *typeable*, never *joinable* — an unverified account may read all three landings and join through none | a browser-session cookie cannot survive an out-of-band mail hop that may arrive on another device, so the promise the landing page had already made was silently lost; that, plus a post-verification redirect to `/nastenka` instead of the soutěž, is why an invited sign-up ended on „Zatím nehraješ v žádné soutěži" (B15). Making the PIN public widens nothing — a PIN was always a secret the organizer hands out |
+| 2026-07-30 | **Other players' tips are revealed by the RESULT, not by the deadline — on every surface** (ui-nav item 20). The rule is `entitled OR the match has a final result` (`Finished`), where „entitled" is the premium toggle or the viewer's own boost (`CompetitionEntitlements::isEntitledToOthersTips` / `…ToDistribution`); it governs the concrete tips **and** the anonymous 1 / X / 2 distribution alike, so an aggregate can never open before the tips it aggregates. Composed in ONE place (`TipVisibilityGate`, consumed by `TipStatsProvider`, the matrix query, `GetGuessesForMatchInCompetition`, match detail and on-behalf tipping); no surface compares `now` against a deadline any more. Explicitly revisitable through one knob, `TipVisibilityGate::$freeRevealRequiresResult` (wired in `config/services.php`, same pattern as `$managersSeeTipsForFree`), with a test pinning the flipped behaviour. Consequences: it REVERSES item 10's unlocked „Pořadí za zápas" on a live match (the section renders, the tips are behind the CTA), and `/zebricek/matice` becomes member-reachable with per-match gating instead of an all-or-nothing refusal (`leaderboard_details` NOT widened; anonymous still refused) | „past the deadline" trusted the SCHEDULE where the product needs a FACT. If a kickoff passes and nobody plays the match — an organizer late to postpone — the old rule published every tip for a match still to come; and because a late-added match's deadline is its own kickoff, postpone-then-reschedule could reopen tipping *after* that reveal, making tips copyable by accident of admin timing. A match without a score cannot leak, whatever its schedule says, so the correctness argument and the product owner's „consistency across the platform" point the same way. It also raises rather than lowers the boost's value: the entitlement shows the tips any time, only the FREE reveal moves later |

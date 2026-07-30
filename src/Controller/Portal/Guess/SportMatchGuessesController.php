@@ -77,9 +77,10 @@ final class SportMatchGuessesController extends AbstractController
         $effectiveDeadline = $this->deadlineResolver->deadlineFor($competition, $sportMatch, $currentUser);
 
         // Visibility gate composes THIS viewer's entitlement (premium toggle / own
-        // boost — per viewer) with the userless deadline having passed (public to
-        // everyone). Distribution and concrete tips are gated independently: an
-        // OthersTips buyer sees both, a TipDistribution buyer only the bar.
+        // boost — per viewer) with the match's RESULT (once played, public to
+        // everyone — the deadline plays no part, 2026-07-30). Distribution and
+        // concrete tips are gated independently: an OthersTips buyer sees both, a
+        // TipDistribution buyer only the bar.
         $canSeeOthersTips = $this->visibilityGate->canSeeOthersTips($competition, $currentUser, $sportMatch);
 
         // The distribution surface (bar when entitled, paywall otherwise) comes

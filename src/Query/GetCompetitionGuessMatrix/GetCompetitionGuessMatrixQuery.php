@@ -79,9 +79,11 @@ final readonly class GetCompetitionGuessMatrixQuery
             array_map(static fn (array $row) => $row['guessId'], $guessRows),
         );
 
-        // Per-viewer visibility: this viewer's entitlement (premium toggle / own
-        // boost) OR each match's userless deadline having passed. The viewer sees
-        // their OWN cells always; OTHERS' cells only when entitled/past-deadline.
+        // Per-viewer visibility (item 20): this viewer's entitlement (premium toggle
+        // / own boost) OR the match having a final result („odehráno"). The viewer
+        // sees their OWN cells always; OTHERS' cells only when entitled or the match
+        // is finished — a match whose deadline has passed but which has no result is
+        // NOT readable, here or anywhere else. See TipVisibilityGate.
         $viewer = $this->userRepository->find($query->requestingUserId);
         $othersVisibleByMatch = $this->visibilityGate->othersTipsVisibleByMatch($competition, $viewer, $matches);
 
@@ -137,6 +139,7 @@ final readonly class GetCompetitionGuessMatrixQuery
                 actualHomeScore: $match->homeScore,
                 actualAwayScore: $match->awayScore,
                 topScores: $topScores,
+                othersHidden: !($othersVisibleByMatch[$matchKey] ?? false),
             );
         }
 
@@ -187,6 +190,10 @@ final readonly class GetCompetitionGuessMatrixQuery
         return new CompetitionGuessMatrixResult(
             matches: $matchColumns,
             members: $memberRows,
+            hiddenMatchCount: count(array_filter(
+                $matchColumns,
+                static fn (MatrixMatchColumn $column): bool => $column->othersHidden,
+            )),
         );
     }
 }

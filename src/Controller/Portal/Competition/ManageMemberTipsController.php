@@ -85,7 +85,8 @@ final class ManageMemberTipsController extends AbstractController
                 // Managing someone else's tips does NOT reveal them: the manager
                 // learns only WHETHER a tip is filled and may overwrite it, unless
                 // they are otherwise entitled to see this member's tips (their own
-                // row, a bought/premium entitlement, or the deadline having passed).
+                // row, or a bought/premium entitlement — the rows here are all
+                // still tippable, so no match on this page has a result yet).
                 /** @var User $manager */
                 $manager = $this->getUser();
                 $showScores = $selectedMember->id->equals($manager->id)

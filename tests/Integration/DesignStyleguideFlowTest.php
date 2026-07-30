@@ -128,7 +128,7 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertStringContainsString('Odemknout za', $body);       // boosts, affordable
         self::assertStringContainsString('Chybí kredity', $body);      // boosts, broke
         self::assertStringContainsString('Zapíná organizátor', $body); // premium
-        self::assertStringContainsString('Zobrazí se po uzávěrce', $body); // nothing to sell
+        self::assertStringContainsString('Zobrazí se po odehrání', $body); // nothing to sell
 
         // One name for the feature (item 12) — never the two older ones.
         self::assertStringContainsString('Rozložení tipů', $body);

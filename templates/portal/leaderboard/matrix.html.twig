@@ -34,6 +34,19 @@
         </div>
     </header>
 
+    {# Item 20 — the page is open to every member; each column decides for itself.
+       An odehraný (finished) match is readable by anybody who plays; anything without
+       a result needs the entitlement, so an unentitled member gets the unlock CTA.
+       Pricing / affordability / „soutěž už skončila" (B6) live in Boost:Panel, not here. #}
+    {% if matrix.hiddenMatchCount > 0 %}
+        <div class="mb-6">
+            <p class="mb-3 text-sm text-white/60">
+                Tipy ostatních u odehraných zápasů vidíte vždy. U nadcházejících a probíhajících zápasů jsou skryté.
+            </p>
+            <twig:Boost:Panel :competition="competition" feature="others" />
+        </div>
+    {% endif %}
+
     {% if matrix.matches|length == 0 or matrix.members|length == 0 %}
         <section class="card-glass p-10 text-center">
             <p class="text-sm text-white/50">
@@ -63,6 +76,7 @@
                             {% elseif m.state.value == 'postponed' %}{% set stateLabel = ' — odloženo' %}
                             {% elseif m.state.value == 'cancelled' %}{% set stateLabel = ' — zrušeno' %}
                             {% endif %}
+                            {% if m.othersHidden %}{% set stateLabel = stateLabel ~ ' — tipy ostatních se zobrazí po odehrání' %}{% endif %}
                             <th scope="col" class="sticky top-0 z-20 whitespace-nowrap border-b border-white/10 bg-surface-2 px-2 py-2 text-center"
                                 title="{{ m.homeTeam.name }} – {{ m.awayTeam.name }} ({{ m.kickoffAt|date('d. m. Y H:i') }}){{ stateLabel }}">
                                 <div class="text-[11px] font-bold tracking-wider text-white">
@@ -117,7 +131,9 @@
                                 <td class="whitespace-nowrap border-b border-white/[0.06] px-2 py-2 text-center {{ highlight }}">
                                     {% if cell is not null %}
                                         {% if cell.hidden %}
-                                            <span class="inline-flex items-center justify-center text-white/40" title="Tip skrytý do uzávěrky">
+                                            {# Item 20: the cell carries NO scores at all — MatrixCell::hidden()
+                                               is empty, so there is nothing here for CSS to merely hide. #}
+                                            <span class="inline-flex items-center justify-center text-white/40" title="Tip se zobrazí po odehrání zápasu">
                                                 <twig:ux:icon name="lucide:lock" class="h-4 w-4" />
                                             </span>
                                         {% else %}
