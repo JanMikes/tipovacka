@@ -87,32 +87,6 @@ class GuessRepository
     /**
      * @return list<Guess>
      */
-    public function listActiveByCompetitionAndMatch(Uuid $competitionId, Uuid $sportMatchId): array
-    {
-        // Scorer tips fetch-joined — list views render them per guess (no N+1).
-        /** @var list<Guess> $result */
-        $result = $this->entityManager->createQueryBuilder()
-            ->select('g', 'u', 'gs', 'gsp')
-            ->from(Guess::class, 'g')
-            ->innerJoin('g.user', 'u')
-            ->leftJoin('g.scorers', 'gs')
-            ->leftJoin('gs.player', 'gsp')
-            ->where('g.competition = :competitionId')
-            ->andWhere('g.sportMatch = :sportMatchId')
-            ->andWhere('g.deletedAt IS NULL')
-            ->setParameter('competitionId', $competitionId)
-            ->setParameter('sportMatchId', $sportMatchId)
-            ->orderBy('g.submittedAt', 'ASC')
-            ->addOrderBy('g.id', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return $result;
-    }
-
-    /**
-     * @return list<Guess>
-     */
     public function listActiveByUserInMatchSource(Uuid $userId, Uuid $matchSourceId, Uuid $competitionId): array
     {
         /** @var list<Guess> $result */

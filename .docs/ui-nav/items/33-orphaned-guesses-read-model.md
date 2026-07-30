@@ -76,3 +76,57 @@ say where it is.
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`, and never a tree-wide `git restore` / `checkout .` / `stash`. Push to `main`.
 Do not update the status board; report your sha.
+
+---
+
+## Assumptions made
+
+Decisions the item file did not settle, taken on the most conservative reading and recorded here.
+
+1. **The „no production consumer" claim held — verified independently, not taken on trust.** Grepped
+   `src/`, `templates/`, `config/`, `fixtures/`, `migrations/`, `tests/` and `.docs/` for the message,
+   the `…Query` handler, `GuessesForMatchInCompetitionResult` and `GuessForMatchItem`, in class and
+   plain-string form. Outside its own directory the only hits were **two test files** and **prose in
+   `.docs/`**. The component that consumed it, `Guess:MatchGuessesList`, is already gone (both
+   `templates/components/Guess/` and `src/Twig/Components/Guess/` hold only `GuessSubmitForm`). No
+   live consumer exists.
+2. **`GuessRepository::listActiveByCompetitionAndMatch` was deleted with it.** The deleted handler was
+   its ONLY caller, so the deletion created a dead public method (`GetMatchRanking` builds its own
+   fetch-joined query and does not use the repository). PLAN's „prefer the clean end-state" applies;
+   leaving it would have been a fetch-joined query with no reader. Nothing else referenced it.
+3. **`.docs/DOMAIN.md`'s decision log was NOT edited.** The query is named in exactly one place there
+   — the dated `2026-07-30` log row for the „revealed by the RESULT" decision — and on that date the
+   claim was true. The item's own instruction is to leave the row and make the prose current, so the
+   §Tips visibility prose above it was rewritten instead: it now lists the **four consumers that
+   actually exist** (`TipStatsProvider`, `GetCompetitionGuessMatrixQuery`, `ManageMemberTipsController`,
+   `CompetitionMatchDetailController`), states the architectural point the deletion makes explicit
+   (**the gate belongs to the caller, not to the read model** — `GetMatchRanking` takes no viewer and
+   hides nothing), and annotates the log row in one parenthetical so a future reader who greps the
+   dead name is told immediately that it is history. AC 2 is met for the *current* prose; falsifying a
+   dated record to satisfy it literally would have been the worse trade.
+4. **`UI-MAP.md` and `.docs/features/*.md` needed no change** — neither ever named the query. UI-MAP §2
+   names `Guess:MatchGuessesList` and already says „now deleted", which is accurate.
+5. **`BoostTipVisibilityTest` was kept, at two of its four cases.** See the file's docblock, which
+   records the per-case reasoning inline so it cannot drift from this note. Summary:
+   - `testOthersTipsHolderSeesConcreteTipsBeforeTheMatchIsPlayed` — **dropped**, covered against
+     `GetMatchRanking` by `CompetitionMatchDetailFlowTest::testRankingIsVisibleWithTheOthersTipsBoost`
+     (same soutěž, same match, asserted on the rendered table) and again by
+     `GuessMatrixVisibilityTest::testMatchDetailRevealsALiveMatchsTipsToAnEntitledMember`.
+   - `testNonEntitledMemberDoesNotSeeOthersTipsBeforeTheMatchIsPlayed` — **re-pointed at
+     `GetMatchRanking`**, not dropped. Its „others are hidden" half is covered twice at page level,
+     but those page tests assert an ABSENCE (`assertCount(0, 'table.lb-table')`), which passes
+     vacuously if the board were empty rather than withheld. The re-pointed test reads the ungated
+     board first — proving it really carries the other member's concrete 3:1 — and only then shows
+     the gate open for the holder and shut for the plain member on that same pair. That makes the
+     page-level paywall assertions non-vacuous, which is the one thing nothing else pinned.
+   - `testOnceTheMatchHasAResultEveryoneSees` — **dropped**, covered three ways: `TipVisibilityGateTest`
+     (gate level, plain viewer + finished match, both `canSeeOthersTips` and `canSeeDistribution`),
+     `GuessMatrixVisibilityTest::testUnentitledMemberReadsFinishedMatchesOnlyAndGetsTheCta` (matrix),
+     and `CompetitionMatchDetailFlowTest::testTheRankingCarriesTheOptionalTipPartsOfTheFoldedAwayList`,
+     which renders real `GetMatchRanking` rows on a finished match for a viewer entitled to nothing
+     (SUBSET_COMPETITION is `monetization: None` and the fixture boost is scoped to BOOSTS_COMPETITION).
+   - `testMatrixGatesOtherCellsPerViewer` — **kept unchanged.** It never touched the deleted query; it
+     exercises `GetCompetitionGuessMatrix`, which is alive and still masks per row (a matrix renders
+     every member × every match, so an all-or-nothing answer would be useless there).
+   `GetGuessesForMatchInCompetitionQueryTest` was deleted outright — every one of its three cases was
+   about the deleted query's own shape (`isMine`, empty result, fixture row), not about the gate.

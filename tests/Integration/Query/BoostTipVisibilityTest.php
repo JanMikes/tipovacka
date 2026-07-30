@@ -8,21 +8,42 @@ use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
-use App\Entity\Guess;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Query\GetCompetitionGuessMatrix\GetCompetitionGuessMatrix;
-use App\Query\GetGuessesForMatchInCompetition\GetGuessesForMatchInCompetition;
-use App\Query\GetGuessesForMatchInCompetition\GuessForMatchItem;
+use App\Query\GetMatchRanking\GetMatchRanking;
+use App\Query\GetMatchRanking\MatchRankingRow;
+use App\Service\Competition\TipVisibilityGate;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
  * Per-viewer tip visibility in a `boosts` competition: the OthersTips holder
- * (SECOND_VERIFIED_USER, fixture) sees concrete tips while a match is still ahead;
- * a member without the boost (VERIFIED_USER, joined here) does not; once a match
- * HAS A FINAL RESULT everyone sees. The deadline is not a door (2026-07-30) — see
- * .docs/DOMAIN.md §Tips visibility.
+ * (SECOND_VERIFIED_USER, fixture) reads concrete tips while a match is still ahead;
+ * a member without the boost (VERIFIED_USER, joined here) does not. The deadline is
+ * not a door (2026-07-30) — see .docs/DOMAIN.md §Tips visibility.
+ *
+ * **What this file is for since ui-nav item 33.** It used to assert on
+ * `GetGuessesForMatchInCompetition`, a read model that masked other members' rows
+ * itself. Item 22 folded that surface into „Pořadí za zápas" and item 33 deleted the
+ * query, so the architecture is now split: {@see GetMatchRanking} does **not** gate
+ * (it has no viewer at all) and the caller owes the decision — the match page asks
+ * {@see TipVisibilityGate} and then either hands the whole board to the template or
+ * none of it.
+ *
+ * That split is what the first test pins, and it is worth pinning precisely because
+ * the page-level paywall test can pass VACUOUSLY: „no table rendered" is equally
+ * true of a board that was withheld and of a board that was empty. Here the board is
+ * fetched ungated and shown to really carry the other member's concrete tip, so the
+ * gate closing over it is provably load-bearing.
+ *
+ * Everything else this file used to cover now lives closer to the user and is not
+ * repeated (item 33, case by case):
+ * - an entitled holder READING the board → `Portal\Competition\CompetitionMatchDetailFlowTest::testRankingIsVisibleWithTheOthersTipsBoost`,
+ *   same soutěž, same match, asserted on the rendered table;
+ * - a played match opening the board to everyone → `Service\TipVisibilityGateTest`
+ *   plus `CompetitionMatchDetailFlowTest::testTheRankingCarriesTheOptionalTipPartsOfTheFoldedAwayList`,
+ *   which renders real rows for a viewer entitled to nothing.
  */
 final class BoostTipVisibilityTest extends IntegrationTestCase
 {
@@ -58,64 +79,48 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
     }
 
     /**
-     * @return array<string, GuessForMatchItem> keyed by user RFC4122
+     * The entitlement is the ONLY thing between a non-entitled member and the other
+     * member's concrete tip on an unplayed match — and there really is one to leak.
+     *
+     * Both halves matter. The gate answering `false` is worth nothing if the board it
+     * guards is empty, and the board carrying the tip is worth nothing if something
+     * other than the gate happens to be hiding it. So the ungated board is read first
+     * (it holds both tips, concrete), and the gate is then shown to open for the
+     * holder and shut for the plain member on that very same pair.
      */
-    private function guessesFor(string $viewerId, string $matchId): array
-    {
-        $result = $this->queryBus()->handle(new GetGuessesForMatchInCompetition(
-            competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            sportMatchId: Uuid::fromString($matchId),
-            viewerId: Uuid::fromString($viewerId),
-        ));
-
-        $byUser = [];
-        foreach ($result->items as $item) {
-            $byUser[$item->userId->toRfc4122()] = $item;
-        }
-
-        return $byUser;
-    }
-
-    public function testOthersTipsHolderSeesConcreteTipsBeforeTheMatchIsPlayed(): void
+    public function testTheEntitlementIsTheOnlyThingWithholdingARealBoardOnAnUnplayedMatch(): void
     {
         $this->seedScheduledTips();
 
-        $items = $this->guessesFor(self::HOLDER, AppFixtures::MATCH_SCHEDULED_ID);
+        // 1. The board itself. `GetMatchRanking` takes no viewer and gates nothing,
+        //    so this is what a leak would expose, in full.
+        $rows = $this->rankingRowsByUser();
 
-        // The OthersTips holder sees the plain member's concrete tip.
-        self::assertFalse($items[self::PLAIN]->hidden);
-        self::assertSame(0, $items[self::PLAIN]->homeScore);
-        self::assertSame(0, $items[self::PLAIN]->awayScore);
+        self::assertArrayHasKey(self::HOLDER, $rows);
+        self::assertArrayHasKey(self::PLAIN, $rows);
+        self::assertSame(3, $rows[self::HOLDER]->guessHome);
+        self::assertSame(1, $rows[self::HOLDER]->guessAway);
+
+        // 2. The gate over it, per viewer, on the same (soutěž, zápas) pair.
+        $gate = $this->gate();
+        $competition = $this->competition();
+        $sportMatch = $this->sportMatch();
+
+        self::assertTrue(
+            $gate->canSeeOthersTips($competition, $this->user(self::HOLDER), $sportMatch),
+            'The OthersTips boost reads the board before the match is played — that is what it sells.',
+        );
+        self::assertFalse(
+            $gate->canSeeOthersTips($competition, $this->user(self::PLAIN), $sportMatch),
+            'Being a member of the soutěž buys no free look at an unplayed match.',
+        );
     }
 
-    public function testNonEntitledMemberDoesNotSeeOthersTipsBeforeTheMatchIsPlayed(): void
-    {
-        $this->seedScheduledTips();
-
-        $items = $this->guessesFor(self::PLAIN, AppFixtures::MATCH_SCHEDULED_ID);
-
-        // Own tip visible…
-        self::assertFalse($items[self::PLAIN]->hidden);
-        self::assertTrue($items[self::PLAIN]->isMine);
-        // …but the holder's tip is hidden (no boost, no result yet).
-        self::assertTrue($items[self::HOLDER]->hidden);
-        self::assertNull($items[self::HOLDER]->homeScore);
-    }
-
-    public function testOnceTheMatchHasAResultEveryoneSees(): void
-    {
-        // MATCH_FINISHED carries a final result, so it is public. Seed tips
-        // directly (the submit command would reject a past-deadline match).
-        $this->persistGuess(self::HOLDER, 2, 2);
-        $this->persistGuess(self::PLAIN, 1, 0);
-
-        // The non-entitled viewer sees everyone's concrete tips once it is played.
-        $items = $this->guessesFor(self::PLAIN, AppFixtures::MATCH_FINISHED_ID);
-
-        self::assertFalse($items[self::HOLDER]->hidden);
-        self::assertSame(2, $items[self::HOLDER]->homeScore);
-    }
-
+    /**
+     * The matrix read model still masks per row (it renders every member × every
+     * match at once, so an all-or-nothing answer would be useless), and it makes that
+     * decision per viewer with the same gate.
+     */
     public function testMatrixGatesOtherCellsPerViewer(): void
     {
         $this->seedScheduledTips();
@@ -128,6 +133,24 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
         // …a member without the boost does not.
         $asPlain = $this->matrixCells(self::PLAIN);
         self::assertTrue($asPlain[self::HOLDER][$matchKey]->hidden);
+    }
+
+    /**
+     * @return array<string, MatchRankingRow> keyed by user RFC4122
+     */
+    private function rankingRowsByUser(): array
+    {
+        $result = $this->queryBus()->handle(new GetMatchRanking(
+            competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+        ));
+
+        $byUser = [];
+        foreach ($result->rows as $row) {
+            $byUser[$row->userId->toRfc4122()] = $row;
+        }
+
+        return $byUser;
     }
 
     /**
@@ -148,28 +171,39 @@ final class BoostTipVisibilityTest extends IntegrationTestCase
         return $byUser;
     }
 
-    private function persistGuess(string $userId, int $home, int $away): void
+    private function gate(): TipVisibilityGate
     {
-        $em = $this->entityManager();
-        $user = $em->find(User::class, Uuid::fromString($userId));
-        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_FINISHED_ID));
-        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID));
-        self::assertInstanceOf(User::class, $user);
-        self::assertInstanceOf(SportMatch::class, $match);
+        /* @var TipVisibilityGate */
+        return self::getContainer()->get(TipVisibilityGate::class);
+    }
+
+    private function competition(): Competition
+    {
+        $competition = $this->entityManager()->find(
+            Competition::class,
+            Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
+        );
         self::assertInstanceOf(Competition::class, $competition);
 
-        $guess = new Guess(
-            id: Uuid::v7(),
-            user: $user,
-            sportMatch: $match,
-            competition: $competition,
-            homeScore: $home,
-            awayScore: $away,
-            submittedAt: new \DateTimeImmutable('2025-06-09 10:00:00 UTC'),
+        return $competition;
+    }
+
+    private function sportMatch(): SportMatch
+    {
+        $sportMatch = $this->entityManager()->find(
+            SportMatch::class,
+            Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
         );
-        $guess->popEvents();
-        $em->persist($guess);
-        $em->flush();
-        $em->clear();
+        self::assertInstanceOf(SportMatch::class, $sportMatch);
+
+        return $sportMatch;
+    }
+
+    private function user(string $id): User
+    {
+        $user = $this->entityManager()->find(User::class, Uuid::fromString($id));
+        self::assertInstanceOf(User::class, $user);
+
+        return $user;
     }
 }

@@ -160,8 +160,16 @@ reached only once.)
 
 One rule, one home: `TipVisibilityGate` — concrete tips **and** the distribution, every
 surface (`/zapasy`, nástěnka, competition detail, match detail's „Pořadí za zápas", the
-`/zebricek/matice` matrix, on-behalf tipping). No other place may compare `now` against a
-deadline to decide visibility. **The decision is explicitly revisitable through one knob:**
+`/zebricek/matice` matrix, on-behalf tipping). Its consumers in code are exactly four:
+`TipStatsProvider` (the distribution, batched per page), `GetCompetitionGuessMatrixQuery`
+(the matrix, masked per cell), `ManageMemberTipsController` (on-behalf tipping) and
+`CompetitionMatchDetailController` (which gates both „Pořadí za zápas" and „Tipy členů").
+**The gate belongs to the caller, not to the read model**: `GetMatchRanking` deliberately
+takes no viewer and hides nothing, so the page either hands its whole board to the template
+or none of it. (The 2026-07-30 log row below also lists `GetGuessesForMatchInCompetition`,
+a fifth consumer that masked its own rows; that was true then — ui-nav item 22 superseded
+the surface it fed and item 33 deleted the query.) No other place may compare `now` against
+a deadline to decide visibility. **The decision is explicitly revisitable through one knob:**
 `TipVisibilityGate::$freeRevealRequiresResult` (wired in `config/services.php`) — `false`
 restores the deadline reveal everywhere at once, and a test pins that alternative so it
 cannot rot. This reverses ui-nav item 10's „a LIVE match's „Pořadí za zápas" is unlocked
