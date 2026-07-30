@@ -400,6 +400,8 @@ ever grows one.)
 and the footer is currently their main entry point. After this change the only path to them is a
 chain: the homepage's two „Funkce" CTAs → `/funkce` → `/cenik` → `/pro-firmy` and `/faq`. Measured:
 
+> **Corrected 2026-07-30 (item 14):** there is now **one** such CTA, not two. The second lived inside the blue countdown banner that item 14 deleted, so the entry point to those four pages is thinner than the table below was written to describe.
+
 | Route | Linked from, after this change |
 |---|---|
 | `app_features` | `templates/home.html.twig` only |
