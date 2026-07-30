@@ -14,7 +14,6 @@ use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\BoostType;
 use App\Exception\GuessNotYetOpen;
-use App\Repository\GuessRepository;
 use App\Service\Competition\TipChangeUnlock;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Tests\Support\IntegrationTestCase;
@@ -23,10 +22,14 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * „Počkejte si na sestavy" buys BOTH ends of the tip window (product owner,
- * 2026-07-30): as well as extending the uzávěrka it LIFTS a „tipování otevřeno
- * od", so the buyer tips a waiting match straight away and keeps tipping to the
- * deadline. That is the promise the paywall on a waiting card makes.
+ * „Tipování otevřeno od" is NOT for sale (product owner, 2026-07-30 — „no
+ * unlocking allowed for early guesses at this point"). Buying „Počkejte si na
+ * sestavy" moves the uzávěrka and nothing else: its owner waits for an opening
+ * exactly like every other member, and no paywall is offered on a waiting match.
+ *
+ * Early access WAS built and withdrawn the same day; these tests pin the rule
+ * that survived, so restoring it later is a deliberate act rather than a
+ * regression nobody notices.
  *
  * MockClock now = 2025-06-15 12:00 UTC; the opening below is in the future.
  */
@@ -34,7 +37,7 @@ final class TipChangeBoostOpeningTest extends IntegrationTestCase
 {
     private const string OPENS_AT = '2025-06-18 09:00:00';
 
-    public function testBoostOwnerCanTipAWaitingMatchWhileOthersWait(): void
+    public function testTheBoostDoesNotLiftAnOpening(): void
     {
         $this->setOpening();
         $this->buyTipChangeFor(AppFixtures::SECOND_VERIFIED_USER_ID);
@@ -44,49 +47,19 @@ final class TipChangeBoostOpeningTest extends IntegrationTestCase
 
         $competition = $this->competition();
         $match = $this->match();
-
         $buyer = $this->user(AppFixtures::SECOND_VERIFIED_USER_ID);
-        $plain = $this->user(AppFixtures::ADMIN_ID);
 
-        // The buyer's window has no opening left…
-        self::assertNull($resolver->windowFor($competition, $match, $buyer)->opensAt);
-        self::assertFalse($resolver->isLocked($competition, $match, $buyer, $now));
-
-        // …everyone else still waits.
         self::assertEquals(
             new \DateTimeImmutable(self::OPENS_AT),
-            $resolver->windowFor($competition, $match, $plain)->opensAt,
+            $resolver->windowFor($competition, $match, $buyer)->opensAt,
         );
-        self::assertTrue($resolver->isLocked($competition, $match, $plain, $now));
+        self::assertTrue($resolver->isLocked($competition, $match, $buyer, $now));
     }
 
-    public function testTheBoostOwnerMayActuallyStoreATipOnAWaitingMatch(): void
+    public function testEvenTheBoostOwnerCannotTipAWaitingMatch(): void
     {
         $this->setOpening();
         $this->buyTipChangeFor(AppFixtures::SECOND_VERIFIED_USER_ID);
-
-        $this->commandBus()->dispatch(new SubmitGuessCommand(
-            userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
-            competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-            homeScore: 2,
-            awayScore: 1,
-        ));
-
-        $this->entityManager()->clear();
-
-        // The write really went through the gate, not around it.
-        self::assertNotNull(self::getContainer()->get(GuessRepository::class)
-            ->findActiveByUserMatchCompetition(
-                Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
-                Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
-                Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            ));
-    }
-
-    public function testWithoutTheBoostTheWaitingMatchStillRefusesATip(): void
-    {
-        $this->setOpening();
 
         $this->expectException(HandlerFailedException::class);
 
@@ -106,26 +79,24 @@ final class TipChangeBoostOpeningTest extends IntegrationTestCase
     }
 
     /**
-     * The paywall must appear on a waiting match even when the deadline itself
-     * would not move — „cannot tip at all" → „can tip now" is the gain being sold.
+     * No paywall on a waiting match whose deadline the boost could not extend:
+     * with nothing to sell, the card must stay quiet rather than advertise an
+     * unlock that would not happen.
      */
-    public function testAnOfferExistsForAWaitingMatchWhoseDeadlineWouldNotMove(): void
+    public function testNoOfferForAWaitingMatchWhoseDeadlineWouldNotMove(): void
     {
         // Deadline pinned to the match's own kickoff, so the boost's „kickoff
-        // minus offset" term can extend nothing: only the opening is left to buy.
+        // minus offset" term can extend nothing.
         $this->setOpening(deadline: new \DateTimeImmutable('2025-06-20 18:00:00'));
 
         $unlock = self::getContainer()->get(TipChangeUnlock::class);
 
-        $offer = $unlock->forMatch(
+        self::assertNull($unlock->forMatch(
             $this->competition(),
             $this->match(),
             $this->user(AppFixtures::SECOND_VERIFIED_USER_ID),
             $this->now(),
-        );
-
-        self::assertNotNull($offer);
-        self::assertEquals(new \DateTimeImmutable('2025-06-20 18:00:00'), $offer->deadline);
+        ));
     }
 
     private function setOpening(?\DateTimeImmutable $deadline = null): void

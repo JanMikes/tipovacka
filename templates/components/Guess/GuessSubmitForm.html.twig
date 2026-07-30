@@ -32,18 +32,10 @@
             {% if this.openingNote %}
                 <p class="guess-locked-detail">{{ this.openingNote }}</p>
             {% endif %}
-
-            {# „Počkejte si na sestavy" buys BOTH ends of the window, so it is worth
-               selling here too: it lifts this opening and then runs to the uzávěrka.
-               The panel renders nothing unless buying would really unlock THIS
-               zápas — see TipChangeUnlock. #}
-            <p class="guess-locked-detail mt-3 font-semibold text-white/70">Už to nevydržíte a nechcete čekat?</p>
-            <twig:Boost:Panel
-                :competitionId="this.competitionId"
-                :sportMatch="this.sportMatch"
-                feature="tip_change"
-                shape="bare"
-            />
+            {# Deliberately NO paywall here: waiting is not for sale (product owner,
+               2026-07-30 — „no unlocking allowed for early guesses at this point").
+               The „Počkejte si na sestavy" panel stays on the LOCKED branch below,
+               where it sells against the uzávěrka. #}
         </div>
     {% elseif this.isLocked %}
         <div class="guess-locked">

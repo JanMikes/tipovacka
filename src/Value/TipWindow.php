@@ -8,12 +8,12 @@ namespace App\Value;
  * The whole tip window of ONE match in ONE competition, as
  * {@see \App\Service\EffectiveTipDeadlineResolver} computed it: `[opensAt, deadline)`.
  *
- * BOTH ends are per viewer, and the same „Měnit tip" entitlement moves them: it
- * extends the deadline and LIFTS the opening, so a buyer tips a waiting match
- * straight away and keeps tipping to the end (product owner, 2026-07-30 — the
- * booster is sold on exactly that promise, „už to nevydržíte a nechcete čekat?").
- * Nothing else opens a window early: managers and admins get no free pass, and
- * on-behalf writes are gated like anyone's own.
+ * The END is per viewer (a „Měnit tip" entitlement extends it). The START is not —
+ * an opening moment is a property of the match in the competition, identical for
+ * every member, and no entitlement moves it. Managers and admins get no free pass
+ * either: before `opensAt` nobody tips, on-behalf writes included. (Selling early
+ * access through the booster was tried on 2026-07-30 and withdrawn the same day —
+ * see DOMAIN.md §Tip window.)
  *
  * `opensAt` null (the default, and what every competition had before 2026-07-30)
  * means „open from the start" — the window is then exactly what it always was.

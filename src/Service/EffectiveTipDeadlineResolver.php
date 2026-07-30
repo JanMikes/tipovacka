@@ -27,11 +27,12 @@ use Symfony\Contracts\Service\ResetInterface;
  * The window's START (`TipWindow::$opensAt`, 2026-07-30) is the ADMIN-set
  * „tipování otevřeno od" of {@see \App\Entity\CompetitionMatchSetting} — null on
  * every match until an admin sets one, which is exactly the behavior that
- * predates it. Managers and admins get no free pass (on-behalf writes are gated
- * the same); the ONE thing that lifts an opening is the „Měnit tip" entitlement,
- * which buys both ends of the window at once ({@see openingFor}). Everything
- * below therefore describes the deadline — the opening is a read of the override
- * row, minus that entitlement.
+ * predates it. It is deliberately NOT user-dependent: entitlements extend the
+ * END of a window, never open it early, and managers/admins get no free pass
+ * (on-behalf writes are gated the same). Buying early access was tried on
+ * 2026-07-30 and withdrawn the same day — see DOMAIN.md §Tip window. Everything
+ * below therefore describes the deadline; the opening is a straight read of the
+ * override row.
  *
  * Model (DOMAIN.md §Tip locking): tips lock at the competition's start — the
  * earliest kickoff among its included matches, or earlier via the manager's
@@ -128,7 +129,7 @@ class EffectiveTipDeadlineResolver implements ResetInterface
 
         return new TipWindow(
             deadline: $this->computeDeadline($competition, $sportMatch, $override?->deadline, $user),
-            opensAt: $this->openingFor($competition, $override?->opensAt, $user),
+            opensAt: $override?->opensAt,
             openingNote: $override?->openingNote,
         );
     }
@@ -157,7 +158,7 @@ class EffectiveTipDeadlineResolver implements ResetInterface
 
             $result[$key] = new TipWindow(
                 deadline: $this->computeDeadline($competition, $match, $override?->deadline, $user),
-                opensAt: $this->openingFor($competition, $override?->opensAt, $user),
+                opensAt: $override?->opensAt,
                 openingNote: $override?->openingNote,
             );
         }
@@ -385,22 +386,6 @@ class EffectiveTipDeadlineResolver implements ResetInterface
         // never past the kickoff (the min() is defensive — a non-negative offset
         // already keeps $entitled ≤ $kickoff).
         return max($base, min($entitled, $kickoff));
-    }
-
-    /**
-     * The opening as THIS viewer experiences it. „Počkejte si na sestavy" buys
-     * both ends of the window (product owner, 2026-07-30): the entitlement that
-     * extends the deadline also LIFTS the opening, so a buyer tips a waiting
-     * match straight away and keeps tipping until the deadline. Without a user
-     * (the visibility gate's userless read) the stored opening stands.
-     */
-    private function openingFor(Competition $competition, ?\DateTimeImmutable $opensAt, ?User $user): ?\DateTimeImmutable
-    {
-        if (null === $opensAt || null === $user) {
-            return $opensAt;
-        }
-
-        return $this->entitlements->canChangeTips($competition, $user) ? null : $opensAt;
     }
 
     private function isLateAdded(Competition $competition, SportMatch $sportMatch, \DateTimeImmutable $lockMoment): bool
