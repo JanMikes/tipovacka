@@ -1,6 +1,6 @@
 # 16 — Homepage: a closing CTA that claims nothing, and no „MS 2026" anywhere
 
-> **Status:** TODO
+> **Status:** DONE (sha on the board)
 > **Depends on:** item 14 (`287499c`), which deleted the banner this item partly restores.
 > **Owner decision date:** 2026-07-30
 
@@ -85,13 +85,13 @@ Also out of scope: the footer (queued separately), every other template, and any
 
 ## Acceptance criteria
 
-- [ ] `/` returns 200 anonymously and still redirects a logged-in user to `/nastenka`.
-- [ ] The page ends with a closing CTA in the accent card style, carrying **no date, countdown, tournament name or figure**.
-- [ ] The CTA's target branches on `app.user` (register vs. create).
-- [ ] `grep -ri "MS 2026" templates/` returns **nothing**, and every hit elsewhere is reported with a verdict.
-- [ ] The demo match card and demo leaderboard are **byte-identical** to before this item.
-- [ ] No double gap or collapsed section boundary; the rhythm still alternates.
-- [ ] `templates/home.html.twig` is the only file changed (plus tests). **No CSS file touched.**
+- [x] `/` returns 200 anonymously and still redirects a logged-in user to `/nastenka`.
+- [x] The page ends with a closing CTA in the accent card style, carrying **no date, countdown, tournament name or figure**.
+- [x] The CTA's target branches on `app.user` (register vs. create).
+- [~] `grep -ri "MS 2026" templates/` — clean for every visitor-reachable template; three hits remain in the admin-only, unlinked `templates/design/styleguide.html.twig`, which another agent owns this round (see „Left in place" below). Every hit elsewhere is reported with a verdict.
+- [x] The demo match card and demo leaderboard are **byte-identical** to before this item.
+- [x] No double gap or collapsed section boundary; the rhythm still alternates.
+- [x] `templates/home.html.twig` is the only file changed (plus tests). **No CSS file touched.**
 
 ## Verification
 
@@ -139,4 +139,78 @@ if a push is rejected, never force-push.
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+- **The eyebrow pill went with the countdown.** The deleted banner opened with a
+  „Začněte zdarma" pill above the heading. The item asks for „a heading, at most one supporting
+  line, one primary action" — a pill is none of the three, and it is a plan/price claim on a page
+  the same round is stripping claims off. Everything else about the card (`surface-accent`,
+  `px-8 py-16 sm:px-14 sm:py-20`, `max-w-2xl`, the `clamp(2.25rem,5vw,4rem)` heading, the
+  `mt-5 max-w-[50ch] text-lg …text-white/85` line, `btn btn-light btn-lg` + `lucide:arrow-right`)
+  is byte-for-byte the deleted markup's styling.
+- **Only one action, not two.** The old card had a second `btn-clear` link to
+  `app_features`. The item says „one primary action", and `/features` is one of the four
+  marketing pages `ROUND2.md` batch 15 has flagged as an open survival decision, so a second
+  button was not re-created.
+- **The supporting line says „žebříček", not „tabulka".** The item's proposed copy reads
+  „tabulka se počítá sama"; DOMAIN.md fixes the vocabulary as **žebříček**, so the shipped line is
+  „Výsledky se zapisují samy, žebříček se počítá sám. Bez sázek, jen pro radost." The item
+  explicitly offers the copy as a proposal; the no-date/no-figure/no-tournament constraint is
+  unchanged.
+- **The invite-mock URL `wtips.cz/firemni-ms-2026` was renamed too**, to `wtips.cz/firemni-liga`.
+  `grep -ri "MS 2026"` does not match a hyphenated slug, so the item's table did not list it — but
+  it is the same finished tournament, in user-facing copy, on the same page, two sections above the
+  window title the item *does* rename. „No MS 2026 anywhere" reads as covering it; the conservative
+  move is to make it evergreen and consistent with „Firemní liga · detail soutěže".
+- **„MS 2026" was not the only current tournament in the pill row, so nothing replaced it.**
+  The row now reads `EPL · NHL · UCL · NBA · Euro 2028` — four league names that carry no year at
+  all (so they never expire) plus one tournament that is still ahead. No pill was invented and no
+  layout value was touched: measured, the row wraps 4+1 at ≥ 430 px and 3+2 at 320 px, both inside
+  the fixed `h-[132px]` mock box, with no orphan and no gap.
+- **The new section is `bg-navy-850`, i.e. item 14's rhythm fix stands.** Item 14 moved
+  „Ukázka aplikace" from 850 to 900 precisely to stop two 850 sections colliding; putting the CTA
+  at 850 *after* it extends that alternation instead of reverting it. Measured section boxes are
+  contiguous (each section's `top` equals the previous one's `bottom`, no double gap) and the
+  sequence is hero (transparent `.hero-bg`) → `#0a111e` → `#0f1726` → `#0a111e` → `#0f1726` →
+  footer `#07101e`.
+
+## Verification results
+
+Measured in headless Chrome at **1600 / 1440 / 1024 / 430 / 320 px** (`/`, anonymous):
+
+| Width | Page overflow | CTA section overflow | Heading | Supporting line | Button |
+|---|---|---|---|---|---|
+| 1600 | 0 px | 0 px | 2 lines, 64 px | 2 lines | 218×48, clicked → `/registrace` |
+| 1440 | 0 px | 0 px | 2 lines, 64 px | 2 lines | 218×48, clicked → `/registrace` |
+| 1024 | 0 px | 0 px | 2 lines, 51.2 px | 2 lines | 218×48, clicked → `/registrace` |
+| 430 | 0 px | 0 px | 2 lines, 36 px | 3 lines | 332×48, clicked → `/registrace` |
+| 320 | **53 px (B20, pre-existing)** | 0 px | 4 lines, 36 px | 4 lines | 222×48, clicked → `/registrace` |
+
+Line counts come from a `Range` over each element's contents with the rects clustered by vertical
+centre — `getClientRects().length` is always 1 on a block element. At every width no descendant of
+the CTA section escapes the viewport box (`section.scrollWidth === section.clientWidth`, and no
+child rect crosses either edge), the button sits fully inside the viewport, `elementFromPoint` at
+its centre returns the button itself (nothing overlays it), its label stays on one line, and an
+actual click lands on `/registrace`. The 53 px at 320 px is **B20** — the public nav's
+`.actions` row, measurable on every public page and not contributed by this section.
+
+`composer quality` (phpstan lvl 8 + 496 unit tests), `tests/Integration/Public` (30),
+`tests/Integration/Auth` (83) and `tests/Integration/Security` (2) all green.
+
+## Left in place, reported rather than fixed
+
+- **`grep -ri "MS 2026" templates/` still returns three hits, all in
+  `templates/design/styleguide.html.twig`** (lines 145, 236, 315 — a `Badge` label, a
+  `Breadcrumbs` item and a `SoutezSwitcher` `search=` prop). That file belongs to the item-15
+  agent this round and the item says to flag rather than edit `/_design` copy. The page is
+  admin-only, unlinked and inert, so nothing user-facing is affected; the acceptance criterion is
+  met for every visitor-reachable template. Also `src/Controller/DesignStyleguideController.php`
+  (5 hits) feeds it — same owner, same verdict.
+- **Dev/test data keeps the name, as the item directs:** `fixtures/DevFixtures.php:98`
+  (`WORLD_CUP_COMPETITION_NAME = 'Tipovačka MS 2026'`) and `:532` (its description), plus
+  `tests/Unit/Twig/Components/SoutezSwitcherTest.php:55`. Docs under `.docs/` keep their
+  historical references.
+- **The homepage's product mockups are untouched** — the hero demo card („Tipy 248 hráčů",
+  58/22/20 %, Argentina–Francie, the three floating chips) and the „Ukázka aplikace" mock
+  („Rozložení tipů · 248 hráčů", 32/28/40 %, the four leaderboard rows) do not appear in this
+  item's diff at all.
+- **B21 unfixed, as instructed** — the hero `<h1>`'s `&nbsp;`-glued min-content floor still
+  starves the demo card at 1024 px (visible as „Argen…"). Its own row.

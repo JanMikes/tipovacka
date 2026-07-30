@@ -172,7 +172,7 @@
                     <div class="text-center">
                         <div class="mb-2 text-[11px] uppercase tracking-[0.08em] text-white/40">Dostupné turnaje</div>
                         <div class="flex max-w-[18rem] flex-wrap justify-center gap-2">
-                            {% for t in ['MS 2026', 'EPL', 'NHL', 'UCL', 'NBA', 'Euro 2028'] %}
+                            {% for t in ['EPL', 'NHL', 'UCL', 'NBA', 'Euro 2028'] %}
                                 <twig:Pill label="{{ t }}" variant="accent" />
                             {% endfor %}
                         </div>
@@ -190,7 +190,7 @@
                 <div class="mt-6 flex h-[132px] items-center justify-center rounded-xl border border-accent-500/20 bg-gradient-to-br from-accent-500/10 to-accent-500/[0.02] p-4">
                     <div class="flex w-full max-w-[20rem] items-center gap-2.5 rounded-lg border border-white/10 bg-surface-2 px-3.5 py-2.5 text-[11px]">
                         <span class="font-bold text-accent-300">wtips.cz/</span>
-                        <span class="font-semibold text-white">firemni-ms-2026</span>
+                        <span class="font-semibold text-white">firemni-liga</span>
                         <span class="ml-auto inline-flex items-center gap-1.5 rounded-md border border-accent-500/40 bg-accent-500/20 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.06em] text-accent-300">
                             <twig:ux:icon name="lucide:link" class="h-3 w-3" />
                             Kopírovat
@@ -250,7 +250,7 @@
                 <span class="h-3 w-3 rounded-full bg-white/15"></span>
                 <span class="h-3 w-3 rounded-full bg-white/15"></span>
                 <span class="h-3 w-3 rounded-full bg-white/15"></span>
-                <span class="ml-3 text-[11px] uppercase tracking-[0.08em] text-white/40">Firemní MS 2026 · detail soutěže</span>
+                <span class="ml-3 text-[11px] uppercase tracking-[0.08em] text-white/40">Firemní liga · detail soutěže</span>
             </div>
 
             <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.4fr_1fr]">
@@ -314,6 +314,42 @@
                             <span class="font-extrabold tabular-nums text-white">{{ r.pts }}</span>
                         </div>
                     {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ───────────────────────────────────────────────────────────────────
+   4. FINAL CTA — surface-accent gradient card
+
+   Evergreen on purpose: no date, no countdown, no tournament name, no figure.
+   The banner that used to sit here was tied to a finished tournament, which is
+   why it was deleted — keep this copy claim-free.
+   bg-navy-850 keeps the hero → 900 → 850 → 900 → 850 → footer alternation.
+   ─────────────────────────────────────────────────────────────────── #}
+<section class="bg-navy-850 py-20 sm:py-24">
+    <div class="mx-auto max-w-[80rem] px-4 sm:px-6 lg:px-8">
+        <div class="surface-accent px-8 py-16 sm:px-14 sm:py-20">
+            <div class="relative z-10 max-w-2xl">
+                <h2 class="text-[clamp(2.25rem,5vw,4rem)] font-black leading-[1.0] tracking-[-0.03em] text-white">
+                    Založte si soutěž a&nbsp;pozvěte kámoše.
+                </h2>
+                <p class="mt-5 max-w-[50ch] text-lg leading-relaxed text-white/85">
+                    Výsledky se zapisují samy, žebříček se počítá sám. Bez sázek, jen pro radost.
+                </p>
+                <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    {% if app.user %}
+                        <a href="{{ path('competition_create') }}" class="btn btn-light btn-lg justify-center">
+                            Vytvořit soutěž
+                            <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}" class="btn btn-light btn-lg justify-center">
+                            Registrace zdarma
+                            <twig:ux:icon name="lucide:arrow-right" class="h-[18px] w-[18px]" />
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
