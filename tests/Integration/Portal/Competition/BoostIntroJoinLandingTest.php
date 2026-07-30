@@ -109,7 +109,9 @@ final class BoostIntroJoinLandingTest extends WebTestCase
         $back = $client->request('GET', self::DETAIL);
         self::assertResponseIsSuccessful();
         self::assertCount(1, $back->filter(self::DIALOG));
-        self::assertSelectorTextContains('dialog', 'Co si můžete v téhle soutěži odemknout');
+        // Item 26 put a second <dialog> („Pravidla") on this page, so every
+        // assertion here names the boost-intro one explicitly.
+        self::assertSelectorTextContains(self::DIALOG, 'Co si můžete v téhle soutěži odemknout');
         self::assertNull($this->membershipOf($user->id)->boostIntroSeenAt);
     }
 
@@ -125,7 +127,7 @@ final class BoostIntroJoinLandingTest extends WebTestCase
         $client->followRedirect();
 
         $crawler = $client->request('GET', self::DETAIL);
-        $token = $crawler->filter('dialog form input[name="_token"]')->attr('value');
+        $token = $crawler->filter(self::DIALOG.' form input[name="_token"]')->attr('value');
         self::assertIsString($token);
 
         $client->request('POST', self::DETAIL.'/vylepseni/uvod/skryt', ['_token' => $token]);

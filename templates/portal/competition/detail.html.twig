@@ -71,8 +71,17 @@
                 </div>
             </div>
 
-            {# Akční lišta — každá položka má vlastní viditelnost, plný hráč nevidí nic. #}
-            <div class="flex flex-wrap items-center gap-2">
+            {#
+                Akční lišta — každá položka má vlastní viditelnost. Od item 26 se
+                lišta vykresluje VŠEM: „Pravidla" potřebuje hráč (bodování je to,
+                podle čeho mu naskakují body), takže není za žádným voterem.
+                Organizátorské akce zůstávají každá za tou svojí. Plný hráč tedy
+                vidí právě jedno tlačítko, ne prázdný toolbar.
+            #}
+            <div class="flex flex-wrap items-center gap-2" data-controller="modal">
+                <button type="button" data-action="modal#open" class="btn btn-ghost btn-sm">
+                    <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla
+                </button>
                 {% if is_granted('competition_edit', competition) %}
                     <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
                         <twig:ux:icon name="lucide:settings" class="h-4 w-4" />Nastavení
@@ -163,21 +172,15 @@
                         </form>
                     {% endif %}
                 {% endif %}
+
+                {#
+                    Zavřený <dialog> je `display: none`, takže z flexu lišty nic
+                    nezabírá; otevřený se kreslí v top layeru, takže na něj
+                    okolní layout nemá vliv.
+                #}
+                {{ include('portal/competition/_rules_modal.html.twig') }}
             </div>
         </div>
-
-        {% if filter_teams is not empty %}
-            <div class="mt-4 flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
-                    <twig:ux:icon name="lucide:shield-half" class="h-4 w-4 text-accent-400" />Týmy soutěže
-                </span>
-                {% for team in filter_teams %}
-                    <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-inset py-1 pl-1 pr-2.5 text-xs text-white/80">
-                        <twig:TeamFlag :team="team" size="20" />{{ team.name }}
-                    </span>
-                {% endfor %}
-            </div>
-        {% endif %}
 
     </header>
 

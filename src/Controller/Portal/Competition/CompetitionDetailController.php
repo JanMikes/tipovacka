@@ -7,15 +7,14 @@ namespace App\Controller\Portal\Competition;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\BoostType;
-use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\SportMatchState;
 use App\Enum\UserRole;
 use App\Query\GetCompetitionDetail\GetCompetitionDetail;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
+use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
 use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
-use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\GuessEvaluationRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
@@ -52,7 +51,6 @@ final class CompetitionDetailController extends AbstractController
 
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
-        private readonly CompetitionTeamFilterRepository $teamFilterRepository,
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
         private readonly GuessEvaluationRepository $evaluationRepository,
@@ -128,9 +126,14 @@ final class CompetitionDetailController extends AbstractController
             ? $competition->tipsLockedAt
             : null;
 
-        $filterTeams = CompetitionMatchSelectionMode::Teams === $competition->selectionMode
-            ? $this->teamFilterRepository->teamViewsFor($competition->id)
-            : [];
+        // ── „Pravidla" (item 26) ────────────────────────────────────────────
+        // The very same read model the settings page renders, shown here in a
+        // dialog EVERY viewer can open: scoring rules are what a player needs to
+        // understand their points, so the button is behind no organizer voter.
+        // Configuration only — a rules modal never reveals anybody's tips.
+        $ruleConfiguration = $this->queryBus->handle(new GetCompetitionRuleConfiguration(
+            competitionId: $competition->id,
+        ));
 
         // ── The match list ──────────────────────────────────────────────────
         // Scope comes from CompetitionMatchProvider (never re-derived), the
@@ -176,7 +179,7 @@ final class CompetitionDetailController extends AbstractController
         return $this->render('portal/competition/detail.html.twig', [
             'competition' => $competition,
             'detail' => $detail,
-            'filter_teams' => $filterTeams,
+            'rule_items' => $ruleConfiguration->items,
             'lock_moment' => $lockMoment,
             'tips_locked' => $tipsLocked,
             'can_unlock_tips' => $canUnlockTips,

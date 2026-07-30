@@ -1,0 +1,50 @@
+{#
+    „Pravidla" — read-only bodování téhle soutěže v dialogu (item 26).
+
+    Otevře ho KAŽDÝ, kdo na stránku vidí: bodování je to, co hráč potřebuje, aby
+    rozuměl svým bodům. Nic z toho není citlivé — dialog ukazuje KONFIGURACI
+    soutěže, nikdy něčí tipy (Managers and admins get no free entitlement pass).
+
+    Chrome je stejný jako u ostatních dialogů v aplikaci (`.confirm-dialog` +
+    `.modal-panel`), takže žádné nové CSS. Obsah kreslí sdílená partial
+    `_partials/competition_rules.html.twig` v režimu `bare` — druhé call site je
+    „Nastavení soutěže", kde má stejný seznam vlastní kartu.
+
+    Zavírá se třemi cestami: ✕, tlačítko „Zavřít" a Esc (nativní chování
+    <dialog>); kliknutí mimo panel dopisuje modal_controller.js.
+#}
+<dialog data-modal-target="dialog"
+        class="confirm-dialog modal-panel w-full max-w-lg p-0"
+        aria-labelledby="rules-modal-title">
+    <div class="p-6">
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <p class="eyebrow mb-1">Jak se v téhle soutěži boduje</p>
+                <h2 id="rules-modal-title" class="flex items-center gap-2 text-lg font-bold tracking-tight text-white">
+                    <twig:ux:icon name="lucide:activity" class="h-5 w-5 shrink-0 text-accent-400" />
+                    Pravidla bodování
+                </h2>
+            </div>
+            <button type="button"
+                    data-action="modal#close"
+                    aria-label="Zavřít"
+                    class="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/5 hover:text-white">
+                <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+            </button>
+        </div>
+
+        <p class="mt-2 text-sm leading-relaxed text-white/60">
+            Body se počítají za každý zápas soutěže zvlášť. Pravidla nastavuje organizátor.
+        </p>
+
+        <div class="mt-5">
+            {{ include('_partials/competition_rules.html.twig', { items: rule_items, bare: true }) }}
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button type="button" data-action="modal#close" class="btn btn-ghost btn-sm">
+                Zavřít
+            </button>
+        </div>
+    </div>
+</dialog>

@@ -35,6 +35,9 @@ final class CompetitionDetailPassTest extends WebTestCase
     private const string PREMIUM_DETAIL = '/souteze/'.AppFixtures::PREMIUM_COMPETITION_ID;
     private const string BOOSTS_DISMISS = self::BOOSTS_DETAIL.'/vylepseni/uvod/skryt';
 
+    /** Item 26 added a „Pravidla" <dialog>, so the intro one has to be named. */
+    private const string INTRO_DIALOG = 'dialog[data-boost-intro-target="dialog"]';
+
     // ── A. the order, in one column ─────────────────────────────────────────
 
     public function testTheSectionsRenderInTheOrderTheProductOwnerPicked(): void
@@ -248,11 +251,13 @@ final class CompetitionDetailPassTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertCount(1, $crawler->filter('dialog[data-boost-intro-target="dialog"]'));
-        self::assertSelectorTextContains('dialog', 'Co si můžete v téhle soutěži odemknout');
+        // Item 26 put a second <dialog> („Pravidla") on this page, so every
+        // assertion here names the boost-intro one explicitly.
+        self::assertCount(1, $crawler->filter(self::INTRO_DIALOG));
+        self::assertSelectorTextContains(self::INTRO_DIALOG, 'Co si můžete v téhle soutěži odemknout');
 
         // Every price comes from PricingConfig via BoostType — no literals anywhere.
-        $dialog = $crawler->filter('dialog')->text();
+        $dialog = $crawler->filter(self::INTRO_DIALOG)->text();
 
         foreach (BoostType::cases() as $type) {
             self::assertStringContainsString($type->label(), $dialog);
@@ -262,9 +267,9 @@ final class CompetitionDetailPassTest extends WebTestCase
         self::assertStringContainsString(PricingConfig::BOOST_TIP_DISTRIBUTION.' kr.', $dialog);
 
         // Three dismissals, ONE persistence path.
-        self::assertCount(1, $crawler->filter('dialog form[action="'.self::BOOSTS_DISMISS.'"]'));
-        self::assertCount(1, $crawler->filter('dialog button[aria-label="Zavřít"]'));
-        self::assertSelectorTextContains('dialog', 'Pochopil jsem, již nezobrazovat');
+        self::assertCount(1, $crawler->filter(self::INTRO_DIALOG.' form[action="'.self::BOOSTS_DISMISS.'"]'));
+        self::assertCount(1, $crawler->filter(self::INTRO_DIALOG.' button[aria-label="Zavřít"]'));
+        self::assertSelectorTextContains(self::INTRO_DIALOG, 'Pochopil jsem, již nezobrazovat');
     }
 
     public function testDismissingItStampsTheMembershipAndItNeverComesBack(): void
@@ -273,7 +278,7 @@ final class CompetitionDetailPassTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
-        $token = $crawler->filter('dialog form input[name="_token"]')->attr('value');
+        $token = $crawler->filter(self::INTRO_DIALOG.' form input[name="_token"]')->attr('value');
         self::assertIsString($token);
 
         $client->request('POST', self::BOOSTS_DISMISS, ['_token' => $token]);
@@ -298,7 +303,7 @@ final class CompetitionDetailPassTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
-        $token = (string) $crawler->filter('dialog form input[name="_token"]')->attr('value');
+        $token = (string) $crawler->filter(self::INTRO_DIALOG.' form input[name="_token"]')->attr('value');
 
         $client->request('POST', self::BOOSTS_DISMISS, ['_token' => $token]);
         $first = $this->membership()->boostIntroSeenAt;
