@@ -243,7 +243,6 @@
         {% endif %}
 
         {# ═════════ 4. Pořadí za zápas — the ONE list of other members' tips ═════════ #}
-        {% set tipper_count = tip_stats ? tip_stats.total : 0 %}
         {% if can_see_others_tips and match_ranking and match_ranking.rows|length > 0 %}
             {% set me_id = current_user_id.toRfc4122 %}
             {% set is_scored_match = sport_match.isFinished and sport_match.homeScore is not null and sport_match.awayScore is not null %}
@@ -364,10 +363,6 @@
                     </div>
                     <twig:Boost:Panel :competition="competition" feature="others" shape="bare" />
                 </header>
-
-                <p class="dist-card-total">
-                    {{ tipper_count }} {{ tipper_count == 1 ? 'hráč' : (tipper_count <= 4 ? 'hráči' : 'hráčů') }} s tipem
-                </p>
 
                 <div class="dist-veil">
                     <div aria-hidden="true" class="dist-skeleton space-y-4">

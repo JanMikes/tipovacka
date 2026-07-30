@@ -33,10 +33,6 @@
 
 {% if not compact %}
     {# ═════════ Full card (match detail) ═════════ #}
-    {# Czech agrees the noun AND the verb with the count: 1 hráč tipoval · 2–4 hráči
-       tipovali · 5+ hráčů tipovalo. #}
-    {% set players = stats.total ~ ' ' ~ (stats.total == 1 ? 'hráč' : (stats.total <= 4 ? 'hráči' : 'hráčů')) %}
-    {% set tipped_verb = stats.total == 1 ? 'tipoval' : (stats.total <= 4 ? 'tipovali' : 'tipovalo') %}
     {% set mon = stats.monetization.value %}
 
     <section class="card-glass dist-card p-5 sm:p-6{{ stats.visible ? '' : ' is-locked' }}">
@@ -95,14 +91,6 @@
                 <span class="dist-unlock is-static">Zapíná organizátor</span>
             {% endif %}
         </header>
-
-        <p class="dist-card-total">
-            {%- if stats.total > 0 -%}
-                {{ players }} {{ tipped_verb }}
-            {%- else -%}
-                Zatím nikdo netipoval
-            {%- endif -%}
-        </p>
 
         {% if stats.visible %}
             {% if stats.total > 0 %}
