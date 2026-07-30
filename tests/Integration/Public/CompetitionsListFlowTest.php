@@ -40,8 +40,10 @@ final class CompetitionsListFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('#souteze-hraju');
         self::assertSelectorNotExists('#souteze-organizuji');
-        // …and the PIN bar, which needs an account, stays away too.
-        self::assertSelectorNotExists('form[action="/pripojit/rychle"]');
+        // The PIN bar, though, is here on purpose since B15: a PIN is how most people
+        // arrive, and it no longer needs an account — it remembers the soutěž through
+        // sign-up instead of bouncing off a login wall.
+        self::assertSelectorExists('form[action="/pripojit/rychle"]');
     }
 
     public function testNonGlobalCompetitionsAreNotListed(): void

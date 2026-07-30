@@ -85,8 +85,11 @@
         </section>
     {% endif %}
 
-    {# ───── PIN join bar ───── #}
-    {% if is_logged_in and app.user.isVerified %}
+    {# ───── PIN join bar ─────
+       Anonymous visitors get it too since B15: a PIN is how most people arrive, and the
+       bar now remembers the soutěž through sign-up instead of bouncing off a login wall.
+       Still hidden while unverified — that account can only be sent to the airlock. #}
+    {% if not is_logged_in or app.user.isVerified %}
         <div class="mb-14">
             {{ include('_partials/join_by_pin_form.html.twig', { size: 'large', collapsible: playing_competitions|length > 0 }) }}
         </div>

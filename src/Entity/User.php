@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
+use App\Enum\InvitationKind;
 use App\Enum\UserRole;
 use App\Event\EmailVerified;
 use App\Event\PasswordChanged;
@@ -61,6 +62,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
 
     #[ORM\Column(length: 20, nullable: true)]
     public private(set) ?string $phone = null;
+
+    /**
+     * The competition this account intends to join as soon as it is allowed to (B15).
+     *
+     * A shareable link or a PIN proves nothing about identity, so the join waits for the
+     * e-mail verification. Between those two moments the user walks out of the app and
+     * into a mailbox — possibly on another device, possibly days later — so the intent
+     * cannot live in the PHP session alone: a browser-session cookie does not survive
+     * that round trip, and the sign-up page had already promised the join.
+     */
+    #[ORM\Column(nullable: true, enumType: InvitationKind::class)]
+    public private(set) ?InvitationKind $pendingJoinKind = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    public private(set) ?string $pendingJoinToken = null;
 
     public string $fullName {
         get => trim(($this->firstName ?? '').' '.($this->lastName ?? ''));
@@ -170,6 +186,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, EntityW
             userId: $this->id,
             occurredOn: $now,
         ));
+    }
+
+    public function rememberPendingJoin(InvitationKind $kind, string $token, \DateTimeImmutable $now): void
+    {
+        $this->pendingJoinKind = $kind;
+        $this->pendingJoinToken = $token;
+        $this->updatedAt = $now;
+    }
+
+    public function forgetPendingJoin(\DateTimeImmutable $now): void
+    {
+        if (null === $this->pendingJoinKind && null === $this->pendingJoinToken) {
+            return;
+        }
+
+        $this->pendingJoinKind = null;
+        $this->pendingJoinToken = null;
+        $this->updatedAt = $now;
     }
 
     public function changeRole(UserRole $role, \DateTimeImmutable $now): void

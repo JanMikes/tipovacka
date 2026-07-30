@@ -3,9 +3,10 @@
 {% block title %}Registrace — {{ brand_name }}{% endblock %}
 
 {% block auth_content %}
+    {# The PIN bar is gone from here (batch 12). „Znám PIN" is a way INTO an account, not a
+       field on the form that creates one — it lives on /pripojit, which an anonymous
+       visitor may now use and which remembers the soutěž through the sign-up. #}
     <div class="mx-auto flex w-full max-w-[60rem] flex-col gap-5">
-
-        {{ include('_partials/join_by_pin_form.html.twig') }}
 
         <section class="card-glass w-full p-8 sm:p-10">
             <span class="eyebrow">Registrace</span>
@@ -17,6 +18,11 @@
             <p class="mt-6 text-center text-[13px] text-white/70">
                 Už máte účet?
                 <a href="{{ path('app_login') }}" class="font-bold text-white underline decoration-white/20 underline-offset-2 transition-colors hover:decoration-accent-400">Přihlaste se</a>
+            </p>
+
+            <p class="mt-3 text-center text-[13px] text-white/50">
+                Máte PIN od organizátora?
+                <a href="{{ path('competition_join_by_pin') }}" class="font-semibold text-accent-300 transition-colors hover:text-accent-200">Připojte se k soutěži</a>
             </p>
         </section>
 

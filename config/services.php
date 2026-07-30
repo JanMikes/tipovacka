@@ -63,6 +63,7 @@ return App::config([
                 '../src/Service/Payment/InvoiceDetails.php',
                 '../src/Service/Payment/WebhookEvent.php',
                 '../src/Service/Competition/GuessFeatures.php',
+                '../src/Service/Competition/PendingJoin.php',
                 '../src/Service/Scoring/MatchContext.php',
             ],
         ],

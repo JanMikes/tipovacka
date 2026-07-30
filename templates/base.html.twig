@@ -41,8 +41,11 @@
     </head>
     <body data-turbo="false" class="min-h-screen flex flex-col antialiased {% block body_class %}{% endblock %}">
 
-        {# ───────── Navigation ───────── #}
-        <twig:Layout:Nav />
+        {# ───────── Navigation ─────────
+           A page may empty this block to render without chrome. The verification airlock
+           does exactly that (B14): an account that may go nowhere must not be shown a bar
+           full of places to go. #}
+        {% block navigation %}<twig:Layout:Nav />{% endblock %}
 
         {# ───────── Main content ───────── #}
         <main class="flex flex-1 flex-col">
@@ -72,7 +75,7 @@
         </main>
 
         {# ───────── Footer ───────── #}
-        <twig:Layout:Footer variant="{{ app.user ? 'app' : 'marketing' }}" />
+        {% block page_footer %}<twig:Layout:Footer variant="{{ app.user ? 'app' : 'marketing' }}" />{% endblock %}
 
     </body>
 </html>

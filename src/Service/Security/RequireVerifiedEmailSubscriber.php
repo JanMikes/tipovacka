@@ -49,10 +49,13 @@ final class RequireVerifiedEmailSubscriber implements EventSubscriberInterface
         'app_reset_password_form',
         // Invitation landings handle the unverified case themselves (see
         // InvitationAcceptanceService::handleAuthenticated): an e-mail invitation proves
-        // mailbox ownership and verifies the account on accept, a shareable link stores
-        // the intent and sends the user here on its own.
+        // mailbox ownership and verifies the account on accept, while a shareable link or
+        // a PIN stores the intent and sends the user here on its own. They are landings,
+        // not portal pages — an unverified visitor may READ them, never join through them.
         'competition_accept_invitation',
         'competition_join_by_link',
+        'competition_join_by_pin',
+        'competition_join_by_pin_quick',
         // Public / marketing surface.
         'app_home',
         'app_faq',

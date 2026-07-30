@@ -448,6 +448,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Cursor spotlight](.docs/features/cursor-spotlight.md) — cards glow & their border lights up under/near the mouse (`assets/spotlight.js` + app.css "Cursor spotlight" section; `PROXIMITY` toggle)
 - [Competition card & filter bar](.docs/features/competition-cards.md) — the ONE `<twig:Competition:Card>` + `<twig:Competition:FilterBar>` shared by the organizer and public grids of `/souteze`, backed by the constant-statement `ListBrowsableCompetitions` query; filters are query params, never JS state; money is always an entry fee, never a prize pool
 - [Competition switcher](.docs/features/competition-switcher.md) — `<twig:SoutezSwitcher>`: grouped („Probíhající" / „Ukončené") searchable tom-select over the viewer's soutěže, name + zdroj zápasů + Prague date range; a real GET `<form>` so it works with JS off, hence `route` must be path-parameter-free (`/zebricek?soutez=` resolves and redirects)
+- [Pending join intent](.docs/features/join-intent.md) — „I am about to join this soutěž", carried through sign-up **and** the verification-mail round trip. Three public landings (e-mail invitation / shareable link / PIN), one `PendingJoinStore` (session for a visitor with no account, `User.pendingJoin*` once one exists), consumed by `LoginSubscriber`. A link or a PIN never verifies an account; only an e-mail invitation does
 
 ## Testing
 

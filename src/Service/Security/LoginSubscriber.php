@@ -6,33 +6,48 @@ namespace App\Service\Security;
 
 use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
+use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
+use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\User;
+use App\Enum\InvitationKind;
 use App\Exception\AlreadyMember;
 use App\Exception\CannotJoinFinishedMatchSource;
 use App\Exception\CompetitionInvitationAlreadyAccepted;
 use App\Exception\CompetitionInvitationAlreadyRevoked;
 use App\Exception\CompetitionInvitationExpired;
 use App\Exception\InvalidInvitationToken;
+use App\Exception\InvalidPin;
 use App\Exception\InvalidShareableLink;
-use App\Service\Competition\CompetitionJoinIntentSession;
+use App\Service\Competition\PendingJoin;
+use App\Service\Competition\PendingJoinStore;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
+use Symfony\Component\Uid\Uuid;
 
+/**
+ * Completes a pending competition join at the first moment the account is allowed to
+ * have one — which, for a shareable link or a PIN, is the login that follows the e-mail
+ * verification.
+ *
+ * B15: the user is then sent to the **competition**, not to the Nástěnka. Landing on an
+ * empty dashboard after being promised a join reads as „it did not work", which is
+ * exactly how the bug was reported even on the runs where the join had succeeded.
+ */
 final class LoginSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly RequestStack $requestStack,
-        private readonly CompetitionJoinIntentSession $joinIntent,
-        private readonly InvitationIntentSession $invitationIntent,
+        private readonly PendingJoinStore $pendingJoins,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -73,60 +88,89 @@ final class LoginSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Invitation intent takes priority over shareable-link intent.
-        $pendingInvitationToken = $this->invitationIntent->consume();
+        $pending = $this->pendingJoins->consume($user);
 
-        if (null !== $pendingInvitationToken) {
-            $this->handleInvitationIntent($event, $user, $pendingInvitationToken, $flashBag);
-
+        if (null === $pending) {
             return;
         }
 
-        $pendingLinkToken = $this->joinIntent->consume();
+        $competitionId = $this->join($pending, $user, $flashBag);
 
-        if (null === $pendingLinkToken) {
-            return;
-        }
+        $event->setResponse(new RedirectResponse(
+            null !== $competitionId
+                ? $this->urlGenerator->generate('competition_detail', ['id' => $competitionId->toRfc4122()])
+                : $this->urlGenerator->generate('dashboard')
+        ));
+    }
+
+    /**
+     * @return Uuid|null the competition joined, or null when the intent could not be honoured
+     */
+    private function join(PendingJoin $pending, User $user, ?FlashBagInterface $flashBag): ?Uuid
+    {
+        $command = match ($pending->kind) {
+            InvitationKind::Email => new AcceptCompetitionInvitationCommand(userId: $user->id, token: $pending->token),
+            InvitationKind::ShareableLink => new JoinCompetitionByLinkCommand(userId: $user->id, token: $pending->token),
+            InvitationKind::Pin => new JoinCompetitionByPinCommand(userId: $user->id, pin: $pending->token),
+        };
 
         try {
-            $this->commandBus->dispatch(new JoinCompetitionByLinkCommand(
-                userId: $user->id,
-                token: $pendingLinkToken,
-            ));
-
-            $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže.');
+            $envelope = $this->commandBus->dispatch($command);
         } catch (HandlerFailedException $handlerFailed) {
-            $inner = $handlerFailed->getPrevious();
+            $this->explain($handlerFailed->getPrevious(), $flashBag);
 
-            if (
-                !($inner instanceof InvalidShareableLink)
-                && !($inner instanceof AlreadyMember)
-                && !($inner instanceof CannotJoinFinishedMatchSource)
-            ) {
-                throw $handlerFailed;
-            }
+            return null;
+        } catch (\Throwable $e) {
+            $this->explain($e, $flashBag);
 
-            if ($inner instanceof AlreadyMember) {
-                $flashBag?->add('info', 'V soutěži již jsi.');
-            } else {
-                $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
-            }
-        } catch (InvalidShareableLink|AlreadyMember|CannotJoinFinishedMatchSource $e) {
-            if ($e instanceof AlreadyMember) {
-                $flashBag?->add('info', 'V soutěži již jsi.');
-            } else {
-                $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
-            }
+            return null;
         }
 
-        $event->setResponse(
-            new RedirectResponse($this->urlGenerator->generate('dashboard'))
-        );
+        $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže.');
+
+        return $this->competitionIdOf($envelope->last(HandledStamp::class)?->getResult());
+    }
+
+    /**
+     * Only the known „this invitation cannot be honoured" outcomes are turned into a
+     * message; anything else is a real fault and must keep bubbling up.
+     */
+    private function explain(?\Throwable $failure, ?FlashBagInterface $flashBag): void
+    {
+        if ($failure instanceof AlreadyMember) {
+            $flashBag?->add('info', 'V soutěži již jsi.');
+
+            return;
+        }
+
+        $known = $failure instanceof InvalidShareableLink
+            || $failure instanceof InvalidPin
+            || $failure instanceof InvalidInvitationToken
+            || $failure instanceof CannotJoinFinishedMatchSource
+            || $failure instanceof CompetitionInvitationExpired
+            || $failure instanceof CompetitionInvitationAlreadyAccepted
+            || $failure instanceof CompetitionInvitationAlreadyRevoked;
+
+        if (!$known) {
+            throw $failure ?? new \LogicException('Pending join failed without a cause.');
+        }
+
+        $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
+    }
+
+    private function competitionIdOf(mixed $result): ?Uuid
+    {
+        return match (true) {
+            $result instanceof Competition => $result->id,
+            $result instanceof CompetitionInvitation => $result->competition->id,
+            default => null,
+        };
     }
 
     /**
      * Sign-up runs through the `Auth:RegistrationForm` Live Component, so the request route
-     * is the shared `ux_live_component`, not `app_register` — both spellings count.
+     * is the shared `ux_live_component`, not `app_register` — both spellings count, and so
+     * does the invitation landing's own form.
      */
     private function isRegistrationRequest(?Request $request): bool
     {
@@ -134,61 +178,10 @@ final class LoginSubscriber implements EventSubscriberInterface
             return false;
         }
 
+        $component = $request->attributes->get('_live_component');
+
         return 'app_register' === $request->attributes->get('_route')
-            || 'Auth:RegistrationForm' === $request->attributes->get('_live_component');
-    }
-
-    private function handleInvitationIntent(
-        LoginSuccessEvent $event,
-        User $user,
-        string $token,
-        ?\Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface $flashBag,
-    ): void {
-        try {
-            $envelope = $this->commandBus->dispatch(new AcceptCompetitionInvitationCommand(
-                userId: $user->id,
-                token: $token,
-            ));
-
-            $stamp = $envelope->last(HandledStamp::class);
-            $invitation = null !== $stamp ? $stamp->getResult() : null;
-
-            if ($invitation instanceof CompetitionInvitation) {
-                $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže přes pozvánku.');
-                $event->setResponse(new RedirectResponse(
-                    $this->urlGenerator->generate('competition_detail', ['id' => $invitation->competition->id->toRfc4122()])
-                ));
-
-                return;
-            }
-        } catch (HandlerFailedException $handlerFailed) {
-            $inner = $handlerFailed->getPrevious();
-
-            if (
-                !($inner instanceof InvalidInvitationToken)
-                && !($inner instanceof CompetitionInvitationExpired)
-                && !($inner instanceof CompetitionInvitationAlreadyAccepted)
-                && !($inner instanceof CompetitionInvitationAlreadyRevoked)
-                && !($inner instanceof AlreadyMember)
-            ) {
-                throw $handlerFailed;
-            }
-
-            if ($inner instanceof AlreadyMember) {
-                $flashBag?->add('info', 'V soutěži již jsi.');
-            } else {
-                $flashBag?->add('warning', 'Pozvánku se nepodařilo uplatnit.');
-            }
-        } catch (InvalidInvitationToken|CompetitionInvitationExpired|CompetitionInvitationAlreadyAccepted|CompetitionInvitationAlreadyRevoked|AlreadyMember $e) {
-            if ($e instanceof AlreadyMember) {
-                $flashBag?->add('info', 'V soutěži již jsi.');
-            } else {
-                $flashBag?->add('warning', 'Pozvánku se nepodařilo uplatnit.');
-            }
-        }
-
-        $event->setResponse(
-            new RedirectResponse($this->urlGenerator->generate('dashboard'))
-        );
+            || 'Auth:RegistrationForm' === $component
+            || 'Auth:InvitationForm' === $component;
     }
 }

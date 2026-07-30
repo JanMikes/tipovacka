@@ -6,6 +6,7 @@ namespace App\Service\Invitation;
 
 use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
+use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
 use App\Entity\User;
 use App\Enum\InvitationKind;
 use App\Exception\AlreadyMember;
@@ -13,8 +14,8 @@ use App\Exception\CannotJoinFinishedMatchSource;
 use App\Exception\CompetitionInvitationAlreadyAccepted;
 use App\Exception\CompetitionInvitationAlreadyRevoked;
 use App\Exception\CompetitionInvitationExpired;
-use App\Service\Competition\CompetitionJoinIntentSession;
-use App\Service\Security\InvitationIntentSession;
+use App\Service\Competition\PendingJoin;
+use App\Service\Competition\PendingJoinStore;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -37,8 +38,7 @@ final readonly class InvitationAcceptanceService
         private UrlGeneratorInterface $urlGenerator,
         private RequestStack $requestStack,
         private ClockInterface $clock,
-        private InvitationIntentSession $invitationIntent,
-        private CompetitionJoinIntentSession $joinIntent,
+        private PendingJoinStore $pendingJoins,
         private Environment $twig,
         #[Autowire(service: 'command.bus')]
         private MessageBusInterface $commandBus,
@@ -64,10 +64,13 @@ final readonly class InvitationAcceptanceService
 
         // Email-kind invitations targeted at the user's own address verify the account
         // implicitly when accepted (see AcceptCompetitionInvitationHandler), so don't block
-        // unverified users at the gate. Shareable-link invitations carry no such proof.
+        // unverified users at the gate. A shareable link or a PIN carries no such proof.
         if (!$currentUser->isVerified && InvitationKind::Email !== $context->kind) {
-            $this->rememberIntent($context);
-            $this->flash('warning', 'Nejprve si ověř svou e-mailovou adresu.');
+            $this->rememberIntent($context, $currentUser);
+            $this->flash('warning', sprintf(
+                'Nejprve si ověř svou e-mailovou adresu — pak tě rovnou přidáme do soutěže %s.',
+                $context->competitionName,
+            ));
 
             return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
         }
@@ -81,10 +84,16 @@ final readonly class InvitationAcceptanceService
      */
     public function joinCompetitionAsUser(InvitationContext $context, User $user): Response
     {
+        // The join is happening right now, so any intent recorded for later is spent —
+        // leaving it would replay at the next login as „V soutěži již jsi.".
+        $this->pendingJoins->forget($user);
+
         try {
-            $command = InvitationKind::Email === $context->kind
-                ? new AcceptCompetitionInvitationCommand(userId: $user->id, token: $context->token)
-                : new JoinCompetitionByLinkCommand(userId: $user->id, token: $context->token);
+            $command = match ($context->kind) {
+                InvitationKind::Email => new AcceptCompetitionInvitationCommand(userId: $user->id, token: $context->token),
+                InvitationKind::ShareableLink => new JoinCompetitionByLinkCommand(userId: $user->id, token: $context->token),
+                InvitationKind::Pin => new JoinCompetitionByPinCommand(userId: $user->id, pin: $context->token),
+            };
 
             $this->commandBus->dispatch($command);
 
@@ -114,12 +123,14 @@ final readonly class InvitationAcceptanceService
         ));
     }
 
-    public function rememberIntent(InvitationContext $context): void
+    /**
+     * @param User|null $user the account the intent belongs to, when one already exists —
+     *                        passing it makes the intent survive the verification mail
+     *                        round trip, which the session alone cannot (B15)
+     */
+    public function rememberIntent(InvitationContext $context, ?User $user = null): void
     {
-        match ($context->kind) {
-            InvitationKind::Email => $this->invitationIntent->store($context->token),
-            InvitationKind::ShareableLink => $this->joinIntent->store($context->token),
-        };
+        $this->pendingJoins->remember(new PendingJoin($context->kind, $context->token), $user);
     }
 
     public function flash(string $type, string $message): void

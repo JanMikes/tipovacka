@@ -17,6 +17,8 @@ final class ResetPasswordFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // B17 — same autofill semantics as the registration pair: `new-password` on both
+        // halves, or the browser prompts to save after the first field.
         $builder->add('newPassword', RepeatedType::class, [
             'type' => PasswordType::class,
             'options' => [
@@ -26,12 +28,14 @@ final class ResetPasswordFormType extends AbstractType
                 'label' => 'Nové heslo',
                 'attr' => [
                     'placeholder' => 'Zadejte nové heslo',
+                    'autocomplete' => 'new-password',
                 ],
             ],
             'second_options' => [
                 'label' => 'Potvrzení hesla',
                 'attr' => [
                     'placeholder' => 'Zopakujte nové heslo',
+                    'autocomplete' => 'new-password',
                 ],
             ],
             'invalid_message' => 'Hesla se musí shodovat.',

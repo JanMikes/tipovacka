@@ -177,11 +177,15 @@ final class InvitationForm extends AbstractController
             return $this->acceptanceService->joinCompetitionAsUser($this->context, $user);
         }
 
-        // Shareable-link: the new user is unverified; remember the intent so LoginSubscriber
-        // completes the join after they verify their email.
-        $this->acceptanceService->rememberIntent($this->context);
+        // Shareable link / PIN: the new user is unverified, so the join has to wait. The
+        // intent is recorded ON THE ACCOUNT (not only in the session) because the next
+        // step happens in a mailbox — possibly in another browser (B15).
+        $this->acceptanceService->rememberIntent($this->context, $user);
         $this->security->login($user);
-        $this->acceptanceService->flash('success', 'Registrace proběhla úspěšně. Potvrď e-mail, ať tě přidáme do soutěže.');
+        $this->acceptanceService->flash('success', sprintf(
+            'Registrace proběhla úspěšně. Potvrď e-mail a rovnou tě přidáme do soutěže %s.',
+            $this->context->competitionName,
+        ));
 
         return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
     }
@@ -216,9 +220,12 @@ final class InvitationForm extends AbstractController
         // Email-kind invitations are addressed to a specific mailbox; accepting one
         // verifies the account in the handler, so we don't need to gate login here.
         if (!$user->isVerified && InvitationKind::Email !== $this->context->kind) {
-            $this->acceptanceService->rememberIntent($this->context);
+            $this->acceptanceService->rememberIntent($this->context, $user);
             $this->security->login($user);
-            $this->acceptanceService->flash('warning', 'Nejprve si ověř svou e-mailovou adresu. Zkontroluj schránku.');
+            $this->acceptanceService->flash('warning', sprintf(
+                'Nejprve si ověř svou e-mailovou adresu — pak tě rovnou přidáme do soutěže %s.',
+                $this->context->competitionName,
+            ));
 
             return new RedirectResponse($this->urlGenerator->generate('app_verify_email_pending'));
         }
@@ -231,7 +238,19 @@ final class InvitationForm extends AbstractController
     private function handleCompleteRegistration(InvitationFormData $data): ?Response
     {
         \assert(null !== $data->password);
-        \assert(InvitationKind::Email === $this->context->kind, 'Stub completion only happens with email-invite kind.');
+
+        // Only an e-mail invitation carries the token that can set a password on a
+        // pre-provisioned account. Reached through a shareable link or a PIN, the same
+        // address belongs to an account we cannot prove the visitor owns — send them
+        // through password reset instead of handing it over.
+        if (InvitationKind::Email !== $this->context->kind) {
+            $this->acceptanceService->flash(
+                'info',
+                'Na tento e-mail už účet existuje, ale nemá heslo. Nastav si ho přes „Zapomenuté heslo" a pak se přihlas.',
+            );
+
+            return null;
+        }
 
         try {
             $this->commandBus->dispatch(new CompleteInvitationRegistrationCommand(

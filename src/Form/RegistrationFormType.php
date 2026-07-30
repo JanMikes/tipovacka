@@ -56,6 +56,9 @@ class RegistrationFormType extends AbstractType
             ],
         ]);
 
+        // B17 — both halves of the pair must say `new-password`. Without it the browser
+        // sees a lone password box, decides the user just signed in and offers to save
+        // the password before the confirmation has even been typed.
         $builder->add('password', RepeatedType::class, [
             'type' => PasswordType::class,
             'options' => [
@@ -65,12 +68,14 @@ class RegistrationFormType extends AbstractType
                 'label' => 'Heslo',
                 'attr' => [
                     'placeholder' => 'Zadejte heslo',
+                    'autocomplete' => 'new-password',
                 ],
             ],
             'second_options' => [
                 'label' => 'Heslo znovu',
                 'attr' => [
                     'placeholder' => 'Zopakujte heslo',
+                    'autocomplete' => 'new-password',
                 ],
             ],
             'invalid_message' => 'Hesla se musí shodovat.',

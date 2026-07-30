@@ -99,6 +99,13 @@ final class AnonymousReachabilityTest extends WebTestCase
         // --- Invitation landings (public on purpose: they onboard logged-out people) ---
         \App\Controller\Invitation\AcceptEmailInvitationController::class => false,
         \App\Controller\Invitation\JoinByShareableLinkController::class => false,
+        // B15 made the PIN a landing like the other two, and for the same reason: it is a
+        // join secret an organizer hands out, and demanding an account before it may be
+        // typed is what lost it. Public here means „may be TYPED", never „may join": with
+        // no account the PIN is only remembered, and an unverified account is still sent
+        // to the airlock by InvitationAcceptanceService::handleAuthenticated.
+        \App\Controller\Invitation\JoinByPinController::class => false,
+        \App\Controller\Invitation\QuickJoinByPinController::class => false,
 
         // --- Portal (the whole authenticated app) --------------------------------------
         \App\Controller\Portal\AccountDeleteController::class => true,
@@ -112,7 +119,6 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Portal\Competition\CompetitionSettingsController::class => true,
         \App\Controller\Portal\Competition\CreateCompetitionController::class => true,
         \App\Controller\Portal\Competition\EnablePremiumController::class => true,
-        \App\Controller\Portal\Competition\JoinByPinController::class => true,
         \App\Controller\Portal\Competition\JoinGlobalCompetitionController::class => true,
         \App\Controller\Portal\Competition\LeaveCompetitionController::class => true,
         \App\Controller\Portal\Competition\LockCompetitionTipsController::class => true,
@@ -121,7 +127,6 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Portal\Competition\PremiumSettingsController::class => true,
         \App\Controller\Portal\Competition\PromoteAnonymousMemberController::class => true,
         \App\Controller\Portal\Competition\PurchaseBoostController::class => true,
-        \App\Controller\Portal\Competition\QuickJoinByPinController::class => true,
         \App\Controller\Portal\Competition\RegeneratePinController::class => true,
         \App\Controller\Portal\Competition\RegenerateShareableLinkController::class => true,
         \App\Controller\Portal\Competition\RemoveMemberController::class => true,

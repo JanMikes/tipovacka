@@ -5,12 +5,14 @@
 {% block auth_content %}
     <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
 
-        {# LEFT — value prop (after the card on mobile) #}
+        {# LEFT — value prop (after the card on mobile).
+           The PIN bar moved out (batch 12: a PIN box on the sign-in page was dead weight —
+           „Znám PIN" now lives on /pripojit, which works before an account exists), and so
+           did the „247 hráčů tipuje právě teď" pill and the three stat tiles
+           (12 400+ hráčů / 340 aktivních soutěží / 98 % doporučí dál). Those figures were
+           invented: there is no user base yet, so claiming one on the page where somebody
+           decides to sign in is a plain misrepresentation. Nothing measured replaces them. #}
         <section class="order-2 flex flex-col gap-6 lg:order-1">
-            {{ include('_partials/join_by_pin_form.html.twig') }}
-
-            <span class="pill pill-live w-max"><span class="ring"></span> 247 hráčů tipuje právě teď</span>
-
             <div class="flex flex-col gap-4">
                 <span class="eyebrow">Vítejte zpátky · pokračování v soutěži</span>
                 <h1 class="grad-headline text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl">
@@ -21,35 +23,11 @@
                 </p>
             </div>
 
-            <div class="mt-1 flex flex-wrap gap-x-9 gap-y-6">
-                <div class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-500/30 bg-gradient-to-br from-accent-500/[0.18] to-accent-deep/10 text-accent-300">
-                        <twig:ux:icon name="lucide:users" class="h-5 w-5" />
-                    </span>
-                    <span>
-                        <span class="block text-2xl font-black leading-none tracking-tight text-white tabular-nums">12 400+</span>
-                        <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.1em] text-white/50">Hráčů</span>
-                    </span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-500/30 bg-gradient-to-br from-accent-500/[0.18] to-accent-deep/10 text-accent-300">
-                        <twig:ux:icon name="lucide:trophy" class="h-5 w-5" />
-                    </span>
-                    <span>
-                        <span class="block text-2xl font-black leading-none tracking-tight text-white tabular-nums">340</span>
-                        <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.1em] text-white/50">Aktivních soutěží</span>
-                    </span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent-500/30 bg-gradient-to-br from-accent-500/[0.18] to-accent-deep/10 text-accent-300">
-                        <twig:ux:icon name="lucide:zap" class="h-5 w-5" />
-                    </span>
-                    <span>
-                        <span class="block text-2xl font-black leading-none tracking-tight text-accent-300 tabular-nums">98 %</span>
-                        <span class="mt-1 block text-[10px] font-bold uppercase tracking-[0.1em] text-white/50">Doporučí dál</span>
-                    </span>
-                </div>
-            </div>
+            <p class="max-w-[46ch] text-sm leading-relaxed text-white/50">
+                Máte PIN od organizátora?
+                <a href="{{ path('competition_join_by_pin') }}" class="font-semibold text-accent-300 transition-colors hover:text-accent-200">Připojte se k soutěži</a>
+                — účet k tomu mít nemusíte.
+            </p>
         </section>
 
         {# RIGHT — form card (first on mobile) #}

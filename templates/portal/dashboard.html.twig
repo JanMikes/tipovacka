@@ -19,24 +19,44 @@
 
 {% if selected_competition is null %}
 
-    {# ───── Nikde nehraju — jediná věc, která tu dává smysl, je začít ───── #}
+    {#
+        Nikde nehraju. Pořadí je záměrné (B15): skoro každý, kdo sem dorazí prázdný,
+        dostal PIN od organizátora — takže PIN je primární akce, „Procházet soutěže"
+        druhá a „Vytvořit soutěž" až třetí a vizuálně menší. Zakládání vlastní soutěže
+        je práce organizátora, ne první krok hráče.
+    #}
     <header class="mb-6">
         <p class="eyebrow mb-3">Nástěnka</p>
         <h1 class="grad-headline text-3xl font-extrabold tracking-tight sm:text-4xl">
             <span>Ahoj, {{ app.user.nickname }}.</span>
         </h1>
+        <p class="mt-4 max-w-2xl text-white/60">
+            Zatím nehraješ v žádné soutěži. Nástěnka ukazuje jednu soutěž — tvoje pořadí,
+            zápasy k tipnutí a žebříček.
+        </p>
     </header>
 
-    <div class="card-glass">
-        <twig:EmptyState
-            illustration="match_sources"
-            title="Zatím nehraješ v žádné soutěži"
-            body="Nástěnka ukazuje jednu soutěž — tvoje pořadí, zápasy k tipnutí a žebříček. Založ si vlastní soutěž pro partu nebo firmu, nebo se připoj k existující přes PIN, pozvánku či veřejný seznam."
-            ctaLabel="Vytvořit soutěž"
-            :ctaPath="path('competition_create')"
-            secondaryLabel="Procházet soutěže"
-            :secondaryPath="path('competitions_list')"
-        />
+    <div class="flex flex-col gap-4">
+        {# 1. — PIN od organizátora #}
+        {{ include('_partials/join_by_pin_form.html.twig') }}
+
+        {# 2. — veřejné soutěže #}
+        <div class="card-glass flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="font-bold text-white">Nemáš PIN?</p>
+                <p class="mt-1 text-sm text-white/60">Projdi si veřejné soutěže a přidej se k některé.</p>
+            </div>
+            <a href="{{ path('competitions_list') }}" class="btn btn-ghost btn-sm shrink-0">
+                <twig:ux:icon name="lucide:search" class="h-4 w-4" />
+                Procházet soutěže
+            </a>
+        </div>
+
+        {# 3. — až nakonec, a menší: založit si vlastní #}
+        <p class="px-1 text-sm text-white/50">
+            Chceš soutěž pro partu nebo firmu vést sám?
+            <a href="{{ path('competition_create') }}" class="font-semibold text-accent-300 transition-colors hover:text-accent-200">Vytvoř si vlastní soutěž</a>.
+        </p>
     </div>
 
 {% else %}

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration\Portal\Competition;
+namespace App\Tests\Integration\Invitation;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Membership;
@@ -12,6 +12,10 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * `/pripojit` for somebody who already has a verified account — the PIN still joins in
+ * one step. (The anonymous half of the page lives in InviteFunnelJourneyTest.).
+ */
 final class JoinByPinFlowTest extends WebTestCase
 {
     public function testJoiningWithValidPin(): void
@@ -42,11 +46,11 @@ final class JoinByPinFlowTest extends WebTestCase
         $client->request('GET', '/pripojit');
         self::assertResponseIsSuccessful();
 
-        $client->submitForm('Připojit se', [
+        $client->submitForm('Pokračovat', [
             'join_by_pin_form[pin]' => AppFixtures::VERIFIED_COMPETITION_PIN,
         ]);
 
-        self::assertResponseRedirects();
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
 
         $memberships = $em->createQueryBuilder()
             ->select('m')
@@ -72,7 +76,7 @@ final class JoinByPinFlowTest extends WebTestCase
 
         $client->request('GET', '/pripojit');
 
-        $client->submitForm('Připojit se', [
+        $client->submitForm('Pokračovat', [
             'join_by_pin_form[pin]' => '99999999',
         ]);
 

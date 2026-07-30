@@ -2,6 +2,26 @@
 
 {% block title %}Ověření e-mailu čeká — {{ brand_name }}{% endblock %}
 
+{#
+    B14 — the airlock is an airlock. The guard already bounces every portal page back
+    here, but rendering the full app bar (Nástěnka / Soutěže / Žebříček / „Vytvořit
+    soutěž" / avatar) advertised an app that is closed, so the bouncing read as the site
+    being broken rather than as a step being missing. Only the brand mark stays; the two
+    ways out — „Poslat znovu" and „Odhlásit se" — are in the card.
+#}
+{% block navigation %}
+    <header class="wtnav">
+        <div class="bar">
+            <span class="brand" aria-label="{{ brand_name }}">
+                <span class="brand-mark" aria-hidden="true">W</span>
+                <span class="brand-name">{{ brand_name }}</span>
+            </span>
+        </div>
+    </header>
+{% endblock %}
+
+{% block page_footer %}{% endblock %}
+
 {% block auth_panel_tagline %}Ověřte svůj e-mail a soutěže na vás už čekají.{% endblock %}
 
 {% block auth_card %}

@@ -37,7 +37,6 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
         yield 'oznámení' => ['/oznameni'];
         yield 'žebříček' => ['/zebricek'];
         yield 'nová soutěž' => ['/souteze/nova'];
-        yield 'připojení PINem' => ['/pripojit'];
         yield 'detail soutěže' => ['/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID];
     }
 
@@ -59,7 +58,6 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
     {
         yield 'nákup kreditů' => ['/kredity/koupit', 'POST'];
         yield 'připojení do globální soutěže' => ['/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'/pripojit-se', 'POST'];
-        yield 'rychlé připojení PINem' => ['/pripojit/rychle', 'POST'];
         yield 'opuštění soutěže' => ['/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/opustit', 'POST'];
         yield 'označení oznámení' => ['/oznameni/precteno', 'POST'];
     }
@@ -148,6 +146,10 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
     {
         yield 'airlock' => [self::AIRLOCK];
         yield 'veřejné soutěže' => ['/souteze'];
+        // B15 turned the PIN page into a landing like the two invitation ones: reachable,
+        // because it must onboard people who have no account at all. Reaching it is not
+        // joining through it — testUnverifiedUserStillCannotJoinByPin pins that.
+        yield 'připojení PINem' => ['/pripojit'];
         yield 'FAQ' => ['/faq'];
         yield 'ceník' => ['/cenik'];
         yield 'ochrana soukromí' => ['/ochrana-soukromi'];
@@ -225,6 +227,78 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
 
         self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+    }
+
+    /**
+     * B15/B14 — a PIN is typeable while unverified, but it may only be *remembered*.
+     */
+    public function testUnverifiedUserStillCannotJoinByPin(): void
+    {
+        $client = static::createClient();
+        $this->loginUnverified($client);
+
+        $client->request('GET', '/pripojit');
+        $client->submitForm('Pokračovat', ['join_by_pin_form[pin]' => AppFixtures::VERIFIED_COMPETITION_PIN]);
+
+        self::assertResponseRedirects(self::AIRLOCK);
+
+        $em = $this->entityManager($client);
+        $em->clear();
+        $memberships = $em->getConnection()->fetchOne(
+            'SELECT COUNT(*) FROM memberships WHERE user_id = :u AND competition_id = :c',
+            ['u' => AppFixtures::UNVERIFIED_USER_ID, 'c' => AppFixtures::VERIFIED_COMPETITION_ID],
+        );
+
+        self::assertSame(0, (int) $memberships, 'A PIN must not buy a membership before the e-mail is verified.');
+    }
+
+    /**
+     * B14 — the guard, exercised the way a browser does it.
+     *
+     * Every other test here logs in with `KernelBrowser::loginUser()`, which primes the
+     * token storage directly. That is exactly the shape that hid B1: the subscriber ran
+     * BEFORE the firewall, so `Security::getUser()` was empty on every real request while
+     * the tests stayed green. A real form login followed by several navigations is the
+     * only version of this assertion that can fail when the ordering breaks again.
+     */
+    public function testTheGuardHoldsAfterARealFormLogin(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/prihlaseni');
+        $client->submitForm('Přihlásit se', [
+            '_username' => AppFixtures::UNVERIFIED_USER_EMAIL,
+            '_password' => AppFixtures::DEFAULT_PASSWORD,
+        ]);
+        self::assertResponseRedirects(self::AIRLOCK);
+
+        foreach (['/nastenka', '/zapasy', '/profil', '/kredity', '/oznameni', '/zebricek', '/souteze/nova'] as $path) {
+            $client->request('GET', $path);
+            self::assertResponseRedirects(self::AIRLOCK, message: $path.' must bounce even on a later request.');
+        }
+    }
+
+    /**
+     * B14 — an account that may go nowhere must not be shown a bar full of places to go.
+     * The guard was holding all along; the app-variant nav made it look otherwise.
+     */
+    public function testAirlockRendersWithoutTheAppChrome(): void
+    {
+        $client = static::createClient();
+        $this->loginUnverified($client);
+
+        $client->request('GET', self::AIRLOCK);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('a[href="/nastenka"]');
+        self::assertSelectorNotExists('a[href="/souteze"]');
+        self::assertSelectorNotExists('a[href="/zebricek"]');
+        self::assertSelectorNotExists('a[href="/souteze/nova"]');
+        self::assertSelectorNotExists('a[href="/profil"]');
+        self::assertSelectorNotExists('nav.primary');
+        // The two ways out stay.
+        self::assertSelectorExists('form[action="/overeni-ceka/znovu-odeslat"]');
+        self::assertSelectorExists('a[href="/odhlaseni"]');
     }
 
     /**

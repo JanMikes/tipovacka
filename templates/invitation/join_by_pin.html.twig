@@ -1,0 +1,43 @@
+{% extends 'auth/_layout.html.twig' %}
+
+{% block title %}Připojit se k soutěži — {{ brand_name }}{% endblock %}
+
+{% block auth_panel_tagline %}Máte PIN od organizátora? Zadejte ho a jste v soutěži.{% endblock %}
+
+{% block auth_card %}
+    <div class="card-glass p-8 sm:p-10">
+        <span class="eyebrow inline-flex items-center gap-2">
+            <twig:ux:icon name="lucide:key-round" class="h-3.5 w-3.5" />
+            Připojit se k soutěži
+        </span>
+        <h1 class="mt-2 text-2xl font-bold tracking-tight text-white">Zadejte PIN soutěže</h1>
+        <p class="mt-2 text-sm leading-relaxed text-white/60">
+            Zadejte 8místný PIN, který vám dal organizátor. Ukážeme vám, do které soutěže se chystáte —
+            {% if app.user %}a rovnou vás připojíme.{% else %}účet si můžete založit hned potom.{% endif %}
+        </p>
+
+        <div class="mt-8">
+            {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
+
+                <div class="field">
+                    {{ form_label(form.pin, null, {label_attr: {class: 'field-label mb-1.5 block'}}) }}
+                    {{ form_widget(form.pin, {attr: {class: 'input text-center font-mono text-lg tracking-[0.3em]'}}) }}
+                    {{ form_errors(form.pin) }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    Pokračovat
+                </button>
+
+            {{ form_end(form) }}
+        </div>
+
+        {% if not app.user %}
+            <p class="mt-6 text-center text-sm text-white/50">
+                Máte pozvánku odkazem? Otevřete ji — nebo se rovnou
+                <a href="{{ path('app_login') }}" class="font-semibold text-accent-300 transition-colors hover:text-accent-200">přihlaste</a>.
+            </p>
+        {% endif %}
+    </div>
+{% endblock %}

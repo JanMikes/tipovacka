@@ -6,6 +6,7 @@ namespace App\Service\Invitation;
 
 use App\Enum\InvitationKind;
 use App\Exception\InvalidInvitationToken;
+use App\Exception\InvalidPin;
 use App\Exception\InvalidShareableLink;
 use App\Repository\CompetitionInvitationRepository;
 use App\Repository\CompetitionRepository;
@@ -21,12 +22,14 @@ final readonly class InvitationContextResolver
     /**
      * @throws InvalidInvitationToken when an email-kind token has no matching invitation
      * @throws InvalidShareableLink   when a shareable-link-kind token has no matching competition
+     * @throws InvalidPin             when a pin-kind token has no matching competition
      */
     public function resolve(InvitationKind $kind, string $token, \DateTimeImmutable $now): InvitationContext
     {
         return match ($kind) {
             InvitationKind::Email => $this->resolveEmailInvitation($token, $now),
             InvitationKind::ShareableLink => $this->resolveShareableLink($token, $now),
+            InvitationKind::Pin => $this->resolvePin($token),
         };
     }
 
@@ -73,6 +76,33 @@ final readonly class InvitationContextResolver
         return new InvitationContext(
             kind: InvitationKind::ShareableLink,
             token: $token,
+            competitionId: $competition->id,
+            competitionName: $competition->name,
+            matchSourceName: $competition->matchSource->name,
+            inviterNickname: $competition->owner->nickname,
+            presetEmail: null,
+            status: $status,
+            expiresAt: null,
+        );
+    }
+
+    private function resolvePin(string $pin): InvitationContext
+    {
+        $competition = $this->competitionRepository->getByPin($pin);
+
+        // Same defence as the shareable link: a global competition is joined by paying
+        // the entry fee, never by knowing a secret, so a stray PIN must not resolve.
+        if ($competition->isGlobal) {
+            throw InvalidPin::create();
+        }
+
+        $status = $competition->matchSource->isCompleted
+            ? InvitationContextStatus::MatchSourceCompleted
+            : InvitationContextStatus::Active;
+
+        return new InvitationContext(
+            kind: InvitationKind::Pin,
+            token: $pin,
             competitionId: $competition->id,
             competitionName: $competition->name,
             matchSourceName: $competition->matchSource->name,
