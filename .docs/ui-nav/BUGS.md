@@ -16,7 +16,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B6 | Boost can be bought for a competition that is already over | DONE | `436841f` |
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
-| B9 | Team picker's create row shows English „Add …" | TODO | — |
+| B9 | Team picker's create row shows English „Add …" | DONE | — |
 
 ---
 
@@ -762,3 +762,85 @@ team picker (match edit, `/zapasy/{id}/upravit`) and in both player pickers (mat
 picker; `/zapasy/{id}/skore`) and confirm the create row is Czech, that picking it still creates the
 team/player, and that B3/B8 have not regressed (dropdown escapes its card; the control does not
 change height on focus). `composer quality` cannot see any of this.
+
+### What was actually wrong — the survey held, but it was one string short
+
+Re-derived from the vendored bundle rather than trusted: `assets/vendor/tom-select/tom-select.index.js`
+(2.6.0 `tom-select.complete`) defines exactly **eight** default renderers — `optgroup_header`, `option`,
+`item`, `option_create`, `no_results`, `loading` (a bare spinner), `not_loading` (returns nothing) and
+`dropdown` (an empty div). Only **two** of them carry English text: `option_create`
+(`<div class="create">Add <strong>…</strong>&hellip;</div>`) and `no_results` („No results found").
+All five construction sites override `no_results`; only `team_picker` was missing `option_create`.
+`loading_more` / `no_more_results` exist only in the `virtual_scroll` plugin, which nothing uses
+(the only plugin in the app is `remove_button`). So the table above was right.
+
+Two things it did not have:
+
+1. **A fourth `no_results` string.** The scope note lists three; `score_entry` had its own („Žádný
+   hráč — napište jméno"), so the create-capable pickers had three different ways of saying it.
+2. **`remove_button` renders an English tooltip.** The plugin hard-codes `title: "Remove"` on every
+   chip's `×` (visible on hover, and the control's accessible name), in `scorer_picker` and
+   `team_filter`. Not a renderer, so the grep in the survey could not have found it.
+
+### What changed (copy only — no CSS, no behaviour, no new picker option)
+
+| Site | `option_create` | `no_results` |
+|---|---|---|
+| `team_picker` | **new** — „Přidat tým „**X**"…" | „Nic nenalezeno — napište název nového týmu" |
+| `scorer_picker` | „Přidat hráče „**X**"…" (unchanged — it set the pattern) | „Nic nenalezeno — napište jméno nového hráče" (unchanged) |
+| `score_entry` | „Přidat hráče „**X**"…" (quotes added) | „Nic nenalezeno — napište jméno nového hráče" |
+| `team_filter` | n/a (`create: false`) | „Žádný tým nenalezen" (unchanged) |
+| `tom_select` | n/a (`create: false`) | „Nic nenalezeno" (unchanged default value) |
+
+Plus `plugins: ['remove_button']` → `plugins: { remove_button: { title: 'Odebrat' } }` in the two
+multi pickers. `escape(data.input)` is kept in every renderer — the typed value is user input.
+
+**The Czech quotes are the house style**, not a coin flip: twelve places in `templates/` already wrap a
+dynamic name in „…" (`Opravdu chcete soutěž „{{ name }}" smazat?`, `Koupit „{{ type.label }}"`), so the
+quoted variant is the one that matches the rest of the UI. The create-capable pickers now share one
+shape — „Nic nenalezeno — napište <jméno/název> nového <hráče/týmu>" — and the two that cannot create
+just report that nothing was found, per the rule above.
+
+`class="create"` is load-bearing and is kept: `render()` only stamps `data-selectable` on the returned
+element, so the class comes from our template — and B3's dark-highlight rule is
+`.ts-dropdown .create.active`. The `py-1` alongside it is inert (vendor's unlayered
+`.ts-dropdown .create { padding: 5px 8px }` out-cascades a Tailwind utility layer); it is kept only so
+the three renderers read identically. Measured create-row padding is `5px 8px` in all three.
+
+### Verification (headless Chrome, measured — `composer quality` sees none of this)
+
+Per picker: `getBoundingClientRect()` on the control plus the rect of every other node on the page
+(`body *`, minus the `.ts-wrapper`/`.ts-dropdown` subtrees) at rest → on focus → while typing.
+
+| Picker | Page | control Δh (focus / typing) | displaced nodes | create row |
+|---|---|---|---|---|
+| team picker ×2 | `/zapasy/{id}/upravit` @1440 & @390 | 44 → 44 → 44 px, Δ 0 | 0 | „Přidat tým „Zzzqqq Nováček"…" |
+| score-entry player picker | `/zapasy/{id}/skore` @1440 | 44 → 44 → 44 px, Δ 0 | 0 | „Přidat hráče „Zzzqqq Střelec"…" |
+| scorer picker (multi) | match detail @1440 | 44 → 44 → 44 px, Δ 0 | 0 | „Přidat hráče „Zzzqqq Střelec"…" |
+| team filter (multi) | `…/zapasy-vyber` @1440 | 56 → 56 → 56 px, Δ 0 | 0 | none (`create: false`) — correct |
+
+- **B3 intact**: on all four pages the open dropdown's parent is `<body>`, `z-index: 300`, zero
+  clipping ancestors; the control's background stays `rgb(12,19,33)` on focus; the create row is
+  `.create.active` with `rgba(70,153,208,0.18)`, i.e. dark-highlighted, not the vendor's white strip.
+- **Creating still works end-to-end**: typed „Zzzqqq Nováček" in the team picker, clicked the Czech
+  create row with a real mouse click, submitted the form → „Zápas byl uložen" and a `teams` row with
+  `match_source_id` = the private source (local scope, per `TeamResolver`). Reverted afterwards.
+- **`remove_button` still registers with the object config**: `ts.plugins.names === ['remove_button']`,
+  the wrapper keeps `plugin-remove_button`, every chip renders `<a class="remove" title="Odebrat">×</a>`,
+  and five chips were added (create row) and removed one by one with real mouse clicks.
+
+### Assumptions made
+
+- **The `remove_button` tooltip was translated too**, although the scope list does not name it. It is
+  the same defect (stock English string in a Czech picker), it is copy-only, and it changes no layout;
+  the object plugin form is tom-select's documented config shape and was verified to still load the
+  plugin. Revert = two lines if the product owner disagrees.
+- **`team_filter`'s and `tom_select`'s „nothing found" wording was left alone.** They cannot create, so
+  they already satisfy the rule („just say nothing was found"); rewording them would be invention.
+- **The `no-results` element's classes were not touched.** `team_picker` / `team_filter` style theirs
+  with utilities while the others use the skin's `.no-results` — aligning them would change padding and
+  color, i.e. a visual change, which this item excludes. Noted for a future pass.
+- One page (`/souteze/{id}/zapasy-vyber`) refuses synthetic mouse input in headless Chrome — a click on
+  empty background produces no event at document level either, so it is a harness quirk, not the app.
+  Chip add/remove was therefore proven with real clicks on the scorer picker (same plugin, same config)
+  and with a dispatched click on the team filter itself.

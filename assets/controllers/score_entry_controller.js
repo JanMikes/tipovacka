@@ -191,8 +191,8 @@ export default class extends Controller {
             searchField: ['name'],
             placeholder: 'Jméno hráče…',
             render: {
-                option_create: (data, escape) => `<div class="create py-1">Přidat hráče <strong>${escape(data.input)}</strong>…</div>`,
-                no_results: () => '<div class="no-results">Žádný hráč — napište jméno</div>',
+                option_create: (data, escape) => `<div class="create py-1">Přidat hráče „<strong>${escape(data.input)}</strong>“…</div>`,
+                no_results: () => '<div class="no-results">Nic nenalezeno — napište jméno nového hráče</div>',
             },
         });
 

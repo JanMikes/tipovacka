@@ -47,7 +47,11 @@ export default class extends Controller {
                     return `<div class="flex items-center justify-between gap-2"><span>${escape(data.name)}</span>${meta ? `<span class="text-xs text-white/40">${escape(meta)}</span>` : ''}</div>`;
                 },
                 item: (data, escape) => `<div>${escape(data.name)}</div>`,
-                no_results: () => '<div class="px-3 py-2 text-sm text-white/40">Napište název — vytvoří se nový tým</div>',
+                // Without this override the create row falls back to tom-select's stock
+                // English „Add <b>…</b>…". The `create` class is what the dark skin (and
+                // its `.create.active` highlight) keys on — keep it.
+                option_create: (data, escape) => `<div class="create py-1">Přidat tým „<strong>${escape(data.input)}</strong>“…</div>`,
+                no_results: () => '<div class="px-3 py-2 text-sm text-white/40">Nic nenalezeno — napište název nového týmu</div>',
             },
         });
 

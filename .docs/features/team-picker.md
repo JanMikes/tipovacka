@@ -28,6 +28,12 @@ import and the form uniform and JS-optional.
   enhances the plain home/away text input into a single-select tom-select that autocompletes
   existing teams and creates a new one on free-type. Degrades to a normal text input with JS
   off (the typed name still posts and resolves server-side).
+- **Copy — every stock tom-select string must be overridden**, or it falls back to English
+  (B9). A picker that can create says „Přidat tým „**X**"…" / „Přidat hráče „**X**"…"
+  (`option_create`, keeping the `create` class the dark skin's `.create.active` rule needs)
+  and its `no_results` invites creating („Nic nenalezeno — napište název nového týmu");
+  a picker that cannot create (`team-filter`) only reports „Žádný tým nenalezen". The typed
+  value is user input — always `escape(data.input)`.
 - Autocomplete endpoint: `TeamAutocompleteController` (`GET /zdroje/{id}/tymy?q=…`,
   gated by `MatchSourceVoter::CREATE_MATCH`) → `TeamRepository::searchGlobalBySport` (curated)
   or `searchLocalBySource` (private).

@@ -49,7 +49,8 @@ export default class extends Controller {
 
         this.instance = new TomSelect(this.selectTarget, {
             dropdownParent: 'body', // never let a card's overflow/stacking context crop it
-            plugins: ['remove_button'],
+            // The plugin's stock chip tooltip is the English „Remove".
+            plugins: { remove_button: { title: 'Odebrat' } },
             maxItems: this.maxValue,
             maxOptions: 200,
             create: (input) => {

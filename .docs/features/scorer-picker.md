@@ -44,3 +44,7 @@ backed by the source's `Player` roster pool with free-typed creation.
   LiveProp and dispatches `input` — the only channel between JS island and component.
 - **Cap**: `maxItems` mirrors `GuessScorer::MAX_PER_GUESS` (5); the command path
   enforces it authoritatively (`TooManyGuessScorers`, 422).
+- **Copy**: the create row is „Přidat hráče „**X**"…" and „no results" is „Nic nenalezeno —
+  napište jméno nového hráče" — the same wording as the organizer's score-entry player picker
+  (`score_entry_controller.js`). The `remove_button` plugin gets `title: 'Odebrat'`; its stock
+  chip tooltip is English. See B9 in `.docs/ui-nav/BUGS.md`.
