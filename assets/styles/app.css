@@ -1335,17 +1335,27 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
    `.flatpickr-days`, `.dayContainer` (there as width + min-width + max-width) —
    and `.flatpickr-rContainer` inherits it by being inline-block around them.
    Inside the „Uzamknout tipy" dialog the picker only gets 214 px at a 320 px
-   viewport (dialog 320 − 2×24 padding − the 40 px icon − its 16 px gap), so the
-   „So"/„Ne" columns and the minutes field fell outside the panel. B13/B22
+   viewport (dialog 320 − 2×1 panel border − 2×24 padding − the 40 px icon − its
+   16 px gap; do not drop the border, 320−48−40−16 gives 216 and the measured
+   column is 214.00), so the „So"/„Ne" columns and the minutes field fell outside
+   the panel — at 320 px by 68.9 px, with 14 runs of text ink outside it. B13/B22
    family, one step further again: `min-width: 0` has nothing to offer when the
    child's width is *declared*, so the declarations themselves have to go fluid.
    No breakpoint and no restructure — the widths become relative at every width,
-   which is also why the ~2 px by which `.flatpickr-days` used to overhang the
-   calendar's own border box (clipping „Ne" at EVERY width, 1440 px included)
-   is gone.
+   which is also why `.flatpickr-days` no longer overhangs its calendar. It used
+   to be 307.875 px wide starting 1 px inside a 307.875 px calendar: 1.00 px past
+   the border box, 2.00 px past the PADDING box — and the skin above sets
+   `overflow: hidden`, which clips at the padding box, so 2.00 px really were
+   clipped, at every width, 1440 px included. What lived in those 2 px was the
+   tail of the „Ne" column's cell band, NOT its label: the „Ne" glyphs cleared
+   the clip edge by 11.25 px and the last day column's numbers by 11.4…15.7 px,
+   so no text was ever cut — the B29 ink-vs-box lesson, in the other direction.
+   The grid now lands exactly on the clip edge (0.00).
    `.flatpickr-calendar` keeps `width: 307.875px` and only gains a cap: for the
    floating pickers (admin forms, match detail) `max-width` resolves against the
-   viewport-sized containing block, so they are untouched; for the inline one it
+   viewport-sized containing block, so their calendar box is unchanged — measured
+   307.875 px on all nine of them, even at a 320 px viewport (their inner grid
+   does lose the 2 px overhang, like everything else). For the inline one it
    resolves against the dialog column and shrinks. The inner three then follow
    whatever the calendar became. `flex: 1 1 0` (not `width: 100%`) on the
    rContainer so a week-number column, should one ever be enabled, still gets
@@ -1356,12 +1366,16 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
 .dayContainer { width: 100%; min-width: 0; max-width: 100%; }
 
 /* The month/year header is the one part that does NOT scale with the above, and
-   shrinking the calendar is what exposes it: „Červenec" (89.5 px) plus the 6ch
-   year block (70 px) plus the two 34 px arrows want 227.5 px, and at a 320 px
-   viewport the header band is 212 px — so the year wrapped onto a second line
-   and was clipped by the months bar, undoing B24 visually one commit after B24
-   fixed its colour. Measured, not assumed: 212 px is the only width in the
-   320…1440 range where it does not fit.
+   shrinking the calendar is what exposes it. Vendor gives `.flatpickr-current-month`
+   `width: 75%` of the band and centres it, with the two 34 px arrows absolutely
+   positioned in the 12.5 % gutters — so the arrows add nothing to its content
+   width and the constraint is that 75 %. At the 212 px band a 320 px viewport
+   leaves, the box is 159.00 px while „Červenec" (89.48 px) plus the 6ch year
+   block (69.96 px) measure 159.44 px: it misses by 0.44 px, the year wraps to a
+   second line and hangs 13.38 px below the months bar — undoing B24 visually one
+   commit after B24 fixed its colour. Measured by deleting just this rule pair:
+   two line boxes at 300 / 310 / 320 px, one from 330 px (band 222, box 166.5) up,
+   so 320 px is the only viewport in the 320…1440 ladder where it does not fit.
    A container query, not a media query: the picker is shared and its width is
    set by whatever box it lands in, never by the viewport — the whole B13/B22
    lesson is to measure the container. `.flatpickr-months` is `width: 100 %` of
@@ -1370,6 +1384,10 @@ span.flatpickr-weekday { background: var(--color-inset); color: var(--fg-3); fon
    (containment moves their containing block from the calendar's padding box to
    the header's — the two coincide, measured identical). */
 .flatpickr-months { container-type: inline-size; }
+/* 236 px, not 213: the measured floor for the full-size header is a 212.6 px band,
+   so this keeps a ~23 px margin and hands over while both sizes still fit (at a
+   242 px band the full-size header has 8.1 px of slack, at 232 px the reduced one
+   has 21.6 px). One line box at every width from 300 to 1440 px. */
 @container (max-width: 236px) {
     .flatpickr-current-month { font-size: 115%; }
     /* 6ch is sized for a spinner the disabled year never shows; 5ch still
