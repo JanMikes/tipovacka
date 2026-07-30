@@ -274,6 +274,25 @@ label.required::after {
     .btn-light { background: #fff; color: #0f1726; }
     .btn-clear { background: rgba(255,255,255,0.10); color: #fff; border-color: rgba(255,255,255,0.22); }
 
+    /* --- item 31: arrow links ---
+       „An arrow means navigation, so it is a link" (product owner). A secondary
+       „go see more" link carrying a `lucide:arrow-right` is accent text with the arrow
+       inline — no border, no background — so navigation stops competing with the
+       actions beside it. A PRIMARY action keeps its button chrome even with an arrow
+       („Zadat tip →", the marketing CTAs): the tell is action vs navigation, not the
+       icon. This is exactly the shape three call sites had already grown inline
+       (`text-sm font-semibold text-accent-300 hover:text-accent-200`), collapsed into
+       one definition. `.btn` never had a focus style of its own — it leaned on the UA
+       ring — so the ring below is the missing half rather than a replacement: a bare
+       text link on a dark surface must stay findable by keyboard. */
+    .link-arrow {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 14px; font-weight: 600; color: var(--color-accent-300);
+        transition: color var(--dur-base) var(--ease-standard);
+    }
+    .link-arrow:hover { color: var(--color-accent-200); }
+    .link-arrow:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 3px; border-radius: 6px; }
+
     /* ---- Pills (match state / status) ---- */
     .pill {
         display: inline-flex; align-items: center; gap: 6px;

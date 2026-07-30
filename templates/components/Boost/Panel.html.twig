@@ -81,10 +81,12 @@
                                 {% endif %}
                             </div>
                             {% if owned %}
-                                {# Bought ⇒ jump straight to the surface it unlocked. #}
+                                {# Bought ⇒ jump straight to the surface it unlocked. Navigace,
+                                   ne akce (koupit umí jen řádek vedle), takže textový odkaz se
+                                   šipkou; `w-full` drží původní velkou dotykovou plochu (item 31). #}
                                 {% set jump = jump_targets[type.value] %}
                                 <div class="mt-3">
-                                    <a href="{{ jump.url }}" class="btn btn-ghost btn-sm w-full justify-between">
+                                    <a href="{{ jump.url }}" class="link-arrow w-full">
                                         {{ jump.label }}
                                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                                     </a>

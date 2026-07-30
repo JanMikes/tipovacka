@@ -94,7 +94,7 @@
 
             {% if organized.hasMore %}
                 <div class="mt-6 flex justify-center">
-                    <a href="{{ path('competitions_list', app.request.query.all|merge({'moje-strana': organized.page + 1})|filter(v => v is not empty)) }}#souteze-organizuji" class="btn btn-ghost btn-sm">
+                    <a href="{{ path('competitions_list', app.request.query.all|merge({'moje-strana': organized.page + 1})|filter(v => v is not empty)) }}#souteze-organizuji" class="link-arrow">
                         Zobrazit další
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>
@@ -140,7 +140,7 @@
 
             {% if discoverable.hasMore %}
                 <div class="mt-6 flex justify-center">
-                    <a href="{{ path('competitions_list', app.request.query.all|merge({'strana': discoverable.page + 1})|filter(v => v is not empty)) }}#souteze-verejne" class="btn btn-ghost btn-sm">
+                    <a href="{{ path('competitions_list', app.request.query.all|merge({'strana': discoverable.page + 1})|filter(v => v is not empty)) }}#souteze-verejne" class="link-arrow">
                         Zobrazit další
                         <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
                     </a>

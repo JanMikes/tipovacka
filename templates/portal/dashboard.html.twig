@@ -132,8 +132,10 @@
                 </div>
             </div>
 
-            {# Zrychlená volba pod tabulkou „Tvoje pozice" (tlačítko se šipkou). #}
-            <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm w-full justify-between">
+            {# Zrychlená volba pod tabulkou „Tvoje pozice" — šipka znamená navigaci, tedy
+               odkaz, ne tlačítko (item 31). `w-full` zůstává: ohraničené tlačítko tu bylo
+               přes celou šířku a bez něj by se cíl na mobilu zmenšil na šířku textu. #}
+            <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="link-arrow w-full">
                 Zobrazit celou tabulku
                 <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
             </a>
@@ -147,7 +149,7 @@
             <h2 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Poslední Tvoje tipy</h2>
             {% if recent_guesses|length > 0 %}
                 <a href="{{ path('leaderboard_member', {soutez: competition_id, userId: app.user.id.toRfc4122}) }}"
-                   class="text-sm font-semibold text-accent-300 transition-colors hover:text-accent-200">
+                   class="link-arrow">
                     Historie
                     <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
                 </a>
@@ -237,9 +239,10 @@
             {% endfor %}
         </ul>
 
-        {# „Všechny soutěže" patří pod seznam mých soutěží, ne do hlavičky sekce. #}
+        {# „Všechny soutěže" patří pod seznam mých soutěží, ne do hlavičky sekce.
+           Vystředění drží rodič, odkaz je jen text se šipkou (item 31). #}
         <div class="mt-5 flex justify-center">
-            <a href="{{ path('competitions_list') }}" class="btn btn-ghost btn-sm">
+            <a href="{{ path('competitions_list') }}" class="link-arrow">
                 Všechny soutěže
                 <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
             </a>
@@ -357,7 +360,7 @@
                 </div>
 
                 <div class="mt-4 flex justify-end">
-                    <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="text-sm font-semibold text-accent-300 transition-colors hover:text-accent-200">
+                    <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="link-arrow">
                         Celý žebříček
                         <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
                     </a>

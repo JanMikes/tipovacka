@@ -414,6 +414,17 @@ Item 18 added a small shared pattern at the end of the component layer: `.card-c
 that must stay reachable above it) — the way a card becomes clickable as a whole **without nesting
 interactive elements**.
 
+Item 31 added `.link-arrow` at the end of the button block: accent text, inline `lucide:arrow-right`,
+no border and no background, with its own `:focus-visible` ring (`.btn` never had one — it leaned on
+the UA default). **An arrow means navigation, so a secondary „go see more" link wears this class, not
+`btn-ghost`** — the nine call sites are „Zobrazit celou tabulku" / „Historie" / „Všechny soutěže" /
+„Celý žebříček" (×2), „Otevřít" on `Competition:Card`, the boost panel's jump link and both
+„Zobrazit další" pagers. **A primary action keeps its button chrome even with an arrow** — „Zadat
+tip →", the `btn-primary` family and the marketing CTAs (including `/cenik`'s three matched plan
+CTAs, where the middle one is `btn-light` and converting only its ghost twins would render one call
+to action two ways). Keep `w-full` where the button was full-width; a text link is a smaller tap
+target otherwise.
+
 Item 21 deleted the retired match-row shape from that layer (≈110 lines): the original 7-track `.tip-row`
 grid and **both** `@media (max-width: 900px)` collapses, B7's four wrapping zones (`.tip-row-line`,
 `.tip-row-when`, `.tip-row-teams`, `.tip-row-score`, `.tip-row-match`, `.tip-row-end`, `.tip-row-outcome`,
