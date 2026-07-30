@@ -78,9 +78,19 @@
                     {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = null %}{% set pill_label = 'Brzy' %}{% set pill_dot = true %}
                 {% endif %}
                 <li>
-                    {# `tipStats` is a LIST: a match can sit in several of the viewer's
-                       soutěže, so the card renders one „Rozložení tipů" strip per soutěž
-                       — all of them from ONE TipStatsProvider batch, never per row. #}
+                    {#
+                        Two cross-competition facts of this page (both B5's reasoning):
+
+                        1. `tipStats` is a LIST — a match can sit in several of the viewer's
+                           soutěže, so the card renders one „Rozložení tipů" strip per soutěž,
+                           all of them from ONE TipStatsProvider batch, never per row.
+                        2. No `myHome`/`myAway` and no `tipMissingLabel`: this row aggregates
+                           soutěže, so it can neither show „MŮJ TIP 2 : 1" (which tip?) nor
+                           claim „Netipováno". `tipUrl` — the card's single „Zadat tip" —
+                           therefore hangs on a tip actually MISSING somewhere, not merely on
+                           the match being tippable; otherwise a card whose pilulka says
+                           „Tip odeslán (2/2)" would invite a tip in the same breath.
+                    #}
                     <twig:Match:MatchRow
                         :homeTeam="m.homeTeam"
                         :awayTeam="m.awayTeam"
@@ -96,7 +106,7 @@
                         :resultAway="m.isFinished or m.isLive ? m.awayScore : null"
                         :detailUrl="path('sport_match_detail', {id: m.id.toRfc4122})"
                         :detailLabel="is_tippable ? 'Tipovat' : 'Detail zápasu'"
-                        :tipUrl="is_tippable ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
+                        :tipUrl="has_pending ? path('sport_match_detail', {id: m.id.toRfc4122}) : null"
                         :tipStats="m.tipStats"
                         :footNote="m.matchSourceName ~ (m.venue ? ' · ' ~ m.venue : '')"
                     />

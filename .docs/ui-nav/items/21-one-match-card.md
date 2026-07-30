@@ -53,13 +53,13 @@ box. So:
 
 ## Acceptance criteria
 
-- [ ] `Match:MatchRow` has **no `variant` prop**, one layout, and no dead CSS or branch left from the old one.
-- [ ] All three surfaces — `/zapasy`, the Nástěnka, competition detail — render the same card, each still passing its own props correctly.
-- [ ] **B5 holds**: „Netipováno" appears on competition detail only; `/zapasy` and the Nástěnka still say „Uzamčeno".
-- [ ] A `/zapasy` row belonging to **several** soutěže renders **every** „Rozložení tipů" strip, and the page still resolves them in ONE batch (assert the query count).
-- [ ] The whole card is ONE `<a>` on every surface, with **nothing interactive nested inside it** — the „Rozložení tipů" strip is a control and must stay a **sibling** (assert `a.tip-row-link a|button|input|select` = 0).
-- [ ] `/_design` shows one card, no „variant" language.
-- [ ] `grep` finds no remaining reference to `variant="default"`, `variant="dashboard"` or `tipPrompt` outside history.
+- [x] `Match:MatchRow` has **no `variant` prop**, one layout, and no dead CSS or branch left from the old one.
+- [x] All three surfaces — `/zapasy`, the Nástěnka, competition detail — render the same card, each still passing its own props correctly.
+- [x] **B5 holds**: „Netipováno" appears on competition detail only; `/zapasy` and the Nástěnka still say „Uzamčeno".
+- [x] A `/zapasy` row belonging to **several** soutěže renders **every** „Rozložení tipů" strip, and the page still resolves them in ONE batch (assert the query count).
+- [x] The whole card is ONE `<a>` on every surface, with **nothing interactive nested inside it** — the „Rozložení tipů" strip is a control and must stay a **sibling** (assert `a.tip-row-link a|button|input|select` = 0).
+- [x] `/_design` shows one card, no „variant" language.
+- [x] `grep` finds no remaining reference to `variant="default"`, `variant="dashboard"` or `tipPrompt` outside history.
 
 ## Verification
 
@@ -108,4 +108,50 @@ and if you are cut off say what is unverified.
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **The multi-strip case was already correct — no fix needed.** The footer region
+   („Rozložení tipů" + poznámka) was defined ONCE in the component and used by both shapes, and
+   its `{% for s in strips %}` loop plus the `strips|length > 1` soutěž heading were part of that
+   shared definition, so the surviving shape inherited them. Verified on `/zapasy`: four cards
+   carry two strips each, both rendered, headed „TIPOVAČKA MS 2026" / „FANDÍME ČESKU", vertically
+   112 px apart with zero overlap at every width from 960 down to 288 px. The gallery now shows
+   the case too (`[tip_stats.unlocked, tip_stats.boostsLocked]`), because production had it and
+   `/_design` did not.
+2. **`/zapasy` gates `tipUrl` on a tip actually MISSING, not on the match being tippable.** The
+   migration exposed a copy contradiction the old shape hid: `/zapasy` passes no `myHome`/`myAway`
+   (cross-competition — which soutěž's tip would it show?), so the unified footer fell to „Zadat
+   tip" on *every* tippable card, including 7 whose pilulka said „Tip odeslán" / „Tip odeslán
+   (2/2)". That is the family of defect B7 reported and item 18 removed („the card asked for a tip
+   twice"). `tipUrl` now hangs on `has_pending`, so the CTA appears exactly where the pilulka says
+   „Chybí tip"; a fully-tipped-but-open card has no footer, which is what `/zapasy` rendered before
+   this item anyway. The card still links to the match either way (`tipUrl ?? detailUrl`, the same
+   URL on this page), so nothing became unreachable and B7's invariant holds.
+3. **`.tip-row.is-dash` stays as the CSS hook.** With one shape the marker class is redundant, but
+   dropping it would mean re-scoping ~15 selectors and re-verifying the geometry for a cosmetic
+   rename, plus churning three tests that key on it. The class is documented as „the one card" in
+   the CSS comment instead. Renaming it is a free, isolated follow-up if anyone wants it.
+4. **What was deleted, and how it was established dead.** Props: `variant`, `tipPrompt` (grep: no
+   call site left, and the surviving branch never read it). Markup: the whole `{% else %}` block.
+   CSS: the original 7-track grid + its `@media (max-width: 900px)` collapse, the three 3 px stripe
+   rules item 11 had already overridden, `.tip-row-line`, `.tip-row-when` (+`.time/.day/.round`),
+   `.tip-row-teams` (+`.home/.info/.name/.role`), `.tip-row-score` (+`.num/.sep/.upcoming`),
+   `.tip-row-match`/`a.tip-row-match`, `.tip-row-end`, `.tip-row-outcome`, `.tip-row-actions`,
+   `.tip-row-pill-link`, `.my-tip.empty` (+ its label/value overrides), `a.my-tip*`, B7's second
+   media query and item 11's `.tip-row { display: block; padding: 0 }` (a no-op once the grid it
+   neutralised was gone). Each was grepped across `templates/`, `src/`, `tests/` and
+   `assets/` first; `.tip-row-actions` and `.tip-row-outcome` had had no markup since item 11.
+   **Kept** because they are still used: `.tip-row` chrome, the five 4 px state stripes, `.my-tip`
+   /`.my-tip.set`/`.my-tip.none`/`-lbl`/`-val`/`-pts`, `.result-tip*` (the Nástěnka's own tip
+   column, not the card), `.tip-row-extra`/`-boost-label`/`-note`, every `.tip-stats-*` and
+   `.tipd-*`.
+5. **Measured** (headless Chrome, pairwise bounding-box intersection over every painted leaf, plus
+   a per-card „does any child paint outside its card" check), at 1600 / 1440 / 1280 / 1024 / 768 /
+   430 / 320 px on `/zapasy`, `/nastenka`, two competition details (12 matches with playoff +
+   points; 6 matches with „Netipováno" + CTA) and `/_design`, in the states `open · tipped · live ·
+   locked · finished-with-points · playoff`: **zero overlaps, zero horizontal overflow, zero card
+   overflow, zero spill**, and zero wrapped team names (`Range`-based line count, clustered by
+   vertical centre) — names ellipsize instead. Repeated with every name rewritten to „FK Slovácko B
+   (Uherské Hradiště)" / „Zbrojovka Brno B — Uherský Brod": same result, 66 names ellipsized at
+   430/320 px, none wrapped. **Card widths by container**: `/zapasy` **960 → 720 → 398 → 288**
+   (the container nobody had measured), Nástěnka 1088 / 633.6 („Odehrané zápasy") → 288,
+   competition detail 1088 → 960 → 720 → 398 → 288, `/_design` 894 / 439 / 380 → 238.
+   `a.tip-row-link a|button|input|select` = **0** on all of them, one link per card.

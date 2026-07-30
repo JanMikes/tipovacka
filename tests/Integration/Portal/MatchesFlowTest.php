@@ -10,8 +10,12 @@ use App\Entity\Guess;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpKernel\Profiler\Profile;
 use Symfony\Component\Uid\Uuid;
 
 final class MatchesFlowTest extends WebTestCase
@@ -209,5 +213,80 @@ final class MatchesFlowTest extends WebTestCase
         self::assertStringContainsString('Tygři', $body);
         self::assertStringContainsString('Uzamčeno', $body);
         self::assertStringNotContainsString('Chybí tip', $body);
+    }
+
+    /**
+     * Item 21 — this page is CROSS-competition, so one match card can carry several
+     * „Rozložení tipů" strips (one per soutěž of the viewer's that includes the
+     * match), each under the name of its soutěž. The unified card has to render
+     * EVERY one of them, not just the first — and the page must still resolve them
+     * in ONE TipStatsProvider batch, so the cost cannot grow with the match count.
+     */
+    public function testAMatchInSeveralSoutezeRendersEveryTipStatsStripFromOneBatch(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        // Admin plays PUBLIC_COMPETITION and — added here — SUBSET_COMPETITION; both
+        // are on PUBLIC_SOURCE and both include MATCH_SCHEDULED.
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $subset = $em->find(Competition::class, Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID));
+        self::assertNotNull($subset);
+        $membership = new Membership(
+            id: Uuid::v7(),
+            competition: $subset,
+            user: $admin,
+            joinedAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $membership->popEvents();
+        $em->persist($membership);
+        $em->flush();
+
+        $client->loginUser($admin);
+
+        $crawler = $client->request('GET', '/zapasy');
+        self::assertResponseIsSuccessful();
+
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID;
+        $card = $crawler->filter('.tip-row')
+            ->reduce(static fn (Crawler $node): bool => $node->filter('a.tip-row-link[href="'.$url.'"]')->count() > 0);
+        self::assertCount(1, $card, 'Expected exactly one card for the shared match.');
+
+        $strips = $card->filter('.tip-stats-open, .tip-stats-locked');
+        self::assertGreaterThanOrEqual(2, $strips->count(), 'A match in several soutěže must render a strip per soutěž.');
+
+        // Every strip is titled with ITS soutěž — otherwise they are indistinguishable.
+        $labels = $card->filter('.tip-row-boost-label')->each(static fn (Crawler $n): string => trim($n->text()));
+        self::assertCount($strips->count(), $labels);
+        self::assertSame($labels, array_values(array_unique($labels)));
+        self::assertNotContains('', $labels);
+
+        // …and all of them come from ONE batch: the whole list costs about the same
+        // as a single-match filter would.
+        $all = $this->queryCount($client, '/zapasy');
+        $few = $this->queryCount($client, '/zapasy?filtr=ukoncene');
+        self::assertGreaterThan(0, $few);
+        self::assertLessThanOrEqual(
+            $few + 12,
+            $all,
+            '/zapasy must batch „Rozložení tipů" — a per-match query would scale with the match count.',
+        );
+    }
+
+    private function queryCount(KernelBrowser $client, string $path): int
+    {
+        $client->enableProfiler();
+        $client->request('GET', $path);
+        self::assertResponseIsSuccessful();
+
+        $profile = $client->getProfile();
+        self::assertInstanceOf(Profile::class, $profile);
+
+        $collector = $profile->getCollector('db');
+        self::assertInstanceOf(DoctrineDataCollector::class, $collector);
+
+        return $collector->getQueryCount();
     }
 }
