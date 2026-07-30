@@ -51,7 +51,10 @@ export default class extends Controller {
                 // English „Add <b>…</b>…". The `create` class is what the dark skin (and
                 // its `.create.active` highlight) keys on — keep it.
                 option_create: (data, escape) => `<div class="create py-1">Přidat tým „<strong>${escape(data.input)}</strong>“…</div>`,
-                no_results: () => '<div class="px-3 py-2 text-sm text-white/40">Nic nenalezeno — napište název nového týmu</div>',
+                // `no-results` is the dark skin's class for this state (B12) — the other four
+                // pickers use it, so styling it with ad-hoc utilities made the same „nothing
+                // found" row read as a different component depending on which picker you opened.
+                no_results: () => '<div class="no-results">Nic nenalezeno — napište název nového týmu</div>',
             },
         });
 
