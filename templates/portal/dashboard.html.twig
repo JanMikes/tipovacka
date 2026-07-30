@@ -87,13 +87,14 @@
                 />
             </div>
             <p class="mt-4 max-w-2xl text-white/60">
-                Tvoje pozice, zápasy k tipnutí a žebříček v soutěži
-                <a href="{{ path('competition_detail', {id: competition_id}) }}" class="font-bold text-accent-300 transition-colors hover:text-accent-200">{{ selected_competition.competitionName }}</a>.
+                Na této obrazovce můžeš přepínat mezi jednotlivými soutěžemi, které hraješ,
+                uvidíš zde zrychlené volby pro konkrétní soutěž.
             </p>
         </div>
 
         {# „Tvoje pozice" — jen když už mám v tabulce řádek #}
         {% if standing is not null %}
+        <div class="flex flex-col gap-3">
             <div class="hero-rank">
                 <p class="hero-rank-label">Tvoje pozice</p>
                 <p class="hero-rank-pool">{{ selected_competition.competitionName }}</p>
@@ -129,6 +130,13 @@
                     </div>
                 </div>
             </div>
+
+            {# Zrychlená volba pod tabulkou „Tvoje pozice" (tlačítko se šipkou). #}
+            <a href="{{ path('leaderboard', {soutez: competition_id}) }}" class="btn btn-ghost btn-sm w-full justify-between">
+                Zobrazit celou tabulku
+                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+            </a>
+        </div>
         {% endif %}
     </header>
 
@@ -167,6 +175,14 @@
                 {% endfor %}
             </div>
         {% endif %}
+
+        {# Zrychlená volba: natipovat celou soutěž na jedné stránce. #}
+        <div class="mt-4">
+            <a href="{{ path('competition_my_tips_batch', {id: competition_id}) }}" class="btn btn-primary btn-sm">
+                <twig:ux:icon name="lucide:target" class="h-4 w-4" />
+                Tipovat zápasy v soutěži
+            </a>
+        </div>
     </section>
 
     {# ───── Moje soutěže — záměrně NEfiltrované přepínačem, je to přehled ───── #}
@@ -176,17 +192,19 @@
                 Moje soutěže
                 <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-semibold text-white/70">{{ my_competitions|length }}</span>
             </h2>
-            <a href="{{ path('competitions_list') }}" class="text-sm font-semibold text-accent-300 transition-colors hover:text-accent-200">
-                Všechny soutěže
-                <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
-            </a>
         </div>
 
         <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
             {% for g in my_competitions %}
                 {% set is_selected = g.competitionId.toRfc4122 == competition_id %}
                 <li>
-                    <div class="card-glass flex h-full flex-col justify-between p-5 sm:p-6{{ is_selected ? ' border-accent-500/40' }}">
+                    {#
+                        Celá karta vede do soutěže. Není to <a> okolo obsahu, ale
+                        rozprostřený odkaz NAD ním (`.card-stretch`, poslední v DOM):
+                        „Zobrazit na nástěnce" tak zůstává funkční a přitom nikdy
+                        nevznikne interaktivní prvek vnořený v odkazu.
+                    #}
+                    <div class="card-glass card-clickable flex h-full flex-col justify-between p-5 sm:p-6{{ is_selected ? ' border-accent-500/40' }}">
                         <div>
                             <div class="mb-3 flex items-start justify-between gap-3">
                                 <p class="eyebrow min-w-0 truncate">{{ g.matchSourceName }}</p>
@@ -195,26 +213,36 @@
                                     {% if g.matchSourceIsCompleted %}<twig:Pill label="Ukončen" variant="done" />{% endif %}
                                 </div>
                             </div>
-                            <h3 class="text-lg font-bold leading-tight tracking-tight text-white">
-                                <a href="{{ path('competition_detail', {id: g.competitionId.toRfc4122}) }}" class="transition-colors hover:text-accent-200">{{ g.competitionName }}</a>
-                            </h3>
+                            <h3 class="text-lg font-bold leading-tight tracking-tight text-white">{{ g.competitionName }}</h3>
                         </div>
 
                         <div class="mt-5 flex items-center justify-between gap-3">
                             {% if is_selected %}
                                 <span class="text-xs font-bold uppercase tracking-wider text-accent-300">Zobrazená</span>
                             {% else %}
-                                <a href="{{ path('dashboard', {soutez: g.competitionId.toRfc4122}) }}" class="text-xs font-semibold text-white/50 transition-colors hover:text-white">Zobrazit na nástěnce</a>
+                                <a href="{{ path('dashboard', {soutez: g.competitionId.toRfc4122}) }}" class="card-raise text-xs font-semibold text-white/50 transition-colors hover:text-white">Zobrazit na nástěnce</a>
                             {% endif %}
-                            <a href="{{ path('competition_detail', {id: g.competitionId.toRfc4122}) }}" class="shrink-0 text-sm font-bold text-accent-300 transition-colors hover:text-accent-200">
-                                Otevřít soutěž
-                                <twig:ux:icon name="lucide:arrow-right" class="inline h-4 w-4" />
-                            </a>
+                            {# Nefunkční prvek — jen značka, že karta sama je proklik. #}
+                            <span class="shrink-0 text-accent-300" aria-hidden="true">
+                                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                            </span>
                         </div>
+
+                        <a href="{{ path('competition_detail', {id: g.competitionId.toRfc4122}) }}"
+                           class="card-stretch"
+                           aria-label="Otevřít soutěž {{ g.competitionName }}"></a>
                     </div>
                 </li>
             {% endfor %}
         </ul>
+
+        {# „Všechny soutěže" patří pod seznam mých soutěží, ne do hlavičky sekce. #}
+        <div class="mt-5 flex justify-center">
+            <a href="{{ path('competitions_list') }}" class="btn btn-ghost btn-sm">
+                Všechny soutěže
+                <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+            </a>
+        </div>
     </section>
 
     {# ───── Následující zápasy ───── #}

@@ -1096,6 +1096,25 @@ label.required::after {
     .tip-stats-locked.is-muted .tip-stats-ghost > i {
         background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.14) 0 5px, rgba(255,255,255,0.03) 5px 11px);
     }
+
+    /* --- item 18: Nástěnka pass --- */
+
+    /* 1. A card that is clickable AS A WHOLE while still holding a link of its own
+       („Moje soutěže" → soutěž, with „Zobrazit na nástěnce" inside it). The card is
+       NOT wrapped in an <a> — an <a> around a card can never contain another control
+       — the link is stretched OVER the card instead and must therefore come LAST in
+       the DOM, so it paints (and hit-tests) above the text; the one control that has
+       to stay reachable is raised above it with `.card-raise`.
+       `.card-glass > *` sets `position: relative` on every direct child at (0,2,0),
+       so the override has to match that specificity — hence the child selector. */
+    .card-clickable { cursor: pointer; }
+    .card-clickable:hover { border-color: var(--border-3); }
+    .card-glass > .card-stretch, .card > .card-stretch {
+        position: absolute; inset: 0; z-index: 1;
+        border-radius: inherit; font-size: 0;
+    }
+    .card-stretch:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -3px; }
+    .card-raise { position: relative; z-index: 2; }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
