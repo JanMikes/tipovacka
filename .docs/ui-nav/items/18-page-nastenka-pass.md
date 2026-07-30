@@ -149,18 +149,18 @@ is conditional on the match being tippable, so a finished card simply has no foo
 
 ## Acceptance criteria
 
-- [ ] The hero shows the new sentence and no leftover „Tvoje pozice, zápasy k tipnutí…" text.
-- [ ] „Zobrazit celou tabulku" sits under „Tvoje pozice" and reaches `/zebricek?soutez=<id>`.
-- [ ] „Tipovat zápasy v soutěži" sits under „Poslední Tvoje tipy" and reaches `/souteze/{id}/moje-tipy`.
-- [ ] A „Moje soutěže" card is clickable anywhere → competition detail; **„Zobrazit na nástěnce" still works** and there is **no nested interactive element inside a link** (check the markup, not the feel).
-- [ ] „Všechny soutěže" renders **below** the grid.
-- [ ] No soutěž roletka; `?zapasy=` does nothing and no dead plumbing reads it.
-- [ ] Filters render as chips ≥ the desktop breakpoint and as a dropdown below it, both driving the same `?filtr=` param, **both working with JavaScript off**.
-- [ ] The match card matches the mock's structure, is **one** link, and shows „Zadat tip" only when tippable.
-- [ ] The Nástěnka card matches the mock; **`/zapasy` and competition detail render byte-for-byte as before** (prove it, e.g. a rendered-HTML diff).
-- [ ] All three production `MatchRow` surfaces plus `/_design` render correctly in every state: open · tipped · live · locked · finished-with-points · playoff.
-- [ ] Zero overlaps and zero horizontal overflow on all three surfaces at **1600 / 1440 / 1280 / 1024 / 768 / 430 / 320 px**.
-- [ ] „Rozložení tipů" still resolves in ONE batch per page (assert the query count, as `DashboardFlowTest` already does).
+- [x] The hero shows the new sentence and no leftover „Tvoje pozice, zápasy k tipnutí…" text.
+- [x] „Zobrazit celou tabulku" sits under „Tvoje pozice" and reaches `/zebricek?soutez=<id>`.
+- [x] „Tipovat zápasy v soutěži" sits under „Poslední Tvoje tipy" and reaches `/souteze/{id}/moje-tipy`.
+- [x] A „Moje soutěže" card is clickable anywhere → competition detail; **„Zobrazit na nástěnce" still works** and there is **no nested interactive element inside a link** (check the markup, not the feel).
+- [x] „Všechny soutěže" renders **below** the grid.
+- [x] No soutěž roletka; `?zapasy=` does nothing and no dead plumbing reads it.
+- [x] Filters render as chips ≥ the desktop breakpoint and as a dropdown below it, both driving the same `?filtr=` param, **both working with JavaScript off**.
+- [x] The match card matches the mock's structure, is **one** link, and shows „Zadat tip" only when tippable.
+- [x] The Nástěnka card matches the mock; **`/zapasy` and competition detail render byte-for-byte as before** (prove it, e.g. a rendered-HTML diff).
+- [x] All three production `MatchRow` surfaces plus `/_design` render correctly in every state: open · tipped · live · locked · finished-with-points · playoff.
+- [x] Zero overlaps and zero horizontal overflow on all three surfaces at **1600 / 1440 / 1280 / 1024 / 768 / 430 / 320 px**.
+- [x] „Rozložení tipů" still resolves in ONE batch per page (assert the query count, as `DashboardFlowTest` already does).
 
 ## Verification
 
@@ -220,4 +220,45 @@ often, and if you sense trouble commit the verified part and say what is unverif
 
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+1. **The „tlačítko tipovat" report — what the product owner actually saw.** Diagnosed in Chrome at
+   390 px before touching anything (screenshot + a dump of every interactive element inside a card).
+   There is no button called „Tipovat", as the item predicted — but the item's hypothesis (the linked
+   state pill) was only the *secondary* half. The primary culprit was the „můj tip" slot itself: it
+   rendered a caps label **„TIPNOUT"** above the value **„+ Zadat tip"**, i.e. the card asked for a tip
+   twice inside one box, in the imperative of the very verb the report names. Add the amber, linked
+   „CHYBÍ TIP" pill and one card carried **three** amber tappable things pointing at the same URL.
+   Both are gone: exactly one „Zadat tip" bar per tippable card, and the pill is no longer a link.
+2. **ONE component with a `variant` prop, not two components** (orchestrator's call, confirmed once
+   inside the code). The branch is a single marked block in `MatchRow.html.twig`; the footer region
+   („Rozložení tipů" + poznámka) is defined once and used by both shapes, and every hard-won shared
+   behaviour (B7's wrapping zones, `min-width: 0` + ellipsis, the five state stripes, `tipStats`
+   batching, accessible names) stays shared. `/zapasy` and competition detail are proven **byte-for-byte
+   identical** — 54 cards over 4 surfaces, before/after HTML dump from the same warm worker.
+3. **The whole card is one `<a>` — but the „Rozložení tipů" strip stays a SIBLING of it.** That strip
+   is itself a control (a `<form><button>` to buy, or a link to `/kredity`), so it cannot live inside a
+   link. The card link therefore wraps the header, the fixture and the footer CTA; the strip follows it
+   inside the same `.tip-row`. This is the only reading of „celá karta na proklik" that does not nest
+   interactive content. `MatchRowTipLinksTest` pins it.
+4. **„Moje soutěže" uses a stretched overlay link, not a wrapper.** „Zobrazit na nástěnce" has to keep
+   working, so the card's own link is painted OVER the card (`.card-stretch`, last in the DOM) and the
+   inner link is raised above it (`.card-raise`). Verified by hit-testing and by real clicks: the card
+   body opens the soutěž, the inner link switches the Nástěnka. The removed „Otevřít soutěž" link left
+   a non-interactive arrow behind as the affordance that the card itself is clickable.
+5. **The new design applies to BOTH Nástěnka lists** („Následující zápasy" and „Odehrané zápasy"), since
+   item 06 made them share one partial deliberately. Confirmed on screen: a finished card simply has no
+   footer CTA — result in the centre, „MŮJ TIP 3 : 1" with the „+5" badge inline in the bar, unlocked
+   distribution below the divider.
+6. **The state pill was NOT restyled.** The item asks for „amber, outlined (not filled)"; `.pill-soon`
+   is already a 14 %-alpha amber fill inside a 40 %-alpha amber border, which reads as outlined, and
+   `.pill` is global — repainting it for one card would have changed every pill in the app.
+7. **The mobile filter roletka keeps a visible „Použít" submit** rather than a JS auto-submit, so the
+   no-JS path is the only path and cannot rot. Chips ≥ 768 px (`md`), roletka below it; both drive the
+   same `?filtr=`. Verified with JavaScript genuinely disabled (proof: zero tom-select wrappers in the
+   DOM) — the roletka submits and the chips navigate.
+8. **`tipPrompt` is ignored by the dashboard variant** (its CTA is derived from `tipUrl` + „no tip yet"),
+   but the prop stays for the default shape, which competition detail still passes.
+9. **Found and deliberately left:** with JavaScript off, the „Zobrazit další (N)" reveal on the Nástěnka
+   keeps the 6th and later match hidden with no way to expand — pre-existing since item 06, out of this
+   item's scope. Also unchanged: `/zapasy` still renders no „můj tip" box at all (it passes neither the
+   tip nor a prompt), which is now the only surface where a tippable card shows no tip affordance beyond
+   its pill.
