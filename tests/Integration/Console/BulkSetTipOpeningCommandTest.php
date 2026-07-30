@@ -119,6 +119,32 @@ final class BulkSetTipOpeningCommandTest extends IntegrationTestCase
         self::assertEquals(new \DateTimeImmutable('2025-06-16 10:00:00'), $set->opensAt);
     }
 
+    /**
+     * The escape hatch from „tipy se zamykají startem soutěže": pinning every
+     * deadline to the match's own kickoff is what lets a season run round by
+     * round instead of freezing every tip at the first kickoff.
+     */
+    public function testDeadlineOwnKickoffPinsEachMatchToItsOwnKickoff(): void
+    {
+        $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
+        $matchId = Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
+
+        $this->tester()->execute([
+            '--opens-at' => '2025-06-16 12:00',
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--deadline-own-kickoff' => true,
+            '--apply' => true,
+        ]);
+
+        $this->entityManager()->clear();
+
+        $set = $this->settingRepository()->findByCompetitionAndMatch($competitionId, $matchId);
+        self::assertNotNull($set);
+        // MATCH_PRIVATE_SCHEDULED kicks off 2025-06-20 19:00 UTC.
+        self::assertEquals(new \DateTimeImmutable('2025-06-20 19:00:00'), $set->deadline);
+        self::assertEquals(new \DateTimeImmutable('2025-06-16 10:00:00'), $set->opensAt);
+    }
+
     public function testNonAdminEditorIsRefused(): void
     {
         $tester = $this->tester();

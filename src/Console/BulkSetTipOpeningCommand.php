@@ -77,6 +77,7 @@ final class BulkSetTipOpeningCommand extends Command
             ->addOption('editor', null, InputOption::VALUE_REQUIRED, 'UUID of the ADMIN user performing the change')
             ->addOption('note', null, InputOption::VALUE_REQUIRED, 'Optional Czech text shown while a match waits', '')
             ->addOption('except', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Sport match UUID to leave tippable (repeatable)')
+            ->addOption('deadline-own-kickoff', null, InputOption::VALUE_NONE, 'Also pin each match deadline to its OWN kickoff, lifting the competition-wide lock-at-start (OVERWRITES any stored per-match deadline)')
             ->addOption('apply', null, InputOption::VALUE_NONE, 'Actually write. Without it the command only reports.');
     }
 
@@ -105,6 +106,7 @@ final class BulkSetTipOpeningCommand extends Command
         $editorId = Uuid::fromString($editorRaw);
         $note = is_string($input->getOption('note')) ? trim($input->getOption('note')) : '';
         $apply = true === $input->getOption('apply');
+        $ownKickoffDeadline = true === $input->getOption('deadline-own-kickoff');
 
         /** @var list<string> $exceptRaw */
         $exceptRaw = $input->getOption('except');
@@ -125,6 +127,9 @@ final class BulkSetTipOpeningCommand extends Command
             ['Otevřít tipování' => sprintf('%s Prague = %s UTC', $opensAt->format('j. n. Y H:i'), $opensAtUtc->format('Y-m-d H:i'))],
             ['Text během čekání' => '' === $note ? '(žádný)' : $note],
             ['Výjimky (zápasy)' => [] === $except ? '(žádné)' : implode(', ', array_keys($except))],
+            ['Uzávěrka zápasu' => $ownKickoffDeadline
+                ? 'nastaví se na VÝKOP daného zápasu (ruší uzamčení celé soutěže při startu)'
+                : 'beze změny (platí pravidlo soutěže)'],
         );
 
         $planned = 0;
@@ -140,6 +145,7 @@ final class BulkSetTipOpeningCommand extends Command
                 $editorId,
                 $except,
                 $apply,
+                $ownKickoffDeadline,
                 $skipped,
             );
 
@@ -193,6 +199,7 @@ final class BulkSetTipOpeningCommand extends Command
         Uuid $editorId,
         array $except,
         bool $apply,
+        bool $ownKickoffDeadline,
         array &$skipped,
     ): array {
         $planned = 0;
@@ -210,8 +217,17 @@ final class BulkSetTipOpeningCommand extends Command
 
             $existing = $this->settingRepository->findByCompetitionAndMatch($competition->id, $sportMatch->id);
             // The deadline end travels back unchanged — a bulk opening must never
-            // erase an organizer's per-match uzávěrka.
+            // erase an organizer's per-match uzávěrka…
             $deadline = $existing?->deadline;
+
+            // …unless the caller explicitly asked to pin every deadline to the
+            // match's own kickoff. That is row 1 of the resolver's decision table,
+            // which beats the competition-wide „tipy se zamykají startem soutěže":
+            // the way to run a season round by round instead of freezing every tip
+            // at the first kickoff.
+            if ($ownKickoffDeadline) {
+                $deadline = $sportMatch->kickoffAt;
+            }
 
             if ($this->deadlineResolver->deadlineWithOverride($competition, $sportMatch, $deadline) <= $opensAtUtc) {
                 ++$skippedHere;
