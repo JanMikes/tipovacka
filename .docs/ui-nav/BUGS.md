@@ -39,6 +39,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B31 | After `db:reset` no competition can reach the scorer picker | DONE | `5e524ff` - World B extended; third gap of this shape after B11 and B23; re-verified, `FIXTURES.md` needed no correction |
 | B27 | Match detail: the two paywall cards do not match; whole card clickable with confirm | DONE | `397c5bd` — the confirm **was** firing all along |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
+| B32 | „Tipy členů" judges each member's deadline by the VIEWER's clock, not theirs | TODO | — |
+| B33 | Every `<dialog>` except the rules modal lets the page scroll away underneath | TODO | — |
 
 ---
 
@@ -1671,3 +1673,44 @@ a cache clear, unrelated).
 - **The baseline was taken by CSSOM deletion, not a file swap.** Equivalent for cascade purposes here
   (the six declarations are the last ones for those selectors) and it avoids writing to a repo another
   session was committing from — which had already bitten this round.
+
+## B32 — „Tipy členů" judges each member's deadline by the VIEWER's deadline
+
+Found by the item 34 implementer, 2026-07-30, while checking whether it was safe to paint
+„Nevyplněno" red. **It was not, at one of three sites** — so that pill is still amber and this is why.
+
+On the merged match page, the „Tipy členů" block gates its per-member pills on
+`can_edit_member_tips = sport_match.isOpenForGuesses and (effective_deadline > now)`, where
+`effective_deadline` is computed **once, for the viewer** — not per row.
+
+Under `CompetitionMonetization::Boosts` the „Měnit tip" entitlement is **per user**
+(`CompetitionEntitlements::canChangeTips`), and `PurchaseBoostHandler` explicitly lets a competition's
+own organizer buy it. So an organizer holding that boost has a **later** deadline than a plain member,
+and in that window the block shows „Nevyplněno" — a call to action — for a member whose own deadline
+has already passed. The correct label there is B5's „Netipováno".
+
+**Display-only, not a data-safety bug.** `SubmitGuessOnBehalfHandler` checks the *target member's*
+deadline and rejects a late write, so nothing can actually be tipped past the deadline. The defect is
+that the organizer is invited to try.
+
+**Fix direction:** resolve the deadline per member — `EffectiveTipDeadlineResolver::deadlinesFor(...)`
+already takes the member, and `ManageMemberTipsController` (site 3) already does exactly this, which is
+why site 3 was safe to paint red. Once fixed, flip that pill to `danger` like its two siblings
+(item 34) so all three read the same.
+
+## B33 — every `<dialog>` except the rules modal lets the page scroll away underneath
+
+Found by the item 26 implementer, 2026-07-30, and **measured before it changed anything**: with a
+native `<dialog>` open, the page behind still scrolls in Chrome (0 → 400 px). That is true of every
+dialog in this app.
+
+Item 26's new generic `modal` controller freezes `<html>` while open (with scrollbar-gutter
+compensation) and releases on the `close` event — the one funnel every dismissal ends in, including
+`disconnect()` while open, so there is no unscrollable-page failure mode. Verified: `scrollY 600 → 600`
+during, position preserved after.
+
+**The other two dialogs did not get it**: `confirm` (`.docs/features/confirm-modal.md`, used for every
+destructive submit) and `boost_intro`. Decide whether the freeze belongs in those too — the argument
+for is consistency and that a scrolled-away confirm dialog is worse than a scrolled-away rules list;
+the argument against is that `confirm` is short-lived and its own tests pin its behaviour. Reuse item
+26's mechanism rather than writing a second one.

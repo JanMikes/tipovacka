@@ -60,9 +60,10 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 28 | [No boost intro on the join landing](items/28-no-boost-intro-on-the-join-landing.md) | DONE | `5c59521` |
 | 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | DONE | `876e674` |
 | 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | DONE | `6165577` |
-| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | IN PROGRESS | — |
+| 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | **PARTIAL** — §2 + §3 done, §1 needs a decision | `4ee32d2` |
+| 34 | [„Nevyplněno" is red too](items/34-nevyplneno-goes-red.md) | DONE (2 of 3 sites; the third is B32) | `1b32665` |
 | 32 | [CI red: a boost refund assertion expects the old price](items/32-ci-red-boost-refund-amount.md) | DONE | `3f733a5` |
-| 33 | [`GetGuessesForMatchInCompetition` has no consumer left](items/33-orphaned-guesses-read-model.md) | IN PROGRESS | — |
+| 33 | [`GetGuessesForMatchInCompetition` has no consumer left](items/33-orphaned-guesses-read-model.md) | DONE | `4dc8b50` |
 
 **Round of 2026-07-30, second half.** Items 22–27 came from the product owner in one sitting, so they
 overlap heavily on three files — `templates/portal/competition/detail.html.twig`,
@@ -143,6 +144,12 @@ product owner reprioritises):
      lost, but that was luck rather than design. **Only one agent may hold the database at a time.**
      Before dispatching, ask not only „do their file lists intersect?" but „do they both need
      `db:reset`, and is one of them driving a browser right now?" — if so, serialise them.
+   - **The product owner works in this same tree.** Uncommitted or untracked files you cannot
+     attribute to any in-flight item are **as likely to be theirs as anyone's** — on 2026-07-30 the
+     orchestrator read a new entity column plus an untracked migration as an agent inventing scope and
+     told two agents to `git checkout` those paths; they were the product owner's in-progress feature,
+     and obeying would have destroyed it. **Never instruct a revert of a path you did not dispatch.**
+     Ask first, and treat anything unattributed as read-only.
    - **Never run `composer cs:fix` repo-wide while a sibling is in flight** — it rewrites their files
      and pulls their hunks into your working tree. Scope it to your own paths, or run `cs:check`, fix
      your own findings by hand, and report the rest.
