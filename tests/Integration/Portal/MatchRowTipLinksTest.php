@@ -72,19 +72,51 @@ final class MatchRowTipLinksTest extends WebTestCase
         }
     }
 
-    public function testDashboardAndMatchListLinkTheStatePillToTheMatchDetail(): void
+    public function testMatchListLinksTheStatePillToTheMatchDetail(): void
     {
         $client = static::createClient();
         $this->login($client);
 
-        foreach (['/nastenka', '/zapasy'] as $path) {
-            $crawler = $client->request('GET', $path);
-            self::assertResponseIsSuccessful();
+        $crawler = $client->request('GET', '/zapasy');
+        self::assertResponseIsSuccessful();
 
-            $pillLink = $crawler->filter('a.tip-row-pill-link[href="'.self::MATCH_DETAIL_URL.'"]');
-            self::assertCount(1, $pillLink, $path.' must link the tippable row\'s pilulka');
-            self::assertStringContainsString('Chybí tip', $pillLink->text());
-        }
+        $pillLink = $crawler->filter('a.tip-row-pill-link[href="'.self::MATCH_DETAIL_URL.'"]');
+        self::assertCount(1, $pillLink, '/zapasy must link the tippable row\'s pilulka');
+        self::assertStringContainsString('Chybí tip', $pillLink->text());
+    }
+
+    /**
+     * Item 18 — the Nástěnka card is ONE link instead: the pilulka and the „můj tip"
+     * bar stopped being links (B7 linked them because the row was not a link; here it
+     * is), the tip CTA is a *styled* element, and nothing interactive may be nested
+     * inside `a.tip-row-link`. The „Rozložení tipů" strip IS a control, so it stays a
+     * sibling of the link, never a descendant.
+     */
+    public function testDashboardCardIsOneLinkWithNothingInteractiveInside(): void
+    {
+        $client = static::createClient();
+        $this->login($client);
+
+        $crawler = $client->request('GET', '/nastenka');
+        self::assertResponseIsSuccessful();
+
+        $cards = $crawler->filter('.tip-row.is-dash');
+        self::assertGreaterThan(0, $cards->count());
+        self::assertCount(0, $crawler->filter('.tip-row.is-dash a.tip-row-pill-link'));
+        self::assertCount(0, $crawler->filter('.tip-row.is-dash a.my-tip'));
+
+        $cards->each(function (Crawler $card): void {
+            // Exactly one link for the card itself…
+            self::assertCount(1, $card->filter('a.tip-row-link'));
+            // …and no control of any kind inside it.
+            self::assertCount(0, $card->filter('a.tip-row-link a, a.tip-row-link button, a.tip-row-link input, a.tip-row-link select'));
+        });
+
+        // The tippable card reaches the match, and its CTA reads „Zadat tip" once.
+        $tippable = $crawler->filter('a.tip-row-link[href="'.self::MATCH_DETAIL_URL.'"]');
+        self::assertCount(1, $tippable);
+        self::assertCount(1, $tippable->filter('.tipd-cta'));
+        self::assertStringContainsString('Zadat tip', $tippable->filter('.tipd-cta')->text());
     }
 
     public function testLockedRowsHaveNoTipLinks(): void
@@ -107,6 +139,12 @@ final class MatchRowTipLinksTest extends WebTestCase
             self::assertCount(0, $crawler->filter('a.tip-row-pill-link'), $path.' must not link a locked row');
             self::assertCount(0, $crawler->filter('a.my-tip'), $path.' must not link a locked tip box');
         }
+
+        // The Nástěnka card still links to the match (item 18: it is ONE link), but a
+        // locked card must not invite a tip any more.
+        $crawler = $client->request('GET', '/nastenka');
+        self::assertGreaterThan(0, $crawler->filter('a.tip-row-link')->count());
+        self::assertCount(0, $crawler->filter('.tipd-cta'), 'a locked Nástěnka card must not offer „Zadat tip"');
     }
 
     private function login(KernelBrowser $client): void

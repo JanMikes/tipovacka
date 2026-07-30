@@ -358,7 +358,9 @@
                         <code class="text-white/70">&lt;twig:Match:MatchRow&gt;</code> — jedna karta na zápas, barevný
                         pruh vlevo podle stavu (<code class="text-white/70">open · tipped · live · locked · finished</code>).
                         Zóny se zalamují podle šířky <strong class="text-white/70">sloupce</strong>, ne okna prohlížeče
-                        (B7), proto je poslední ukázka v úzkém kontejneru.
+                        (B7), proto je poslední ukázka v úzkém kontejneru. Dvě podoby:
+                        <code class="text-white/70">variant="default"</code> (detail soutěže, <code class="text-white/70">/zapasy</code>)
+                        a <code class="text-white/70">variant="dashboard"</code> (Nástěnka — celá karta je jeden odkaz).
                     </p>
                 </div>
                 <twig:Pill label="Hotovo" variant="done" />
@@ -458,6 +460,65 @@
                     :detailUrl="match_url"
                     :tipUrl="match_url"
                     tipPrompt="+ Zadat tip"
+                    footNote="Chodská liga — jaro · Městský stadion"
+                />
+            </div>
+
+            {#
+                Item 18 — druhá podoba téže komponenty, `variant="dashboard"`, kterou
+                používá jen Nástěnka: kolo · datum · čas v hlavičce, zrcadlené bloky
+                týmů kolem skóre (nebo „vs") a jediná výzva „Zadat tip" v patě.
+                Celá karta je JEDEN odkaz, proto je „Zadat tip" jen stylovaný prvek —
+                pruh „Rozložení tipů" (sám ovládací prvek) zůstává mimo odkaz.
+            #}
+            <p class="eyebrow mb-2 mt-8">variant="dashboard" — podoba z Nástěnky (celá karta je jeden odkaz)</p>
+            <ul class="flex flex-col gap-5">
+                {% for row in match_rows %}
+                    <li>
+                        <p class="eyebrow mb-2">{{ row.caption }}</p>
+                        <twig:Match:MatchRow
+                            variant="dashboard"
+                            :homeTeam="row.home"
+                            :awayTeam="row.away"
+                            :kickoffAt="row.kickoff"
+                            :round="row.round"
+                            :isPlayoff="row.isPlayoff|default(false)"
+                            :state="row.state"
+                            :pillVariant="row.pillVariant"
+                            :pillLabel="row.pillLabel"
+                            :pillIcon="row.pillIcon"
+                            :pillDot="row.pillDot"
+                            :myHome="row.myHome|default(null)"
+                            :myAway="row.myAway|default(null)"
+                            :resultHome="row.resultHome|default(null)"
+                            :resultAway="row.resultAway|default(null)"
+                            :points="row.points|default(null)"
+                            :hitClass="row.hitClass|default(null)"
+                            :detailUrl="match_url"
+                            :tipUrl="row.tippable|default(false) ? match_url : null"
+                            :tipMissingLabel="row.tipMissingLabel|default(null)"
+                            :tipStats="row.tipStats|default([])"
+                            :footNote="row.footNote"
+                        />
+                    </li>
+                {% endfor %}
+            </ul>
+
+            <p class="eyebrow mb-2 mt-6">tatáž podoba v úzkém sloupci (380 px)</p>
+            <div class="max-w-[380px]">
+                <twig:Match:MatchRow
+                    variant="dashboard"
+                    :homeTeam="teams.longHome"
+                    :awayTeam="teams.longAway"
+                    :kickoffAt="kickoffs.playoff"
+                    round="Osmifinále"
+                    :isPlayoff="true"
+                    state="open"
+                    pillVariant="soon"
+                    pillLabel="Chybí tip"
+                    pillIcon="circle-alert"
+                    :detailUrl="match_url"
+                    :tipUrl="match_url"
                     footNote="Chodská liga — jaro · Městský stadion"
                 />
             </div>

@@ -1115,6 +1115,66 @@ label.required::after {
     }
     .card-stretch:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -3px; }
     .card-raise { position: relative; z-index: 2; }
+
+    /* 2. The match card as the Nástěnka wants it (`Match:MatchRow variant="dashboard"`).
+       Only that page: /zapasy and competition detail keep the item 11 card, so
+       everything below is scoped to `.tip-row.is-dash` and cannot reach them.
+       Reused as-is: the card itself (`.tip-row` — border, radius, glass, the five
+       state stripes), the „MŮJ TIP" box (`.my-tip*`, incl. the points badge) and the
+       whole footer region (`.tip-row-extra`, `.tip-stats-*`).
+       Container-relative like B7: no width media query anywhere — the zones simply
+       wrap, because this same card is 1088 px wide on a desktop Nástěnka and 288 px
+       on a 320 px phone. */
+    .tip-row.is-dash .tip-row-link {
+        display: flex; flex-direction: column; gap: 14px;
+        padding: 14px 18px 16px; border-radius: 10px;
+        color: inherit; text-decoration: none;
+    }
+    .tip-row.is-dash .tip-row-link:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -2px; }
+
+    /* Hlavička: kolo · datum · čas doprostřed, stavová pilulka doprava. */
+    /* `justify-content: center` only bites once the head WRAPS: while both parts share
+       a line the meta group (flex-grow: 1) eats the free space, so the pilulka stays
+       pinned right as the design asks; on a phone, where it drops to its own line, it
+       is centred under the centred meta instead of hanging off the left edge. */
+    .tipd-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; min-width: 0; }
+    .tipd-meta { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px; min-width: 0; }
+    .tipd-round { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+    .tipd-date, .tipd-time { font-size: 15px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tipd-head > .pill { flex: 0 0 auto; }
+
+    /* Tělo: zrcadlené bloky týmů kolem skóre. Obě strany jsou stejně široké
+       (`flex: 1 1 0`), takže skóre zůstává opticky ve středu karty. */
+    .tipd-body { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center; gap: 10px 12px; }
+    .tipd-side { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+    .tipd-role { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+    /* `max-width: 100%` + ellipsis: dlouhý název se zkrátí („Frýdek-Míst…"), nikdy
+       nepřeteče — `min-width: 0` na rodiči k tomu sám nestačí (B7/B13). */
+    .tipd-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: #fff; }
+    .tipd-score { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; padding-top: 8px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .tipd-score .num { font-size: 30px; font-weight: 900; letter-spacing: -0.03em; color: #fff; }
+    .tipd-score .sep { font-size: 18px; font-weight: 700; color: var(--fg-4); }
+    .tipd-score.is-vs { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-4); }
+    .tip-row.is-dash .tip-row-link:hover .tipd-name { color: var(--color-accent-200); }
+
+    /* Pata: jediná výzva k tipu. Vypadá jako tlačítko, ale odkaz je celá karta —
+       tohle je `<span>`, aby nikdy nevznikl ovládací prvek uvnitř odkazu. */
+    .tipd-cta {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 11px 16px; border-radius: 12px;
+        border: 1px solid var(--border-accent); background: rgba(70,153,208,0.14);
+        font-size: 14px; font-weight: 800; color: var(--color-accent-200);
+        transition: background var(--dur-base) var(--ease-standard), border-color var(--dur-base) var(--ease-standard);
+    }
+    .tip-row.is-dash .tip-row-link:hover .tipd-cta { background: rgba(70,153,208,0.24); border-color: var(--color-accent-500); }
+    /* „MŮJ TIP" v patě = stejný box, jen na celou šířku a na jednom řádku; odznak
+       bodů se v pruhu řadí do toku (v malém boxu visí v rohu). */
+    .my-tip.is-bar {
+        display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px;
+        padding: 10px 16px; border-radius: 12px; text-align: center;
+    }
+    .my-tip.is-bar .my-tip-lbl { margin-bottom: 0; }
+    .my-tip.is-bar .my-tip-pts { position: static; top: auto; right: auto; border: none; }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
