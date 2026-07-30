@@ -48,13 +48,15 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 16 | [Homepage: a closing CTA that claims nothing, and no „MS 2026"](items/16-homepage-cta-and-ms2026.md) | DONE | `01e8dda` + `358884d` (tests) |
 | 17 | [App chrome: credits in the bar, simpler footer, B18 + B20](items/17-chrome-pass.md) | DONE | `09c9d21` + `90f7fb8` |
 | 18 | [Nástěnka: quick actions, clickable cards, new match-card design](items/18-page-nastenka-pass.md) | DONE | `3e0cffc` + `096546b` + `11184db` |
+| 19 | [Competition detail: description, invite CTA, reorder, 5 matches, credits modal](items/19-page-competition-detail-pass.md) | IN PROGRESS | — |
+| 20 | [Tabulka tipů: reachable by members, revealed per match](items/20-tip-matrix-visibility.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B13–B20 DONE · B10 **BLOCKED** (product decision) · B11/B12/B21/B22/B23/B24 TODO |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B13–B20 DONE · B10 **WONTFIX** (by design) · B11 + B23 in flight · B12/B21/B22/B24/B25 TODO |
 | [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->

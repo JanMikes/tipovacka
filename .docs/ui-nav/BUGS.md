@@ -17,7 +17,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B7 | Match rows: overlapping elements, overflowing team names, dead „Zadat tip" | DONE | `9e81f31` |
 | B8 | tom-select jumps on focus — search input wraps to a second line | DONE | `224a16f` |
 | B9 | Team picker's create row shows English „Add …" | DONE | `d0b8bd4` |
-| B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **BLOCKED** — needs a product decision | — |
+| B10 | A player choosing „Volná volba Premium" is never told what the boosts are or cost | **WONTFIX** — by design (product owner, 2026-07-30) | — |
 | B11 | The premium fixture world renders no „Rozložení tipů" surface, so the premium paywall cannot be verified | TODO | — |
 | B12 | The five pickers' „nothing found" rows are styled two different ways | TODO | — |
 | B13 | PIN and shareable-link boxes overflow their card on mobile | DONE | `77023fc` |
@@ -869,6 +869,22 @@ Per picker: `getBoundingClientRect()` on the control plus the rect of every othe
 ---
 
 ## B10 — a player choosing „Volná volba Premium" is never told what the boosts are or cost
+
+**Closed WONTFIX by the product owner, 2026-07-30: „B10 - not needed to show anything".**
+
+So option (a) below stands: the organizer picking a monetization model on step 4 of the wizard is choosing
+a **policy**, not making a purchase, and does not need the price list in front of them to make that
+choice. W4's copy — which deliberately dropped the price strip from the private branch — was right as
+written, and nothing is added back.
+
+Note this is **not** the same gap as „the player never learns the prices": item 19's first-visit credits
+modal shows the boost prices (from `PricingConfig`) to every member the first time they open a `boosts`
+competition, which is the moment the information is actually actionable. The organizer's wizard step and
+the player's first visit are different audiences at different moments, and only the second one needed it.
+
+The original report is kept below for the record.
+
+---
 
 Found by the item 12 agent while renaming the boost, 2026-07-30. **Not a regression — this is a
 direct consequence of a decision the product owner already approved**, which is why it is `BLOCKED`
