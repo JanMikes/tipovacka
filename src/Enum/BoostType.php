@@ -44,7 +44,7 @@ enum BoostType: string
         return match ($this) {
             self::TipDistribution => 'Uvidíte anonymní procenta, jak tipovali ostatní hráči (1 / X / 2).',
             self::OthersTips => 'Uvidíte konkrétní tipy soutěžících v partičce. Obsahuje i Rozložení tipů ostatních.',
-            self::TipChange => 'Můžete měnit svůj tip až do nastaveného času před prvním zápasem dne.',
+            self::TipChange => 'Můžete měnit svůj tip až do nastaveného času před začátkem zápasu.',
         };
     }
 }

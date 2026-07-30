@@ -32,12 +32,12 @@ final class PremiumSettingsFormType extends AbstractType
         $builder->add('allowTipChanges', CheckboxType::class, [
             'label' => 'Měnit tip během turnaje',
             'required' => false,
-            'help' => 'Členové mohou měnit tip až do nastaveného předstihu před prvním zápasem dne.',
+            'help' => 'Členové mohou měnit tip až do nastaveného předstihu před začátkem každého zápasu.',
         ]);
 
         $builder->add('tipChangeOffsetMinutes', IntegerType::class, [
             'label' => 'Předstih pro změnu tipu (minuty)',
-            'help' => 'O kolik minut před prvním zápasem dne se zamknou změny tipů.',
+            'help' => 'O kolik minut před začátkem zápasu se zamknou změny tipů.',
             'attr' => ['min' => 0, 'max' => 1440],
         ]);
     }

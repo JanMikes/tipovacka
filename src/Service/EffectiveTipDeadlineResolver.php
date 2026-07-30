@@ -26,7 +26,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * manual „Uzamknout tipy" (`Competition::$tipsLockedAt`). Matches entering the
  * competition after that lock moment (late playoff additions) stay tippable
  * until their own kickoff; managers may override per match; the „Měnit tip"
- * entitlement extends the window to shortly before the day's first match.
+ * entitlement extends the window to shortly before THAT MATCH's own kickoff.
  *
  * Decision table for deadlineFor(C, M, U) — first matching row wins, then the
  * entitlement row may only EXTEND the result (a paid boost never shortens a
@@ -38,7 +38,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * | 2 | M is late-added — mode All: max(M.createdAt, C.createdAt) >      | M.kickoffAt                       |
  * |   | lock moment; mode Subset: selection.addedAt > lock moment       |                                   |
  * | 3 | default                                                         | min(lock moment, M.kickoffAt)     |
- * | + | U given and CompetitionEntitlements::canChangeTips(C, U)        | max(above, min(dayFirstKickoff −  |
+ * | + | U given and CompetitionEntitlements::canChangeTips(C, U)        | max(above, min(M.kickoffAt −      |
  * |   |                                                                 | C.tipChangeOffsetMinutes, kickoff))|
  *
  * where
@@ -49,15 +49,19 @@ use Symfony\Contracts\Service\ResetInterface;
  *   scheduled „Uzamknout tipy · V určený čas" (B2), and it needs no job: the
  *   deadline is already `min(lockMoment, kickoff)`, so the lock fires by time
  *   passing. `Competition::scheduleTipsLock` keeps it before the first kickoff,
- *   so a schedule can only ever bring the lock FORWARD;
- * - dayFirstKickoff = earliest kickoffAt among C's included matches on M's
- *   Europe/Prague calendar day (kickoffs are stored UTC and converted to
- *   Europe/Prague for the day grouping — a 23:30 UTC kickoff belongs to the
- *   NEXT Prague day). M itself is included, so the set is never empty.
+ *   so a schedule can only ever bring the lock FORWARD.
+ *
+ * The entitlement window is **per match** (2026-07-30): it ends
+ * `C.tipChangeOffsetMinutes` before M's OWN kickoff, not before the kickoff of
+ * the day's first competition match as it did until then. Per-match is always
+ * ≥ the old day-based term (the two coincide for the day's first match and
+ * per-match is strictly later for every subsequent one), so the extend-only `max()`
+ * composition holds and no player lost a window they already had. The offset
+ * stays prémium-configurable.
  *
  * Invariant: the returned deadline is never later than M's kickoffAt — every
  * row above is capped by it (row 2 trivially; the entitlement term because the
- * day's first kickoff ≤ M's kickoff and the offset is non-negative).
+ * offset is non-negative, with the `min()` kept as a defensive cap).
  *
  * Postponement: moving a kickoff does NOT reopen tipping. A non-late-added
  * match keeps deadline = lock moment (row 3) no matter where its kickoff moves;
@@ -80,16 +84,14 @@ use Symfony\Contracts\Service\ResetInterface;
  * „Měnit tip" entitlement extends only when THEY may still tip/change — it
  * never changes what they may SEE of other members' tips.
  *
- * Per-request caching: the included-match list (→ first kickoff, day-first
- * lookups) and Subset selection addedAt map are cached per competition; the
+ * Per-request caching: the included-match list (→ first kickoff / lock moment)
+ * and Subset selection addedAt map are cached per competition; the
  * kernel reset ({@see ResetInterface}) drops them between requests. Long-lived
  * processes mutating matches/selections mid-flight can call
  * {@see forgetCompetition}.
  */
 class EffectiveTipDeadlineResolver implements ResetInterface
 {
-    private const string PRAGUE_TIMEZONE = 'Europe/Prague';
-
     /** @var array<string, list<SportMatch>> competition UUID → included matches, kickoff-ordered */
     private array $matchesCache = [];
 
@@ -274,6 +276,9 @@ class EffectiveTipDeadlineResolver implements ResetInterface
 
         $entitled = $this->entitledDeadline($competition, $sportMatch);
 
+        // Extend-only: the entitlement may only ever push the window LATER, and
+        // never past the kickoff (the min() is defensive — a non-negative offset
+        // already keeps $entitled ≤ $kickoff).
         return max($base, min($entitled, $kickoff));
     }
 
@@ -300,32 +305,14 @@ class EffectiveTipDeadlineResolver implements ResetInterface
     }
 
     /**
-     * „Měnit tip" window end: kickoff of the day's first included competition
-     * match (Europe/Prague day of $sportMatch's kickoff) minus the
-     * competition's tip-change offset.
+     * „Měnit tip" window end: THIS match's own kickoff minus the competition's
+     * tip-change offset — the promise the boost is sold on („upravit své tipy až
+     * 1 hodinu před začátkem zápasu"). Other matches of the same day are
+     * irrelevant; no match list is read here at all.
      */
     private function entitledDeadline(Competition $competition, SportMatch $sportMatch): \DateTimeImmutable
     {
-        $pragueDay = $this->pragueDay($sportMatch->kickoffAt);
-        $dayFirstKickoff = $sportMatch->kickoffAt;
-
-        foreach ($this->includedMatches($competition) as $match) {
-            if ($this->pragueDay($match->kickoffAt) !== $pragueDay) {
-                continue;
-            }
-
-            // Included matches are kickoff-ordered — the first hit is the day's first.
-            $dayFirstKickoff = $match->kickoffAt;
-
-            break;
-        }
-
-        return $dayFirstKickoff->modify(sprintf('-%d minutes', $competition->tipChangeOffsetMinutes));
-    }
-
-    private function pragueDay(\DateTimeImmutable $moment): string
-    {
-        return $moment->setTimezone(new \DateTimeZone(self::PRAGUE_TIMEZONE))->format('Y-m-d');
+        return $sportMatch->kickoffAt->modify(sprintf('-%d minutes', $competition->tipChangeOffsetMinutes));
     }
 
     /**

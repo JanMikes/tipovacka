@@ -18,7 +18,7 @@ Must-know invariants (details in DOMAIN.md):
 - **1 credit = 1 Kč.** All prices are constants in one config class — never literal numbers.
 - **Premium XOR boosts** per competition via the single `monetization` column.
 - Tips lock at competition start; matches added later get their own deadlines;
-  „Měnit tip" entitlement = until 1 h before the day's first match.
+  „Měnit tip" entitlement = until 1 h before **that match's own** kickoff (per match, not per day).
 - Rules/points are configured **per competition**, matches/results live on the source.
 - Never the word „sázka"; no gambling mechanics, no payouts; entry fees are burned credits.
 - Stack reality: PHP 8.5, Symfony 8.0, PostgreSQL 17 (older docs may claim less).

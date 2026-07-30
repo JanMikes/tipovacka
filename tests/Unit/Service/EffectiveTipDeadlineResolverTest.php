@@ -24,8 +24,9 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Unit matrix for the tip-locking contract (S07). All times UTC unless noted;
- * Europe/Prague is UTC+2 in June (CEST) — day-boundary cases test exactly that.
+ * Unit matrix for the tip-locking contract (S07). All times UTC unless noted.
+ * The „Měnit tip" window has been PER MATCH since 2026-07-30 (it used to end
+ * before the day's first competition match) — see .docs/DOMAIN.md §Tip locking.
  *
  * Fixed "now" is 2025-06-15 12:00 UTC (matches MockClock), but the resolver
  * itself is clock-free: it returns deadlines, callers compare with now.
@@ -432,11 +433,11 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
     // ── Entitlement branch („Měnit tip") ─────────────────────────────────────
 
-    public function testEntitledUserMayChangeUntilOffsetBeforeDaysFirstMatch(): void
+    public function testEntitledUserMayChangeUntilOffsetBeforeEachMatchsOwnKickoff(): void
     {
-        // Started competition (locked since June 10). Two matches share the
-        // Prague day June 20: 14:00 and 18:00 UTC. Entitled deadline for BOTH
-        // is day-first (14:00) − 60 min = 13:00 UTC.
+        // Started competition (locked since June 10). Two matches share the day
+        // June 20: 14:00 and 18:00 UTC. Since 2026-07-30 the window is PER MATCH
+        // — each gets its OWN kickoff − 60 min, not the day's first (13:00).
         $competition = $this->makeCompetition();
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
         $dayFirst = $this->makeMatch($competition, kickoff: '2025-06-20 14:00', createdAt: '2025-06-01 10:00');
@@ -447,13 +448,49 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $resolver = $this->resolver();
         $user = $this->makeUser();
 
-        self::assertEquals(new \DateTimeImmutable('2025-06-20 13:00'), $resolver->deadlineFor($competition, $daySecond, $user));
-        // The day's FIRST match: entitlement gives 13:00, but the base rule
-        // (lock ≤ kickoff... here lock is past) is 06-10; max() keeps 13:00.
+        self::assertEquals(new \DateTimeImmutable('2025-06-20 17:00'), $resolver->deadlineFor($competition, $daySecond, $user));
+        // The day's FIRST match: per-match and the old day-first rule coincide.
         self::assertEquals(new \DateTimeImmutable('2025-06-20 13:00'), $resolver->deadlineFor($competition, $dayFirst, $user));
 
         // Without a user (or without the entitlement) the lock moment holds.
         self::assertEquals(new \DateTimeImmutable('2025-06-10 18:00'), $resolver->deadlineFor($competition, $daySecond));
+    }
+
+    public function testPerMatchWindowNeverShortensTheOldDayFirstWindow(): void
+    {
+        // Extend-only guarantee of the 2026-07-30 change: three matches on one
+        // day, the old rule closed ALL of them at day-first (14:00) − 60 min =
+        // 13:00. Per-match must be ≥ that for every match, strictly later for
+        // every match after the first — nobody loses a window they had.
+        $competition = $this->makeCompetition();
+        $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
+        $first = $this->makeMatch($competition, kickoff: '2025-06-20 14:00', createdAt: '2025-06-01 10:00');
+        $second = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
+        $third = $this->makeMatch($competition, kickoff: '2025-06-20 21:00', createdAt: '2025-06-01 10:00');
+        $this->provideMatches($competition, [$opener, $first, $second, $third]);
+        $this->canChangeTips = true;
+
+        $resolver = $this->resolver();
+        $user = $this->makeUser();
+        $oldDayFirstDeadline = new \DateTimeImmutable('2025-06-20 13:00');
+
+        foreach ([$first, $second, $third] as $match) {
+            $deadline = $resolver->deadlineFor($competition, $match, $user);
+
+            self::assertGreaterThanOrEqual($oldDayFirstDeadline, $deadline);
+            // …and never past the kickoff, in either rule.
+            self::assertLessThanOrEqual($match->kickoffAt, $deadline);
+        }
+
+        self::assertEquals($oldDayFirstDeadline, $resolver->deadlineFor($competition, $first, $user));
+        self::assertGreaterThan($oldDayFirstDeadline, $resolver->deadlineFor($competition, $second, $user));
+        self::assertGreaterThan($oldDayFirstDeadline, $resolver->deadlineFor($competition, $third, $user));
+
+        // The late match is still tippable at a moment when the day's first has
+        // long closed — the concrete promise the boost is sold on.
+        $afterFirstWindow = new \DateTimeImmutable('2025-06-20 15:30');
+        self::assertTrue($resolver->isLocked($competition, $first, $user, $afterFirstWindow));
+        self::assertFalse($resolver->isLocked($competition, $third, $user, $afterFirstWindow));
     }
 
     public function testEntitlementNeverShortensTheDefaultWindow(): void
@@ -472,9 +509,9 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         );
     }
 
-    public function testEntitledDeadlineUsesEachMatchsOwnPragueDay(): void
+    public function testEntitledDeadlineFollowsEachMatchIndependently(): void
     {
-        // Matches on DIFFERENT Prague days each follow their own day's first match.
+        // Matches on different days each follow their own kickoff.
         $competition = $this->makeCompetition();
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
         $day20 = $this->makeMatch($competition, kickoff: '2025-06-20 14:00', createdAt: '2025-06-01 10:00');
@@ -489,11 +526,12 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         self::assertEquals(new \DateTimeImmutable('2025-06-21 15:00'), $resolver->deadlineFor($competition, $day21, $user));
     }
 
-    public function testPragueDayBoundaryGroupsLateUtcEveningWithNextDay(): void
+    public function testEntitledDeadlineNoLongerGroupsMatchesByCalendarDay(): void
     {
-        // 2025-06-20 23:30 UTC = 2025-06-21 01:30 Europe/Prague (CEST, UTC+2):
-        // the match belongs to the PRAGUE day June 21, whose first match is the
-        // 21st 10:00 UTC — NOT to the June 20 games.
+        // The old rule grouped kickoffs by Europe/Prague day, so 2025-06-20
+        // 23:30 UTC (= 06-21 01:30 CEST) and the 21st 10:00 UTC shared ONE
+        // window (22:30). Per-match each keeps its own — strictly later for the
+        // 10:00 match, which is the extend-only direction.
         $competition = $this->makeCompetition();
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
         $day20 = $this->makeMatch($competition, kickoff: '2025-06-20 14:00', createdAt: '2025-06-01 10:00');
@@ -505,9 +543,8 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $resolver = $this->resolver();
         $user = $this->makeUser();
 
-        // Prague-day June 21 starts with the 23:30 UTC match itself (01:30 local).
         self::assertEquals(new \DateTimeImmutable('2025-06-20 22:30'), $resolver->deadlineFor($competition, $lateEvening, $user));
-        self::assertEquals(new \DateTimeImmutable('2025-06-20 22:30'), $resolver->deadlineFor($competition, $day21, $user));
+        self::assertEquals(new \DateTimeImmutable('2025-06-21 09:00'), $resolver->deadlineFor($competition, $day21, $user));
         self::assertEquals(new \DateTimeImmutable('2025-06-20 13:00'), $resolver->deadlineFor($competition, $day20, $user));
     }
 
@@ -529,8 +566,8 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
 
     public function testEntitledDeadlineNeverExceedsTheMatchKickoff(): void
     {
-        // Offset 0 ⇒ entitled deadline = day-first kickoff itself; for the
-        // day's first match that equals its kickoff — the cap holds exactly.
+        // Offset 0 ⇒ entitled deadline = the match's kickoff itself — the
+        // „never after kickoff" cap holds exactly.
         $competition = $this->makeCompetition();
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
         $match = $this->makeMatch($competition, kickoff: '2025-06-20 18:00', createdAt: '2025-06-01 10:00');
@@ -545,10 +582,11 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         self::assertLessThanOrEqual($match->kickoffAt, $deadline);
     }
 
-    public function testEntitledDayFirstConsidersOnlyIncludedMatchesInSubsetMode(): void
+    public function testEntitledDeadlineIgnoresEveryOtherMatchOfTheDay(): void
     {
-        // The SOURCE has a 09:00 UTC match that day, but the competition did
-        // not select it — day-first must be the first INCLUDED match (12:00).
+        // Neither the earlier SELECTED match (12:00) nor the earlier source
+        // match the competition did NOT select (09:00) can pull this match's
+        // window forward any more — only its own kickoff counts.
         $competition = $this->makeCompetition(CompetitionMatchSelectionMode::Subset);
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
         $selectedNoon = $this->makeMatch($competition, kickoff: '2025-06-20 12:00', createdAt: '2025-06-01 10:00');
@@ -562,7 +600,7 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $this->canChangeTips = true;
 
         self::assertEquals(
-            new \DateTimeImmutable('2025-06-20 11:00'),
+            new \DateTimeImmutable('2025-06-20 14:00'),
             $this->resolver()->deadlineFor($competition, $selectedAfternoon, $this->makeUser()),
         );
     }
@@ -570,7 +608,7 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
     public function testEntitlementExtendsPastAManagerOverrideWhenLater(): void
     {
         // Manager override caps a late playoff match at 12:00; the „Měnit tip"
-        // boost promises changes until day-first − offset (17:00). The boost's
+        // boost promises changes until its kickoff − offset (17:00). The boost's
         // promise wins where later — entitlements only ever EXTEND.
         $competition = $this->makeCompetition();
         $opener = $this->makeMatch($competition, kickoff: '2025-06-10 18:00', createdAt: '2025-06-01 10:00');
