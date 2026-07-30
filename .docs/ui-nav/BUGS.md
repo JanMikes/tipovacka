@@ -31,7 +31,8 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B23 | After `db:reset` no competition can reach the „Uzamknout tipy" modal | DONE | `6ee485a` — was 0 of 7 competitions, now 1 (World E) |
 | B24 | flatpickr’s year renders near-black on the dark lock modal | TODO | — |
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
-| B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | TODO | — |
+| B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
+| B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
 ---
@@ -1181,3 +1182,25 @@ is the one place where turning JS off removes *content* rather than convenience.
 state, not the default); or make it a real link (`?vse=1`-style) that renders the full list server-side, the
 shape item 05 used before its expand control was retired. Do **not** fix it by removing the truncation —
 the product owner asked for exactly 5 with a load-more.
+
+## B26 — the homepage hero's „1. MÍSTO" chip sits on the away team name
+
+Found by the B21 agent while measuring, 2026-07-30. **Left alone deliberately** — items 14 and 16 both
+declare the hero's floating chips intentional decoration and forbid moving them.
+
+The „1. MÍSTO 147 / 248" chip (`-right-6 top-[22%]`) overlaps the demo card's **away** team block. B21
+made it better, not worse — before, at ≥1280 px it covered „Francie" **63 of 63 px (100 %) plus the whole
+FRA coin**; now it covers **60 of 74 px with the coin clear**. At 1024 px it covers „Francie" entirely,
+where previously the name had zero width anyway.
+
+So the name is no longer *truncated* — a translucent `.glass` panel is simply sitting on it. That is a
+design question, not a layout defect: the chips are supposed to overlap the card's edges, and whoever
+placed them did not anticipate the card being ~130 px wider (which is what B21 gave back).
+
+**Fix, if the product owner wants the away team unobstructed at 1024–1280 px:** move the chip's anchor
+(`-right-6 top-[22%]`). Do not remove it — it is part of the hero's designed look. Verify the other two
+chips („+12 b Marek vystihl skóre", „+9 b Ana trefila výsledek") do not acquire the same problem, and
+measure at 1024 / 1280 / 1440 / 1600 px, where the two-column layout exists at all.
+
+Note also, unchanged by B21 and not part of this: „Argentina" still ellipsizes at 430 px (70 of 82 px) in
+the single-column layout.

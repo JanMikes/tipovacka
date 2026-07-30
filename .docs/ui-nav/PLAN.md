@@ -50,14 +50,14 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 18 | [Nástěnka: quick actions, clickable cards, new match-card design](items/18-page-nastenka-pass.md) | DONE | `3e0cffc` + `096546b` + `11184db` |
 | 19 | [Competition detail: description, invite CTA, reorder, 5 matches, credits modal](items/19-page-competition-detail-pass.md) | DONE | `4a3d3a8` … `82eb31f` |
 | 20 | [Tips are revealed by the RESULT, not the deadline (all surfaces)](items/20-tip-matrix-visibility.md) | DONE | `9303b78` |
-| 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | TODO — after item 19 lands | — |
+| 21 | [One match card: migrate `/zapasy`, delete the `variant` prop](items/21-one-match-card.md) | IN PROGRESS | — |
 
 Separate sub-backlogs, each with its own board (work them after the numbered items unless the
 product owner reprioritises):
 
 | Sub-backlog | Scope | Status |
 |---|---|---|
-| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B11, B13–B20, B23, B25 DONE · B10 **WONTFIX** (by design) · B21 in flight · B12/B22/B24 TODO |
+| [`BUGS.md`](BUGS.md) | Bug / hardening backlog (B1…) — independent of the page restructure | B1–B9, B11, B13–B21, B23, B25 DONE · B10 **WONTFIX** (by design) · B12/B22/B24/B26 TODO |
 | [`CREATE-WIZARD.md`](CREATE-WIZARD.md) | Create-competition wizard + copy backlog (W1…) | DONE (W1–W6) |
 
 <!-- Add one row per item file. Keep the order = intended execution order. -->
