@@ -284,9 +284,12 @@ final class InvitationForm extends AbstractController
         $this->security->login($user);
         $this->acceptanceService->flash('success', 'Registrace dokončena, vítej v soutěži!');
 
+        // `?pripojeno=1` (item 28) states the fact „you have just joined" — completing a
+        // pre-provisioned account's registration creates the membership right here, so
+        // this is a join landing too, and the boost-price modal waits for the next visit.
         return new RedirectResponse($this->urlGenerator->generate(
             'competition_detail',
-            ['id' => $this->context->competitionId->toRfc4122()],
+            ['id' => $this->context->competitionId->toRfc4122(), 'pripojeno' => 1],
         ));
     }
 

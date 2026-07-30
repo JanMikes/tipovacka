@@ -226,7 +226,7 @@ final class UnverifiedEmailAirlockTest extends WebTestCase
         $this->loginUnverified($client);
         $client->request('GET', '/pozvanka/'.AppFixtures::PENDING_INVITATION_TOKEN);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'?pripojeno=1');
     }
 
     /**

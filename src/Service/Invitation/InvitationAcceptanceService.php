@@ -117,9 +117,12 @@ final readonly class InvitationAcceptanceService
             }
         }
 
+        // `?pripojeno=1` (item 28) states the fact „you have just joined": the
+        // competition page uses it to withhold the boost-price modal this once,
+        // so the welcome and the upsell do not arrive in the same breath.
         return new RedirectResponse($this->urlGenerator->generate(
             'competition_detail',
-            ['id' => $context->competitionId->toRfc4122()],
+            ['id' => $context->competitionId->toRfc4122(), 'pripojeno' => 1],
         ));
     }
 

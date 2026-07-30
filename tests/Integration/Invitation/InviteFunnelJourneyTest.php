@@ -76,7 +76,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
 
         $this->clickVerificationLink($client, $user);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'?pripojeno=1');
         self::assertTrue($this->isMember($client, $user->id, AppFixtures::VERIFIED_COMPETITION_ID));
     }
 
@@ -96,7 +96,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
 
         $this->clickVerificationLink($client, $user);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'?pripojeno=1');
         self::assertTrue(
             $this->isMember($client, $user->id, AppFixtures::VERIFIED_COMPETITION_ID),
             'The join must not depend on the sign-up session surviving the mail round trip.',
@@ -120,7 +120,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
 
         $this->clickVerificationLink($client, $user);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'?pripojeno=1');
         self::assertTrue($this->isMember($client, $user->id, AppFixtures::VERIFIED_COMPETITION_ID));
     }
 
@@ -161,7 +161,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
             ],
         ], 'submit')->response();
 
-        self::assertSame('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID, $response->headers->get('Location'));
+        self::assertSame('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'?pripojeno=1', $response->headers->get('Location'));
         self::assertTrue($this->isMember($client, Uuid::fromString(AppFixtures::ADMIN_ID), AppFixtures::VERIFIED_COMPETITION_ID));
     }
 

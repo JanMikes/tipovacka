@@ -151,3 +151,29 @@ item 26 is in flight.
 
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. Push to `main`. Do not update the status board; report your sha.
+
+## Assumptions made (implementer, 2026-07-30)
+
+1. **There is a FOURTH join redirect, and it got the parameter too.**
+   `src/Twig/Components/Auth/InvitationForm.php:287` — a *pre-provisioned* account (bulk e-mail
+   invitation, no password yet) completing its registration. `CompleteInvitationRegistrationHandler`
+   creates the `Membership` right there and the component flashes „Registrace dokončena, vítej
+   v soutěži!", so it is a join landing by every test this item applies; it was simply not on the
+   list. Found because `EmailInvitationLandingTest::testCompleteRegistrationFromStubAccount` was the
+   one redirect assertion that still failed after the other three were done.
+2. **`JoinGlobalCompetitionController::alreadyMember()` (`:100`) carries the parameter; the CSRF
+   refusal (`:57`) does not.** `alreadyMember` is reached only *from* „Připojit se" and the player is
+   a member when it renders, so it is the same breath. The CSRF branch joined nothing — and its
+   visitor is normally not a member, where the modal is already withheld by the first suppression,
+   so the parameter would be decoration.
+3. **All three (four) join paths get it**, as the item's own judgement call proposed — including the
+   global-competition join. The counter-argument (that user deliberately clicked „Připojit se" on a
+   monetized competition) does not survive the fact that the modal is not lost, only deferred by one
+   page view.
+4. **Not touched:** `CreateWizard` / `CreateGlobalCompetition` (creating a soutěž makes you its
+   owner, which is not a join and not what was reported), and every non-join `competition_detail`
+   redirect — lock/unlock, leave, delete, purchase boost, dismiss intro, admin edit.
+5. **Existing redirect assertions were updated, not weakened** — 15 of them across 9 test files
+   assert the exact `Location`. `tests/Integration/Invitation/InviteFunnelJourneyTest.php` (item 27's
+   file) is among them; item 27 had already committed (`7dc2ea3`) and the file was clean in the
+   working tree, so the four one-line edits swept nothing.

@@ -26,6 +26,7 @@ use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -64,7 +65,7 @@ final class CompetitionDetailController extends AbstractController
     ) {
     }
 
-    public function __invoke(string $id): Response
+    public function __invoke(Request $request, string $id): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -86,7 +87,7 @@ final class CompetitionDetailController extends AbstractController
         $isFullyOver = $this->matchProvider->isFullyOver($competition);
 
         // ── The first-visit boost-price modal (item 19, closes B10) ─────────
-        // Four suppressions, all deliberate:
+        // Five suppressions, all deliberate:
         //   • not a member        — nothing to sell them, and nothing to stamp
         //     (only an admin ever reaches this page as a non-member);
         //   • already dismissed   — the stamp lives on the membership, so the
@@ -95,11 +96,21 @@ final class CompetitionDetailController extends AbstractController
         //     buy boosts at all (the organizer pays for everyone), so a price
         //     list would advertise the unpurchasable; `none` sells nothing either.
         //     Premium XOR boosts, as a user-visible consequence;
-        //   • fully over (B6)     — a boost bought now could unlock nothing.
+        //   • fully over (B6)     — a boost bought now could unlock nothing;
+        //   • just joined (item 28) — every join redirect carries `?pripojeno=1`,
+        //     so we do not greet a brand-new member with a price list in the same
+        //     breath as the welcome. Nothing is stamped for a suppressed render
+        //     (only DismissBoostIntroController writes boostIntroSeenAt), so the
+        //     modal simply waits for the next visit. A forged or shared parameter
+        //     therefore costs one render of a promotional modal — hence no token,
+        //     no signature, no session check.
+        $justJoined = $request->query->getBoolean('pripojeno');
+
         $showBoostIntro = $isMember
             && null === $membership->boostIntroSeenAt
             && CompetitionMonetization::Boosts === $competition->monetization
-            && !$isFullyOver;
+            && !$isFullyOver
+            && !$justJoined;
 
         // Tip-locking state for the hero + the „Uzamknout tipy" action: locked =
         // the competition-level lock moment (manual lock or first kickoff)

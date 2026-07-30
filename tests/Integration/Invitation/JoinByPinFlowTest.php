@@ -50,7 +50,7 @@ final class JoinByPinFlowTest extends WebTestCase
             'join_by_pin_form[pin]' => AppFixtures::VERIFIED_COMPETITION_PIN,
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'?pripojeno=1');
 
         $memberships = $em->createQueryBuilder()
             ->select('m')

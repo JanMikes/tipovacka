@@ -90,14 +90,23 @@ final class JoinGlobalCompetitionController extends AbstractController
 
         $this->addFlash('success', 'Vítejte v soutěži! Nezapomeňte si zadat tipy.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+        // `?pripojeno=1` (item 28) states the fact „you have just joined": the
+        // competition page uses it to withhold the boost-price modal this once,
+        // so the welcome and the upsell do not arrive in the same breath.
+        return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122(), 'pripojeno' => 1]);
     }
 
+    /**
+     * Also a landing straight off „Připojit se" — the membership exists either way
+     * (a racing duplicate, or a stale button), so it carries `pripojeno` too. The
+     * CSRF refusal above deliberately does not: nothing was joined there, and a
+     * non-member never sees the modal anyway.
+     */
     private function alreadyMember(Uuid $competitionId): RedirectResponse
     {
         $this->addFlash('info', 'Už jste členem této soutěže.');
 
-        return $this->redirectToRoute('competition_detail', ['id' => $competitionId->toRfc4122()]);
+        return $this->redirectToRoute('competition_detail', ['id' => $competitionId->toRfc4122(), 'pripojeno' => 1]);
     }
 
     private function redirectToTopUp(Uuid $competitionId, int $entryFeeCredits, Uuid $userId): RedirectResponse

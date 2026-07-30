@@ -96,9 +96,12 @@ final class LoginSubscriber implements EventSubscriberInterface
 
         $competitionId = $this->join($pending, $user, $flashBag);
 
+        // `?pripojeno=1` (item 28) states the fact „you have just joined": the
+        // competition page uses it to withhold the boost-price modal this once,
+        // so the welcome and the upsell do not arrive in the same breath.
         $event->setResponse(new RedirectResponse(
             null !== $competitionId
-                ? $this->urlGenerator->generate('competition_detail', ['id' => $competitionId->toRfc4122()])
+                ? $this->urlGenerator->generate('competition_detail', ['id' => $competitionId->toRfc4122(), 'pripojeno' => 1])
                 : $this->urlGenerator->generate('dashboard')
         ));
     }

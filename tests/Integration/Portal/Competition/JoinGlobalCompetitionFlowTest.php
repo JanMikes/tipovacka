@@ -32,7 +32,8 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $this->loginUserById($this->client, AppFixtures::SECOND_VERIFIED_USER_ID);
         $this->postJoin(AppFixtures::FREE_GLOBAL_COMPETITION_ID);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID);
+        // `?pripojeno=1` (item 28): a join redirect withholds the boost intro this once.
+        self::assertResponseRedirects('/souteze/'.AppFixtures::FREE_GLOBAL_COMPETITION_ID.'?pripojeno=1');
         self::assertTrue($this->isMember(AppFixtures::SECOND_VERIFIED_USER_ID, AppFixtures::FREE_GLOBAL_COMPETITION_ID));
     }
 
@@ -48,7 +49,7 @@ final class JoinGlobalCompetitionFlowTest extends WebTestCase
         $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
         $this->postJoin(AppFixtures::GLOBAL_COMPETITION_ID);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID);
+        self::assertResponseRedirects('/souteze/'.AppFixtures::GLOBAL_COMPETITION_ID.'?pripojeno=1');
         self::assertTrue($this->isMember(AppFixtures::VERIFIED_USER_ID, AppFixtures::GLOBAL_COMPETITION_ID));
     }
 
