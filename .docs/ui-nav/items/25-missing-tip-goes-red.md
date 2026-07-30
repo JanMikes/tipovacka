@@ -96,34 +96,6 @@ player sees. The count came from grepping the exact markup form rather than the 
 **grep the string, count every hit, and check each state**, rather than trusting the four call sites
 tabulated above. If you find more, say so.
 
-## Also land these, handed over from item 23 (`2578def`)
-
-Item 23 renamed the boosters and the „Rozložení tipů" section but **could not touch
-`templates/design/styleguide.html.twig`**, which item 22 owned at the time. You own that file, so
-finish its sweep in the same pass — the gallery is the shop window and is currently advertising
-retired names. Read each line before changing it; some are prose *about* a component and some are the
-component's sample copy.
-
-| Line (approx.) | Now | Should be |
-|---|---|---|
-| 721, 724 | „Rozložení tipů ostatních" | „Jak tipují ostatní?" |
-| 728, 731 | „Konkrétní tipy kolegů" | „Přesné tipy soupeřů" |
-| 732 | „Rozložení tipů plus konkrétní tipy soutěžících v partičce." | the canonical sentence: „Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži." |
-| 735, 738 | „Měnit tip během turnaje" | „Počkejte si na sestavy" |
-| 380, 468, 473, 495, 502 | captions/headings saying „Rozložení tipů" | „Jak tipují ostatní?" — the heading they describe was renamed |
-
-⚠️ **`DesignStyleguideFlowTest:140` asserts `assertStringContainsString('Rozložení tipů', $body)`
-and passes today only because of line 502.** Rename 502 and that test fails — update the assertion in
-the **same** commit. Prices in the gallery already derive from `pricing.*`, so 15/35/50 landed on
-their own; only names and captions are left.
-
-**A counting lesson from item 23, which applies to this item too.** Its spec said `Match/TipStats`
-had „two user-visible occurrences" of the heading; there were **six** — the `<h2>` plus five
-`.tip-stats-eyebrow` states, including the **locked** one, which is precisely what a non-paying
-player sees. The count came from grepping the exact markup form rather than the string. So here:
-**grep the string, count every hit, and check each state**, rather than trusting the four call sites
-tabulated above. If you find more, say so.
-
 ## What must NOT change
 
 - No other `Pill` variant's colour, and no change to the amber token itself.
