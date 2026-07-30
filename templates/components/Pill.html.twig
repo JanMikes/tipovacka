@@ -1,6 +1,7 @@
 {#
-  Status pill. variant: soon|tipped|done|locked|accent|success|warn|neutral|live
-  (live is marketing-decoration only). icon = lucide name (optional). dot = leading dot.
+  Status pill. variant: soon|tipped|done|locked|accent|success|warn|neutral|live|danger
+  (live is marketing-decoration only; danger is the missing tip — see item 25 — and is
+  the only red a player is asked to act on). icon = lucide name (optional). dot = leading dot.
 #}
 {% props label, variant = 'neutral', icon = null, dot = false %}
 <span class="pill pill-{{ variant }}">

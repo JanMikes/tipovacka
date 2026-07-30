@@ -93,9 +93,10 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertStringContainsString('Viditelnost', $body);
         self::assertStringContainsString('id="hraju-01930000-0000-7000-8000-0000000000c1"', $body);
 
-        // Match:MatchRow in all five states (`finished` paints the `done` stripe).
+        // Match:MatchRow in all six states (`finished` paints the `done` stripe).
         // Item 21 — ONE card design, so there is one gallery, not a variant per shape.
-        foreach (['open', 'tipped', 'live', 'locked', 'done'] as $state) {
+        // Item 25 — `missing` is the red „Chybí tip" state; `open` („Brzy") stays amber.
+        foreach (['open', 'missing', 'tipped', 'live', 'locked', 'done'] as $state) {
             self::assertStringContainsString('class="tip-row is-dash '.$state.'"', $body);
         }
         self::assertStringNotContainsString('variant="dashboard"', $body);
@@ -136,8 +137,11 @@ final class DesignStyleguideFlowTest extends WebTestCase
         self::assertStringContainsString('Zapíná organizátor', $body); // premium
         self::assertStringContainsString('Zobrazí se po odehrání', $body); // nothing to sell
 
-        // One name for the feature (item 12) — never the two older ones.
-        self::assertStringContainsString('Rozložení tipů', $body);
+        // One name for the feature — item 12 settled on „Rozložení tipů", item 23 then
+        // renamed the surface after the booster that unlocks it. The gallery advertises
+        // that ONE name; none of the three retired ones may survive anywhere on it.
+        self::assertStringContainsString('Jak tipují ostatní?', $body);
+        self::assertStringNotContainsString('Rozložení tipů', $body);
         self::assertStringNotContainsString('Lišta tipů', $body);
         self::assertStringNotContainsString('Distribuce tipů', $body);
     }

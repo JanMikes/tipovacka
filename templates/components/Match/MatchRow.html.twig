@@ -33,8 +33,11 @@
       kickoffAt    \DateTimeImmutable|null — výkop (formát „1. 6." + „20:15", Europe/Prague)
       round        string|null   — kolo / fáze (např. „Osmifinále")
       isPlayoff    bool          — zobrazí malou pilulku „Playoff" vedle kola
-      state        string        — open | tipped | live | locked | finished (odvozeno na call-site);
-                                   barví levý pruh karty
+      state        string        — open | missing | tipped | live | locked | finished
+                                   (odvozeno na call-site); barví levý pruh karty.
+                                   `missing` = tip chybí a ještě se dá zadat → červený
+                                   pruh (item 25); `open` zůstává jantarový pro „Brzy",
+                                   `locked` šedý (po uzávěrce je to fakt, ne výzva)
       pillVariant  string|null   — varianta stavové pilulky (Pill component)
       pillLabel    string|null   — text stavové pilulky
       pillIcon     string|null   — lucide ikona pilulky

@@ -296,9 +296,11 @@ POST-only: `…/ukoncit`, `…/obnovit`, `…/smazat` (source); `…/zrusit`, `�
 ## 3. Shared Twig components (`templates/components/`)
 
 **Presentational (template-only, `{% props %}`)**
-`Avatar` (name, size, rank) · `Pill` (label, variant, icon, dot — the **nine** variants defined in
+`Avatar` (name, size, rank) · `Pill` (label, variant, icon, dot — the **ten** variants defined in
 `app.css`: `done` · `tipped` · `success` · `soon` · `warn` · `accent` · `neutral` · `locked` ·
-`live`) · `Badge` (label, variant, icon — `win` · `loss` · `draw` · `pending` · `competition` ·
+`live` · `danger`. `danger` (item 25) is the palette's red `loss` and means **„you owe a tip and
+can still give one"** — „Chybí tip" and nothing else; `soon`/`warn` stay amber everywhere,
+including „BRZY", and `live` red stays marketing-only) · `Badge` (label, variant, icon — `win` · `loss` · `draw` · `pending` · `competition` ·
 `organizer` · `points`) · `StatCard` ·
 `EmptyState` · `Breadcrumbs` (`:items`) · `TeamFlag` (`:team`, size) ·
 `PremiumTeaser` · `Match/TipStats` (`:stats` — **always** feed it from
@@ -310,7 +312,9 @@ coin with the buy CTA. The real bars are `.dist-bar`/`.dist-fill`, the paywall d
 `.dist-ghost-fill` — keep them apart, „is the split visible?" is asserted on the real ones)
 · **`Match/MatchRow`** — **THE match card, one design on every surface** (item 21 retired the `variant`
 prop and the item 11 row shape it selected). `.tip-row.is-dash` is the card (4 px left accent stripe per
-`state` = `open|tipped|live|locked|finished`); inside it `a.tip-row-link` holds a centred header
+`state` = `open|missing|tipped|live|locked|finished`; item 25 split `missing` — the **red** „Chybí tip"
+card — off `open`, which is still the amber „Brzy" one, while `locked` stays grey because after the
+uzávěrka a missing tip is a fact, not a call to action); inside it `a.tip-row-link` holds a centred header
 (`.tipd-head`: kolo · Playoff · datum · čas, state pill right-aligned — centred when it wraps to its own
 line on a phone), **mirrored** team blocks (`.tipd-side`, home role-above-name, away name-above-role)
 around the **score, or „vs" when there is none — never a duplicated kickoff time**, and a full-width

@@ -294,6 +294,14 @@ label.required::after {
     .pill-live .ring { position: relative; width: 6px; height: 6px; border-radius: 50%; background: #ff5d7a; }
     .pill-live .ring::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 1px solid rgba(255,93,122,0.7); animation: ring-pulse 1.4s var(--ease-standard) infinite; }
 
+    /* --- item 25: a missing tip is red, not amber ---
+       „Chybí tip" is the one status the player can still act on, so it shouts in the
+       palette's red (the `loss` token, same as `.badge-loss`) instead of the amber it
+       used to share with „Brzy". Same shape and the same alpha steps as its nine
+       siblings, so no new hex enters the palette. `soon` and `warn` stay amber
+       EVERYWHERE else — „deadline approaching" is not „you owe a tip". */
+    .pill-danger  { background: rgba(255,93,122,0.14); border-color: rgba(255,93,122,0.40); color: #ff8ea1; }
+
     /* ---- Badges (label + icon) ---- */
     .badge {
         display: inline-flex; align-items: center; gap: 6px;
@@ -1105,6 +1113,14 @@ label.required::after {
     }
     .my-tip.is-bar .my-tip-lbl { margin-bottom: 0; }
     .my-tip.is-bar .my-tip-pts { position: static; top: auto; right: auto; border: none; }
+
+    /* --- item 25: a missing tip is red, not amber ---
+       A SIXTH state rather than a repaint of `open`, because `open` is also the „Brzy"
+       card — tippable, nothing owed — and that one stays amber. `locked` stays grey for
+       the mirror-image reason: after the uzávěrka a missing tip is a fact, not a call to
+       action, and red would nag about something the player can no longer do. The 4 px
+       width comes from the bare `.tip-row` rule above, so only the colour is set here. */
+    .tip-row.missing { border-left-color: var(--color-loss); }
 
     /* --- B22: the credits ledger („Historie transakcí" on /kredity) --- */
     /* Measured cause: the table's min-content floor is the SUM of five column

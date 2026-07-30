@@ -290,7 +290,8 @@
                         {% elseif state == 'tipped' %}
                             {% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_label = 'Tip odeslán' %}{% set pill_dot = false %}
                         {% else %}
-                            {% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_label = 'Chybí tip' %}{% set pill_dot = false %}
+                            {# Item 25 — tip chybí a dá se ještě zadat: červený pruh i pilulka. #}
+                            {% set pill_variant = 'danger' %}{% set pill_icon = 'circle-alert' %}{% set pill_label = 'Chybí tip' %}{% set pill_dot = false %}
                         {% endif %}
 
                         {% set hit_class = null %}
@@ -308,14 +309,19 @@
                         <li data-reveal-target="item">
                         {# B5: „Netipováno" (`tipMissingLabel`) jen tady — tato karta zná
                            právě JEDNU soutěž; napříč soutěžemi (/zapasy, nástěnka) by
-                           lhala, tam zůstává „Uzamčeno" v pilulce. #}
+                           lhala, tam zůstává „Uzamčeno" v pilulce.
+
+                           `state == 'open'` znamená na této ploše vždy „chybí tip"
+                           (odložený, zrušený i probíhající zápas už není
+                           `isOpenForGuesses`, takže z controlleru vyjde `locked`),
+                           proto se mapuje na červený stav `missing` (item 25). #}
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
                             :awayTeam="m.awayTeam"
                             :kickoffAt="m.kickoffAt"
                             :round="m.round"
                             :isPlayoff="m.isPlayoff"
-                            :state="m.state.value == 'live' ? 'live' : (state == 'open' ? 'open' : state)"
+                            :state="m.state.value == 'live' ? 'live' : (state == 'open' ? 'missing' : state)"
                             :pillVariant="pill_variant"
                             :pillIcon="pill_icon"
                             :pillLabel="pill_label"

@@ -39,7 +39,8 @@
 {% elseif is_locked %}
     {% set row_state = 'locked' %}{% set pill_variant = 'locked' %}{% set pill_icon = 'lock' %}{% set pill_label = 'Uzamčeno' %}{% set pill_dot = false %}
 {% elseif m.pendingCompetitionsCount > 0 %}
-    {% set row_state = 'open' %}{% set pill_variant = 'soon' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
+    {# Item 25 — tip chybí a dá se ještě zadat: červený pruh i pilulka. #}
+    {% set row_state = 'missing' %}{% set pill_variant = 'danger' %}{% set pill_icon = 'circle-alert' %}{% set pill_dot = false %}
     {% set pill_label = m.openCompetitionsCount > 1 ? 'Chybí tip (' ~ guessed_among_open ~ '/' ~ m.openCompetitionsCount ~ ')' : 'Chybí tip' %}
 {% elseif is_tipped %}
     {% set row_state = 'tipped' %}{% set pill_variant = 'tipped' %}{% set pill_icon = 'check' %}{% set pill_dot = false %}

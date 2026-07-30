@@ -160,3 +160,44 @@ tabulated above. If you find more, say so.
 
 `git commit -o <path> [<path>…]` (`--only`) — **never** `git add` + `git commit`, never `git add -A`
 / `.` / `commit -a`. Push to `main`. Do not update the status board; report your sha.
+
+## Assumptions made
+
+1. **A SIXTH card state (`missing`), not a repaint of `open` — because `open` is also „BRZY".**
+   Step 2 of „What to do" says to turn the `open` stripe red; acceptance criterion 2 says the
+   „BRZY" card must be visually unchanged. Both cannot hold: `/zapasy` and the Nástěnka derive
+   `state = 'open'` for **two** branches — „Chybí tip" (`pendingCompetitionsCount > 0`) and the
+   final `else` that renders „Brzy" — so repainting `open` would have turned „BRZY" red too.
+   Resolved by adding `.tip-row.missing` (red) and leaving `.tip-row.open` amber for „Brzy";
+   the call sites that mean „a tip is missing" now say `state: 'missing'`. The name comes from
+   `/zapasy`'s own state-enum comment, which already told the two apart in prose.
+   *(Aside, established while checking: the „Brzy" branch is unreachable in production —
+   `pending == 0 ∧ open > 0` implies `guessed ≥ open > 0`, which the previous `is_tipped`
+   branch already catches. It renders only in `/_design`. It is still not this item's business
+   to delete it, and keeping `open` amber costs nothing.)*
+   On competition detail the mapping is exact rather than conservative: `rowState()` returns
+   `open` **only** when the match is still `isOpenForGuesses` and untipped — postponed,
+   cancelled and live matches all fall to `locked` first — so `open → missing` there cannot
+   catch anything but a genuinely missing tip.
+2. **The pilulka variant is `danger`, matching the existing `.btn-danger`** and the product
+   owner's own word („use red (danger)"). It is built from the `loss` token at the siblings'
+   alpha steps, so it is byte-identical in colour to `.pill-live` — deliberately: the palette
+   has one red, and `live` is a *decoration* while `danger` is a *state a player must act on*.
+   Two names for one colour is right here; one name for two meanings would not be.
+3. **„Nevyplněno" stays amber, and it is the same semantic in three more places.**
+   `portal/competition/match_detail.html.twig` (×2) and `portal/competition/manage_member_tips.html.twig`
+   render `<twig:Pill label="Nevyplněno" variant="soon" icon="circle-alert">` — B5's „a tip is
+   missing and can still be given", i.e. exactly what this item paints red on the cards. They are
+   left amber because „What must NOT change" says red must not leak onto „any other `soon` /
+   `warn` use anywhere in the app". **Flagged for the product owner**: after this item the same
+   fact reads amber on the match page and red on the card that links to it.
+4. **`missing` and `live` now share one stripe colour** (both `var(--color-loss)`), and both can
+   appear on `/zapasy` at once. The item forbids inventing a third colour, so nothing was
+   invented. The cards are still told apart by everything else — „• LIVE" vs „⚠ CHYBÍ TIP" in the
+   pilulka, a score vs „vs" in the middle, a „Zadat tip" bar only on the missing one — but the
+   4 px stripe alone no longer distinguishes them. Recorded rather than fixed.
+5. **The „Chybí tip" call-site count in this file was complete** — `grep` finds exactly the six
+   listed occurrences in four files. What the file missed was the shared `state: 'open'` above
+   (assumption 1) and the fact that the standalone „Chybí tip" pilulka in `/_design` was the
+   gallery's ONLY `soon` sample, so recolouring it would have dropped `soon` out of the
+   „všechny varianty" row; a „Brzy" pilulka was added to keep the row complete at ten.

@@ -130,7 +130,8 @@
                 <twig:Pill label="Hotovo" variant="done" icon="check" />
                 <twig:Pill label="Tip odeslán" variant="tipped" icon="check" />
                 <twig:Pill label="Odemčeno" variant="success" icon="unlock" />
-                <twig:Pill label="Chybí tip" variant="soon" icon="circle-alert" />
+                <twig:Pill label="Brzy" variant="soon" :dot="true" />
+                <twig:Pill label="Chybí tip" variant="danger" icon="circle-alert" />
                 <twig:Pill label="Vylepšení" variant="warn" icon="sparkles" />
                 <twig:Pill label="Před startem" variant="accent" />
                 <twig:Pill label="Probíhá" variant="neutral" />
@@ -358,7 +359,10 @@
                     </h3>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         <code class="text-white/70">&lt;twig:Match:MatchRow&gt;</code> — jedna karta na zápas, barevný
-                        pruh vlevo podle stavu (<code class="text-white/70">open · tipped · live · locked · finished</code>).
+                        pruh vlevo podle stavu (<code class="text-white/70">open · missing · tipped · live · locked · finished</code>).
+                        <code class="text-white/70">missing</code> = tip chybí a ještě se dá zadat, proto jediné červené
+                        volání k akci; <code class="text-white/70">open</code> („Brzy") zůstává jantarový a
+                        <code class="text-white/70">locked</code> šedý.
                         Jedna podoba na všech plochách (nástěnka, <code class="text-white/70">/zapasy</code>,
                         detail soutěže): celá karta je JEDEN odkaz a v patě má jedinou výzvu „Zadat tip".
                         Zóny se zalamují podle šířky <strong class="text-white/70">sloupce</strong>, ne okna prohlížeče
@@ -377,7 +381,7 @@
                     footNote: 'MS ve fotbale 2026 · Estadio Azteca',
                 },
                 {
-                    caption: 'state="tipped" — tip odeslán, uvnitř karty pruh „Rozložení tipů"',
+                    caption: 'state="tipped" — tip odeslán, uvnitř karty pruh „Jak tipují ostatní?"',
                     state: 'tipped', pillVariant: 'tipped', pillLabel: 'Tip odeslán', pillIcon: 'check', pillDot: false,
                     home: teams.home, away: teams.away, kickoff: kickoffs.upcoming, round: 'Základní skupina',
                     tippable: true, myHome: 2, myAway: 1,
@@ -407,8 +411,8 @@
                     footNote: 'MS ve fotbale 2026 · Estadio Monumental',
                 },
                 {
-                    caption: 'playoff + dlouhé názvy týmů (jméno se ořízne třemi tečkami, karta nezmění výšku)',
-                    state: 'open', pillVariant: 'soon', pillLabel: 'Chybí tip', pillIcon: 'circle-alert', pillDot: false,
+                    caption: 'state="missing" — tip chybí a dá se zadat (červeně), playoff + dlouhé názvy týmů (jméno se ořízne třemi tečkami, karta nezmění výšku)',
+                    state: 'missing', pillVariant: 'danger', pillLabel: 'Chybí tip', pillIcon: 'circle-alert', pillDot: false,
                     home: teams.longHome, away: teams.longAway, kickoff: kickoffs.playoff, round: 'Osmifinále',
                     isPlayoff: true, tippable: true,
                     footNote: 'Chodská liga — jaro · Městský stadion',
@@ -454,8 +458,8 @@
                     :kickoffAt="kickoffs.playoff"
                     round="Osmifinále"
                     :isPlayoff="true"
-                    state="open"
-                    pillVariant="soon"
+                    state="missing"
+                    pillVariant="danger"
                     pillLabel="Chybí tip"
                     pillIcon="circle-alert"
                     :detailUrl="match_url"
@@ -465,12 +469,12 @@
             </div>
 
             {#
-                Item 21 — /zapasy a nástěnka předávají SEZNAM pruhů „Rozložení tipů":
+                Item 21 — /zapasy a nástěnka předávají SEZNAM pruhů „Jak tipují ostatní?":
                 jeden zápas může ležet v několika soutěžích hráče. Karta musí vykreslit
                 každý z nich (s nadpisem soutěže), ne jen první — proto je ten případ
                 tady, v galerii.
             #}
-            <p class="eyebrow mb-2 mt-8">zápas ve DVOU soutěžích — každá má svůj pruh „Rozložení tipů" i nadpis</p>
+            <p class="eyebrow mb-2 mt-8">zápas ve DVOU soutěžích — každá má svůj pruh „Jak tipují ostatní?" i nadpis</p>
             <twig:Match:MatchRow
                 :homeTeam="teams.home"
                 :awayTeam="teams.plain"
@@ -492,14 +496,14 @@
         {% endset %}
         {{ gal.inert(section) }}
 
-        {# ═════════ A8. Rozložení tipů ═════════ #}
+        {# ═════════ A8. Jak tipují ostatní? ═════════ #}
         {% set section %}
         <section class="card-glass p-6 sm:p-8">
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 class="flex items-center gap-2 text-xl font-bold tracking-tight text-white">
                         <twig:ux:icon name="lucide:activity" class="h-5 w-5 text-accent-300" />
-                        Rozložení tipů
+                        Jak tipují ostatní?
                     </h3>
                     <p class="mt-1.5 max-w-xl text-sm text-white/50">
                         <code class="text-white/70">&lt;twig:Match:TipStats&gt;</code> — jediná plocha pro rozdělení
@@ -718,24 +722,24 @@
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Zaplatíte za celou soutěž — cena je {{ pricing.premiumPerPlayer }} Kč za každého hráče.</p>
                     </div>
 
-                    {# Rozložení tipů ostatních #}
+                    {# Jak tipují ostatní? — jména i věty jsou ta jediná kanonická (item 23). #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                         <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipDistribution }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Rozložení tipů ostatních</div>
+                        <div class="mt-1 text-sm font-bold text-white">Jak tipují ostatní?</div>
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Uvidíte procenta, jak hlasovali kolegové.</p>
                     </div>
 
-                    {# Konkrétní tipy kolegů #}
+                    {# Přesné tipy soupeřů #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                         <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostOthersTips }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Konkrétní tipy kolegů</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Rozložení tipů plus konkrétní tipy soutěžících v partičce.</p>
+                        <div class="mt-1 text-sm font-bold text-white">Přesné tipy soupeřů</div>
+                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži.</p>
                     </div>
 
-                    {# Měnit tip během turnaje #}
+                    {# Počkejte si na sestavy #}
                     <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                         <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipChange }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Měnit tip během turnaje</div>
+                        <div class="mt-1 text-sm font-bold text-white">Počkejte si na sestavy</div>
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Až hodinu před začátkem zápasu.</p>
                     </div>
                 </div>
