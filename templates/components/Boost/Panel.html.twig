@@ -103,7 +103,7 @@
                                 </div>
                             {% elseif is_over %}
                                 <p class="mt-3 text-[12px] leading-snug text-white/45">
-                                    Soutěž už skončila — vylepšení už nemá co odemknout.
+                                    {{ constant('App\\Enum\\BoostType::LOCKED_OVER_NOTE') }}
                                 </p>
                             {% else %}
                                 <div class="mt-3">
@@ -123,9 +123,13 @@
                                             </button>
                                         </form>
                                     {% else %}
-                                        <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm w-full">
-                                            <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-                                            Dokoupit kredity
+                                        {# ONE CTA per booster, affordable or not — the row
+                                           keeps offering the boost at its price and simply
+                                           routes an insufficient wallet through dobití
+                                           (item 23). #}
+                                        <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm w-full">
+                                            <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                                            Koupit za {{ type.price }} kr.
                                         </a>
                                     {% endif %}
                                 </div>
@@ -200,9 +204,9 @@
                                 </button>
                             </form>
                         {% else %}
-                            <a href="{{ path('credits') }}" class="dist-unlock">
-                                <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
-                                Chybí kredity ({{ p.balance }}/{{ type.price }} kr.)
+                            <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                                Odemknout za {{ type.price }} kr.
+                                <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                             </a>
                         {% endif %}
                     </div>
@@ -236,13 +240,10 @@
                                     </button>
                                 </form>
                             {% else %}
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <span class="text-[12px] text-white/50">Chybí kredity ({{ p.balance }} / {{ type.price }} kr.)</span>
-                                    <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm">
-                                        <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-                                        Dokoupit kredity
-                                    </a>
-                                </div>
+                                <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm">
+                                    <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                                    Odemknout za {{ type.price }} kr.
+                                </a>
                             {% endif %}
                         </div>
                     </section>
@@ -256,7 +257,7 @@
                own. Pricing, affordability and B6 „soutěž už skončila" stay here —
                that is the whole reason the caller composes this component. #}
             {% if mon == 'boosts' and is_over %}
-                <span class="dist-unlock is-static">Soutěž už skončila</span>
+                <span class="dist-unlock is-static">{{ constant('App\\Enum\\BoostType::LOCKED_OVER_CTA') }}</span>
             {% elseif mon == 'boosts' and p.canAfford(type) %}
                 <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
                     class="dist-buy"
@@ -280,12 +281,14 @@
                     </button>
                 </form>
             {% elseif mon == 'boosts' %}
-                <a href="{{ path('credits') }}" class="dist-unlock">
-                    <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
-                    Chybí kredity ({{ p.balance }}/{{ type.price }} kr.)
+                {# Same control, same price — a wallet that cannot cover it is routed
+                   through dobití instead of the confirm dialog (item 23). #}
+                <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                    Odemknout za {{ type.price }} kr.
+                    <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </a>
             {% elseif mon == 'premium' %}
-                <span class="dist-unlock is-static">Zapíná organizátor</span>
+                <span class="dist-unlock is-static">{{ constant('App\\Enum\\BoostType::LOCKED_PREMIUM_CTA') }}</span>
             {% endif %}
             {# mon == 'none' → nothing to sell; the caller's note says it opens
                once the zápas is played. #}
@@ -303,7 +306,7 @@
                 </div>
                 <div class="mt-4">
                     {% if is_over %}
-                        <p class="text-[12px] leading-snug text-white/50">Soutěž už skončila — vylepšení už nemá co odemknout.</p>
+                        <p class="text-[12px] leading-snug text-white/50">{{ constant('App\\Enum\\BoostType::LOCKED_OVER_NOTE') }}</p>
                     {% elseif p.canAfford(type) %}
                         <form method="post" action="{{ path('competition_boost_purchase', {id: competition.id.toRfc4122}) }}"
                             data-controller="confirm"
@@ -320,13 +323,10 @@
                             </button>
                         </form>
                     {% else %}
-                        <div class="flex flex-wrap items-center gap-3">
-                            <span class="text-[12px] text-white/50">Chybí kredity ({{ p.balance }} / {{ type.price }} kr.)</span>
-                            <a href="{{ path('credits') }}" class="btn btn-ghost btn-sm">
-                                <twig:ux:icon name="lucide:wallet" class="h-4 w-4" />
-                                Dokoupit kredity
-                            </a>
-                        </div>
+                        <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm">
+                            <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
+                            Odemknout za {{ type.price }} kr.
+                        </a>
                     {% endif %}
                 </div>
             </section>
@@ -336,13 +336,13 @@
                     <twig:ux:icon name="lucide:crown" class="h-4 w-4" />
                     Prémium
                 </p>
-                <p class="mt-1 text-[12px] text-white/55">Tuto funkci zapíná organizátor soutěže pro všechny.</p>
+                <p class="mt-1 text-[12px] text-white/55">{{ constant('App\\Enum\\BoostType::LOCKED_PREMIUM_NOTE') }}</p>
             </section>
         {% else %}
             <section class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p class="inline-flex items-center gap-1.5 text-sm font-medium text-white/60">
                     <twig:ux:icon name="lucide:lock" class="h-4 w-4 text-white/40" />
-                    Tipy ostatních se zobrazí po odehrání zápasu.
+                    {{ constant('App\\Enum\\BoostType::LOCKED_AFTER_MATCH_NOTE') }}
                 </p>
             </section>
         {% endif %}

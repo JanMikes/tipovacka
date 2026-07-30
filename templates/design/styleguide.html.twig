@@ -732,26 +732,20 @@
                         <p class="mt-1.5 text-[12px] leading-snug text-white/55">Zaplatíte za celou soutěž — cena je {{ pricing.premiumPerPlayer }} Kč za každého hráče.</p>
                     </div>
 
-                    {# Jak tipují ostatní? — jména i věty jsou ta jediná kanonická (item 23). #}
-                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipDistribution }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Jak tipují ostatní?</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Uvidíte procenta, jak hlasovali kolegové.</p>
-                    </div>
-
-                    {# Přesné tipy soupeřů #}
-                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostOthersTips }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Přesné tipy soupeřů</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Chcete vědět, jak tipuje váš soupeř? Odemkněte si přesné tipy ostatních hráčů ve vaší soutěži.</p>
-                    </div>
-
-                    {# Počkejte si na sestavy #}
-                    <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                        <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ pricing.boostTipChange }} Kč</div>
-                        <div class="mt-1 text-sm font-bold text-white">Počkejte si na sestavy</div>
-                        <p class="mt-1.5 text-[12px] leading-snug text-white/55">Až hodinu před začátkem zápasu.</p>
-                    </div>
+                    {# Tři vylepšení — jméno i věta VŽDY z BoostType (item 23). Galerie
+                       je poslední místo, kde se copy přepisovala ručně; teď se ani tady
+                       nedá rozejít s obchodem. #}
+                    {% for tile in [
+                        {boost: constant('App\\Enum\\BoostType::TipDistribution'), price: pricing.boostTipDistribution},
+                        {boost: constant('App\\Enum\\BoostType::OthersTips'), price: pricing.boostOthersTips},
+                        {boost: constant('App\\Enum\\BoostType::TipChange'), price: pricing.boostTipChange},
+                    ] %}
+                        <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                            <div class="text-2xl font-black tabular-nums tracking-tight text-[#8ac3e8]">{{ tile.price }} Kč</div>
+                            <div class="mt-1 text-sm font-bold text-white">{{ tile.boost.label }}</div>
+                            <p class="mt-1.5 text-[12px] leading-snug text-white/55">{{ tile.boost.description }}</p>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </section>

@@ -233,3 +233,12 @@ Decisions the item file did not answer, taken the conservative way and recorded 
    first is a navigation verb, not a product name; the second varies per monetization
    (boosts / prémium / none), so it cannot be one canonical sentence. „rozložení tipů" survives as
    the lowercase descriptive phrase — it is inside the product owner's own sentence.
+
+   > **REVERSED 2026-07-30 by the product owner**, who found „Uvidíš, jak tipují 4 hráči" still on
+   > `/souteze/{id}` and read it as exactly the drift this item was filed to end. The teaser half of
+   > the assumption does not hold: those strings varied by **monetization**, not by booster, so the
+   > varying part belongs in its own constants (`BoostType::LOCKED_PREMIUM_*` / `LOCKED_OVER_*` /
+   > `LOCKED_AFTER_MATCH_*`) and the invariant part was `description()` all along. Every lock
+   > overlay now renders `label()` + `description()`; the veiled „Pořadí za zápas" card on match
+   > detail gained the booster's name, which it had never carried. See the 2026-07-30 decision-log
+   > row in `.docs/DOMAIN.md`. The jump-CTA half of this assumption stands.

@@ -103,7 +103,15 @@ final class TipStatsSurfacesTest extends WebTestCase
             );
             // Item 23 — the section and the booster that unlocks it share ONE name, so
             // the heading is read from the enum rather than transcribed here.
-            self::assertStringContainsString(BoostType::TipDistribution->label(), (string) $client->getResponse()->getContent());
+            $body = (string) $client->getResponse()->getContent();
+            self::assertStringContainsString(BoostType::TipDistribution->label(), $body);
+            // …and the pitch is the booster's ONE sentence, not a teaser the surface
+            // invented („Uvidíš, jak tipují 4 hráči" was such a second vocabulary).
+            self::assertStringContainsString(
+                htmlspecialchars(BoostType::TipDistribution->description(), \ENT_QUOTES, 'UTF-8'),
+                $body,
+                sprintf('The locked strip on %s must sell the booster with BoostType::description().', $path),
+            );
         }
     }
 

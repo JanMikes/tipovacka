@@ -374,17 +374,19 @@
                         {% endfor %}
                     </div>
 
+                    {# The card's own heading is „Pořadí za zápas", so unlike the
+                       distribution card this overlay must NAME the booster it sells —
+                       and it names it with BoostType::label(), never a retyped one.
+                       The sentence is BoostType::description(); with nothing to sell
+                       („none") the state constant speaks instead. #}
+                    {% set others_boost = constant('App\\Enum\\BoostType::OthersTips') %}
                     <div class="dist-lock">
                         <span class="dist-lock-coin"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></span>
-                        <p class="dist-lock-title">Uvidíš konkrétní tipy kolegů</p>
+                        <p class="dist-lock-title">{{ others_boost.label }}</p>
                         <p class="dist-lock-note">
-                            {%- if competition.monetization.value == 'boosts' -%}
-                                Konkrétní tipy všech hráčů v soutěži, jméno po jménu — i před uzávěrkou.
-                            {%- elseif competition.monetization.value == 'premium' -%}
-                                Konkrétní tipy všech hráčů v soutěži, jméno po jménu — jen pro Prémium.
-                            {%- else -%}
-                                Konkrétní tipy ostatních hráčů se zobrazí po odehrání zápasu.
-                            {%- endif -%}
+                            {{- competition.monetization.value == 'none'
+                                ? constant('App\\Enum\\BoostType::LOCKED_AFTER_MATCH_NOTE')
+                                : others_boost.description -}}
                         </p>
                     </div>
                 </div>

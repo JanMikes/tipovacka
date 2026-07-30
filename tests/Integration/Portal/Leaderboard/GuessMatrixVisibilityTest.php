@@ -64,14 +64,6 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         return BoostType::OthersTips->label();
     }
 
-    /**
-     * Match detail composes the same paywall differently since B27: the card, the
-     * blurred skeleton and the lock coin are the page's, and `Boost:Panel` renders
-     * `shape="bare"` — the gold „Odemknout za N kr." control only. So the locked
-     * twin is pinned on THAT, not on the inline shape's headline.
-     */
-    private const string MATCH_DETAIL_CTA = 'Uvidíš konkrétní tipy kolegů';
-
     private const string MATRIX_PATH = '/zebricek/matice?soutez='.AppFixtures::BOOSTS_COMPETITION_ID;
 
     /**
@@ -289,13 +281,18 @@ final class GuessMatrixVisibilityTest extends WebTestCase
             'A live match has no result: its tips must be absent from the markup here too.',
         );
         self::assertCount(0, $crawler->filter('table.lb-table'), 'The ranking table itself must not render.');
+        // Match detail composes the same paywall differently since B27: the card,
+        // the blurred skeleton and the lock coin are the page's, and `Boost:Panel`
+        // renders `shape="bare"` — the gold „Odemknout za N kr." control only. The
+        // overlay used to invent its own pitch („Uvidíš konkrétní tipy kolegů");
+        // it now names the booster with the SAME canonical label as the matrix.
         self::assertStringContainsString(
-            self::MATCH_DETAIL_CTA,
+            self::ctaHeadline(),
             self::body($client),
-            'The locked twin must carry the unlock pitch instead.',
+            'The locked twin must name the booster it sells.',
         );
-        // …and the bare CTA control (this viewer has no credits, so it is the
-        // „Chybí kredity" variant — still the gold `.dist-unlock` vocabulary).
+        // …and the bare CTA control (this viewer has no credits, so the control links
+        // to dobití — but it is the SAME gold `.dist-unlock` „Odemknout za N kr.").
         self::assertGreaterThanOrEqual(
             1,
             $crawler->filter('.dist-card.is-locked .dist-unlock')->count(),

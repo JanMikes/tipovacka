@@ -82,13 +82,16 @@
                         </button>
                     </form>
                 {% else %}
-                    <a href="{{ path('credits') }}" class="dist-unlock">
-                        <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
-                        Chybí kredity ({{ stats.balance }}/{{ stats.price }} kr.)
+                    {# Same CTA, same price, only the destination differs: a wallet that
+                       cannot cover the boost goes to dobití first (item 23). Never a
+                       „Chybí kredity" label — the offer is the offer. #}
+                    <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                        Odemknout za {{ stats.price }} kr.
+                        <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                     </a>
                 {% endif %}
             {% elseif not stats.visible and mon == 'premium' %}
-                <span class="dist-unlock is-static">Zapíná organizátor</span>
+                <span class="dist-unlock is-static">{{ constant('App\\Enum\\BoostType::LOCKED_PREMIUM_CTA') }}</span>
             {% endif %}
         </header>
 
@@ -129,17 +132,16 @@
                     {% endfor %}
                 </div>
 
+                {# The header above already carries the booster's ONE name, so the
+                   overlay adds only its ONE sentence — no invented teaser. With
+                   nothing to sell („none") the sentence would promise a purchase
+                   that does not exist, so the state constant speaks instead. #}
                 <div class="dist-lock">
                     <span class="dist-lock-coin"><twig:ux:icon name="lucide:lock" class="h-5 w-5" /></span>
-                    <p class="dist-lock-title">Uvidíš, jak tipuje konkurence</p>
                     <p class="dist-lock-note">
-                        {%- if mon == 'boosts' -%}
-                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2.
-                        {%- elseif mon == 'premium' -%}
-                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2 — jen pro Prémium.
-                        {%- else -%}
-                            Detailní rozpad tipů s počtem hráčů, kteří tipovali 1 / X / 2, se zobrazí po odehrání zápasu.
-                        {%- endif -%}
+                        {{- mon == 'none'
+                            ? constant('App\\Enum\\BoostType::LOCKED_AFTER_MATCH_NOTE')
+                            : dist_boost_description -}}
                     </p>
                 </div>
             </div>
@@ -148,11 +150,12 @@
 
 {% elseif stats.hasAnythingToShow %}
     {% set players = stats.total ~ ' ' ~ (stats.total == 1 ? 'hráč' : (stats.total <= 4 ? 'hráči' : 'hráčů')) %}
-    {# Czech agrees the verb with the count too: 1 hráč tipuje · 2–4 hráči tipují ·
-       5+ hráčů tipuje. With no tips yet the count would read „0 hráčů" — tease the
-       feature instead. #}
-    {% set tips_verb = stats.total >= 2 and stats.total <= 4 ? 'tipují' : 'tipuje' %}
-    {% set teaser = stats.total > 0 ? 'Uvidíš, jak ' ~ tips_verb ~ ' ' ~ players : 'Uvidíš, jak tipují ostatní' %}
+    {# The locked strip sells the booster with the booster's OWN sentence — the same
+       one the shop row, the confirm dialog and /cenik render. It used to count the
+       players („Uvidíš, jak tipují 4 hráči"), which was a second vocabulary for the
+       same product; the count still belongs to the UNLOCKED strip, where it is data
+       rather than bait. #}
+    {% set teaser = dist_boost_description %}
     {# item 11: the paywalled strip lives INSIDE the match card. The hatched bar is
        a stand-in for the hidden split — fixed proportions, it leaks nothing. #}
     {% set ghost %}
@@ -209,7 +212,9 @@
                 </button>
             </form>
         {% else %}
-            <a href="{{ path('credits') }}" class="tip-stats-locked group">
+            {# The strip is identical to the affordable one — same CTA, same price; it
+               just leads to dobití instead of the confirm dialog (item 23). #}
+            <a href="{{ path('credits') }}#dobit" class="tip-stats-locked group">
                 <span class="tip-stats-head">
                     <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
                     <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
@@ -218,8 +223,8 @@
                         <span class="tip-stats-teaser">{{ teaser }}</span>
                     </span>
                     <span class="tip-stats-cta">
-                        <twig:ux:icon name="lucide:wallet" class="h-3.5 w-3.5" />
-                        Chybí kredity ({{ stats.balance }}/{{ stats.price }} kr.)
+                        Odemknout za {{ stats.price }} kr.
+                        <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                     </span>
                 </span>
                 {{ ghost }}
@@ -236,7 +241,7 @@
                     <span class="tip-stats-lock is-premium"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
                     <span class="tip-stats-teaser">{{ teaser }}</span>
                 </span>
-                <span class="tip-stats-cta is-premium">Zapíná organizátor</span>
+                <span class="tip-stats-cta is-premium">{{ constant('App\\Enum\\BoostType::LOCKED_PREMIUM_CTA') }}</span>
             </span>
             {{ ghost }}
         </div>
@@ -248,7 +253,7 @@
                 <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>
                 <span class="tip-stats-note">
                     <span class="tip-stats-lock is-muted"><twig:ux:icon name="lucide:lock" class="h-3.5 w-3.5" /></span>
-                    <span class="tip-stats-teaser">Zobrazí se po odehrání</span>
+                    <span class="tip-stats-teaser">{{ constant('App\\Enum\\BoostType::LOCKED_AFTER_MATCH_CTA') }}</span>
                 </span>
             </span>
             {{ ghost }}

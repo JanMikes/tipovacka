@@ -689,9 +689,11 @@ label.required::after {
     /* (D) B20 — the bar did not fit 320 px even BEFORE the chip: 373 px of .actions on a
        public page (+53), +7 px on an app page. Something has to give way, in this order:
        the two long CTA labels (≤1100), then everything the hamburger panel already
-       repeats — the avatar dropdown and „Vytvořit soutěž" (≤900) — then the wordmark and
-       the secondary „Přihlásit se" (≤420). The brand mark, the balance, the bell and the
-       hamburger never leave. */
+       repeats — the avatar dropdown and „Vytvořit soutěž" (≤900) — then the wordmark
+       (≤420), where the public bar also tightens its two button paddings. The brand mark,
+       the balance, the bell and the hamburger never leave — and neither does „Přihlásit"
+       any more: signing in must not be hidden behind the hamburger on a phone, so the
+       public bar keeps BOTH doors (přihlásit / registrace) at every width. */
     .wtnav .cta-short { display: none; }
     @media (max-width: 1100px) {
         /* Only the app bar is this crowded: brand · links · Administrace · balance ·
@@ -706,7 +708,9 @@ label.required::after {
     @media (max-width: 420px) {
         .wtnav .bar { padding: 0 14px; gap: 10px; }
         .wtnav .brand-name { display: none; }
-        .wtnav .nav-phone-hide { display: none; }
+        /* Two buttons instead of one on the public bar — buy the room back from their
+           side padding rather than by dropping „Přihlásit" again. */
+        .wtnav.is-public .btn-sm { padding: 8px 11px; }
     }
     /* (B) B18 — the bell panel is a fixed 20rem box that was right-aligned to a trigger
        sitting in the MIDDLE of a narrow bar, so it hung off the LEFT edge of the viewport
@@ -1034,12 +1038,16 @@ label.required::after {
     .tip-stats-locked:hover { border-color: rgba(245,205,84,0.62); background-color: rgba(245,205,84,0.10); }
     .tip-stats-locked .tip-stats-eyebrow { color: #f5cd54; }
     .tip-stats-locked.is-muted .tip-stats-eyebrow { color: var(--fg-3); }
+    /* The pill carries the booster's ONE canonical sentence (BoostType::description),
+       which is 722 px of ink — it MUST wrap rather than ellipsis, or the strip shows
+       a shortened version of copy the product owner set verbatim (item 23 forbids
+       adapting it). A stadium radius cannot hold three lines, hence 14px. */
     .tip-stats-note {
-        display: inline-flex; min-width: 0; align-items: center; gap: 8px;
-        padding: 4px 12px 4px 4px; border-radius: 999px;
+        display: flex; min-width: 0; align-items: flex-start; gap: 8px;
+        padding: 4px 12px 5px 4px; border-radius: 14px;
         border: 1px solid rgba(255,255,255,0.07); background: rgba(9,14,26,0.55);
     }
-    .tip-stats-note .tip-stats-teaser { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tip-stats-note .tip-stats-teaser { min-width: 0; line-height: 1.35; padding-top: 3px; }
     .tip-stats-note .tip-stats-lock { height: 24px; width: 24px; background: rgba(245,205,84,0.92); color: #2a2000; }
     .tip-stats-locked.is-muted .tip-stats-note .tip-stats-lock { background: rgba(255,255,255,0.08); color: var(--fg-3); }
     .tip-stats-cta { color: #f5cd54; }

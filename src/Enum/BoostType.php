@@ -17,6 +17,21 @@ use App\Service\Credits\PricingConfig;
  */
 enum BoostType: string
 {
+    /**
+     * The booster-agnostic half of the copy: what a LOCKED surface says when the
+     * reason it is locked has nothing to do with which booster it is. Same rule as
+     * {@see self::label()} / {@see self::description()} — no surface writes its own
+     * prose, it renders these (item 23, extended 2026-07-30 to the lock overlays).
+     *
+     * `…_CTA` goes where a buy button would sit, `…_NOTE` where the sentence goes.
+     */
+    public const string LOCKED_PREMIUM_CTA = 'Zapíná organizátor';
+    public const string LOCKED_PREMIUM_NOTE = 'Tuto funkci zapíná organizátor soutěže pro všechny.';
+    public const string LOCKED_OVER_CTA = 'Soutěž už skončila';
+    public const string LOCKED_OVER_NOTE = 'Soutěž už skončila — vylepšení už nemá co odemknout.';
+    public const string LOCKED_AFTER_MATCH_CTA = 'Zobrazí se po odehrání';
+    public const string LOCKED_AFTER_MATCH_NOTE = 'Zobrazí se po odehrání zápasu.';
+
     case TipDistribution = 'tip_distribution';
     case OthersTips = 'others_tips';
     case TipChange = 'tip_change';
@@ -48,7 +63,9 @@ enum BoostType: string
 
     /**
      * The ONE sentence describing this booster. No surface may hand-write its own
-     * prose about a booster; it renders this instead.
+     * prose about a booster; it renders this instead — including the LOCKED
+     * overlays (the veiled „Jak tipují ostatní?" card and strip, the veiled
+     * „Pořadí za zápas" card), which used to invent a teaser of their own.
      *
      * Note on {@see self::TipChange}: the window is the competition's own
      * `tipChangeOffsetMinutes` (default 60), so a competition that moved it off
