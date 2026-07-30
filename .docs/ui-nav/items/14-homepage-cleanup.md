@@ -1,6 +1,6 @@
 # 14 — Homepage: cut the invented numbers, the countdown and „Proč Wtips", fix the wrapped score
 
-> **Status:** TODO
+> **Status:** DONE (sha on the board)
 > **Depends on:** nothing. Runs concurrently with three other agents — see „Files another agent owns".
 > **Owner decision date:** 2026-07-30
 
@@ -142,6 +142,82 @@ unfinished work into its commit; right now it would destroy three agents' work. 
 and verify with `git diff --cached --stat` before committing. Another session has also been committing
 here today, so `git pull --rebase` if a push is rejected; never force-push.
 
+## What was actually wrong with the score — the item's diagnosis held, but only half of it
+
+Measured on the real page (headless Chrome, HEAD before the change, 1600 / 1440 / 1280 / 1024 /
+768 / 430 / 320 px). The score is a **block** element, so `getClientRects().length` is always 1 for
+it — the harness has to count line boxes with a `Range` over its contents (clustered by vertical
+centre, one cluster per line). Measured that way, at HEAD the hero score occupied **2 line boxes at
+1600, 1440, 1280, 1024, 430 and 320 px** — every width except 768 px, where the hero is one column
+and the card gets the full width.
+
+`whitespace-nowrap` alone is **not** sufficient, exactly as the item suspected: it is the B7
+mechanism underneath. `1fr` is `minmax(auto, 1fr)`, so each team track kept a min-content floor
+(coin 36 px + gap 12 px + an unbreakable name) and there was nothing left for the score. At HEAD the
+overflow was already visible: at 1024 px content spilled **82 px** past `.hero-bg`, which is
+`overflow: hidden`, so it was silently **clipped**, and the app-mock fixture in „Ukázka aplikace"
+spilled 31–42 px past its own `overflow-hidden` section at 320 px. So the fix is
+`whitespace-nowrap` on the score **plus** `min-w-0` on both team blocks and their inner text
+column, plus `truncate` on the name lines (B7's precedent: ellipsis, not wrapping).
+
+After the change, at all seven widths: score = **1 line box**, no intersection with either team
+block, **zero clipped content** in either `overflow-hidden` section, and zero page overflow except
+one pre-existing offender, below.
+
 ## Assumptions made
 
-_(Implementer appends here if the item did not answer a question it had to answer.)_
+- **„The blue banner" = the whole `surface-accent` final-CTA card, so section 5 went in full.**
+  The item says to delete the element *and its container* and not just the sentence; the only blue
+  banner on the page is that gradient card, and a `<section>` wrapping nothing is not a thing to
+  leave behind. **Consequence, stated rather than hidden:** the page no longer has a closing CTA —
+  conversion now rests on the hero's „Vytvořit soutěž zdarma", the PIN strip and the nav's
+  „Registrace zdarma". If the product owner wants a bottom CTA back, it needs copy that claims
+  nothing (no countdown, no head-count).
+- **The same fix was applied to the second fixture on the page** — the „Ukázka aplikace" mock
+  (Česko–Německo) is the identical `1fr auto 1fr` construction and was measurably broken the same
+  way (2 line boxes + 31 px clipped at 320 px). Leaving a known-wrapping score on the same page
+  after being asked to fix „the score positioning" made no sense; it is the same template, the same
+  two utilities, no new CSS.
+- **„MS 2026" still appears twice on the page, deliberately.** The acceptance criterion asked for
+  the string to be absent, but the two survivors are not the manufactured deadline: the
+  „Dostupné turnaje" pill row in step 01 and the app-mock window title „Firemní MS 2026 · detail
+  soutěže". Neither claims a date or a figure. Deleting a tournament from a list of example
+  tournaments (while „Euro 2028" stays) would be arbitrary, and rewording a demo competition's name
+  is copy work nobody asked for. Reported, not removed — see the leftovers below.
+- **The section backgrounds had to be re-alternated.** Deleting sections 3 and 5 left
+  „Jak to funguje" (`bg-navy-850`) directly above „Ukázka aplikace" (`bg-navy-850`) — two 20/24-unit
+  paddings and one uninterrupted colour, i.e. the collapsed boundary the item warned about. The
+  surviving „Ukázka aplikace" section is now `bg-navy-900`, restoring hero → 900 → 850 → 900 →
+  footer (`#07101e`). No spacing values were changed; every section still carries its own padding.
+
+## Left in place, reported rather than fixed
+
+- **Invented-ish figures that stay** (all inside the two decorative mock cards, which read as
+  screenshots of the app rather than as claims about it): „Tipy 248 hráčů" and 58/22/20 % in the
+  hero card, „Rozložení tipů · 248 hráčů" and 32/28/40 % plus the four mock leaderboard rows in the
+  „Ukázka aplikace" card, and the floating chips („+12 b", „1. místo 147 / 248", „+9 b") the item
+  explicitly protects. Also two claims that are copy, not statistics: „5 hráčů zdarma navždy" (hero
+  reassurance row — a plan claim, and the only price-shaped string left on the page) and
+  „Dostupné turnaje: MS 2026 · EPL · NHL · UCL · NBA · Euro 2028" with „Wtips automaticky natáhne
+  rozpis zápasů a soupisky" (step 01 — a capability claim). All out of this item's scope; each is a
+  product decision.
+- **No dead CSS.** `card-glass`, `surface-accent`, `btn-light` and `btn-clear` all lost a call site
+  here but remain used elsewhere (portal + the four marketing pages). Nothing in `assets/styles/app.css`
+  is now dead, so nothing had to be reported for that file's owner. The six lucide icons of the
+  deleted feature grid (`zap`, `users`, `shield`, `flame`, `target`, `list-ordered`) are all still
+  used by other templates.
+- **New defect, NOT on this surface: the public nav overflows at 320 px by 53 px.**
+  `HEADER.wtnav > .bar > .actions` (the „Registrace zdarma" button + the burger) is 373 px wide in a
+  320 px viewport. It is not the homepage — the same 53 px is measurable on `/ochrana-soukromi` and
+  therefore on every public page — so it belongs to `templates/components/Layout/Nav.html.twig` /
+  `.wtnav` and to whoever owns them. Gone by 430 px. Homepage content itself has **zero** horizontal
+  overflow at every width tested.
+- **The hero's right column collapses at ~1024 px, which is why the card is so tight.** The `<h1>`
+  glues „a pak to" and „kámošům o hlavu." with `&nbsp;`, giving the left column a ~700 px
+  min-content floor, so `lg:grid-cols-[1.15fr_0.95fr]` cannot hold its ratio: the demo card is
+  ~390 px wide at 1280 px and ~235 px at 1024 px. The team names therefore ellipsize („Argen…") at
+  1280 px and disappear entirely at 1024 px. That is *contained* now (nothing overflows or is
+  clipped any more, and the score is intact), but the underlying squeeze is a hero-layout/typography
+  decision — either let the headline break, or give the card a floor — and was deliberately not
+  taken here: the item forbids restructuring the grid without evidence, and the evidence points at
+  the headline, not at the fixture.
