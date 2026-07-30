@@ -77,7 +77,9 @@ final class NotifyPremiumAndBoostEventsTest extends IntegrationTestCase
             competitionId: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
             userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
             boostType: BoostType::OthersTips->value,
-            amount: 20,
+            // The notification body renders this as „(%d kr.)" — derive it so the
+            // fixture event cannot claim a price the product no longer charges.
+            amount: BoostType::OthersTips->price(),
             occurredOn: $this->now(),
         ));
 

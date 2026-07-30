@@ -19,6 +19,7 @@ use App\Enum\PremiumChargeStatus;
 use App\Event\BoostRefunded;
 use App\Exception\InsufficientCredits;
 use App\Exception\PremiumAlreadyEnabled;
+use App\Service\Credits\PricingConfig;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
@@ -209,8 +210,9 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
     public function testEnablingPremiumOnBoostsCompetitionRefundsActiveBoosts(): void
     {
         // BOOSTS_COMPETITION: ADMIN owns it, SECOND_VERIFIED_USER (the sole non-owner
-        // member) holds an active OthersTips boost (fixture, pricePaid 20). Enabling
-        // premium charges ADMIN for the member and refunds the boost to SECOND.
+        // member) holds an active OthersTips boost whose pricePaid the fixture derives
+        // from BoostType::OthersTips->price(), i.e. PricingConfig::BOOST_OTHERS_TIPS.
+        // Enabling premium charges ADMIN for the member and refunds the boost to SECOND.
         $this->grant(AppFixtures::ADMIN_ID, 100);
 
         $this->enable(AppFixtures::BOOSTS_COMPETITION_ID, AppFixtures::ADMIN_ID);
@@ -232,7 +234,7 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
             ->getResult();
         self::assertCount(0, $active);
 
-        // A BoostRefund ledger row credited the buyer (VERIFIED_USER) 20 back.
+        // A BoostRefund ledger row credited the buyer the full price back.
         /** @var list<CreditTransaction> $refunds */
         $refunds = $this->entityManager()->createQueryBuilder()
             ->select('t')
@@ -244,7 +246,7 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
             ->getQuery()
             ->getResult();
         self::assertCount(1, $refunds);
-        self::assertSame(20, $refunds[0]->amount);
+        self::assertSame(PricingConfig::BOOST_OTHERS_TIPS, $refunds[0]->amount);
         self::assertSame('others_tips', $refunds[0]->boostType);
         self::assertSame(AppFixtures::SECOND_VERIFIED_USER_ID, $refunds[0]->wallet->user->id->toRfc4122());
 
@@ -253,6 +255,6 @@ final class EnablePremiumHandlerTest extends IntegrationTestCase
         self::assertCount(1, $events);
         self::assertSame(AppFixtures::SECOND_VERIFIED_USER_ID, $events[0]->userId->toRfc4122());
         self::assertSame('others_tips', $events[0]->boostType);
-        self::assertSame(20, $events[0]->amount);
+        self::assertSame(PricingConfig::BOOST_OTHERS_TIPS, $events[0]->amount);
     }
 }
