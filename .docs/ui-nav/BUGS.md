@@ -33,6 +33,7 @@ Legend: `TODO` · `IN PROGRESS` · `DONE` · `BLOCKED`
 | B25 | With JavaScript off, „Zobrazit další" hides matches unreachably | DONE | `8d63ee7` — `reveal` now collapses instead of hiding |
 | B21 | Hero `<h1>` nbsp starves the demo card; team names vanish at 1024 px | DONE | `6bcd689` — one glue was 740 px, exactly the column width |
 | B26 | Homepage hero: the „1. MÍSTO" floating chip sits on the away team name | TODO | — |
+| B27 | Match detail: the two paywall cards do not match; confirm-before-paying is wired but reportedly unseen | TODO | — |
 | B19 | Stray border with no padding around the tip form on match detail | DONE | `b6dacf2` |
 
 ---
@@ -1204,3 +1205,79 @@ measure at 1024 / 1280 / 1440 / 1600 px, where the two-column layout exists at a
 
 Note also, unchanged by B21 and not part of this: „Argentina" still ellipsizes at 430 px (70 of 82 px) in
 the single-column layout.
+
+## B27 — the two paywall cards on match detail do not match, and the purchase confirm may not be firing
+
+Reported 2026-07-30 against `/zapasy/019fa008-7233-7603-b414-e0fb581541ef`:
+
+> these 2 are misaligned, first card is correct, the other one align to look more like the first card.
+> there as well should be confirmation before paying any credits
+
+Screenshot: [`screenshots/bug-b27-paywall-misalignment.png`](screenshots/bug-b27-paywall-misalignment.png).
+
+### Part 1 — the alignment (the actual ask)
+
+Both cards are paywalls for the same kind of thing, and the product owner has named the **first** as
+correct. Measured from the screenshot:
+
+| | „ROZLOŽENÍ TIPŮ" (correct) | „POŘADÍ ZA ZÁPAS" (to fix) |
+|---|---|---|
+| gold „VYLEPŠENÍ" pill + eyebrow | yes | yes |
+| headline | „1 hráč tipoval" | „Uvidíš konkrétní tipy kolegů" |
+| top-right slot | **the CTA**, „Odemknout za 10 kr. →", gold outline | „1 hráč s tipem" (a count) |
+| the lock treatment | a **centred gold coin** over the blurred skeleton, with the pitch under it | a **striped inner panel**, left-aligned, lock in a grey circle |
+| the CTA button | gold, top-right | **blue**, inside the striped panel |
+
+So the second card carries a second, differently-styled paywall *inside* itself. **Item 10 §6 intended
+the opposite** — it reused `Boost:Panel` for the CTA specifically *„so both paywalls read as one
+treatment"*. What actually happened is that `Boost:Panel`'s **inline** shape brings its own striped
+container and its own blue button, so nesting it inside the item-10 shell produced two treatments, not
+one. That is the defect: the intent was right and the composition defeated it.
+
+**Fix direction:** make the „Pořadí za zápas" lock read like the distribution lock — centred gold coin
+over the blurred skeleton, the pitch beneath it, and the CTA in the card's **top-right**, gold. Whether
+that means `Boost:Panel` gains a shape that renders bare (no striped container, no button colour of its
+own) or the item-10 shell stops nesting it, **decide from the code and say which** — but do not duplicate
+`Boost:Panel`'s pricing, affordability, superset and B6 „soutěž už skončila" logic, which is why item 10
+reused it in the first place. Note item 11 already established gold as „paid feature" for both funding
+models, so gold is the target, not blue.
+
+The count („1 hráč s tipem") should not simply be deleted to free the top-right corner — decide where it
+goes and say so.
+
+### Part 2 — the confirm is already wired; find out why it was not seen
+
+**Do not „add confirmation". It exists on every purchase path.** Verified in the templates:
+
+- `Match/TipStats.html.twig` lines ~62-71 and ~186-203 — both the compact strip and the full card carry
+  `data-controller="confirm"` with `…title-value="Odemknout „Rozložení tipů ostatních""`, a message naming
+  the price **and** the viewer's balance, and `…confirm-label-value="Koupit za N kr."`.
+- `Boost/Panel.html.twig` lines ~105-109 and ~165-175 — the same on both of its shapes.
+
+So either the product owner reported the requirement without exercising it, or **the confirm controller is
+not firing on this page** — which has a precedent worth reading first: **B16**, where the `confirm`
+controller's dialog *was* present and correct but a `disconnect()` destroyed its only `fields` target, so
+every later open silently fell back to a plain submit that looks identical to the no-JS path. A silent JS
+failure and „no confirm was implemented" are indistinguishable from a screenshot.
+
+**Establish which it is, in a real browser, and report it.** Click both CTAs and confirm a dialog appears,
+that cancelling really cancels (no credits move), and that confirming charges exactly once. Check the
+console. If it does fire, say so plainly — „the product owner did not see it because it works" is a
+legitimate outcome and better than a speculative fix.
+
+Also verify the **no-JS** path: with scripting off the `confirm` controller cannot run, so the form posts
+directly. A one-click credit spend with no confirmation is acceptable degradation only if the server-side
+purchase is idempotent and the price is visible on the button — check what actually happens and report it
+rather than assuming it is fine.
+
+### Constraints
+
+- Prices from `Credits/PricingConfig` — never a literal. Both cards already do this; keep it.
+- **Premium XOR boosts**; do not introduce a third funding state.
+- `Boost:Panel` is shared — it renders on competition detail (`#vylepseni`), inside the item-10 match-detail
+  shell, and in `/_design` half A. **Verify all three** after changing its shape; `/_design` must keep
+  passing `DesignStyleguideFlowTest::testNothingOnThePageCanAct` (the gallery is inert, so its CTA must
+  stay neutralised).
+- Measure at 1600 / 1440 / 1024 / 430 / 320 px — zero overlaps, zero horizontal overflow.
+
+**Queued behind item 21**, which owns `assets/styles/app.css`.
