@@ -1,26 +1,32 @@
 import { Controller } from '@hotwired/stimulus';
 
 /*
- * Hides list items beyond a visible count and exposes a toggle button to reveal
- * the remainder. Re-collapses on a second click.
+ * Collapses a list to the first `visible` items and exposes a toggle button to
+ * reveal the remainder. Re-collapses on a second click.
+ *
+ * B25: collapsing is the ENHANCED state, never the default. The server renders
+ * EVERY item visible and the toggle button `hidden`; this controller hides the
+ * overflow and unhides the button on connect. With JavaScript off the button
+ * therefore never appears and no content is unreachable — the old contract
+ * (template pre-hides the overflow with `hidden`) left the 6th and later rows
+ * unreachable by any means: not by scrolling, not by any URL.
  *
  * Usage:
- *   <div data-controller="reveal" data-reveal-visible-value="5">
+ *   <div data-controller="reveal"
+ *        data-reveal-visible-value="5"
+ *        data-reveal-more-label-value="Načíst všechny zápasy"
+ *        data-reveal-less-label-value="Zobrazit méně">
  *       <ul>
- *           <li data-reveal-target="item" class="hidden">...</li>
+ *           <li data-reveal-target="item">...</li>
  *           ...
  *       </ul>
- *       <button type="button"
+ *       <button type="button" hidden
  *               data-reveal-target="toggle"
- *               data-action="reveal#toggle"
- *               data-reveal-more-label-value="Zobrazit další"
- *               data-reveal-less-label-value="Zobrazit méně">
- *           Zobrazit další (X)
- *       </button>
+ *               data-action="reveal#toggle">Načíst všechny zápasy</button>
  *   </div>
  *
- * The template is responsible for pre-hiding items with `hidden` beyond the
- * initial visible count; this controller just flips that state on click.
+ * Note the label values belong on the CONTROLLER element — Stimulus reads values
+ * from there, not from the button.
  */
 export default class extends Controller {
     static targets = ['item', 'toggle'];
@@ -31,13 +37,39 @@ export default class extends Controller {
     };
 
     connect() {
+        this.expanded = true;
+
+        if (this.hiddenCount() === 0) {
+            // Nothing to collapse ⇒ leave the list alone and keep the button away.
+            return;
+        }
+
         this.expanded = false;
+        this.applyState();
+
+        if (this.hasToggleTarget) {
+            this.toggleTarget.hidden = false;
+        }
+    }
+
+    disconnect() {
+        // Give the page back its server-rendered shape, so a re-connect (or a
+        // Live Component re-render above us) can never leave rows stuck hidden.
+        this.expanded = true;
+        this.applyState();
+
+        if (this.hasToggleTarget) {
+            this.toggleTarget.hidden = true;
+        }
     }
 
     toggle(event) {
         event.preventDefault();
         this.expanded = !this.expanded;
+        this.applyState();
+    }
 
+    applyState() {
         this.itemTargets.forEach((item, index) => {
             if (this.expanded || index < this.visibleValue) {
                 item.classList.remove('hidden');
@@ -47,10 +79,13 @@ export default class extends Controller {
         });
 
         if (this.hasToggleTarget) {
-            const hiddenCount = Math.max(0, this.itemTargets.length - this.visibleValue);
             this.toggleTarget.textContent = this.expanded
                 ? this.lessLabelValue
-                : `${this.moreLabelValue} (${hiddenCount})`;
+                : `${this.moreLabelValue} (${this.hiddenCount()})`;
         }
+    }
+
+    hiddenCount() {
+        return Math.max(0, this.itemTargets.length - this.visibleValue);
     }
 }

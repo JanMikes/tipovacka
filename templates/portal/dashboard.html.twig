@@ -293,7 +293,9 @@
         {% else %}
             <ul class="flex flex-col gap-3">
                 {% for m in matches %}
-                    <li data-reveal-target="item" class="{% if loop.index0 >= matches_visible %}hidden{% endif %}">
+                    {# B25: every row is rendered VISIBLE — the reveal controller collapses
+                       the overflow and unhides the button. With JS off nothing is hidden. #}
+                    <li data-reveal-target="item">
                         {{ include('portal/_dashboard_match_row.html.twig', {m: m, my_tips_by_match: my_tips_by_match}) }}
                     </li>
                 {% endfor %}
@@ -301,11 +303,9 @@
 
             {% if matches|length > matches_visible %}
                 <div class="mt-5 flex justify-center">
-                    <button type="button"
+                    <button type="button" hidden
                             data-reveal-target="toggle"
                             data-action="reveal#toggle"
-                            data-reveal-more-label-value="Zobrazit další"
-                            data-reveal-less-label-value="Zobrazit méně"
                             class="btn btn-ghost btn-sm">
                         Zobrazit další ({{ matches|length - matches_visible }})
                     </button>

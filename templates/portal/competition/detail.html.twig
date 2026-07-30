@@ -10,6 +10,8 @@
     so the header must not claim tipping is over while the list still offers „Tipovat".
 #}
 {% set open_match_rows = match_rows|filter(r => r.isOpen)|length %}
+{# Produkt: „Zobrazit pouze 5 zápasů, pod tím tlačítko načíst všechny zápasy." #}
+{% set matches_visible = 5 %}
 <div class="bg-radial mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
 
     {# ───────── Header: back link · eyebrow · name + stav · role · akce ───────── #}
@@ -177,15 +179,37 @@
             </div>
         {% endif %}
 
-        {% if detail.description %}
-            <p class="mt-4 max-w-3xl whitespace-pre-line text-sm text-white/60">{{ detail.description }}</p>
-        {% endif %}
     </header>
 
-    <div class="grid gap-6 lg:grid-cols-12">
+    {#
+        Popis soutěže (item 19). Prázdný popis nevykreslí VŮBEC NIC — žádný box,
+        žádný zástupný text. Uživatelský vstup: Twig ho escapuje a `|raw` tu nemá
+        co dělat; řádky drží `whitespace-pre-line`, což je ještě bezpečnější než
+        `|nl2br` (do HTML se nepřidá ani <br>).
+    #}
+    {% if detail.description %}
+        <p class="mb-8 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-white/60">{{ detail.description }}</p>
+    {% endif %}
 
-        {# ───────── Hlavní sloupec: banner + zápasy ───────── #}
-        <div class="space-y-4 lg:col-span-8">
+    {#
+        ───────── Jeden sloupec (item 19) ─────────
+        Item 08 dalo žebříček a vylepšení do postranního panelu; produkt to zrušil.
+        Pořadí je rozhodnutí produktu (ROUND2 decision 6): [Pozvat kamaráda] →
+        banner → Tabulka soutěže (zápasy) → Žebříček → Prémiové funkce.
+    #}
+    <div class="space-y-6">
+
+        {# „Pozvat kamaráda" — míří do JEDINÉHO místa s pozvánkami (item 08). #}
+        {% if is_granted('competition_manage_join_mechanics', competition) %}
+            <div>
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}#pozvanky" class="btn btn-primary">
+                    <twig:ux:icon name="lucide:user-plus" class="h-4 w-4" />
+                    Pozvat kamaráda
+                </a>
+            </div>
+        {% endif %}
+
+        <div class="space-y-4">
 
             {#
                 Batch-fill all my tips at once — the banner the product owner keeps above the list.
@@ -221,7 +245,21 @@
                 {% endif %}
             {% endif %}
 
-            <section id="zapasy" class="space-y-3">
+            {#
+                „Tabulka soutěže" — nadpis nad rozpisem (rozhodnutí produktu, ROUND2 batch 2).
+
+                B25: server vykreslí VŠECHNY zápasy a tlačítko `hidden`; controller
+                `reveal` teprve sbalí přebytek a tlačítko odkryje. S vypnutým
+                JavaScriptem tedy není nedosažitelný ani jeden zápas — a zkrácení
+                na 5 zůstává (produkt si vyžádal 5 + „načíst všechny").
+            #}
+            <section id="zapasy" class="space-y-3"
+                     data-controller="reveal"
+                     data-reveal-visible-value="{{ matches_visible }}"
+                     data-reveal-more-label-value="Načíst všechny zápasy"
+                     data-reveal-less-label-value="Zobrazit jen prvních {{ matches_visible }}">
+                <h2 class="text-xl font-bold tracking-tight text-white sm:text-2xl">Tabulka soutěže</h2>
+
                 {% if match_rows|length == 0 %}
                     <twig:EmptyState
                         illustration="matches"
@@ -229,6 +267,7 @@
                         body="Jakmile se do zdroje zápasů přidají zápasy, objeví se tady."
                     />
                 {% else %}
+                    <ul class="flex flex-col gap-3">
                     {% for row in match_rows %}
                         {%- set m = row.match -%}
                         {%- set g = row.guess -%}
@@ -265,6 +304,10 @@
                             {% endif %}
                         {% endif %}
 
+                        {# `cardUrl` = „Zápasy musí fungovat na proklik": celá karta vede na
+                           zápas v této soutěži — týž cíl, na který vedou i odkazy uvnitř. #}
+                        {% set match_url = path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) %}
+                        <li data-reveal-target="item">
                         <twig:Match:MatchRow
                             :homeTeam="m.homeTeam"
                             :awayTeam="m.awayTeam"
@@ -284,22 +327,36 @@
                             :hitClass="hit_class"
                             :tipPrompt="row.isOpen and is_member ? '+ Zadat tip' : null"
                             :tipMissingLabel="not row.isOpen and is_member and not g ? 'Netipováno' : null"
-                            :detailUrl="path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122})"
+                            :detailUrl="match_url"
                             :detailLabel="row.isOpen and is_member ? 'Tipovat' : 'Detail zápasu'"
-                            :tipUrl="row.isOpen and is_member ? path('competition_sport_match_guesses', {competitionId: competition.id.toRfc4122, sportMatchId: m.id.toRfc4122}) : null"
+                            :tipUrl="row.isOpen and is_member ? match_url : null"
                             :tipStats="row.stats ? [row.stats] : []"
                             :footNote="row.isOpen ? 'Uzávěrka ' ~ row.deadline|date('j. n. Y H:i') : null"
+                            :cardUrl="match_url"
                         />
+                        </li>
                     {% endfor %}
+                    </ul>
+
+                    {% if match_rows|length > matches_visible %}
+                        <div class="flex justify-center pt-2">
+                            <button type="button" hidden
+                                    data-reveal-target="toggle"
+                                    data-action="reveal#toggle"
+                                    class="btn btn-ghost btn-sm">
+                                Načíst všechny zápasy ({{ match_rows|length - matches_visible }})
+                            </button>
+                        </div>
+                    {% endif %}
                 {% endif %}
             </section>
         </div>
 
-        {# ───────── Aside: žebříček + vylepšení ───────── #}
-        <aside class="space-y-6 lg:col-span-4">
+        {# ───────── Žebříček („tabulka s hodnocením") ───────── #}
+        <div class="space-y-6">
 
             {% if is_granted('leaderboard_view', competition) %}
-                <section class="card-glass overflow-hidden p-0">
+                <section id="zebricek" class="card-glass overflow-hidden p-0">
                     <div class="flex items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
                         <h2 class="flex items-center gap-2 text-base font-bold text-white">
                             <twig:ux:icon name="lucide:trophy" class="h-5 w-5 text-accent-400" />
@@ -361,11 +418,26 @@
                 </section>
             {% endif %}
 
-            {# Vylepšení / prémium — jeden monetizační model, nikdy oba (Premium XOR boosts). #}
-            {% if is_granted('competition_view', competition) %}
+        </div>
+
+        {# ───────── Prémiové funkce / vylepšení ─────────
+           Jeden monetizační model, nikdy oba (Premium XOR boosts) — komponenta si
+           sama vybere podobu podle `monetization` a po skončení soutěže nic
+           neprodává (B6). #}
+        {% if is_granted('competition_view', competition) %}
+            <div id="vylepseni">
                 <twig:Boost:Panel :competition="competition" />
-            {% endif %}
-        </aside>
+            </div>
+        {% endif %}
     </div>
+
+    {#
+        První návštěva soutěže s vylepšeními: modal s cenami (item 19, uzavírá B10).
+        Controller rozhoduje, komu se vůbec vykreslí — člen soutěže „boosts", která
+        ještě neskončila, a jen dokud si ho neodklikl (stamp na členství).
+    #}
+    {% if show_boost_intro %}
+        {{ include('portal/competition/_boost_intro_modal.html.twig') }}
+    {% endif %}
 </div>
 {% endblock %}

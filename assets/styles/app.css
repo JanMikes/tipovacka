@@ -1175,6 +1175,37 @@ label.required::after {
     }
     .my-tip.is-bar .my-tip-lbl { margin-bottom: 0; }
     .my-tip.is-bar .my-tip-pts { position: static; top: auto; right: auto; border: none; }
+
+    /* --- item 19: competition detail ---
+       „Zápasy musí fungovat na proklik" without restyling the card. The item 11
+       card (`variant="default"`) keeps every pixel; it only gains a stretched link
+       when the call site passes `cardUrl`. Item 18's `.card-stretch` rule is scoped
+       to `.card-glass > *` / `.card > *`, and `.tip-row` is neither, so the geometry
+       is repeated here for it — deliberately NOT by widening item 18's selector,
+       which would reach every card in the app.
+       Everything interactive inside the card is raised above the overlay, which is
+       what keeps B7's rule intact: nothing interactive is nested in a link, and the
+       pilulka / dvojice týmů / „můj tip" / the „Rozložení tipů" strip (itself a
+       control — a buy form or a link to /kredity) all still work. */
+    .tip-row.card-clickable > .card-stretch {
+        position: absolute; inset: 0; z-index: 1;
+        border-radius: inherit; font-size: 0;
+    }
+    .tip-row.card-clickable .tip-row-pill-link,
+    .tip-row.card-clickable .tip-row-match,
+    .tip-row.card-clickable .tip-row-end,
+    .tip-row.card-clickable .tip-row-extra { position: relative; z-index: 2; }
+    /* `.card-clickable:hover` sets the whole `border-color`, and it is declared
+       AFTER the state stripes at the same specificity — so without this the 4 px
+       state stripe would turn grey exactly while the pointer is on the card.
+       Re-assert it per state at (0,3,0); the hover affordance keeps the other
+       three sides. */
+    .tip-row.card-clickable:hover        { border-left-color: var(--border-2); }
+    .tip-row.card-clickable.open:hover   { border-left-color: #f5b544; }
+    .tip-row.card-clickable.tipped:hover { border-left-color: var(--color-win); }
+    .tip-row.card-clickable.live:hover   { border-left-color: var(--color-loss); }
+    .tip-row.card-clickable.locked:hover { border-left-color: var(--border-3); }
+    .tip-row.card-clickable.done:hover   { border-left-color: var(--color-accent-500); }
 }
 
 @keyframes ring-pulse { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }

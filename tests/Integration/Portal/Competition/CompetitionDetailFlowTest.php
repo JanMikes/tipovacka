@@ -99,7 +99,10 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'), 'Nastavení');
-        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Pozvat');
+        // Two now (item 19): the action bar's „Pozvat" and the „Pozvat kamaráda"
+        // CTA above the banner — both point at the ONE invitation block (item 08).
+        self::assertCount(2, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Pozvat + Pozvat kamaráda');
+        self::assertSelectorTextContains('body', 'Pozvat kamaráda');
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'), 'Tipovat za členy');
         self::assertCount(1, $crawler->filter('form[action="/souteze/'.$id.'/uzamknout-tipy"]'), 'Uzamknout tipy');
 
