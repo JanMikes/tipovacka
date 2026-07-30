@@ -92,27 +92,29 @@ answers. When you do act on your own judgement, say so explicitly and make it ch
   file to the scratchpad; never mutate the tree a sibling is working in.
 - Follow the board-sha convention: the work commit, then a one-line commit recording its sha.
 
-### `/clear` does not stop the agents — and their commits look like somebody else's
+### Every commit in this repo is yours. Do not reason about a second author.
 
 A `/clear` ends the orchestrator's **conversation**, not the subagents it already dispatched. They
-keep running, keep editing the working tree, and keep committing — carrying the **old conversation's
-`Claude-Session` trailer**, because that is a per-conversation constant.
+keep running, keep editing the working tree and keep committing — so a fresh orchestrator can find
+work landing that it has no memory of dispatching. **It is still its own.**
 
-On 2026-07-30 that produced a genuinely misleading picture. A fresh orchestrator read the board
-(„B30/B31 in flight"), saw uncommitted work in the tree, concluded the previous session's agents had
-died without committing, and dispatched a new agent onto the same two files. Both then ran
-concurrently on `assets/styles/app.css`. When commits appeared under a different session id, the
-obvious inference — „the product owner has a second session open" — was **wrong**, and it cost a
-correction from them to fix. There was only ever one Claude Code instance and one orchestrator's
-agents.
+On 2026-07-30 that produced a bad hour. The board said „B30/B31 in flight", the tree held uncommitted
+work, and a fresh orchestrator concluded those agents were gone and dispatched a new one onto the same
+two files — so two agents worked `assets/styles/app.css` at once, and one of them destroyed the
+other's measured edit by restoring the file from HEAD. When commits then appeared under a
+`Claude-Session` trailer that did not match, the orchestrator inferred **„somebody else is writing to
+this repo"**. That was wrong, and the product owner had to correct it twice.
+
+**The rule is simply: there is no second author.** A commit you do not recognise came from an agent
+this stream dispatched. Attributing it elsewhere converts your own collision into somebody else's
+problem and stops you fixing it.
 
 So, on any cold start:
 1. `git status` **before** reading the board — the board can say „in flight" for work sitting
    uncommitted in the tree.
-2. `git log --format='%h %ad %s' --date=format:'%H:%M' -15` — if commits are still *arriving*, the
-   previous conversation's agents are alive. **Wait for them, do not re-dispatch their items.**
-3. A `Claude-Session` trailer that is not yours means „an earlier conversation of this same
-   session", not „another person". Do not reason about a second author.
+2. `git log --format='%h %ad %s' --date=format:'%H:%M' -15` — if commits are still *arriving*,
+   agents are alive. **Wait for them; do not re-dispatch their items.**
+3. Never explain a surprising commit by inventing another party. Find which agent did it.
 
 ### What actually collides
 

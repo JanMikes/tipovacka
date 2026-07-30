@@ -57,9 +57,8 @@ Legend: `TODO` not started · `IN PROGRESS` claimed by an agent · `DONE` merged
 | 29 | [The dev wallet can no longer demonstrate „nemáte dost kreditů"](items/29-dev-wallet-after-the-price-rise.md) | TODO | — |
 | 30 | [„Chybí natipovat X zápasů" badge, on both card surfaces](items/30-nastenka-missing-tips-badge.md) | TODO — blocked on 22 + 25 | — |
 | 31 | [A secondary arrow link is a link, not a button](items/31-arrow-links-are-links.md) | TODO — blocked on 22 | — |
+| 28 | [No boost intro on the join landing](items/28-no-boost-intro-on-the-join-landing.md) | DONE | `5c59521` |
 | 22 | [One match page per soutěž; `/zapasy/{id}` becomes the source-side page](items/22-match-page-per-competition.md) | IN PROGRESS | — |
-| 23 | [One canonical copy and price per booster, everywhere](items/23-boost-copy-and-prices.md) | IN PROGRESS | — |
-| 27 | [The invitation landing says it once, not three times](items/27-invitation-landing-copy.md) | IN PROGRESS | — |
 | 25 | [A missing tip is red, not amber](items/25-missing-tip-goes-red.md) | TODO — blocked on 22 | — |
 | 26 | [Competition detail: „Pravidla" modal, no boost card, no team pills](items/26-competition-detail-rules-modal.md) | TODO — blocked on 22 + 23 | — |
 
@@ -124,13 +123,11 @@ product owner reprioritises):
    - Never `git add -A` / `git add .` / `git commit -a`.
    - **Never restore a file from HEAD to take a "before" measurement, and never run a tree-wide
      `git restore` / `git checkout .` / `git stash`.** This is what actually destroyed work on
-     2026-07-30, and it took most of the day to attribute because the commits carried a *different*
-     `Claude-Session` trailer — which looked like a second person in the repo and was not. It was
-     this stream's own agents: a `/clear` ends the orchestrator's **conversation**, not the agents it
-     already dispatched, so they keep running and keep committing under the old conversation's id.
-     One of them said so outright: *„I briefly overwrote `assets/styles/app.css` with the HEAD
-     version to take a baseline"* — and its sibling watched a finished, measured edit vanish with a
-     clean `git status` and no commit containing it.
+     2026-07-30. One agent said so outright: *„I briefly overwrote `assets/styles/app.css` with the
+     HEAD version to take a baseline"* — and its sibling watched a finished, measured edit vanish
+     with a clean `git status` and no commit containing it. The orchestrator then lost hours blaming
+     „another session": **there is no other session. Every agent in this tree is one this stream
+     dispatched**, and a `/clear` does not stop the ones already running.
      **To measure a before/after, do not touch the file.** Delete or override the rules in the live
      CSSOM, toggle a class, or copy the file to the scratchpad and read it there. `-o` protects the
      index; nothing protects the working tree from another process restoring it.
