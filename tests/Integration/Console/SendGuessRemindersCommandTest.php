@@ -30,7 +30,7 @@ final class SendGuessRemindersCommandTest extends IntegrationTestCase
 
         $tester->assertCommandIsSuccessful();
 
-        self::assertSame(1, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertSame(1, $this->visibleReminderCount(AppFixtures::ADMIN_ID));
     }
 
     /** Adds a scheduled PUBLIC_SOURCE match kicking off within the 24 h window. */
@@ -46,16 +46,16 @@ final class SendGuessRemindersCommandTest extends IntegrationTestCase
         ));
     }
 
-    private function reminderCount(string $userId, string $competitionId): int
+    /** The sweep now writes ONE per-user digest (competition-less), not per-competition rows. */
+    private function visibleReminderCount(string $userId): int
     {
         return (int) $this->entityManager()->createQueryBuilder()
             ->select('COUNT(n.id)')
             ->from(Notification::class, 'n')
             ->where('n.user = :userId')
-            ->andWhere('n.competition = :competitionId')
             ->andWhere('n.type = :type')
+            ->andWhere('n.inAppVisible = true')
             ->setParameter('userId', Uuid::fromString($userId))
-            ->setParameter('competitionId', Uuid::fromString($competitionId))
             ->setParameter('type', NotificationType::GuessReminder)
             ->getQuery()
             ->getSingleScalarResult();

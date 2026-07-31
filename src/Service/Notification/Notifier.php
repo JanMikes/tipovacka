@@ -37,6 +37,13 @@ use Symfony\Component\Mime\Address;
  * channel-agnostic — a user with in-app OFF + email ON no longer re-receives the
  * email on every sweep (the historical email-spam hole).
  *
+ * `$additionalDedupKeys` lets ONE aggregated delivery stand in for several
+ * logical reminders (the guess-reminder digest spanning many competitions): each
+ * extra key leaves an invisible dedup-only row, so a later `notify()` carrying
+ * that key — as primary or as marker — is dropped exactly as if it had been
+ * delivered on its own. Markers are written only when the delivery itself
+ * happened; a fully-muted user keeps no marks and loses nothing.
+ *
  * When BOTH channels are off (or email is on but the user has no address and
  * in-app is off) nothing is delivered and no row is written — there is nothing to
  * dedup.
@@ -58,6 +65,7 @@ final readonly class Notifier
 
     /**
      * @param array<string, scalar|null>|null $payload
+     * @param list<string>                    $additionalDedupKeys
      */
     public function notify(
         User $user,
@@ -68,6 +76,7 @@ final readonly class Notifier
         ?Competition $competition = null,
         ?array $payload = null,
         ?string $dedupKey = null,
+        array $additionalDedupKeys = [],
     ): void {
         try {
             if (null !== $dedupKey && $this->notificationRepository->existsForDedup($user->id, $type, $dedupKey)) {
@@ -106,6 +115,26 @@ final readonly class Notifier
 
             if (null !== $emailAddress && $deliverEmail) {
                 $this->sendEmail($emailAddress, $user->displayName, $type, $title, $body, $url);
+            }
+
+            foreach ($additionalDedupKeys as $markerKey) {
+                if ($markerKey === $dedupKey || $this->notificationRepository->existsForDedup($user->id, $type, $markerKey)) {
+                    continue;
+                }
+
+                $this->notificationRepository->save(new Notification(
+                    id: $this->identityProvider->next(),
+                    user: $user,
+                    type: $type,
+                    title: $title,
+                    body: $body,
+                    competition: $competition,
+                    createdAt: \DateTimeImmutable::createFromInterface($this->clock->now()),
+                    url: $url,
+                    payload: null,
+                    dedupKey: $markerKey,
+                    inAppVisible: false,
+                ));
             }
         } catch (\Throwable $e) {
             $this->logger->error('Notification delivery failed', [

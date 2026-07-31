@@ -122,6 +122,37 @@ final class NotificationRepository
         return null !== $result;
     }
 
+    /**
+     * The subset of the given dedup keys that already have a row for this
+     * user/type — the batch companion of {@see existsForDedup} for sweeps whose
+     * ONE delivery covers several logical reminders at once.
+     *
+     * @param list<string> $dedupKeys
+     *
+     * @return list<string>
+     */
+    public function existingDedupKeys(Uuid $userId, NotificationType $type, array $dedupKeys): array
+    {
+        if ([] === $dedupKeys) {
+            return [];
+        }
+
+        /** @var list<array{dedupKey: string}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('DISTINCT n.dedupKey AS dedupKey')
+            ->from(Notification::class, 'n')
+            ->where('n.user = :userId')
+            ->andWhere('n.type = :type')
+            ->andWhere('n.dedupKey IN (:dedupKeys)')
+            ->setParameter('userId', $userId)
+            ->setParameter('type', $type)
+            ->setParameter('dedupKeys', $dedupKeys)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_column($rows, 'dedupKey');
+    }
+
     public function markAllRead(Uuid $userId, \DateTimeImmutable $now): int
     {
         /** @var int $affected */

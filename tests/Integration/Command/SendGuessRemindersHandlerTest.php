@@ -12,24 +12,30 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Notification;
 use App\Entity\SportMatch;
 use App\Enum\NotificationType;
-use App\Repository\NotificationRepository;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * The reminder sweep sends ONE aggregated digest per user — never one
+ * notification/e-mail per competition. ADMIN sits in five fixture competitions
+ * on PUBLIC_SOURCE (Admin liga, both global ones, the premium and the boosts
+ * league), so a single near match is exactly the "member of many soutěže"
+ * scenario the digest exists for.
+ */
 final class SendGuessRemindersHandlerTest extends IntegrationTestCase
 {
     /** Adds a scheduled PUBLIC_SOURCE match kicking off within the 24 h window (now = 2025-06-15 12:00). */
-    private function addNearMatch(): SportMatch
+    private function addNearMatch(string $home = 'Blízký Domácí', string $kickoff = '2025-06-16 10:00:00 UTC'): SportMatch
     {
         $envelope = $this->commandBus()->dispatch(new CreateSportMatchCommand(
             matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
             editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
-            homeTeam: 'Blízký Domácí',
+            homeTeam: $home,
             awayTeam: 'Blízký Hosté',
-            kickoffAt: new \DateTimeImmutable('2025-06-16 10:00:00 UTC'),
+            kickoffAt: new \DateTimeImmutable($kickoff),
             venue: null,
         ));
 
@@ -40,29 +46,41 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         return $handled->getResult();
     }
 
-    public function testReminderCreatedForMatchWithinWindow(): void
+    public function testOneDigestAcrossAllCompetitions(): void
     {
         $this->addNearMatch();
 
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        self::assertSame(1, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        // ONE visible notification for ADMIN despite five affected competitions…
+        $visible = $this->visibleReminders(AppFixtures::ADMIN_ID);
+        self::assertCount(1, $visible);
 
-        $notification = $this->reminder(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID);
-        self::assertNotNull($notification);
-        self::assertStringContainsString('chybí', $notification->body);
-        self::assertStringContainsString('1 zápas', $notification->body);
+        $digest = $visible[0];
+        // …spanning competitions, so it carries no single competition and lands on /zapasy.
+        self::assertNull($digest->competition);
+        self::assertNotNull($digest->url);
+        self::assertStringContainsString('/zapasy', $digest->url);
+        self::assertSame('Chybí vám 5 tipů', $digest->title);
+        self::assertStringContainsString(AppFixtures::PUBLIC_COMPETITION_NAME, $digest->body);
+        self::assertStringContainsString(AppFixtures::GLOBAL_COMPETITION_NAME, $digest->body);
+        self::assertStringContainsString('nejbližší uzávěrka', $digest->body);
+
+        // One (competition, deadline-day) stamp per competition: 1 visible + 4 markers.
+        self::assertSame(5, $this->reminderRowCount(AppFixtures::ADMIN_ID));
+        // And exactly one e-mail.
+        self::assertSame(1, $this->reminderEmailCountFor(AppFixtures::ADMIN_EMAIL));
     }
 
     public function testNoReminderOutsideWindow(): void
     {
-        // No near match added — every fixture match is > 24 h away.
+        // No near match added — every fixture match deadline is > 24 h away.
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        self::assertSame(0, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertSame(0, $this->reminderRowCount(AppFixtures::ADMIN_ID));
     }
 
-    public function testNoReminderWhenAlreadyTipped(): void
+    public function testTippedCompetitionDropsFromDigest(): void
     {
         $match = $this->addNearMatch();
 
@@ -76,7 +94,11 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
 
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        self::assertSame(0, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        // The tipped soutěž no longer appears; the others still do.
+        $visible = $this->visibleReminders(AppFixtures::ADMIN_ID);
+        self::assertCount(1, $visible);
+        self::assertStringNotContainsString(AppFixtures::PUBLIC_COMPETITION_NAME, $visible[0]->body);
+        self::assertStringContainsString(AppFixtures::GLOBAL_COMPETITION_NAME, $visible[0]->body);
     }
 
     public function testReminderIsIdempotentAcrossRuns(): void
@@ -86,7 +108,24 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        self::assertSame(1, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertCount(1, $this->visibleReminders(AppFixtures::ADMIN_ID));
+        self::assertSame(1, $this->reminderEmailCountFor(AppFixtures::ADMIN_EMAIL));
+    }
+
+    /**
+     * A match added later on an ALREADY-reminded deadline-day rides the existing
+     * (competition, day) stamp — no second digest for the same day.
+     */
+    public function testSameDayLaterMatchDoesNotRetrigger(): void
+    {
+        $this->addNearMatch();
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        $this->addNearMatch(home: 'Pozdější Domácí', kickoff: '2025-06-16 11:00:00 UTC');
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        self::assertCount(1, $this->visibleReminders(AppFixtures::ADMIN_ID));
+        self::assertSame(1, $this->reminderEmailCountFor(AppFixtures::ADMIN_EMAIL));
     }
 
     public function testPreferenceOffSuppressesReminder(): void
@@ -102,14 +141,14 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
 
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        self::assertSame(0, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
+        self::assertSame(0, $this->reminderRowCount(AppFixtures::ADMIN_ID));
     }
 
     /**
      * Regression: in-app OFF + email ON. The reminder sweep runs HOURLY, so a
-     * channel-dependent dedup would have re-sent the email every hour. The dedup
-     * marker is now delivery-level, so the PUBLIC_COMPETITION reminder email is
-     * sent exactly ONCE across runs — and nothing surfaces in the (in-app) feed.
+     * channel-dependent dedup would have re-sent the email every hour. The
+     * delivery-level stamps (digest row + markers) keep the e-mail to exactly
+     * ONE across runs — and nothing surfaces in the (in-app) feed.
      */
     public function testEmailReminderStaysOnceAcrossRunsWhenInAppOff(): void
     {
@@ -125,30 +164,81 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
         $this->commandBus()->dispatch(new SendGuessRemindersCommand());
 
-        // Exactly one email for this competition's reminder across two sweeps.
-        self::assertSame(1, $this->reminderEmailCountFor(AppFixtures::PUBLIC_COMPETITION_NAME), 'Email sent once, not re-sent hourly.');
-        // Delivery-level dedup row exists (raw count) ...
-        self::assertSame(1, $this->reminderCount(AppFixtures::ADMIN_ID, AppFixtures::PUBLIC_COMPETITION_ID));
-        // ... but no guess reminder surfaces in the (in-app-off) feed.
-        $visibleReminders = array_filter(
-            $this->notifications()->listForUser(Uuid::fromString(AppFixtures::ADMIN_ID), 50),
-            static fn (Notification $notification): bool => NotificationType::GuessReminder === $notification->type,
-        );
-        self::assertCount(0, $visibleReminders);
+        self::assertSame(1, $this->reminderEmailCountFor(AppFixtures::ADMIN_EMAIL), 'Email sent once, not re-sent hourly.');
+        // Dedup stamps exist (raw rows) but none is feed-visible.
+        self::assertSame(5, $this->reminderRowCount(AppFixtures::ADMIN_ID));
+        self::assertCount(0, $this->visibleReminders(AppFixtures::ADMIN_ID));
     }
 
-    private function notifications(): NotificationRepository
+    /**
+     * A player whose missing tips sit in a SINGLE soutěž keeps the competition
+     * context: title names it, the row links its detail.
+     */
+    public function testSingleCompetitionDigestKeepsCompetitionContext(): void
     {
-        /* @var NotificationRepository */
-        return self::getContainer()->get(NotificationRepository::class);
+        // Near match on the PRIVATE source — only VERIFIED_COMPETITION includes it,
+        // and VERIFIED_USER is a member of that competition alone.
+        $this->commandBus()->dispatch(new CreateSportMatchCommand(
+            matchSourceId: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
+            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            homeTeam: 'Blízký Domácí',
+            awayTeam: 'Blízký Hosté',
+            kickoffAt: new \DateTimeImmutable('2025-06-16 10:00:00 UTC'),
+            venue: null,
+        ));
+
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        $visible = $this->visibleReminders(AppFixtures::VERIFIED_USER_ID);
+        self::assertCount(1, $visible);
+        self::assertSame(sprintf('Chybí vám tipy v soutěži %s', AppFixtures::VERIFIED_COMPETITION_NAME), $visible[0]->title);
+        self::assertNotNull($visible[0]->competition);
+        self::assertSame(AppFixtures::VERIFIED_COMPETITION_ID, $visible[0]->competition->id->toRfc4122());
+        self::assertNotNull($visible[0]->url);
+        self::assertStringContainsString(AppFixtures::VERIFIED_COMPETITION_ID, $visible[0]->url);
     }
 
-    /** Emails whose subject names the given competition (the reminder subject). */
-    private function reminderEmailCountFor(string $competitionName): int
+    /**
+     * @return list<Notification>
+     */
+    private function visibleReminders(string $userId): array
+    {
+        /** @var list<Notification> $result */
+        $result = $this->entityManager()->createQueryBuilder()
+            ->select('n')
+            ->from(Notification::class, 'n')
+            ->where('n.user = :userId')
+            ->andWhere('n.type = :type')
+            ->andWhere('n.inAppVisible = true')
+            ->setParameter('userId', Uuid::fromString($userId))
+            ->setParameter('type', NotificationType::GuessReminder)
+            ->orderBy('n.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /** All reminder rows including invisible dedup markers. */
+    private function reminderRowCount(string $userId): int
+    {
+        return (int) $this->entityManager()->createQueryBuilder()
+            ->select('COUNT(n.id)')
+            ->from(Notification::class, 'n')
+            ->where('n.user = :userId')
+            ->andWhere('n.type = :type')
+            ->setParameter('userId', Uuid::fromString($userId))
+            ->setParameter('type', NotificationType::GuessReminder)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** Reminder e-mails addressed to the given recipient. */
+    private function reminderEmailCountFor(string $recipient): int
     {
         return count(array_filter(
             $this->messengerAsyncTransport()->getSent(),
-            static function ($envelope) use ($competitionName): bool {
+            static function ($envelope) use ($recipient): bool {
                 $message = $envelope->getMessage();
 
                 if (!$message instanceof SendEmailMessage) {
@@ -157,39 +247,18 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
 
                 $email = $message->getMessage();
 
-                return $email instanceof Email && str_contains((string) $email->getSubject(), $competitionName);
+                if (!$email instanceof Email || !str_contains((string) $email->getSubject(), 'Chybí vám')) {
+                    return false;
+                }
+
+                foreach ($email->getTo() as $address) {
+                    if ($address->getAddress() === $recipient) {
+                        return true;
+                    }
+                }
+
+                return false;
             },
         ));
-    }
-
-    private function reminderCount(string $userId, string $competitionId): int
-    {
-        return (int) $this->entityManager()->createQueryBuilder()
-            ->select('COUNT(n.id)')
-            ->from(Notification::class, 'n')
-            ->where('n.user = :userId')
-            ->andWhere('n.competition = :competitionId')
-            ->andWhere('n.type = :type')
-            ->setParameter('userId', Uuid::fromString($userId))
-            ->setParameter('competitionId', Uuid::fromString($competitionId))
-            ->setParameter('type', NotificationType::GuessReminder)
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    private function reminder(string $userId, string $competitionId): ?Notification
-    {
-        return $this->entityManager()->createQueryBuilder()
-            ->select('n')
-            ->from(Notification::class, 'n')
-            ->where('n.user = :userId')
-            ->andWhere('n.competition = :competitionId')
-            ->andWhere('n.type = :type')
-            ->setParameter('userId', Uuid::fromString($userId))
-            ->setParameter('competitionId', Uuid::fromString($competitionId))
-            ->setParameter('type', NotificationType::GuessReminder)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
     }
 }
