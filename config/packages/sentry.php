@@ -45,7 +45,12 @@ return App::config([
         ],
         'messenger' => [
             'enabled' => true,
-            'capture_soft_fails' => true,
+            // A failure that will still be retried (SMTP 421 from Seznam, a
+            // transient DB hiccup) is weather, not fire — messenger already logs
+            // it at WARNING, so it stays visible as a breadcrumb + Sentry Log.
+            // Only the FINAL failure (retries exhausted, message headed to the
+            // failed transport) becomes an issue.
+            'capture_soft_fails' => false,
             // The worker is a long-running process: give every message its own
             // runtime context so scope/logs/metrics are flushed when it finishes
             // instead of leaking into the next message.

@@ -15,9 +15,16 @@ return App::config([
                         'use_notify' => true,
                         'check_delayed_interval' => 60000,
                     ],
+                    // 1 min → 4 min → 16 min → 30 min (capped), ±10 % jitter:
+                    // long enough to outlive SMTP greylisting/timeouts (the
+                    // Seznam 421s), and the doctrine transport only polls for
+                    // delayed messages every check_delayed_interval anyway, so
+                    // sub-minute delays would be rounded up to ~60 s regardless.
                     'retry_strategy' => [
-                        'max_retries' => 3,
-                        'multiplier' => 2,
+                        'max_retries' => 4,
+                        'delay' => 60000,
+                        'multiplier' => 4,
+                        'max_delay' => 1800000,
                     ],
                 ],
                 'failed' => 'doctrine://default?queue_name=failed',
