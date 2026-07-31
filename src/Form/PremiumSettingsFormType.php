@@ -42,6 +42,7 @@ final class PremiumSettingsFormType extends AbstractType
         $builder->add('tipChangeOffsetMinutes', IntegerType::class, [
             'label' => 'Předstih pro změnu tipu (minuty)',
             'help' => 'O kolik minut před začátkem zápasu se zamknou změny tipů.',
+            'empty_data' => '60',
             'attr' => ['min' => 0, 'max' => 1440],
         ]);
     }

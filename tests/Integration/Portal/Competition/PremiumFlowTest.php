@@ -102,6 +102,26 @@ final class PremiumFlowTest extends WebTestCase
         self::assertSame(120, $competition->tipChangeOffsetMinutes);
     }
 
+    public function testEmptyTipChangeOffsetFallsBackToDefaultNotACrash(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+
+        $client->request('GET', self::PREMIUM_SETTINGS);
+        self::assertResponseIsSuccessful();
+
+        // A cleared number input submits an empty string; empty_data falls back
+        // to the default 60 instead of crashing on the non-nullable int property.
+        $client->submitForm('Uložit nastavení', [
+            'premium_settings_form[tipChangeOffsetMinutes]' => '',
+        ]);
+
+        self::assertResponseRedirects(self::PREMIUM_SETTINGS);
+
+        $competition = $this->reloadCompetition(AppFixtures::PREMIUM_COMPETITION_ID);
+        self::assertSame(60, $competition->tipChangeOffsetMinutes);
+    }
+
     public function testPremiumSettingsRedirectsForNonPremiumCompetition(): void
     {
         $client = static::createClient();

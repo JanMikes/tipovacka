@@ -26,6 +26,7 @@ final class AdminUserSearchFormType extends AbstractType
             'label' => 'Ověření',
             'expanded' => true,
             'multiple' => false,
+            'empty_data' => AdminUserSearchFormData::VERIFIED_ALL,
             'choices' => [
                 'Vše' => AdminUserSearchFormData::VERIFIED_ALL,
                 'Ověření' => AdminUserSearchFormData::VERIFIED_VERIFIED,
@@ -37,6 +38,7 @@ final class AdminUserSearchFormType extends AbstractType
             'label' => 'Stav',
             'expanded' => true,
             'multiple' => false,
+            'empty_data' => AdminUserSearchFormData::ACTIVE_ALL,
             'choices' => [
                 'Vše' => AdminUserSearchFormData::ACTIVE_ALL,
                 'Aktivní' => AdminUserSearchFormData::ACTIVE_ACTIVE,

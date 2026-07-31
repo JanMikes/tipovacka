@@ -24,6 +24,7 @@ final class RuleConfigurationEntryFormType extends AbstractType
 
         $builder->add('points', IntegerType::class, [
             'label' => 'Body',
+            'empty_data' => '0',
             'attr' => [
                 'min' => 0,
             ],

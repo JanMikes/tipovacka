@@ -98,12 +98,14 @@ final class MatchSourceFormType extends AbstractType
                 'label' => 'Vstupné (kredity)',
                 'required' => false,
                 'help' => '0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.',
+                'empty_data' => '0',
                 'attr' => ['min' => 0],
             ]);
 
             $builder->add('globalCompetitionMonetization', EnumType::class, [
                 'label' => 'Monetizace globální soutěže',
                 'class' => CompetitionMonetization::class,
+                'empty_data' => CompetitionMonetization::None->value,
                 'choice_label' => static fn (CompetitionMonetization $monetization): string => $monetization->label(),
             ]);
         }

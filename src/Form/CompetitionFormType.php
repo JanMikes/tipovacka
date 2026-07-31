@@ -90,6 +90,7 @@ final class CompetitionFormType extends AbstractType
             'label' => 'Zápasy soutěže',
             'class' => CompetitionMatchSelectionMode::class,
             'expanded' => true,
+            'empty_data' => CompetitionMatchSelectionMode::All->value,
             'choice_label' => static fn (CompetitionMatchSelectionMode $mode): string => match ($mode) {
                 CompetitionMatchSelectionMode::All => 'Všechny zápasy',
                 CompetitionMatchSelectionMode::Subset => 'Vybrat jen některé zápasy',

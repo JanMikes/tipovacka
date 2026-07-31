@@ -67,6 +67,7 @@ final class GlobalCompetitionFormType extends AbstractType
         $builder->add('entryFeeCredits', IntegerType::class, [
             'label' => 'Vstupné (kredity)',
             'help' => '0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.',
+            'empty_data' => '0',
             'attr' => ['min' => 0],
         ]);
 
@@ -77,6 +78,7 @@ final class GlobalCompetitionFormType extends AbstractType
             'label' => 'Monetizace',
             'class' => CompetitionMonetization::class,
             'expanded' => true,
+            'empty_data' => CompetitionMonetization::None->value,
             'choice_label' => static fn (CompetitionMonetization $monetization): string => $monetization->label(),
         ]);
     }
