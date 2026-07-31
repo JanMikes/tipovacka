@@ -1,8 +1,8 @@
 # Team picker & the team directory
 
 Teams are a first-class entity (`App\Entity\Team`). A team is one identity across every
-match it plays — the home for a logo (future), a short name, a country and a brand color,
-and the anchor for the per-team roster (`Player.team`).
+match it plays — the home for a logo, a short name, a country and a brand color, and the
+anchor for the per-team roster (`Player.team`).
 
 ## Hybrid scope (the one rule to remember)
 
@@ -56,14 +56,51 @@ A separate picker for the „Podle týmu" competition scope (see
   away of a live match), so a filter never offers a team with zero matches. Server-side
   `TeamResolver::belongsToSourceScope` re-validates on write.
 
-## Monogram (logo comes later)
+## Logo, country, monogram — the team coin
 
-No uploads yet: every team renders as a colored initials **monogram** via the pure, unit-tested
-[`App\Value\TeamMonogram`](../../src/Value/TeamMonogram.php) — background = brand color or a
-stable hash of the name, foreground = whichever of black/white wins WCAG contrast (so text is
-never illegible). One component renders it everywhere: `<twig:TeamFlag :team="…">` (accepts a
-`Team` or a `TeamView`; a bare `name` string still works as a fallback). Query results carry a
-`TeamView` (`App\Value\TeamView`) rather than the entity.
+One component renders a team everywhere: `<twig:TeamFlag :team="…">` (accepts a `Team` or a
+`TeamView`; a bare `name` string still works as a fallback). Query results carry a `TeamView`
+(`App\Value\TeamView`) rather than the entity. What it draws, in order:
+
+- **Logo** when the team has one — admin-uploaded, optional. `Team.logo` holds a **storage
+  path** („019….webp"), never a URL, so the file can move between storages without touching a
+  row; `…|team_logo_url` (`TeamLogoExtension` → `TeamLogoStorage::url`) resolves it at render
+  time.
+- **Monogram** otherwise: a colored initials coin via the pure, unit-tested
+  [`App\Value\TeamMonogram`](../../src/Value/TeamMonogram.php) — background = brand color or a
+  stable hash of the name, foreground = whichever of black/white wins WCAG contrast (so text is
+  never illegible).
+- **Country flag badge** on top of either, when the team has a country.
+
+### Logo uploads (`TeamLogoStorage`)
+
+[`App\Service\Team\TeamLogoStorage`](../../src/Service/Team/TeamLogoStorage.php) is the one
+place a logo becomes a file. Whatever an admin uploads (PNG/JPG/WebP/GIF, ≤ 2 MB) is normalised
+to **one shape — transparent WebP fitting inside 256 × 256** (twice the biggest coin we render,
+so it is retina-sharp everywhere) and written through **Flysystem**, never raw `fopen`/`unlink`:
+storage `team_logos` in [`config/packages/flysystem.php`](../../config/packages/flysystem.php),
+local adapter on `public/uploads/teams`, `public_url: /uploads/teams`. Moving logos to S3/R2 is
+a change in that file and nothing else. In production `public/uploads` is a **persistent
+external volume** shared by web + worker (D34), so deploys neither ship nor wipe these files.
+
+`UpdateTeamCommand` treats the logo as three states: `logo` set = point at that freshly stored
+file, `removeLogo` = clear it, neither = leave it alone (so editing a name never loses a logo).
+The controller deletes the replaced file only after the command commits.
+
+### Country
+
+`Team.country` stores ISO 3166-1 **alpha-2**, validated against
+[`App\Value\Country`](../../src/Value/Country.php) — the single source of truth for the field:
+248 countries with their alpha-3 code and Czech name, ordered by Czech name. The admin field is
+a closed `ChoiceType` over that directory (no free text), upgraded by the shared `tom-select`
+controller into a searchable list; each option carries its flag in `data-flag`, which the
+controller renders as a leading image. With JS off it is still a working `<select>`.
+
+Flags are **one 64px round WebP per country in `assets/flags/`, named by the alpha-3 code**
+(`CZE.webp`) — served through AssetMapper, ~1.5 KB each. `<twig:CountryFlag :code="…" size="…">`
+renders one and nothing at all for an empty/unknown code; the `|country` filter
+(`CountryExtension`) resolves a stored code to the `Country` value object. A unit test asserts
+every country in the registry has its asset on disk.
 
 ## Reassigning a match's team
 
@@ -78,5 +115,6 @@ match edit.
 `/admin/tymy` (`admin_team_list`) lists global teams grouped by sport with their match count;
 create/edit at `admin_team_create` / `admin_team_edit` (`TeamFormType`, `CreateTeamCommand` /
 `UpdateTeamCommand`). Gated by the `^/admin` firewall (no dedicated voter). Local teams are not
-managed here — they live and die with their private source. The logo-upload field lands on this
-form in the follow-up.
+managed here — they live and die with their private source. The form carries name, sport
+(create only), zkratka, **země** (country picker), barva and **logo** (upload + „Odebrat
+stávající logo", offered only when there is one).

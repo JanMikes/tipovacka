@@ -49,7 +49,10 @@ class Team
     #[ORM\Column(length: self::SHORT_NAME_MAX_LENGTH, nullable: true)]
     public private(set) ?string $shortName;
 
-    /** ISO 3166-1 alpha-2, upper-cased. Drives the country flag when present. Optional. */
+    /**
+     * ISO 3166-1 alpha-2, upper-cased — one of App\Value\Country::codes(). Drives
+     * the country flag badge when present. Optional.
+     */
     #[ORM\Column(length: 2, nullable: true)]
     public private(set) ?string $country;
 
@@ -57,7 +60,11 @@ class Team
     #[ORM\Column(length: 7, nullable: true)]
     public private(set) ?string $brandColor;
 
-    /** Reserved for a future uploaded logo; always null in v1 (only the monogram renders). */
+    /**
+     * Storage path of the uploaded logo, e.g. „019….webp", written by
+     * TeamLogoStorage — never a URL, so the file can move between storages
+     * without touching a row. Optional; without it the monogram renders.
+     */
     #[ORM\Column(length: 255, nullable: true)]
     public private(set) ?string $logo;
 
@@ -94,12 +101,13 @@ class Team
         ?string $shortName = null,
         ?string $country = null,
         ?string $brandColor = null,
+        ?string $logo = null,
     ) {
         $this->name = $name;
         $this->shortName = $shortName;
         $this->country = $country;
         $this->brandColor = $brandColor;
-        $this->logo = null;
+        $this->logo = $logo;
         $this->updatedAt = $this->createdAt;
     }
 
@@ -114,6 +122,17 @@ class Team
         $this->shortName = $shortName;
         $this->country = $country;
         $this->brandColor = $brandColor;
+        $this->updatedAt = $now;
+    }
+
+    /**
+     * Points the team at a freshly stored logo, or clears it with null. Deleting
+     * the previous file is the caller's job (TeamLogoStorage::remove) — the entity
+     * only ever holds the path.
+     */
+    public function changeLogo(?string $logo, \DateTimeImmutable $now): void
+    {
+        $this->logo = $logo;
         $this->updatedAt = $now;
     }
 }

@@ -8,6 +8,7 @@ use App\Command\UpdateTeam\UpdateTeamCommand;
 use App\Form\TeamFormData;
 use App\Form\TeamFormType;
 use App\Repository\TeamRepository;
+use App\Service\Team\TeamLogoStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +23,7 @@ final class EditTeamController extends AbstractController
     public function __construct(
         private readonly MessageBusInterface $commandBus,
         private readonly TeamRepository $teamRepository,
+        private readonly TeamLogoStorage $logoStorage,
     ) {
     }
 
@@ -30,17 +32,27 @@ final class EditTeamController extends AbstractController
         $team = $this->teamRepository->get(Uuid::fromString($id));
 
         $formData = TeamFormData::fromTeam($team);
-        $form = $this->createForm(TeamFormType::class, $formData);
+        $form = $this->createForm(TeamFormType::class, $formData, ['with_logo_removal' => null !== $team->logo]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $previousLogo = $team->logo;
+            $newLogo = null !== $formData->logoFile ? $this->logoStorage->store($formData->logoFile) : null;
+
             $this->commandBus->dispatch(new UpdateTeamCommand(
                 teamId: $team->id,
                 name: $formData->name,
                 shortName: $formData->shortName ?: null,
                 country: $formData->country ?: null,
                 brandColor: $formData->brandColor ?: null,
+                logo: $newLogo,
+                removeLogo: $formData->removeLogo,
             ));
+
+            // The command committed, so the replaced file is now unreferenced.
+            if (null !== $newLogo || $formData->removeLogo) {
+                $this->logoStorage->remove($previousLogo);
+            }
 
             $this->addFlash('success', 'Tým byl upraven.');
 

@@ -1,0 +1,16 @@
+{#
+    Round country flag — one 64px WebP per ISO 3166-1 country, named by its
+    alpha-3 code in `assets/flags/`. Renders nothing when the code is empty or
+    unknown, so callers need no guard. Used as the badge on a team coin
+    (<twig:TeamFlag>) and in the admin team directory.
+    props: code (ISO 3166-1 alpha-2), size (px), title (bool — native tooltip)
+#}
+{% props code = null, size = 16, title = true %}
+{% set country = code|country %}
+{% if country is not null %}
+    <img src="{{ asset(country.flagAssetPath) }}"
+         alt="{{ country.name }}"{% if title %} title="{{ country.name }}"{% endif %}
+         width="{{ size }}" height="{{ size }}" loading="lazy" decoding="async"
+         class="inline-block flex-none rounded-full object-contain"
+         style="width:{{ size }}px;height:{{ size }}px" />
+{% endif %}

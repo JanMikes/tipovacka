@@ -36,6 +36,7 @@ final readonly class CreateTeamHandler
             shortName: $command->shortName,
             country: null !== $command->country ? mb_strtoupper($command->country) : null,
             brandColor: null !== $command->brandColor ? mb_strtoupper($command->brandColor) : null,
+            logo: $command->logo,
         );
 
         $this->teamRepository->save($team);

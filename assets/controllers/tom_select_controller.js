@@ -19,6 +19,11 @@ export default class extends Controller {
         // soutěž switcher uses them for the zdroj-zápasů name and the date range.
         const subtitle = (data) => personSubtitle(data) || data.sub || '';
         const meta = (data) => data.meta || '';
+        // Options may carry a leading image via `data-flag` (the country picker puts
+        // the round flag asset there); it renders in both the dropdown and the control.
+        const icon = (data, escape) => data.flag
+            ? `<img src="${escape(data.flag)}" alt="" class="inline-block h-4 w-4 flex-none rounded-full object-contain" />`
+            : '';
 
         const options = {
             // Render the dropdown into <body>, never inside the control's own card.
@@ -44,13 +49,13 @@ export default class extends Controller {
                     const secondLine = (sub || extra)
                         ? `<small class="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-xs leading-tight text-white/60">${sub ? `<span>${escape(sub)}</span>` : ''}${extra ? `<span class="text-white/40">${escape(extra)}</span>` : ''}</small>`
                         : '';
-                    return `<div class="py-1"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${secondLine}</div>`;
+                    return `<div class="flex items-center gap-2 py-1">${icon(data, escape)}<div class="min-w-0"><div class="leading-tight">${escape(primary(data))}${unverified}</div>${secondLine}</div></div>`;
                 },
                 // The control itself stays single-line: only the person subtitle (nickname +
                 // full name) is worth the second row there, never the `data-sub` metadata.
                 item: (data, escape) => {
                     const sub = personSubtitle(data);
-                    return `<div class="leading-tight"><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div>`;
+                    return `<div class="flex items-center gap-2 leading-tight">${icon(data, escape)}<div><div>${escape(primary(data))}</div>${sub ? `<small class="block text-xs leading-tight text-white/60">${escape(sub)}</small>` : ''}</div></div>`;
                 },
             },
         };

@@ -7,6 +7,7 @@ namespace App\Controller\Admin\Team;
 use App\Command\CreateTeam\CreateTeamCommand;
 use App\Form\TeamFormData;
 use App\Form\TeamFormType;
+use App\Service\Team\TeamLogoStorage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,6 +19,7 @@ final class CreateTeamController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $commandBus,
+        private readonly TeamLogoStorage $logoStorage,
     ) {
     }
 
@@ -36,6 +38,7 @@ final class CreateTeamController extends AbstractController
                 shortName: $formData->shortName ?: null,
                 country: $formData->country ?: null,
                 brandColor: $formData->brandColor ?: null,
+                logo: null !== $formData->logoFile ? $this->logoStorage->store($formData->logoFile) : null,
             ));
 
             $this->addFlash('success', 'Tým byl přidán do adresáře.');

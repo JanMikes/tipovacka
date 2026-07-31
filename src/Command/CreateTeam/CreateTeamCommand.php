@@ -18,6 +18,8 @@ final readonly class CreateTeamCommand
         public ?string $shortName,
         public ?string $country,
         public ?string $brandColor,
+        /** Storage path of an already-stored logo (TeamLogoStorage), or null. */
+        public ?string $logo = null,
     ) {
     }
 }

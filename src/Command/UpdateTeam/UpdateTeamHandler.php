@@ -29,5 +29,11 @@ final readonly class UpdateTeamHandler
             brandColor: null !== $command->brandColor ? mb_strtoupper($command->brandColor) : null,
             now: $now,
         );
+
+        if ($command->removeLogo) {
+            $team->changeLogo(null, $now);
+        } elseif (null !== $command->logo) {
+            $team->changeLogo($command->logo, $now);
+        }
     }
 }

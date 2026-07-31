@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block admin_title %}Adresář týmů{% endblock %}
-{% block admin_subtitle %}Globální týmy sdílené napříč kurátorovanými zdroji — jedna identita týmu, jedno logo (brzy), statistiky napříč zápasy.{% endblock %}
+{% block admin_subtitle %}Globální týmy sdílené napříč kurátorovanými zdroji — jedna identita týmu, jedno logo, jedna země, statistiky napříč zápasy.{% endblock %}
 {% block admin_actions %}
     <a href="{{ path('admin_team_create') }}" class="btn btn-primary btn-sm">
         <twig:ux:icon name="lucide:plus" class="h-4 w-4" />
@@ -52,7 +52,15 @@
                             </div>
                         </td>
                         <td class="px-4 py-3">{{ item.team.shortName ?? '—' }}</td>
-                        <td class="px-4 py-3">{% if item.team.country %}{{ item.team.country|country_flag }} {{ item.team.country }}{% else %}<span class="text-white/40">—</span>{% endif %}</td>
+                        <td class="px-4 py-3">
+                            {% set country = item.team.country|country %}
+                            {% if country is not null %}
+                                <span class="inline-flex items-center gap-2">
+                                    <twig:CountryFlag :code="country.alpha2" size="18" :title="false" />
+                                    {{ country.name }}
+                                </span>
+                            {% else %}<span class="text-white/40">—</span>{% endif %}
+                        </td>
                         <td class="px-4 py-3">
                             {% if item.team.brandColor %}
                                 <span class="inline-flex items-center gap-2">

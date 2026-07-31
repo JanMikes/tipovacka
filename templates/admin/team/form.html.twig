@@ -59,6 +59,24 @@
             {{ form_widget(form.brandColor) }}
             {{ form_errors(form.brandColor) }}
         </div>
+        <div class="field">
+            {{ form_label(form.logoFile) }}
+            {% if mode == 'edit' and team is defined and team.logo %}
+                <div class="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                    <img src="{{ team.logo|team_logo_url }}" alt="{{ team.name }}" class="h-12 w-12 flex-none rounded-full object-contain" />
+                    <div class="text-sm text-white/50">Stávající logo. Nahráním nového ho nahradíte.</div>
+                </div>
+            {% endif %}
+            {{ form_widget(form.logoFile) }}
+            {{ form_errors(form.logoFile) }}
+            {% if form.removeLogo is defined %}
+                <label class="mt-3 flex items-center gap-2 text-sm text-white/70">
+                    {{ form_widget(form.removeLogo) }}
+                    {{ form.removeLogo.vars.label }}
+                </label>
+                {{ form_errors(form.removeLogo) }}
+            {% endif %}
+        </div>
         <div class="flex flex-wrap gap-3 pt-2">
             <button type="submit" class="btn btn-primary">{{ mode == 'edit' ? 'Uložit změny' : 'Vytvořit tým' }}</button>
             <a href="{{ path('admin_team_list') }}" class="btn btn-ghost">Zrušit</a>
