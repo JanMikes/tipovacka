@@ -40,6 +40,7 @@ final class MatchSourceFormType extends AbstractType
 
         $builder->add('name', TextType::class, [
             'label' => 'Název zdroje zápasů',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'Např. Liga mistrů 2026/27',
             ],

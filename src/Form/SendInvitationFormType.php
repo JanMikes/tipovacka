@@ -18,6 +18,7 @@ final class SendInvitationFormType extends AbstractType
     {
         $builder->add('email', EmailType::class, [
             'label' => 'E-mail pozvaného',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'kamarad@example.com',
                 'autocomplete' => 'off',

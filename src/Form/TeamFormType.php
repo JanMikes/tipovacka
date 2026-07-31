@@ -34,6 +34,7 @@ final class TeamFormType extends AbstractType
 
         $builder->add('name', TextType::class, [
             'label' => 'Název týmu',
+            'empty_data' => '',
             'attr' => ['placeholder' => 'Např. Sparta Praha'],
         ]);
 

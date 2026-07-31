@@ -19,10 +19,12 @@ final class AnonymousMemberFormType extends AbstractType
         $builder
             ->add('firstName', TextType::class, [
                 'label' => 'Jméno',
+                'empty_data' => '',
                 'attr' => ['autocomplete' => 'off'],
             ])
             ->add('lastName', TextType::class, [
                 'label' => 'Příjmení',
+                'empty_data' => '',
                 'attr' => ['autocomplete' => 'off'],
             ])
             ->add('nickname', TextType::class, [

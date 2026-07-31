@@ -37,11 +37,13 @@ final class SportMatchFormType extends AbstractType
 
         $builder->add('homeTeam', TextType::class, [
             'label' => 'Domácí tým',
+            'empty_data' => '',
             'attr' => $homeAttr,
         ]);
 
         $builder->add('awayTeam', TextType::class, [
             'label' => 'Hostující tým',
+            'empty_data' => '',
             'attr' => $awayAttr,
         ]);
 

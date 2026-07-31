@@ -45,6 +45,7 @@ final class GlobalCompetitionFormType extends AbstractType
 
             $builder->add('name', TextType::class, [
                 'label' => 'Název soutěže',
+                'empty_data' => '',
                 'attr' => ['placeholder' => 'Např. Tipovačka Ligy mistrů'],
             ]);
 

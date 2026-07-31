@@ -28,6 +28,7 @@ final class CompetitionFormType extends AbstractType
     {
         $builder->add('name', TextType::class, [
             'label' => 'Název soutěže',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'Např. Kámoši u piva',
             ],

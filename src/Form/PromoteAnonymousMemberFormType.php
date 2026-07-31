@@ -18,6 +18,7 @@ final class PromoteAnonymousMemberFormType extends AbstractType
     {
         $builder->add('email', EmailType::class, [
             'label' => 'E-mail',
+            'empty_data' => '',
             'attr' => [
                 'placeholder' => 'kamarad@example.com',
                 'autocomplete' => 'off',

@@ -89,6 +89,28 @@ final class CreateSportMatchFlowTest extends WebTestCase
         self::assertSame('3. kolo', $match->round);
     }
 
+    public function testEmptyTeamNamesAreRejectedWith422NotACrash(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/zapasy/novy');
+        self::assertResponseIsSuccessful();
+
+        $client->submitForm('Vytvořit zápas', [
+            'sport_match_form[homeTeam]' => '',
+            'sport_match_form[awayTeam]' => '',
+            'sport_match_form[kickoffAt]' => '2025-09-15 18:00',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Zadejte prosím domácí tým.');
+    }
+
     public function testNonOwnerCannotCreateMatch(): void
     {
         $client = static::createClient();

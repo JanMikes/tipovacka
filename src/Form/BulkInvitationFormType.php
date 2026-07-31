@@ -18,6 +18,7 @@ final class BulkInvitationFormType extends AbstractType
     {
         $builder->add('emails', TextareaType::class, [
             'label' => 'E-maily (jeden na řádek nebo oddělené čárkou)',
+            'empty_data' => '',
             'attr' => [
                 'rows' => 6,
                 'placeholder' => "jan@example.com\nlucie@example.com, petr@example.com",
