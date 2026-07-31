@@ -80,7 +80,7 @@ final class EmailVerificationFlowTest extends WebTestCase
         self::assertResponseRedirects('/prihlaseni');
     }
 
-    public function testTamperedSignatureShowsResendCta(): void
+    public function testTamperedTokenShowsResendCta(): void
     {
         $client = static::createClient();
         $signedUrl = $this->buildSignedVerificationUrl(
@@ -89,7 +89,9 @@ final class EmailVerificationFlowTest extends WebTestCase
             AppFixtures::UNVERIFIED_USER_EMAIL,
         );
 
-        $tampered = preg_replace('/(signature=)([^&]+)/', '$1zzzzzzzzzz', $signedUrl);
+        // A tampered token kills both the full-URI signature AND the token
+        // fallback — this is the genuinely unrecoverable link.
+        $tampered = preg_replace('/(token=)([^&]+)/', '$1zzzzzzzzzz', $signedUrl);
         self::assertIsString($tampered);
 
         $client->request('GET', $tampered);
@@ -108,6 +110,48 @@ final class EmailVerificationFlowTest extends WebTestCase
         self::assertTrue($capture->hasWarningThatContains('Email verification link rejected'));
         self::assertFalse($capture->hasErrorRecords());
         self::assertFalse($capture->hasCriticalRecords());
+    }
+
+    public function testScannerMangledUrlWithIntactTokenStillVerifies(): void
+    {
+        $client = static::createClient();
+        $signedUrl = $this->buildSignedVerificationUrl(
+            $client,
+            AppFixtures::UNVERIFIED_USER_ID,
+            AppFixtures::UNVERIFIED_USER_EMAIL,
+        );
+
+        // A link-rewriting intermediary (mail-scanner „safe links", the Seznam
+        // app — TIPOVACKA-K) appends its own param: the full-URI signature dies,
+        // the mail's token survives. The click must still verify.
+        $client->request('GET', $signedUrl.'&utm_source=mail-scanner');
+        self::assertResponseRedirects('/nastenka');
+
+        $em = $this->entityManager($client);
+        $em->clear();
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        self::assertNotNull($user);
+        self::assertTrue($user->isVerified);
+
+        $capture = $client->getContainer()->get('monolog.handler.capture');
+        self::assertInstanceOf(TestHandler::class, $capture);
+        self::assertTrue($capture->hasInfoThatContains('Email verification accepted via token fallback'));
+        self::assertFalse($capture->hasErrorRecords());
+    }
+
+    public function testBrokenLinkForVerifiedUserSaysAlreadyVerified(): void
+    {
+        $client = static::createClient();
+        $client->request(
+            'GET',
+            '/overit-email?id='.AppFixtures::VERIFIED_USER_ID.'&token=mangled&signature=mangled&expires=1',
+        );
+
+        // However broken the URL, a verified account never sees a broken-link
+        // error — and never gets a session out of it either.
+        self::assertResponseRedirects('/prihlaseni');
+        $client->request('GET', '/nastenka');
+        self::assertResponseRedirects('/prihlaseni');
     }
 
     public function testVerificationLeavesNoStaleSessionForUnknownUserId(): void

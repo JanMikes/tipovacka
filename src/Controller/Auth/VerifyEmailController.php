@@ -55,6 +55,16 @@ final class VerifyEmailController extends AbstractController
             ]);
         }
 
+        // A verified account means the link already did its job — this click, an
+        // earlier one, or an invitation acceptance. Whatever the state of the URL
+        // (replayed, expired, scanner-mangled), never show such a visitor a
+        // broken-link error; and never mint a session for a replay either.
+        if ($user->isVerified) {
+            $this->addFlash('info', 'Váš e-mail byl již dříve ověřen. Můžete se přihlásit.');
+
+            return $this->redirectToRoute('app_login');
+        }
+
         try {
             $this->verifyEmailHelper->validateEmailConfirmationFromRequest(
                 $request,
@@ -62,25 +72,37 @@ final class VerifyEmailController extends AbstractController
                 $user->email,
             );
         } catch (VerifyEmailExceptionInterface $e) {
-            // An expected outcome, not an application error: mail scanners and
-            // crawlers fetch one-time links (TIPOVACKA-K was SeznamBot), users click
-            // expired or truncated ones — and they all get a recovery page below.
-            // WARNING keeps it out of Sentry issues (only ERROR records carrying a
-            // Throwable become issues via ExceptionToSentryIssueHandler) while the
-            // exception in context still feeds the breadcrumb trail.
-            $this->logger->warning('Email verification link rejected', [
+            if (!$this->tokenProvesMailPossession($request, $userId, $user->email)) {
+                // An expected outcome, not an application error: mail scanners and
+                // crawlers fetch one-time links (TIPOVACKA-K was SeznamBot), users
+                // click stale or truncated ones — and they all get a recovery page
+                // below. WARNING keeps it out of Sentry issues (only ERROR records
+                // carrying a Throwable become issues via ExceptionToSentryIssueHandler)
+                // while the exception in context still feeds the breadcrumb trail.
+                $this->logger->warning('Email verification link rejected', [
+                    'exception' => $e,
+                    'userId' => $userId,
+                    'reason' => $e::class,
+                ]);
+
+                $errorMessage = $e instanceof ExpiredSignatureException
+                    ? 'Tento ověřovací odkaz vypršel. Vyžádejte si prosím nový.'
+                    : 'Ověřovací odkaz je poškozený nebo neplatný. Vyžádejte si prosím nový.';
+
+                return $this->render('auth/verify_error.html.twig', [
+                    'errorMessage' => $errorMessage,
+                    'showResend' => true,
+                ]);
+            }
+
+            // The full-URI signature is dead but the mail's token is genuine: a
+            // link-rewriting intermediary altered the URL (TIPOVACKA-K: the Seznam
+            // app + crawler pipeline). The click still proves mail possession, so
+            // verify instead of bouncing a legitimate visitor.
+            $this->logger->info('Email verification accepted via token fallback', [
                 'exception' => $e,
                 'userId' => $userId,
                 'reason' => $e::class,
-            ]);
-
-            $errorMessage = $e instanceof ExpiredSignatureException
-                ? 'Tento ověřovací odkaz vypršel. Vyžádejte si prosím nový.'
-                : 'Ověřovací odkaz je poškozený nebo neplatný. Vyžádejte si prosím nový.';
-
-            return $this->render('auth/verify_error.html.twig', [
-                'errorMessage' => $errorMessage,
-                'showResend' => true,
             ]);
         }
 
@@ -123,5 +145,43 @@ final class VerifyEmailController extends AbstractController
         $this->addFlash('success', 'E-mail byl úspěšně ověřen. Jsi přihlášen(a).');
 
         return $loginResponse ?? $this->redirectToRoute('dashboard');
+    }
+
+    /**
+     * The mail's `token` param is a self-contained HMAC of userId+email: only the
+     * mailbox owner ever holds it, so it carries the same proof as the signed URL.
+     * Link-rewriting intermediaries (mail-scanner „safe links", the Seznam app)
+     * append or re-encode query params, which kills the full-URI signature while
+     * the token survives — compare it directly. Expiry is deliberately forgiven
+     * here: the token never rotates for a given address, the account is still
+     * unverified (guarded above), and a replay never mints a session.
+     */
+    private function tokenProvesMailPossession(Request $request, string $userId, string $email): bool
+    {
+        $received = $request->query->getString('token');
+
+        if ('' === $received) {
+            return false;
+        }
+
+        $signedUrl = $this->verifyEmailHelper->generateSignature(
+            routeName: 'app_verify_email',
+            userId: $userId,
+            userEmail: $email,
+            extraParams: ['id' => $userId],
+        )->getSignedUrl();
+
+        parse_str((string) parse_url($signedUrl, PHP_URL_QUERY), $query);
+        $knownToken = $query['token'] ?? null;
+
+        if (!is_string($knownToken)) {
+            return false;
+        }
+
+        // The token is plain base64: a '+' percent-encoded in the mail comes back
+        // as a space when an intermediary decodes %2B and the query parser then
+        // reads '+' as a space — repair before comparing.
+        return hash_equals($knownToken, $received)
+            || hash_equals($knownToken, str_replace(' ', '+', $received));
     }
 }
