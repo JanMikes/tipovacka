@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Player;
 use App\Entity\Team;
 use App\Service\Identity\ProvideIdentity;
+use App\Service\Player\PlayerNameNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -14,6 +15,7 @@ final class PlayerRepository
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly PlayerNameNormalizer $nameNormalizer,
     ) {
     }
 
@@ -25,10 +27,14 @@ final class PlayerRepository
     /**
      * Players are created lazily when an organizer first types their name into the
      * score-entry form. The lookup is case-insensitive („Novák" and „novák" are the
-     * same player); the stored row keeps its first-seen casing. If two concurrent
-     * saves race on the same new name, the unique constraint on (team_id, name)
-     * fails one of the transactions; the organizer simply re-submits and the player
-     * is found on the next attempt (same pattern as CreditWalletProvider).
+     * same player); the stored row keeps its first-seen casing. A miss is retried
+     * against the team roster with PlayerNameNormalizer (diacritics + „J. Novák" ↔
+     * „Jan Novák"), but only when exactly ONE roster player matches — an ambiguous
+     * initial creates a new row rather than guessing (scorer_hit scoring zero beats
+     * crediting the wrong player). If two concurrent saves race on the same new
+     * name, the unique constraint on (team_id, name) fails one of the transactions;
+     * the organizer simply re-submits and the player is found on the next attempt
+     * (same pattern as CreditWalletProvider).
      */
     public function findOrCreate(
         Team $team,
@@ -48,6 +54,15 @@ final class PlayerRepository
 
         if ($player instanceof Player) {
             return $player;
+        }
+
+        $normalizedMatches = array_values(array_filter(
+            $this->listByTeam($team->id),
+            fn (Player $candidate): bool => $this->nameNormalizer->matches($candidate->name, $name),
+        ));
+
+        if (1 === count($normalizedMatches)) {
+            return $normalizedMatches[0];
         }
 
         $player = new Player(

@@ -65,6 +65,8 @@ return App::config([
                 '../src/Service/Competition/GuessFeatures.php',
                 '../src/Service/Competition/PendingJoin.php',
                 '../src/Service/Scoring/MatchContext.php',
+                '../src/Service/Feed/MatchSnapshot.php',
+                '../src/Service/Feed/FeedSyncResult.php',
             ],
         ],
         // An organizer must hold no in-game advantage: they buy visibility boosts

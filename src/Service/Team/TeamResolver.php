@@ -6,6 +6,7 @@ namespace App\Service\Team;
 
 use App\Entity\MatchSource;
 use App\Entity\Team;
+use App\Repository\TeamAliasRepository;
 use App\Repository\TeamRepository;
 use App\Service\Identity\ProvideIdentity;
 
@@ -15,13 +16,16 @@ use App\Service\Identity\ProvideIdentity;
  * A team NAME (typed in the match form, picked from the autocomplete, or read
  * from a CSV cell) resolves to a Team entity: on a curated source to a shared
  * GLOBAL directory team for that sport; on a private source to a LOCAL team of
- * that source. Unknown names are created (the directory / local pool grows) —
- * exactly like Player names flow through PlayerRepository::findOrCreate.
+ * that source. A name that misses is retried against TeamAlias rows in the same
+ * scope (feed/import spellings map onto the one directory identity). Unknown
+ * names are created (the directory / local pool grows) — exactly like Player
+ * names flow through PlayerRepository::findOrCreate.
  */
 final readonly class TeamResolver
 {
     public function __construct(
         private TeamRepository $teams,
+        private TeamAliasRepository $aliases,
         private ProvideIdentity $identity,
     ) {
     }
@@ -49,17 +53,22 @@ final readonly class TeamResolver
     }
 
     /**
-     * Find-only lookup in the source's resolution scope — never creates. Used by
-     * the reassign guard and the import „nový tým" badge so a rejected/previewed
-     * edit never leaves a throwaway team behind.
+     * Find-only lookup in the source's resolution scope — never creates. Tries
+     * the team name first, then aliases in the same scope. Used by the reassign
+     * guard, the import „nový tým" badge and the feed synchronizer's pending-team
+     * gate, so a rejected/previewed edit never leaves a throwaway team behind.
      */
     public function findExisting(MatchSource $source, string $name): ?Team
     {
         $name = trim($name);
 
-        return $source->isCurated
-            ? $this->teams->findGlobalByName($source->sport->id, $name)
-            : $this->teams->findLocalByName($source->id, $name);
+        if ($source->isCurated) {
+            return $this->teams->findGlobalByName($source->sport->id, $name)
+                ?? $this->aliases->findGlobalTeamByAlias($source->sport->id, $name);
+        }
+
+        return $this->teams->findLocalByName($source->id, $name)
+            ?? $this->aliases->findLocalTeamByAlias($source->id, $name);
     }
 
     /**

@@ -14,4 +14,9 @@ final class TeamNotFound extends \DomainException
     {
         return new self(sprintf('Tým s ID "%s" nebyl nalezen.', $id->toRfc4122()));
     }
+
+    public static function withName(string $name): self
+    {
+        return new self(sprintf('Tým se jménem "%s" nebyl nalezen.', $name));
+    }
 }

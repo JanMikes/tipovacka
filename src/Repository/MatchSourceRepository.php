@@ -58,6 +58,31 @@ final class MatchSourceRepository
     }
 
     /**
+     * Active curated sources bound to an external feed — the work list of
+     * app:matches:sync. Completed/deleted sources drop out automatically.
+     *
+     * @return list<MatchSource>
+     */
+    public function listFeedBound(): array
+    {
+        /** @var list<MatchSource> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('t', 's')
+            ->from(MatchSource::class, 't')
+            ->join('t.sport', 's')
+            ->where('t.feedProvider IS NOT NULL')
+            ->andWhere('t.feedRef IS NOT NULL')
+            ->andWhere('t.completedAt IS NULL')
+            ->andWhere('t.deletedAt IS NULL')
+            ->orderBy('t.createdAt', 'ASC')
+            ->addOrderBy('t.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
      * @return MatchSource[]
      */
     public function findPrivateByOwner(Uuid $ownerId): array

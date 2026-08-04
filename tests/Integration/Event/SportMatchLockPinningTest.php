@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Event;
 
 use App\Command\PostponeSportMatch\PostponeSportMatchCommand;
+use App\Command\RescheduleSportMatch\RescheduleSportMatchCommand;
 use App\Command\SoftDeleteSportMatch\SoftDeleteSportMatchCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
@@ -73,6 +74,45 @@ final class SportMatchLockPinningTest extends IntegrationTestCase
 
         $reloaded = $em->find(Competition::class, $competition->id);
         self::assertInstanceOf(Competition::class, $reloaded);
+        self::assertEquals(new \DateTimeImmutable('2025-06-10 18:00:00 UTC'), $reloaded->tipsLockedAt);
+
+        $resolver = self::getContainer()->get(EffectiveTipDeadlineResolver::class);
+        $resolver->reset();
+        $reloadedSibling = $em->find(SportMatch::class, $sibling->id);
+        self::assertInstanceOf(SportMatch::class, $reloadedSibling);
+        self::assertTrue($resolver->isLocked($reloaded, $reloadedSibling, null, new \DateTimeImmutable('2025-06-15 12:00:00 UTC')));
+    }
+
+    /**
+     * P0.9 of the feed prep (.docs/MATCH_DATA_FEEDS.md): `reschedule()` records
+     * only SportMatchUpdated, which has NO handler — so the pin set on
+     * postponement is never revisited. That is the intended extend-only
+     * semantics (once tips closed, they stay closed however the schedule
+     * churns), and with a feed making postpone→reschedule routine it must be
+     * pinned by a test rather than stay an accident of missing wiring.
+     */
+    public function testReschedulingPostponedOpenerKeepsThePin(): void
+    {
+        [$competition, $opener, $sibling] = $this->seedStartedCompetition('2025-06-10 18:00:00 UTC');
+
+        $this->commandBus()->dispatch(new PostponeSportMatchCommand(
+            sportMatchId: $opener->id,
+            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            newKickoffAt: new \DateTimeImmutable('2025-06-28 18:00:00 UTC'),
+        ));
+
+        $this->commandBus()->dispatch(new RescheduleSportMatchCommand(
+            sportMatchId: $opener->id,
+            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            newKickoffAt: new \DateTimeImmutable('2025-06-30 18:00:00 UTC'),
+        ));
+
+        $em = $this->entityManager();
+        $em->clear();
+
+        $reloaded = $em->find(Competition::class, $competition->id);
+        self::assertInstanceOf(Competition::class, $reloaded);
+        // Rescheduling the opener does NOT unpin: tips never silently reopen.
         self::assertEquals(new \DateTimeImmutable('2025-06-10 18:00:00 UTC'), $reloaded->tipsLockedAt);
 
         $resolver = self::getContainer()->get(EffectiveTipDeadlineResolver::class);

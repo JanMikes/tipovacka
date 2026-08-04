@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
+use App\Enum\FeedProvider;
 use App\Enum\MatchSourceKind;
 use App\Event\MatchSourceCompleted;
 use App\Event\MatchSourceCreated;
@@ -45,8 +46,23 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $completedAt = null;
 
+    /** Which external feed maintains this source's matches; null = manual entry. */
+    #[ORM\Column(nullable: true, enumType: FeedProvider::class)]
+    public private(set) ?FeedProvider $feedProvider = null;
+
+    /**
+     * The provider's competition reference — FAČR soutěž code („2026001A1A"),
+     * vendor league/season id, or a JSON path for FeedProvider::Fixture.
+     */
+    #[ORM\Column(length: 160, nullable: true)]
+    public private(set) ?string $feedRef = null;
+
     public bool $isCurated {
         get => MatchSourceKind::Curated === $this->kind;
+    }
+
+    public bool $hasFeed {
+        get => null !== $this->feedProvider && null !== $this->feedRef;
     }
 
     public bool $isCompleted {
@@ -102,6 +118,36 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new MatchSourceUpdated(
+            matchSourceId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /** Bind (or re-point) this source to an external feed. Curated sources only — the caller enforces it. */
+    public function bindFeed(FeedProvider $provider, string $ref, \DateTimeImmutable $now): void
+    {
+        $this->feedProvider = $provider;
+        $this->feedRef = $ref;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new MatchSourceUpdated(
+            matchSourceId: $this->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /** Back to manual maintenance; existing matches keep their externalId links. */
+    public function unbindFeed(\DateTimeImmutable $now): void
+    {
+        if (null === $this->feedProvider && null === $this->feedRef) {
+            return;
+        }
+
+        $this->feedProvider = null;
+        $this->feedRef = null;
         $this->updatedAt = $now;
 
         $this->recordThat(new MatchSourceUpdated(

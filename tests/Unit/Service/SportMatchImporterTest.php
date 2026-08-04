@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Enum\MatchSourceKind;
 use App\Exception\SportMatchImportFailed;
 use App\Repository\SportMatchRepository;
+use App\Repository\TeamAliasRepository;
 use App\Repository\TeamRepository;
 use App\Service\Identity\ProvideIdentity;
 use App\Service\SportMatch\SportMatchImporter;
@@ -39,6 +40,7 @@ final class SportMatchImporterTest extends TestCase
         // new) is covered by the integration test SportMatchImportBadgeTest.
         $teamResolver = new TeamResolver(
             new TeamRepository($this->createStub(EntityManagerInterface::class)),
+            new TeamAliasRepository($this->createStub(EntityManagerInterface::class)),
             $identity,
         );
 

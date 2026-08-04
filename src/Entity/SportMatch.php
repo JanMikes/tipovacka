@@ -30,10 +30,26 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'sport_matches')]
 #[ORM\Index(columns: ['match_source_id', 'kickoff_at', 'deleted_at'], name: 'IDX_sport_matches_match_source_kickoff')]
 #[ORM\Index(columns: ['state', 'kickoff_at', 'deleted_at'], name: 'IDX_sport_matches_state_kickoff')]
+#[ORM\UniqueConstraint(
+    name: 'UNIQ_sport_matches_source_external',
+    columns: ['match_source_id', 'external_id'],
+    // Predicate written exactly as Postgres normalizes it (per-condition parens),
+    // otherwise schema:validate reports perpetual drift on the string compare.
+    options: ['where' => '((external_id IS NOT NULL) AND (deleted_at IS NULL))'],
+)]
 class SportMatch implements EntityWithEvents, SoftDeletable
 {
     use HasEvents;
     use SoftDeletes;
+
+    /**
+     * Opaque per-provider fixture reference (FAČR zápas GUID, vendor fixture id) —
+     * the idempotency anchor for feed re-polling. The natural key (teams, kickoff)
+     * is unstable because kickoff is exactly what a postponement moves. Null on
+     * manually entered matches; unique per source among live rows.
+     */
+    #[ORM\Column(length: 120, nullable: true)]
+    public private(set) ?string $externalId = null;
 
     #[ORM\Column]
     public private(set) \DateTimeImmutable $kickoffAt;
@@ -134,11 +150,13 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         // the fields themselves are declared up top next to $venue.
         ?string $round = null,
         bool $isPlayoff = false,
+        ?string $externalId = null,
     ) {
         $this->kickoffAt = $kickoffAt;
         $this->venue = $venue;
         $this->round = $round;
         $this->isPlayoff = $isPlayoff;
+        $this->externalId = $externalId;
         $this->state = SportMatchState::Scheduled;
         $this->updatedAt = $this->createdAt;
 
@@ -187,6 +205,16 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             sportMatchId: $this->id,
             occurredOn: $now,
         ));
+    }
+
+    /**
+     * Backfill link of a manually created match to its feed counterpart, so the
+     * next sync updates this row instead of creating a duplicate.
+     */
+    public function linkExternal(string $externalId, \DateTimeImmutable $now): void
+    {
+        $this->externalId = $externalId;
+        $this->updatedAt = $now;
     }
 
     public function beginLive(\DateTimeImmutable $now): void

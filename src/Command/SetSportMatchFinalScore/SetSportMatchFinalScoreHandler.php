@@ -34,7 +34,11 @@ final readonly class SetSportMatchFinalScoreHandler
             now: $now,
         );
 
-        $this->matchEventWriter->replace($sportMatch, $command->events, $now);
+        // Null = the caller knows nothing about events (feed score-only update);
+        // wiping the sheet here would silently zero scorer_hit for everyone.
+        if (null !== $command->events) {
+            $this->matchEventWriter->replace($sportMatch, $command->events, $now);
+        }
 
         if ($command->isLastMatch && !$sportMatch->matchSource->isCompleted) {
             $sportMatch->matchSource->markCompleted($now);

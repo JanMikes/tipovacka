@@ -43,6 +43,24 @@ class SportMatchRepository
     }
 
     /**
+     * Feed idempotency lookup: the live (non-deleted) match a provider snapshot
+     * refers to. A soft-deleted match frees its externalId for re-creation.
+     */
+    public function findBySourceAndExternalId(Uuid $matchSourceId, string $externalId): ?SportMatch
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('m')
+            ->from(SportMatch::class, 'm')
+            ->where('m.matchSource = :matchSourceId')
+            ->andWhere('m.externalId = :externalId')
+            ->andWhere('m.deletedAt IS NULL')
+            ->setParameter('matchSourceId', $matchSourceId)
+            ->setParameter('externalId', $externalId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * @return list<SportMatch>
      */
     public function listByMatchSource(
