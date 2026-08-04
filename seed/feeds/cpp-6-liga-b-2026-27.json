@@ -1,0 +1,821 @@
+[
+  {
+    "externalId": "3de7e00a-8ebc-466d-ba04-5f6a4fc98d68",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-08-15T08:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "41ed807e-8992-4f39-8896-de230a967ab6",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "4d5305d8-6f13-41e1-8797-96701cb937d9",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "e13d133b-7990-43aa-9263-38e79fe78025",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "f0a7bfed-6824-4243-8e67-a5fdd47f6e71",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "6bf14877-9ed3-4818-adf6-ac5195effe22",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "fe029c7e-7c2b-4d98-9a6d-4a336ee65975",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "5e442158-29fd-41bc-acbb-8fc9a0f58106",
+    "homeTeam": "Tichá",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-08-22T08:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "0501df3b-ab2c-4062-9d4a-c508d8917d23",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "b843be33-19e1-404f-a6e1-2325a4d80abd",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "c8d7c44d-949f-441f-b44b-95db0800889d",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "cb427192-d42e-424b-a1a0-24dcfcd89e65",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "07909faa-8fe8-40b6-909e-16173dae9cbb",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-08-23T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "94743de4-f407-4393-bff6-b3f73f58129b",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-08-23T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "9184166f-e546-4587-9412-e1d393570b82",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-08-29T08:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "01ae87b1-b020-4751-ab58-401cb6bf6a53",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "a0250a44-0b4e-46f2-b243-d2f31a38970d",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "a2f02a3f-a48c-476e-85e1-dceda603890b",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "e4073622-1261-4453-a779-350cdfde2b73",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "58a56123-fcad-4ce6-b7e0-57b31f487a5f",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-08-30T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "c64499ed-7a9f-464d-bf17-2e374b6b2b09",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-08-30T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "03239bb8-0131-444b-9f63-d3340fdf0808",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "179a5723-a869-4944-9af1-1a54e229269f",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "192f5433-dde7-4ea1-98a4-facab10b7d32",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "4bd107ab-44f9-4807-8cfb-423e39a7fea0",
+    "homeTeam": "Tichá",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "93868843-b83c-488b-bf12-5b1e31099436",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "c25e87af-0cec-409a-88ef-f70256a7d594",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "88a02949-5b04-4b34-a9ad-04756e7029da",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-09-06T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "7480c0e4-23fc-4131-92bf-cf44c9f356f4",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-09-12T08:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "3cff0ba9-f311-40a2-89cb-325d58c823ca",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "5f59d75e-ea7a-4011-96cc-f00f8fb8f952",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "6432a2a3-038a-452c-accb-dde5f544139f",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "a4900b3c-8b35-4cd6-a6a2-7e6c6ab1cb34",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "05c81658-b0be-4d67-8459-5f8a06dbfe67",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-09-13T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "99dd64ae-e902-47bf-a2df-ff0e87f7bfbb",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-09-13T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "ac16cb54-6629-4980-a2a8-388a78c16f84",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-09-19T08:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "0947cec4-0306-4189-a756-27f7cbdb07a5",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "216facb2-ac78-40ce-8de2-f8621bb0e912",
+    "homeTeam": "Tichá",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "7d4407a0-f776-436b-8e87-8404808c89b2",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "8290429b-6961-4004-96db-1129a88ca406",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "9a61aa59-c80b-4d86-a726-716de4673d52",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "bb5e3b27-f5db-4433-8f1f-ac2e72b45a10",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-09-20T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "0575412f-8e3a-46fe-bb06-bfb7b095e83b",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "0f4f16e6-99df-429f-aa2c-06f52490c9f4",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "253a6864-6ecd-4859-8063-de8573a9b16b",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "e143eec6-fd8d-4fbe-82f7-5bfca4933f34",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "0a838939-a513-4d27-a793-1ca11247c328",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "1d7892e7-63e6-4486-a0d5-0f362c4f36ae",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "61b5e483-6a54-4fd7-9c61-938184d5d6e9",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "2c853ed4-ae6d-4345-a288-f131bf519907",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-10-03T08:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "040e0754-2c29-4b81-aafa-0d8ab8d6666f",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "c72f8e84-7573-4af1-85d3-72f02943c94b",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "ebd9fcf8-c903-471a-ae7e-fa269f6bb8d7",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "f21246b3-7bb7-4fe1-936c-35e72f73d946",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "3ff0a560-c731-49c0-b0ed-beda1bf51685",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-10-04T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "f25c2e3f-c11c-46c9-b19a-c23e0036aae1",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-10-04T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "4a553d35-4b29-402f-8054-214edec17922",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "61c647d8-260b-4b16-b154-1d09807a7b57",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "8112f666-b866-434d-9425-657c91d2818c",
+    "homeTeam": "Tichá",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "8badcd66-0597-4509-9469-bdfeb0cc095f",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "93bceddf-41de-4dda-bdbe-a07b46596c7a",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "452b77f1-8ee6-4d89-9fd5-92a06720c440",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "e3fe6ea8-7461-4f0e-98ae-1dddcd8d0983",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "8a54ad7c-81c0-4c46-955a-020b6cbc5652",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-10-17T08:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "7d48af9e-4f2d-46dc-9407-3e3cc80b512f",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "b29cfc03-362a-4ec3-9c80-4be203562de1",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "f0731856-3af2-4218-ad5b-17155a9507a6",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "feb2fb1b-0aab-450c-b7d9-6805f286cac2",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "b9e5889a-a590-4238-b493-ba3d53a58d8c",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-10-18T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Těrlicko - tráva"
+  },
+  {
+    "externalId": "f54ed7c8-c5e7-4a0c-b650-739a0b60591e",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-10-18T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "327206e9-9f43-47cc-bbdf-ab66be99f9f3",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "62b947f4-35c8-4aad-b746-ef3130fb570b",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "6a756645-4f66-48f0-907c-651bab798b63",
+    "homeTeam": "Tichá",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "aa89eb05-38ab-491f-a888-3db4b0e0f26e",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Horní Suchá",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "cf086550-13b4-4546-898b-b9399fb26702",
+    "homeTeam": "Dětmarovice",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Dětmarovice - tráva"
+  },
+  {
+    "externalId": "54366215-5c15-4518-bcc1-e110ba0f0ac7",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "8cecbe45-555d-43c3-9812-47f03fc497b6",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "233b91de-233c-4508-9c32-94ef89fbcc2c",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Jistebník",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "49ff59fd-476a-4457-bf6a-d0407ce7cb46",
+    "homeTeam": "Dobratice",
+    "awayTeam": "Libhošť",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Dobratice - tráva"
+  },
+  {
+    "externalId": "4edd775c-5c21-4ff8-af4d-45fc8cfece20",
+    "homeTeam": "Lískovec",
+    "awayTeam": "Fryčovice",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Lískovec"
+  },
+  {
+    "externalId": "55391905-5f51-4729-8c3e-43c845488340",
+    "homeTeam": "Ostravice",
+    "awayTeam": "Kopřivnice",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Ostravice - tráva"
+  },
+  {
+    "externalId": "f267bbec-99cf-46e4-aa89-e5bd82c741c4",
+    "homeTeam": "Tichá",
+    "awayTeam": "Smilovice",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Tichá - tráva"
+  },
+  {
+    "externalId": "ee63481f-dafb-4cbf-a187-b7723c9e6d31",
+    "homeTeam": "Jablunkov",
+    "awayTeam": "Těrlicko 2022",
+    "kickoffUtc": "2026-11-01T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Jablunkov - tráva"
+  },
+  {
+    "externalId": "fc787e7e-14fe-4866-beb9-b226098b1425",
+    "homeTeam": "Bystřice",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-11-01T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Bystřice - tráva"
+  },
+  {
+    "externalId": "69580442-58e0-4fe8-92ce-efea8fe143e7",
+    "homeTeam": "Smilovice",
+    "awayTeam": "Jablunkov",
+    "kickoffUtc": "2026-11-07T09:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Smilovice - tráva"
+  },
+  {
+    "externalId": "464b66ac-f5a0-4a3c-b377-32797c3923e6",
+    "homeTeam": "Horní Suchá",
+    "awayTeam": "Bystřice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Horní Suchá - tráva"
+  },
+  {
+    "externalId": "5efa90a7-7d10-4e8a-bb56-7c32a692594d",
+    "homeTeam": "Kopřivnice",
+    "awayTeam": "Tichá",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Kopřivnice - tráva"
+  },
+  {
+    "externalId": "e6795a33-43a4-4754-888a-94749d2f5ad9",
+    "homeTeam": "Jistebník",
+    "awayTeam": "Ostravice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Jistebník - tráva"
+  },
+  {
+    "externalId": "f8ad1cf1-d8c6-43d5-ae8e-584e2c7a7872",
+    "homeTeam": "Fryčovice",
+    "awayTeam": "Dobratice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Fryčovice - tráva"
+  },
+  {
+    "externalId": "2cb7b3d9-bbb9-438d-acaf-6904baabe3f1",
+    "homeTeam": "Libhošť",
+    "awayTeam": "Dětmarovice",
+    "kickoffUtc": "2026-11-08T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Libhošť - tráva"
+  },
+  {
+    "externalId": "5c9bfea0-bdf1-4f18-9f17-30c78cec3b9b",
+    "homeTeam": "Těrlicko 2022",
+    "awayTeam": "Lískovec",
+    "kickoffUtc": "2026-11-08T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Těrlicko - tráva"
+  }
+]

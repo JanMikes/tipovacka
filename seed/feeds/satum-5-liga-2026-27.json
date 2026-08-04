@@ -1,0 +1,1154 @@
+[
+  {
+    "externalId": "4adbd087-d65b-4859-bcfe-4312dec1fc3b",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-08-08T08:30:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "0ea43b59-5d19-4087-b220-b88c3e22ded4",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "730a2ad1-444c-4612-9903-a7122095d7ed",
+    "homeTeam": "Koblov",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "9e54a565-dc38-4693-9861-24ff8e88ad4f",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "bbe7eef2-4256-4f24-99bc-788dcb8cee3a",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "ce1e7cdc-dfb8-4357-ac7e-b0f93d2a8219",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "01989b4b-081c-41b6-87a6-12bf633d3a7d",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-08-09T14:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "408bf7b2-92b6-4210-8769-dbecc729acbb",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-08-09T14:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "a9cdeae5-a45c-4213-8438-8824edad4d07",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-08-15T12:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "3ebfd7e0-f429-49c8-9680-ee4d8a3d0df4",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "af1b7a0b-84ed-4632-841f-742bf14b5a8a",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-08-15T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "9928d1fa-2847-4762-aa1a-78d2bdfd37d2",
+    "homeTeam": "Krnov",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-08-16T13:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "7f03cb5a-9827-45dc-b2dc-74545e79edde",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "b8b5efd5-73a0-41cd-8cde-145ab4bc4f97",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "cefb5938-ef2f-48f5-97c2-6f924fe32214",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "f7aef081-ff09-406e-ba6d-292000b8e673",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-08-16T14:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "b52a4615-aadc-4c8c-a7e3-bf760a445a83",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-08-22T08:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "23a49376-f593-45dc-8cf6-ce9ada567c19",
+    "homeTeam": "Koblov",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "7f6fff4c-73ca-4ed1-a2a0-2c6286595253",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "9927d9ab-a1f9-4dc9-adb3-8e0bb24d9857",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-08-22T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "85f37c63-ea63-454b-bb98-eedac660d626",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-08-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "9ce26fd2-3d75-40c6-b961-bebaba2174de",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-08-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "ac1961f4-7a06-42d6-908f-2fcc48109155",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-08-23T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "eb7f87e5-9899-4fbf-ada4-7f6ad97b5807",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-08-23T14:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "274aceb5-9a5f-40b4-add3-626f5ac46609",
+    "homeTeam": "Krnov",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "443c4ae0-be38-4d80-9dfa-4566cdc3b2d5",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "61f6ea19-13bd-4857-8b6d-e4dbd7f8e860",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "76c5c833-181c-4ce1-a73d-d77467310ff7",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "95d058d3-ad2d-45fb-9368-e421b4c6ae85",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "99b10cfe-1e06-4360-a81a-29507e7a611e",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "9bf8df2b-dbe8-4384-aaf1-62b20da0f7f3",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "d1ab4fca-4c76-4805-92b7-92f493fde06d",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-08-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "c9bcfe9f-b586-4914-ac0e-00ea2255aa0f",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-08-29T08:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "96a49d3a-590d-4791-a848-f1938f35f99d",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-08-29T12:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "39a9eb5d-dbdf-4179-9147-9359c9d2d88a",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "98dcbe3a-ccfe-43b5-9716-d3046db6317b",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "e0b8dd6b-03c5-4eb5-b5aa-e186e7bdf348",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "9364aad1-9cd7-4e9f-a79b-7a5e45c9007e",
+    "homeTeam": "Krnov",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-08-30T13:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "59fb82dd-f0ed-4d64-9ba7-b14b15fe0aaa",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-08-30T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "cc2c1bfd-36cf-4838-af38-04136d34f2b4",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-08-30T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "2fe225a5-ae4f-4207-b513-5d46cffffb27",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-09-05T08:30:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "126a520d-37da-4208-8e7d-6f2f63f2dff2",
+    "homeTeam": "Koblov",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "1a0675ab-384d-4a95-8146-65e437ddca57",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "ab1b3c3d-2e62-4b54-b68b-9b2d676f5cab",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "fbd9e1da-7a2e-473a-8c66-d1cf75eb6dbe",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "bf074e48-dcd2-4369-8da7-301b6bbe4c82",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-09-06T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "ea55d2d0-4b2b-422a-a950-510b47103fac",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-09-06T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "ee2e3ead-5f5e-48ee-96ac-5ebaf235a576",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-09-06T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "e81a39db-1838-4ae2-be39-a6afee15d3c7",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-09-12T12:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "051347ee-7a12-4e9d-8f56-3f61823c9fdb",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "92c7fcd8-6705-4915-8c3d-acceca6a12c3",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "be756ef0-c846-402e-8611-170db4056264",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "2e993086-15e5-4a9a-a4c7-2b052e078c80",
+    "homeTeam": "Krnov",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-09-13T13:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "09aadc3b-a742-497b-b6e2-1d9284e11a2c",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-09-13T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "10d6757d-239a-4bd0-9b74-f9c4f125eaa5",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-09-13T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "3e4f5cca-98a0-447c-a86c-0479f49447c8",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-09-13T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "82887524-5511-4191-9875-7ed545d91d92",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-09-19T08:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "52e82ff6-134e-492f-a7bd-c63cbbc9fc84",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "6a2caf4a-b592-454d-8a10-269692f37965",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "817c9c2c-f352-4da1-804c-f2d2fb2275ab",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "d4208f26-bb2a-40de-9cd0-583cc34c9fd6",
+    "homeTeam": "Koblov",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-09-19T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "093f10df-fd5d-4ebf-a41b-546b4faf3eb3",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-09-20T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "57c3bdc6-6d36-4c04-88e3-1cce65990072",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-09-20T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "f56784be-dfee-4653-9043-41e9daf31132",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-09-20T13:30:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "42518e72-dcf1-4048-b28a-97152fc3b854",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-09-26T12:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "20933ea1-244a-4e9d-a7b1-8198c61e241c",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "36ca23cf-fbaf-4f3c-9360-d228544e09d1",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "6e7d73e8-8826-43c0-87ef-a21c58b0c11b",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-09-26T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "f9abc9d5-948c-404b-a81e-032ac81b07e1",
+    "homeTeam": "Krnov",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-09-27T13:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "124badb1-6847-450a-a42d-fb793a09c2ef",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "25a6cd6a-0fb2-4338-9835-b259c36147a2",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "fb1c5743-5f5a-4664-ba07-131023dde548",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-09-27T13:30:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "5da4e6e2-2398-4798-9cdf-cb3e40ad797c",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-10-03T08:30:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "fea74dae-cf8a-48b7-ba63-f58505165667",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-10-03T12:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "09fc7a1e-677a-4f21-8476-cb83c322b002",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "8e5dbdf5-b03e-43e7-873b-309ed541921f",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "ce6ebe75-9dec-4575-8242-9de12688887b",
+    "homeTeam": "Koblov",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "eed366e2-4558-45c4-998c-694727678999",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-10-03T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "655f75e7-1b5d-4807-b9f5-b87f23a8685c",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-10-04T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "f721c19e-70e2-4d18-8d25-69b664e78ad0",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-10-04T13:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "4f889ca0-6927-481b-bda9-07de271f7e7d",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "5742ddf0-c0d0-49db-8d94-4e51f1d8623e",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "90b8ed24-84d6-41eb-830f-32d40c864288",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-10-10T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "443b8af1-adf2-41aa-b881-ea00301a0d8e",
+    "homeTeam": "Krnov",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "c4b0ee01-724b-4220-bc4b-7dde0003411e",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "cef3ba17-ecbd-44d4-9a4d-3a1b1ed4574e",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "e799f2b5-3a6e-4cd0-8b27-229f3544359b",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "f65bab34-1ce8-444a-9338-0fcde331d845",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-10-11T13:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "5312b6c0-4b76-4779-8880-646346514e9d",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-10-17T08:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "b5d6a8f7-5128-4aa6-a010-5c524f5065e0",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-10-17T12:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "11e4dee7-c840-43a9-9f48-07f23f660bc2",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "69b943e2-8990-4673-9bd2-f15bc0ad6498",
+    "homeTeam": "Koblov",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "e03fd83a-4f2b-4306-996b-d716c1003f48",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "e4c78681-24a0-4e6d-b2ee-6441a07c499c",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-10-17T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "8ed60411-3abd-4832-a74c-06889074c2da",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-10-18T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "bc29deda-d478-4ac3-8277-9f79773c8486",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-10-18T12:30:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "68c1d49d-6fdc-48ce-aff6-df3a8977e356",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "6c222f1e-9694-41b5-96fa-ffe1d77dc97c",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "f34021fe-1f91-41d7-9fd4-33fd35b8d1e7",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-10-24T12:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "1d1317fa-466f-4149-9155-71fbeca6d6d0",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "2730a782-25c3-43ac-b345-588d42a2d4c7",
+    "homeTeam": "Krnov",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "5eadcf18-ccf7-49d1-8204-2f8bc91fe0af",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "874fa11e-ccb0-46ae-bbea-3f7642822c9c",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "b78dda84-377d-42be-b02c-b7b436d71c08",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-10-25T13:30:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "b86b0c61-cc79-4be4-afe1-bdd86d0347a2",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Koblov",
+    "kickoffUtc": "2026-10-31T09:30:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "5561fd66-04b4-4fb6-9ef5-c23226a5ab4e",
+    "homeTeam": "Lokomotiva Petrovice",
+    "awayTeam": "FC Vřesina",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Petrovice - tráva"
+  },
+  {
+    "externalId": "bab34844-bf93-4f8c-aaa8-c3c98e9a1460",
+    "homeTeam": "Slavia Orlová",
+    "awayTeam": "H&P Staré Město",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Orlová - tráva"
+  },
+  {
+    "externalId": "e9caa12a-1217-4700-a4a2-68ac2e0d63ae",
+    "homeTeam": "Heřmanice",
+    "awayTeam": "Kobeřice",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Heřmanice - tráva"
+  },
+  {
+    "externalId": "f7bc0dc2-bb93-4364-a20a-a7276be26c06",
+    "homeTeam": "Město Albrechtice",
+    "awayTeam": "Jakubčovice",
+    "kickoffUtc": "2026-10-31T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Chomýž - tráva"
+  },
+  {
+    "externalId": "77436145-8596-427c-9a85-d13b605bd62f",
+    "homeTeam": "Krnov",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-11-01T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Krnov-tráva"
+  },
+  {
+    "externalId": "dd62de0a-ee8d-4f0f-b8c1-14c4b17d5b5d",
+    "homeTeam": "Baník Albrechtice",
+    "awayTeam": "Vítkovice B",
+    "kickoffUtc": "2026-11-01T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Albrechtice - tráva"
+  },
+  {
+    "externalId": "e8a9a09d-a4d0-4df8-9e64-d0ce93353608",
+    "homeTeam": "Frenštát p. R.",
+    "awayTeam": "Brušperk",
+    "kickoffUtc": "2026-11-01T13:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": "Frenštát p. R. - tráva"
+  },
+  {
+    "externalId": "40f6f20c-3a1e-4697-ae8c-1ef7d73f7518",
+    "homeTeam": "Koblov",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "428153c8-5d06-450b-9800-bcd0fe7cbc23",
+    "homeTeam": "Háj ve Slezsku",
+    "awayTeam": "Český Těšín",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Háj ve Slezsku - tráva"
+  },
+  {
+    "externalId": "49b4d167-dd94-45d3-82f9-1f8afb96dcb2",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "9acce2b0-c621-4dee-9f9c-81c93419b327",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "dc5f6ee5-ad13-457a-9dac-f03ab42624cc",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-11-07T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "71401e34-084d-4d9e-b914-a790d28370d0",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-11-08T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "99af8ae8-9be2-4bf8-a188-a6014d34c347",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-11-08T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Vřesina - tráva"
+  },
+  {
+    "externalId": "ebd5b88c-8305-471a-99ac-92194979a771",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-11-08T13:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "831171d5-7178-47ee-aea6-fb4174a7b999",
+    "homeTeam": "Český Těšín",
+    "awayTeam": "Slavia Orlová",
+    "kickoffUtc": "2026-11-14T09:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Český Těšín - tráva"
+  },
+  {
+    "externalId": "5854305d-3c93-4b5b-9ef2-9f3c4294d2a6",
+    "homeTeam": "H&P Staré Město",
+    "awayTeam": "Frenštát p. R.",
+    "kickoffUtc": "2026-11-14T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Staré Město - tráva"
+  },
+  {
+    "externalId": "6f6ce7ef-e993-481a-a884-fce45b43f9a1",
+    "homeTeam": "Jakubčovice",
+    "awayTeam": "Krnov",
+    "kickoffUtc": "2026-11-14T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Jakubčovice - tráva"
+  },
+  {
+    "externalId": "85851ae7-7cf9-4b6f-83c3-91dafb7cda1c",
+    "homeTeam": "Brušperk",
+    "awayTeam": "Město Albrechtice",
+    "kickoffUtc": "2026-11-14T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Brušperk - tráva"
+  },
+  {
+    "externalId": "85b6519b-8dc9-48be-b064-28141bb4fb86",
+    "homeTeam": "Koblov",
+    "awayTeam": "Baník Albrechtice",
+    "kickoffUtc": "2026-11-14T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Koblov - tráva"
+  },
+  {
+    "externalId": "025c20e5-5cd4-43e9-a393-691428ece224",
+    "homeTeam": "Vítkovice B",
+    "awayTeam": "Heřmanice",
+    "kickoffUtc": "2026-11-15T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Slovan Ostrava, Hulváky - tráva"
+  },
+  {
+    "externalId": "39b43362-2748-4126-8903-8cf67e943173",
+    "homeTeam": "Kobeřice",
+    "awayTeam": "Lokomotiva Petrovice",
+    "kickoffUtc": "2026-11-15T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Kobeřice - tráva"
+  },
+  {
+    "externalId": "9b5d237d-2e72-4175-820c-3c510df75e03",
+    "homeTeam": "FC Vřesina",
+    "awayTeam": "Háj ve Slezsku",
+    "kickoffUtc": "2026-11-15T12:30:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": "Vřesina - tráva"
+  }
+]
