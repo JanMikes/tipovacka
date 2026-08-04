@@ -1,0 +1,95 @@
+[
+  {
+    "name": "1.FC Slovácko",
+    "shortName": "FCS",
+    "country": "CZ",
+    "brandColor": "#004B8D"
+  },
+  {
+    "name": "AC Sparta Praha",
+    "shortName": "ACS",
+    "country": "CZ",
+    "brandColor": "#AA1E1E"
+  },
+  {
+    "name": "Bohemians Praha 1905",
+    "shortName": "BOH",
+    "country": "CZ",
+    "brandColor": "#00A651"
+  },
+  {
+    "name": "FC Baník Ostrava",
+    "shortName": "FCB",
+    "country": "CZ",
+    "brandColor": "#00539F"
+  },
+  {
+    "name": "FC Hradec Králové",
+    "shortName": "HKR",
+    "country": "CZ"
+  },
+  {
+    "name": "FC Slovan Liberec",
+    "shortName": "LIB",
+    "country": "CZ",
+    "brandColor": "#005BAC"
+  },
+  {
+    "name": "FC Viktoria Plzeň",
+    "shortName": "PLZ",
+    "country": "CZ",
+    "brandColor": "#003DA5"
+  },
+  {
+    "name": "FC Zbrojovka Brno",
+    "shortName": "ZBR",
+    "country": "CZ",
+    "brandColor": "#D2232A"
+  },
+  {
+    "name": "FC Zlín",
+    "shortName": "FCZ",
+    "country": "CZ",
+    "brandColor": "#F5C400"
+  },
+  {
+    "name": "FK Jablonec",
+    "shortName": "FKJ",
+    "country": "CZ",
+    "brandColor": "#009639"
+  },
+  {
+    "name": "FK Mladá Boleslav",
+    "shortName": "MBL",
+    "country": "CZ",
+    "brandColor": "#004B93"
+  },
+  {
+    "name": "FK Pardubice",
+    "shortName": "FKP",
+    "country": "CZ"
+  },
+  {
+    "name": "FK Teplice",
+    "shortName": "TEP",
+    "country": "CZ",
+    "brandColor": "#FFDD00"
+  },
+  {
+    "name": "SK Artis Brno",
+    "shortName": "ART",
+    "country": "CZ"
+  },
+  {
+    "name": "SK Sigma Olomouc",
+    "shortName": "SIG",
+    "country": "CZ",
+    "brandColor": "#005CA9"
+  },
+  {
+    "name": "SK Slavia Praha",
+    "shortName": "SKS",
+    "country": "CZ",
+    "brandColor": "#D71920"
+  }
+]

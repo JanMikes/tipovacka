@@ -1,0 +1,182 @@
+[
+  {
+    "externalId": "2049101",
+    "homeTeam": "Levski Sofia",
+    "awayTeam": "Kairat Almaty",
+    "kickoffUtc": "2026-08-04T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Georgi Asparuhov Stadium"
+  },
+  {
+    "externalId": "2049104",
+    "homeTeam": "Hapoel Beer-Sheva",
+    "awayTeam": "Crvena Zvezda",
+    "kickoffUtc": "2026-08-04T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Haladás Stadium"
+  },
+  {
+    "externalId": "2049099",
+    "homeTeam": "Dinamo Záhřeb",
+    "awayTeam": "Kauno Žalgiris",
+    "kickoffUtc": "2026-08-04T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadion Maksimir"
+  },
+  {
+    "externalId": "2049105",
+    "homeTeam": "Olympiacos",
+    "awayTeam": "NEC Nijmegen",
+    "kickoffUtc": "2026-08-04T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadio Georgios Karaiskakis"
+  },
+  {
+    "externalId": "2049106",
+    "homeTeam": "Union Saint-Gilloise",
+    "awayTeam": "Bodø/Glimt",
+    "kickoffUtc": "2026-08-04T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "KVDO Arena"
+  },
+  {
+    "externalId": "2049108",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "Olympique Lyon",
+    "kickoffUtc": "2026-08-04T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadion Letná"
+  },
+  {
+    "externalId": "2049102",
+    "homeTeam": "AGF Aarhus",
+    "awayTeam": "Sabah",
+    "kickoffUtc": "2026-08-05T16:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Randers Stadion"
+  },
+  {
+    "externalId": "2049107",
+    "homeTeam": "Fenerbahçe",
+    "awayTeam": "Sturm Graz",
+    "kickoffUtc": "2026-08-05T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Fenerbahçe Şükrü Saracoğlu Spor Kompleksi"
+  },
+  {
+    "externalId": "2049111",
+    "homeTeam": "Kairat Almaty",
+    "awayTeam": "Levski Sofia",
+    "kickoffUtc": "2026-08-11T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Turkestan-Arena"
+  },
+  {
+    "externalId": "2049112",
+    "homeTeam": "Sabah",
+    "awayTeam": "AGF Aarhus",
+    "kickoffUtc": "2026-08-11T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Alinja Stadium"
+  },
+  {
+    "externalId": "2049116",
+    "homeTeam": "Bodø/Glimt",
+    "awayTeam": "Union Saint-Gilloise",
+    "kickoffUtc": "2026-08-11T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Aspmyra"
+  },
+  {
+    "externalId": "2049109",
+    "homeTeam": "Kauno Žalgiris",
+    "awayTeam": "Dinamo Záhřeb",
+    "kickoffUtc": "2026-08-11T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Dariaus ir Girėno Stadionas"
+  },
+  {
+    "externalId": "2049115",
+    "homeTeam": "NEC Nijmegen",
+    "awayTeam": "Olympiacos",
+    "kickoffUtc": "2026-08-11T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Goffertstadion"
+  },
+  {
+    "externalId": "2049114",
+    "homeTeam": "Crvena Zvezda",
+    "awayTeam": "Hapoel Beer-Sheva",
+    "kickoffUtc": "2026-08-11T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stadion Rajko Mitić"
+  },
+  {
+    "externalId": "2049110",
+    "homeTeam": "Slovan Bratislava",
+    "awayTeam": "Mjällby AIF",
+    "kickoffUtc": "2026-08-11T18:15:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Národný futbalový štadión"
+  },
+  {
+    "externalId": "2049113",
+    "homeTeam": "NK Celje",
+    "awayTeam": "Ararat-Armenia",
+    "kickoffUtc": "2026-08-11T18:15:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stadion Celje"
+  },
+  {
+    "externalId": "2049117",
+    "homeTeam": "Sturm Graz",
+    "awayTeam": "Fenerbahçe",
+    "kickoffUtc": "2026-08-11T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stadion Graz Liebenau"
+  },
+  {
+    "externalId": "2049118",
+    "homeTeam": "Olympique Lyon",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-08-11T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "OL Stadium"
+  },
+  {
+    "externalId": "2049209",
+    "homeTeam": "Celtic",
+    "awayTeam": "LASK",
+    "kickoffUtc": "2026-08-19T19:00:00Z",
+    "status": "scheduled",
+    "round": "Play-off – 1. zápas",
+    "venue": "Celtic Park"
+  },
+  {
+    "externalId": "2049216",
+    "homeTeam": "LASK",
+    "awayTeam": "Celtic",
+    "kickoffUtc": "2026-08-25T19:00:00Z",
+    "status": "scheduled",
+    "round": "Play-off – 2. zápas",
+    "venue": "Oberösterreich Arena"
+  }
+]

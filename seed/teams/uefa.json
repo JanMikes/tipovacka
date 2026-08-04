@@ -1,0 +1,242 @@
+[
+  {
+    "name": "AC Sparta Praha",
+    "shortName": "ACS",
+    "country": "CZ"
+  },
+  {
+    "name": "AGF Aarhus",
+    "shortName": "AGF",
+    "country": "DK"
+  },
+  {
+    "name": "Anderlecht",
+    "shortName": "AND",
+    "country": "BE"
+  },
+  {
+    "name": "Ararat-Armenia",
+    "shortName": "ARA",
+    "country": "AM"
+  },
+  {
+    "name": "Benfica",
+    "shortName": "BEN",
+    "country": "PT"
+  },
+  {
+    "name": "Beşiktaş",
+    "shortName": "BES",
+    "country": "TR"
+  },
+  {
+    "name": "Bodø/Glimt",
+    "shortName": "BOD",
+    "country": "NO"
+  },
+  {
+    "name": "CSKA Sofia",
+    "shortName": "CSS",
+    "country": "BG"
+  },
+  {
+    "name": "Celtic",
+    "shortName": "CEL",
+    "country": "GB"
+  },
+  {
+    "name": "Crvena Zvezda",
+    "shortName": "ZVE",
+    "country": "RS"
+  },
+  {
+    "name": "Dinamo Záhřeb",
+    "shortName": "DIN",
+    "country": "HR"
+  },
+  {
+    "name": "Egnatia",
+    "shortName": "EGN",
+    "country": "AL"
+  },
+  {
+    "name": "FC Hradec Králové",
+    "shortName": "HKR",
+    "country": "CZ"
+  },
+  {
+    "name": "FC Thun",
+    "shortName": "THU",
+    "country": "CH"
+  },
+  {
+    "name": "Fenerbahçe",
+    "shortName": "FEN",
+    "country": "TR"
+  },
+  {
+    "name": "Ferencváros",
+    "shortName": "FER",
+    "country": "HU"
+  },
+  {
+    "name": "Górnik Zabrze",
+    "shortName": "GOR",
+    "country": "PL"
+  },
+  {
+    "name": "Hapoel Beer-Sheva",
+    "shortName": "HBS",
+    "country": "IL"
+  },
+  {
+    "name": "Hearts",
+    "shortName": "HEA",
+    "country": "GB"
+  },
+  {
+    "name": "Iberia Tbilisi",
+    "shortName": "IBE",
+    "country": "GE"
+  },
+  {
+    "name": "Jagiellonia Białystok",
+    "shortName": "JAG",
+    "country": "PL"
+  },
+  {
+    "name": "Kairat Almaty",
+    "shortName": "KAI",
+    "country": "KZ"
+  },
+  {
+    "name": "Kauno Žalgiris",
+    "shortName": "KAU",
+    "country": "LT"
+  },
+  {
+    "name": "KuPS Kuopio",
+    "shortName": "KUP",
+    "country": "FI"
+  },
+  {
+    "name": "KÍ Klaksvík",
+    "shortName": "KLA",
+    "country": "FO"
+  },
+  {
+    "name": "LASK",
+    "shortName": "LAS",
+    "country": "AT"
+  },
+  {
+    "name": "Larne",
+    "shortName": "LAR",
+    "country": "GB"
+  },
+  {
+    "name": "Lech Poznań",
+    "shortName": "LPO",
+    "country": "PL"
+  },
+  {
+    "name": "Levski Sofia",
+    "shortName": "LSO",
+    "country": "BG"
+  },
+  {
+    "name": "Lincoln Red Imps",
+    "shortName": "LRI",
+    "country": "GI"
+  },
+  {
+    "name": "Maccabi Tel-Aviv",
+    "shortName": "MTA",
+    "country": "IL"
+  },
+  {
+    "name": "Mjällby AIF",
+    "shortName": "MJA",
+    "country": "SE"
+  },
+  {
+    "name": "NEC Nijmegen",
+    "shortName": "NIJ",
+    "country": "NL"
+  },
+  {
+    "name": "NK Celje",
+    "shortName": "CLJ",
+    "country": "SI"
+  },
+  {
+    "name": "Olympiacos",
+    "shortName": "OLY",
+    "country": "GR"
+  },
+  {
+    "name": "Olympique Lyon",
+    "shortName": "LYO",
+    "country": "FR"
+  },
+  {
+    "name": "Omonia",
+    "shortName": "OMO",
+    "country": "CY"
+  },
+  {
+    "name": "PAOK",
+    "shortName": "PAO",
+    "country": "GR"
+  },
+  {
+    "name": "Pafos FC",
+    "shortName": "PAF",
+    "country": "CY"
+  },
+  {
+    "name": "RB Salzburg",
+    "shortName": "SAL",
+    "country": "AT"
+  },
+  {
+    "name": "Rangers",
+    "shortName": "RAN",
+    "country": "GB"
+  },
+  {
+    "name": "Sabah",
+    "shortName": "SAB",
+    "country": "AZ"
+  },
+  {
+    "name": "Shamrock Rovers",
+    "shortName": "SHR",
+    "country": "IE"
+  },
+  {
+    "name": "Slovan Bratislava",
+    "shortName": "SLB",
+    "country": "SK"
+  },
+  {
+    "name": "Sturm Graz",
+    "shortName": "SGR",
+    "country": "AT"
+  },
+  {
+    "name": "Union Saint-Gilloise",
+    "shortName": "USG",
+    "country": "BE"
+  },
+  {
+    "name": "Universitatea Craiova",
+    "shortName": "UCR",
+    "country": "RO"
+  },
+  {
+    "name": "Víkingur Reykjavík",
+    "shortName": "VKR",
+    "country": "IS"
+  }
+]

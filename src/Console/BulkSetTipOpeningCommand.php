@@ -78,6 +78,7 @@ final class BulkSetTipOpeningCommand extends Command
             ->addOption('editor', null, InputOption::VALUE_REQUIRED, 'UUID of the ADMIN user performing the change')
             ->addOption('note', null, InputOption::VALUE_REQUIRED, 'Optional Czech text shown while a match waits', '')
             ->addOption('except', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Sport match UUID to leave tippable (repeatable)')
+            ->addOption('competition', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Restrict to these competition UUIDs (repeatable). Default: every active competition — on production prefer an explicit list so user-created soutěže stay untouched.')
             ->addOption('deadline-own-kickoff', null, InputOption::VALUE_NONE, 'Also pin each match deadline to its OWN kickoff, lifting the competition-wide lock-at-start (OVERWRITES any stored per-match deadline)')
             ->addOption('apply', null, InputOption::VALUE_NONE, 'Actually write. Without it the command only reports.');
     }
@@ -148,6 +149,20 @@ final class BulkSetTipOpeningCommand extends Command
             $only[Uuid::fromString($value)->toRfc4122()] = true;
         }
 
+        /** @var list<string> $competitionRaw */
+        $competitionRaw = $input->getOption('competition');
+        $onlyCompetitions = [];
+
+        foreach ($competitionRaw as $value) {
+            if (!Uuid::isValid($value)) {
+                $io->error(sprintf('--competition "%s" is not a UUID.', $value));
+
+                return Command::INVALID;
+            }
+
+            $onlyCompetitions[Uuid::fromString($value)->toRfc4122()] = true;
+        }
+
         $io->title($apply ? 'Nastavuji tipovací okno' : 'Zkušební běh (nic se nezapisuje)');
         $io->definitionList(
             ['Otevřít tipování' => null === $opensAtUtc
@@ -167,6 +182,10 @@ final class BulkSetTipOpeningCommand extends Command
         $rows = [];
 
         foreach ($this->competitionRepository->findAllActive() as $competition) {
+            if ([] !== $onlyCompetitions && !isset($onlyCompetitions[$competition->id->toRfc4122()])) {
+                continue;
+            }
+
             [$competitionPlanned, $competitionExempt, $competitionSkipped] = $this->walkCompetition(
                 $competition,
                 $opensAtUtc,

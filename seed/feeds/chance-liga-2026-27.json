@@ -1,0 +1,2018 @@
+[
+  {
+    "externalId": "8350",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-08-07T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8348",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8349",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-08-08T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8343",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-08-08T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8346",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-08-09T13:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8345",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-08-09T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8347",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-08-09T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8344",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-08-09T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8353",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-08-15T15:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8356",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-08-15T15:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8357",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-08-15T15:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8351",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-08-15T18:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8355",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-08-16T13:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8354",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-08-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8358",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-08-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8352",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-08-16T18:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8360",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-08-22T15:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8361",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-08-22T15:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8365",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-08-22T15:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8363",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-08-22T18:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8362",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-08-23T13:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8364",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-08-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8366",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-08-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8359",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-08-23T18:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8367",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8368",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8369",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8370",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8371",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8372",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8373",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8374",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-08-28T22:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8375",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8376",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8377",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8378",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8379",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8380",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8381",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8382",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-09-04T22:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8383",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8384",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8385",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8386",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8387",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8388",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8389",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8390",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-09-11T22:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8391",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8392",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8393",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8394",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8395",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8396",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8397",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8398",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-09-18T22:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8399",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8400",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8401",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8402",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8403",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8404",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8405",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8406",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-10-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8407",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8408",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8409",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8410",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8411",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8412",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8413",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8414",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-10-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8415",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8416",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8417",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8418",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8419",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8420",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8421",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8422",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-10-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8423",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8424",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8425",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8426",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8427",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8428",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8429",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8430",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-10-30T23:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8431",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8432",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8433",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8434",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8435",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8436",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8437",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8438",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-11-06T23:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8439",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8440",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8441",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8442",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8443",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8444",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8445",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8446",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-11-20T23:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8447",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8448",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8449",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8450",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8451",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8452",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8453",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8454",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2026-11-27T23:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8455",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8456",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8457",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8458",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8459",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8460",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8461",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8462",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-12-04T23:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8463",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8464",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8465",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8466",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8467",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8468",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8469",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8470",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2026-12-11T23:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8471",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8472",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8473",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8474",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8475",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8476",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8477",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8478",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-01-29T23:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8479",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8480",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8481",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8482",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8483",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8484",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8485",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8486",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-02-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8487",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8488",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8489",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8490",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8491",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8492",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8493",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8494",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-02-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8495",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8496",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8497",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8498",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8499",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8500",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8501",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8502",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-02-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8503",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8504",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8505",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8506",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8507",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8508",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8509",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8510",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-02-26T23:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8511",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8512",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8513",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8514",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8515",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8516",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8517",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8518",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-03-05T23:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8519",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8520",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8521",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8522",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8523",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8524",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8525",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8526",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2027-03-12T23:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8527",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8528",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8529",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8530",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8531",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8532",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8533",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8534",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2027-03-19T23:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8535",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8536",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8537",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8538",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8539",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8540",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8541",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8542",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-04-02T22:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8543",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8544",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FC Slovan Liberec",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8545",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8546",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8547",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8548",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8549",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8550",
+    "homeTeam": "SK Artis Brno",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-04-09T22:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8551",
+    "homeTeam": "FC Viktoria Plzeň",
+    "awayTeam": "Bohemians Praha 1905",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8552",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "AC Sparta Praha",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8553",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8554",
+    "homeTeam": "SK Slavia Praha",
+    "awayTeam": "SK Sigma Olomouc",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8555",
+    "homeTeam": "FC Hradec Králové",
+    "awayTeam": "1.FC Slovácko",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8556",
+    "homeTeam": "FC Zlín",
+    "awayTeam": "FK Mladá Boleslav",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8557",
+    "homeTeam": "FK Teplice",
+    "awayTeam": "FC Baník Ostrava",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8558",
+    "homeTeam": "FC Zbrojovka Brno",
+    "awayTeam": "FK Pardubice",
+    "kickoffUtc": "2027-04-16T22:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8559",
+    "homeTeam": "FC Slovan Liberec",
+    "awayTeam": "FC Viktoria Plzeň",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8560",
+    "homeTeam": "FK Mladá Boleslav",
+    "awayTeam": "SK Artis Brno",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8561",
+    "homeTeam": "SK Sigma Olomouc",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8562",
+    "homeTeam": "1.FC Slovácko",
+    "awayTeam": "SK Slavia Praha",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8563",
+    "homeTeam": "FK Pardubice",
+    "awayTeam": "FC Hradec Králové",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8564",
+    "homeTeam": "FC Baník Ostrava",
+    "awayTeam": "FC Zlín",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8565",
+    "homeTeam": "Bohemians Praha 1905",
+    "awayTeam": "FK Teplice",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  },
+  {
+    "externalId": "8566",
+    "homeTeam": "AC Sparta Praha",
+    "awayTeam": "FC Zbrojovka Brno",
+    "kickoffUtc": "2027-04-23T22:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo",
+    "venue": null
+  }
+]
