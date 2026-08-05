@@ -191,6 +191,31 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
+     * How the soutěž's zdroje read on a card, a switcher or an invitation —
+     * the headline one, plus how many others. Every surface that used to print
+     * the single zdroj's name prints this instead, so a multi-source soutěž
+     * never advertises only its first zdroj.
+     */
+    public string $sourcesLabel {
+        get => self::describeSources($this->matchSource->name, $this->sourceLinks->count());
+    }
+
+    /**
+     * The single home of that copy, as a static so list queries can build it
+     * from a batched layer count without touching the lazy collection per row.
+     */
+    public static function describeSources(string $headlineSourceName, int $sourceCount): string
+    {
+        $others = max(0, $sourceCount - 1);
+
+        return match (true) {
+            0 === $others => $headlineSourceName,
+            $others < 5 => sprintf('%s a %d další', $headlineSourceName, $others),
+            default => sprintf('%s a %d dalších', $headlineSourceName, $others),
+        };
+    }
+
+    /**
      * „The schedule is known-complete" — every zdroj feeding this competition
      * has been marked completed („poslední zápas"). This, plus „no included
      * match is still unsettled", is what ends a competition; with several

@@ -14,7 +14,7 @@
     ]" />
 
     <header class="mb-8 mt-2">
-        <span class="eyebrow">{{ competition.name }}</span>
+        <span class="eyebrow">{{ competition.name }}{% if layers|length > 1 %} · {{ layer.matchSource.name }}{% endif %}</span>
         {% if is_teams %}
             <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Týmy soutěže</h1>
             <p class="mt-2 text-sm leading-relaxed text-white/70">
@@ -30,13 +30,27 @@
         {% endif %}
     </header>
 
+    {% if layers|length > 1 %}
+        {# A soutěž drawing from several zdroje edits one layer at a time — the
+           checklist and the team picker are both per-zdroj. #}
+        <div class="mb-4 flex flex-wrap gap-2">
+            {% for option in layers %}
+                <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122, vrstva: option.id.toRfc4122}) }}"
+                   class="btn btn-sm {{ option.id.toRfc4122 == layer.id.toRfc4122 ? 'btn-secondary' : 'btn-ghost' }}"
+                   {{ option.id.toRfc4122 == layer.id.toRfc4122 ? 'aria-current="page"' : '' }}>
+                    {{ option.matchSource.name }}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="card-glass p-6 sm:p-8"{% if not is_teams %} data-controller="competition-matches"{% endif %}>
-        <form method="post" action="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="space-y-4">
+        <form method="post" action="{{ path('competition_match_selection', {id: competition.id.toRfc4122, vrstva: layer.id.toRfc4122}) }}" class="space-y-4">
             <input type="hidden" name="_token" value="{{ csrf_token('competition_match_selection_' ~ competition.id.toRfc4122) }}">
 
             {% if is_teams %}
                 <div class="field" data-controller="team-filter"
-                     data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: competition.matchSource.id.toRfc4122}) }}">
+                     data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: layer.matchSource.id.toRfc4122}) }}">
                     <label class="field-label" for="team-filter-select">Týmy</label>
                     <select multiple id="team-filter-select" name="teams[]" data-team-filter-target="select" class="input" aria-label="Týmy soutěže">
                         {% for team in filter_teams %}

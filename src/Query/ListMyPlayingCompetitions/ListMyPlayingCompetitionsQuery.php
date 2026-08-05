@@ -92,7 +92,7 @@ final readonly class ListMyPlayingCompetitionsQuery
             $items[] = new PlayingCompetitionItem(
                 competitionId: $competition->id,
                 name: $competition->name,
-                matchSourceName: $competition->matchSource->name,
+                matchSourceName: $competition->sourcesLabel,
                 viewerIsOwner: $competition->owner->id->equals($query->userId),
                 isFinished: $competition->scheduleIsComplete || $this->allSettled($included),
                 rank: $rank,

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command\UpdateCompetitionMatchSelection;
 
+use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionSource;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Exception\MatchNotInCompetition;
 use App\Repository\CompetitionMatchSelectionRepository;
@@ -16,6 +18,7 @@ use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Uid\Uuid;
 
 #[AsMessageHandler]
 final readonly class UpdateCompetitionMatchSelectionHandler
@@ -37,9 +40,7 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $editor = $this->userRepository->get($command->editorId);
 
-        // TODO(C3): take the layer id from the command so a multi-source
-        // competition can edit each of its subset layers separately.
-        $layer = $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+        $layer = $this->resolveLayer($competition, $command->competitionSourceId);
 
         if (CompetitionMatchSelectionMode::Subset !== $layer->selectionMode) {
             throw new \DomainException('Výběr zápasů lze upravovat jen u soutěží s vybranými zápasy.');
@@ -74,6 +75,12 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         $changed = false;
 
         foreach ($this->selectionRepository->listByCompetition($competition->id) as $existing) {
+            // Only this layer's rows are replaced — another layer's hand-picked
+            // matches are none of this edit's business.
+            if (!$existing->competitionSource->id->equals($layer->id)) {
+                continue;
+            }
+
             $key = $existing->sportMatch->id->toRfc4122();
 
             if (isset($wantedMatches[$key])) {
@@ -110,5 +117,25 @@ final readonly class UpdateCompetitionMatchSelectionHandler
             $competition->recordMatchSelectionChanged($editor, $now);
             $this->matchProvider->forgetSelections($competition->id);
         }
+    }
+
+    /**
+     * The layer being edited. Null (every single-zdroj competition) means the
+     * first one; an id from another competition is refused rather than silently
+     * redirected at someone else's scope.
+     */
+    private function resolveLayer(Competition $competition, ?Uuid $competitionSourceId): CompetitionSource
+    {
+        if (null === $competitionSourceId) {
+            return $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+        }
+
+        foreach ($competition->sources as $layer) {
+            if ($layer->id->equals($competitionSourceId)) {
+                return $layer;
+            }
+        }
+
+        throw new \DomainException('Tento zdroj zápasů do soutěže nepatří.');
     }
 }

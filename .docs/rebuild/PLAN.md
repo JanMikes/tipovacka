@@ -129,6 +129,7 @@ disabled for global competitions; rejoining a paid global competition charges th
 | S11 | Notification center | done | ed27a54 |
 | S12 | Leaderboard delta & snapshots | done | f4d1818 |
 | S13 | Admin consolidation, docs, e2e, final review | done | 33d54d0 |
+| S14 | Multi-source competitions (CompetitionSource layers + wizard basket) | done | see feature/multi-source-competitions |
 
 Statuses: `todo` → `in-progress` → `done (sha)`. Update immediately after each transition.
 

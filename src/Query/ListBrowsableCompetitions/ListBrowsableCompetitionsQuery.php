@@ -72,7 +72,7 @@ final readonly class ListBrowsableCompetitionsQuery
         $matchAggregates = $this->matchAggregates($competitionIds);
         // Batched so the list cost stays flat: reaching through each
         // competition's lazy layer collection would be one statement per row.
-        $scheduleComplete = $this->competitionSourceRepository->scheduleCompleteMap($competitionIds);
+        $scopeSummaries = $this->competitionSourceRepository->scopeSummaries($competitionIds);
         $viewerMemberships = null !== $query->viewerId
             ? $this->viewerMembershipIds($query->viewerId, $competitionIds)
             : [];
@@ -92,7 +92,7 @@ final readonly class ListBrowsableCompetitionsQuery
                 name: $competition->name,
                 sportId: $sport->id,
                 sportName: $sport->name,
-                matchSourceName: $competition->matchSource->name,
+                matchSourceName: Competition::describeSources($competition->matchSource->name, $scopeSummaries[$key]['layerCount'] ?? 1),
                 sourceStartAt: $competition->matchSource->startAt,
                 sourceEndAt: $competition->matchSource->endAt,
                 entryFeeCredits: $competition->entryFeeCredits,
@@ -102,7 +102,7 @@ final readonly class ListBrowsableCompetitionsQuery
                 finishedMatchCount: $aggregate['finished'],
                 liveMatchCount: $aggregate['live'],
                 isGlobal: $competition->isGlobal,
-                sourceIsCompleted: $scheduleComplete[$key] ?? false,
+                sourceIsCompleted: $scopeSummaries[$key]['scheduleComplete'] ?? false,
                 viewerIsMember: isset($viewerMemberships[$key]),
                 viewerIsOwner: null !== $query->viewerId && $competition->owner->id->equals($query->viewerId),
             );

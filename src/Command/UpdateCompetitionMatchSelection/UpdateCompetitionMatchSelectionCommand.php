@@ -13,12 +13,17 @@ final readonly class UpdateCompetitionMatchSelectionCommand
      * Guesses for now-excluded matches are kept — they simply stop counting
      * (CompetitionMatchProvider excludes them everywhere).
      *
+     * Scoped to ONE scope layer: a soutěž may hand-pick from several zdroje,
+     * and each layer's selection is edited on its own. Null means „the first
+     * one", which is every single-zdroj competition.
+     *
      * @param list<Uuid> $selectedMatchIds
      */
     public function __construct(
         public Uuid $editorId,
         public Uuid $competitionId,
         public array $selectedMatchIds,
+        public ?Uuid $competitionSourceId = null,
     ) {
     }
 }

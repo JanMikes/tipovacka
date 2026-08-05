@@ -22,7 +22,7 @@ final readonly class GetInvitationByTokenQuery
         return new InvitationLandingResult(
             token: $invitation->token,
             competitionName: $invitation->competition->name,
-            matchSourceName: $invitation->competition->matchSource->name,
+            matchSourceName: $invitation->competition->sourcesLabel,
             inviterNickname: $invitation->inviter->displayName,
             isExpired: $invitation->isExpiredAt($query->now),
             isAccepted: $invitation->isAccepted,

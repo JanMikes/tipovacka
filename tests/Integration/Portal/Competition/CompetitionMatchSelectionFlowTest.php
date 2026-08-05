@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Portal\Competition;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionSource;
+use App\Entity\MatchSource;
+use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Enum\CompetitionMatchSelectionMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -38,6 +43,108 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         self::assertSame($expected, $checked);
     }
 
+    /**
+     * A soutěž hand-picking from two zdroje edits one layer at a time. Saving
+     * one must leave the other's picks untouched — a full-replace scoped to the
+     * whole competition would wipe them.
+     */
+    public function testEditingOneLayerLeavesTheOtherLayersPicksAlone(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $secondLayer = $this->addPrivateSubsetLayer($em);
+
+        // Edit the FIRST layer (the public zdroj), replacing its picks entirely.
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber?vrstva='.AppFixtures::SUBSET_COMPETITION_SOURCE_ID);
+        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        self::assertIsString($token);
+
+        $client->request('POST', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber?vrstva='.AppFixtures::SUBSET_COMPETITION_SOURCE_ID, [
+            '_token' => $token,
+            'matches' => [AppFixtures::MATCH_PLAYOFF_ID],
+        ]);
+
+        $em->clear();
+
+        $byLayer = [];
+
+        foreach ($em->createQueryBuilder()
+            ->select('s')
+            ->from(CompetitionMatchSelection::class, 's')
+            ->where('s.competition = :competitionId')
+            ->setParameter('competitionId', Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID))
+            ->getQuery()
+            ->getResult() as $selection) {
+            $byLayer[$selection->competitionSource->id->toRfc4122()][] = $selection->sportMatch->id->toRfc4122();
+        }
+
+        self::assertSame([AppFixtures::MATCH_PLAYOFF_ID], $byLayer[AppFixtures::SUBSET_COMPETITION_SOURCE_ID] ?? []);
+        self::assertSame([AppFixtures::MATCH_PRIVATE_SCHEDULED_ID], $byLayer[$secondLayer] ?? []);
+    }
+
+    /** Both zdroje are offered as tabs once the soutěž draws from two. */
+    public function testTheLayerSwitcherListsEveryManageableZdroj(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $this->addPrivateSubsetLayer($em);
+
+        $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('vrstva='.AppFixtures::SUBSET_COMPETITION_SOURCE_ID, $html);
+        self::assertStringContainsString(AppFixtures::PRIVATE_SOURCE_NAME, $html);
+    }
+
+    /**
+     * Gives SUBSET_COMPETITION a second subset layer over the private zdroj,
+     * holding exactly MATCH_PRIVATE_SCHEDULED.
+     *
+     * @return string the new layer's UUID
+     */
+    private function addPrivateSubsetLayer(EntityManagerInterface $em): string
+    {
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID));
+        self::assertInstanceOf(Competition::class, $competition);
+        $privateSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID));
+        self::assertInstanceOf(MatchSource::class, $privateSource);
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+
+        $now = new \DateTimeImmutable('2025-06-15 12:00:00 UTC');
+
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $privateSource,
+            addedAt: $now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+            position: 1,
+        );
+        $competition->attachSource($layer);
+        $em->persist($layer);
+        $em->persist(new CompetitionMatchSelection(
+            id: Uuid::v7(),
+            competition: $competition,
+            competitionSource: $layer,
+            sportMatch: $match,
+            addedAt: $now,
+        ));
+        $em->flush();
+
+        return $layer->id->toRfc4122();
+    }
+
     public function testOwnerCanReplaceSelection(): void
     {
         $client = static::createClient();
@@ -56,7 +163,12 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
             'matches' => [AppFixtures::MATCH_PLAYOFF_ID],
         ]);
 
-        self::assertResponseRedirects('/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        // Back to the SAME layer that was just edited — a soutěž drawing from
+        // several zdroje must not bounce the manager to a different one.
+        $location = $client->getResponse()->headers->get('Location');
+        self::assertIsString($location);
+        self::assertStringStartsWith('/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber?vrstva=', $location);
+        self::assertStringContainsString(AppFixtures::SUBSET_COMPETITION_SOURCE_ID, $location);
 
         $em->clear();
 

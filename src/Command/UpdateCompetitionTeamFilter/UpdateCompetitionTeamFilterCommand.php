@@ -13,12 +13,16 @@ final readonly class UpdateCompetitionTeamFilterCommand
      * Guesses for now-excluded matches are kept — they simply stop counting
      * (CompetitionMatchProvider excludes them everywhere).
      *
+     * Scoped to ONE scope layer — see
+     * {@see \App\Command\UpdateCompetitionMatchSelection\UpdateCompetitionMatchSelectionCommand}.
+     *
      * @param list<Uuid> $teamIds
      */
     public function __construct(
         public Uuid $editorId,
         public Uuid $competitionId,
         public array $teamIds,
+        public ?Uuid $competitionSourceId = null,
     ) {
     }
 }

@@ -54,13 +54,32 @@ Ported into `assets/styles/app.css` (re-derived — the DS source rule was malfo
 `.step-bar.done` = accent connector. Pair with `.option-card` (`.selected`) for the
 selectable source/monetization tiles.
 
-## Match scope step (All / Podle týmu / Vybrané zápasy)
+## Match scope step — a basket of zdroje
 
-Step 1's „Zápasy soutěže" offers three selection modes (radios bound to the
-`selectionMode` LiveProp): **Všechny zápasy** (`all`), **Podle týmu** (`teams`) and
-**Vybrat jen některé zápasy** (`subset`, private only). Global (admin) mode hides
-`subset` — a global competition is `all` or `teams`. Step 1 is *only* the match-scope
-choice; the **playoff toggle lives on step 2** (see below).
+Step 1's „Zápasy soutěže" is a **basket**. One zdroj's editor offers three selection
+modes (radios bound to the `selectionMode` LiveProp): **Všechny zápasy** (`all`),
+**Podle týmu** (`teams`) and **Vybrat jen některé zápasy** (`subset`, private only).
+Global (admin) mode hides `subset` — a global competition is `all` or `teams`.
+
+Committing the editor (`addLayer`) drops a card into `layers` — a writable array
+LiveProp of plain arrays, so the whole basket survives the round trip — and the basket
+then offers **„Přidat zdroj zápasů"** (`startLayer`) and **„Vlastní zápasy"**
+(`addOwnMatchesLayer`, a layer with an empty `sourceId` = the competition's own private
+zdroj, created on demand by the handler). Cards carry `editLayer` / `removeLayer`.
+
+- **The one-zdroj path is unchanged.** The editor IS the step while the basket is empty
+  (`draftOpen` starts true), and `validateBasics()` commits a still-open, usable editor,
+  so nobody has to press „Přidat" before „Pokračovat".
+- **The picker narrows as you go** (`availableSources`): once layer 0 fixes a sport, other
+  sports drop out (`lockedSport`), and a zdroj already basketed is not offered twice.
+  `allSourcesById` is the unfiltered map the basket renders names from.
+- **`ScopeDraftResolver` previews the basket** — total count, date span, and the duplicate
+  warning (same team NAMES within ±24 h across zdroje; warn only, never drop). It
+  re-implements the per-layer rules because the layers do not exist yet;
+  `ScopeDraftResolverTest` pins it against `CompetitionMatchProvider`.
+- **Submit** sends layer 0 in `CreateCompetitionCommand`'s own source fields and the rest as
+  `additionalSources: list<CompetitionSourceSpec>`. Every basketed zdroj is re-checked
+  against `MatchSourceVoter::CREATE_COMPETITION`, not just the headline one.
 
 - **Podle týmu** reveals a multi-team **`team-filter`** tom-select island (see
   [team-picker](team-picker.md)) fed by the source's teams. Picks are mirrored as a
@@ -104,20 +123,21 @@ PP and PEN are deliberately **not** split — one combined „Celkové skóre po
 penaltách" entry backed by the single `overtime_exact` rule and the single overtime score
 pair on `SportMatch`/`Guess`.
 
-## Playoff toggle lives on step 2 — „Dohrávat turnaj?"
+## Playoff toggle — „Dohrávat turnaj?", inside the layer editor
 
-„Dohrávat turnaj?" (`includePlayoff`) sits at the bottom of step 2 („Pravidla"),
-below the scoring fields and **outside** the `scoring-preset` controller — it is not a
-scoring rule. It renders only for a **private** competition with a source and match scope
-**`all`**, because that is the only mode in which the flag does anything:
-`CompetitionMatchProvider` ignores it for `subset` (an explicitly ticked playoff match
-counts) and for `teams` (playoff always in), and `CreateCompetitionHandler` forces it to
-`true` outside mode `all`.
+„Dohrávat turnaj?" (`includePlayoff`) sits in the zdroj editor, under the mode radios. It
+was on step 2 while the flag lived on the competition; it now lives on the zdroj's
+`CompetitionSource`, and a step holding no layer has nothing to write it to. It renders
+only for a **private** competition whose editor is in mode **`all`**, because that is the
+only mode in which the flag does anything: `CompetitionMatchProvider` ignores it for
+`subset` (an explicitly ticked playoff match counts) and for `teams` (playoff always in),
+and `CompetitionSource` normalises it to `true` outside mode `all`.
 
 This ONE checkbox is the whole answer to „dohrávat turnaj" — never add a second control
 writing `includePlayoff`, and never widen the visibility condition (it would promise a
 choice the provider does not honour). A test asserts the markup contains exactly one
-`data-model="includePlayoff"`.
+`data-model="includePlayoff"` while the editor is open, none once the layer is committed,
+and that the card then states the answer instead.
 
 ## Step 4 — „Pozvete nás na pivo?" (private) vs „Monetizace soutěže" (global)
 
@@ -136,6 +156,11 @@ via the admin global branch, which keeps its original copy, price list and balan
 
 ## Judgment calls
 
+- **The basket is server state, not client state** — `layers` is a writable array LiveProp
+  of plain arrays (no entities, no UUID objects), so it round-trips; `layerCards`,
+  `layerSpecs` and `scopeDraft` are derived getters. A layer is only ever built in ONE
+  place (`draftLayer()`), so the sport lock and the empty-selection guards are enforced
+  once rather than at every entry point.
 - **Match checklist = LiveProp-driven, not a `data-live-ignore` island** — it must
   re-render when the source changes. Selection lives in the writable array LiveProp
   `selectedMatchIds` (multi-checkbox `data-model="norender|selectedMatchIds[]"`, so

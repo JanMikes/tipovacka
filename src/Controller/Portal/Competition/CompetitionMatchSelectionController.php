@@ -7,6 +7,7 @@ namespace App\Controller\Portal\Competition;
 use App\Command\UpdateCompetitionMatchSelection\UpdateCompetitionMatchSelectionCommand;
 use App\Command\UpdateCompetitionTeamFilter\UpdateCompetitionTeamFilterCommand;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
@@ -26,9 +27,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Manage which matches a competition includes. The surface adapts to the
- * competition's selection mode: Subset ⇒ a per-match checklist; Teams ⇒ a
- * team-filter picker; All ⇒ nothing to manage (redirect back).
+ * Manage which matches a competition includes. The surface adapts to the LAYER
+ * being managed: Subset ⇒ a per-match checklist; Teams ⇒ a team-filter picker;
+ * All ⇒ nothing to manage. A soutěž drawing from several zdroje manages one
+ * layer at a time, chosen with `?vrstva={id}`; the default is its first
+ * manageable one, so a single-zdroj competition never sees the choice.
  */
 #[Route(
     '/souteze/{id}/zapasy-vyber',
@@ -56,11 +59,55 @@ final class CompetitionMatchSelectionController extends AbstractController
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(CompetitionVoter::EDIT, $competition);
 
-        return match ($competition->selectionMode) {
-            CompetitionMatchSelectionMode::Subset => $this->manageSubset($request, $competition, $user),
-            CompetitionMatchSelectionMode::Teams => $this->manageTeams($request, $competition, $user),
+        $layer = $this->resolveLayer($competition, $request->query->get('vrstva'));
+
+        if (null === $layer) {
+            return $this->redirectAllModeToDetail($competition);
+        }
+
+        return match ($layer->selectionMode) {
+            CompetitionMatchSelectionMode::Subset => $this->manageSubset($request, $competition, $layer, $user),
+            CompetitionMatchSelectionMode::Teams => $this->manageTeams($request, $competition, $layer, $user),
             CompetitionMatchSelectionMode::All => $this->redirectAllModeToDetail($competition),
         };
+    }
+
+    /**
+     * The layer to manage: the one asked for by `?vrstva`, else the first that
+     * has anything to manage at all. Null when no layer does — every layer
+     * takes its whole zdroj.
+     */
+    private function resolveLayer(Competition $competition, mixed $requestedId): ?CompetitionSource
+    {
+        if (\is_string($requestedId) && Uuid::isValid($requestedId)) {
+            foreach ($competition->sources as $layer) {
+                if ($layer->id->equals(Uuid::fromString($requestedId))) {
+                    return $layer;
+                }
+            }
+        }
+
+        foreach ($competition->sources as $layer) {
+            if (CompetitionMatchSelectionMode::All !== $layer->selectionMode) {
+                return $layer;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The layers a manager can actually edit — what the layer switcher offers.
+     * Rendered only when there is more than one.
+     *
+     * @return list<CompetitionSource>
+     */
+    private function manageableLayers(Competition $competition): array
+    {
+        return array_values(array_filter(
+            $competition->sources,
+            static fn (CompetitionSource $layer): bool => CompetitionMatchSelectionMode::All !== $layer->selectionMode,
+        ));
     }
 
     private function redirectAllModeToDetail(Competition $competition): Response
@@ -70,7 +117,7 @@ final class CompetitionMatchSelectionController extends AbstractController
         return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
     }
 
-    private function manageSubset(Request $request, Competition $competition, User $user): Response
+    private function manageSubset(Request $request, Competition $competition, CompetitionSource $layer, User $user): Response
     {
         if ($request->isMethod('POST')) {
             $this->assertCsrf($request, $competition);
@@ -91,6 +138,7 @@ final class CompetitionMatchSelectionController extends AbstractController
                         editorId: $user->id,
                         competitionId: $competition->id,
                         selectedMatchIds: $selectedMatchIds,
+                        competitionSourceId: $layer->id,
                     ));
 
                     $this->addFlash('success', 'Výběr zápasů byl uložen.');
@@ -99,13 +147,16 @@ final class CompetitionMatchSelectionController extends AbstractController
                 }
             }
 
-            return $this->redirectToRoute('competition_match_selection', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_match_selection', [
+                'id' => $competition->id->toRfc4122(),
+                'vrstva' => $layer->id->toRfc4122(),
+            ]);
         }
 
-        $selectedIds = array_flip($this->selectionRepository->selectedMatchIds($competition->id));
+        $selectedIds = array_flip($this->selectionRepository->selectedMatchIdsForLayer($layer->id));
 
         $selectable = array_values(array_filter(
-            $this->sportMatchRepository->listByMatchSource($competition->matchSource->id),
+            $this->sportMatchRepository->listByMatchSource($layer->matchSource->id),
             static fn (SportMatch $match): bool => !$match->isCancelled,
         ));
 
@@ -121,12 +172,14 @@ final class CompetitionMatchSelectionController extends AbstractController
 
         return $this->render('portal/competition/match_selection.html.twig', [
             'competition' => $competition,
+            'layer' => $layer,
+            'layers' => $this->manageableLayers($competition),
             'mode' => 'subset',
             'groups' => $groups,
         ]);
     }
 
-    private function manageTeams(Request $request, Competition $competition, User $user): Response
+    private function manageTeams(Request $request, Competition $competition, CompetitionSource $layer, User $user): Response
     {
         if ($request->isMethod('POST')) {
             $this->assertCsrf($request, $competition);
@@ -147,6 +200,7 @@ final class CompetitionMatchSelectionController extends AbstractController
                         editorId: $user->id,
                         competitionId: $competition->id,
                         teamIds: $teamIds,
+                        competitionSourceId: $layer->id,
                     ));
 
                     $this->addFlash('success', 'Filtr týmů byl uložen.');
@@ -155,13 +209,18 @@ final class CompetitionMatchSelectionController extends AbstractController
                 }
             }
 
-            return $this->redirectToRoute('competition_match_selection', ['id' => $competition->id->toRfc4122()]);
+            return $this->redirectToRoute('competition_match_selection', [
+                'id' => $competition->id->toRfc4122(),
+                'vrstva' => $layer->id->toRfc4122(),
+            ]);
         }
 
         return $this->render('portal/competition/match_selection.html.twig', [
             'competition' => $competition,
+            'layer' => $layer,
+            'layers' => $this->manageableLayers($competition),
             'mode' => 'teams',
-            'filter_teams' => $this->teamFilterRepository->teamViewsFor($competition->id),
+            'filter_teams' => $this->teamFilterRepository->teamViewsForLayer($layer->id),
         ]);
     }
 

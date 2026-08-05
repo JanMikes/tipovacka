@@ -73,16 +73,18 @@ class CompetitionSourceRepository
     }
 
     /**
-     * „Is the schedule known-complete" for many competitions in ONE statement —
-     * the batch form of {@see \App\Entity\Competition::$scheduleIsComplete},
-     * for list surfaces where reaching through the lazy layer collection per
-     * row would put the cost back on the list length.
+     * How many zdroje each competition draws from, and whether every one of
+     * them is completed — ONE statement for a whole list, so a card can print
+     * „a 2 další" and „dohráno" without reaching through the lazy layer
+     * collection per row and putting the cost back on the list length.
+     * The batch form of {@see \App\Entity\Competition::$sourcesLabel} and
+     * {@see \App\Entity\Competition::$scheduleIsComplete}.
      *
      * @param list<Uuid> $competitionIds
      *
-     * @return array<string, bool> competition UUID → every zdroj it draws from is completed
+     * @return array<string, array{layerCount: int, scheduleComplete: bool}>
      */
-    public function scheduleCompleteMap(array $competitionIds): array
+    public function scopeSummaries(array $competitionIds): array
     {
         if ([] === $competitionIds) {
             return [];
@@ -107,7 +109,10 @@ class CompetitionSourceRepository
 
         foreach ($rows as $row) {
             $total = (int) $row['total'];
-            $map[(string) $row['competitionId']] = $total > 0 && (int) $row['completed'] === $total;
+            $map[(string) $row['competitionId']] = [
+                'layerCount' => $total,
+                'scheduleComplete' => $total > 0 && (int) $row['completed'] === $total,
+            ];
         }
 
         return $map;

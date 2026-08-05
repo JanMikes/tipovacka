@@ -40,34 +40,54 @@ in-app credit currency (Stripe-backed), never from gambling mechanics or payouts
   `private` — auto-created behind a from-scratch competition, invisible as a concept to users,
   scores entered by the competition manager. *Why one entity*: one shared pipeline for
   matches/import/state machine/score entry; no polymorphic match ownership.
-- **Competition ← source linkage**: `selectionMode: all | subset | teams`. `all` inherits
-  every source match automatically (new playoff matches flow in ⇒ "new match" notification);
-  `subset` uses explicit `CompetitionMatchSelection` rows (the source is never mutated by
-  competitions); `teams` uses explicit `CompetitionTeamFilter` rows and dynamically includes
-  every source match where a filter team plays (home OR away) — so a team's later-added match
-  (e.g. a playoff fixture) auto-joins, just like `all`. `includePlayoff` (bool) excludes/includes
-  playoff-flagged matches for `all` mode only (`teams`/`subset` always keep playoff). Multiple
-  teams filter as a union; a team must belong to the source's resolution scope (curated → global
-  directory team of the sport; private → local team of the source). `teams` is offered in both the
-  private and the admin/global create flow (a global competition never hand-picks, so it is `all`
+- **Competition ← source linkage — a soutěž draws from MANY zdroje.** Its match scope is
+  the UNION of its `CompetitionSource` **layers**, each naming one zdroj and carrying its
+  OWN `selectionMode: all | subset | teams` + `includePlayoff`. `all` inherits every match
+  of that layer's source automatically (new playoff matches flow in ⇒ "new match"
+  notification); `subset` uses explicit `CompetitionMatchSelection` rows (the source is
+  never mutated by competitions); `teams` uses explicit `CompetitionTeamFilter` rows and
+  dynamically includes every match OF THAT LAYER'S SOURCE where a filter team plays (home
+  OR away) — so a team's later-added match (e.g. a playoff fixture) auto-joins, just like
+  `all`. `includePlayoff` excludes/includes playoff-flagged matches for `all` mode only
+  (`teams`/`subset` always keep playoff). Multiple teams filter as a union; a team must
+  belong to its layer's source resolution scope (curated → global directory team of the
+  sport; private → local team of the source), and team-filter uniqueness is per LAYER, not
+  per competition (one club plays in several zdroje). `teams` is offered in both the private
+  and the admin/global create flow (a global competition never hand-picks, so it is `all`
   or `teams`, never `subset`).
+  - A match belongs to the soutěž iff the layer fed by ITS OWN zdroj exists and accepts it.
+    `Competition.matchSource` survives as the **headline** zdroj (layer 0) — display, sport
+    and „who may create a competition here" read it; scope never does.
+  - **One sport per soutěž.** Every layer must share the first one's sport
+    (`CompetitionSourcesSportMismatch`), because rules are configured once per competition
+    and phrased in that sport's vocabulary (2 poločasy vs 3 třetiny).
+  - **The same fixture can arrive from two zdroje** and there is no cross-source identity
+    for it (`externalId` is unique per zdroj; a club is a global directory `Team` in a
+    curated zdroj and a local one in a private zdroj). The wizard therefore WARNS on a
+    name+kickoff heuristic (`ScopeDraftResolver`) and never silently drops one — a cup
+    replay or a two-legged tie is a legitimate pair.
 - **Rules are per-competition** (`CompetitionRuleConfiguration`), NOT per source. Defaults
   provisioned on creation; each rule = identifier + enabled + points. Rule classes are
   binary/count evaluators; points policy lives entirely in configuration. Guess-feature
   toggles (period tips, scorer tips, overtime tip) ARE the enabled states of the
   corresponding rules — no duplicate flags.
 - **Competition end**: a competition ends when all its matches are finished+evaluated AND
-  the schedule is known-complete — for source-driven competitions the admin/manager ticks
-  „poslední zápas" when entering the final result (`MatchSource.markCompleted`). *Why*:
+  the schedule is known-complete — i.e. EVERY zdroj it draws from has been ticked
+  „poslední zápas" (`Competition.scheduleIsComplete`, an AND over the layers; one
+  still-running zdroj keeps the whole soutěž open). For source-driven competitions the
+  admin/manager ticks it when entering the final result (`MatchSource.markCompleted`). *Why*:
   playoffs mean future matches are unknowable; an explicit human confirmation beats guessing.
 
 ## Business rules & why
 
 ### Creating competitions (users)
-Multi-step wizard (4 steps: základy+zdroj → pravidla → pozvánky → podpora). Three source
-options: from scratch (manual matches + CSV/XLSX import), from curated source (all matches),
-from curated source (subset picker). Only admins create curated sources; users never see
-"private sources" as a concept. *Why*: clarity over confusion — users think in competitions,
+Multi-step wizard (4 steps: základy+zdroje → pravidla → pozvánky → podpora). „Zápasy
+soutěže" is a **basket**: one zdroj's editor (from scratch / curated all / curated subset /
+curated by team) commits into a card, and the basket then offers „Přidat zdroj zápasů" and
+„Vlastní zápasy". Leaving the step with a usable editor open commits it, so the single-zdroj
+path — still the common one — is unchanged. The picker narrows as you go: other sports and
+already-basketed zdroje stop being offered. Only admins create curated sources; users never
+see "private sources" as a concept — „Vlastní zápasy" creates one on demand. *Why*: clarity over confusion — users think in competitions,
 not in data plumbing.
 
 ### Global competitions (admin)
@@ -368,4 +388,5 @@ per-match deltas noisy; a day is the natural "round" of a tipovačka.
 | 2026-07-30 | **„Chybí kredity" is abolished — an unaffordable purchase keeps the SAME CTA at the SAME price and only changes destination.** Every boost surface (`Match:TipStats` strip + full card, `Boost:Panel` in all three shapes, the „Získej výhody" shop row) now renders one control per booster: with enough credits it opens the confirm dialog, without them it links to `/kredity#dobit`. No balance-vs-price label, no separate „Dokoupit kredity" button | the old label answered a question nobody asked („how short am I?") and made the same product look like two different offers depending on the wallet; the offer is the offer, and the wallet only decides which step comes first |
 | 2026-07-31 | **A verification link never dead-ends a legitimate visitor** (Sentry TIPOVACKA-K): (a) an already-verified account short-circuits `/overit-email` to „e-mail už je ověřen → přihlaste se" BEFORE any signature check, however broken the URL, and never with a session; (b) when the full-URI signature fails but the mail's `token` param — a self-contained HMAC of userId+email, with the `+`-arrived-as-space base64 mangle repaired — matches, the click verifies anyway, and expiry is forgiven in this fallback while the account is unverified. Links stay multi-use and 7-day-signed on the normal path; the genuinely unrecoverable case (token itself damaged) keeps the recovery page with „Vyžádat nový" | the token is the same proof the signed URL encodes — only the mailbox owner ever holds it — while the URI signature protects exactly the bytes that link-rewriting intermediaries (mail-scanner „safe links", the Seznam app/crawler pipeline) legitimately alter. TIPOVACKA-K showed a real user (Seznam app, 4 clicks incl. a 15s-fresh resent link) bounced to an error page by `UriSigner` over bytes they never touched; token possession must beat byte equality, and an already-verified visitor has nothing left to prove at all |
 | 2026-07-31 | **The guess reminder is ONE digest per USER, and a „missing tip" is only one the player can enter RIGHT NOW.** The hourly sweep aggregates across all the player's soutěže into a single notification/e-mail: per-soutěž line with its own count and NEAREST deadline; a single-soutěž digest keeps the old title and links the competition detail, a multi-soutěž one links `/zapasy`. Counted matches must have their tip window OPEN at sweep time (not waiting for an admin `opensAt`, deadline not passed) and closing within 24 h — a locked or not-yet-open match is never counted. Idempotency keeps the pre-digest granularity: every (soutěž, Prague deadline-day) bucket is stamped once — the digest row carries the first new bucket key, the rest become invisible marker rows (`Notifier` `additionalDedupKeys`), so a NEW bucket fires a fresh complete digest while a match added later on an already-reminded day rides the existing stamp | a player in ten soutěže sharing one zdroj zápasů got ten near-identical e-mails per deadline-day (product owner feedback, 2026-07-31) — the unit the player cares about is „what do I need to tip", not „which soutěž noticed"; and an e-mail advertising 18 chybějících tipů of which several were already locked or not yet open taught players the number lies. Bucket-level stamps (not one per-user daily gate) are what lets a later-entering soutěž/day still remind without ever re-nagging an already-covered one |
+| 2026-08-05 | **A soutěž draws from MANY zdroje: match scope becomes a set of `CompetitionSource` layers** (zdroj + that zdroj's own `selectionMode`/`includePlayoff`), whose union is the scope. Selections and team filters hang off a layer; team-filter uniqueness moves from (competition, team) to (layer, team). `Competition.matchSource` stays as the HEADLINE zdroj (display/sport/authorization); `selectionMode`+`includePlayoff` stay on the competition only as a legacy mirror of layer 0 until every reader is moved. „Schedule complete" becomes an AND over the layers. One sport per soutěž (`CompetitionSourcesSportMismatch`); duplicate fixtures across zdroje are WARNED about on a team-name + ±24 h heuristic, never dropped. The wizard's scope step becomes a basket; the manage screen edits one layer at a time (`?vrstva=`) | users asked to combine hand-picked matches from several existing zdroje plus their own — impossible while the scope was one FK and one mode. Layers put the mode where it was always semantically owed (per zdroj: „all of Chance Ligy, only Sparta from LM, three of my own"). The sport lock is not taste: rules are configured once per soutěž in that sport's vocabulary, so a mixed scope has no coherent ruleset. Duplicates only warn because there is no cross-source fixture identity to dedupe ON — `externalId` is per-zdroj and the same club is a different `Team` row in a curated vs a private zdroj — and a cup replay is a real pair |
 | 2026-07-31 | **Match data feeds: two-tier provider strategy behind one `MatchDataProvider` interface** (full research, source landscape, legal verdicts and Phase-0 prep in [`.docs/MATCH_DATA_FEEDS.md`](MATCH_DATA_FEEDS.md)). Tier CZ = FAČR (existing scraper in another project, announced API later; IS FAČR is the system of record even for Chance Liga — `2026001A1A`); Tier world (UCL/UEL) = a granted free tier of a commercial API (first candidate SoccersAPI free, fallback API-Football $19/mo — which also covers ALL tiers if a single vendor is ever preferred). **Never scrape Flashscore/Livesport, SofaScore, FotMob, ESPN or chanceliga.cz** — verified legal exposure, incl. Czech-law database-right clauses of a Prague rightsholder. Prerequisites before any download: `SportMatch.externalId` + per-source unique index, `MatchSource.feedProvider/feedRef`, `TeamAlias` with pending-team gate, player-name normalization, `MatchEventWriter` merge mode, AET/pens decision | manual result entry doesn't scale past a handful of zdrojů zápasů; the Czech leg is the part no affordable vendor does well while FAČR does it authoritatively for free, and the UEFA leg is commodity data with real free options — so the split follows the market's own fault line. One thin interface keeps „one vendor for everything" a per-source config change, not a redesign. The scraping bans are risk decisions, not taste: a monetized Czech product scraping a Czech rightsholder is the *Football Dataco* fact pattern in the defendant's home court |

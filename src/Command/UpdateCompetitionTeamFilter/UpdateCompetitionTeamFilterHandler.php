@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Command\UpdateCompetitionTeamFilter;
 
+use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\CompetitionTeamFilter;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Exception\TeamNotInSource;
@@ -16,6 +18,7 @@ use App\Service\Identity\ProvideIdentity;
 use App\Service\Team\TeamResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Uid\Uuid;
 
 #[AsMessageHandler]
 final readonly class UpdateCompetitionTeamFilterHandler
@@ -37,9 +40,7 @@ final readonly class UpdateCompetitionTeamFilterHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $editor = $this->userRepository->get($command->editorId);
 
-        // TODO(C3): take the layer id from the command so a multi-source
-        // competition can edit each of its team-filter layers separately.
-        $layer = $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+        $layer = $this->resolveLayer($competition, $command->competitionSourceId);
 
         if (CompetitionMatchSelectionMode::Teams !== $layer->selectionMode) {
             throw new \DomainException('Filtr týmů lze upravovat jen u soutěží se zápasy vybraných týmů.');
@@ -70,6 +71,11 @@ final readonly class UpdateCompetitionTeamFilterHandler
         $changed = false;
 
         foreach ($this->teamFilterRepository->listByCompetition($competition->id) as $existing) {
+            // Another layer's filter teams are none of this edit's business.
+            if (!$existing->competitionSource->id->equals($layer->id)) {
+                continue;
+            }
+
             $key = $existing->team->id->toRfc4122();
 
             if (isset($wanted[$key])) {
@@ -97,5 +103,21 @@ final readonly class UpdateCompetitionTeamFilterHandler
             $competition->recordMatchSelectionChanged($editor, $now);
             $this->matchProvider->forgetTeamFilters($competition->id);
         }
+    }
+
+    /** @see \App\Command\UpdateCompetitionMatchSelection\UpdateCompetitionMatchSelectionHandler */
+    private function resolveLayer(Competition $competition, ?Uuid $competitionSourceId): CompetitionSource
+    {
+        if (null === $competitionSourceId) {
+            return $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+        }
+
+        foreach ($competition->sources as $layer) {
+            if ($layer->id->equals($competitionSourceId)) {
+                return $layer;
+            }
+        }
+
+        throw new \DomainException('Tento zdroj zápasů do soutěže nepatří.');
     }
 }

@@ -90,6 +90,28 @@ class CompetitionTeamFilterRepository
     }
 
     /**
+     * One layer's filter teams as display DTOs, alphabetised — the manage
+     * screen edits a single layer at a time.
+     *
+     * @return list<TeamView>
+     */
+    public function teamViewsForLayer(Uuid $competitionSourceId): array
+    {
+        /** @var list<Team> $teams */
+        $teams = $this->entityManager->createQueryBuilder()
+            ->select('t')
+            ->from(Team::class, 't')
+            ->innerJoin(CompetitionTeamFilter::class, 'f', 'WITH', 'f.team = t')
+            ->where('f.competitionSource = :competitionSourceId')
+            ->setParameter('competitionSourceId', $competitionSourceId)
+            ->orderBy('t.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return array_map(static fn (Team $team): TeamView => TeamView::fromTeam($team), $teams);
+    }
+
+    /**
      * The filter teams as display DTOs, alphabetised — for the competition
      * detail summary and the manage-filter page.
      *

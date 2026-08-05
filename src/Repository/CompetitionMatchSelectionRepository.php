@@ -60,6 +60,23 @@ class CompetitionMatchSelectionRepository
     }
 
     /**
+     * @return list<string> selected sport match UUIDs (RFC 4122) of ONE layer
+     */
+    public function selectedMatchIdsForLayer(Uuid $competitionSourceId): array
+    {
+        /** @var list<array{sportMatchId: string}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(s.sportMatch) AS sportMatchId')
+            ->from(CompetitionMatchSelection::class, 's')
+            ->where('s.competitionSource = :competitionSourceId')
+            ->setParameter('competitionSourceId', $competitionSourceId)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): string => (string) $row['sportMatchId'], $rows);
+    }
+
+    /**
      * The competition's selections grouped by the scope layer that owns them —
      * one query for the whole competition, so {@see \App\Service\Competition\CompetitionMatchProvider}
      * can answer membership per layer without an N+1 over layers.

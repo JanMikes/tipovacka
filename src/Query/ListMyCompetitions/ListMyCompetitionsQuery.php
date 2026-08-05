@@ -58,7 +58,7 @@ final readonly class ListMyCompetitionsQuery
                 competitionId: $m->competition->id,
                 competitionName: $m->competition->name,
                 matchSourceId: $m->competition->matchSource->id,
-                matchSourceName: $m->competition->matchSource->name,
+                matchSourceName: $m->competition->sourcesLabel,
                 matchSourceIsCompleted: $m->competition->scheduleIsComplete,
                 ownerNickname: $m->competition->owner->displayName,
                 isOwner: $m->user->id->equals($m->competition->owner->id),
