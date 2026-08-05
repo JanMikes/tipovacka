@@ -605,6 +605,25 @@ final class CreateWizard extends AbstractController
         $this->draftOpen = false;
     }
 
+    /**
+     * Commits the draft and immediately reopens an empty editor — the one
+     * gesture that turns a single-zdroj soutěž into a multi-zdroj one, so it is
+     * offered as soon as the editor holds a usable zdroj rather than once a
+     * basket already exists.
+     */
+    #[LiveAction]
+    public function addLayerAndContinue(): void
+    {
+        $this->addLayer();
+
+        if (null !== $this->errorMessage) {
+            return;
+        }
+
+        $this->resetDraft();
+        $this->draftOpen = true;
+    }
+
     #[LiveAction]
     public function editLayer(#[LiveArg] int $index): void
     {

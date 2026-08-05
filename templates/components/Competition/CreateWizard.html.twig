@@ -305,12 +305,24 @@
                         {% endif %}
                     {% endif %}
 
-                    {% if this.hasLayers or editingIndex is not null %}
-                        <div class="flex flex-wrap gap-2 border-t border-white/10 pt-4">
-                            <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayer">
-                                {{ editingIndex is not null ? 'Uložit změnu' : 'Přidat do soutěže' }}
-                            </button>
-                            <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+                    {# The way INTO a multi-zdroj soutěž. It must render as soon as the
+                       editor holds a usable zdroj — gating it on „the basket already
+                       has something" made the feature unreachable, because this was
+                       also the only way to put the first thing in it. #}
+                    {% if fromScratch or this.selectedSource %}
+                        <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+                            {% if editingIndex is not null %}
+                                <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayer">Uložit změnu</button>
+                                <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+                            {% else %}
+                                <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayerAndContinue">
+                                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat další zdroj zápasů
+                                </button>
+                                {% if this.hasLayers %}
+                                    <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+                                {% endif %}
+                                <span class="text-xs leading-relaxed text-white/40">Soutěž může kombinovat víc zdrojů — „Pokračovat" uloží i tenhle.</span>
+                            {% endif %}
                         </div>
                     {% endif %}
                     {% endif %}{# draftOpen #}

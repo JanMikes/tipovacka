@@ -217,6 +217,59 @@ final class CreateWizardComponentTest extends WebTestCase
     }
 
     /**
+     * The regression that shipped: the „add another zdroj" affordance was gated
+     * on the basket already holding something, and it was ALSO the only way to
+     * put the first thing in it — so from a fresh wizard the whole multi-zdroj
+     * feature was unreachable. This drives the surface a user actually sees.
+     */
+    public function testAFreshWizardOffersTheWayIntoASecondZdroj(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        // Nothing picked yet: no half-offer, just the source picker.
+        $blank = (string) $component->set('name', 'Cesta ke druhému zdroji')->render();
+        self::assertStringNotContainsString('addLayerAndContinue', $blank);
+
+        // The moment a zdroj is chosen, the way to add another must be there.
+        $picked = (string) $component->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)->render();
+        self::assertStringContainsString('Přidat další zdroj zápasů', $picked);
+        self::assertStringContainsString('addLayerAndContinue', $picked);
+
+        // Using it banks the first zdroj and hands back an empty editor.
+        $second = (string) $component->call('addLayerAndContinue')->render();
+        self::assertStringContainsString(AppFixtures::PUBLIC_SOURCE_NAME, $second, 'the first zdroj should now be a basket card');
+        self::assertStringNotContainsString('value="'.AppFixtures::PUBLIC_SOURCE_ID.'"', $second, 'and should no longer be offered in the picker');
+    }
+
+    /**
+     * „Pokračovat" alone must still build a one-zdroj soutěž — the common path
+     * cannot require discovering the basket first.
+     */
+    public function testContinueAloneStillBanksTheChosenZdroj(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        $component
+            ->set('name', 'Jen pokračovat')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->call('next')
+            ->call('next')
+            ->call('submit');
+
+        $competition = $this->competitionByName($client, 'Jen pokračovat');
+
+        self::assertCount(1, $competition->sources);
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_ID, $competition->sources[0]->matchSource->id->toRfc4122());
+    }
+
+    /**
      * The reason the basket exists: one soutěž composed from two zdroje, each
      * with its own scope. The wizard must create exactly that — not the first
      * zdroj with the second quietly dropped.
