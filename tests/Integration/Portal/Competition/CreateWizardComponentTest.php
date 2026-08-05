@@ -217,6 +217,43 @@ final class CreateWizardComponentTest extends WebTestCase
     }
 
     /**
+     * The tom-select team picker lives in a `data-live-ignore` island, and
+     * LiveComponents NEVER removes a node carrying that attribute
+     * (live_controller.js `beforeNodeRemoved`). Left as the outermost node of
+     * the „Podle týmu" branch it therefore survived switching back to „Všechny
+     * zápasy" and stayed on screen. It must sit inside a plain wrapper, which
+     * is what the morph can remove.
+     */
+    public function testTheTeamPickerIslandSitsInsideARemovableWrapper(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        $teams = (string) $component
+            ->set('name', 'Ostrov týmů')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->set('selectionMode', 'teams')
+            ->render();
+
+        self::assertStringContainsString('data-live-ignore', $teams);
+        self::assertStringContainsString('data-team-scope', $teams);
+        // The wrapper must come FIRST — an ignored outermost node is unremovable.
+        self::assertLessThan(
+            strpos($teams, 'data-live-ignore'),
+            strpos($teams, 'data-team-scope'),
+            'data-live-ignore must not be the outermost node of the branch, or the morph can never drop it.',
+        );
+
+        // And switching back stops rendering both, so the morph has something to remove.
+        $all = (string) $component->set('selectionMode', 'all')->render();
+
+        self::assertStringNotContainsString('data-team-scope', $all);
+        self::assertStringNotContainsString('data-live-ignore', $all);
+    }
+
+    /**
      * The regression that shipped: the „add another zdroj" affordance was gated
      * on the basket already holding something, and it was ALSO the only way to
      * put the first thing in it — so from a fresh wizard the whole multi-zdroj

@@ -237,6 +237,14 @@
                                 </div>
 
                                 {% if this.isTeams %}
+                                    {# The tom-select island must stay untouched by the morph, but
+                                       LiveComponents NEVER removes a node carrying data-live-ignore
+                                       (live_controller.js: `beforeNodeRemoved` returns
+                                       !hasAttribute('data-live-ignore')). Left as the outermost node
+                                       of this branch it therefore survived switching back to
+                                       „Všechny zápasy" and the picker stayed on screen. The plain
+                                       wrapper is what the morph removes — the island goes with it. #}
+                                    <div data-team-scope>
                                     <div data-live-ignore>
                                         <div data-controller="team-filter"
                                              data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: this.selectedSource.id.toRfc4122}) }}">
@@ -248,6 +256,7 @@
                                             <input type="hidden" data-model="norender|selectedTeamIdsCsv" data-team-filter-target="payload" value="{{ selectedTeamIdsCsv }}" />
                                         </div>
                                         <p class="mt-2 text-xs leading-relaxed text-white/50">Soutěž zahrne všechny zápasy vybraných týmů — i ty, které se do rozpisu přidají později (třeba playoff).</p>
+                                    </div>
                                     </div>
                                 {% elseif this.isSubset %}
                                     <div data-controller="wizard-matches">
