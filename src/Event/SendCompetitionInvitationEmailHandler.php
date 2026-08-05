@@ -37,7 +37,7 @@ final readonly class SendCompetitionInvitationEmailHandler
             ->context([
                 'inviterNickname' => $invitation->inviter->displayName,
                 'competitionName' => $invitation->competition->name,
-                'matchSourceName' => $invitation->competition->matchSource->name,
+                'matchSourceName' => $invitation->competition->headlineSource->name,
                 'invitationUrl' => $invitationUrl,
                 'expiresAt' => $invitation->expiresAt,
             ]);

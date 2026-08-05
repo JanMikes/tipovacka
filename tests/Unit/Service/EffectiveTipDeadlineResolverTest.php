@@ -945,20 +945,19 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
     ): Competition {
         $competition = new Competition(
             id: Uuid::v7(),
-            matchSource: $this->makeMatchSource(),
+            headlineSource: $this->makeMatchSource(),
             owner: $this->makeUser(),
             name: 'G',
             description: null,
             pin: null,
             shareableLinkToken: null,
             createdAt: new \DateTimeImmutable($createdAt),
-            selectionMode: $selectionMode,
         );
         $competition->popEvents();
         $competition->attachSource(new CompetitionSource(
             id: Uuid::v7(),
             competition: $competition,
-            matchSource: $competition->matchSource,
+            matchSource: $competition->headlineSource,
             addedAt: new \DateTimeImmutable($createdAt),
             selectionMode: $selectionMode,
         ));
@@ -970,9 +969,9 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
     {
         $match = new SportMatch(
             id: Uuid::fromString(sprintf('01933333-0000-7000-8000-0000000009%02d', ++$this->matchSequence)),
-            matchSource: $competition->matchSource,
-            homeTeam: new Team(id: Uuid::v7(), sport: $competition->matchSource->sport, matchSource: $competition->matchSource, name: 'A', createdAt: $this->now),
-            awayTeam: new Team(id: Uuid::v7(), sport: $competition->matchSource->sport, matchSource: $competition->matchSource, name: 'B', createdAt: $this->now),
+            matchSource: $competition->headlineSource,
+            homeTeam: new Team(id: Uuid::v7(), sport: $competition->headlineSource->sport, matchSource: $competition->headlineSource, name: 'A', createdAt: $this->now),
+            awayTeam: new Team(id: Uuid::v7(), sport: $competition->headlineSource->sport, matchSource: $competition->headlineSource, name: 'B', createdAt: $this->now),
             kickoffAt: new \DateTimeImmutable($kickoff),
             venue: null,
             createdAt: new \DateTimeImmutable($createdAt),

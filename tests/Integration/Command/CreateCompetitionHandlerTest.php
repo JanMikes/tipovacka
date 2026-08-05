@@ -82,7 +82,7 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
         self::assertNull($competition->tipsLockedAt);
-        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
+        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->sources[0]->selectionMode);
 
         $selections = $this->entityManager()->createQueryBuilder()
             ->select('s')
@@ -146,9 +146,9 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
         $competition = $this->findCompetitionByName('Podle týmů');
 
-        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->selectionMode);
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->sources[0]->selectionMode);
         // Teams mode keeps playoff (the toggle is All-only).
-        self::assertTrue($competition->includePlayoff);
+        self::assertTrue($competition->sources[0]->includePlayoff);
 
         $filters = $this->entityManager()->createQueryBuilder()
             ->select('f')
@@ -221,12 +221,12 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
 
         $competition = $this->findCompetitionByName('Od začátku');
 
-        self::assertSame(MatchSourceKind::Private, $competition->matchSource->kind);
-        self::assertSame('hockey', $competition->matchSource->sport->code);
-        self::assertSame(AppFixtures::VERIFIED_USER_ID, $competition->matchSource->owner->id->toRfc4122());
-        self::assertSame('Od začátku', $competition->matchSource->name);
+        self::assertSame(MatchSourceKind::Private, $competition->headlineSource->kind);
+        self::assertSame('hockey', $competition->headlineSource->sport->code);
+        self::assertSame(AppFixtures::VERIFIED_USER_ID, $competition->headlineSource->owner->id->toRfc4122());
+        self::assertSame('Od začátku', $competition->headlineSource->name);
         self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
-        self::assertSame(CompetitionMatchSelectionMode::All, $competition->selectionMode);
+        self::assertSame(CompetitionMatchSelectionMode::All, $competition->sources[0]->selectionMode);
     }
 
     public function testAppliesRuleChangesOverDefaults(): void

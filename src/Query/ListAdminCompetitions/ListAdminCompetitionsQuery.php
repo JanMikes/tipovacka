@@ -26,13 +26,13 @@ final readonly class ListAdminCompetitionsQuery
         $qb = $this->entityManager->createQueryBuilder()
             ->select('g', 't', 'o')
             ->from(Competition::class, 'g')
-            ->innerJoin('g.matchSource', 't')
+            ->innerJoin('g.headlineSource', 't')
             ->innerJoin('g.owner', 'o')
             ->orderBy('g.createdAt', 'DESC')
             ->addOrderBy('g.id', 'DESC');
 
         if (null !== $query->matchSourceId) {
-            $qb->andWhere('g.matchSource = :matchSourceId')
+            $qb->andWhere('g.headlineSource = :matchSourceId')
                 ->setParameter('matchSourceId', $query->matchSourceId);
         }
 
@@ -45,8 +45,8 @@ final readonly class ListAdminCompetitionsQuery
             static fn (Competition $g): AdminCompetitionItem => new AdminCompetitionItem(
                 id: $g->id,
                 name: $g->name,
-                matchSourceId: $g->matchSource->id,
-                matchSourceName: $g->matchSource->name,
+                matchSourceId: $g->headlineSource->id,
+                matchSourceName: $g->headlineSource->name,
                 ownerNickname: $g->owner->displayName,
                 memberCount: $memberCounts[$g->id->toRfc4122()] ?? 0,
                 isDeleted: null !== $g->deletedAt,

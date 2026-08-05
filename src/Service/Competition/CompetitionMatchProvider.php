@@ -259,7 +259,7 @@ class CompetitionMatchProvider implements ResetInterface
      * be fed by the match's OWN zdroj, and must accept the match under its own
      * mode. That inner source equality is what makes this predicate complete —
      * before multi-source, callers had to hand-join `m.matchSource =
-     * c.matchSource` for the result to be correct, an obligation nothing
+     * c.headlineSource` for the result to be correct, an obligation nothing
      * enforced. **Do not add such a join back**: it would pin a multi-source
      * competition to its headline zdroj and silently drop every other layer's
      * matches.

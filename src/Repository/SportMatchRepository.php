@@ -115,7 +115,7 @@ class SportMatchRepository
             ->from(Membership::class, 'ms')
             ->innerJoin('ms.competition', 'g')
             ->where('ms.user = :userId')
-            ->andWhere('g.matchSource = t.id')
+            ->andWhere('g.headlineSource = t.id')
             ->andWhere('ms.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->getDQL();

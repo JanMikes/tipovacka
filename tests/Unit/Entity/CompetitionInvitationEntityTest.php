@@ -64,7 +64,7 @@ final class CompetitionInvitationEntityTest extends TestCase
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: 'Soutěž',
             description: null,

@@ -58,10 +58,10 @@ final readonly class ListAdminMatchSourcesQuery
     {
         /** @var list<array{matchSourceId: mixed, c: mixed}> $rows */
         $rows = $this->entityManager->createQueryBuilder()
-            ->select('IDENTITY(g.matchSource) AS matchSourceId', 'COUNT(g.id) AS c')
+            ->select('IDENTITY(g.headlineSource) AS matchSourceId', 'COUNT(g.id) AS c')
             ->from(Competition::class, 'g')
             ->where('g.deletedAt IS NULL')
-            ->groupBy('g.matchSource')
+            ->groupBy('g.headlineSource')
             ->getQuery()
             ->getScalarResult();
 

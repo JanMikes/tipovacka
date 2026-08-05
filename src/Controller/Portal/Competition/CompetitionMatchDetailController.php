@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Portal\Competition;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
@@ -231,15 +232,17 @@ final class CompetitionMatchDetailController extends AbstractController
             // with this match. A soutěž over THIS one, though, raises the „I am a
             // member — why is it not listed?" question, and the viewer cannot
             // answer it from this page. Collect those and say why.
-            if ($competition->matchSource->id->equals($sportMatch->matchSource->id)) {
+            $layer = $competition->sourceFor($sportMatch->matchSource->id);
+
+            if (null !== $layer) {
                 $excluded[] = [
                     'id' => $competition->id,
                     'name' => $competition->name,
-                    'reason' => self::exclusionReason($competition, $sportMatch),
-                    // Bounded by the viewer's own Teams-mode soutěže over this one
+                    'reason' => self::exclusionReason($layer, $sportMatch),
+                    // Bounded by the viewer's own Teams-mode layers over this one
                     // zdroj — typically zero or one, so no N+1 risk.
-                    'teams' => CompetitionMatchSelectionMode::Teams === $competition->selectionMode
-                        ? $this->teamFilterRepository->teamViewsFor($competition->id)
+                    'teams' => CompetitionMatchSelectionMode::Teams === $layer->selectionMode
+                        ? $this->teamFilterRepository->teamViewsForLayer($layer->id)
                         : [],
                 ];
             }
@@ -353,26 +356,26 @@ final class CompetitionMatchDetailController extends AbstractController
         return CompetitionSwitcherOption::fromDates(
             id: $competition->id->toRfc4122(),
             name: $competition->name,
-            subtitle: $competition->matchSource->name,
-            startAt: $competition->matchSource->startAt,
-            endAt: $competition->matchSource->endAt,
+            subtitle: $competition->headlineSource->name,
+            startAt: $competition->headlineSource->startAt,
+            endAt: $competition->headlineSource->endAt,
             isFinished: $competition->scheduleIsComplete,
         );
     }
 
     /**
      * Why {@see CompetitionMatchProvider::includes} said no, for a soutěž that lives
-     * on the very zdroj zápasů this match belongs to. The cases mirror the provider's
+     * through the LAYER fed by the very zdroj this match belongs to. The cases mirror the provider's
      * own branches one-to-one — the deleted-match and foreign-source ones cannot
      * occur here (the page 404s on the former, the caller filters the latter), hence
      * the `other` catch-all rather than a partial match.
      */
-    private static function exclusionReason(Competition $competition, SportMatch $sportMatch): string
+    private static function exclusionReason(CompetitionSource $layer, SportMatch $sportMatch): string
     {
         return match (true) {
-            CompetitionMatchSelectionMode::Subset === $competition->selectionMode => 'subset',
-            CompetitionMatchSelectionMode::Teams === $competition->selectionMode => 'teams',
-            $sportMatch->isPlayoff && !$competition->includePlayoff => 'playoff',
+            CompetitionMatchSelectionMode::Subset === $layer->selectionMode => 'subset',
+            CompetitionMatchSelectionMode::Teams === $layer->selectionMode => 'teams',
+            $sportMatch->isPlayoff && !$layer->includePlayoff => 'playoff',
             default => 'other',
         };
     }

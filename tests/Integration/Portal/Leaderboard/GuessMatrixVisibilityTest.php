@@ -217,14 +217,13 @@ final class GuessMatrixVisibilityTest extends WebTestCase
 
         $over = new Competition(
             id: Uuid::v7(),
-            matchSource: $finished->matchSource,
+            headlineSource: $finished->matchSource,
             owner: $tipper,
             name: 'Dohraná parta',
             description: null,
             pin: null,
             shareableLinkToken: null,
             createdAt: $now,
-            selectionMode: CompetitionMatchSelectionMode::Subset,
             monetization: CompetitionMonetization::Boosts,
         );
         $over->popEvents();

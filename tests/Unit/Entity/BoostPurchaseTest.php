@@ -61,7 +61,7 @@ final class BoostPurchaseTest extends TestCase
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: 'Příspěvková',
             description: null,

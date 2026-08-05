@@ -779,14 +779,13 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
     ): Competition {
         $competition = new Competition(
             id: Uuid::fromString($id),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: $name,
             description: $description,
             pin: $pin,
             shareableLinkToken: $linkToken,
             createdAt: $createdAt,
-            selectionMode: $selectionMode,
             monetization: $monetization,
             isGlobal: $isGlobal,
             entryFeeCredits: $entryFeeCredits,

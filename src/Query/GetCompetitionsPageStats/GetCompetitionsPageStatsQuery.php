@@ -69,7 +69,7 @@ final readonly class GetCompetitionsPageStatsQuery
         $qb = $this->entityManager->createQueryBuilder()
             ->select('COUNT(c.id)')
             ->from(Competition::class, 'c')
-            ->innerJoin('c.matchSource', 's')
+            ->innerJoin('c.headlineSource', 's')
             ->andWhere(sprintf(
                 'EXISTS(SELECT 1 FROM %s cps_cs INNER JOIN cps_cs.matchSource cps_ms WHERE cps_cs.competition = c AND cps_ms.completedAt IS NULL AND cps_ms.deletedAt IS NULL)',
                 CompetitionSource::class,
@@ -104,7 +104,7 @@ final readonly class GetCompetitionsPageStatsQuery
         $qb = $this->entityManager->createQueryBuilder()
             ->from(Membership::class, 'm')
             ->innerJoin('m.competition', 'c')
-            ->innerJoin('c.matchSource', 's')
+            ->innerJoin('c.headlineSource', 's')
             ->andWhere('m.leftAt IS NULL');
         $this->applyLiveScope($qb);
 
@@ -132,10 +132,10 @@ final readonly class GetCompetitionsPageStatsQuery
                 'm.state AS state',
             )
             ->from(Competition::class, 'c')
-            ->innerJoin('c.matchSource', 's')
+            ->innerJoin('c.headlineSource', 's')
             // Candidates = every match of every zdroj the competition draws
             // from; the row-level scope filter below then keeps only the ones
-            // its layers actually accept. Joining on `c.matchSource` instead
+            // its layers actually accept. Joining on `c.headlineSource` instead
             // would pin the query to the headline zdroj and lose every other
             // layer's matches.
             ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = c')

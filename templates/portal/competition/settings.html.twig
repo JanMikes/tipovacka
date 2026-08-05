@@ -33,13 +33,11 @@
                     <a href="{{ path('competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                         <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla bodování
                     </a>
-                    {% if competition.selectionMode.value == 'subset' %}
+                    {# One link per soutěž, named by what its layers actually offer —
+                       the copy lives on Competition.scopeManageLabel, not here. #}
+                    {% if competition.scopeManageLabel %}
                         <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
-                            <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Výběr zápasů
-                        </a>
-                    {% elseif competition.selectionMode.value == 'teams' %}
-                        <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
-                            <twig:ux:icon name="lucide:shield-half" class="h-4 w-4" />Týmy soutěže
+                            <twig:ux:icon name="{{ competition.scopeManageLabel == 'Týmy soutěže' ? 'lucide:shield-half' : 'lucide:list-checks' }}" class="h-4 w-4" />{{ competition.scopeManageLabel }}
                         </a>
                     {% endif %}
 

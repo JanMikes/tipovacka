@@ -77,8 +77,8 @@ final class FixtureLoadingTest extends IntegrationTestCase
         $competition = $this->entityManager()->find(Competition::class, Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID));
 
         self::assertNotNull($competition);
-        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
-        self::assertTrue($competition->includePlayoff);
+        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->sources[0]->selectionMode);
+        self::assertTrue($competition->sources[0]->includePlayoff);
 
         $selections = $this->entityManager()->createQueryBuilder()
             ->select('s')

@@ -33,7 +33,7 @@ use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'competitions')]
-#[ORM\Index(columns: ['match_source_id', 'deleted_at'], name: 'IDX_competitions_match_source')]
+#[ORM\Index(columns: ['headline_source_id', 'deleted_at'], name: 'IDX_competitions_headline_source')]
 #[ORM\Index(columns: ['owner_id', 'deleted_at'], name: 'IDX_competitions_owner')]
 #[ORM\UniqueConstraint(name: 'UIDX_competitions_pin', columns: ['pin'], options: ['where' => '(pin IS NOT NULL)'])]
 #[ORM\UniqueConstraint(name: 'UIDX_competitions_shareable_link_token', columns: ['shareable_link_token'], options: ['where' => '(shareable_link_token IS NOT NULL)'])]
@@ -98,23 +98,6 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\OneToMany(mappedBy: 'competition', targetEntity: CompetitionSource::class, cascade: ['persist'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $sourceLinks;
-
-    /**
-     * Legacy mirror of the FIRST layer's mode, kept only until every reader is
-     * moved onto {@see $sources}. Writers must keep it in sync with layer 0.
-     *
-     * @deprecated read the layer ({@see CompetitionSource::$selectionMode})
-     */
-    #[ORM\Column(enumType: CompetitionMatchSelectionMode::class, options: ['default' => CompetitionMatchSelectionMode::All->value])]
-    public private(set) CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All;
-
-    /**
-     * Legacy mirror of the FIRST layer's playoff flag.
-     *
-     * @deprecated read the layer ({@see CompetitionSource::$includePlayoff})
-     */
-    #[ORM\Column(options: ['default' => true])]
-    public private(set) bool $includePlayoff = true;
 
     /**
      * Premium XOR boosts (XOR by column). Set by the create-competition wizard
@@ -191,13 +174,49 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
+     * The layers a manager can still edit — an `all` layer takes its whole
+     * zdroj, so there is nothing to pick. Drives the „Výběr zápasů" / „Týmy
+     * soutěže" link on the settings screen and the switcher on the manage one.
+     *
+     * @var list<CompetitionSource>
+     */
+    public array $manageableSources {
+        get => array_values(array_filter(
+            $this->sources,
+            static fn (CompetitionSource $layer): bool => CompetitionMatchSelectionMode::All !== $layer->selectionMode,
+        ));
+    }
+
+    /**
+     * What the settings screen calls the manage-scope link, or null when there
+     * is nothing to manage. A soutěž mixing hand-picked and team-filtered
+     * zdroje gets the neutral name — the screen itself then offers both.
+     */
+    public ?string $scopeManageLabel {
+        get {
+            $modes = [];
+
+            foreach ($this->manageableSources as $layer) {
+                $modes[$layer->selectionMode->value] = true;
+            }
+
+            return match (true) {
+                [] === $modes => null,
+                1 < count($modes) => 'Zápasy soutěže',
+                isset($modes['subset']) => 'Výběr zápasů',
+                default => 'Týmy soutěže',
+            };
+        }
+    }
+
+    /**
      * How the soutěž's zdroje read on a card, a switcher or an invitation —
      * the headline one, plus how many others. Every surface that used to print
      * the single zdroj's name prints this instead, so a multi-source soutěž
      * never advertises only its first zdroj.
      */
     public string $sourcesLabel {
-        get => self::describeSources($this->matchSource->name, $this->sourceLinks->count());
+        get => self::describeSources($this->headlineSource->name, $this->sourceLinks->count());
     }
 
     /**
@@ -242,9 +261,17 @@ class Competition implements EntityWithEvents, SoftDeletable
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
         private(set) Uuid $id,
+        /**
+         * The soutěž's HEADLINE zdroj — layer 0's, kept denormalised here so
+         * display, sport derivation and „who may create a competition on this
+         * zdroj" stay one join away and stay paginable. It is NOT the scope:
+         * ask {@see \App\Service\Competition\CompetitionMatchProvider}, or
+         * read {@see $sources}. Confusing the two is the classic mistake, which
+         * is why this is not called `matchSource` any more.
+         */
         #[ORM\ManyToOne(targetEntity: MatchSource::class)]
-        #[ORM\JoinColumn(name: 'match_source_id', referencedColumnName: 'id', nullable: false)]
-        private(set) MatchSource $matchSource,
+        #[ORM\JoinColumn(name: 'headline_source_id', referencedColumnName: 'id', nullable: false)]
+        public private(set) MatchSource $headlineSource,
         #[ORM\ManyToOne(targetEntity: User::class)]
         #[ORM\JoinColumn(name: 'owner_id', referencedColumnName: 'id', nullable: false)]
         private(set) User $owner,
@@ -254,8 +281,6 @@ class Competition implements EntityWithEvents, SoftDeletable
         ?string $shareableLinkToken,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
-        CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
-        bool $includePlayoff = true,
         bool $hideOthersTipsBeforeDeadline = false,
         CompetitionMonetization $monetization = CompetitionMonetization::None,
         bool $isGlobal = false,
@@ -269,8 +294,6 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->description = $description;
         $this->pin = $pin;
         $this->shareableLinkToken = $shareableLinkToken;
-        $this->selectionMode = $selectionMode;
-        $this->includePlayoff = $includePlayoff;
         $this->hideOthersTipsBeforeDeadline = $hideOthersTipsBeforeDeadline;
         $this->monetization = $monetization;
         $this->isGlobal = $isGlobal;
@@ -280,7 +303,7 @@ class Competition implements EntityWithEvents, SoftDeletable
 
         $this->recordThat(new CompetitionCreated(
             competitionId: $this->id,
-            matchSourceId: $this->matchSource->id,
+            matchSourceId: $this->headlineSource->id,
             ownerId: $this->owner->id,
             name: $this->name,
             occurredOn: $this->createdAt,
@@ -290,8 +313,8 @@ class Competition implements EntityWithEvents, SoftDeletable
     /**
      * Attaches a scope layer, keeping the in-memory collection authoritative for
      * the rest of the transaction (the provider reads it straight after a
-     * competition is composed). The legacy {@see $selectionMode} /
-     * {@see $includePlayoff} mirror follows the FIRST layer.
+     * competition is composed), and keeps {@see $headlineSource} pointed at
+     * layer 0.
      */
     public function attachSource(CompetitionSource $source): void
     {
@@ -300,13 +323,13 @@ class Competition implements EntityWithEvents, SoftDeletable
         }
 
         $this->sourceLinks->add($source);
-        $this->syncLegacyScopeMirror();
+        $this->repointHeadlineSource();
     }
 
     public function detachSource(CompetitionSource $source): void
     {
         $this->sourceLinks->removeElement($source);
-        $this->syncLegacyScopeMirror();
+        $this->repointHeadlineSource();
     }
 
     /** The layer feeding this competition from the given zdroj, if any. */
@@ -322,19 +345,18 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
-     * Re-points the legacy scope mirror at the first layer. Called on every
-     * layer mutation; drops out with the two deprecated columns.
+     * Keeps {@see $headlineSource} equal to layer 0's zdroj. Called on every
+     * layer mutation — without it, dropping the first layer would leave the
+     * competition advertising (and authorising against) a zdroj it no longer
+     * draws from.
      */
-    public function syncLegacyScopeMirror(): void
+    private function repointHeadlineSource(): void
     {
         $first = $this->sources[0] ?? null;
 
-        if (null === $first) {
-            return;
+        if (null !== $first) {
+            $this->headlineSource = $first->matchSource;
         }
-
-        $this->selectionMode = $first->selectionMode;
-        $this->includePlayoff = $first->includePlayoff;
     }
 
     public function updateDetails(

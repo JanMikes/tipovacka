@@ -256,7 +256,7 @@ final class CompetitionEntitlementsTest extends TestCase
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::BOOSTS_COMPETITION_ID),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $this->owner,
             name: 'Test',
             description: null,

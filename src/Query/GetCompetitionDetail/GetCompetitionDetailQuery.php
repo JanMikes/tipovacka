@@ -52,7 +52,7 @@ final readonly class GetCompetitionDetailQuery
 
         return new GetCompetitionDetailResult(
             id: $competition->id,
-            matchSourceId: $competition->matchSource->id,
+            matchSourceId: $competition->headlineSource->id,
             matchSourceName: $competition->sourcesLabel,
             matchSourceIsCompleted: $competition->scheduleIsComplete,
             ownerId: $competition->owner->id,

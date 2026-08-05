@@ -132,7 +132,7 @@ final class ManageMemberTipsController extends AbstractController
             // B5: no rows after a lock is not „nothing scheduled" — say which it is.
             'lock_moment' => $lockMoment,
             'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
-            'sport' => $competition->matchSource->sport,
+            'sport' => $competition->headlineSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);
     }

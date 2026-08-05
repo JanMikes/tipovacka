@@ -390,13 +390,24 @@ class EffectiveTipDeadlineResolver implements ResetInterface
 
     private function isLateAdded(Competition $competition, SportMatch $sportMatch, \DateTimeImmutable $lockMoment): bool
     {
-        if (CompetitionMatchSelectionMode::Subset === $competition->selectionMode) {
+        $layer = $competition->sourceFor($sportMatch->matchSource->id);
+
+        if (null !== $layer && CompetitionMatchSelectionMode::Subset === $layer->selectionMode) {
             $addedAt = $this->selectionAddedAtMap($competition)[$sportMatch->id->toRfc4122()] ?? null;
 
             // No selection row ⇒ the match is not in the competition at all;
             // callers guard with MatchNotInCompetition, so just fall through
             // to the default branch here.
             return null !== $addedAt && $addedAt > $lockMoment;
+        }
+
+        // A whole zdroj attached after the lock moment brings its matches in
+        // late, exactly as a single subset row does — otherwise adding a second
+        // zdroj to a running soutěž would arrive already locked. A layer created
+        // with the competition carries its creation moment, so this is false for
+        // every soutěž that never gained a zdroj mid-flight.
+        if (null !== $layer && $layer->addedAt > $lockMoment) {
+            return true;
         }
 
         // A match "enters" an All-mode competition at the LATER of its own

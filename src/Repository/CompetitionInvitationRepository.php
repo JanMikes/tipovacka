@@ -46,7 +46,7 @@ class CompetitionInvitationRepository
             ->select('i', 'g', 't', 'inviter')
             ->from(CompetitionInvitation::class, 'i')
             ->innerJoin('i.competition', 'g')
-            ->innerJoin('g.matchSource', 't')
+            ->innerJoin('g.headlineSource', 't')
             ->innerJoin('i.inviter', 'inviter')
             ->where('i.token = :token')
             ->setParameter('token', $token)

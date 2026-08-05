@@ -189,7 +189,7 @@ final class GetCompetitionLeaderboardDeltaTest extends IntegrationTestCase
 
         $match = new SportMatch(
             id: Uuid::v7(),
-            matchSource: $competition->matchSource,
+            matchSource: $competition->headlineSource,
             homeTeam: $homeTeam,
             awayTeam: $awayTeam,
             kickoffAt: new \DateTimeImmutable($kickoff, new \DateTimeZone('UTC')),

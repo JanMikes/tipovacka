@@ -282,15 +282,13 @@ final class CompetitionMatchProviderTest extends TestCase
     {
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
-            matchSource: $this->source,
+            headlineSource: $this->source,
             owner: $this->owner,
             name: 'Soutěž',
             description: null,
             pin: null,
             shareableLinkToken: 'token-x',
             createdAt: $this->now,
-            selectionMode: $mode,
-            includePlayoff: $includePlayoff,
         );
         $competition->popEvents();
         $competition->attachSource(new CompetitionSource(

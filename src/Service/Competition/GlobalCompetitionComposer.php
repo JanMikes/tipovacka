@@ -76,7 +76,7 @@ final readonly class GlobalCompetitionComposer
 
         $competition = new Competition(
             id: $this->identity->next(),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $admin,
             name: $name,
             description: $description,
@@ -86,8 +86,6 @@ final readonly class GlobalCompetitionComposer
             // pin: null. See fix in .docs/DOMAIN.md §Global competitions.
             shareableLinkToken: null,
             createdAt: $now,
-            selectionMode: $selectionMode,
-            includePlayoff: true,
             hideOthersTipsBeforeDeadline: false,
             monetization: $monetization,
             isGlobal: true,

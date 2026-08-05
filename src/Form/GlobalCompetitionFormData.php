@@ -35,7 +35,7 @@ final class GlobalCompetitionFormData
     public static function fromCompetition(Competition $competition): self
     {
         $formData = new self();
-        $formData->matchSource = $competition->matchSource;
+        $formData->matchSource = $competition->headlineSource;
         $formData->name = $competition->name;
         $formData->description = $competition->description;
         $formData->entryFeeCredits = $competition->entryFeeCredits;

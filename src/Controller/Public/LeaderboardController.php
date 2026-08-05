@@ -228,9 +228,9 @@ final class LeaderboardController extends AbstractController
         array_unshift($options, CompetitionSwitcherOption::fromDates(
             id: $id,
             name: $competition->name,
-            subtitle: $competition->matchSource->name,
-            startAt: $competition->matchSource->startAt,
-            endAt: $competition->matchSource->endAt,
+            subtitle: $competition->headlineSource->name,
+            startAt: $competition->headlineSource->startAt,
+            endAt: $competition->headlineSource->endAt,
             isFinished: $competition->scheduleIsComplete,
         ));
 

@@ -297,7 +297,7 @@ final class CompetitionMatchScopeAgreementTest extends IntegrationTestCase
     {
         // Deliberately joined WITHOUT any source agreement (`1 = 1`): the
         // row-level predicate must carry that itself. Before multi-source it
-        // did not, and callers had to remember `m.matchSource = c.matchSource`
+        // did not, and callers had to remember `m.matchSource = c.headlineSource`
         // — an unenforced obligation that would now silently pin a soutěž to
         // its headline zdroj.
         $qb = $this->entityManager()->createQueryBuilder()
@@ -344,7 +344,7 @@ final class CompetitionMatchScopeAgreementTest extends IntegrationTestCase
         $competitions = $this->entityManager()->createQueryBuilder()
             ->select('c')
             ->from(Competition::class, 'c')
-            ->where('c.matchSource = :sourceId')
+            ->where('c.headlineSource = :sourceId')
             ->andWhere('c.deletedAt IS NULL')
             ->setParameter('sourceId', Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID))
             ->getQuery()

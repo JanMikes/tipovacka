@@ -80,7 +80,7 @@ final class LeaderboardTieResolutionRepository
         $this->entityManager->createQueryBuilder()
             ->delete(LeaderboardTieResolution::class, 'r')
             ->where(sprintf(
-                'r.competition IN (SELECT c.id FROM %s c WHERE c.matchSource = :matchSourceId)',
+                'r.competition IN (SELECT c.id FROM %s c WHERE c.headlineSource = :matchSourceId)',
                 Competition::class,
             ))
             ->setParameter('matchSourceId', $matchSourceId)

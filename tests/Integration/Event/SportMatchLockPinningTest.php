@@ -175,7 +175,7 @@ final class SportMatchLockPinningTest extends IntegrationTestCase
 
         $competition = new Competition(
             id: Uuid::v7(),
-            matchSource: $source,
+            headlineSource: $source,
             owner: $owner,
             name: 'Pin test competition',
             description: null,

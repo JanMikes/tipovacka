@@ -93,7 +93,7 @@ final class AdminGlobalCompetitionFlowTest extends WebTestCase
         $competition = $this->competitionByName($client, 'Soutěž ze zdroje');
         self::assertInstanceOf(Competition::class, $competition);
         self::assertTrue($competition->isGlobal);
-        self::assertSame($source->id->toRfc4122(), $competition->matchSource->id->toRfc4122());
+        self::assertSame($source->id->toRfc4122(), $competition->headlineSource->id->toRfc4122());
     }
 
     public function testGlobalCreateFormPrefillsSourceFromQuery(): void
@@ -153,7 +153,7 @@ final class AdminGlobalCompetitionFlowTest extends WebTestCase
         return $em->createQueryBuilder()
             ->select('g', 't')
             ->from(Competition::class, 'g')
-            ->innerJoin('g.matchSource', 't')
+            ->innerJoin('g.headlineSource', 't')
             ->where('g.name = :name')
             ->setParameter('name', $name)
             ->getQuery()

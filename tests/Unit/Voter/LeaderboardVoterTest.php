@@ -183,7 +183,7 @@ final class LeaderboardVoterTest extends TestCase
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: 'Soutěž',
             description: null,

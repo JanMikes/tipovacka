@@ -63,7 +63,7 @@ final class RuleTestFactory
     {
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            matchSource: self::matchSource(),
+            headlineSource: self::matchSource(),
             owner: self::user(),
             name: 'G',
             description: null,
@@ -162,7 +162,7 @@ final class RuleTestFactory
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $user,
             name: 'G',
             description: null,

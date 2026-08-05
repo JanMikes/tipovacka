@@ -84,7 +84,7 @@ final class GlobalCompetitionGuardsFlowTest extends WebTestCase
 
         $competition = new Competition(
             id: Uuid::v7(),
-            matchSource: $source,
+            headlineSource: $source,
             owner: $admin,
             name: 'Globální s odkazem',
             description: null,

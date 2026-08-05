@@ -85,9 +85,9 @@ final class FullHappyPathTest extends IntegrationTestCase
         $competition = $em->find(Competition::class, $competitionId);
         self::assertNotNull($competition);
         self::assertNotNull($competition->pin);
-        self::assertSame(MatchSourceKind::Private, $competition->matchSource->kind);
-        self::assertSame('hockey', $competition->matchSource->sport->code);
-        $matchSourceId = $competition->matchSource->id;
+        self::assertSame(MatchSourceKind::Private, $competition->headlineSource->kind);
+        self::assertSame('hockey', $competition->headlineSource->sport->code);
+        $matchSourceId = $competition->headlineSource->id;
         $pin = $competition->pin;
 
         // 2a) Add a match manually.
@@ -191,7 +191,7 @@ final class FullHappyPathTest extends IntegrationTestCase
         // 8) Source completed; both matches finished.
         $competition = $em->find(Competition::class, $competitionId);
         self::assertNotNull($competition);
-        self::assertTrue($competition->matchSource->isCompleted);
+        self::assertTrue($competition->headlineSource->isCompleted);
         self::assertSame(SportMatchState::Finished, $this->matchState($matchOneId));
         self::assertSame(SportMatchState::Finished, $this->matchState($matchTwoId));
 

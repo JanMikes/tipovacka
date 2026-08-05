@@ -83,7 +83,7 @@ final readonly class ListBrowsableCompetitionsQuery
         foreach ($competitions as $competition) {
             $key = $competition->id->toRfc4122();
             $aggregate = $matchAggregates[$key] ?? ['total' => 0, 'started' => 0, 'finished' => 0, 'live' => 0];
-            $sport = $competition->matchSource->sport;
+            $sport = $competition->headlineSource->sport;
 
             $sportOptions[$sport->id->toRfc4122()] ??= new SportFilterOption($sport->id, $sport->name);
 
@@ -92,9 +92,9 @@ final readonly class ListBrowsableCompetitionsQuery
                 name: $competition->name,
                 sportId: $sport->id,
                 sportName: $sport->name,
-                matchSourceName: Competition::describeSources($competition->matchSource->name, $scopeSummaries[$key]['layerCount'] ?? 1),
-                sourceStartAt: $competition->matchSource->startAt,
-                sourceEndAt: $competition->matchSource->endAt,
+                matchSourceName: Competition::describeSources($competition->headlineSource->name, $scopeSummaries[$key]['layerCount'] ?? 1),
+                sourceStartAt: $competition->headlineSource->startAt,
+                sourceEndAt: $competition->headlineSource->endAt,
                 entryFeeCredits: $competition->entryFeeCredits,
                 playerCount: $playerCounts[$key] ?? 0,
                 matchCount: $aggregate['total'],
@@ -162,7 +162,7 @@ final readonly class ListBrowsableCompetitionsQuery
         $qb = $this->entityManager->createQueryBuilder()
             ->select('c', 's', 'sp', 'o')
             ->from(Competition::class, 'c')
-            ->innerJoin('c.matchSource', 's')
+            ->innerJoin('c.headlineSource', 's')
             ->innerJoin('s.sport', 'sp')
             ->innerJoin('c.owner', 'o')
             ->where('c.deletedAt IS NULL')
@@ -238,7 +238,7 @@ final readonly class ListBrowsableCompetitionsQuery
             ->from(Competition::class, 'c')
             // Candidates = every match of every zdroj the competition draws
             // from; applyRowLevelCompetitionMatchFilter narrows them to the
-            // ones its layers accept. Joining on `c.matchSource` would pin a
+            // ones its layers accept. Joining on `c.headlineSource` would pin a
             // multi-source soutěž to its headline zdroj.
             ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = c')
             ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.matchSource = cs.matchSource')

@@ -82,7 +82,7 @@ final class MyTipsBatchController extends AbstractController
             // B5: „no rows" has two very different causes — nothing scheduled, or
             // the whole soutěž is locked. The empty state must say which.
             'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
-            'sport' => $competition->matchSource->sport,
+            'sport' => $competition->headlineSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
         ]);
     }
@@ -99,7 +99,7 @@ final class MyTipsBatchController extends AbstractController
         $guesses = $request->request->all('guesses');
         $competition = $this->competitionRepository->get($competitionId);
         $features = $this->guessFeatures->featuresFor($competitionId);
-        $sport = $competition->matchSource->sport;
+        $sport = $competition->headlineSource->sport;
 
         $saved = 0;
         $deleted = 0;

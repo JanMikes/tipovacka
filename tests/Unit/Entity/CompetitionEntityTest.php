@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Entity;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
@@ -76,7 +77,7 @@ final class CompetitionEntityTest extends TestCase
 
         return new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            matchSource: $this->makeMatchSource($owner),
+            headlineSource: $this->makeMatchSource($owner),
             owner: $owner,
             name: 'Soutěž',
             description: null,
@@ -113,35 +114,93 @@ final class CompetitionEntityTest extends TestCase
         self::assertSame(60, $competition->tipChangeOffsetMinutes);
     }
 
-    public function testSelectionDefaultsOnFreshCompetition(): void
+    /**
+     * Scope is not a constructor concern any more: a fresh competition has no
+     * layers at all, and the first one attached brings the All/playoff defaults.
+     */
+    public function testAFreshCompetitionHasNoScopeUntilAZdrojIsAttached(): void
     {
         $competition = $this->makeCompetition();
 
-        self::assertSame(CompetitionMatchSelectionMode::All, $competition->selectionMode);
-        self::assertTrue($competition->includePlayoff);
+        self::assertSame([], $competition->sources);
+        self::assertFalse($competition->isMultiSource);
+        // Nothing to have ended, and nothing to manage.
+        self::assertFalse($competition->scheduleIsComplete);
+        self::assertNull($competition->scopeManageLabel);
+
+        $layer = $this->attachLayer($competition);
+
+        self::assertSame(CompetitionMatchSelectionMode::All, $layer->selectionMode);
+        self::assertTrue($layer->includePlayoff);
+        self::assertSame([$layer], $competition->sources);
     }
 
-    public function testConstructorHonorsSelectionAndTipSettings(): void
+    public function testConstructorHonorsTipSettings(): void
     {
         $owner = $this->makeOwner();
 
         $competition = new Competition(
             id: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
-            matchSource: $this->makeMatchSource($owner),
+            headlineSource: $this->makeMatchSource($owner),
             owner: $owner,
             name: 'Soutěž',
             description: null,
             pin: null,
             shareableLinkToken: 'token-x',
             createdAt: $this->now,
-            selectionMode: CompetitionMatchSelectionMode::Subset,
-            includePlayoff: false,
             hideOthersTipsBeforeDeadline: true,
         );
 
-        self::assertSame(CompetitionMatchSelectionMode::Subset, $competition->selectionMode);
-        self::assertFalse($competition->includePlayoff);
         self::assertTrue($competition->hideOthersTipsBeforeDeadline);
+    }
+
+    /**
+     * The headline zdroj follows layer 0. Dropping the first layer must repoint
+     * it — otherwise the soutěž keeps advertising, and authorising against, a
+     * zdroj it no longer draws from.
+     */
+    public function testDroppingTheFirstLayerRepointsTheHeadlineZdroj(): void
+    {
+        $competition = $this->makeCompetition();
+        $first = $this->attachLayer($competition);
+
+        $second = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $this->makeMatchSource($competition->owner),
+            addedAt: $this->now,
+            position: 1,
+        );
+        $competition->attachSource($second);
+
+        self::assertSame($first->matchSource, $competition->headlineSource);
+
+        $competition->detachSource($first);
+
+        self::assertSame($second->matchSource, $competition->headlineSource);
+        self::assertSame($competition->headlineSource->name, $competition->sourcesLabel);
+    }
+
+    /** „Chance Liga a 2 další" — the one home of that copy. */
+    public function testSourcesLabelNamesTheHeadlineZdrojAndCountsTheRest(): void
+    {
+        self::assertSame('Chance Liga', Competition::describeSources('Chance Liga', 1));
+        self::assertSame('Chance Liga a 1 další', Competition::describeSources('Chance Liga', 2));
+        self::assertSame('Chance Liga a 4 další', Competition::describeSources('Chance Liga', 5));
+        self::assertSame('Chance Liga a 5 dalších', Competition::describeSources('Chance Liga', 6));
+    }
+
+    private function attachLayer(Competition $competition): CompetitionSource
+    {
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $competition->headlineSource,
+            addedAt: $this->now,
+        );
+        $competition->attachSource($layer);
+
+        return $layer;
     }
 
     public function testRecordMatchSelectionChangedRecordsEventAndTouchesUpdatedAt(): void

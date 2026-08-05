@@ -173,7 +173,7 @@ final class CreditWalletTest extends TestCase
 
         $competition = new Competition(
             id: Uuid::v7(),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: 'Kancelářská tipovačka',
             description: null,

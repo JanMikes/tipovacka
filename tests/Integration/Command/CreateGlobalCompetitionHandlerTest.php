@@ -39,7 +39,7 @@ final class CreateGlobalCompetitionHandlerTest extends IntegrationTestCase
         $reloaded = $this->entityManager()->find(Competition::class, $competitionId);
         self::assertTrue($reloaded->isGlobal);
         self::assertSame(30, $reloaded->entryFeeCredits);
-        self::assertSame(CompetitionMatchSelectionMode::All, $reloaded->selectionMode);
+        self::assertSame(CompetitionMatchSelectionMode::All, $reloaded->sources[0]->selectionMode);
         self::assertSame(AppFixtures::ADMIN_ID, $reloaded->owner->id->toRfc4122());
         // A global competition must NEVER mint a shareable-link token (nor a PIN):
         // joining is entry-fee only — a token would be a fee-free back door.

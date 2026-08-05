@@ -44,9 +44,7 @@ final class CompetitionFormData
         $formData->description = $competition->description;
         $formData->withPin = null !== $competition->pin;
         $formData->hideOthersTipsBeforeDeadline = $competition->hideOthersTipsBeforeDeadline;
-        $formData->matchSourceId = $competition->matchSource->id->toRfc4122();
-        $formData->selectionMode = $competition->selectionMode;
-        $formData->includePlayoff = $competition->includePlayoff;
+        $formData->matchSourceId = $competition->headlineSource->id->toRfc4122();
 
         return $formData;
     }

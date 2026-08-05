@@ -126,7 +126,7 @@ final class JoinCompetitionByPinHandlerTest extends IntegrationTestCase
 
         $competition = new Competition(
             id: $this->identityProvider()->next(),
-            matchSource: $source,
+            headlineSource: $source,
             owner: $admin,
             name: 'Globální s PINem',
             description: null,

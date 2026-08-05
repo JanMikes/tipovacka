@@ -84,15 +84,13 @@ final readonly class CreateCompetitionHandler
 
         $competition = new Competition(
             id: $this->identity->next(),
-            matchSource: $matchSource,
+            headlineSource: $matchSource,
             owner: $owner,
             name: $command->name,
             description: $command->description,
             pin: $command->withPin ? $this->resolvePin($command->pin) : null,
             shareableLinkToken: $command->shareableLinkToken ?? $this->linkTokenGenerator->generate(),
             createdAt: $now,
-            selectionMode: $selectionMode,
-            includePlayoff: CompetitionMatchSelectionMode::All === $selectionMode ? $command->includePlayoff : true,
             hideOthersTipsBeforeDeadline: $command->hideOthersTipsBeforeDeadline,
             monetization: $command->monetization,
         );

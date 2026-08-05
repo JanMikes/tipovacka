@@ -828,7 +828,7 @@ final class CreateWizard extends AbstractController
             $this->addFlash('success', 'Soutěž je připravená. Teď přidejte zápasy — ručně, nebo nahrajte celý rozpis.');
 
             return $this->redirectToRoute('match_source_detail', [
-                'id' => $competition->matchSource->id->toRfc4122(),
+                'id' => $competition->headlineSource->id->toRfc4122(),
             ]);
         }
 

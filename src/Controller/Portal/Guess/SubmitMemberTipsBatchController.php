@@ -81,7 +81,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
 
         $guesses = $request->request->all('guesses');
         $features = $this->guessFeatures->featuresFor($competition->id);
-        $sport = $competition->matchSource->sport;
+        $sport = $competition->headlineSource->sport;
 
         $saved = 0;
         $errors = [];

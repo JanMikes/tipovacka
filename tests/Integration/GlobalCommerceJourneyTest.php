@@ -184,7 +184,7 @@ final class GlobalCommerceJourneyTest extends IntegrationTestCase
 
         // A match with a future kickoff defines the reconciliation moment.
         $bus->dispatch(new CreateSportMatchCommand(
-            matchSourceId: $competition->matchSource->id,
+            matchSourceId: $competition->headlineSource->id,
             editorId: $ownerId,
             homeTeam: 'Domácí',
             awayTeam: 'Hosté',

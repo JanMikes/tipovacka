@@ -77,7 +77,7 @@ zdroj, created on demand by the handler). Cards carry `editLayer` / `removeLayer
   warning (same team NAMES within ±24 h across zdroje; warn only, never drop). It
   re-implements the per-layer rules because the layers do not exist yet;
   `ScopeDraftResolverTest` pins it against `CompetitionMatchProvider`.
-- **Submit** sends layer 0 in `CreateCompetitionCommand`'s own source fields and the rest as
+- **Submit** sends layer 0 in `CreateCompetitionCommand`'s own source fields (which describe layer 0) and the rest as
   `additionalSources: list<CompetitionSourceSpec>`. Every basketed zdroj is re-checked
   against `MatchSourceVoter::CREATE_COMPETITION`, not just the headline one.
 

@@ -53,9 +53,9 @@ final class CreateWizardGlobalTest extends WebTestCase
         self::assertTrue($competition->isGlobal);
         self::assertSame(50, $competition->entryFeeCredits);
         self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
-        self::assertSame(CompetitionMatchSelectionMode::All, $competition->selectionMode);
-        self::assertSame(MatchSourceKind::Curated, $competition->matchSource->kind);
-        self::assertSame(AppFixtures::PUBLIC_SOURCE_ID, $competition->matchSource->id->toRfc4122());
+        self::assertSame(CompetitionMatchSelectionMode::All, $competition->sources[0]->selectionMode);
+        self::assertSame(MatchSourceKind::Curated, $competition->headlineSource->kind);
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_ID, $competition->headlineSource->id->toRfc4122());
         self::assertSame(AppFixtures::ADMIN_ID, $competition->owner->id->toRfc4122());
 
         // No fee-free back door: global competitions carry no PIN / shareable link.

@@ -121,13 +121,13 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertMatchesRegularExpression('#^/turnaje/[0-9a-f-]{36}$#', (string) $response->headers->get('Location'));
 
         $competition = $this->competitionByName($client, 'Hokej od začátku');
-        self::assertSame(MatchSourceKind::Private, $competition->matchSource->kind);
-        self::assertSame('hockey', $competition->matchSource->sport->code);
+        self::assertSame(MatchSourceKind::Private, $competition->headlineSource->kind);
+        self::assertSame('hockey', $competition->headlineSource->sport->code);
         self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
         self::assertCount(1, $this->memberships($client, $competition->id));
 
         // Redirect points at the freshly created hidden source (empty-state „Přidejte zápasy").
-        self::assertSame('/turnaje/'.$competition->matchSource->id->toRfc4122(), $response->headers->get('Location'));
+        self::assertSame('/turnaje/'.$competition->headlineSource->id->toRfc4122(), $response->headers->get('Location'));
     }
 
     public function testCuratedSubsetCustomRulesPremiumHappyPath(): void
@@ -527,7 +527,7 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertSame(302, $response->getStatusCode());
 
         $competition = $this->competitionByName($client, 'Jen Sparta');
-        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->selectionMode);
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $competition->sources[0]->selectionMode);
 
         $filters = $this->em($client)->createQueryBuilder()
             ->select('f')->from(CompetitionTeamFilter::class, 'f')

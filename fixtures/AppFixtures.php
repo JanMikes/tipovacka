@@ -409,7 +409,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $verifiedCompetition = new Competition(
             id: Uuid::fromString(self::VERIFIED_COMPETITION_ID),
-            matchSource: $private,
+            headlineSource: $private,
             owner: $verified,
             name: self::VERIFIED_COMPETITION_NAME,
             description: null,
@@ -466,7 +466,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $publicCompetition = new Competition(
             id: Uuid::fromString(self::PUBLIC_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $admin,
             name: self::PUBLIC_COMPETITION_NAME,
             description: null,
@@ -511,7 +511,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         // other is free. Owner is the sole member of each ⇒ fee still unlocked.
         $globalCompetition = new Competition(
             id: Uuid::fromString(self::GLOBAL_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $admin,
             name: self::GLOBAL_COMPETITION_NAME,
             description: null,
@@ -544,7 +544,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
 
         $freeGlobalCompetition = new Competition(
             id: Uuid::fromString(self::FREE_GLOBAL_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $admin,
             name: self::FREE_GLOBAL_COMPETITION_NAME,
             description: null,
@@ -580,7 +580,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         // premium charge. A shareable link lets tests add further joiners.
         $premiumCompetition = new Competition(
             id: Uuid::fromString(self::PREMIUM_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $admin,
             name: self::PREMIUM_COMPETITION_NAME,
             description: null,
@@ -635,7 +635,7 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         // deadline). No wallet/ledger seeded.
         $boostsCompetition = new Competition(
             id: Uuid::fromString(self::BOOSTS_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $admin,
             name: self::BOOSTS_COMPETITION_NAME,
             description: null,
@@ -859,14 +859,13 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         // Only MATCH_SCHEDULED + MATCH_FINISHED are selected.
         $subsetCompetition = new Competition(
             id: Uuid::fromString(self::SUBSET_COMPETITION_ID),
-            matchSource: $public,
+            headlineSource: $public,
             owner: $secondVerified,
             name: self::SUBSET_COMPETITION_NAME,
             description: null,
             pin: null,
             shareableLinkToken: self::SUBSET_COMPETITION_LINK_TOKEN,
             createdAt: $now,
-            selectionMode: CompetitionMatchSelectionMode::Subset,
         );
         $subsetCompetition->popEvents();
         $subsetCompetitionSource = new CompetitionSource(
