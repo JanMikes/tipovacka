@@ -73,30 +73,30 @@ final class CompetitionVoter extends Voter
 
         return match ($attribute) {
             self::VIEW => $isAdmin || $isMember,
-            self::EDIT => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->matchSource->isCompleted,
+            self::EDIT => ($isAdmin || $isOwner) && $subject->isNotDeleted && !$subject->scheduleIsComplete,
             self::DELETE => $isAdmin || $isOwner,
             self::MANAGE_MEMBERS => $isAdmin || $isOwner,
             self::MANAGE_JOIN_MECHANICS => ($isAdmin || $isOwner)
                 && $subject->isNotDeleted
-                && !$subject->matchSource->isCompleted
+                && !$subject->scheduleIsComplete
                 && !$subject->isGlobal,
             self::SHARE_JOIN_LINK => ($isAdmin || $isMember)
                 && $subject->isNotDeleted
-                && !$subject->matchSource->isCompleted
+                && !$subject->scheduleIsComplete
                 && !$subject->isGlobal,
-            self::JOIN => $currentUser->isVerified && !$subject->matchSource->isCompleted && $subject->isNotDeleted,
+            self::JOIN => $currentUser->isVerified && !$subject->scheduleIsComplete && $subject->isNotDeleted,
             // Global discovery join: any verified non-member, source not finished.
             // The entry fee is charged (or the friendly insufficient-credits redirect
             // happens) in JoinGlobalCompetitionHandler / the controller, not here.
             self::JOIN_GLOBAL => $subject->isGlobal
                 && $subject->isNotDeleted
-                && !$subject->matchSource->isCompleted
+                && !$subject->scheduleIsComplete
                 && $currentUser->isVerified
                 && !$isMember,
             self::LEAVE => $isMember && !$isOwner,
             self::INVITE_MEMBER => ($isAdmin || $isOwner)
                 && $subject->isNotDeleted
-                && !$subject->matchSource->isCompleted
+                && !$subject->scheduleIsComplete
                 && !$subject->isGlobal,
         };
     }

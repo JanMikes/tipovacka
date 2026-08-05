@@ -39,7 +39,7 @@ final readonly class JoinCompetitionByLinkHandler
             throw CompetitionIsGlobal::joinViaShareableLink($competition->id);
         }
 
-        if ($competition->matchSource->isCompleted) {
+        if ($competition->scheduleIsComplete) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 

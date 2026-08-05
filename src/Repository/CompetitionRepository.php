@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Enum\CompetitionMonetization;
 use App\Exception\CompetitionNotFound;
 use App\Exception\InvalidPin;
@@ -148,6 +149,13 @@ class CompetitionRepository
     }
 
     /**
+     * Every competition that DRAWS FROM the given zdroj — through any of its
+     * scope layers, not just its headline one. This is the fan-in every
+     * source-driven side effect starts from (match added / deleted / postponed,
+     * source completed / reopened), so a multi-source soutěž must be reachable
+     * from each of its zdroje. Membership itself is still decided per match by
+     * {@see \App\Service\Competition\CompetitionMatchProvider}.
+     *
      * @return Competition[]
      */
     public function findByMatchSource(Uuid $matchSourceId): array
@@ -156,7 +164,8 @@ class CompetitionRepository
             ->select('g', 'o')
             ->from(Competition::class, 'g')
             ->innerJoin('g.owner', 'o')
-            ->where('g.matchSource = :matchSourceId')
+            ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = g')
+            ->where('cs.matchSource = :matchSourceId')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('matchSourceId', $matchSourceId)
             ->orderBy('g.createdAt', 'DESC')

@@ -356,7 +356,7 @@ final class CompetitionMatchDetailController extends AbstractController
             subtitle: $competition->matchSource->name,
             startAt: $competition->matchSource->startAt,
             endAt: $competition->matchSource->endAt,
-            isFinished: $competition->matchSource->isCompleted,
+            isFinished: $competition->scheduleIsComplete,
         );
     }
 

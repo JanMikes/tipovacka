@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\GetCompetitionsPageStats;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
 use App\Enum\SportMatchState;
@@ -58,7 +59,10 @@ final readonly class GetCompetitionsPageStatsQuery
     }
 
     /**
-     * Competitions whose zdroj zápasů is still running („aktivní soutěže").
+     * Competitions still running („aktivní soutěže") — at least one of the
+     * zdroje they draw from has not been marked completed. A multi-source
+     * soutěž is over only once every layer is, mirroring
+     * {@see Competition::$scheduleIsComplete}.
      */
     private function activeCompetitionCount(): int
     {
@@ -66,7 +70,10 @@ final readonly class GetCompetitionsPageStatsQuery
             ->select('COUNT(c.id)')
             ->from(Competition::class, 'c')
             ->innerJoin('c.matchSource', 's')
-            ->andWhere('s.completedAt IS NULL');
+            ->andWhere(sprintf(
+                'EXISTS(SELECT 1 FROM %s cps_cs INNER JOIN cps_cs.matchSource cps_ms WHERE cps_cs.competition = c AND cps_ms.completedAt IS NULL AND cps_ms.deletedAt IS NULL)',
+                CompetitionSource::class,
+            ));
         $this->applyLiveScope($qb);
 
         return (int) $qb->getQuery()->getSingleScalarResult();
@@ -126,7 +133,13 @@ final readonly class GetCompetitionsPageStatsQuery
             )
             ->from(Competition::class, 'c')
             ->innerJoin('c.matchSource', 's')
-            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.matchSource = c.matchSource')
+            // Candidates = every match of every zdroj the competition draws
+            // from; the row-level scope filter below then keeps only the ones
+            // its layers actually accept. Joining on `c.matchSource` instead
+            // would pin the query to the headline zdroj and lose every other
+            // layer's matches.
+            ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = c')
+            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.matchSource = cs.matchSource')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.state != :cps_cancelled')
             ->setParameter('cps_cancelled', SportMatchState::Cancelled);

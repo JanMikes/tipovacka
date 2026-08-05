@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Query\ListUserMatches;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\Guess;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
@@ -244,11 +245,14 @@ final readonly class ListUserMatchesQuery
         }
 
         $qb = $this->entityManager->createQueryBuilder()
-            ->select('g')
+            ->select('DISTINCT g')
             ->from(Membership::class, 'm')
             ->innerJoin(Competition::class, 'g', 'WITH', 'g.id = m.competition')
+            // Through ANY scope layer, not just the headline zdroj: a soutěž
+            // drawing from three zdroje must surface under each of them.
+            ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = g')
             ->where('m.user = :userId')
-            ->andWhere('g.matchSource IN (:matchSourceIds)')
+            ->andWhere('cs.matchSource IN (:matchSourceIds)')
             ->andWhere('m.leftAt IS NULL')
             ->andWhere('g.deletedAt IS NULL')
             ->setParameter('userId', $userId)
@@ -264,9 +268,27 @@ final readonly class ListUserMatchesQuery
         /** @var list<Competition> $competitions */
         $competitions = $qb->getQuery()->getResult();
 
+        $wanted = [];
+        foreach ($matchSourceIds as $matchSourceId) {
+            $wanted[$matchSourceId->toRfc4122()] = true;
+        }
+
         $byMatchSource = [];
+        $seen = [];
+
         foreach ($competitions as $competition) {
-            $byMatchSource[$competition->matchSource->id->toRfc4122()][] = $competition;
+            if (isset($seen[$competition->id->toRfc4122()])) {
+                continue;
+            }
+            $seen[$competition->id->toRfc4122()] = true;
+
+            foreach ($competition->sources as $layer) {
+                $sourceKey = $layer->matchSource->id->toRfc4122();
+
+                if (isset($wanted[$sourceKey])) {
+                    $byMatchSource[$sourceKey][] = $competition;
+                }
+            }
         }
 
         return $byMatchSource;

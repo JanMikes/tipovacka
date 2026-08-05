@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Query\ListBrowsableCompetitions;
 
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
 use App\Enum\CompetitionBrowseScope;
 use App\Enum\CompetitionStateFilter;
 use App\Enum\CompetitionVisibilityFilter;
 use App\Enum\SportMatchState;
+use App\Repository\CompetitionSourceRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -44,6 +46,7 @@ final readonly class ListBrowsableCompetitionsQuery
     public function __construct(
         private EntityManagerInterface $entityManager,
         private CompetitionMatchProvider $matchProvider,
+        private CompetitionSourceRepository $competitionSourceRepository,
         private ClockInterface $clock,
     ) {
     }
@@ -67,6 +70,9 @@ final readonly class ListBrowsableCompetitionsQuery
 
         $playerCounts = $this->playerCounts($competitionIds);
         $matchAggregates = $this->matchAggregates($competitionIds);
+        // Batched so the list cost stays flat: reaching through each
+        // competition's lazy layer collection would be one statement per row.
+        $scheduleComplete = $this->competitionSourceRepository->scheduleCompleteMap($competitionIds);
         $viewerMemberships = null !== $query->viewerId
             ? $this->viewerMembershipIds($query->viewerId, $competitionIds)
             : [];
@@ -96,7 +102,7 @@ final readonly class ListBrowsableCompetitionsQuery
                 finishedMatchCount: $aggregate['finished'],
                 liveMatchCount: $aggregate['live'],
                 isGlobal: $competition->isGlobal,
-                sourceIsCompleted: $competition->matchSource->isCompleted,
+                sourceIsCompleted: $scheduleComplete[$key] ?? false,
                 viewerIsMember: isset($viewerMemberships[$key]),
                 viewerIsOwner: null !== $query->viewerId && $competition->owner->id->equals($query->viewerId),
             );
@@ -230,7 +236,12 @@ final readonly class ListBrowsableCompetitionsQuery
                 'SUM(CASE WHEN m.state = :lbc_live THEN 1 ELSE 0 END) AS live',
             )
             ->from(Competition::class, 'c')
-            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.matchSource = c.matchSource')
+            // Candidates = every match of every zdroj the competition draws
+            // from; applyRowLevelCompetitionMatchFilter narrows them to the
+            // ones its layers accept. Joining on `c.matchSource` would pin a
+            // multi-source soutěž to its headline zdroj.
+            ->innerJoin(CompetitionSource::class, 'cs', 'WITH', 'cs.competition = c')
+            ->innerJoin(SportMatch::class, 'm', 'WITH', 'm.matchSource = cs.matchSource')
             ->where('c.id IN (:lbc_competitionIds)')
             ->andWhere('m.deletedAt IS NULL')
             ->andWhere('m.state != :lbc_cancelled')

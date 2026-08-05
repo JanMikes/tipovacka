@@ -62,6 +62,34 @@ class CompetitionTeamFilterRepository
     }
 
     /**
+     * The competition's filter teams grouped by the scope layer that owns them.
+     * One global directory team may filter two different zdroje of the same
+     * soutěž, so the grouping — not a flat team set — is what membership tests
+     * against.
+     *
+     * @return array<string, array<string, true>> layer UUID → set of team UUIDs
+     */
+    public function teamIdsByLayer(Uuid $competitionId): array
+    {
+        /** @var list<array{layerId: string, teamId: string}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(f.competitionSource) AS layerId', 'IDENTITY(f.team) AS teamId')
+            ->from(CompetitionTeamFilter::class, 'f')
+            ->where('f.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getArrayResult();
+
+        $byLayer = [];
+
+        foreach ($rows as $row) {
+            $byLayer[(string) $row['layerId']][(string) $row['teamId']] = true;
+        }
+
+        return $byLayer;
+    }
+
+    /**
      * The filter teams as display DTOs, alphabetised — for the competition
      * detail summary and the manage-filter page.
      *

@@ -262,12 +262,14 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
 
     public function testRejectsPlayoffMatchWhenCompetitionExcludesPlayoff(): void
     {
-        // Flip PUBLIC_COMPETITION (mode All) to includePlayoff = false directly —
-        // there is no dedicated command yet (S08 wizard territory).
+        // Flip PUBLIC_COMPETITION's scope layer (mode All) to
+        // includePlayoff = false directly — there is no dedicated command yet
+        // (S08 wizard territory). The flag lives on the layer, not the
+        // competition: it is a per-zdroj answer.
         $em = $this->entityManager();
         $connection = $em->getConnection();
         $connection->executeStatement(
-            'UPDATE competitions SET include_playoff = false WHERE id = :id',
+            'UPDATE competition_sources SET include_playoff = false WHERE competition_id = :id',
             ['id' => AppFixtures::PUBLIC_COMPETITION_ID],
         );
         $em->clear();

@@ -39,7 +39,7 @@ final readonly class JoinCompetitionByPinHandler
             throw CompetitionIsGlobal::joinViaPin($competition->id);
         }
 
-        if ($competition->matchSource->isCompleted) {
+        if ($competition->scheduleIsComplete) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 

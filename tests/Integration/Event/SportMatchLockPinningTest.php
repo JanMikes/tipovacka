@@ -9,6 +9,7 @@ use App\Command\RescheduleSportMatch\RescheduleSportMatchCommand;
 use App\Command\SoftDeleteSportMatch\SoftDeleteSportMatchCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -184,6 +185,15 @@ final class SportMatchLockPinningTest extends IntegrationTestCase
         );
         $competition->popEvents();
         $em->persist($competition);
+
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $source,
+            addedAt: $createdAt,
+        );
+        $competition->attachSource($layer);
+        $em->persist($layer);
 
         // Teams are irrelevant to the lock-pinning logic; reuse the shared
         // directory fixtures (both matches use the same pair).

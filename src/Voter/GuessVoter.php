@@ -12,6 +12,7 @@ use App\Enum\UserRole;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
+use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -41,6 +42,7 @@ final class GuessVoter extends Voter
         private readonly MembershipRepository $membershipRepository,
         private readonly GuessRepository $guessRepository,
         private readonly CompetitionRepository $competitionRepository,
+        private readonly CompetitionMatchProvider $matchProvider,
         private readonly EffectiveTipDeadlineResolver $deadlineResolver,
         private readonly ClockInterface $clock,
     ) {
@@ -114,7 +116,10 @@ final class GuessVoter extends Voter
                 return false;
             }
 
-            if (!$subject->sportMatch->matchSource->id->equals($subject->competition->matchSource->id)) {
+            // The match must come from a zdroj this competition actually draws
+            // from — and, since a layer may hand-pick or team-filter, must be
+            // in scope at all.
+            if (!$this->matchProvider->includes($subject->competition, $subject->sportMatch)) {
                 return false;
             }
 

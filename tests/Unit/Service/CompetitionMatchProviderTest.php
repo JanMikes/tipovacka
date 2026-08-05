@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -28,6 +29,8 @@ use Symfony\Component\Uid\Uuid;
  */
 final class CompetitionMatchProviderTest extends TestCase
 {
+    private const string LAYER_ID = '019eeee2-0000-7000-8000-0000000000a1';
+
     private \DateTimeImmutable $now;
     private User $owner;
     private MatchSource $source;
@@ -126,9 +129,9 @@ final class CompetitionMatchProviderTest extends TestCase
 
         $selectionRepository = $this->createMock(CompetitionMatchSelectionRepository::class);
         $selectionRepository->expects(self::once())
-            ->method('selectedMatchIds')
+            ->method('selectedMatchIdsByLayer')
             ->with($competition->id)
-            ->willReturn([$this->regularMatch->id->toRfc4122()]);
+            ->willReturn([self::LAYER_ID => [$this->regularMatch->id->toRfc4122() => true]]);
 
         $provider = new CompetitionMatchProvider(
             $this->createStub(EntityManagerInterface::class),
@@ -148,9 +151,9 @@ final class CompetitionMatchProviderTest extends TestCase
 
         $selectionRepository = $this->createMock(CompetitionMatchSelectionRepository::class);
         $selectionRepository->expects(self::exactly(2))
-            ->method('selectedMatchIds')
+            ->method('selectedMatchIdsByLayer')
             ->with($competition->id)
-            ->willReturnOnConsecutiveCalls([], [$this->regularMatch->id->toRfc4122()]);
+            ->willReturnOnConsecutiveCalls([], [self::LAYER_ID => [$this->regularMatch->id->toRfc4122() => true]]);
 
         $provider = new CompetitionMatchProvider(
             $this->createStub(EntityManagerInterface::class),
@@ -207,9 +210,9 @@ final class CompetitionMatchProviderTest extends TestCase
 
         $teamFilterRepository = $this->createMock(CompetitionTeamFilterRepository::class);
         $teamFilterRepository->expects(self::exactly(2))
-            ->method('teamIdsFor')
+            ->method('teamIdsByLayer')
             ->with($competition->id)
-            ->willReturnOnConsecutiveCalls([], [$sparta->toRfc4122()]);
+            ->willReturnOnConsecutiveCalls([], [self::LAYER_ID => [$sparta->toRfc4122() => true]]);
 
         $provider = new CompetitionMatchProvider(
             $this->createStub(EntityManagerInterface::class),
@@ -290,6 +293,14 @@ final class CompetitionMatchProviderTest extends TestCase
             includePlayoff: $includePlayoff,
         );
         $competition->popEvents();
+        $competition->attachSource(new CompetitionSource(
+            id: Uuid::fromString(self::LAYER_ID),
+            competition: $competition,
+            matchSource: $this->source,
+            addedAt: $this->now,
+            selectionMode: $mode,
+            includePlayoff: $includePlayoff,
+        ));
 
         return $competition;
     }
@@ -300,7 +311,8 @@ final class CompetitionMatchProviderTest extends TestCase
     private function makeProvider(array $selectedMatchIds): CompetitionMatchProvider
     {
         $selectionRepository = $this->createStub(CompetitionMatchSelectionRepository::class);
-        $selectionRepository->method('selectedMatchIds')->willReturn($selectedMatchIds);
+        $selectionRepository->method('selectedMatchIdsByLayer')
+            ->willReturn([self::LAYER_ID => array_fill_keys($selectedMatchIds, true)]);
 
         return new CompetitionMatchProvider(
             $this->createStub(EntityManagerInterface::class),
@@ -316,7 +328,8 @@ final class CompetitionMatchProviderTest extends TestCase
     private function makeTeamsProvider(array $filterTeamIds): CompetitionMatchProvider
     {
         $teamFilterRepository = $this->createStub(CompetitionTeamFilterRepository::class);
-        $teamFilterRepository->method('teamIdsFor')->willReturn($filterTeamIds);
+        $teamFilterRepository->method('teamIdsByLayer')
+            ->willReturn([self::LAYER_ID => array_fill_keys($filterTeamIds, true)]);
 
         return new CompetitionMatchProvider(
             $this->createStub(EntityManagerInterface::class),

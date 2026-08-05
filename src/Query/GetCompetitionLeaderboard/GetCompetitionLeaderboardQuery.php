@@ -233,7 +233,7 @@ final readonly class GetCompetitionLeaderboardQuery
 
         return new CompetitionLeaderboardResult(
             rows: $finalRows,
-            matchSourceCompleted: $competition->matchSource->isCompleted,
+            matchSourceCompleted: $competition->scheduleIsComplete,
         );
     }
 }

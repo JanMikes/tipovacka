@@ -53,7 +53,7 @@ final readonly class JoinGlobalCompetitionHandler
             throw CompetitionIsNotGlobal::withId($competition->id);
         }
 
-        if ($competition->matchSource->isCompleted) {
+        if ($competition->scheduleIsComplete) {
             throw CannotJoinFinishedMatchSource::forCompetition($competition->id);
         }
 

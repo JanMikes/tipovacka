@@ -72,6 +72,47 @@ class CompetitionSourceRepository
         return $result;
     }
 
+    /**
+     * „Is the schedule known-complete" for many competitions in ONE statement —
+     * the batch form of {@see \App\Entity\Competition::$scheduleIsComplete},
+     * for list surfaces where reaching through the lazy layer collection per
+     * row would put the cost back on the list length.
+     *
+     * @param list<Uuid> $competitionIds
+     *
+     * @return array<string, bool> competition UUID → every zdroj it draws from is completed
+     */
+    public function scheduleCompleteMap(array $competitionIds): array
+    {
+        if ([] === $competitionIds) {
+            return [];
+        }
+
+        /** @var list<array{competitionId: string, total: int|string, completed: int|string|null}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select(
+                'IDENTITY(cs.competition) AS competitionId',
+                'COUNT(cs.id) AS total',
+                'SUM(CASE WHEN ms.completedAt IS NOT NULL THEN 1 ELSE 0 END) AS completed',
+            )
+            ->from(CompetitionSource::class, 'cs')
+            ->innerJoin('cs.matchSource', 'ms')
+            ->where('cs.competition IN (:competitionIds)')
+            ->groupBy('cs.competition')
+            ->setParameter('competitionIds', $competitionIds)
+            ->getQuery()
+            ->getArrayResult();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $total = (int) $row['total'];
+            $map[(string) $row['competitionId']] = $total > 0 && (int) $row['completed'] === $total;
+        }
+
+        return $map;
+    }
+
     /** The next free position in the competition's layer order. */
     public function nextPosition(Uuid $competitionId): int
     {

@@ -71,10 +71,9 @@ final readonly class ListMyPlayingCompetitionsQuery
 
         foreach ($competitions as $competition) {
             $key = $competition->id->toRfc4122();
-            $sourceKey = $competition->matchSource->id->toRfc4122();
 
             $included = array_values(array_filter(
-                $matchesBySource[$sourceKey] ?? [],
+                $this->candidateMatches($competition, $matchesBySource),
                 fn (SportMatch $m): bool => $this->matchProvider->includes($competition, $m),
             ));
 
@@ -95,7 +94,7 @@ final readonly class ListMyPlayingCompetitionsQuery
                 name: $competition->name,
                 matchSourceName: $competition->matchSource->name,
                 viewerIsOwner: $competition->owner->id->equals($query->userId),
-                isFinished: $competition->matchSource->isCompleted || $this->allSettled($included),
+                isFinished: $competition->scheduleIsComplete || $this->allSettled($included),
                 rank: $rank,
                 memberCount: $memberCounts[$key] ?? 1,
                 totalPoints: $viewerPoints,
@@ -281,6 +280,30 @@ final readonly class ListMyPlayingCompetitionsQuery
     }
 
     /**
+     * The candidate matches of every zdroj the competition draws from, merged
+     * back into one kickoff-ordered list (each per-source bucket is ordered,
+     * their concatenation is not).
+     *
+     * @param array<string, list<SportMatch>> $matchesBySource
+     *
+     * @return list<SportMatch>
+     */
+    private function candidateMatches(Competition $competition, array $matchesBySource): array
+    {
+        $candidates = [];
+
+        foreach ($competition->sources as $layer) {
+            foreach ($matchesBySource[$layer->matchSource->id->toRfc4122()] ?? [] as $match) {
+                $candidates[] = $match;
+            }
+        }
+
+        usort($candidates, static fn (SportMatch $a, SportMatch $b): int => [$a->kickoffAt, $a->id->toRfc4122()] <=> [$b->kickoffAt, $b->id->toRfc4122()]);
+
+        return $candidates;
+    }
+
+    /**
      * @param list<Competition> $competitions
      *
      * @return array<string, list<SportMatch>> match source UUID → its matches
@@ -290,7 +313,12 @@ final readonly class ListMyPlayingCompetitionsQuery
         $sourceIds = [];
 
         foreach ($competitions as $competition) {
-            $sourceIds[$competition->matchSource->id->toRfc4122()] = $competition->matchSource->id;
+            // Every zdroj the competition draws from, not just its headline one
+            // — a multi-source soutěž would otherwise silently lose the matches
+            // of every layer but the first.
+            foreach ($competition->sources as $layer) {
+                $sourceIds[$layer->matchSource->id->toRfc4122()] = $layer->matchSource->id;
+            }
         }
 
         /** @var list<SportMatch> $matches */

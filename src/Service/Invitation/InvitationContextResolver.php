@@ -41,7 +41,7 @@ final readonly class InvitationContextResolver
             $invitation->isRevoked => InvitationContextStatus::Revoked,
             $invitation->isAccepted => InvitationContextStatus::Accepted,
             $invitation->isExpiredAt($now) => InvitationContextStatus::Expired,
-            $invitation->competition->matchSource->isCompleted => InvitationContextStatus::MatchSourceCompleted,
+            $invitation->competition->scheduleIsComplete => InvitationContextStatus::MatchSourceCompleted,
             default => InvitationContextStatus::Active,
         };
 
@@ -69,7 +69,7 @@ final readonly class InvitationContextResolver
             throw InvalidShareableLink::create();
         }
 
-        $status = $competition->matchSource->isCompleted
+        $status = $competition->scheduleIsComplete
             ? InvitationContextStatus::MatchSourceCompleted
             : InvitationContextStatus::Active;
 
@@ -96,7 +96,7 @@ final readonly class InvitationContextResolver
             throw InvalidPin::create();
         }
 
-        $status = $competition->matchSource->isCompleted
+        $status = $competition->scheduleIsComplete
             ? InvitationContextStatus::MatchSourceCompleted
             : InvitationContextStatus::Active;
 

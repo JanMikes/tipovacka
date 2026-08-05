@@ -111,7 +111,7 @@ final class LeaderboardController extends AbstractController
 
         // The winner banner is the competition's overall champion.
         $winner = null;
-        if ($competition->matchSource->isCompleted) {
+        if ($competition->scheduleIsComplete) {
             foreach ($leaderboard->rows as $row) {
                 if (1 === $row->rank) {
                     $winner = $row;
@@ -231,7 +231,7 @@ final class LeaderboardController extends AbstractController
             subtitle: $competition->matchSource->name,
             startAt: $competition->matchSource->startAt,
             endAt: $competition->matchSource->endAt,
-            isFinished: $competition->matchSource->isCompleted,
+            isFinished: $competition->scheduleIsComplete,
         ));
 
         return $options;

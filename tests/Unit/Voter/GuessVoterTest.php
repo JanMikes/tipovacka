@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Voter;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\Guess;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
@@ -17,6 +18,7 @@ use App\Repository\BoostPurchaseRepository;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionMatchSettingRepository;
 use App\Repository\CompetitionRepository;
+use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\GuessRepository;
 use App\Repository\MembershipRepository;
 use App\Service\Competition\CompetitionEntitlements;
@@ -24,6 +26,7 @@ use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Voter\GuessVoter;
 use App\Voter\GuessVotingContext;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
@@ -107,7 +110,17 @@ final class GuessVoterTest extends TestCase
 
         $clock = new MockClock($this->now);
 
-        $this->voter = new GuessVoter($memberRepo, $guessRepo, $competitionRepo, $resolver, $clock);
+        // A real provider over stub repositories: the competitions built here
+        // carry a real All-mode layer, so membership answers honestly instead
+        // of a stub's blanket false.
+        $matchProvider = new CompetitionMatchProvider(
+            $this->createStub(EntityManagerInterface::class),
+            $competitionRepo,
+            $this->createStub(CompetitionMatchSelectionRepository::class),
+            $this->createStub(CompetitionTeamFilterRepository::class),
+        );
+
+        $this->voter = new GuessVoter($memberRepo, $guessRepo, $competitionRepo, $matchProvider, $resolver, $clock);
     }
 
     private function registerCompetition(Competition $competition): void
@@ -190,6 +203,12 @@ final class GuessVoterTest extends TestCase
             createdAt: $this->now,
         );
         $competition->popEvents();
+        $competition->attachSource(new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $this->now,
+        ));
         $this->registerCompetition($competition);
 
         return $competition;

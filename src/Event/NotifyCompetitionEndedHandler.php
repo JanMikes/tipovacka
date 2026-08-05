@@ -82,7 +82,7 @@ final readonly class NotifyCompetitionEndedHandler
         }
 
         // The manager must have confirmed the schedule is complete ...
-        if (!$competition->matchSource->isCompleted) {
+        if (!$competition->scheduleIsComplete) {
             return;
         }
 

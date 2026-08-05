@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Voter;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\User;
@@ -192,6 +193,12 @@ final class LeaderboardVoterTest extends TestCase
         );
 
         $competition->popEvents();
+        $competition->attachSource(new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $this->now,
+        ));
 
         return $competition;
     }
