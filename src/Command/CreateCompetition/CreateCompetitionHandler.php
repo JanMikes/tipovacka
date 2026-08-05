@@ -7,6 +7,7 @@ namespace App\Command\CreateCompetition;
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionSource;
 use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
@@ -16,6 +17,7 @@ use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\CompetitionSourceRepository;
 use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\MatchSourceRepository;
 use App\Repository\MembershipRepository;
@@ -52,6 +54,7 @@ final readonly class CreateCompetitionHandler
         private CompetitionMatchSelectionRepository $selectionRepository,
         private CompetitionTeamFilterRepository $teamFilterRepository,
         private CompetitionRuleConfigurationRepository $ruleConfigurationRepository,
+        private CompetitionSourceRepository $competitionSourceRepository,
         private TeamRepository $teamRepository,
         private TeamResolver $teamResolver,
         private UserRepository $userRepository,
@@ -94,12 +97,26 @@ final readonly class CreateCompetitionHandler
 
         $this->competitionRepository->save($competition);
 
+        // The competition's scope is the union of its layers; a freshly created
+        // one starts with exactly the layer the wizard configured.
+        $layer = new CompetitionSource(
+            id: $this->identity->next(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $now,
+            selectionMode: $selectionMode,
+            includePlayoff: $command->includePlayoff,
+            position: 0,
+        );
+        $this->competitionSourceRepository->save($layer);
+        $competition->attachSource($layer);
+
         if (CompetitionMatchSelectionMode::Subset === $selectionMode) {
-            $this->createSelections($command, $competition, $matchSource, $now);
+            $this->createSelections($command, $layer, $now);
         }
 
         if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
-            $this->createTeamFilters($command, $competition, $matchSource, $now);
+            $this->createTeamFilters($command, $layer, $now);
         }
 
         $this->membershipRepository->save(new Membership(
@@ -150,21 +167,21 @@ final readonly class CreateCompetitionHandler
 
     private function createSelections(
         CreateCompetitionCommand $command,
-        Competition $competition,
-        MatchSource $matchSource,
+        CompetitionSource $layer,
         \DateTimeImmutable $now,
     ): void {
         foreach ($command->selectedMatchIds as $sportMatchId) {
             $sportMatch = $this->sportMatchRepository->get($sportMatchId);
 
-            // Defensive: only matches of the chosen source can be selected.
-            if (!$sportMatch->matchSource->id->equals($matchSource->id) || null !== $sportMatch->deletedAt) {
+            // Defensive: only matches of this layer's source can be selected.
+            if (!$sportMatch->matchSource->id->equals($layer->matchSource->id) || null !== $sportMatch->deletedAt) {
                 continue;
             }
 
             $this->selectionRepository->save(new CompetitionMatchSelection(
                 id: $this->identity->next(),
-                competition: $competition,
+                competition: $layer->competition,
+                competitionSource: $layer,
                 sportMatch: $sportMatch,
                 addedAt: $now,
             ));
@@ -179,10 +196,10 @@ final readonly class CreateCompetitionHandler
      */
     private function createTeamFilters(
         CreateCompetitionCommand $command,
-        Competition $competition,
-        MatchSource $matchSource,
+        CompetitionSource $layer,
         \DateTimeImmutable $now,
     ): void {
+        $matchSource = $layer->matchSource;
         $seen = [];
 
         foreach ($command->filterTeamIds as $teamId) {
@@ -201,7 +218,8 @@ final readonly class CreateCompetitionHandler
 
             $this->teamFilterRepository->save(new CompetitionTeamFilter(
                 id: $this->identity->next(),
-                competition: $competition,
+                competition: $layer->competition,
+                competitionSource: $layer,
                 team: $team,
                 addedAt: $now,
             ));

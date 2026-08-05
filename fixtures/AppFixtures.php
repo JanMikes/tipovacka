@@ -10,6 +10,7 @@ use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionSource;
 use App\Entity\Guess;
 use App\Entity\GuessEvaluation;
 use App\Entity\GuessEvaluationRulePoints;
@@ -98,6 +99,15 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
      * NOT selected: MATCH_LIVE and MATCH_PLAYOFF (⇒ MatchNotInCompetition).
      */
     public const string SUBSET_COMPETITION_ID = '019bbbbb-0000-7000-8000-000000000033';
+
+    /** Scope layers — one per fixture competition (see .docs/FIXTURES.md). */
+    public const string VERIFIED_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c1';
+    public const string PUBLIC_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c2';
+    public const string GLOBAL_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c3';
+    public const string FREE_GLOBAL_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c4';
+    public const string PREMIUM_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c5';
+    public const string BOOSTS_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c6';
+    public const string SUBSET_COMPETITION_SOURCE_ID = '019bbbbb-0000-7000-8000-0000000000c7';
     public const string SUBSET_COMPETITION_NAME = 'Vybrané zápasy party';
     public const string SUBSET_COMPETITION_LINK_TOKEN = '019bbbbb00007000800000000000000319bbbbb0000700b3';
     public const string SUBSET_SELECTION_SCHEDULED_ID = '019bbbbb-0000-7000-8000-00000000bb01';
@@ -408,6 +418,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             createdAt: $now,
         );
         $verifiedCompetition->popEvents();
+        $verifiedCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::VERIFIED_COMPETITION_SOURCE_ID),
+            competition: $verifiedCompetition,
+            matchSource: $private,
+            addedAt: $now,
+        );
+        $verifiedCompetition->attachSource($verifiedCompetitionSource);
+        $manager->persist($verifiedCompetitionSource);
         $manager->persist($verifiedCompetition);
 
         $verifiedOwnerMembership = new Membership(
@@ -457,6 +475,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             createdAt: $now,
         );
         $publicCompetition->popEvents();
+        $publicCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::PUBLIC_COMPETITION_SOURCE_ID),
+            competition: $publicCompetition,
+            matchSource: $public,
+            addedAt: $now,
+        );
+        $publicCompetition->attachSource($publicCompetitionSource);
+        $manager->persist($publicCompetitionSource);
         $manager->persist($publicCompetition);
 
         $publicOwnerMembership = new Membership(
@@ -497,6 +523,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             entryFeeCredits: self::GLOBAL_COMPETITION_ENTRY_FEE,
         );
         $globalCompetition->popEvents();
+        $globalCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::GLOBAL_COMPETITION_SOURCE_ID),
+            competition: $globalCompetition,
+            matchSource: $public,
+            addedAt: $now,
+        );
+        $globalCompetition->attachSource($globalCompetitionSource);
+        $manager->persist($globalCompetitionSource);
         $manager->persist($globalCompetition);
 
         $globalOwnerMembership = new Membership(
@@ -522,6 +556,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             entryFeeCredits: 0,
         );
         $freeGlobalCompetition->popEvents();
+        $freeGlobalCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::FREE_GLOBAL_COMPETITION_SOURCE_ID),
+            competition: $freeGlobalCompetition,
+            matchSource: $public,
+            addedAt: $now,
+        );
+        $freeGlobalCompetition->attachSource($freeGlobalCompetitionSource);
+        $manager->persist($freeGlobalCompetitionSource);
         $manager->persist($freeGlobalCompetition);
 
         $freeGlobalOwnerMembership = new Membership(
@@ -548,6 +590,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             monetization: CompetitionMonetization::Premium,
         );
         $premiumCompetition->popEvents();
+        $premiumCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::PREMIUM_COMPETITION_SOURCE_ID),
+            competition: $premiumCompetition,
+            matchSource: $public,
+            addedAt: $now,
+        );
+        $premiumCompetition->attachSource($premiumCompetitionSource);
+        $manager->persist($premiumCompetitionSource);
         $manager->persist($premiumCompetition);
 
         $premiumOwnerMembership = new Membership(
@@ -595,6 +645,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             monetization: CompetitionMonetization::Boosts,
         );
         $boostsCompetition->popEvents();
+        $boostsCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::BOOSTS_COMPETITION_SOURCE_ID),
+            competition: $boostsCompetition,
+            matchSource: $public,
+            addedAt: $now,
+        );
+        $boostsCompetition->attachSource($boostsCompetitionSource);
+        $manager->persist($boostsCompetitionSource);
         $manager->persist($boostsCompetition);
 
         $boostsOwnerMembership = new Membership(
@@ -811,6 +869,15 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             selectionMode: CompetitionMatchSelectionMode::Subset,
         );
         $subsetCompetition->popEvents();
+        $subsetCompetitionSource = new CompetitionSource(
+            id: Uuid::fromString(self::SUBSET_COMPETITION_SOURCE_ID),
+            competition: $subsetCompetition,
+            matchSource: $public,
+            addedAt: $now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+        );
+        $subsetCompetition->attachSource($subsetCompetitionSource);
+        $manager->persist($subsetCompetitionSource);
         $manager->persist($subsetCompetition);
 
         $subsetOwnerMembership = new Membership(
@@ -825,12 +892,14 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
         $manager->persist(new CompetitionMatchSelection(
             id: Uuid::fromString(self::SUBSET_SELECTION_SCHEDULED_ID),
             competition: $subsetCompetition,
+            competitionSource: $subsetCompetitionSource,
             sportMatch: $scheduledMatch,
             addedAt: $now,
         ));
         $manager->persist(new CompetitionMatchSelection(
             id: Uuid::fromString(self::SUBSET_SELECTION_FINISHED_ID),
             competition: $subsetCompetition,
+            competitionSource: $subsetCompetitionSource,
             sportMatch: $finishedMatch,
             addedAt: $now,
         ));

@@ -9,6 +9,7 @@ use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionPremiumCharge;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionSource;
 use App\Entity\CompetitionTeamFilter;
 use App\Entity\CreditWallet;
 use App\Entity\Guess;
@@ -793,6 +794,16 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
         $competition->popEvents();
         $manager->persist($competition);
 
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $createdAt,
+            selectionMode: $selectionMode,
+        );
+        $competition->attachSource($layer);
+        $manager->persist($layer);
+
         return $competition;
     }
 
@@ -1140,6 +1151,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             $manager->persist(new CompetitionTeamFilter(
                 id: Uuid::v7(),
                 competition: $competition,
+                competitionSource: $competition->sources[0],
                 team: $teams[$teamName],
                 addedAt: $seededAt,
             ));

@@ -8,6 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\BoostPurchase;
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionSource;
 use App\Entity\Guess;
 use App\Entity\Membership;
 use App\Entity\SportMatch;
@@ -229,9 +230,20 @@ final class GuessMatrixVisibilityTest extends WebTestCase
         $over->popEvents();
         $em->persist($over);
 
+        $overSource = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $over,
+            matchSource: $finished->matchSource,
+            addedAt: $now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+        );
+        $over->attachSource($overSource);
+        $em->persist($overSource);
+
         $em->persist(new CompetitionMatchSelection(
             id: Uuid::v7(),
             competition: $over,
+            competitionSource: $overSource,
             sportMatch: $finished,
             addedAt: $now,
         ));

@@ -37,7 +37,11 @@ final readonly class UpdateCompetitionTeamFilterHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $editor = $this->userRepository->get($command->editorId);
 
-        if (CompetitionMatchSelectionMode::Teams !== $competition->selectionMode) {
+        // TODO(C3): take the layer id from the command so a multi-source
+        // competition can edit each of its team-filter layers separately.
+        $layer = $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+
+        if (CompetitionMatchSelectionMode::Teams !== $layer->selectionMode) {
             throw new \DomainException('Filtr týmů lze upravovat jen u soutěží se zápasy vybraných týmů.');
         }
 
@@ -52,8 +56,8 @@ final readonly class UpdateCompetitionTeamFilterHandler
         foreach ($command->teamIds as $teamId) {
             $team = $this->teamRepository->get($teamId);
 
-            if (!$this->teamResolver->belongsToSourceScope($competition->matchSource, $team)) {
-                throw TeamNotInSource::create($teamId, $competition->matchSource->id);
+            if (!$this->teamResolver->belongsToSourceScope($layer->matchSource, $team)) {
+                throw TeamNotInSource::create($teamId, $layer->matchSource->id);
             }
 
             $wanted[$team->id->toRfc4122()] = $team;
@@ -82,6 +86,7 @@ final readonly class UpdateCompetitionTeamFilterHandler
             $this->teamFilterRepository->save(new CompetitionTeamFilter(
                 id: $this->identity->next(),
                 competition: $competition,
+                competitionSource: $layer,
                 team: $team,
                 addedAt: $now,
             ));

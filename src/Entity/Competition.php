@@ -24,6 +24,8 @@ use App\Event\PremiumConfirmed;
 use App\Event\PremiumDowngraded;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
 use App\Exception\CompetitionTipsLockTimeInvalid;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -84,11 +86,33 @@ class Competition implements EntityWithEvents, SoftDeletable
     #[ORM\Column(options: ['default' => 60])]
     public private(set) int $tipChangeOffsetMinutes = 60;
 
-    /** All ⇒ every source match belongs here; Subset ⇒ only `CompetitionMatchSelection` rows. */
+    /**
+     * The competition's match scope: an ordered list of {@see CompetitionSource}
+     * layers whose UNION is „which matches are in this soutěž". Never read this
+     * collection to answer that question directly — ask
+     * {@see \App\Service\Competition\CompetitionMatchProvider}, the single
+     * authority that all three membership implementations agree on.
+     *
+     * @var Collection<int, CompetitionSource>
+     */
+    #[ORM\OneToMany(mappedBy: 'competition', targetEntity: CompetitionSource::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    private Collection $sourceLinks;
+
+    /**
+     * Legacy mirror of the FIRST layer's mode, kept only until every reader is
+     * moved onto {@see $sources}. Writers must keep it in sync with layer 0.
+     *
+     * @deprecated read the layer ({@see CompetitionSource::$selectionMode})
+     */
     #[ORM\Column(enumType: CompetitionMatchSelectionMode::class, options: ['default' => CompetitionMatchSelectionMode::All->value])]
     public private(set) CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All;
 
-    /** Only meaningful in All mode — Subset selections always win over this flag. */
+    /**
+     * Legacy mirror of the FIRST layer's playoff flag.
+     *
+     * @deprecated read the layer ({@see CompetitionSource::$includePlayoff})
+     */
     #[ORM\Column(options: ['default' => true])]
     public private(set) bool $includePlayoff = true;
 
@@ -152,6 +176,43 @@ class Competition implements EntityWithEvents, SoftDeletable
         get => null === $this->deletedAt;
     }
 
+    /**
+     * The competition's scope layers, in display order.
+     *
+     * @var list<CompetitionSource>
+     */
+    public array $sources {
+        get => array_values($this->sourceLinks->toArray());
+    }
+
+    /** More than one zdroj zápasů feeds this competition. */
+    public bool $isMultiSource {
+        get => $this->sourceLinks->count() > 1;
+    }
+
+    /**
+     * „The schedule is known-complete" — every zdroj feeding this competition
+     * has been marked completed („poslední zápas"). This, plus „no included
+     * match is still unsettled", is what ends a competition; with several
+     * layers a single un-finished source keeps the whole soutěž open, exactly
+     * as the single-source rule did before.
+     */
+    public bool $scheduleIsComplete {
+        get {
+            if (0 === $this->sourceLinks->count()) {
+                return false;
+            }
+
+            foreach ($this->sourceLinks as $link) {
+                if (!$link->matchSource->isCompleted) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     public function __construct(
         #[ORM\Id]
         #[ORM\Column(type: UuidType::NAME, unique: true)]
@@ -189,6 +250,7 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->monetization = $monetization;
         $this->isGlobal = $isGlobal;
         $this->entryFeeCredits = $entryFeeCredits;
+        $this->sourceLinks = new ArrayCollection();
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new CompetitionCreated(
@@ -198,6 +260,56 @@ class Competition implements EntityWithEvents, SoftDeletable
             name: $this->name,
             occurredOn: $this->createdAt,
         ));
+    }
+
+    /**
+     * Attaches a scope layer, keeping the in-memory collection authoritative for
+     * the rest of the transaction (the provider reads it straight after a
+     * competition is composed). The legacy {@see $selectionMode} /
+     * {@see $includePlayoff} mirror follows the FIRST layer.
+     */
+    public function attachSource(CompetitionSource $source): void
+    {
+        if ($this->sourceLinks->contains($source)) {
+            return;
+        }
+
+        $this->sourceLinks->add($source);
+        $this->syncLegacyScopeMirror();
+    }
+
+    public function detachSource(CompetitionSource $source): void
+    {
+        $this->sourceLinks->removeElement($source);
+        $this->syncLegacyScopeMirror();
+    }
+
+    /** The layer feeding this competition from the given zdroj, if any. */
+    public function sourceFor(Uuid $matchSourceId): ?CompetitionSource
+    {
+        foreach ($this->sourceLinks as $link) {
+            if ($link->matchSource->id->equals($matchSourceId)) {
+                return $link;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Re-points the legacy scope mirror at the first layer. Called on every
+     * layer mutation; drops out with the two deprecated columns.
+     */
+    public function syncLegacyScopeMirror(): void
+    {
+        $first = $this->sources[0] ?? null;
+
+        if (null === $first) {
+            return;
+        }
+
+        $this->selectionMode = $first->selectionMode;
+        $this->includePlayoff = $first->includePlayoff;
     }
 
     public function updateDetails(

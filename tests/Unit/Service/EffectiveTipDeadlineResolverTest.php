@@ -8,6 +8,7 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionMatchSetting;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
@@ -900,6 +901,7 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
         $this->selections[$competition->id->toRfc4122()][] = new CompetitionMatchSelection(
             id: Uuid::v7(),
             competition: $competition,
+            competitionSource: $competition->sources[0],
             sportMatch: $match,
             addedAt: new \DateTimeImmutable($addedAt),
         );
@@ -953,6 +955,13 @@ final class EffectiveTipDeadlineResolverTest extends TestCase
             selectionMode: $selectionMode,
         );
         $competition->popEvents();
+        $competition->attachSource(new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $competition->matchSource,
+            addedAt: new \DateTimeImmutable($createdAt),
+            selectionMode: $selectionMode,
+        ));
 
         return $competition;
     }

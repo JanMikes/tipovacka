@@ -6,6 +6,7 @@ namespace App\Service\Competition;
 
 use App\Entity\Competition;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionSource;
 use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
@@ -16,6 +17,7 @@ use App\Exception\GlobalCompetitionRequiresCuratedSource;
 use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\CompetitionSourceRepository;
 use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\MembershipRepository;
 use App\Repository\TeamRepository;
@@ -37,6 +39,7 @@ final readonly class GlobalCompetitionComposer
         private CompetitionRepository $competitionRepository,
         private MembershipRepository $membershipRepository,
         private CompetitionRuleConfigurationRepository $ruleConfigurationRepository,
+        private CompetitionSourceRepository $competitionSourceRepository,
         private CompetitionTeamFilterRepository $teamFilterRepository,
         private TeamRepository $teamRepository,
         private TeamResolver $teamResolver,
@@ -93,8 +96,20 @@ final readonly class GlobalCompetitionComposer
 
         $this->competitionRepository->save($competition);
 
+        $layer = new CompetitionSource(
+            id: $this->identity->next(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $now,
+            selectionMode: $selectionMode,
+            includePlayoff: true,
+            position: 0,
+        );
+        $this->competitionSourceRepository->save($layer);
+        $competition->attachSource($layer);
+
         if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
-            $this->createTeamFilters($filterTeamIds, $matchSource, $competition, $now);
+            $this->createTeamFilters($filterTeamIds, $layer, $now);
         }
 
         $this->membershipRepository->save(new Membership(
@@ -118,10 +133,10 @@ final readonly class GlobalCompetitionComposer
      */
     private function createTeamFilters(
         array $filterTeamIds,
-        MatchSource $matchSource,
-        Competition $competition,
+        CompetitionSource $layer,
         \DateTimeImmutable $now,
     ): void {
+        $matchSource = $layer->matchSource;
         $seen = [];
 
         foreach ($filterTeamIds as $teamId) {
@@ -140,7 +155,8 @@ final readonly class GlobalCompetitionComposer
 
             $this->teamFilterRepository->save(new CompetitionTeamFilter(
                 id: $this->identity->next(),
-                competition: $competition,
+                competition: $layer->competition,
+                competitionSource: $layer,
                 team: $team,
                 addedAt: $now,
             ));

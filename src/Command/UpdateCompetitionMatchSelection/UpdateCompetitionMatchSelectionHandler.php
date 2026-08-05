@@ -37,7 +37,11 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         $competition = $this->competitionRepository->get($command->competitionId);
         $editor = $this->userRepository->get($command->editorId);
 
-        if (CompetitionMatchSelectionMode::Subset !== $competition->selectionMode) {
+        // TODO(C3): take the layer id from the command so a multi-source
+        // competition can edit each of its subset layers separately.
+        $layer = $competition->sources[0] ?? throw new \DomainException('Soutěž nemá žádný zdroj zápasů.');
+
+        if (CompetitionMatchSelectionMode::Subset !== $layer->selectionMode) {
             throw new \DomainException('Výběr zápasů lze upravovat jen u soutěží s vybranými zápasy.');
         }
 
@@ -53,7 +57,7 @@ final readonly class UpdateCompetitionMatchSelectionHandler
         foreach ($command->selectedMatchIds as $sportMatchId) {
             $sportMatch = $this->sportMatchRepository->get($sportMatchId);
 
-            if (!$sportMatch->matchSource->id->equals($competition->matchSource->id)
+            if (!$sportMatch->matchSource->id->equals($layer->matchSource->id)
                 || null !== $sportMatch->deletedAt
                 || $sportMatch->isCancelled
             ) {
@@ -95,6 +99,7 @@ final readonly class UpdateCompetitionMatchSelectionHandler
             $this->selectionRepository->save(new CompetitionMatchSelection(
                 id: $this->identity->next(),
                 competition: $competition,
+                competitionSource: $layer,
                 sportMatch: $sportMatch,
                 addedAt: $addedAt,
             ));

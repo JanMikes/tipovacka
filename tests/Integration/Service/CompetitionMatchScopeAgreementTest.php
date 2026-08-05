@@ -136,6 +136,7 @@ final class CompetitionMatchScopeAgreementTest extends IntegrationTestCase
         $this->entityManager()->persist(new CompetitionTeamFilter(
             id: Uuid::fromString('019eeee1-0000-7000-8000-0000000000b1'),
             competition: $competition,
+            competitionSource: $competition->sources[0],
             team: $team,
             addedAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
         ));

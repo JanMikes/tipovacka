@@ -7,11 +7,13 @@ namespace App\Tests\Unit\Entity;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\CompetitionMatchSelection;
+use App\Entity\CompetitionSource;
 use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\Team;
 use App\Entity\User;
+use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Uid\Uuid;
@@ -67,16 +69,27 @@ final class CompetitionMatchSelectionEntityTest extends TestCase
         );
         $sportMatch->popEvents();
 
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $now,
+            selectionMode: CompetitionMatchSelectionMode::Subset,
+        );
+        $competition->attachSource($layer);
+
         $selectionId = Uuid::fromString(AppFixtures::SUBSET_SELECTION_SCHEDULED_ID);
         $selection = new CompetitionMatchSelection(
             id: $selectionId,
             competition: $competition,
+            competitionSource: $layer,
             sportMatch: $sportMatch,
             addedAt: $now,
         );
 
         self::assertSame($selectionId, $selection->id);
         self::assertSame($competition, $selection->competition);
+        self::assertSame($layer, $selection->competitionSource);
         self::assertSame($sportMatch, $selection->sportMatch);
         self::assertSame($now, $selection->addedAt);
     }
