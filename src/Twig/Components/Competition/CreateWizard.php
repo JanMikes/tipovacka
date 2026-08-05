@@ -21,9 +21,12 @@ use App\Repository\SportMatchRepository;
 use App\Repository\SportRepository;
 use App\Repository\TeamRepository;
 use App\Service\Competition\PinGenerator;
+use App\Service\Competition\ScopeDraftResolver;
 use App\Service\Competition\ShareableLinkTokenGenerator;
 use App\Service\Credits\PricingConfig;
 use App\Service\Scoring\RulePresetProvider;
+use App\Value\CompetitionSourceSpec;
+use App\Value\ScopeDraft;
 use App\Voter\MatchSourceVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -36,6 +39,7 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Uid\Uuid;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -91,6 +95,32 @@ final class CreateWizard extends AbstractController
 
     #[LiveProp(writable: true)]
     public string $sportId = Sport::FOOTBALL_ID;
+
+    /**
+     * Committed scope layers, in display order — the „košík" of zdroje the
+     * soutěž draws from. Plain arrays so the whole basket survives the
+     * LiveComponent round trip; {@see layerSpecs} turns them into
+     * {@see CompetitionSourceSpec} at submit time.
+     *
+     * An empty `sourceId` means „Moje zápasy" — the competition's own private
+     * zdroj, created on demand.
+     *
+     * @var list<array{sourceId: string, mode: string, includePlayoff: bool, matchIds: list<string>, teamIds: list<string>}>
+     */
+    #[LiveProp(writable: true)]
+    public array $layers = [];
+
+    /**
+     * Whether the „add a zdroj" editor is open. It is the whole step while the
+     * basket is empty, so a single-source soutěž — still the overwhelmingly
+     * common one — is composed exactly as it was before the basket existed.
+     */
+    #[LiveProp(writable: true)]
+    public bool $draftOpen = true;
+
+    /** Index of the layer being re-edited, or null while adding a new one. */
+    #[LiveProp]
+    public ?int $editingIndex = null;
 
     #[LiveProp(writable: true)]
     public string $sourceId = '';
@@ -150,6 +180,7 @@ final class CreateWizard extends AbstractController
         private readonly RulePresetProvider $rulePresetProvider,
         private readonly PinGenerator $pinGenerator,
         private readonly ShareableLinkTokenGenerator $linkTokenGenerator,
+        private readonly ScopeDraftResolver $scopeDraftResolver,
         private readonly QueryBus $queryBus,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
@@ -182,6 +213,102 @@ final class CreateWizard extends AbstractController
     // ---- Read models for the template ------------------------------------
 
     /**
+     * The basket rows: one card per committed layer, with the copy describing
+     * what it contributes. „Moje zápasy" is a layer like any other — the user
+     * never meets the word „zdroj" for it.
+     *
+     * @var list<array{index: int, name: string, sportName: string, scope: string, isOwnMatches: bool, matchCount: int}>
+     */
+    public array $layerCards {
+        get {
+            $counts = $this->layerMatchCounts;
+            $cards = [];
+
+            foreach ($this->layers as $index => $layer) {
+                $source = '' === $layer['sourceId'] ? null : ($this->allSourcesById[$layer['sourceId']] ?? null);
+
+                $cards[] = [
+                    'index' => $index,
+                    'name' => null === $source ? 'Moje zápasy' : $source->name,
+                    'sportName' => null === $source ? $this->selectedSport->name : $source->sport->name,
+                    'scope' => $this->scopeLabel($layer),
+                    'isOwnMatches' => null === $source,
+                    'matchCount' => $counts[$index] ?? 0,
+                ];
+            }
+
+            return $cards;
+        }
+    }
+
+    /**
+     * How many matches each committed layer contributes on its own — resolved
+     * one layer at a time so a card can say „306 zápasů" without the user
+     * having to guess what „Všechny zápasy" means in practice.
+     *
+     * @var array<int, int>
+     */
+    public array $layerMatchCounts {
+        get {
+            $counts = [];
+
+            foreach ($this->layers as $index => $layer) {
+                $counts[$index] = $this->scopeDraftResolver->resolve([$this->specFor($layer)])->matchCount;
+            }
+
+            return $counts;
+        }
+    }
+
+    /**
+     * The whole basket resolved: the fixture list the soutěž would start with,
+     * its span, and any fixture taken twice from different zdroje.
+     */
+    public ScopeDraft $scopeDraft {
+        get => $this->scopeDraftResolver->resolve($this->layerSpecs);
+    }
+
+    /** @var list<CompetitionSourceSpec> */
+    public array $layerSpecs {
+        get {
+            $specs = [];
+
+            foreach ($this->layers as $layer) {
+                $specs[] = $this->specFor($layer);
+            }
+
+            return $specs;
+        }
+    }
+
+    public bool $hasLayers {
+        get => [] !== $this->layers;
+    }
+
+    /**
+     * The sport every further zdroj must match, once the first layer fixed it.
+     * Null while the basket is empty. Rules are configured once per soutěž and
+     * phrased in the sport's own words, so a mixed scope has no coherent
+     * ruleset — see .docs/DOMAIN.md §Core model.
+     */
+    public ?Sport $lockedSport {
+        get {
+            $first = $this->layers[0] ?? null;
+
+            if (null === $first) {
+                return null;
+            }
+
+            if ('' === $first['sourceId']) {
+                return $this->selectedSport;
+            }
+
+            return ($this->allSourcesById[$first['sourceId']] ?? null)?->sport;
+        }
+    }
+
+
+    /**
      * Curated sources plus the user's own private sources — the set the wizard
      * offers as „Zdroj zápasů".
      *
@@ -203,7 +330,53 @@ final class CreateWizard extends AbstractController
                 }
             }
 
+            $locked = $this->lockedSport;
+            $taken = [];
+
+            foreach ($this->layers as $index => $layer) {
+                if ('' !== $layer['sourceId'] && $index !== $this->editingIndex) {
+                    $taken[$layer['sourceId']] = true;
+                }
+            }
+
+            $sources = array_filter(
+                $sources,
+                // One sport per soutěž, and a zdroj already in the basket is not
+                // offered again — adding it twice would mean the same union.
+                static fn (MatchSource $source): bool => (null === $locked || $source->sport->id->equals($locked->id))
+                    && !isset($taken[$source->id->toRfc4122()]),
+            );
+
             return array_values($sources);
+        }
+    }
+
+    /**
+     * Every zdroj the user may reference, INCLUDING those already basketed —
+     * `availableSources` hides those, but the basket still has to render their
+     * names. Keyed by UUID.
+     *
+     * @var array<string, MatchSource>
+     */
+    public array $allSourcesById {
+        get {
+            $sources = $this->matchSourceRepository->findActiveCurated();
+
+            if (!$this->isGlobalKind) {
+                foreach ($this->matchSourceRepository->findPrivateByOwner($this->currentUser()->id) as $private) {
+                    if ($private->isActive) {
+                        $sources[] = $private;
+                    }
+                }
+            }
+
+            $byId = [];
+
+            foreach ($sources as $source) {
+                $byId[$source->id->toRfc4122()] = $source;
+            }
+
+            return $byId;
         }
     }
 
@@ -404,6 +577,114 @@ final class CreateWizard extends AbstractController
 
     // ---- Actions ---------------------------------------------------------
 
+    /**
+     * Commits the draft editor into the basket. This is the ONE place a layer
+     * is added, so the sport lock and the „already in the basket" rule are
+     * enforced once rather than at every entry point.
+     */
+    #[LiveAction]
+    public function addLayer(): void
+    {
+        $this->errorMessage = null;
+
+        $layer = $this->draftLayer();
+
+        if (null === $layer) {
+            return;
+        }
+
+        if (null !== $this->editingIndex && isset($this->layers[$this->editingIndex])) {
+            $this->layers[$this->editingIndex] = $layer;
+        } else {
+            $this->layers[] = $layer;
+        }
+
+        $this->resetDraft();
+        // Composing more than one zdroj is the exception, so the editor closes
+        // and the basket becomes the step. „Přidat zdroj" reopens it.
+        $this->draftOpen = false;
+    }
+
+    #[LiveAction]
+    public function editLayer(#[LiveArg] int $index): void
+    {
+        if (!isset($this->layers[$index])) {
+            return;
+        }
+
+        $layer = $this->layers[$index];
+
+        $this->errorMessage = null;
+        $this->editingIndex = $index;
+        $this->sourceId = $layer['sourceId'];
+        $this->fromScratch = '' === $layer['sourceId'];
+        $this->selectionMode = $layer['mode'];
+        $this->includePlayoff = $layer['includePlayoff'];
+        $this->selectedMatchIds = $layer['matchIds'];
+        $this->selectedTeamIdsCsv = implode(',', $layer['teamIds']);
+        $this->draftOpen = true;
+    }
+
+    #[LiveAction]
+    public function removeLayer(#[LiveArg] int $index): void
+    {
+        if (!isset($this->layers[$index])) {
+            return;
+        }
+
+        $remaining = $this->layers;
+        unset($remaining[$index]);
+        $this->layers = array_values($remaining);
+        $this->errorMessage = null;
+
+        if ([] === $this->layers) {
+            $this->draftOpen = true;
+        }
+    }
+
+    /** Opens the editor for a NEW zdroj (as opposed to re-editing one). */
+    #[LiveAction]
+    public function startLayer(): void
+    {
+        $this->errorMessage = null;
+        $this->resetDraft();
+        $this->draftOpen = true;
+    }
+
+    /**
+     * Adds „Moje zápasy" — the competition's own private zdroj. The user enters
+     * its matches after the soutěž exists, so it needs no editor.
+     */
+    #[LiveAction]
+    public function addOwnMatchesLayer(): void
+    {
+        $this->errorMessage = null;
+
+        foreach ($this->layers as $layer) {
+            if ('' === $layer['sourceId']) {
+                return;
+            }
+        }
+
+        $this->layers[] = [
+            'sourceId' => '',
+            'mode' => 'all',
+            'includePlayoff' => true,
+            'matchIds' => [],
+            'teamIds' => [],
+        ];
+        $this->resetDraft();
+        $this->draftOpen = false;
+    }
+
+    #[LiveAction]
+    public function cancelLayer(): void
+    {
+        $this->errorMessage = null;
+        $this->resetDraft();
+        $this->draftOpen = [] === $this->layers;
+    }
+
     #[LiveAction]
     public function next(): void
     {
@@ -485,16 +766,33 @@ final class CreateWizard extends AbstractController
             return $this->submitGlobal($user);
         }
 
-        $source = $this->fromScratch ? null : $this->selectedSource;
+        $specs = $this->layerSpecs;
 
-        if (!$this->fromScratch) {
-            if (null === $source) {
-                $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+        if ([] === $specs) {
+            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
 
-                return null;
+            return null;
+        }
+
+        // The first layer travels in the command's own source fields, the rest
+        // as specs — the command reads as „this soutěž, and also these zdroje".
+        $first = $specs[0];
+        $rest = array_slice($specs, 1);
+        $ownMatchesFirst = null === $first->matchSourceId;
+        $source = null;
+
+        foreach ($specs as $spec) {
+            if (null === $spec->matchSourceId) {
+                continue;
             }
 
-            $this->denyAccessUnlessGranted(MatchSourceVoter::CREATE_COMPETITION, $source);
+            // Every basketed zdroj is authorised, not just the headline one.
+            $basketed = $this->matchSourceRepository->get($spec->matchSourceId);
+            $this->denyAccessUnlessGranted(MatchSourceVoter::CREATE_COMPETITION, $basketed);
+
+            if ($spec === $first) {
+                $source = $basketed;
+            }
         }
 
         try {
@@ -503,14 +801,15 @@ final class CreateWizard extends AbstractController
                 name: trim($this->name),
                 description: $this->trimmedDescription(),
                 matchSourceId: $source?->id,
-                sportId: $this->fromScratch ? Uuid::fromString($this->sportId) : null,
-                fromScratch: $this->fromScratch,
+                sportId: $ownMatchesFirst ? Uuid::fromString($this->sportId) : null,
+                fromScratch: $ownMatchesFirst,
                 withPin: $this->withPin,
                 monetization: CompetitionMonetization::from($this->monetization),
-                selectionMode: $this->selectionModeEnum(),
-                includePlayoff: $this->includePlayoff,
-                selectedMatchIds: $this->selectedMatchUuids(),
-                filterTeamIds: $this->filterTeamUuids(),
+                selectionMode: $first->selectionMode,
+                includePlayoff: $first->includePlayoff,
+                selectedMatchIds: $first->selectedMatchIds,
+                filterTeamIds: $first->filterTeamIds,
+                additionalSources: $rest,
                 ruleChanges: $this->ruleChanges(),
                 inviteEmails: '' === trim($this->inviteEmailsRaw) ? [] : [$this->inviteEmailsRaw],
                 pin: $this->withPin ? $this->pin : null,
@@ -525,7 +824,7 @@ final class CreateWizard extends AbstractController
 
         $competition = $this->extractCompetition($envelope);
 
-        if ($this->fromScratch) {
+        if ($ownMatchesFirst) {
             $this->addFlash('success', 'Soutěž je připravená. Teď přidejte zápasy — ručně, nebo nahrajte celý rozpis.');
 
             return $this->redirectToRoute('match_source_detail', [
@@ -554,13 +853,15 @@ final class CreateWizard extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
 
-        $source = $this->selectedSource;
+        $first = $this->layerSpecs[0] ?? null;
 
-        if (null === $source) {
+        if (null === $first || null === $first->matchSourceId) {
             $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
 
             return null;
         }
+
+        $source = $this->matchSourceRepository->get($first->matchSourceId);
 
         try {
             $envelope = $this->commandBus->dispatch(new CreateGlobalCompetitionCommand(
@@ -571,8 +872,10 @@ final class CreateWizard extends AbstractController
                 description: $this->trimmedDescription(),
                 monetization: CompetitionMonetization::from($this->monetization),
                 ruleChanges: $this->ruleChanges(),
-                selectionMode: $this->isTeams ? CompetitionMatchSelectionMode::Teams : CompetitionMatchSelectionMode::All,
-                filterTeamIds: $this->filterTeamUuids(),
+                selectionMode: CompetitionMatchSelectionMode::Teams === $first->selectionMode
+                    ? CompetitionMatchSelectionMode::Teams
+                    : CompetitionMatchSelectionMode::All,
+                filterTeamIds: $first->filterTeamIds,
             ));
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
@@ -626,30 +929,24 @@ final class CreateWizard extends AbstractController
             return false;
         }
 
-        if ($this->fromScratch) {
-            if (null === $this->sportRepository->find(Uuid::fromString($this->sportId))) {
-                $this->errorMessage = 'Vyberte prosím sport.';
+        if ($this->fromScratch && null === $this->sportRepository->find(Uuid::fromString($this->sportId))) {
+            $this->errorMessage = 'Vyberte prosím sport.';
 
+            return false;
+        }
+
+        // Leaving the step with the editor still open and usable commits it, so
+        // the one-zdroj case never has to press „Přidat" before „Pokračovat".
+        if ($this->draftOpen && ($this->fromScratch || null !== $this->selectedSource)) {
+            $this->addLayer();
+
+            if (null !== $this->errorMessage) {
                 return false;
             }
-
-            return true;
         }
 
-        if (null === $this->selectedSource) {
+        if ([] === $this->layers) {
             $this->errorMessage = 'Vyberte zdroj zápasů, nebo zvolte „Vytvořit soutěž od začátku".';
-
-            return false;
-        }
-
-        if ($this->isSubset && [] === $this->selectedMatchUuids()) {
-            $this->errorMessage = 'Vyberte prosím alespoň jeden zápas.';
-
-            return false;
-        }
-
-        if ($this->isTeams && [] === $this->filterTeamUuids()) {
-            $this->errorMessage = 'Vyberte prosím alespoň jeden tým.';
 
             return false;
         }
@@ -686,15 +983,6 @@ final class CreateWizard extends AbstractController
         }
 
         return $result;
-    }
-
-    private function selectionModeEnum(): CompetitionMatchSelectionMode
-    {
-        return match (true) {
-            $this->isTeams => CompetitionMatchSelectionMode::Teams,
-            $this->isSubset => CompetitionMatchSelectionMode::Subset,
-            default => CompetitionMatchSelectionMode::All,
-        };
     }
 
     /**
@@ -783,5 +1071,109 @@ final class CreateWizard extends AbstractController
         }
 
         return $result;
+    }
+
+    // ---- Basket helpers ---------------------------------------------------
+
+    /**
+     * The draft editor's current state as a basket layer, or null (with
+     * `$errorMessage` set) when it does not describe a usable one.
+     *
+     * @return array{sourceId: string, mode: string, includePlayoff: bool, matchIds: list<string>, teamIds: list<string>}|null
+     */
+    private function draftLayer(): ?array
+    {
+        if ($this->fromScratch) {
+            return [
+                'sourceId' => '',
+                'mode' => 'all',
+                'includePlayoff' => true,
+                'matchIds' => [],
+                'teamIds' => [],
+            ];
+        }
+
+        $source = $this->selectedSource;
+
+        if (null === $source) {
+            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+
+            return null;
+        }
+
+        $locked = $this->lockedSport;
+
+        if (null !== $locked && !$source->sport->id->equals($locked->id) && 0 !== $this->editingIndex) {
+            $this->errorMessage = sprintf(
+                'Soutěž může kombinovat jen zdroje stejného sportu — už jste vybrali %s.',
+                mb_strtolower($locked->name),
+            );
+
+            return null;
+        }
+
+        $matchIds = array_map(static fn (Uuid $id): string => $id->toRfc4122(), $this->selectedMatchUuids());
+        $teamIds = array_map(static fn (Uuid $id): string => $id->toRfc4122(), $this->filterTeamUuids());
+
+        if ($this->isSubset && [] === $matchIds) {
+            $this->errorMessage = 'Vyberte prosím alespoň jeden zápas.';
+
+            return null;
+        }
+
+        if ($this->isTeams && [] === $teamIds) {
+            $this->errorMessage = 'Vyberte prosím alespoň jeden tým.';
+
+            return null;
+        }
+
+        return [
+            'sourceId' => $source->id->toRfc4122(),
+            'mode' => $this->selectionMode,
+            'includePlayoff' => $this->includePlayoff,
+            'matchIds' => $matchIds,
+            'teamIds' => $teamIds,
+        ];
+    }
+
+    private function resetDraft(): void
+    {
+        $this->editingIndex = null;
+        $this->sourceId = '';
+        $this->fromScratch = false;
+        $this->selectionMode = 'all';
+        $this->includePlayoff = true;
+        $this->selectedMatchIds = [];
+        $this->selectedTeamIdsCsv = '';
+    }
+
+    /**
+     * @param array{sourceId: string, mode: string, includePlayoff: bool, matchIds: list<string>, teamIds: list<string>} $layer
+     */
+    private function specFor(array $layer): CompetitionSourceSpec
+    {
+        return new CompetitionSourceSpec(
+            matchSourceId: '' === $layer['sourceId'] ? null : Uuid::fromString($layer['sourceId']),
+            selectionMode: CompetitionMatchSelectionMode::from($layer['mode']),
+            includePlayoff: $layer['includePlayoff'],
+            selectedMatchIds: array_map(static fn (string $id): Uuid => Uuid::fromString($id), $layer['matchIds']),
+            filterTeamIds: array_map(static fn (string $id): Uuid => Uuid::fromString($id), $layer['teamIds']),
+        );
+    }
+
+    /**
+     * @param array{sourceId: string, mode: string, includePlayoff: bool, matchIds: list<string>, teamIds: list<string>} $layer
+     */
+    private function scopeLabel(array $layer): string
+    {
+        if ('' === $layer['sourceId']) {
+            return 'Zápasy, které si sami zadáte';
+        }
+
+        return match ($layer['mode']) {
+            'subset' => sprintf('Vybrané zápasy (%d)', count($layer['matchIds'])),
+            'teams' => sprintf('Jen zápasy vybraných týmů (%d)', count($layer['teamIds'])),
+            default => $layer['includePlayoff'] ? 'Všechny zápasy' : 'Všechny zápasy kromě playoff',
+        };
     }
 }

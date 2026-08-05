@@ -106,7 +106,77 @@
                             <input id="wizard-entry-fee" type="number" min="0" class="input" data-model="entryFeeCredits" value="{{ entryFeeCredits }}" />
                             <p class="text-xs leading-relaxed text-white/50">0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.</p>
                         </div>
-                    {% else %}
+                    {% endif %}
+
+                    {# ===== Košík zdrojů — co všechno se v soutěži tipuje ===== #}
+                    {% if this.hasLayers %}
+                        {% set draft = this.scopeDraft %}
+                        <div class="space-y-3 border-t border-white/10 pt-5">
+                            <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                                <span class="field-label">Zápasy soutěže</span>
+                                <span class="text-xs text-white/50">
+                                    Celkem {{ draft.matchCount }} {{ draft.matchCount == 1 ? 'zápas' : (draft.matchCount < 5 ? 'zápasy' : 'zápasů') }}
+                                    {%- if draft.firstKickoff %} · {{ draft.firstKickoff|date('j. n. Y', 'Europe/Prague') }}{% if draft.lastKickoff %} – {{ draft.lastKickoff|date('j. n. Y', 'Europe/Prague') }}{% endif %}{% endif %}
+                                </span>
+                            </div>
+
+                            <div class="space-y-2">
+                                {% for card in this.layerCards %}
+                                    <div class="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-inset p-4">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <twig:ux:icon name="{{ card.isOwnMatches ? 'lucide:pencil' : 'lucide:trophy' }}" class="h-4 w-4 shrink-0 text-white/40" />
+                                                <span class="truncate text-sm font-semibold text-white">{{ card.name }}</span>
+                                            </div>
+                                            <p class="mt-1 text-xs leading-relaxed text-white/50">
+                                                {{ card.scope }}{% if not card.isOwnMatches %} · {{ card.matchCount }} {{ card.matchCount == 1 ? 'zápas' : (card.matchCount < 5 ? 'zápasy' : 'zápasů') }}{% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="flex shrink-0 items-center gap-1">
+                                            {% if not card.isOwnMatches %}
+                                                <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="editLayer" data-live-index-param="{{ card.index }}">Upravit</button>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-ghost btn-sm" aria-label="Odebrat {{ card.name }}"
+                                                    data-action="live#action" data-live-action-param="removeLayer" data-live-index-param="{{ card.index }}">
+                                                <twig:ux:icon name="lucide:x" class="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            {% if draft.hasDuplicates %}
+                                <div class="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
+                                    <div class="flex items-center gap-2">
+                                        <twig:ux:icon name="lucide:triangle-alert" class="h-4 w-4 shrink-0 text-amber-300" />
+                                        <span class="text-sm font-semibold text-amber-100">Některé zápasy máte v soutěži dvakrát</span>
+                                    </div>
+                                    <ul class="mt-2 space-y-1 text-xs leading-relaxed text-amber-100/70">
+                                        {% for group in draft.duplicates %}
+                                            <li>{{ group.label }} — ze zdrojů {{ group.sourceNames|join(' a ') }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    <p class="mt-2 text-xs leading-relaxed text-amber-100/60">Hráči by je tipovali dvakrát. Pokud jde o odvetu nebo opakovaný zápas, nechte je být.</p>
+                                </div>
+                            {% endif %}
+
+                            {% if not draftOpen %}
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="startLayer">
+                                        <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat zdroj zápasů
+                                    </button>
+                                    {% if not isGlobalKind %}
+                                        <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="addOwnMatchesLayer">
+                                            <twig:ux:icon name="lucide:pencil" class="h-4 w-4" /> Vlastní zápasy
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if draftOpen %}
+                    {% if not isGlobalKind and not this.hasLayers %}
                         <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
                             <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                    data-model="fromScratch" {{ fromScratch ? 'checked' }} />
@@ -211,9 +281,44 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                {# W2: the „Zahrnout playoff zápasy" toggle lives on step 2 (Pravidla) now. #}
+                                {# „Dohrávat turnaj?" belongs to THIS layer: only mode „all"
+                                   honours includePlayoff (subset keeps whatever was
+                                   ticked, teams always includes playoff — see
+                                   CompetitionMatchProvider), and the flag now lives on
+                                   the zdroj's layer, so it cannot sit on a later step
+                                   that has no layer in hand. Still exactly ONE control
+                                   writing includePlayoff — never add a second. #}
+                                {% if not isGlobalKind and selectionMode == 'all' %}
+                                    <div class="border-t border-white/10 pt-4">
+                                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Dohrávat turnaj?</div>
+                                        <label class="flex cursor-pointer items-start gap-3">
+                                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                                   data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
+                                            <span class="text-sm">
+                                                <span class="block font-medium text-white">Ano, dohrajeme turnaj — zahrnout playoff zápasy</span>
+                                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když turnaj dohrávat nebudete, soutěž se tipuje jen na základní část.</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                {% endif %}
                             </div>
                         {% endif %}
+                    {% endif %}
+
+                    {% if this.hasLayers or editingIndex is not null %}
+                        <div class="flex flex-wrap gap-2 border-t border-white/10 pt-4">
+                            <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayer">
+                                {{ editingIndex is not null ? 'Uložit změnu' : 'Přidat do soutěže' }}
+                            </button>
+                            <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+                        </div>
+                    {% endif %}
+                    {% endif %}{# draftOpen #}
+
+                    {% if not draftOpen and not this.hasLayers %}
+                        <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="startLayer">
+                            <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat zdroj zápasů
+                        </button>
                     {% endif %}
                 </div>
 
@@ -282,26 +387,6 @@
                         {% endfor %}
                     </div>
                 </div>
-
-                {# W2: playoff scope, moved here from step 1. Only mode „all" honours
-                   `includePlayoff` — subset keeps whatever was ticked, teams always
-                   includes playoff (see CompetitionMatchProvider) — so the visibility
-                   condition must stay as narrow as it is.
-                   W1: reworded to „Dohrávat turnaj?" — this ONE checkbox is the answer
-                   to that question; never add a second control writing includePlayoff. #}
-                {% if not isGlobalKind and not fromScratch and this.selectedSource and selectionMode == 'all' %}
-                    <div class="mt-6 border-t border-white/10 pt-5">
-                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Dohrávat turnaj?</div>
-                        <label class="flex cursor-pointer items-start gap-3">
-                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
-                                   data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
-                            <span class="text-sm">
-                                <span class="block font-medium text-white">Ano, dohrajeme turnaj — zahrnout playoff zápasy</span>
-                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když turnaj dohrávat nebudete, soutěž se tipuje jen na základní část.</span>
-                            </span>
-                        </label>
-                    </div>
-                {% endif %}
 
             {# ================= KROK 3 — Pozvánky ================= #}
             {% elseif step == 3 %}

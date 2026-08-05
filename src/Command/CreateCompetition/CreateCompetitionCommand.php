@@ -6,6 +6,7 @@ namespace App\Command\CreateCompetition;
 
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
+use App\Value\CompetitionSourceSpec;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -16,15 +17,18 @@ use Symfony\Component\Uid\Uuid;
  *
  * Source is XOR: either an existing `$matchSourceId` (curated or the manager's
  * own private source) OR `$fromScratch = true` with a `$sportId` (a hidden
- * private source is created).
+ * private source is created). That pair describes the soutěž's FIRST scope
+ * layer; `$additionalSources` carries every further zdroj it draws from, each
+ * with its own selection mode. All layers must share one sport.
  */
 final readonly class CreateCompetitionCommand
 {
     /**
-     * @param list<Uuid>                                       $selectedMatchIds only used when $selectionMode is Subset
-     * @param list<Uuid>                                       $filterTeamIds    only used when $selectionMode is Teams
-     * @param array<string, array{enabled: bool, points: int}> $ruleChanges      rule identifier → desired state (over the defaults)
-     * @param list<string>                                     $inviteEmails     raw e-mail entries (validated in the handler)
+     * @param list<Uuid>                                       $selectedMatchIds  only used when $selectionMode is Subset
+     * @param list<Uuid>                                       $filterTeamIds     only used when $selectionMode is Teams
+     * @param list<CompetitionSourceSpec>                      $additionalSources further zdroje the soutěž draws from, after the first
+     * @param array<string, array{enabled: bool, points: int}> $ruleChanges       rule identifier → desired state (over the defaults)
+     * @param list<string>                                     $inviteEmails      raw e-mail entries (validated in the handler)
      */
     public function __construct(
         public Uuid $ownerId,
@@ -38,6 +42,7 @@ final readonly class CreateCompetitionCommand
         public bool $includePlayoff = true,
         public array $selectedMatchIds = [],
         public array $filterTeamIds = [],
+        public array $additionalSources = [],
         public array $ruleChanges = [],
         public array $inviteEmails = [],
         public ?string $description = null,

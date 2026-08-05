@@ -10,6 +10,7 @@ use App\Entity\CompetitionInvitation;
 use App\Entity\CompetitionMatchSelection;
 use App\Entity\CompetitionRuleConfiguration;
 use App\Entity\CompetitionTeamFilter;
+use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Entity\User;
@@ -208,33 +209,120 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertStringContainsString('Vybrat jen některé zápasy', $html);
         self::assertStringContainsString('value="teams"', $html);
 
-        self::assertStringNotContainsString('Dohrávat turnaj?', $html);
-        self::assertStringNotContainsString('data-model="includePlayoff"', $html);
+        // The playoff question belongs to the layer being composed, so it is
+        // right here with the mode radios — and it is the ONLY control writing
+        // the flag.
+        self::assertStringContainsString('Dohrávat turnaj?', $html);
+        self::assertSame(1, substr_count($html, 'data-model="includePlayoff"'));
     }
 
     /**
-     * W2 — the playoff toggle now lives on step 2 („Pravidla").
-     * W1 — and it is worded as „Dohrávat turnaj?": ONE control, not two.
+     * The reason the basket exists: one soutěž composed from two zdroje, each
+     * with its own scope. The wizard must create exactly that — not the first
+     * zdroj with the second quietly dropped.
      */
-    public function testPlayoffToggleLivesOnRulesStepWordedAsDohravatTurnaj(): void
+    public function testComposesACompetitionFromTwoZdrojeWithTheirOwnScopes(): void
     {
         $client = static::createClient();
         $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
 
         $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
-        $html = (string) $component
-            ->set('name', 'Playoff v kroku 2')
+
+        $basket = (string) $component
+            ->set('name', 'Dva zdroje')
             ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
-            ->call('next')
+            ->set('selectionMode', 'teams')
+            ->set('selectedTeamIdsCsv', AppFixtures::TEAM_SPARTA_ID)
+            ->call('addLayer')
+            ->set('sourceId', AppFixtures::PRIVATE_SOURCE_ID)
+            ->set('selectionMode', 'all')
+            ->call('addLayer')
             ->render();
 
-        self::assertStringContainsString('Vyberte pravidla', $html);
-        self::assertStringContainsString('Dohrávat turnaj?', $html);
-        self::assertStringContainsString('zahrnout playoff zápasy', $html);
+        // Both zdroje are in the basket, each stating its own scope.
+        self::assertStringContainsString('Jen zápasy vybraných týmů (1)', $basket);
+        self::assertStringContainsString('Všechny zápasy', $basket);
 
-        // Exactly ONE control writes includePlayoff — a second one would be the bug
-        // the product decision exists to prevent.
-        self::assertSame(1, substr_count($html, 'data-model="includePlayoff"'));
+        $component->call('next')->call('next')->call('next')->call('submit');
+
+        $competition = $this->competitionByName($client, 'Dva zdroje');
+
+        self::assertCount(2, $competition->sources);
+        self::assertTrue($competition->isMultiSource);
+
+        $scopeBySource = [];
+
+        foreach ($competition->sources as $layer) {
+            $scopeBySource[$layer->matchSource->id->toRfc4122()] = $layer->selectionMode;
+        }
+
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $scopeBySource[AppFixtures::PUBLIC_SOURCE_ID]);
+        self::assertSame(CompetitionMatchSelectionMode::All, $scopeBySource[AppFixtures::PRIVATE_SOURCE_ID]);
+    }
+
+    /**
+     * One sport per soutěž: the rules are configured once, in the sport's own
+     * vocabulary. Rather than letting someone pick a hockey zdroj and then
+     * refusing it, the picker stops offering other sports the moment the first
+     * layer fixes one — and a zdroj already in the basket stops being offered
+     * too, since adding it twice would mean the same union.
+     */
+    public function testThePickerNarrowsToTheChosenSportAndDropsBasketedZdroje(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $hockeySourceId = $this->seedHockeySource($client);
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        // Before anything is chosen, both sports are on offer.
+        $empty = (string) $component->set('name', 'Jeden sport')->render();
+        self::assertStringContainsString($hockeySourceId, $empty);
+
+        $afterFootball = (string) $component
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('addLayer')
+            ->call('startLayer')
+            ->render();
+
+        self::assertStringNotContainsString($hockeySourceId, $afterFootball);
+        // …and the football zdroj already in the basket is not offered again.
+        self::assertStringNotContainsString('value="'.AppFixtures::PUBLIC_SOURCE_ID.'"', $afterFootball);
+        // The other football zdroj still is.
+        self::assertStringContainsString(AppFixtures::PRIVATE_SOURCE_ID, $afterFootball);
+    }
+
+    /**
+     * W1 — „Dohrávat turnaj?": ONE control, not two. It sits in the layer
+     * editor because the flag lives on the zdroj's scope layer; a later step
+     * has no layer in hand to write it to. Once the layer is committed the
+     * control is gone, and its answer is visible on the basket card instead.
+     */
+    public function testPlayoffToggleIsWordedAsDohravatTurnajAndLeavesWithItsLayer(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+
+        $editing = (string) $component
+            ->set('name', 'Playoff u vrstvy')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->render();
+
+        self::assertStringContainsString('Dohrávat turnaj?', $editing);
+        self::assertStringContainsString('zahrnout playoff zápasy', $editing);
+        self::assertSame(1, substr_count($editing, 'data-model="includePlayoff"'));
+
+        // Committed: the toggle went with the editor, and the card states the answer.
+        $committed = (string) $component
+            ->set('includePlayoff', false)
+            ->call('addLayer')
+            ->render();
+
+        self::assertStringNotContainsString('data-model="includePlayoff"', $committed);
+        self::assertStringContainsString('Všechny zápasy kromě playoff', $committed);
     }
 
     /**
@@ -477,6 +565,33 @@ final class CreateWizardComponentTest extends WebTestCase
     // ---- helpers ----
 
     /** Renders step 2 („Pravidla") over a curated source. */
+    /** A curated zdroj of ANOTHER sport, so the sport lock has something to refuse. */
+    private function seedHockeySource(KernelBrowser $client): string
+    {
+        $em = $this->em($client);
+
+        $sport = $em->find(Sport::class, Uuid::fromString(Sport::HOCKEY_ID));
+        self::assertInstanceOf(Sport::class, $sport);
+        $owner = $this->user($client, AppFixtures::ADMIN_ID);
+
+        $source = new MatchSource(
+            id: Uuid::v7(),
+            sport: $sport,
+            owner: $owner,
+            kind: MatchSourceKind::Curated,
+            name: 'Hokejová extraliga',
+            description: null,
+            startAt: null,
+            endAt: null,
+            createdAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $source->popEvents();
+        $em->persist($source);
+        $em->flush();
+
+        return $source->id->toRfc4122();
+    }
+
     private function renderRulesStep(): string
     {
         $client = static::createClient();

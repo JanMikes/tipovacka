@@ -11,8 +11,10 @@ use App\Entity\CompetitionSource;
 use App\Entity\CompetitionTeamFilter;
 use App\Entity\MatchSource;
 use App\Entity\Membership;
+use App\Entity\Sport;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\MatchSourceKind;
+use App\Exception\CompetitionSourcesSportMismatch;
 use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
@@ -73,7 +75,7 @@ final readonly class CreateCompetitionHandler
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $matchSource = $command->fromScratch
-            ? $this->createPrivateMatchSource($command, $now)
+            ? $this->createPrivateMatchSource($command, null, $now)
             : $this->matchSourceRepository->get($this->requireSourceId($command));
 
         // From-scratch sources hold no matches yet — a subset selection is
@@ -97,26 +99,52 @@ final readonly class CreateCompetitionHandler
 
         $this->competitionRepository->save($competition);
 
-        // The competition's scope is the union of its layers; a freshly created
-        // one starts with exactly the layer the wizard configured.
-        $layer = new CompetitionSource(
-            id: $this->identity->next(),
+        // The competition's scope is the UNION of its layers. The command's own
+        // source fields describe the first one; `additionalSources` the rest.
+        $this->attachLayer(
             competition: $competition,
             matchSource: $matchSource,
-            addedAt: $now,
             selectionMode: $selectionMode,
             includePlayoff: $command->includePlayoff,
+            selectedMatchIds: $command->selectedMatchIds,
+            filterTeamIds: $command->filterTeamIds,
             position: 0,
+            now: $now,
         );
-        $this->competitionSourceRepository->save($layer);
-        $competition->attachSource($layer);
 
-        if (CompetitionMatchSelectionMode::Subset === $selectionMode) {
-            $this->createSelections($command, $layer, $now);
-        }
+        $position = 0;
+        // „Moje zápasy" is ONE private zdroj however many specs ask for it, and
+        // it is the same one a from-scratch competition already made.
+        $ownMatchesSource = $command->fromScratch ? $matchSource : null;
 
-        if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
-            $this->createTeamFilters($command, $layer, $now);
+        foreach ($command->additionalSources as $spec) {
+            $additionalSource = null === $spec->matchSourceId
+                ? $ownMatchesSource ??= $this->createPrivateMatchSource($command, $matchSource->sport, $now)
+                : $this->matchSourceRepository->get($spec->matchSourceId);
+
+            // One sport per soutěž: the rules are configured once, in the
+            // sport's own vocabulary, so a mixed scope has no coherent ruleset.
+            if (!$additionalSource->sport->id->equals($matchSource->sport->id)) {
+                throw CompetitionSourcesSportMismatch::between($matchSource->sport->name, $additionalSource->sport->name);
+            }
+
+            // Two layers over one zdroj would double every match; the union is
+            // already what „add it again" would mean, so the later spec is the
+            // one that counts.
+            if (null !== $competition->sourceFor($additionalSource->id)) {
+                continue;
+            }
+
+            $this->attachLayer(
+                competition: $competition,
+                matchSource: $additionalSource,
+                selectionMode: $spec->selectionMode,
+                includePlayoff: $spec->includePlayoff,
+                selectedMatchIds: $spec->selectedMatchIds,
+                filterTeamIds: $spec->filterTeamIds,
+                position: ++$position,
+                now: $now,
+            );
         }
 
         $this->membershipRepository->save(new Membership(
@@ -142,15 +170,23 @@ final readonly class CreateCompetitionHandler
         return $competition;
     }
 
-    private function createPrivateMatchSource(CreateCompetitionCommand $command, \DateTimeImmutable $now): MatchSource
+    /**
+     * The competition's own private zdroj („Moje zápasy"). Its sport comes from
+     * the command when the soutěž is from-scratch, and otherwise from the zdroj
+     * it is being added ALONGSIDE — an own-matches layer added to an existing
+     * zdroj carries no sport of its own, and all layers share one anyway.
+     */
+    private function createPrivateMatchSource(CreateCompetitionCommand $command, ?Sport $inheritedSport, \DateTimeImmutable $now): MatchSource
     {
-        if (null === $command->sportId) {
+        $sport = null !== $command->sportId ? $this->sportRepository->get($command->sportId) : $inheritedSport;
+
+        if (null === $sport) {
             throw new \InvalidArgumentException('A from-scratch competition requires a sport.');
         }
 
         $matchSource = new MatchSource(
             id: $this->identity->next(),
-            sport: $this->sportRepository->get($command->sportId),
+            sport: $sport,
             owner: $this->userRepository->get($command->ownerId),
             kind: MatchSourceKind::Private,
             name: $command->name,
@@ -165,12 +201,54 @@ final readonly class CreateCompetitionHandler
         return $matchSource;
     }
 
+    /**
+     * Persists one scope layer plus whatever its mode needs (explicit match
+     * selections or team filters). The single place a layer is born, so every
+     * zdroj a soutěž draws from is validated the same way.
+     *
+     * @param list<Uuid> $selectedMatchIds
+     * @param list<Uuid> $filterTeamIds
+     */
+    private function attachLayer(
+        Competition $competition,
+        MatchSource $matchSource,
+        CompetitionMatchSelectionMode $selectionMode,
+        bool $includePlayoff,
+        array $selectedMatchIds,
+        array $filterTeamIds,
+        int $position,
+        \DateTimeImmutable $now,
+    ): void {
+        $layer = new CompetitionSource(
+            id: $this->identity->next(),
+            competition: $competition,
+            matchSource: $matchSource,
+            addedAt: $now,
+            selectionMode: $selectionMode,
+            includePlayoff: $includePlayoff,
+            position: $position,
+        );
+        $this->competitionSourceRepository->save($layer);
+        $competition->attachSource($layer);
+
+        if (CompetitionMatchSelectionMode::Subset === $selectionMode) {
+            $this->createSelections($selectedMatchIds, $layer, $now);
+        }
+
+        if (CompetitionMatchSelectionMode::Teams === $selectionMode) {
+            $this->createTeamFilters($filterTeamIds, $layer, $now);
+        }
+    }
+
+    /**
+     * @param list<Uuid> $selectedMatchIds
+     */
     private function createSelections(
-        CreateCompetitionCommand $command,
+        array $selectedMatchIds,
         CompetitionSource $layer,
         \DateTimeImmutable $now,
     ): void {
-        foreach ($command->selectedMatchIds as $sportMatchId) {
+        foreach ($selectedMatchIds as $sportMatchId) {
             $sportMatch = $this->sportMatchRepository->get($sportMatchId);
 
             // Defensive: only matches of this layer's source can be selected.
@@ -194,15 +272,18 @@ final readonly class CreateCompetitionHandler
      * a foreign / cross-sport team id aborts the whole creation (TeamNotInSource).
      * Duplicate ids collapse to a single row.
      */
+    /**
+     * @param list<Uuid> $filterTeamIds
+     */
     private function createTeamFilters(
-        CreateCompetitionCommand $command,
+        array $filterTeamIds,
         CompetitionSource $layer,
         \DateTimeImmutable $now,
     ): void {
         $matchSource = $layer->matchSource;
         $seen = [];
 
-        foreach ($command->filterTeamIds as $teamId) {
+        foreach ($filterTeamIds as $teamId) {
             $key = $teamId->toRfc4122();
 
             if (isset($seen[$key])) {

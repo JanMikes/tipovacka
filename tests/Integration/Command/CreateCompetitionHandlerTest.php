@@ -18,11 +18,13 @@ use App\Entity\User;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\MatchSourceKind;
+use App\Exception\CompetitionSourcesSportMismatch;
 use App\Exception\InvalidInvitationEmails;
 use App\Exception\TeamNotInSource;
 use App\Rule\ExactScoreRule;
 use App\Rule\ScorerHitRule;
 use App\Tests\Support\IntegrationTestCase;
+use App\Value\CompetitionSourceSpec;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Uid\Uuid;
 
@@ -413,5 +415,122 @@ final class CreateCompetitionHandlerTest extends IntegrationTestCase
             ->setParameter('competitionId', $competitionId)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Additional zdroje become their own scope layers, each keeping its own
+     * selection mode — the union is the soutěž's scope.
+     */
+    public function testAdditionalZdrojeBecomeTheirOwnLayers(): void
+    {
+        $this->commandBus()->dispatch(new CreateCompetitionCommand(
+            ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            name: 'Vrstvená soutěž',
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            sportId: null,
+            fromScratch: false,
+            withPin: false,
+            selectionMode: CompetitionMatchSelectionMode::Teams,
+            filterTeamIds: [Uuid::fromString(AppFixtures::TEAM_SPARTA_ID)],
+            additionalSources: [
+                new CompetitionSourceSpec(
+                    matchSourceId: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
+                    selectionMode: CompetitionMatchSelectionMode::All,
+                    includePlayoff: false,
+                ),
+            ],
+        ));
+
+        $competition = $this->findCompetitionByName('Vrstvená soutěž');
+
+        self::assertCount(2, $competition->sources);
+        self::assertTrue($competition->isMultiSource);
+
+        [$first, $second] = $competition->sources;
+
+        self::assertSame(AppFixtures::PUBLIC_SOURCE_ID, $first->matchSource->id->toRfc4122());
+        self::assertSame(CompetitionMatchSelectionMode::Teams, $first->selectionMode);
+        self::assertSame(0, $first->position);
+
+        self::assertSame(AppFixtures::PRIVATE_SOURCE_ID, $second->matchSource->id->toRfc4122());
+        self::assertSame(CompetitionMatchSelectionMode::All, $second->selectionMode);
+        self::assertFalse($second->includePlayoff);
+        self::assertSame(1, $second->position);
+    }
+
+    /** One sport per soutěž — the last guard, behind the wizard's picker. */
+    public function testAZdrojOfAnotherSportIsRejected(): void
+    {
+        $hockeySource = $this->seedHockeySource();
+
+        $this->expectException(HandlerFailedException::class);
+
+        try {
+            $this->commandBus()->dispatch(new CreateCompetitionCommand(
+                ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+                name: 'Fotbal a hokej',
+                matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+                sportId: null,
+                fromScratch: false,
+                withPin: false,
+                additionalSources: [new CompetitionSourceSpec(matchSourceId: $hockeySource->id)],
+            ));
+        } catch (HandlerFailedException $e) {
+            self::assertInstanceOf(CompetitionSourcesSportMismatch::class, $e->getPrevious());
+
+            throw $e;
+        }
+    }
+
+    /**
+     * „Moje zápasy" asked for twice — or asked for alongside a from-scratch
+     * soutěž — is ONE private zdroj, not several empty ones.
+     */
+    public function testOwnMatchesLayerResolvesToASinglePrivateZdroj(): void
+    {
+        $this->commandBus()->dispatch(new CreateCompetitionCommand(
+            ownerId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            name: 'Vlastní zápasy dvakrát',
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            sportId: null,
+            fromScratch: false,
+            withPin: false,
+            additionalSources: [
+                new CompetitionSourceSpec(matchSourceId: null),
+                new CompetitionSourceSpec(matchSourceId: null),
+            ],
+        ));
+
+        $competition = $this->findCompetitionByName('Vlastní zápasy dvakrát');
+
+        self::assertCount(2, $competition->sources, 'The second „Moje zápasy" must collapse into the first.');
+        self::assertSame(MatchSourceKind::Private, $competition->sources[1]->matchSource->kind);
+    }
+
+    private function seedHockeySource(): MatchSource
+    {
+        $em = $this->entityManager();
+
+        $sport = $em->find(Sport::class, Uuid::fromString(Sport::HOCKEY_ID));
+        self::assertInstanceOf(Sport::class, $sport);
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertInstanceOf(User::class, $owner);
+
+        $source = new MatchSource(
+            id: Uuid::v7(),
+            sport: $sport,
+            owner: $owner,
+            kind: MatchSourceKind::Curated,
+            name: 'Hokejová extraliga',
+            description: null,
+            startAt: null,
+            endAt: null,
+            createdAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $source->popEvents();
+        $em->persist($source);
+        $em->flush();
+
+        return $source;
     }
 }
