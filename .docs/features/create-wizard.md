@@ -56,6 +56,12 @@ selectable source/monetization tiles.
 
 ## Match scope step — a basket of zdroje
 
+> The basket is **not wizard-only**. It lives in the `ComposesMatchScope` trait plus two
+> shared partials (`_scope_basket.html.twig`, `_scope_editor.html.twig`) and is rendered
+> identically by `Competition:ScopeEditor` at `/souteze/{id}/zapasy`, where the organizer
+> edits it for the life of the soutěž — see [competition-scope](competition-scope.md).
+> Everything below therefore describes both surfaces; anything wizard-specific says so.
+
 Step 1's „Zápasy soutěže" is a **basket**. One zdroj's editor offers three selection
 modes (radios bound to the `selectionMode` LiveProp): **Všechny zápasy** (`all`),
 **Podle týmu** (`teams`) and **Vybrat jen některé zápasy** (`subset`, private only).

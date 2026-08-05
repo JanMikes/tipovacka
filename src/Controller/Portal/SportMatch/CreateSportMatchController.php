@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Form\SportMatchFormData;
 use App\Form\SportMatchFormType;
 use App\Repository\MatchSourceRepository;
+use App\Service\Competition\ScopeReturn;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,6 +33,7 @@ final class CreateSportMatchController extends AbstractController
 {
     public function __construct(
         private readonly MatchSourceRepository $matchSourceRepository,
+        private readonly ScopeReturn $scopeReturn,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -43,6 +45,9 @@ final class CreateSportMatchController extends AbstractController
 
         $matchSource = $this->matchSourceRepository->get(Uuid::fromString($matchSourceId));
         $this->denyAccessUnlessGranted(SportMatchVoter::CREATE, $matchSource);
+
+        // „Přišel jsem sem ze soutěže" survives the POST through the form action.
+        $scopeCompetitionId = $this->scopeReturn->competitionId($request);
 
         $formData = new SportMatchFormData();
         $form = $this->createForm(SportMatchFormType::class, $formData, [
@@ -68,6 +73,12 @@ final class CreateSportMatchController extends AbstractController
 
             $this->addFlash('success', 'Zápas byl vytvořen.');
 
+            // Coming from „Zápasy soutěže", the organizer is typing a whole rozpis
+            // in — send them back to it rather than to the new match's page.
+            if (null !== $scopeCompetitionId) {
+                return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+            }
+
             return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
@@ -75,6 +86,7 @@ final class CreateSportMatchController extends AbstractController
             'form' => $form,
             'match_source' => $matchSource,
             'mode' => 'create',
+            'scope_competition_id' => $scopeCompetitionId,
         ]);
     }
 

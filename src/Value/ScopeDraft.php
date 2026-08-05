@@ -18,12 +18,16 @@ use App\Entity\SportMatch;
 final class ScopeDraft
 {
     /**
-     * @param list<SportMatch>            $matches    kickoff-ordered, deduplicated by identity
-     * @param list<DuplicateFixtureGroup> $duplicates fixtures that look like the same real-world match
+     * @param list<SportMatch>            $matches     kickoff-ordered, deduplicated by identity
+     * @param list<DuplicateFixtureGroup> $duplicates  fixtures that look like the same real-world match
+     * @param list<int>                   $layerCounts what each spec contributes ON ITS OWN, in the order
+     *                                                 the specs were given — so a basket card can say
+     *                                                 „306 zápasů" without resolving that layer again
      */
     public function __construct(
         public private(set) array $matches,
         public private(set) array $duplicates,
+        public private(set) array $layerCounts = [],
     ) {
     }
 

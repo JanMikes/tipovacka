@@ -1,0 +1,72 @@
+{#
+    „Zápasy soutěže" — the košík of zdroje, shared by Competition:CreateWizard
+    (step 1) and Competition:ScopeEditor (/souteze/{id}/zapasy). Both components
+    use the ComposesMatchScope trait, so every `this.*` below exists on both.
+
+    Renders nothing while the basket is empty — the editor IS the step then.
+#}
+{% if this.hasLayers %}
+    {% set draft = this.scopeDraft %}
+    <div class="space-y-3 border-t border-white/10 pt-5">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span class="field-label">Zápasy soutěže</span>
+            <span class="text-xs text-white/50">
+                Celkem {{ draft.matchCount }} {{ draft.matchCount|czech_zapas }}
+                {%- if draft.firstKickoff %} · {{ draft.firstKickoff|date('j. n. Y', 'Europe/Prague') }}{% if draft.lastKickoff %} – {{ draft.lastKickoff|date('j. n. Y', 'Europe/Prague') }}{% endif %}{% endif %}
+            </span>
+        </div>
+
+        <div class="space-y-2">
+            {% for card in this.layerCards %}
+                <div class="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-inset p-4">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <twig:ux:icon name="{{ card.isOwnMatches ? 'lucide:pencil' : 'lucide:trophy' }}" class="h-4 w-4 shrink-0 text-white/40" />
+                            <span class="truncate text-sm font-semibold text-white">{{ card.name }}</span>
+                        </div>
+                        <p class="mt-1 text-xs leading-relaxed text-white/50">
+                            {{ card.scope }}{% if not card.isOwnMatches or card.matchCount > 0 %} · {{ card.matchCount }} {{ card.matchCount|czech_zapas }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1">
+                        {% if not card.isOwnMatches %}
+                            <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="editLayer" data-live-index-param="{{ card.index }}">Upravit</button>
+                        {% endif %}
+                        <button type="button" class="btn btn-ghost btn-sm" aria-label="Odebrat {{ card.name }}"
+                                data-action="live#action" data-live-action-param="removeLayer" data-live-index-param="{{ card.index }}">
+                            <twig:ux:icon name="lucide:x" class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if draft.hasDuplicates %}
+            <div class="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
+                <div class="flex items-center gap-2">
+                    <twig:ux:icon name="lucide:triangle-alert" class="h-4 w-4 shrink-0 text-amber-300" />
+                    <span class="text-sm font-semibold text-amber-100">Některé zápasy máte v soutěži dvakrát</span>
+                </div>
+                <ul class="mt-2 space-y-1 text-xs leading-relaxed text-amber-100/70">
+                    {% for group in draft.duplicates %}
+                        <li>{{ group.label }} — ze zdrojů {{ group.sourceNames|join(' a ') }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="mt-2 text-xs leading-relaxed text-amber-100/60">Hráči by je tipovali dvakrát. Pokud jde o odvetu nebo opakovaný zápas, nechte je být.</p>
+            </div>
+        {% endif %}
+
+        {% if not draftOpen %}
+            <div class="flex flex-wrap gap-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="startLayer">
+                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat zdroj zápasů
+                </button>
+                {% if not this.isGlobalScope and not this.hasOwnMatchesLayer %}
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="addOwnMatchesLayer">
+                        <twig:ux:icon name="lucide:pencil" class="h-4 w-4" /> Vlastní zápasy
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

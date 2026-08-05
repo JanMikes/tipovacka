@@ -54,25 +54,37 @@ final readonly class ScopeDraftResolver
         $bySource = $this->matchesBySource(array_values($sourceIds));
 
         $picked = [];
+        $layerCounts = [];
 
         foreach ($specs as $spec) {
             if (null === $spec->matchSourceId) {
-                // „Moje zápasy" has no zdroj yet — its matches are entered after
-                // the soutěž exists, so a draft contributes none.
+                // „Moje zápasy" that has no zdroj YET — its matches are entered
+                // after the soutěž exists, so a draft contributes none. (The
+                // manage screen points the spec at the zdroj it already has, so
+                // there it goes down the normal branch.)
+                $layerCounts[] = 0;
+
                 continue;
             }
+
+            $layerCount = 0;
 
             foreach ($bySource[$spec->matchSourceId->toRfc4122()] ?? [] as $match) {
                 if ($this->accepts($spec, $match)) {
                     $picked[$match->id->toRfc4122()] = $match;
+                    ++$layerCount;
                 }
             }
+
+            // What THIS layer contributes on its own — counted in the same pass
+            // as the union, so a basket never costs one query per card.
+            $layerCounts[] = $layerCount;
         }
 
         $matches = array_values($picked);
         usort($matches, static fn (SportMatch $a, SportMatch $b): int => [$a->kickoffAt, $a->id->toRfc4122()] <=> [$b->kickoffAt, $b->id->toRfc4122()]);
 
-        return new ScopeDraft($matches, $this->duplicateGroups($matches));
+        return new ScopeDraft($matches, $this->duplicateGroups($matches), $layerCounts);
     }
 
     private function accepts(CompetitionSourceSpec $spec, SportMatch $match): bool

@@ -1,0 +1,76 @@
+{#
+    Competition:ScopeEditor — „Zápasy soutěže" of an existing soutěž.
+
+    The basket and the zdroj editor are the SAME two partials the create wizard
+    renders in step 1 (ComposesMatchScope); only the surrounding chrome and the
+    save action differ. See .docs/features/competition-scope.md.
+#}
+<div {{ attributes }} class="space-y-6">
+    {% if errorMessage %}
+        <div class="flex items-start gap-2 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white">
+            <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-4 w-4 shrink-0 text-loss" />
+            <span>{{ errorMessage }}</span>
+        </div>
+    {% endif %}
+
+    <section class="card-glass overflow-hidden p-0">
+        <header class="flex items-center gap-2.5 border-b border-white/10 px-6 py-4">
+            <twig:ux:icon name="lucide:list-checks" class="h-5 w-5 text-accent-400" />
+            <h2 class="text-lg font-semibold text-white">Zdroje zápasů</h2>
+        </header>
+
+        <div class="space-y-5 px-6 py-5">
+            {{ include('components/Competition/_scope_basket.html.twig') }}
+            {{ include('components/Competition/_scope_editor.html.twig', {
+                allow_from_scratch: false,
+                scope_commit_hint: 'Soutěž může kombinovat víc zdrojů — „Uložit" uloží i tenhle.',
+            }) }}
+
+            <div class="flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
+                <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="save">
+                    <twig:ux:icon name="lucide:save" class="h-4 w-4" /> Uložit zápasy soutěže
+                </button>
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost">Zpět na nastavení</a>
+            </div>
+
+            <p class="text-xs leading-relaxed text-white/40">
+                Změny se dotknou jen této soutěže. Rozpis samotného zdroje (a tedy ostatní soutěže, které z něj čerpají) zůstává beze změny.
+            </p>
+        </div>
+    </section>
+
+    {# ───── Vlastní zápasy — the only rozpis this soutěž may edit in place ───── #}
+    {% if this.hasOwnMatchesLayer %}
+        <section class="card-glass overflow-hidden p-0">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <twig:ux:icon name="lucide:pencil" class="h-5 w-5 text-accent-400" />
+                    <h2 class="text-lg font-semibold text-white">Vlastní zápasy</h2>
+                </div>
+                {% if this.ownMatchSource and is_granted('sport_match_create', this.ownMatchSource) %}
+                    <div class="flex flex-wrap gap-2">
+                        <a href="{{ path('sport_match_create', {matchSourceId: ownMatchesSourceId, soutez: competition.id.toRfc4122}) }}" class="btn btn-secondary btn-sm">
+                            <twig:ux:icon name="lucide:plus" class="h-4 w-4" />Přidat zápas
+                        </a>
+                        <a href="{{ path('sport_match_import', {matchSourceId: ownMatchesSourceId, soutez: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">
+                            <twig:ux:icon name="lucide:upload" class="h-4 w-4" />Nahrát rozpis
+                        </a>
+                    </div>
+                {% endif %}
+            </header>
+
+            <div class="px-6 py-5">
+                {% if this.ownMatchesAwaitsSave %}
+                    <p class="text-sm leading-relaxed text-white/60">
+                        Nejdřív uložte změny výše — pak sem budete moct zapisovat vlastní zápasy.
+                    </p>
+                {% else %}
+                    {{ include('portal/competition/_own_matches.html.twig', {
+                        competition: competition,
+                        own_matches: this.ownMatches,
+                    }) }}
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+</div>

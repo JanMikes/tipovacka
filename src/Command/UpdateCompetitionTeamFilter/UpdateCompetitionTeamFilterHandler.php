@@ -6,16 +6,11 @@ namespace App\Command\UpdateCompetitionTeamFilter;
 
 use App\Entity\Competition;
 use App\Entity\CompetitionSource;
-use App\Entity\CompetitionTeamFilter;
 use App\Enum\CompetitionMatchSelectionMode;
-use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionRepository;
-use App\Repository\CompetitionTeamFilterRepository;
-use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
-use App\Service\Identity\ProvideIdentity;
-use App\Service\Team\TeamResolver;
+use App\Service\Competition\ScopeLayerWriter;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Uid\Uuid;
@@ -25,12 +20,9 @@ final readonly class UpdateCompetitionTeamFilterHandler
 {
     public function __construct(
         private CompetitionRepository $competitionRepository,
-        private CompetitionTeamFilterRepository $teamFilterRepository,
-        private TeamRepository $teamRepository,
         private UserRepository $userRepository,
-        private TeamResolver $teamResolver,
         private CompetitionMatchProvider $matchProvider,
-        private ProvideIdentity $identity,
+        private ScopeLayerWriter $layerWriter,
         private ClockInterface $clock,
     ) {
     }
@@ -48,56 +40,10 @@ final readonly class UpdateCompetitionTeamFilterHandler
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
-        // Validate the whole desired set BEFORE mutating anything: a team filter
-        // must never end up empty, and every team must belong to the source's
-        // resolution scope (same guard as creation). A crafted POST with a
-        // foreign / cross-sport team id aborts the whole update.
-        $wanted = [];
-
-        foreach ($command->teamIds as $teamId) {
-            $team = $this->teamRepository->get($teamId);
-
-            if (!$this->teamResolver->belongsToSourceScope($layer->matchSource, $team)) {
-                throw TeamNotInSource::create($teamId, $layer->matchSource->id);
-            }
-
-            $wanted[$team->id->toRfc4122()] = $team;
-        }
-
-        if ([] === $wanted) {
-            throw new \DomainException('Vyberte prosím alespoň jeden tým.');
-        }
-
-        $changed = false;
-
-        foreach ($this->teamFilterRepository->listByCompetition($competition->id) as $existing) {
-            // Another layer's filter teams are none of this edit's business.
-            if (!$existing->competitionSource->id->equals($layer->id)) {
-                continue;
-            }
-
-            $key = $existing->team->id->toRfc4122();
-
-            if (isset($wanted[$key])) {
-                unset($wanted[$key]);
-
-                continue;
-            }
-
-            $this->teamFilterRepository->remove($existing);
-            $changed = true;
-        }
-
-        foreach ($wanted as $team) {
-            $this->teamFilterRepository->save(new CompetitionTeamFilter(
-                id: $this->identity->next(),
-                competition: $competition,
-                competitionSource: $layer,
-                team: $team,
-                addedAt: $now,
-            ));
-            $changed = true;
-        }
+        // Validation, the „never empty" guard and the „team must belong to this
+        // zdroj's scope" rule live in the writer — shared with the whole-basket
+        // screen, so the two never drift apart.
+        $changed = $this->layerWriter->replaceTeamFilters($layer, $command->teamIds, $now);
 
         if ($changed) {
             $competition->recordMatchSelectionChanged($editor, $now);

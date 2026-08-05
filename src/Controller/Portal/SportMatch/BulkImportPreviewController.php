@@ -8,6 +8,7 @@ use App\Exception\SportMatchImportFailed;
 use App\Form\ImportSportMatchesFormData;
 use App\Form\ImportSportMatchesFormType;
 use App\Repository\MatchSourceRepository;
+use App\Service\Competition\ScopeReturn;
 use App\Service\SportMatch\SportMatchImporter;
 use App\Service\SportMatch\SportMatchImportSession;
 use App\Voter\SportMatchVoter;
@@ -30,6 +31,7 @@ final class BulkImportPreviewController extends AbstractController
 {
     public function __construct(
         private readonly MatchSourceRepository $matchSourceRepository,
+        private readonly ScopeReturn $scopeReturn,
         private readonly SportMatchImporter $importer,
         private readonly SportMatchImportSession $session,
         private readonly ClockInterface $clock,
@@ -68,6 +70,8 @@ final class BulkImportPreviewController extends AbstractController
             'form' => $form,
             'match_source' => $matchSource,
             'preview' => $preview,
+            // „Přišel jsem sem ze soutěže" — carried through upload → preview → commit.
+            'scope_competition_id' => $this->scopeReturn->competitionId($request),
         ]);
     }
 }

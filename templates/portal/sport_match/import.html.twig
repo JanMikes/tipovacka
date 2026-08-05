@@ -5,6 +5,10 @@
 {% block body %}
 <div class="bg-radial">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {# `soutez` rides along so the whole upload → preview → commit round trip lands
+           back on „Zápasy soutěže" (App\Service\Competition\ScopeReturn). #}
+        {% set scope_param = scope_competition_id is defined and scope_competition_id ? {soutez: scope_competition_id} : {} %}
+
         <twig:Breadcrumbs :items="[
             {label: 'Nástěnka', path: path('dashboard')},
             {label: match_source.name, path: path('match_source_detail', {id: match_source.id.toRfc4122})},
@@ -27,7 +31,10 @@
                 Stáhnout šablonu (CSV)
             </a>
 
-            {{ form_start(form, {attr: {class: 'space-y-5 mt-6', novalidate: 'novalidate', enctype: 'multipart/form-data'}}) }}
+            {{ form_start(form, {
+                action: path('sport_match_import', {matchSourceId: match_source.id.toRfc4122}|merge(scope_param)),
+                attr: {class: 'space-y-5 mt-6', novalidate: 'novalidate', enctype: 'multipart/form-data'},
+            }) }}
                 <div class="field">
                     {{ form_label(form.file, null, {label_attr: {class: 'field-label'}}) }}
                     {{ form_widget(form.file, {attr: {class: 'block w-full text-sm text-white/70 file:mr-4 file:rounded-lg file:border-0 file:bg-accent-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:brightness-110 file:cursor-pointer'}}) }}
@@ -104,6 +111,9 @@
                               class="mt-6">
                             <input type="hidden" name="_token"
                                    value="{{ csrf_token('sport_match_import_commit_' ~ match_source.id.toRfc4122) }}">
+                            {% if scope_param.soutez is defined %}
+                                <input type="hidden" name="soutez" value="{{ scope_param.soutez }}">
+                            {% endif %}
                             <button type="submit" class="btn btn-success">
                                 <twig:ux:icon name="lucide:check" class="h-4 w-4" />
                                 Potvrdit import ({{ preview.validRows|length }} zápasů)

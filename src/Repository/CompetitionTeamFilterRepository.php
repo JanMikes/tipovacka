@@ -28,16 +28,18 @@ class CompetitionTeamFilterRepository
     }
 
     /**
+     * ONE layer's rows — see {@see CompetitionMatchSelectionRepository::listByLayer}.
+     *
      * @return list<CompetitionTeamFilter>
      */
-    public function listByCompetition(Uuid $competitionId): array
+    public function listByLayer(Uuid $competitionSourceId): array
     {
         /** @var list<CompetitionTeamFilter> $result */
         $result = $this->entityManager->createQueryBuilder()
             ->select('f')
             ->from(CompetitionTeamFilter::class, 'f')
-            ->where('f.competition = :competitionId')
-            ->setParameter('competitionId', $competitionId)
+            ->where('f.competitionSource = :competitionSourceId')
+            ->setParameter('competitionSourceId', $competitionSourceId)
             ->getQuery()
             ->getResult();
 

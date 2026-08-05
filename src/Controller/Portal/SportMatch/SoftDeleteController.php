@@ -7,6 +7,7 @@ namespace App\Controller\Portal\SportMatch;
 use App\Command\SoftDeleteSportMatch\SoftDeleteSportMatchCommand;
 use App\Entity\User;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\ScopeReturn;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,7 @@ final class SoftDeleteController extends AbstractController
 {
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
+        private readonly ScopeReturn $scopeReturn,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -53,6 +55,13 @@ final class SoftDeleteController extends AbstractController
         ));
 
         $this->addFlash('success', 'Zápas byl smazán.');
+
+        // Deleted from „Zápasy soutěže"? Then that is where the organizer is.
+        $scopeCompetitionId = $this->scopeReturn->competitionId($request);
+
+        if (null !== $scopeCompetitionId) {
+            return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+        }
 
         return $this->redirectToRoute('match_source_detail', ['id' => $matchSourceId]);
     }

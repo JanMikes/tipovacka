@@ -173,4 +173,26 @@ class CompetitionRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * How many OTHER (non-deleted) soutěže draw from this zdroj. The exclusivity
+     * test behind „may this competition edit these matches in place?" — a private
+     * zdroj shared with a second soutěž is edited from the zdroj's own page, with
+     * the organizer knowing both are affected. See
+     * {@see \App\Service\Competition\OwnMatchesSource}.
+     */
+    public function countOtherCompetitionsUsingMatchSource(Uuid $matchSourceId, Uuid $exceptCompetitionId): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(DISTINCT cs.competition)')
+            ->from(CompetitionSource::class, 'cs')
+            ->innerJoin('cs.competition', 'g')
+            ->where('cs.matchSource = :matchSourceId')
+            ->andWhere('cs.competition != :exceptCompetitionId')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('matchSourceId', $matchSourceId)
+            ->setParameter('exceptCompetitionId', $exceptCompetitionId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

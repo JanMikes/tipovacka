@@ -7,6 +7,7 @@ namespace App\Controller\Portal\SportMatch;
 use App\Command\BulkImportSportMatches\BulkImportSportMatchesCommand;
 use App\Entity\User;
 use App\Repository\MatchSourceRepository;
+use App\Service\Competition\ScopeReturn;
 use App\Service\SportMatch\SportMatchImportSession;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,6 +30,7 @@ final class BulkImportCommitController extends AbstractController
 {
     public function __construct(
         private readonly MatchSourceRepository $matchSourceRepository,
+        private readonly ScopeReturn $scopeReturn,
         private readonly SportMatchImportSession $session,
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -63,6 +65,12 @@ final class BulkImportCommitController extends AbstractController
         ));
 
         $this->addFlash('success', sprintf('Importováno %d zápasů.', count($rows)));
+
+        $scopeCompetitionId = $this->scopeReturn->competitionId($request);
+
+        if (null !== $scopeCompetitionId) {
+            return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+        }
 
         return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
     }

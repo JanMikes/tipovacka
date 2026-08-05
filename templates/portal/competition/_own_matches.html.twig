@@ -1,0 +1,52 @@
+{#
+    The rozpis of the soutěž's OWN private zdroj — the only matches an organizer
+    may add, change and delete from inside a soutěž, because no other soutěž
+    draws from that zdroj (App\Service\Competition\OwnMatchesSource).
+
+    Every action reuses the ordinary match screens and carries `soutez` so they
+    come back here (App\Service\Competition\ScopeReturn).
+
+    Expects: `competition`, `own_matches` (list<SportMatch>).
+#}
+{% if own_matches|length == 0 %}
+    <p class="text-sm leading-relaxed text-white/60">
+        Zatím jste nezadali žádný zápas. Přidejte první — nebo nahrajte rovnou celý rozpis z tabulky.
+    </p>
+{% else %}
+    <ul class="-mx-6 divide-y divide-white/[0.06]">
+        {% for m in own_matches %}
+            {% set state = m.state.value %}
+            <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-medium text-white">{{ m.homeTeam.name }} – {{ m.awayTeam.name }}</p>
+                    <p class="mt-0.5 text-xs text-white/50">
+                        {{ m.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }}
+                        {%- if m.round %} · {{ m.round }}{% endif %}
+                        {%- if m.isPlayoff %} · Playoff{% endif %}
+                        {%- if state == 'cancelled' %} · zrušen{% endif %}
+                    </p>
+                </div>
+                <div class="flex shrink-0 items-center gap-1">
+                    <a href="{{ path('sport_match_detail', {id: m.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Detail</a>
+                    {% if is_granted('sport_match_edit', m) %}
+                        <a href="{{ path('sport_match_edit', {id: m.id.toRfc4122, soutez: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Upravit</a>
+                    {% endif %}
+                    {% if is_granted('sport_match_delete', m) %}
+                        <form method="post" action="{{ path('sport_match_delete', {id: m.id.toRfc4122}) }}"
+                              data-controller="confirm"
+                              data-confirm-variant-value="danger"
+                              data-confirm-title-value="Smazat zápas"
+                              data-confirm-message-value="Zápas {{ m.homeTeam.name }} – {{ m.awayTeam.name }} se ze soutěže odstraní i s tipy, které na něj hráči zadali."
+                              data-confirm-confirm-label-value="Ano, smazat">
+                            <input type="hidden" name="_token" value="{{ csrf_token('sport_match_delete_' ~ m.id.toRfc4122) }}">
+                            <input type="hidden" name="soutez" value="{{ competition.id.toRfc4122 }}">
+                            <button type="submit" class="btn btn-ghost btn-sm" aria-label="Smazat zápas">
+                                <twig:ux:icon name="lucide:trash-2" class="h-4 w-4" />
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}

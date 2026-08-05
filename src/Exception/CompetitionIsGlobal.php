@@ -26,4 +26,15 @@ final class CompetitionIsGlobal extends \DomainException
     {
         return new self('Do globální soutěže se připojíte přes vstupné, ne PINem.');
     }
+
+    /**
+     * A global competition's scope is an admin decision taken in the admin area
+     * ({@see \App\Command\UpdateGlobalCompetition\UpdateGlobalCompetitionHandler}):
+     * players joined it under advertised terms, and it may never grow a private
+     * „vlastní zápasy" zdroj. The organizer basket screen is therefore closed to it.
+     */
+    public static function scopeIsAdminOnly(): self
+    {
+        return new self('Rozsah zápasů globální soutěže se upravuje jen v administraci.');
+    }
 }

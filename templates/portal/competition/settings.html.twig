@@ -33,9 +33,16 @@
                     <a href="{{ path('competition_rules', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                         <twig:ux:icon name="lucide:activity" class="h-4 w-4" />Pravidla bodování
                     </a>
-                    {# One link per soutěž, named by what its layers actually offer —
-                       the copy lives on Competition.scopeManageLabel, not here. #}
-                    {% if competition.scopeManageLabel %}
+                    {# A private soutěž edits its WHOLE basket of zdroje (add / remove /
+                       change how each one is taken, plus its own zápasy) on one screen —
+                       the create wizard's step 1, available any time. A global soutěž
+                       keeps the narrow per-layer screen: its scope is an admin decision,
+                       so only the team filter is ever managed here. #}
+                    {% if not competition.isGlobal %}
+                        <a href="{{ path('competition_scope', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
+                            <twig:ux:icon name="lucide:list-checks" class="h-4 w-4" />Zápasy soutěže
+                        </a>
+                    {% elseif competition.scopeManageLabel %}
                         <a href="{{ path('competition_match_selection', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm w-full justify-start">
                             <twig:ux:icon name="{{ competition.scopeManageLabel == 'Týmy soutěže' ? 'lucide:shield-half' : 'lucide:list-checks' }}" class="h-4 w-4" />{{ competition.scopeManageLabel }}
                         </a>

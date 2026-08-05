@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Form\SportMatchFormData;
 use App\Form\SportMatchFormType;
 use App\Repository\SportMatchRepository;
+use App\Service\Competition\ScopeReturn;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +30,7 @@ final class UpdateSportMatchController extends AbstractController
 {
     public function __construct(
         private readonly SportMatchRepository $sportMatchRepository,
+        private readonly ScopeReturn $scopeReturn,
         private readonly MessageBusInterface $commandBus,
     ) {
     }
@@ -40,6 +42,9 @@ final class UpdateSportMatchController extends AbstractController
 
         $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(SportMatchVoter::EDIT, $sportMatch);
+
+        // „Přišel jsem sem ze soutěže" survives the POST through the form action.
+        $scopeCompetitionId = $this->scopeReturn->competitionId($request);
 
         $formData = SportMatchFormData::fromSportMatch($sportMatch);
         $form = $this->createForm(SportMatchFormType::class, $formData, [
@@ -61,6 +66,10 @@ final class UpdateSportMatchController extends AbstractController
 
             $this->addFlash('success', 'Zápas byl uložen.');
 
+            if (null !== $scopeCompetitionId) {
+                return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+            }
+
             return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
@@ -69,6 +78,7 @@ final class UpdateSportMatchController extends AbstractController
             'match_source' => $sportMatch->matchSource,
             'sport_match' => $sportMatch,
             'mode' => 'edit',
+            'scope_competition_id' => $scopeCompetitionId,
         ]);
     }
 }

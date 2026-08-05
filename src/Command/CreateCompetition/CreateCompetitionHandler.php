@@ -13,7 +13,6 @@ use App\Entity\MatchSource;
 use App\Entity\Membership;
 use App\Entity\Sport;
 use App\Enum\CompetitionMatchSelectionMode;
-use App\Enum\MatchSourceKind;
 use App\Exception\CompetitionSourcesSportMismatch;
 use App\Exception\TeamNotInSource;
 use App\Repository\CompetitionMatchSelectionRepository;
@@ -28,6 +27,7 @@ use App\Repository\SportRepository;
 use App\Repository\TeamRepository;
 use App\Repository\UserRepository;
 use App\Rule\RuleRegistry;
+use App\Service\Competition\OwnMatchesSource;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
 use App\Service\Identity\ProvideIdentity;
@@ -62,6 +62,7 @@ final readonly class CreateCompetitionHandler
         private UserRepository $userRepository,
         private RuleRegistry $ruleRegistry,
         private CompetitionInviter $inviter,
+        private OwnMatchesSource $ownMatchesSource,
         private ProvideIdentity $identity,
         private PinGenerator $pinGenerator,
         private ShareableLinkTokenGenerator $linkTokenGenerator,
@@ -182,21 +183,12 @@ final readonly class CreateCompetitionHandler
             throw new \InvalidArgumentException('A from-scratch competition requires a sport.');
         }
 
-        $matchSource = new MatchSource(
-            id: $this->identity->next(),
-            sport: $sport,
-            owner: $this->userRepository->get($command->ownerId),
-            kind: MatchSourceKind::Private,
-            name: $command->name,
-            description: null,
-            startAt: null,
-            endAt: null,
-            createdAt: $now,
+        return $this->ownMatchesSource->create(
+            $sport,
+            $this->userRepository->get($command->ownerId),
+            $command->name,
+            $now,
         );
-
-        $this->matchSourceRepository->save($matchSource);
-
-        return $matchSource;
     }
 
     /**

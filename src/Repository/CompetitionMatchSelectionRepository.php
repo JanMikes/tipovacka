@@ -43,6 +43,27 @@ class CompetitionMatchSelectionRepository
     }
 
     /**
+     * ONE layer's rows — what {@see \App\Service\Competition\ScopeLayerWriter}
+     * replaces or clears. A layer's selection is nobody else's business, so the
+     * narrow query is the one every write path uses.
+     *
+     * @return list<CompetitionMatchSelection>
+     */
+    public function listByLayer(Uuid $competitionSourceId): array
+    {
+        /** @var list<CompetitionMatchSelection> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(CompetitionMatchSelection::class, 's')
+            ->where('s.competitionSource = :competitionSourceId')
+            ->setParameter('competitionSourceId', $competitionSourceId)
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    /**
      * @return list<string> selected sport match UUIDs (RFC 4122)
      */
     public function selectedMatchIds(Uuid $competitionId): array

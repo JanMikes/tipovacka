@@ -59,6 +59,33 @@ class CompetitionMatchProvider implements ResetInterface
     }
 
     /**
+     * The same membership answer as {@see matchesFor}, as a SET of match UUIDs
+     * (RFC 4122) — for callers that only need „is this match in?", so a whole
+     * liga is not hydrated into the UnitOfWork to build an id list.
+     *
+     * @return array<string, true>
+     */
+    public function matchIdSetFor(Competition $competition): array
+    {
+        $qb = $this->entityManager->createQueryBuilder()
+            ->select('m.id')
+            ->from(SportMatch::class, 'm');
+
+        $this->applyCompetitionMatchFilter($qb, 'm', $competition);
+
+        /** @var list<array{id: Uuid}> $rows */
+        $rows = $qb->getQuery()->getArrayResult();
+
+        $ids = [];
+
+        foreach ($rows as $row) {
+            $ids[$row['id']->toRfc4122()] = true;
+        }
+
+        return $ids;
+    }
+
+    /**
      * All matches belonging to the competition, kickoff-ordered. Includes every
      * state (Scheduled / Live / Finished / Postponed / Cancelled) — state
      * filtering stays with the call sites.

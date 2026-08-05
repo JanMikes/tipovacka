@@ -1,0 +1,176 @@
+{#
+    The editor that puts ONE zdroj in the basket — shared by
+    Competition:CreateWizard (step 1) and Competition:ScopeEditor
+    (/souteze/{id}/zapasy) via the ComposesMatchScope trait.
+
+    Callers must pass `allow_from_scratch`: the wizard offers „Vytvořit soutěž od
+    začátku" (pick a sport, no zdroj at all) while the basket is still empty; the
+    manage screen never does — a soutěž that exists already has its sport, and its
+    own zápasy are added with the „Vlastní zápasy" button instead.
+#}
+{% if draftOpen %}
+    {% if allow_from_scratch %}
+        <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
+            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                   data-model="fromScratch" {{ fromScratch ? 'checked' }} />
+            <span class="text-sm">
+                <span class="block font-semibold text-white">Vytvořit soutěž od začátku</span>
+                <span class="mt-1 block text-xs leading-relaxed text-white/50">Bez šablony — zápasy, týmy a termíny doplníte ručně.</span>
+            </span>
+        </label>
+    {% endif %}
+
+    {% if fromScratch and not this.isGlobalScope %}
+        <div class="field">
+            <label class="field-label" for="wizard-sport">Sport</label>
+            <select id="wizard-sport" class="input" data-model="sportId">
+                {% for sport in this.availableSports %}
+                    <option value="{{ sport.id.toRfc4122 }}" {{ sportId == sport.id.toRfc4122 ? 'selected' }}>{{ sport.name }}</option>
+                {% endfor %}
+            </select>
+            <p class="text-xs leading-relaxed text-white/50">Sport určuje strukturu zápasu ({{ this.selectedSport.periodLabelPlural }}) a bodování.</p>
+        </div>
+    {% else %}
+        <div class="field">
+            <label class="field-label" for="wizard-source">Zdroj zápasů</label>
+            <select id="wizard-source" class="input" data-model="sourceId">
+                <option value="">Vyberte zdroj zápasů…</option>
+                {% for source in this.availableSources %}
+                    {% set dates = source.startAt ? source.startAt|date('j. n. Y', 'Europe/Prague') : '' %}
+                    {% set dates = source.endAt ? dates ~ '–' ~ source.endAt|date('j. n. Y', 'Europe/Prague') : dates %}
+                    <option value="{{ source.id.toRfc4122 }}" {{ sourceId == source.id.toRfc4122 ? 'selected' }}>
+                        {{ source.name }} · {{ source.sport.name }}{{ dates ? ' · ' ~ dates }}
+                    </option>
+                {% endfor %}
+            </select>
+            <p class="text-xs leading-relaxed text-white/50">{{ this.isGlobalScope ? 'Globální soutěž zahrnuje všechny zápasy vybraného zdroje.' : 'Rozpis zápasů, nad kterým se soutěž tipuje.' }}</p>
+        </div>
+
+        {% if this.selectedSource %}
+            <div class="space-y-3 border-t border-white/10 pt-5">
+                <span class="field-label">Zápasy soutěže</span>
+                <div class="grid grid-cols-1 gap-2 {{ this.isGlobalScope ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }}">
+                    <label class="option-card flex cursor-pointer items-center gap-3 {{ selectionMode == 'all' ? 'selected' : '' }}">
+                        <input type="radio" name="wizard-selection-mode" value="all" data-model="selectionMode"
+                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ selectionMode == 'all' ? 'checked' }} />
+                        <span class="text-sm font-medium text-white">Všechny zápasy</span>
+                    </label>
+                    <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isTeams ? 'selected' : '' }}">
+                        <input type="radio" name="wizard-selection-mode" value="teams" data-model="selectionMode"
+                               class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isTeams ? 'checked' }} />
+                        <span class="text-sm font-medium text-white">Podle týmu</span>
+                    </label>
+                    {% if not this.isGlobalScope %}
+                        <label class="option-card flex cursor-pointer items-center gap-3 {{ this.isSubset ? 'selected' : '' }}">
+                            <input type="radio" name="wizard-selection-mode" value="subset" data-model="selectionMode"
+                                   class="h-4 w-4 shrink-0 border-white/20 bg-inset text-accent-500 focus:ring-accent-500" {{ this.isSubset ? 'checked' }} />
+                            <span class="text-sm font-medium text-white">Vybrat jen některé zápasy</span>
+                        </label>
+                    {% endif %}
+                </div>
+
+                {% if this.isTeams %}
+                    {# The tom-select island must stay untouched by the morph, but
+                       LiveComponents NEVER removes a node carrying data-live-ignore
+                       (live_controller.js: `beforeNodeRemoved` returns
+                       !hasAttribute('data-live-ignore')). Left as the outermost node
+                       of this branch it therefore survived switching back to
+                       „Všechny zápasy" and the picker stayed on screen. The plain
+                       wrapper is what the morph removes — the island goes with it. #}
+                    <div data-team-scope>
+                    <div data-live-ignore>
+                        <div data-controller="team-filter"
+                             data-team-filter-url-value="{{ path('competition_source_filter_teams', {id: this.selectedSource.id.toRfc4122}) }}">
+                            <select multiple data-team-filter-target="select" class="input" aria-label="Týmy soutěže" placeholder="Vyhledat a přidat tým…">
+                                {% for option in this.filterTeamOptions %}
+                                    <option value="{{ option.id }}" selected>{{ option.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" data-model="norender|selectedTeamIdsCsv" data-team-filter-target="payload" value="{{ selectedTeamIdsCsv }}" />
+                        </div>
+                        <p class="mt-2 text-xs leading-relaxed text-white/50">Soutěž zahrne všechny zápasy vybraných týmů — i ty, které se do rozpisu přidají později (třeba playoff).</p>
+                    </div>
+                    </div>
+                {% elseif this.isSubset %}
+                    <div data-controller="wizard-matches">
+                        <div class="relative mb-3">
+                            <twig:ux:icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                            <input type="text" class="input pl-9" placeholder="Filtrovat zápasy…"
+                                   data-wizard-matches-target="filter" data-action="input->wizard-matches#filter" />
+                        </div>
+
+                        {% for group, matches in this.groupedMatches %}
+                            <div class="mb-3 rounded-xl border border-white/10 bg-inset p-4" data-group-block data-wizard-matches-target="group">
+                                <div class="mb-2 flex items-center justify-between gap-3">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-white/50">{{ group }}</span>
+                                    <button type="button" class="btn btn-ghost btn-sm" data-action="wizard-matches#toggleGroup">Vybrat vše</button>
+                                </div>
+                                <div class="space-y-1.5">
+                                    {% for match in matches %}
+                                        <label class="flex cursor-pointer items-center gap-3" data-wizard-matches-target="row"
+                                               data-search="{{ (match.homeTeam.name ~ ' ' ~ match.awayTeam.name)|lower }}">
+                                            <input type="checkbox" class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                                   data-model="norender|selectedMatchIds[]" value="{{ match.id.toRfc4122 }}"
+                                                   {{ match.id.toRfc4122 in selectedMatchIds ? 'checked' }} />
+                                            <span class="text-sm text-white/80">{{ match.homeTeam.name }} – {{ match.awayTeam.name }} <span class="text-white/40">({{ match.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }})</span></span>
+                                            {% if match.isPlayoff %}
+                                                <twig:Pill label="Playoff" variant="neutral" />
+                                            {% endif %}
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {# „Dohrávat turnaj?" belongs to THIS layer: only mode „all"
+                   honours includePlayoff (subset keeps whatever was
+                   ticked, teams always includes playoff — see
+                   CompetitionMatchProvider), and the flag now lives on
+                   the zdroj's layer, so it cannot sit on a later step
+                   that has no layer in hand. Still exactly ONE control
+                   writing includePlayoff — never add a second. #}
+                {% if not this.isGlobalScope and selectionMode == 'all' %}
+                    <div class="border-t border-white/10 pt-4">
+                        <div class="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">Dohrávat turnaj?</div>
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                                   data-model="includePlayoff" {{ includePlayoff ? 'checked' }} />
+                            <span class="text-sm">
+                                <span class="block font-medium text-white">Ano, dohrajeme turnaj — zahrnout playoff zápasy</span>
+                                <span class="mt-1 block text-xs leading-relaxed text-white/50">Playoff zápasy přibývají do rozpisu postupně. Když turnaj dohrávat nebudete, soutěž se tipuje jen na základní část.</span>
+                            </span>
+                        </label>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {# The way INTO a multi-zdroj soutěž. It must render as soon as the
+       editor holds a usable zdroj — gating it on „the basket already
+       has something" made the feature unreachable, because this was
+       also the only way to put the first thing in it. #}
+    {% if fromScratch or this.selectedSource %}
+        <div class="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+            {% if editingIndex is not null %}
+                <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayer">Uložit změnu</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+            {% else %}
+                <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="addLayerAndContinue">
+                    <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat další zdroj zápasů
+                </button>
+                {% if this.hasLayers %}
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="live#action" data-live-action-param="cancelLayer">Zrušit</button>
+                {% endif %}
+                <span class="text-xs leading-relaxed text-white/40">{{ scope_commit_hint }}</span>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endif %}
+
+{% if not draftOpen and not this.hasLayers %}
+    <button type="button" class="btn btn-secondary btn-sm" data-action="live#action" data-live-action-param="startLayer">
+        <twig:ux:icon name="lucide:plus" class="h-4 w-4" /> Přidat zdroj zápasů
+    </button>
+{% endif %}
