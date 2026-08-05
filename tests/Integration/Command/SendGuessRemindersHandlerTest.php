@@ -59,8 +59,9 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         $digest = $visible[0];
         // …spanning competitions, so it carries no single competition and lands on /zapasy.
         self::assertNull($digest->competition);
-        self::assertNotNull($digest->url);
-        self::assertStringContainsString('/zapasy', $digest->url);
+        // Host-relative: the sweep runs from cron, where an absolute url would bake in
+        // whatever origin `default_uri` happened to hold.
+        self::assertSame('/zapasy', $digest->url);
         self::assertSame('Chybí vám 5 tipů', $digest->title);
         self::assertStringContainsString(AppFixtures::PUBLIC_COMPETITION_NAME, $digest->body);
         self::assertStringContainsString(AppFixtures::GLOBAL_COMPETITION_NAME, $digest->body);
@@ -196,6 +197,7 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         self::assertSame(AppFixtures::VERIFIED_COMPETITION_ID, $visible[0]->competition->id->toRfc4122());
         self::assertNotNull($visible[0]->url);
         self::assertStringContainsString(AppFixtures::VERIFIED_COMPETITION_ID, $visible[0]->url);
+        self::assertStringStartsWith('/', $visible[0]->url);
     }
 
     /**

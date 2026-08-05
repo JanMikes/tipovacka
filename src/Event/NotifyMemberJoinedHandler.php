@@ -50,7 +50,7 @@ final readonly class NotifyMemberJoinedHandler
         $url = $this->urlGenerator->generate(
             'competition_detail',
             ['id' => $competition->id->toRfc4122()],
-            UrlGeneratorInterface::ABSOLUTE_URL,
+            UrlGeneratorInterface::ABSOLUTE_PATH,
         );
 
         $this->notifier->notify(

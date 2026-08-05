@@ -43,7 +43,7 @@ final readonly class NotifyPremiumBalanceLowHandler
         $url = $this->urlGenerator->generate(
             'credits',
             [],
-            UrlGeneratorInterface::ABSOLUTE_URL,
+            UrlGeneratorInterface::ABSOLUTE_PATH,
         );
 
         $this->notifier->notify(

@@ -88,6 +88,13 @@ renders an `.env` file (0600, box-only) from **Infisical**; every service reads 
 `env_file: .env`. Non-secret env (canonical `APP_URL`, `MAILER_FROM_EMAIL`, `DATABASE_HOST`)
 is set inline in `compose.yaml`.
 
+`APP_URL` is load-bearing beyond e-mail copy: it is the router's `default_uri`, i.e. the
+host of every URL generated **without a request** — the cron commands and the worker. Point
+it at anything but the public origin and the hourly reminder starts mailing links to that
+origin (it shipped `http://localhost:8080` links until 2026-07-31, when the router still read
+a second, never-set `DEFAULT_URI` and fell back to the committed dev default). In-app
+notification urls are stored host-relative, so they are immune by construction.
+
 Required keys (see [`.env.prod.example`](../.env.prod.example) for the shape — the prod
 values live in Infisical, not in that file):
 

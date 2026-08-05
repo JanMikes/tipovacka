@@ -14,6 +14,7 @@ use App\Service\Notification\Notifier;
 use App\Tests\Support\IntegrationTestCase;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
@@ -156,7 +157,7 @@ final class NotifierTest extends IntegrationTestCase
             NotificationType::MatchAdded,
             'Nový zápas: A – B',
             'Do soutěže X přibyl zápas A – B.',
-            url: 'https://wtips.cz/oznameni',
+            url: '/oznameni',
         );
         $this->entityManager()->flush();
 
@@ -164,7 +165,9 @@ final class NotifierTest extends IntegrationTestCase
         self::assertCount(1, $rows);
         self::assertSame('Nový zápas: A – B', $rows[0]->title);
         self::assertSame('Do soutěže X přibyl zápas A – B.', $rows[0]->body);
-        self::assertSame('https://wtips.cz/oznameni', $rows[0]->url);
+        // Stored host-relative: the origin belongs to whoever renders it, so a wrong
+        // `default_uri` can never point the in-app click-through off-domain.
+        self::assertSame('/oznameni', $rows[0]->url);
         self::assertSame(NotificationType::MatchAdded, $rows[0]->type);
     }
 
@@ -193,6 +196,7 @@ final class NotifierTest extends IntegrationTestCase
             self::getContainer()->get(NotificationPreferenceRepository::class),
             $this->identityProvider(),
             $failingMailer,
+            self::getContainer()->get(UrlHelper::class),
             self::getContainer()->get(ClockInterface::class),
             self::getContainer()->get(LoggerInterface::class),
         );

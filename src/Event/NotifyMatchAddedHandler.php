@@ -63,7 +63,7 @@ final readonly class NotifyMatchAddedHandler
             $url = $this->urlGenerator->generate(
                 'competition_detail',
                 ['id' => $competition->id->toRfc4122()],
-                UrlGeneratorInterface::ABSOLUTE_URL,
+                UrlGeneratorInterface::ABSOLUTE_PATH,
             );
 
             $dedupKey = sprintf('match_added:%s:%s', $match->id->toRfc4122(), $competition->id->toRfc4122());

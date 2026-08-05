@@ -71,7 +71,7 @@ final readonly class NotifyMatchEvaluatedHandler
             $url = $this->urlGenerator->generate(
                 'leaderboard',
                 ['soutez' => $competition->id->toRfc4122()],
-                UrlGeneratorInterface::ABSOLUTE_URL,
+                UrlGeneratorInterface::ABSOLUTE_PATH,
             );
 
             foreach ($pointsByUser as $userId => $points) {

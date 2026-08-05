@@ -104,7 +104,7 @@ final readonly class NotifyCompetitionEndedHandler
         $url = $this->urlGenerator->generate(
             'leaderboard',
             ['soutez' => $competition->id->toRfc4122()],
-            UrlGeneratorInterface::ABSOLUTE_URL,
+            UrlGeneratorInterface::ABSOLUTE_PATH,
         );
 
         foreach ($this->membershipRepository->findActiveByCompetition($competition->id) as $membership) {

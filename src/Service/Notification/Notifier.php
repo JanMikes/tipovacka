@@ -14,6 +14,7 @@ use App\Service\Identity\ProvideIdentity;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\HttpFoundation\UrlHelper;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
@@ -48,6 +49,12 @@ use Symfony\Component\Mime\Address;
  * in-app is off) nothing is delivered and no row is written — there is nothing to
  * dedup.
  *
+ * `$url` is a host-RELATIVE path (`/soutez/…`), never an absolute URL: the in-app
+ * click-through stays on whatever host the user is browsing, so a wrong origin can
+ * never send the bell off-domain. The e-mail channel — the one place a host is
+ * required — absolutizes it here via {@see UrlHelper}, which falls back to the
+ * router's `default_uri` (env `APP_URL`) when there is no request (cron, worker).
+ *
  * A notification is a side effect and must never break the triggering command:
  * every failure is caught and logged, never rethrown.
  */
@@ -58,12 +65,14 @@ final readonly class Notifier
         private NotificationPreferenceRepository $preferenceRepository,
         private ProvideIdentity $identityProvider,
         private MailerInterface $mailer,
+        private UrlHelper $urlHelper,
         private ClockInterface $clock,
         private LoggerInterface $logger,
     ) {
     }
 
     /**
+     * @param string|null                     $url                 host-RELATIVE path (see the class doc)
      * @param array<string, scalar|null>|null $payload
      * @param list<string>                    $additionalDedupKeys
      */
@@ -161,7 +170,10 @@ final readonly class Notifier
             ->context([
                 'title' => $title,
                 'body' => $body,
-                'url' => $url,
+                // Stored paths are host-relative; an e-mail link must carry the host.
+                // Outside a request that host comes from the router's `default_uri`
+                // (env APP_URL) — the reminder sweep runs from cron.
+                'url' => null !== $url ? $this->urlHelper->getAbsoluteUrl($url) : null,
                 'type' => $type,
             ]);
 

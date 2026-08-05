@@ -198,7 +198,7 @@ final readonly class SendGuessRemindersHandler
             $url = $this->urlGenerator->generate(
                 'competition_detail',
                 ['id' => $competition->id->toRfc4122()],
-                UrlGeneratorInterface::ABSOLUTE_URL,
+                UrlGeneratorInterface::ABSOLUTE_PATH,
             );
         } else {
             $competition = null;
@@ -216,7 +216,7 @@ final readonly class SendGuessRemindersHandler
             }
 
             $body = implode("\n", $lines);
-            $url = $this->urlGenerator->generate('matches', [], UrlGeneratorInterface::ABSOLUTE_URL);
+            $url = $this->urlGenerator->generate('matches', [], UrlGeneratorInterface::ABSOLUTE_PATH);
         }
 
         $this->notifier->notify(

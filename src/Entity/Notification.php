@@ -28,6 +28,11 @@ class Notification
     #[ORM\Column(type: Types::TEXT)]
     public private(set) string $body;
 
+    /**
+     * Click-through target as a host-RELATIVE path (`/soutez/…`). Never absolute —
+     * the host belongs to whoever renders it (the feed keeps the user on the host
+     * they browse; only the e-mail channel absolutizes, in the Notifier).
+     */
     #[ORM\Column(length: 512, nullable: true)]
     public private(set) ?string $url;
 

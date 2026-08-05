@@ -51,7 +51,11 @@ final class ReadNotificationController extends AbstractController
             notificationId: $notification->id,
         ));
 
-        if (null !== $notification->url && '' !== $notification->url) {
+        // Only ever forward WITHIN this host. Stored urls are host-relative paths, so
+        // anything else is a stale row from when they were absolute (and carried
+        // whatever origin the cron process happened to generate — see the localhost
+        // links of 2026-07-31) — those fall back to the center rather than off-domain.
+        if (null !== $notification->url && str_starts_with($notification->url, '/') && !str_starts_with($notification->url, '//')) {
             return $this->redirect($notification->url);
         }
 
