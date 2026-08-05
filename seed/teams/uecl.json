@@ -1,0 +1,302 @@
+[
+  {
+    "name": "Ajax Amsterdam",
+    "shortName": "AJX",
+    "country": "NL"
+  },
+  {
+    "name": "Apollon Limassol",
+    "shortName": "APO",
+    "country": "CY"
+  },
+  {
+    "name": "Auda",
+    "shortName": "AUD",
+    "country": "LV"
+  },
+  {
+    "name": "Austria Vídeň",
+    "shortName": "AUS",
+    "country": "AT"
+  },
+  {
+    "name": "Beitar Jeruzalém",
+    "shortName": "BEI",
+    "country": "IL"
+  },
+  {
+    "name": "Bohemians Dublin",
+    "shortName": "BDU",
+    "country": "IE"
+  },
+  {
+    "name": "Borac Banja Luka",
+    "shortName": "BOR",
+    "country": "BA"
+  },
+  {
+    "name": "Braga",
+    "shortName": "BRA",
+    "country": "PT"
+  },
+  {
+    "name": "Brann",
+    "shortName": "BRN",
+    "country": "NO"
+  },
+  {
+    "name": "CFR Kluž",
+    "shortName": "CLU",
+    "country": "RO"
+  },
+  {
+    "name": "CSKA 1948 Sofia",
+    "shortName": "CSK",
+    "country": "BG"
+  },
+  {
+    "name": "DAC Dunajská Streda",
+    "shortName": "DAC",
+    "country": "SK"
+  },
+  {
+    "name": "Debrecín",
+    "shortName": "DEB",
+    "country": "HU"
+  },
+  {
+    "name": "Dinamo City",
+    "shortName": "DCI",
+    "country": "AL"
+  },
+  {
+    "name": "Dinamo Minsk",
+    "shortName": "DMI",
+    "country": "BY"
+  },
+  {
+    "name": "Drita",
+    "shortName": "DRI",
+    "country": "XK"
+  },
+  {
+    "name": "Dynamo Kyjev",
+    "shortName": "DKY",
+    "country": "UA"
+  },
+  {
+    "name": "ETO Győr",
+    "shortName": "ETO",
+    "country": "HU"
+  },
+  {
+    "name": "FC Kodaň",
+    "shortName": "CPH",
+    "country": "DK"
+  },
+  {
+    "name": "FK Jablonec",
+    "shortName": "FKJ",
+    "country": "CZ"
+  },
+  {
+    "name": "Flora Tallinn",
+    "shortName": "FLO",
+    "country": "EE"
+  },
+  {
+    "name": "Gent",
+    "shortName": "GNT",
+    "country": "BE"
+  },
+  {
+    "name": "GKS Katowice",
+    "shortName": "KAT",
+    "country": "PL"
+  },
+  {
+    "name": "Hajduk Split",
+    "shortName": "HAJ",
+    "country": "HR"
+  },
+  {
+    "name": "Hammarby",
+    "shortName": "HAM",
+    "country": "SE"
+  },
+  {
+    "name": "Hapoel Tel-Aviv",
+    "shortName": "HTA",
+    "country": "IL"
+  },
+  {
+    "name": "Hibernian",
+    "shortName": "HIB",
+    "country": "GB"
+  },
+  {
+    "name": "HJK Helsinky",
+    "shortName": "HJK",
+    "country": "FI"
+  },
+  {
+    "name": "IFK Göteborg",
+    "shortName": "IFK",
+    "country": "SE"
+  },
+  {
+    "name": "Ilves Tampere",
+    "shortName": "ILV",
+    "country": "FI"
+  },
+  {
+    "name": "Inter Escaldes",
+    "shortName": "INT",
+    "country": "AD"
+  },
+  {
+    "name": "Inter Turku",
+    "shortName": "TUR",
+    "country": "FI"
+  },
+  {
+    "name": "Lugano",
+    "shortName": "LUG",
+    "country": "CH"
+  },
+  {
+    "name": "Midtjylland",
+    "shortName": "MID",
+    "country": "DK"
+  },
+  {
+    "name": "ML Vitebsk",
+    "shortName": "VIT",
+    "country": "BY"
+  },
+  {
+    "name": "Motherwell",
+    "shortName": "MOT",
+    "country": "GB"
+  },
+  {
+    "name": "Noah Jerevan",
+    "shortName": "NOA",
+    "country": "AM"
+  },
+  {
+    "name": "Nordsjælland",
+    "shortName": "NRS",
+    "country": "DK"
+  },
+  {
+    "name": "NSÍ Runavík",
+    "shortName": "NSI",
+    "country": "FO"
+  },
+  {
+    "name": "Paide",
+    "shortName": "PAI",
+    "country": "EE"
+  },
+  {
+    "name": "Panathinaikos",
+    "shortName": "PAN",
+    "country": "GR"
+  },
+  {
+    "name": "Partizan Bělehrad",
+    "shortName": "PRT",
+    "country": "RS"
+  },
+  {
+    "name": "Qarabağ",
+    "shortName": "QAR",
+    "country": "AZ"
+  },
+  {
+    "name": "Raków Częstochowa",
+    "shortName": "RAK",
+    "country": "PL"
+  },
+  {
+    "name": "Rapid Vídeň",
+    "shortName": "RAP",
+    "country": "AT"
+  },
+  {
+    "name": "RFS Riga",
+    "shortName": "RFS",
+    "country": "LV"
+  },
+  {
+    "name": "Riga FC",
+    "shortName": "RIG",
+    "country": "LV"
+  },
+  {
+    "name": "Rijeka",
+    "shortName": "RIJ",
+    "country": "HR"
+  },
+  {
+    "name": "Shelbourne",
+    "shortName": "SHL",
+    "country": "IE"
+  },
+  {
+    "name": "Sheriff Tiraspol",
+    "shortName": "SHE",
+    "country": "MD"
+  },
+  {
+    "name": "Shkëndija Tetovo",
+    "shortName": "SKN",
+    "country": "MK"
+  },
+  {
+    "name": "Sion",
+    "shortName": "SIO",
+    "country": "CH"
+  },
+  {
+    "name": "St. Gallen",
+    "shortName": "SGA",
+    "country": "CH"
+  },
+  {
+    "name": "Tobol Kostanaj",
+    "shortName": "TOB",
+    "country": "KZ"
+  },
+  {
+    "name": "Tre Fiori",
+    "shortName": "TRE",
+    "country": "SM"
+  },
+  {
+    "name": "Tromsø",
+    "shortName": "TRO",
+    "country": "NO"
+  },
+  {
+    "name": "Twente",
+    "shortName": "TWE",
+    "country": "NL"
+  },
+  {
+    "name": "Vaduz",
+    "shortName": "VAD",
+    "country": "LI"
+  },
+  {
+    "name": "Valur Reykjavík",
+    "shortName": "VAL",
+    "country": "IS"
+  },
+  {
+    "name": "Žalgiris Vilnius",
+    "shortName": "ZAL",
+    "country": "LT"
+  }
+]

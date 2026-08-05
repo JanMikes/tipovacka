@@ -1,0 +1,515 @@
+[
+  {
+    "externalId": "2049149",
+    "homeTeam": "Inter Turku",
+    "awayTeam": "Vaduz",
+    "kickoffUtc": "2026-08-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Kupittaan Jalkapallostadion"
+  },
+  {
+    "externalId": "2049166",
+    "homeTeam": "HJK Helsinky",
+    "awayTeam": "Motherwell",
+    "kickoffUtc": "2026-08-06T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Helsinki Football Stadium"
+  },
+  {
+    "externalId": "2049172",
+    "homeTeam": "FK Jablonec",
+    "awayTeam": "RFS Riga",
+    "kickoffUtc": "2026-08-06T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadion Střelnice"
+  },
+  {
+    "externalId": "2049155",
+    "homeTeam": "Noah Jerevan",
+    "awayTeam": "Sion",
+    "kickoffUtc": "2026-08-06T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Abovyan city stadium"
+  },
+  {
+    "externalId": "2049169",
+    "homeTeam": "Paide",
+    "awayTeam": "Rapid Vídeň",
+    "kickoffUtc": "2026-08-06T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Lilleküla Stadium"
+  },
+  {
+    "externalId": "2049161",
+    "homeTeam": "CFR Kluž",
+    "awayTeam": "Tromsø",
+    "kickoffUtc": "2026-08-06T16:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadionul Dr. Constantin Rădulescu"
+  },
+  {
+    "externalId": "2049171",
+    "homeTeam": "Debrecín",
+    "awayTeam": "FC Kodaň",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Nagyerdei Stadion"
+  },
+  {
+    "externalId": "2049162",
+    "homeTeam": "Dynamo Kyjev",
+    "awayTeam": "Qarabağ",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Arena Lublin"
+  },
+  {
+    "externalId": "2049168",
+    "homeTeam": "IFK Göteborg",
+    "awayTeam": "Gent",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Gamla Ullevi"
+  },
+  {
+    "externalId": "2049147",
+    "homeTeam": "Inter Escaldes",
+    "awayTeam": "Flora Tallinn",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Estadi FAF"
+  },
+  {
+    "externalId": "2049165",
+    "homeTeam": "Raków Częstochowa",
+    "awayTeam": "Hammarby",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Municipal Sport Stadium “Raków” Częstochowa"
+  },
+  {
+    "externalId": "2049148",
+    "homeTeam": "Riga FC",
+    "awayTeam": "ETO Győr",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Skonto Stadions"
+  },
+  {
+    "externalId": "2049158",
+    "homeTeam": "Sheriff Tiraspol",
+    "awayTeam": "St. Gallen",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Sheriff Main Arena"
+  },
+  {
+    "externalId": "2049150",
+    "homeTeam": "Žalgiris Vilnius",
+    "awayTeam": "Hajduk Split",
+    "kickoffUtc": "2026-08-06T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "FK Žalgiris stadium"
+  },
+  {
+    "externalId": "2049160",
+    "homeTeam": "Beitar Jeruzalém",
+    "awayTeam": "Austria Vídeň",
+    "kickoffUtc": "2026-08-06T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Ilie Oană Stadium"
+  },
+  {
+    "externalId": "2049153",
+    "homeTeam": "Ajax Amsterdam",
+    "awayTeam": "Shelbourne",
+    "kickoffUtc": "2026-08-06T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Johan Cruijff ArenA"
+  },
+  {
+    "externalId": "2049159",
+    "homeTeam": "Hapoel Tel-Aviv",
+    "awayTeam": "GKS Katowice",
+    "kickoffUtc": "2026-08-06T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "DVTK Stadium"
+  },
+  {
+    "externalId": "2049174",
+    "homeTeam": "Twente",
+    "awayTeam": "DAC Dunajská Streda",
+    "kickoffUtc": "2026-08-06T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "FC Twente Stadion"
+  },
+  {
+    "externalId": "2049146",
+    "homeTeam": "Borac Banja Luka",
+    "awayTeam": "ML Vitebsk",
+    "kickoffUtc": "2026-08-06T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Gradski Stadion Banja Luka"
+  },
+  {
+    "externalId": "2049156",
+    "homeTeam": "Braga",
+    "awayTeam": "Dinamo Minsk",
+    "kickoffUtc": "2026-08-06T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Estádio Municipal de Braga"
+  },
+  {
+    "externalId": "2049164",
+    "homeTeam": "Lugano",
+    "awayTeam": "NSÍ Runavík",
+    "kickoffUtc": "2026-08-06T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Lugano Arena"
+  },
+  {
+    "externalId": "2049157",
+    "homeTeam": "Valur Reykjavík",
+    "awayTeam": "Nordsjælland",
+    "kickoffUtc": "2026-08-06T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Hlíðarendi"
+  },
+  {
+    "externalId": "2049170",
+    "homeTeam": "Bohemians Dublin",
+    "awayTeam": "Midtjylland",
+    "kickoffUtc": "2026-08-06T18:45:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Tallaght Stadium"
+  },
+  {
+    "externalId": "2049173",
+    "homeTeam": "Rijeka",
+    "awayTeam": "Ilves Tampere",
+    "kickoffUtc": "2026-08-06T18:45:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadion HNK Rijeka"
+  },
+  {
+    "externalId": "2049167",
+    "homeTeam": "Hibernian",
+    "awayTeam": "Shkëndija Tetovo",
+    "kickoffUtc": "2026-08-06T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Easter Road Stadium"
+  },
+  {
+    "externalId": "2049151",
+    "homeTeam": "Partizan Bělehrad",
+    "awayTeam": "Tobol Kostanaj",
+    "kickoffUtc": "2026-08-06T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "Stadion FK Partizan"
+  },
+  {
+    "externalId": "2049145",
+    "homeTeam": "Tre Fiori",
+    "awayTeam": "Drita",
+    "kickoffUtc": "2026-08-06T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 1. zápas",
+    "venue": "San Marino Stadium"
+  },
+  {
+    "externalId": "2049193",
+    "homeTeam": "Apollon Limassol",
+    "awayTeam": "Brann",
+    "kickoffUtc": "2026-08-11T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Limassol Stadium"
+  },
+  {
+    "externalId": "2049182",
+    "homeTeam": "CSKA 1948 Sofia",
+    "awayTeam": "Panathinaikos",
+    "kickoffUtc": "2026-08-11T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Natsionalen Stadion Vasil Levski"
+  },
+  {
+    "externalId": "2049201",
+    "homeTeam": "FC Kodaň",
+    "awayTeam": "Debrecín",
+    "kickoffUtc": "2026-08-12T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Parken"
+  },
+  {
+    "externalId": "2049189",
+    "homeTeam": "GKS Katowice",
+    "awayTeam": "Hapoel Tel-Aviv",
+    "kickoffUtc": "2026-08-12T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Arena Katowice"
+  },
+  {
+    "externalId": "2049199",
+    "homeTeam": "Rapid Vídeň",
+    "awayTeam": "Paide",
+    "kickoffUtc": "2026-08-12T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Weststadion"
+  },
+  {
+    "externalId": "2049181",
+    "homeTeam": "Tobol Kostanaj",
+    "awayTeam": "Partizan Bělehrad",
+    "kickoffUtc": "2026-08-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Tsentralniy"
+  },
+  {
+    "externalId": "2049204",
+    "homeTeam": "DAC Dunajská Streda",
+    "awayTeam": "Twente",
+    "kickoffUtc": "2026-08-13T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "DAC Arena"
+  },
+  {
+    "externalId": "2049177",
+    "homeTeam": "Flora Tallinn",
+    "awayTeam": "Inter Escaldes",
+    "kickoffUtc": "2026-08-13T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Lilleküla Stadium"
+  },
+  {
+    "externalId": "2049203",
+    "homeTeam": "Ilves Tampere",
+    "awayTeam": "Rijeka",
+    "kickoffUtc": "2026-08-13T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Tammelan Stadion"
+  },
+  {
+    "externalId": "2049192",
+    "homeTeam": "Qarabağ",
+    "awayTeam": "Dynamo Kyjev",
+    "kickoffUtc": "2026-08-13T16:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Tofiq Bahramov Republican Stadium"
+  },
+  {
+    "externalId": "2049202",
+    "homeTeam": "RFS Riga",
+    "awayTeam": "FK Jablonec",
+    "kickoffUtc": "2026-08-13T16:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "LNK Sporta Parks"
+  },
+  {
+    "externalId": "2049186",
+    "homeTeam": "Dinamo Minsk",
+    "awayTeam": "Braga",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "City Stadium Beroe"
+  },
+  {
+    "externalId": "2049178",
+    "homeTeam": "ETO Győr",
+    "awayTeam": "Riga FC",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "ETO Stadion"
+  },
+  {
+    "externalId": "2049195",
+    "homeTeam": "Hammarby",
+    "awayTeam": "Raków Częstochowa",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stockholm Arena"
+  },
+  {
+    "externalId": "2049176",
+    "homeTeam": "ML Vitebsk",
+    "awayTeam": "Borac Banja Luka",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Municipal Stadium Mezőkövesd"
+  },
+  {
+    "externalId": "2049200",
+    "homeTeam": "Midtjylland",
+    "awayTeam": "Bohemians Dublin",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Arena Herning"
+  },
+  {
+    "externalId": "2049187",
+    "homeTeam": "Nordsjælland",
+    "awayTeam": "Valur Reykjavík",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Right to Dream Park"
+  },
+  {
+    "externalId": "2049191",
+    "homeTeam": "Tromsø",
+    "awayTeam": "CFR Kluž",
+    "kickoffUtc": "2026-08-13T17:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Romssa Arena"
+  },
+  {
+    "externalId": "2049194",
+    "homeTeam": "NSÍ Runavík",
+    "awayTeam": "Lugano",
+    "kickoffUtc": "2026-08-13T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "við Djúpumýru"
+  },
+  {
+    "externalId": "2049179",
+    "homeTeam": "Vaduz",
+    "awayTeam": "Inter Turku",
+    "kickoffUtc": "2026-08-13T17:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Rheinpark Stadion"
+  },
+  {
+    "externalId": "2049175",
+    "homeTeam": "Drita",
+    "awayTeam": "Tre Fiori",
+    "kickoffUtc": "2026-08-13T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stadiumi Fadil Vokrri"
+  },
+  {
+    "externalId": "2049197",
+    "homeTeam": "Shkëndija Tetovo",
+    "awayTeam": "Hibernian",
+    "kickoffUtc": "2026-08-13T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "National Arena Todor Proeski "
+  },
+  {
+    "externalId": "2049188",
+    "homeTeam": "St. Gallen",
+    "awayTeam": "Sheriff Tiraspol",
+    "kickoffUtc": "2026-08-13T18:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Sitterstadion"
+  },
+  {
+    "externalId": "2049185",
+    "homeTeam": "Sion",
+    "awayTeam": "Noah Jerevan",
+    "kickoffUtc": "2026-08-13T18:15:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stade de Tourbillon"
+  },
+  {
+    "externalId": "2049190",
+    "homeTeam": "Austria Vídeň",
+    "awayTeam": "Beitar Jeruzalém",
+    "kickoffUtc": "2026-08-13T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Franz-Horr-Stadion"
+  },
+  {
+    "externalId": "2049198",
+    "homeTeam": "Gent",
+    "awayTeam": "IFK Göteborg",
+    "kickoffUtc": "2026-08-13T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "KAA Gent Arena"
+  },
+  {
+    "externalId": "2049196",
+    "homeTeam": "Motherwell",
+    "awayTeam": "HJK Helsinky",
+    "kickoffUtc": "2026-08-13T18:30:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Fir Park Stadium"
+  },
+  {
+    "externalId": "2049183",
+    "homeTeam": "Shelbourne",
+    "awayTeam": "Ajax Amsterdam",
+    "kickoffUtc": "2026-08-13T18:45:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Tolka Park"
+  },
+  {
+    "externalId": "2049184",
+    "homeTeam": "Dinamo City",
+    "awayTeam": "Auda",
+    "kickoffUtc": "2026-08-13T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Elbasan Arena"
+  },
+  {
+    "externalId": "2049180",
+    "homeTeam": "Hajduk Split",
+    "awayTeam": "Žalgiris Vilnius",
+    "kickoffUtc": "2026-08-13T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. předkolo – 2. zápas",
+    "venue": "Stadion Poljud"
+  }
+]
