@@ -97,7 +97,7 @@ final class CompetitionVoterTest extends TestCase
         return $matchSource;
     }
 
-    private function makeCompetition(User $owner, ?MatchSource $matchSource = null, bool $deleted = false, bool $isGlobal = false, int $entryFeeCredits = 0): Competition
+    private function makeCompetition(User $owner, ?MatchSource $matchSource = null, bool $deleted = false, bool $isGlobal = false, int $entryFeeCredits = 0, ?string $pin = null): Competition
     {
         $matchSource ??= $this->makeMatchSource($owner);
 
@@ -107,7 +107,7 @@ final class CompetitionVoterTest extends TestCase
             owner: $owner,
             name: 'Soutěž',
             description: null,
-            pin: null,
+            pin: $pin,
             shareableLinkToken: null,
             createdAt: $this->now,
             isGlobal: $isGlobal,
@@ -296,7 +296,27 @@ final class CompetitionVoterTest extends TestCase
         self::assertSame(-1, $this->voter->vote($this->token($other), $competition, [CompetitionVoter::LEAVE]));
     }
 
-    public function testRegularMemberCannotInviteMember(): void
+    /**
+     * The rule a plain member's invitation lives by: a partička grows because the players
+     * bring their friends, so being a member is enough — provided the organizer has left
+     * the doors open.
+     */
+    public function testMemberCanInviteWhileACompetitionHasAWayIn(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::MEMBER_ID);
+        $competition = $this->makeCompetition($owner, pin: '12345678');
+        $this->markAsMember($member, $competition);
+
+        self::assertSame(1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::INVITE_MEMBER]));
+    }
+
+    /**
+     * …and the other half of that rule: revoking BOTH the PIN and the shareable link is
+     * how an organizer closes a competition to newcomers, so a member's e-mail invitation
+     * must not be a way around it. The organizer keeps inviting — they hold the switch.
+     */
+    public function testMemberCannotInviteOnceTheOrganizerRevokedEveryWayIn(): void
     {
         $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
         $member = $this->makeUser(self::MEMBER_ID);
@@ -304,6 +324,39 @@ final class CompetitionVoterTest extends TestCase
         $this->markAsMember($member, $competition);
 
         self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::INVITE_MEMBER]));
+        self::assertSame(1, $this->voter->vote($this->token($owner), $competition, [CompetitionVoter::INVITE_MEMBER]));
+    }
+
+    /**
+     * A global competition has no PIN and no link and is open to everybody anyway, so its
+     * members may always invite. What that invitation DOES is another matter entirely —
+     * it mails the public page and the invitee pays the entry fee.
+     */
+    public function testMemberCanInviteIntoGlobalCompetition(): void
+    {
+        $admin = $this->makeUser(AppFixtures::ADMIN_ID, isAdmin: true);
+        $member = $this->makeUser(self::MEMBER_ID);
+        $competition = $this->makeCompetition($admin, isGlobal: true, entryFeeCredits: 50);
+        $this->markAsMember($member, $competition);
+
+        self::assertSame(1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::INVITE_MEMBER]));
+        self::assertSame(1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::SHARE_JOIN_LINK]));
+    }
+
+    /**
+     * Sharing stays a member's right, inviting-by-e-mail is now too — but the join
+     * MECHANICS (whether a PIN and a link exist at all) remain the organizer's, and a
+     * global competition has none to manage.
+     */
+    public function testMemberNeverManagesJoinMechanics(): void
+    {
+        $owner = $this->makeUser(AppFixtures::VERIFIED_USER_ID);
+        $member = $this->makeUser(self::MEMBER_ID);
+        $competition = $this->makeCompetition($owner, pin: '12345678');
+        $this->markAsMember($member, $competition);
+
+        self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::MANAGE_JOIN_MECHANICS]));
+        self::assertSame(-1, $this->voter->vote($this->token($member), $competition, [CompetitionVoter::MANAGE_MEMBERS]));
     }
 
     public function testOwnerCanInviteMember(): void

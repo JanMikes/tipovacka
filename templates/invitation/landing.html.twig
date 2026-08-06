@@ -94,6 +94,22 @@
             </p>
         </div>
 
+        {#
+            Vstupné se říká PŘED registrací, ne až za ní. Nenulové je jen u globální
+            soutěže (do soukromé se chodí zdarma), takže tenhle blok se jinde nevykreslí.
+            Kdo si kvůli soutěži zakládá účet, má vědět, co ho čeká, dokud ještě může couvnout.
+        #}
+        {% if context.entryFeeCredits > 0 %}
+            <div class="mb-6 flex items-start gap-3 rounded-xl border border-draw/30 bg-draw/10 p-4">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-draw/30 bg-white/5 text-draw">
+                    <twig:ux:icon name="lucide:coins" class="h-5 w-5" />
+                </span>
+                <p class="text-sm leading-relaxed text-white/70">
+                    Vstupné je <strong class="font-semibold text-white">{{ context.entryFeeCredits|credits }}</strong> — odečteme je z tvého kreditu ve chvíli, kdy se připojíš. Když ti kredity nestačí, nabídneme dobití.
+                </p>
+            </div>
+        {% endif %}
+
         <twig:Auth:InvitationForm kind="{{ context.kind.value }}" token="{{ context.token }}" />
 
         <p class="mt-6 text-center text-sm text-white/50">

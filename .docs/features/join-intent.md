@@ -12,7 +12,7 @@ of band. That is exactly how every link-invited sign-up silently lost its compet
 
 | Piece | Where | Job |
 |---|---|---|
-| `InvitationKind` | `src/Enum/InvitationKind.php` | `Email` · `ShareableLink` · `Pin` — how the visitor arrived. Only `Email` proves mailbox ownership. |
+| `InvitationKind` | `src/Enum/InvitationKind.php` | `Email` · `ShareableLink` · `Pin` · `GlobalCompetition` — how the visitor arrived. Only `Email` proves mailbox ownership; `GlobalCompetition` carries no secret at all (see below). |
 | `InvitationContext(Resolver)` | `src/Service/Invitation/` | Turns (kind, token) into „which soutěž, in what state" — the thing the landing page names. |
 | `PendingJoin` | `src/Service/Competition/PendingJoin.php` | Immutable (kind, token). Excluded from autowiring in `config/services.php`. |
 | `PendingJoinStore` | `src/Service/Competition/PendingJoinStore.php` | **The only place intents are written or read.** Session for a visitor with no account, `User.pendingJoinKind/pendingJoinToken` the moment one exists. |
@@ -38,14 +38,19 @@ Only ever through `PendingJoinStore`:
 - `forget(User)` — the join just happened inline; drop the intent so the next login does
   not replay it as „V soutěži již jsi.".
 
-## The three entry points
+## The four entry points
 
-All three are **public** controllers in `src/Controller/Invitation/`, all allow-listed in
+All four are **public** controllers in `src/Controller/Invitation/`, all allow-listed in
 `RequireVerifiedEmailSubscriber` (they handle the unverified case themselves):
 
 - `/pozvanka/{token}` — e-mail invitation
 - `/souteze/pozvanka/{token}` — shareable link
 - `/pripojit` (+ the 8-box bar's `POST /pripojit/rychle`) — PIN
+- `/souteze/{id}/pozvanka` — a **global** soutěž (see [invite-a-friend](invite-a-friend.md)).
+  The odd one out: its „token" is the competition's own id, not a secret, because a global
+  soutěž is public. It is here for the same reason as the others — to name the soutěž to
+  somebody with no account and survive the mail round trip — but it ends in the ordinary
+  **entry-fee** join, so an insufficient balance goes to the top-up, not into the soutěž.
 
 They all render `templates/invitation/landing.html.twig`, which **names the soutěž before
 any account exists** and hosts the one `Auth:InvitationForm` that both signs up and signs

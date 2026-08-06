@@ -160,6 +160,23 @@ class Competition implements EntityWithEvents, SoftDeletable
     }
 
     /**
+     * May a plain member bring somebody in — not just the organizer?
+     *
+     * A GLOBAL competition always may: it is publicly browsable and joined by
+     * paying the entry fee, so passing its link around gives nothing away and
+     * costs the organizer nothing.
+     *
+     * A private one may exactly while the organizer keeps at least one join
+     * mechanic alive. Revoking BOTH the PIN and the shareable link is how an
+     * organizer closes the doors ({@see \App\Voter\CompetitionVoter::MANAGE_JOIN_MECHANICS}),
+     * and a member's invitation must never reopen them — that is the whole
+     * reason this is not simply „is a member".
+     */
+    public bool $isOpenToInvites {
+        get => $this->isGlobal || null !== $this->pin || null !== $this->shareableLinkToken;
+    }
+
+    /**
      * The competition's scope layers, in display order.
      *
      * @var list<CompetitionSource>

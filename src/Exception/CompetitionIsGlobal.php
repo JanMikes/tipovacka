@@ -28,6 +28,22 @@ final class CompetitionIsGlobal extends \DomainException
     }
 
     /**
+     * The private-competition e-mail invitation pre-provisions the seat (a stub user
+     * plus an active Membership) so the organizer can tip on the invitee's behalf
+     * before they accept. For a global competition that would hand out a fee-free
+     * membership — the same money leak the two factories above defend against — so the
+     * global path mails the public invitation page instead and the invitee pays on
+     * arrival ({@see \App\Command\InviteToGlobalCompetition\InviteToGlobalCompetitionHandler}).
+     */
+    public static function seatCannotBePreProvisioned(Uuid $competitionId): self
+    {
+        return new self(sprintf(
+            'Soutěž "%s" je globální — pozvánka do ní nesmí předem vytvořit členství, platí se vstupné.',
+            $competitionId->toRfc4122(),
+        ));
+    }
+
+    /**
      * A global competition's scope is an admin decision taken in the admin area
      * ({@see \App\Command\UpdateGlobalCompetition\UpdateGlobalCompetitionHandler}):
      * players joined it under advertised terms, and it may never grow a private

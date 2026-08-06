@@ -99,11 +99,13 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni"]'), 'Nastavení');
-        // Two now (item 19): the action bar's „Pozvat" and „Spravovat pozvánky" in the
-        // („Pozvat kamaráda") share card — both point at the ONE invitation block
-        // (item 08). The card itself is every member's; only these two links are not.
-        self::assertCount(2, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Pozvat + Pozvat kamaráda');
-        self::assertSelectorTextContains('body', 'Pozvat kamaráda');
+        // Back to one: the action bar's „Pozvat" used to lead into „Nastavení →
+        // Pozvánky", but inviting is a player's action now, so it opens the
+        // „Pozvat přítele" card instead (an in-page anchor). The only link left into
+        // the organizer's invitation block is the one inside that card's dialog.
+        self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'), 'Spravovat pozvánky');
+        self::assertCount(1, $crawler->filter('a[href="#pozvat"]'), 'Pozvat přítele → the card');
+        self::assertSelectorTextContains('body', 'Pozvat přítele');
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'), 'Tipovat za členy');
         self::assertCount(1, $crawler->filter('form[action="/souteze/'.$id.'/uzamknout-tipy"]'), 'Uzamknout tipy');
 
@@ -142,9 +144,10 @@ final class CompetitionDetailFlowTest extends WebTestCase
     }
 
     /**
-     * Sharing is NOT an organizer privilege: a plain member gets the join link (and
-     * the PIN, where one exists) so they can pull their friends in themselves. What
-     * stays organizer-only is the CONTROL — regenerating, revoking, e-mail invites.
+     * Inviting is NOT an organizer privilege: a plain member gets the join link (and
+     * the PIN, where one exists) AND the e-mail invitation form, so they can pull their
+     * friends in themselves. What stays organizer-only is the CONTROL — regenerating and
+     * revoking the PIN/link, and the bulk paste-an-address-book form.
      */
     public function testPlainMemberCanShareTheJoinLink(): void
     {
@@ -160,11 +163,17 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         $body = (string) $client->getResponse()->getContent();
-        self::assertStringContainsString('Pozvat kamaráda', $body);
+        self::assertStringContainsString('Pozvat přítele', $body);
         self::assertStringContainsString(AppFixtures::BOOSTS_COMPETITION_LINK_TOKEN, $body);
-        // …but none of the controls that regenerate or revoke it.
+        // The e-mail invitation form is theirs too, and it posts back to the competition
+        // page — a plain member has no „Nastavení" to be redirected to.
+        self::assertCount(1, $crawler->filter('form[action="/souteze/'.$id.'/pozvanky/odeslat"]'));
+        self::assertCount(1, $crawler->filter('form[action="/souteze/'.$id.'/pozvanky/odeslat"] input[name="navrat"][value="detail"]'));
+        // …but none of the controls that regenerate or revoke it, no bulk form, and no
+        // way into the organizer's invitation block.
         self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/odkaz/novy"]'));
         self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/pin/novy"]'));
+        self::assertCount(0, $crawler->filter('form[action="/souteze/'.$id.'/pozvanky/hromadne"]'));
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'));
     }
 
@@ -182,8 +191,13 @@ final class CompetitionDetailFlowTest extends WebTestCase
         self::assertResponseIsSuccessful();
 
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/spravovat-tipy"]'));
-        // …while „Pozvat" is off for globals too (they are entry-fee discovery only).
+        // A global competition has no PIN and no shareable link to manage, so the way
+        // into „Nastavení → Pozvánky" stays shut — even for its admin owner…
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.$id.'/nastaveni#pozvanky"]'));
+        // …but inviting itself is open, and what it hands over is the competition's own
+        // public invitation page, where the invitee pays the entry fee.
+        self::assertSelectorTextContains('body', 'Pozvat přítele');
+        self::assertStringContainsString('/souteze/'.$id.'/pozvanka', (string) $client->getResponse()->getContent());
     }
 
     public function testNonMemberReceivesForbidden(): void

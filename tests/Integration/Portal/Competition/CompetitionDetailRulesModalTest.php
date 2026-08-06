@@ -11,6 +11,7 @@ use App\Enum\CompetitionMatchSelectionMode;
 use App\Tests\Support\WebFlowHelpers;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Uid\Uuid;
 
@@ -29,6 +30,15 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
 
     private const string OWN_DETAIL = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID;
     private const string BOOSTS_DETAIL = '/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID;
+
+    /**
+     * „Pozvat přítele" put a SECOND `modal` dialog on this page, so every assertion here
+     * names the rules one by its accessible name instead of counting dialogs. Counting
+     * was never what these tests meant — they mean „the rules dialog is there, server
+     * -rendered, read-only" — and a bare `dialog[data-modal-target="dialog"]` would now
+     * silently read the invitation dialog's markup instead.
+     */
+    private const string RULES_DIALOG = 'dialog[aria-labelledby="rules-modal-title"]';
 
     // ── Who may open the rules ──────────────────────────────────────────────
 
@@ -49,11 +59,10 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
         self::assertCount(0, $crawler->filter('a[href="/souteze/'.AppFixtures::BOOSTS_COMPETITION_ID.'/nastaveni"]'));
 
         // …but the action bar exists for the one thing a player needs.
-        self::assertCount(1, $crawler->filter('button[data-action="modal#open"]'));
-        self::assertSelectorTextContains('button[data-action="modal#open"]', 'Pravidla');
+        self::assertSame(1, $this->modalTriggersLabelled($crawler, 'Pravidla'));
 
         // The dialog itself is server-rendered, with this competition's points.
-        $dialog = $crawler->filter('dialog[data-modal-target="dialog"]');
+        $dialog = $crawler->filter(self::RULES_DIALOG);
         self::assertCount(1, $dialog);
         self::assertStringContainsString('Přesný výsledek', $dialog->text());
         self::assertStringContainsString('5 b.', $dialog->text());
@@ -69,9 +78,9 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
         $crawler = $client->request('GET', self::OWN_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertCount(1, $crawler->filter('button[data-action="modal#open"]'));
+        self::assertSame(1, $this->modalTriggersLabelled($crawler, 'Pravidla'));
         self::assertCount(1, $crawler->filter('a[href="/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni"]'));
-        self::assertStringContainsString('Přesný výsledek', $crawler->filter('dialog[data-modal-target="dialog"]')->text());
+        self::assertStringContainsString('Přesný výsledek', $crawler->filter(self::RULES_DIALOG)->text());
     }
 
     public function testAnAdminOwnerSeesTheRulesToo(): void
@@ -82,8 +91,8 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
         self::assertResponseIsSuccessful();
 
-        self::assertCount(1, $crawler->filter('button[data-action="modal#open"]'));
-        self::assertStringContainsString('Přesný výsledek', $crawler->filter('dialog[data-modal-target="dialog"]')->text());
+        self::assertSame(1, $this->modalTriggersLabelled($crawler, 'Pravidla'));
+        self::assertStringContainsString('Přesný výsledek', $crawler->filter(self::RULES_DIALOG)->text());
     }
 
     // ── What the dialog is, and is not ──────────────────────────────────────
@@ -99,11 +108,11 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
         $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
 
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
-        $text = $crawler->filter('dialog[data-modal-target="dialog"]')->text();
+        $text = $crawler->filter(self::RULES_DIALOG)->text();
 
         self::assertStringNotContainsString('Trefený střelec', $text);
         self::assertStringNotContainsString('Přesný výsledek části zápasu', $text);
-        self::assertCount(4, $crawler->filter('dialog[data-modal-target="dialog"] li'));
+        self::assertCount(4, $crawler->filter(self::RULES_DIALOG.' li'));
     }
 
     /**
@@ -118,10 +127,11 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
 
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
 
-        self::assertCount(1, $crawler->filter('[data-controller="modal"]'));
-        self::assertCount(1, $crawler->filter('dialog[aria-labelledby="rules-modal-title"]'));
+        // Inside its own `modal` scope — „Pozvat přítele" has a separate one.
+        self::assertCount(1, $crawler->filter('[data-controller="modal"] '.self::RULES_DIALOG));
+        self::assertCount(1, $crawler->filter(self::RULES_DIALOG));
         self::assertCount(1, $crawler->filter('#rules-modal-title'));
-        self::assertCount(2, $crawler->filter('dialog[data-modal-target="dialog"] button[data-action="modal#close"]'));
+        self::assertCount(2, $crawler->filter(self::RULES_DIALOG.' button[data-action="modal#close"]'));
     }
 
     /**
@@ -135,8 +145,8 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
 
         $crawler = $client->request('GET', self::BOOSTS_DETAIL);
 
-        self::assertCount(0, $crawler->filter('dialog[data-modal-target="dialog"] form'));
-        self::assertCount(0, $crawler->filter('dialog[data-modal-target="dialog"] input'));
+        self::assertCount(0, $crawler->filter(self::RULES_DIALOG.' form'));
+        self::assertCount(0, $crawler->filter(self::RULES_DIALOG.' input'));
     }
 
     // ── „Týmy soutěže" is gone (the display, not the scope) ─────────────────
@@ -162,6 +172,17 @@ final class CompetitionDetailRulesModalTest extends WebTestCase
             $matchCount,
             'A teams-mode competition must still include FEWER matches than mode `all`.',
         );
+    }
+
+    /**
+     * How many „open a dialog" triggers carry this label. Counting all of them stopped
+     * saying anything the day „Pozvat přítele" added a second one to this page.
+     */
+    private function modalTriggersLabelled(Crawler $crawler, string $label): int
+    {
+        return $crawler->filter('button[data-action="modal#open"]')
+            ->reduce(static fn (Crawler $node): bool => str_contains($node->text(), $label))
+            ->count();
     }
 
     private function allModeMatchCount(KernelBrowser $client): int

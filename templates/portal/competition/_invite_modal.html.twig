@@ -1,0 +1,169 @@
+{#
+    „Pozvat přítele" — jedno místo, kde hráč (ne jen organizátor) přivede kamaráda.
+
+    Otevírá ho `modal_controller.js` úplně stejně jako „Pravidla"; dialog je jen jeden na
+    stránce a spouštěče na něj ukazují dva (tlačítko v akční liště a karta níž), proto ho
+    tahle partial vykresluje SAMA a `data-controller="modal"` sedí na obalu, který oba
+    spouštěče i dialog obsahuje.
+
+    Co je uvnitř, se liší podle soutěže, a ten rozdíl je věcný:
+
+      • soukromá partička — odkaz a PIN (obojí zapíná/vypíná organizátor v Nastavení) plus
+        pozvánka e-mailem, která pozvanému rovnou založí místo, aby za něj šlo tipovat;
+      • globální soutěž — veřejná stránka s pozvánkou. Žádné tajemství, žádné místo předem:
+        kdo přijde, zaplatí vstupné jako každý jiný. Proto se tu vstupné taky rovnou píše —
+        posílat kamarádovi odkaz a nevědět, že něco stojí, je past.
+
+    Nepoužívá se `{# … #}` uvnitř atributů komponent (rozbilo by pre-lexer) — komentáře
+    patří nad tag.
+#}
+{% set share_url = competition.isGlobal
+    ? url('competition_global_invitation', {id: competition.id.toRfc4122})
+    : (detail.shareableLinkToken ? url('competition_join_by_link', {token: detail.shareableLinkToken}) : null) %}
+{% set share_pin = competition.isGlobal ? null : detail.pin %}
+{% set can_manage_invites = is_granted('competition_manage_join_mechanics', competition) %}
+
+<dialog data-modal-target="dialog"
+        class="confirm-dialog modal-panel w-full max-w-lg p-0"
+        aria-labelledby="invite-modal-title">
+    <div class="p-6">
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <p class="eyebrow mb-1">Partička roste tím, koho přivedete</p>
+                <h2 id="invite-modal-title" class="flex items-center gap-2 text-lg font-bold tracking-tight text-white">
+                    <twig:ux:icon name="lucide:user-plus" class="h-5 w-5 shrink-0 text-accent-400" />
+                    Pozvat přítele
+                </h2>
+            </div>
+            <button type="button"
+                    data-action="modal#close"
+                    aria-label="Zavřít"
+                    class="-mr-1 -mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/5 hover:text-white">
+                <twig:ux:icon name="lucide:x" class="h-5 w-5" />
+            </button>
+        </div>
+
+        {% if competition.isGlobal and competition.entryFeeCredits > 0 %}
+            <p class="mt-3 flex items-start gap-2 rounded-xl border border-draw/30 bg-draw/10 p-3 text-[13px] leading-snug text-white/75">
+                <twig:ux:icon name="lucide:coins" class="mt-0.5 h-4 w-4 shrink-0 text-draw" />
+                <span>Tahle soutěž má vstupné <strong class="font-semibold text-white">{{ competition.entryFeeCredits|credits }}</strong>. Kdo pozvánku přijme, zaplatí je ze svého kreditu — pozvání nic nestojí vás.</span>
+            </p>
+        {% endif %}
+
+        {% if invitation_form %}
+            <div class="mt-5">
+                <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
+                    <twig:ux:icon name="lucide:mail" class="h-3.5 w-3.5" />
+                    Poslat pozvánku e-mailem
+                </p>
+                {{ form_start(invitation_form) }}
+                    <input type="hidden" name="navrat" value="detail">
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div class="field min-w-[200px] flex-1">
+                            {{ form_widget(invitation_form.email, {attr: {class: 'input'}}) }}
+                            {{ form_errors(invitation_form.email) }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <twig:ux:icon name="lucide:send" class="h-4 w-4" />
+                            Odeslat
+                        </button>
+                    </div>
+                {{ form_end(invitation_form) }}
+                <p class="mt-1.5 text-xs text-white/45">
+                    {% if competition.isGlobal %}
+                        Pošleme mu odkaz na tuhle soutěž. Připojí se sám.
+                    {% else %}
+                        Pozvanému rovnou držíme místo — než pozvánku přijme, můžete za něj zadávat tipy.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+
+        {% if share_url or share_pin %}
+            <div class="mt-5 space-y-4 border-t border-white/10 pt-5">
+                {% if share_url %}
+                    <div>
+                        <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
+                            <twig:ux:icon name="lucide:share-2" class="h-3.5 w-3.5" />
+                            Odkaz
+                        </p>
+                        <div class="copy-field" data-controller="copy">
+                            <input type="text" readonly value="{{ share_url }}"
+                                data-copy-target="source"
+                                onclick="this.select()"
+                                class="text-xs"
+                                aria-label="Odkaz pro připojení">
+                            <button type="button"
+                                data-copy-target="button"
+                                data-action="copy#copy"
+                                aria-label="Kopírovat odkaz">
+                                <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                    <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                </span>
+                                <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                    Zkopírováno
+                                </span>
+                            </button>
+                        </div>
+                        <p class="mt-1.5 text-xs text-white/45">
+                            {% if competition.isGlobal %}
+                                Otevře stránku soutěže i tomu, kdo tu ještě nemá účet.
+                            {% else %}
+                                Kdo odkaz otevře, rovnou se přidá.
+                            {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+
+                {% if share_pin %}
+                    <div>
+                        <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
+                            <twig:ux:icon name="lucide:key-round" class="h-3.5 w-3.5" />
+                            PIN
+                        </p>
+                        <div class="copy-field" data-controller="copy">
+                            <input type="text" readonly value="{{ share_pin }}"
+                                data-copy-target="source"
+                                onclick="this.select()"
+                                class="text-center font-mono text-lg tracking-[0.3em]"
+                                aria-label="PIN soutěže">
+                            <button type="button"
+                                data-copy-target="button"
+                                data-action="copy#copy"
+                                aria-label="Kopírovat PIN">
+                                <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
+                                    <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
+                                </span>
+                                <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
+                                    <twig:ux:icon name="lucide:check" class="h-4 w-4" />
+                                    Zkopírováno
+                                </span>
+                            </button>
+                        </div>
+                        {# Skutečná adresa, ne natvrdo napsaná doména — v dev i v produkci sedí. #}
+                        <p class="mt-1.5 text-xs text-white/45">
+                            Zadá se na <strong class="font-semibold text-white/70">{{ url('competition_join_by_pin')|replace({'https://': '', 'http://': ''}) }}</strong>.
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        {% elseif not invitation_form %}
+            {# Organizátor zrušil PIN i odkaz — hráč tedy nemá co poslat a e-mail mu voter
+               taky nedovolí. Tenhle stav vidí prakticky jen organizátor sám (jemu voter
+               e-mail nechává), ale ať dialog nikdy není prázdný. #}
+            <p class="mt-5 text-[13px] leading-snug text-white/45">
+                Do téhle soutěže se teď nedá nikoho pozvat — PIN ani odkaz nejsou aktivní.
+            </p>
+        {% endif %}
+
+        {% if can_manage_invites %}
+            <div class="mt-5 border-t border-white/10 pt-4">
+                <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}#pozvanky" class="btn btn-ghost btn-sm">
+                    <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
+                    Spravovat pozvánky, PIN a odkaz
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</dialog>

@@ -10,6 +10,7 @@ use App\Exception\InvalidPin;
 use App\Exception\InvalidShareableLink;
 use App\Repository\CompetitionInvitationRepository;
 use App\Repository\CompetitionRepository;
+use Symfony\Component\Uid\Uuid;
 
 final readonly class InvitationContextResolver
 {
@@ -20,7 +21,8 @@ final readonly class InvitationContextResolver
     }
 
     /**
-     * @throws InvalidInvitationToken when an email-kind token has no matching invitation
+     * @throws InvalidInvitationToken when an email-kind token has no matching invitation,
+     *                                or a global-kind one names no joinable global competition
      * @throws InvalidShareableLink   when a shareable-link-kind token has no matching competition
      * @throws InvalidPin             when a pin-kind token has no matching competition
      */
@@ -30,6 +32,7 @@ final readonly class InvitationContextResolver
             InvitationKind::Email => $this->resolveEmailInvitation($token, $now),
             InvitationKind::ShareableLink => $this->resolveShareableLink($token, $now),
             InvitationKind::Pin => $this->resolvePin($token),
+            InvitationKind::GlobalCompetition => $this->resolveGlobalCompetition($token),
         };
     }
 
@@ -83,6 +86,43 @@ final readonly class InvitationContextResolver
             presetEmail: null,
             status: $status,
             expiresAt: null,
+        );
+    }
+
+    /**
+     * The global-competition invitation: its „token" is the competition's own UUID, which
+     * is not a secret — the same competition is listed on the public „Soutěže" page.
+     *
+     * Anything that is NOT a joinable global competition resolves to „invalid", never to
+     * a different outcome per reason: a private competition's UUID must not be
+     * distinguishable here from a nonexistent one, or this page becomes a way to confirm
+     * that a given id names a real partička.
+     */
+    private function resolveGlobalCompetition(string $competitionId): InvitationContext
+    {
+        if (!Uuid::isValid($competitionId)) {
+            throw InvalidInvitationToken::forToken($competitionId);
+        }
+
+        $competition = $this->competitionRepository->find(Uuid::fromString($competitionId));
+
+        if (null === $competition || !$competition->isGlobal || !$competition->isNotDeleted) {
+            throw InvalidInvitationToken::forToken($competitionId);
+        }
+
+        return new InvitationContext(
+            kind: InvitationKind::GlobalCompetition,
+            token: $competitionId,
+            competitionId: $competition->id,
+            competitionName: $competition->name,
+            matchSourceName: $competition->sourcesLabel,
+            inviterNickname: null,
+            presetEmail: null,
+            status: $competition->scheduleIsComplete
+                ? InvitationContextStatus::MatchSourceCompleted
+                : InvitationContextStatus::Active,
+            expiresAt: null,
+            entryFeeCredits: $competition->entryFeeCredits,
         );
     }
 

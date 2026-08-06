@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Portal\Competition;
 
+use App\Command\InviteToGlobalCompetition\InviteToGlobalCompetitionCommand;
 use App\Command\SendCompetitionInvitation\SendCompetitionInvitationCommand;
 use App\Entity\User;
 use App\Form\SendInvitationFormData;
@@ -40,6 +41,8 @@ final class SendInvitationController extends AbstractController
         $user = $this->getUser();
 
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
+        // Not an organizer check any more: every member may bring a friend in, exactly as
+        // every member may pass on the PIN. See CompetitionVoter::INVITE_MEMBER.
         $this->denyAccessUnlessGranted(CompetitionVoter::INVITE_MEMBER, $competition);
 
         $formData = new SendInvitationFormData();
@@ -47,21 +50,46 @@ final class SendInvitationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->commandBus->dispatch(new SendCompetitionInvitationCommand(
-                inviterId: $user->id,
-                competitionId: $competition->id,
-                email: $formData->email,
-            ));
+            // Two different things wear the same button. A private soutěž pre-provisions
+            // the seat so the organizer can tip on the invitee's behalf; a global one must
+            // not (that seat costs money), so it only mails the public invitation page.
+            $this->commandBus->dispatch($competition->isGlobal
+                ? new InviteToGlobalCompetitionCommand(
+                    inviterId: $user->id,
+                    competitionId: $competition->id,
+                    email: $formData->email,
+                )
+                : new SendCompetitionInvitationCommand(
+                    inviterId: $user->id,
+                    competitionId: $competition->id,
+                    email: $formData->email,
+                ));
 
             $this->addFlash('success', 'Pozvánka byla odeslána.');
-
-            return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
+        } else {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getMessage());
+            }
         }
 
-        foreach ($form->getErrors(true) as $error) {
-            $this->addFlash('error', $error->getMessage());
-        }
+        return $this->redirectToRoute(...$this->backTo($request, $competition->id));
+    }
 
-        return $this->redirectToRoute('competition_settings', ['id' => $competition->id->toRfc4122()]);
+    /**
+     * Where the form was submitted from. The organizer's copy lives in „Nastavení →
+     * Pozvánky" and belongs back there; a player's copy is the modal on the competition
+     * page, which they may not even be allowed to leave for — a plain member has no
+     * „Nastavení". Anything unrecognised falls back to the settings page, so the parameter
+     * can never redirect somewhere of the submitter's choosing.
+     *
+     * @return array{string, array{id: string}}
+     */
+    private function backTo(Request $request, Uuid $competitionId): array
+    {
+        $route = 'detail' === $request->request->get('navrat')
+            ? 'competition_detail'
+            : 'competition_settings';
+
+        return [$route, ['id' => $competitionId->toRfc4122()]];
     }
 }

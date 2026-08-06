@@ -74,7 +74,11 @@ final class CompetitionSettingsController extends AbstractController
             viewerIsAdmin: $isAdmin,
         ));
 
-        $canInvite = $this->isGranted(CompetitionVoter::INVITE_MEMBER, $competition);
+        // MANAGE_JOIN_MECHANICS, not INVITE_MEMBER: since every member may invite, the
+        // latter no longer describes „owns this section". The organizer's pending-invitation
+        // list, the bulk form and the PIN/link controls are one surface and share one gate —
+        // the very one `settings.html.twig` wraps the section in.
+        $canInvite = $this->isGranted(CompetitionVoter::MANAGE_JOIN_MECHANICS, $competition);
         $canManage = $this->isGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 

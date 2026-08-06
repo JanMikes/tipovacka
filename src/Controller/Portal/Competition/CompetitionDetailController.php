@@ -10,6 +10,8 @@ use App\Enum\BoostType;
 use App\Enum\CompetitionMonetization;
 use App\Enum\SportMatchState;
 use App\Enum\UserRole;
+use App\Form\SendInvitationFormData;
+use App\Form\SendInvitationFormType;
 use App\Query\GetCompetitionDetail\GetCompetitionDetail;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
@@ -169,6 +171,26 @@ final class CompetitionDetailController extends AbstractController
             ];
         }
 
+        // ── „Pozvat přítele" (the modal) ────────────────────────────────────
+        // A player's recruiting surface, not an organizer's: INVITE_MEMBER is granted to
+        // every member of a competition whose doors are open. The form is built only when
+        // it may be shown — an unbuilt form is one that cannot be posted by accident.
+        $canInvite = $this->isGranted(CompetitionVoter::INVITE_MEMBER, $competition);
+        $invitationForm = $canInvite
+            ? $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
+                'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
+            ])->createView()
+            : null;
+
+        // The card appears when there is ANY way in to hand over: an e-mail invitation, or
+        // something to copy. „Something to copy" is the competition's own public invitation
+        // page for a global competition, and the PIN / shareable link for a private one —
+        // both already nulled out by GetCompetitionDetail for a viewer who may not see them.
+        $canInvitePanel = $canInvite || (
+            $this->isGranted(CompetitionVoter::SHARE_JOIN_LINK, $competition)
+            && ($competition->isGlobal || null !== $detail->shareableLinkToken || null !== $detail->pin)
+        );
+
         // ── The žebříček aside ──────────────────────────────────────────────
         $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
         $previewRows = array_slice($leaderboard->rows, 0, self::LEADERBOARD_PREVIEW_ROWS);
@@ -203,6 +225,8 @@ final class CompetitionDetailController extends AbstractController
             'leaderboard_rows' => $previewRows,
             'leaderboard_total' => count($leaderboard->rows),
             'leaderboard_my_row' => $myRow,
+            'can_invite_panel' => $canInvitePanel,
+            'invitation_form' => $invitationForm,
         ]);
     }
 

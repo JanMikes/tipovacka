@@ -106,6 +106,11 @@ final class AnonymousReachabilityTest extends WebTestCase
         // to the airlock by InvitationAcceptanceService::handleAuthenticated.
         \App\Controller\Invitation\JoinByPinController::class => false,
         \App\Controller\Invitation\QuickJoinByPinController::class => false,
+        // The global competition's invitation landing: public like the other three, and
+        // the least sensitive of them — its „token" is the competition's own id and the
+        // competition is on the public „Soutěže" list anyway. Public still means „may be
+        // READ": joining demands a verified account AND the entry fee.
+        \App\Controller\Invitation\JoinGlobalCompetitionInviteController::class => false,
 
         // --- Portal (the whole authenticated app) --------------------------------------
         \App\Controller\Portal\AccountDeleteController::class => true,

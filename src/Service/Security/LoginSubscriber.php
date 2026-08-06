@@ -7,6 +7,7 @@ namespace App\Service\Security;
 use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
+use App\Command\JoinGlobalCompetition\JoinGlobalCompetitionCommand;
 use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\User;
@@ -16,6 +17,7 @@ use App\Exception\CannotJoinFinishedMatchSource;
 use App\Exception\CompetitionInvitationAlreadyAccepted;
 use App\Exception\CompetitionInvitationAlreadyRevoked;
 use App\Exception\CompetitionInvitationExpired;
+use App\Exception\InsufficientCredits;
 use App\Exception\InvalidInvitationToken;
 use App\Exception\InvalidPin;
 use App\Exception\InvalidShareableLink;
@@ -115,6 +117,12 @@ final class LoginSubscriber implements EventSubscriberInterface
             InvitationKind::Email => new AcceptCompetitionInvitationCommand(userId: $user->id, token: $pending->token),
             InvitationKind::ShareableLink => new JoinCompetitionByLinkCommand(userId: $user->id, token: $pending->token),
             InvitationKind::Pin => new JoinCompetitionByPinCommand(userId: $user->id, pin: $pending->token),
+            // The global-competition intent's token IS the competition id (see
+            // InvitationKind) — nothing to look up, and the join charges the entry fee.
+            InvitationKind::GlobalCompetition => new JoinGlobalCompetitionCommand(
+                userId: $user->id,
+                competitionId: Uuid::fromString($pending->token),
+            ),
         };
 
         try {
@@ -142,6 +150,16 @@ final class LoginSubscriber implements EventSubscriberInterface
     {
         if ($failure instanceof AlreadyMember) {
             $flashBag?->add('info', 'V soutěži již jsi.');
+
+            return;
+        }
+
+        // A pending join into a global competition is the one intent that can fail for a
+        // reason the user can FIX, so it gets its own message instead of the generic
+        // „nepodařilo se uplatnit" — nothing is broken, the wallet is just short. We do
+        // not auto-join after a top-up anywhere, so there is nothing to remember here.
+        if ($failure instanceof InsufficientCredits) {
+            $flashBag?->add('warning', 'Na vstupné do soutěže nemáš dost kreditů. Dobij si je a připoj se ze stránky soutěže.');
 
             return;
         }

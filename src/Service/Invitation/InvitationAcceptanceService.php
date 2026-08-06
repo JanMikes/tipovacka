@@ -7,6 +7,7 @@ namespace App\Service\Invitation;
 use App\Command\AcceptCompetitionInvitation\AcceptCompetitionInvitationCommand;
 use App\Command\JoinCompetitionByLink\JoinCompetitionByLinkCommand;
 use App\Command\JoinCompetitionByPin\JoinCompetitionByPinCommand;
+use App\Command\JoinGlobalCompetition\JoinGlobalCompetitionCommand;
 use App\Entity\User;
 use App\Enum\InvitationKind;
 use App\Exception\AlreadyMember;
@@ -14,8 +15,13 @@ use App\Exception\CannotJoinFinishedMatchSource;
 use App\Exception\CompetitionInvitationAlreadyAccepted;
 use App\Exception\CompetitionInvitationAlreadyRevoked;
 use App\Exception\CompetitionInvitationExpired;
+use App\Exception\InsufficientCredits;
+use App\Query\GetCreditWallet\GetCreditWallet;
+use App\Query\QueryBus;
+use App\Service\Competition\GlobalJoinReturnIntentSession;
 use App\Service\Competition\PendingJoin;
 use App\Service\Competition\PendingJoinStore;
+use App\Service\Credits\CreditsWord;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -39,6 +45,8 @@ final readonly class InvitationAcceptanceService
         private RequestStack $requestStack,
         private ClockInterface $clock,
         private PendingJoinStore $pendingJoins,
+        private GlobalJoinReturnIntentSession $returnIntent,
+        private QueryBus $queryBus,
         private Environment $twig,
         #[Autowire(service: 'command.bus')]
         private MessageBusInterface $commandBus,
@@ -93,6 +101,13 @@ final readonly class InvitationAcceptanceService
                 InvitationKind::Email => new AcceptCompetitionInvitationCommand(userId: $user->id, token: $context->token),
                 InvitationKind::ShareableLink => new JoinCompetitionByLinkCommand(userId: $user->id, token: $context->token),
                 InvitationKind::Pin => new JoinCompetitionByPinCommand(userId: $user->id, pin: $context->token),
+                // A global competition is joined the one and only way it is ever joined —
+                // by paying. Arriving through an invitation link buys no discount and no
+                // shortcut; it merely saved the invitee from having to find the page.
+                InvitationKind::GlobalCompetition => new JoinGlobalCompetitionCommand(
+                    userId: $user->id,
+                    competitionId: $context->competitionId,
+                ),
             };
 
             $this->commandBus->dispatch($command);
@@ -103,6 +118,8 @@ final readonly class InvitationAcceptanceService
 
             if ($inner instanceof AlreadyMember) {
                 $this->flash('info', 'V soutěži již jsi.');
+            } elseif ($inner instanceof InsufficientCredits) {
+                return $this->redirectToTopUp($context, $user);
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
                 $this->flash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
 
@@ -124,6 +141,27 @@ final readonly class InvitationAcceptanceService
             'competition_detail',
             ['id' => $context->competitionId->toRfc4122(), 'pripojeno' => 1],
         ));
+    }
+
+    /**
+     * The invitee said yes to a paid competition with too thin a wallet. Send them to the
+     * top-up with the shortfall named, remembering the competition so the credits page can
+     * offer the way back — the same treatment „Připojit se" gives on the competition page
+     * ({@see \App\Controller\Portal\Competition\JoinGlobalCompetitionController}). We never
+     * auto-join after a top-up; they click again.
+     */
+    private function redirectToTopUp(InvitationContext $context, User $user): RedirectResponse
+    {
+        $balance = $this->queryBus->handle(new GetCreditWallet($user->id))->balance;
+
+        $this->returnIntent->store($context->competitionId->toRfc4122());
+        $this->flash('warning', sprintf(
+            'Na vstupné do soutěže %s potřebujete ještě %s.',
+            $context->competitionName,
+            CreditsWord::format(max(0, $context->entryFeeCredits - $balance)),
+        ));
+
+        return new RedirectResponse($this->urlGenerator->generate('credits'));
     }
 
     /**

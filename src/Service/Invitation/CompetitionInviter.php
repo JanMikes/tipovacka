@@ -9,6 +9,7 @@ use App\Entity\Competition;
 use App\Entity\CompetitionInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Exception\CompetitionIsGlobal;
 use App\Exception\InvalidInvitationEmails;
 use App\Repository\CompetitionInvitationRepository;
 use App\Repository\MembershipRepository;
@@ -56,6 +57,14 @@ final readonly class CompetitionInviter
         \DateTimeImmutable $now,
         bool $strict,
     ): BulkInvitationResult {
+        // This pipeline hands out a Membership before the invitee has done anything.
+        // That is right for a partička and a money leak for a paid one, so a global
+        // competition never gets here — its invitations go out as a link to the public
+        // invitation page, where the entry fee is charged on arrival.
+        if ($competition->isGlobal) {
+            throw CompetitionIsGlobal::seatCannotBePreProvisioned($competition->id);
+        }
+
         $expiresAt = $now->modify('+7 days');
 
         $pendingSet = [];

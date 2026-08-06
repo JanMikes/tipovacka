@@ -56,6 +56,10 @@ final class RequireVerifiedEmailSubscriber implements EventSubscriberInterface
         'competition_join_by_link',
         'competition_join_by_pin',
         'competition_join_by_pin_quick',
+        // The global competition's invitation landing carries no secret at all — the
+        // competition is on the public „Soutěže" page — and the join behind it demands a
+        // VERIFIED account plus the entry fee, so reading it changes nothing.
+        'competition_global_invitation',
         // Public / marketing surface.
         'app_home',
         'app_faq',

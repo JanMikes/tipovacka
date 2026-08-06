@@ -50,7 +50,7 @@ final class CompetitionDetailPassTest extends WebTestCase
 
         $positions = [
             'popis' => mb_strpos($body, 'Popis pro pořadí.'),
-            'pozvat' => mb_strpos($body, 'Pozvat kamaráda'),
+            'pozvat' => mb_strpos($body, 'id="pozvat"'),
             'banner' => mb_strpos($body, 'Tipněte si všechny zápasy najednou'),
             'tabulka' => mb_strpos($body, 'Tabulka soutěže'),
             'zebricek' => mb_strpos($body, 'id="zebricek"'),
@@ -63,7 +63,7 @@ final class CompetitionDetailPassTest extends WebTestCase
         $order = array_values($positions);
         $sorted = $order;
         sort($sorted);
-        self::assertSame($sorted, $order, 'popis → Pozvat kamaráda → banner → Tabulka soutěže → Žebříček.');
+        self::assertSame($sorted, $order, 'popis → Pozvat přítele → banner → Tabulka soutěže → Žebříček.');
 
         // Item 35 removed the trailing „Získej výhody" card; the anchor it carried
         // must be gone with it, or every link into it silently dead-ends.

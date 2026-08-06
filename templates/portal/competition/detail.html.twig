@@ -87,9 +87,15 @@
                         <twig:ux:icon name="lucide:settings" class="h-4 w-4" />Nastavení
                     </a>
                 {% endif %}
-                {% if is_granted('competition_manage_join_mechanics', competition) %}
-                    <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}#pozvanky" class="btn btn-ghost btn-sm">
-                        <twig:ux:icon name="lucide:user-plus" class="h-4 w-4" />Pozvat
+                {#
+                    Míří na kartu „Pozvat přítele" o kus níž, ne do Nastavení: pozvat smí
+                    od téhle změny každý člen, a plný hráč do Nastavení vůbec nesmí. Je to
+                    obyčejná kotva — dialog otevírá až tlačítko na kartě, aby na stránce
+                    byl jeden jediný `modal` controller a jeden jediný dialog.
+                #}
+                {% if can_invite_panel %}
+                    <a href="#pozvat" class="btn btn-ghost btn-sm">
+                        <twig:ux:icon name="lucide:user-plus" class="h-4 w-4" />Pozvat přítele
                     </a>
                 {% endif %}
                 {% if is_granted('competition_manage_members', competition) and not competition.isGlobal %}
@@ -204,105 +210,40 @@
     <div class="space-y-6">
 
         {#
-            „Pozvat kamaráda" — sdílet smí KAŽDÝ hráč, ne jen organizátor. Partička roste
-            tím, že se pozvou kamarádi navzájem, takže odkaz i PIN vidí každý člen a může
-            je poslat dál. Organizátor si nechává ovládání: jestli PIN a odkaz vůbec
-            existují a jejich obnovu/zrušení řeší „Nastavení → Pozvánky"
-            (`competition_manage_join_mechanics`); tahle karta je jen předává.
-            Pozvánky e-mailem zůstávají organizátorovi — zvou jménem soutěže.
+            „Pozvat přítele" — pozvat smí KAŽDÝ hráč, ne jen organizátor. Partička roste
+            tím, že se pozvou kamarádi navzájem; hráč tedy pošle dál odkaz i PIN a smí
+            odeslat i pozvánku e-mailem (`competition_invite_member`). Organizátor si
+            nechává ovládání: jestli PIN a odkaz vůbec existují a jejich obnovu/zrušení
+            řeší „Nastavení → Pozvánky" (`competition_manage_join_mechanics`) — a dokud
+            obojí zruší, hráč zve. U globální soutěže se místo tajemství předává veřejná
+            stránka s pozvánkou a pozvaný platí vstupné, viz `_invite_modal`.
+
+            Karta je JEDINÝ spouštěč dialogu na stránce (kotva „Pozvat přítele" v akční
+            liště sem jen skočí), takže `modal` controller i dialog jsou tu právě jednou.
         #}
-        {% set can_manage_invites = is_granted('competition_manage_join_mechanics', competition) %}
-        {% set share_link = detail.shareableLinkToken ? url('competition_join_by_link', {token: detail.shareableLinkToken}) : null %}
-        {% if is_granted('competition_share_join_link', competition) and (share_link or detail.pin or can_manage_invites) %}
-            <section class="card-glass p-5 sm:p-6">
-                <div class="flex flex-wrap items-start justify-between gap-3">
+        {% if can_invite_panel %}
+            <section id="pozvat" class="card-glass p-5 sm:p-6" data-controller="modal">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="min-w-0">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-white">
                             <twig:ux:icon name="lucide:user-plus" class="h-5 w-5 text-accent-400" />
-                            Pozvat kamaráda
+                            Pozvat přítele
                         </h2>
                         <p class="mt-1 text-[13px] leading-snug text-white/55">
-                            Pošlete odkaz nebo PIN — kdo je má, přidá se do soutěže sám.
+                            {% if competition.isGlobal %}
+                                Pošlete odkaz nebo pozvánku e-mailem — soutěž je otevřená každému{% if competition.entryFeeCredits > 0 %} za vstupné {{ competition.entryFeeCredits|credits }}{% endif %}.
+                            {% else %}
+                                Pošlete pozvánku e-mailem, odkaz nebo PIN — kdo je má, přidá se do soutěže sám.
+                            {% endif %}
                         </p>
                     </div>
-                    {% if can_manage_invites %}
-                        <a href="{{ path('competition_settings', {id: competition.id.toRfc4122}) }}#pozvanky" class="btn btn-ghost btn-sm">
-                            <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
-                            Spravovat pozvánky
-                        </a>
-                    {% endif %}
+                    <button type="button" data-action="modal#open" class="btn btn-primary">
+                        <twig:ux:icon name="lucide:user-plus" class="h-4 w-4" />
+                        Pozvat přítele
+                    </button>
                 </div>
 
-                {% if share_link or detail.pin %}
-                    <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                        {% if share_link %}
-                            <div>
-                                <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
-                                    <twig:ux:icon name="lucide:share-2" class="h-3.5 w-3.5" />
-                                    Odkaz
-                                </p>
-                                <div class="copy-field" data-controller="copy">
-                                    <input type="text" readonly value="{{ share_link }}"
-                                        data-copy-target="source"
-                                        onclick="this.select()"
-                                        class="text-xs"
-                                        aria-label="Odkaz pro připojení">
-                                    <button type="button"
-                                        data-copy-target="button"
-                                        data-action="copy#copy"
-                                        aria-label="Kopírovat odkaz">
-                                        <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
-                                            <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
-                                        </span>
-                                        <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
-                                            <twig:ux:icon name="lucide:check" class="h-4 w-4" />
-                                            Zkopírováno
-                                        </span>
-                                    </button>
-                                </div>
-                                <p class="mt-1.5 text-xs text-white/45">Kdo odkaz otevře, rovnou se přidá.</p>
-                            </div>
-                        {% endif %}
-
-                        {% if detail.pin %}
-                            <div>
-                                <p class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/40">
-                                    <twig:ux:icon name="lucide:key-round" class="h-3.5 w-3.5" />
-                                    PIN
-                                </p>
-                                <div class="copy-field" data-controller="copy">
-                                    <input type="text" readonly value="{{ detail.pin }}"
-                                        data-copy-target="source"
-                                        onclick="this.select()"
-                                        class="text-center font-mono text-lg tracking-[0.3em]"
-                                        aria-label="PIN soutěže">
-                                    <button type="button"
-                                        data-copy-target="button"
-                                        data-action="copy#copy"
-                                        aria-label="Kopírovat PIN">
-                                        <span data-copy-target="labelCopy" class="inline-flex" title="Kopírovat">
-                                            <twig:ux:icon name="lucide:copy" class="h-4 w-4" />
-                                        </span>
-                                        <span data-copy-target="labelCopied" class="hidden items-center gap-1 text-xs font-semibold" title="Zkopírováno">
-                                            <twig:ux:icon name="lucide:check" class="h-4 w-4" />
-                                            Zkopírováno
-                                        </span>
-                                    </button>
-                                </div>
-                                {# Skutečná adresa, ne natvrdo napsaná doména — v dev i v produkci sedí. #}
-                                <p class="mt-1.5 text-xs text-white/45">
-                                    Zadá se na <strong class="font-semibold text-white/70">{{ url('competition_join_by_pin')|replace({'https://': '', 'http://': ''}) }}</strong>.
-                                </p>
-                            </div>
-                        {% endif %}
-                    </div>
-                {% elseif can_manage_invites %}
-                    {# Obojí zrušeno — hráči tuhle kartu vůbec nevidí, organizátor ano,
-                       aby věděl proč a mohl to zapnout. #}
-                    <p class="mt-4 text-[13px] leading-snug text-white/45">
-                        PIN ani odkaz nejsou aktivní — zapnout je můžete v Nastavení → Pozvánky.
-                    </p>
-                {% endif %}
+                {{ include('portal/competition/_invite_modal.html.twig') }}
             </section>
         {% endif %}
 

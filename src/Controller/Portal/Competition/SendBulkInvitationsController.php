@@ -42,7 +42,10 @@ final class SendBulkInvitationsController extends AbstractController
         $user = $this->getUser();
 
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
-        $this->denyAccessUnlessGranted(CompetitionVoter::INVITE_MEMBER, $competition);
+        // Stays the ORGANIZER's tool even though INVITE_MEMBER opened up to every member:
+        // this one pastes a whole address book and pre-provisions a seat for each, which is
+        // the setup half of running a competition, not the „bring a friend" half.
+        $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_JOIN_MECHANICS, $competition);
 
         $formData = new BulkInvitationFormData();
         $form = $this->createForm(BulkInvitationFormType::class, $formData);

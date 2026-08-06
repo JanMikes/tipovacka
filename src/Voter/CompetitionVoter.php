@@ -24,17 +24,32 @@ final class CompetitionVoter extends Voter
     /** PIN / shareable link / e-mail invite / anonymous member — all disabled for global competitions. */
     public const string MANAGE_JOIN_MECHANICS = 'competition_manage_join_mechanics';
     /**
-     * SEE and pass on the PIN / shareable link. Every member may do this — a partička
-     * grows because the players invite their friends, not because the organizer is the
-     * only one holding the code. The organizer still CONTROLS it: whether a PIN and a
-     * link exist at all, and revoking or regenerating either, stays
-     * {@see self::MANAGE_JOIN_MECHANICS}. Same preconditions otherwise, so a deleted,
-     * finished or global competition is never recruited into.
+     * SEE and pass on the way in — the PIN / shareable link of a private soutěž, the
+     * public invitation page of a global one. Every member may do this: a partička grows
+     * because the players invite their friends, not because the organizer is the only one
+     * holding the code. The organizer still CONTROLS it: whether a PIN and a link exist at
+     * all, and revoking or regenerating either, stays {@see self::MANAGE_JOIN_MECHANICS}.
+     * Same preconditions otherwise, so a deleted or finished competition is never
+     * recruited into.
      */
     public const string SHARE_JOIN_LINK = 'competition_share_join_link';
     public const string JOIN = 'competition_join';
     public const string JOIN_GLOBAL = 'competition_join_global';
     public const string LEAVE = 'competition_leave';
+    /**
+     * Send an invitation BY E-MAIL from this competition. Every member may, not only the
+     * organizer — the same reasoning as {@see self::SHARE_JOIN_LINK}, of which this is
+     * the „let the app deliver it for me" variant.
+     *
+     * A member's permission is bounded by {@see Competition::$isOpenToInvites}: an
+     * organizer who revoked both the PIN and the link has closed the doors, and a
+     * member's e-mail must not reopen them. The organizer (and an admin) may always
+     * invite — they are the ones holding that switch.
+     *
+     * What the invitation DOES differs by competition and is decided downstream, never
+     * here: a private soutěž pre-provisions the seat, a global one only mails the public
+     * invitation page, where the invitee pays the entry fee like everybody else.
+     */
     public const string INVITE_MEMBER = 'competition_invite_member';
 
     public function __construct(
@@ -82,8 +97,7 @@ final class CompetitionVoter extends Voter
                 && !$subject->isGlobal,
             self::SHARE_JOIN_LINK => ($isAdmin || $isMember)
                 && $subject->isNotDeleted
-                && !$subject->scheduleIsComplete
-                && !$subject->isGlobal,
+                && !$subject->scheduleIsComplete,
             self::JOIN => $currentUser->isVerified && !$subject->scheduleIsComplete && $subject->isNotDeleted,
             // Global discovery join: any verified non-member, source not finished.
             // The entry fee is charged (or the friendly insufficient-credits redirect
@@ -94,10 +108,9 @@ final class CompetitionVoter extends Voter
                 && $currentUser->isVerified
                 && !$isMember,
             self::LEAVE => $isMember && !$isOwner,
-            self::INVITE_MEMBER => ($isAdmin || $isOwner)
+            self::INVITE_MEMBER => ($isAdmin || $isOwner || ($isMember && $subject->isOpenToInvites))
                 && $subject->isNotDeleted
-                && !$subject->scheduleIsComplete
-                && !$subject->isGlobal,
+                && !$subject->scheduleIsComplete,
         };
     }
 }

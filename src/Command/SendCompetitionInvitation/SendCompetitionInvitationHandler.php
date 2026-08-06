@@ -7,6 +7,7 @@ namespace App\Command\SendCompetitionInvitation;
 use App\Entity\CompetitionInvitation;
 use App\Entity\Membership;
 use App\Entity\User;
+use App\Exception\CompetitionIsGlobal;
 use App\Repository\CompetitionInvitationRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
@@ -36,6 +37,13 @@ final readonly class SendCompetitionInvitationHandler
     {
         $competition = $this->competitionRepository->get($command->competitionId);
         $inviter = $this->userRepository->get($command->inviterId);
+
+        // Same defence as CompetitionInviter: the seat provisioned below is free, so a
+        // paid (global) competition is invited into by InviteToGlobalCompetitionCommand,
+        // which only mails the public invitation page.
+        if ($competition->isGlobal) {
+            throw CompetitionIsGlobal::seatCannotBePreProvisioned($competition->id);
+        }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $expiresAt = $now->modify('+7 days');

@@ -19,6 +19,12 @@ final readonly class InvitationContext
         public ?string $presetEmail,
         public InvitationContextStatus $status,
         public ?\DateTimeImmutable $expiresAt,
+        /**
+         * What joining costs, in credits. Only a global competition charges anything —
+         * every secret-based way in (invitation / link / PIN) is free by construction —
+         * so this is 0 for all other kinds and the landing page says nothing about money.
+         */
+        public int $entryFeeCredits = 0,
     ) {
     }
 }
