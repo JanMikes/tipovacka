@@ -63,7 +63,7 @@
             {{ form_label(form.logoFile) }}
             {% if mode == 'edit' and team is defined and team.logo %}
                 <div class="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                    <img src="{{ team.logo|team_logo_url }}" alt="{{ team.name }}" class="h-12 w-12 flex-none rounded-full object-contain" />
+                    <img src="{{ team.logo|team_logo_url }}" alt="{{ team.name }}" class="h-12 w-12 flex-none object-contain" />
                     <div class="text-sm text-white/50">Stávající logo. Nahráním nového ho nahradíte.</div>
                 </div>
             {% endif %}

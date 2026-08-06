@@ -65,8 +65,11 @@ One component renders a team everywhere: `<twig:TeamFlag :team="…">` (accepts 
 - **Logo** when the team has one — admin-uploaded, optional. `Team.logo` holds a **storage
   path** („019….webp"), never a URL, so the file can move between storages without touching a
   row; `…|team_logo_url` (`TeamLogoExtension` → `TeamLogoStorage::url`) resolves it at render
-  time.
-- **Monogram** otherwise: a colored initials coin via the pure, unit-tested
+  time. A logo is **not** a coin: it fills the same `size × size` box but carries the `.flag.logo`
+  modifier — no `border-radius`, no coin border/background, `object-fit: contain` — so a crest is
+  drawn whole instead of being cropped into a circle.
+- **Monogram** otherwise: a colored initials coin (the round shape survives only here) via the
+  pure, unit-tested
   [`App\Value\TeamMonogram`](../../src/Value/TeamMonogram.php) — background = brand color or a
   stable hash of the name, foreground = whichever of black/white wins WCAG contrast (so text is
   never illegible).

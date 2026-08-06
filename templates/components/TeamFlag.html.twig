@@ -1,9 +1,11 @@
 {#
-    Circular team "coin". Pass a `team` object (Team entity or TeamView) — it
-    renders the team's logo when present, otherwise a colored initials monogram
-    with a contrast-safe foreground, plus a small country-flag badge when the
-    team has a country. A bare `name` string is still accepted as a fallback for
-    the few surfaces that only have a label (default gradient, no brand color).
+    Team "coin". Pass a `team` object (Team entity or TeamView) — it renders the
+    team's logo when present, otherwise a colored initials monogram with a
+    contrast-safe foreground, plus a small country-flag badge when the team has
+    a country. Only the monogram is a circle: a logo keeps the same box but is
+    drawn whole (no round mask, no coin border/background). A bare `name` string
+    is still accepted as a fallback for the few surfaces that only have a label
+    (default gradient, no brand color).
     props: team (Team|TeamView), name (string fallback), size (px)
 #}
 {% props team = null, name = null, size = 44 %}
@@ -12,7 +14,7 @@
     {% set logo_url = team.logo|team_logo_url %}
     <span class="flag-coin" style="position:relative;display:inline-flex;flex:none;width:{{ size }}px;height:{{ size }}px">
         {% if logo_url %}
-            <img class="flag" src="{{ logo_url }}" alt="{{ team.name }}" style="width:{{ size }}px;height:{{ size }}px;object-fit:cover">
+            <img class="flag logo" src="{{ logo_url }}" alt="{{ team.name }}" style="width:{{ size }}px;height:{{ size }}px;object-fit:contain">
         {% else %}
             <span class="flag club" title="{{ team.name }}"
                   style="width:{{ size }}px;height:{{ size }}px;font-size:{{ (size / 3.4)|round }}px;background:{{ mono.background }};color:{{ mono.foreground }}">{{ mono.initials }}</span>
