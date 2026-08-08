@@ -42,6 +42,11 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
 
     private const string INCLUDES = 'participants;scores;state;round;venue;events';
 
+    /**
+     * Keep the span under Sportmonks' hard limit: a range over 100 days is
+     * rejected outright („You requested a date range of N days. The maximum
+     * range is 100 days."), so these two must always sum to less than that.
+     */
     private const string WINDOW_BACK = '-7 days';
 
     private const string WINDOW_FORWARD = '+30 days';

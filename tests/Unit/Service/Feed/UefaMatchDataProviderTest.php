@@ -72,6 +72,19 @@ final class UefaMatchDataProviderTest extends TestCase
     }
 
     /**
+     * UEFA publishes knockout fixtures before their draw with participants like
+     * „Lyon or Sparta Praha". Importing those is impossible and reporting them
+     * as unpairable teams on every poll would bury the aliases that matter.
+     */
+    public function testUndrawnTiesAreSkippedEntirely(): void
+    {
+        $externalIds = array_map(static fn ($snapshot): string => $snapshot->externalId, $this->fetch());
+
+        self::assertNotContains('2049300', $externalIds);
+        self::assertCount(4, $externalIds);
+    }
+
+    /**
      * @return list<\App\Service\Feed\MatchSnapshot>
      */
     private function fetch(): array
@@ -113,8 +126,8 @@ final class UefaMatchDataProviderTest extends TestCase
                 'id' => '2049220',
                 'status' => 'UPCOMING',
                 'kickOffTime' => ['dateTime' => '2026-08-26T19:00:00Z'],
-                'homeTeam' => ['id' => '1', 'internationalName' => 'Lyon or Sparta Praha'],
-                'awayTeam' => ['id' => '2', 'internationalName' => 'Fenerbahçe or Sturm Graz'],
+                'homeTeam' => ['id' => '1', 'internationalName' => 'Sparta Praha'],
+                'awayTeam' => ['id' => '2', 'internationalName' => 'Sturm Graz'],
                 'score' => null,
                 'round' => ['metaData' => ['name' => 'Play-off', 'type' => 'PLAY_OFF']],
                 'leg' => ['number' => 1],
@@ -127,6 +140,14 @@ final class UefaMatchDataProviderTest extends TestCase
                 'awayTeam' => ['id' => '4', 'internationalName' => 'Shelbourne'],
                 'score' => ['regular' => ['home' => 2, 'away' => 0]],
                 'playerEvents' => ['scorers' => []],
+            ],
+            [
+                'id' => '2049300',
+                'status' => 'UPCOMING',
+                'kickOffTime' => ['dateTime' => '2026-08-26T19:00:00Z'],
+                'homeTeam' => ['id' => '7', 'internationalName' => 'Lyon or Sparta Praha', 'isPlaceHolder' => true],
+                'awayTeam' => ['id' => '8', 'internationalName' => 'Fenerbahçe or Sturm Graz', 'isPlaceHolder' => true],
+                'score' => null,
             ],
             [
                 'id' => '2049169',

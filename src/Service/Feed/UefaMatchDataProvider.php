@@ -58,17 +58,46 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
             throw FeedPayloadInvalid::missingFeedRef(self::provides()->label(), 'UEFA competitionId (1 / 14 / 2019)');
         }
 
-        $snapshots = [];
+        $rows = $this->fetchRows($competitionId, $this->seasonYear($source));
 
-        foreach ($this->fetchRows($competitionId, $this->seasonYear($source)) as $index => $row) {
-            $snapshots[] = $this->snapshotFromRow($index, $row);
-        }
-
-        if ([] === $snapshots) {
+        if ([] === $rows) {
             throw FeedPayloadInvalid::emptyResponse(self::provides()->label(), $competitionId);
         }
 
+        $snapshots = [];
+
+        foreach ($rows as $index => $row) {
+            if ($this->isUndrawnTie($row)) {
+                continue;
+            }
+
+            $snapshots[] = $this->snapshotFromRow($index, $row);
+        }
+
         return $snapshots;
+    }
+
+    /**
+     * UEFA publishes a knockout fixture BEFORE its draw, with participants like
+     * „Lyon or Sparta Praha" flagged `isPlaceHolder`. Those are not teams: they
+     * resolve against nothing, so without this every poll between a fixture's
+     * publication and its draw would report a fistful of unpairable „teams" and
+     * bury the ones that genuinely need an alias. They come back as real names
+     * once the draw happens, which is when the match is worth importing anyway.
+     *
+     * @param array<mixed> $row
+     */
+    private function isUndrawnTie(array $row): bool
+    {
+        foreach (['homeTeam', 'awayTeam'] as $key) {
+            $team = $row[$key] ?? null;
+
+            if (is_array($team) && true === ($team['isPlaceHolder'] ?? false)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
