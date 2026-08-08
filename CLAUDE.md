@@ -63,7 +63,9 @@ them by hand to exercise them:
 
 ```bash
 docker compose exec web bin/console app:premium:reconcile            # every 5 min in prod
+docker compose exec web bin/console app:matches:sync --dry-run       # every 5 min in prod (feed pipeline)
 docker compose exec web bin/console app:guess-reminders:send         # hourly in prod
+docker compose exec web bin/console app:match-digests:send           # hourly at :10 in prod
 docker compose exec web bin/console app:leaderboard:capture-snapshots # 03:00 Europe/Prague in prod
 ```
 
@@ -88,10 +90,12 @@ commits.
 
 ### Recurring jobs (host cron, not symfony/scheduler)
 
-The three recurring domain jobs run as standalone console commands in `src/Console/`
-(`#[AsCommand]`), each dispatching its existing command-bus message synchronously:
-`app:premium:reconcile` (every 5 min), `app:guess-reminders:send` (hourly),
-`app:leaderboard:capture-snapshots` (03:00 Europe/Prague). They are invoked by **host cron**
+The recurring domain jobs run as standalone console commands in `src/Console/`
+(`#[AsCommand]`), each a thin wrapper dispatching a command-bus message or calling one
+service — no business logic in a console class: `app:premium:reconcile` (every 5 min),
+`app:matches:sync` (every 5 min), `app:guess-reminders:send` (hourly),
+`app:match-digests:send` (hourly at :10), `app:leaderboard:capture-snapshots`
+(03:00 Europe/Prague). They are invoked by **host cron**
 (lily.srv `apps/wtips/cron.d/wtips` per D30, wrapped by `lily-cron-run` + `sentry-cli monitors`
 for ops visibility/monitorability) — NOT by symfony/scheduler, which was removed. Each cron
 entry runs `docker compose run --rm messenger-consumer bin/console app:…`; keep the command

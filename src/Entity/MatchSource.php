@@ -57,6 +57,15 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     #[ORM\Column(length: 160, nullable: true)]
     public private(set) ?string $feedRef = null;
 
+    /**
+     * When this source was last fetched from its provider. Drives the poll
+     * cadence (see App\Service\Feed\FeedPollPolicy) so a source with nothing
+     * playing is fetched once a day instead of every five minutes — null means
+     * never polled, which is always due.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $feedPolledAt = null;
+
     public bool $isCurated {
         get => MatchSourceKind::Curated === $this->kind;
     }
@@ -137,6 +146,15 @@ class MatchSource implements EntityWithEvents, SoftDeletable
             matchSourceId: $this->id,
             occurredOn: $now,
         ));
+    }
+
+    /**
+     * Stamp a completed fetch. Deliberately does NOT touch `updatedAt` or record
+     * a domain event — polling is bookkeeping, not a change to the source.
+     */
+    public function markFeedPolled(\DateTimeImmutable $now): void
+    {
+        $this->feedPolledAt = $now;
     }
 
     /** Back to manual maintenance; existing matches keep their externalId links. */

@@ -7,6 +7,7 @@ namespace App\Service\Notification;
 use App\Entity\Competition;
 use App\Entity\Notification;
 use App\Entity\User;
+use App\Enum\NotificationDelivery;
 use App\Enum\NotificationType;
 use App\Repository\NotificationPreferenceRepository;
 use App\Repository\NotificationRepository;
@@ -75,6 +76,8 @@ final readonly class Notifier
      * @param string|null                     $url                 host-RELATIVE path (see the class doc)
      * @param array<string, scalar|null>|null $payload
      * @param list<string>                    $additionalDedupKeys
+     * @param NotificationDelivery            $delivery            narrows the channels this ONE
+     *                                                             delivery may use; never widens them
      */
     public function notify(
         User $user,
@@ -86,6 +89,7 @@ final readonly class Notifier
         ?array $payload = null,
         ?string $dedupKey = null,
         array $additionalDedupKeys = [],
+        NotificationDelivery $delivery = NotificationDelivery::Default,
     ): void {
         try {
             if (null !== $dedupKey && $this->notificationRepository->existsForDedup($user->id, $type, $dedupKey)) {
@@ -97,8 +101,10 @@ final readonly class Notifier
             $wantsEmail = null !== $preference ? $preference->email : $type->defaultEmail();
 
             $emailAddress = null !== $user->email && '' !== $user->email ? $user->email : null;
-            $deliverInApp = $wantsInApp;
-            $deliverEmail = $wantsEmail && null !== $emailAddress;
+
+            // A restriction can only ever narrow what the preferences allow.
+            $deliverInApp = $wantsInApp && NotificationDelivery::EmailOnly !== $delivery;
+            $deliverEmail = $wantsEmail && null !== $emailAddress && NotificationDelivery::InAppOnly !== $delivery;
 
             // Nothing to deliver on any channel ⇒ nothing to write, nothing to dedup.
             if (!$deliverInApp && !$deliverEmail) {

@@ -1,7 +1,9 @@
 # Match data feeds — plan & implementation preparation
 
-Status: **research verified 2026-07-31** (live probes of every claim — no vendor marketing
-taken at face value), direction decided, implementation prep (Phase 0) specified below.
+Status: **research verified 2026-07-31**, **Phase 0 implemented**, **Phase 1 designed
+2026-08-08** (see [Phase 1](#phase-1--the-three-real-adapters-designed-2026-08-08) at the
+bottom — it supersedes several assumptions in the TL;DR below, most importantly that one
+vendor could cover everything).
 Owner rationale: demand for Chance Liga, Evropská liga and Liga mistrů soutěže; manual
 result entry does not scale with the number of zdrojů zápasů.
 
@@ -241,3 +243,290 @@ MSFL rounds every weekend):
 - Attribution placement for SoccersAPI (footer of match surfaces?) if it becomes Tier world.
 - Live in-play for CZ (FAČR tier is post-match only): acceptable for v1; if live UX is
   ever wanted for Chance Liga, that's a separate vendor decision — do not scrape for it.
+
+---
+
+# Phase 1 — the three real adapters (IMPLEMENTED 2026-08-08)
+
+Everything in this part was **probed live on 2026-08-08**, not inferred. Where a claim
+came from the 2026-07-31 sweep and was not re-checked, it says so.
+
+> **Status: shipped.** `FacrMatchDataProvider`, `UefaMatchDataProvider` and
+> `SportmonksMatchDataProvider` all run against their real sources; the poll policy, the
+> past-kickoff guard, the deadline re-pin, the evaluation-mail digest and both cron entries
+> are in. What remains is **operational**, not code: pair the team aliases per source, run
+> `app:matches:adopt-external-ids` where the ids differ, then bind the sources one at a
+> time (§Rollout below). Decisions taken with Honza on the day:
+> **(a)** no back-fill — a feed never creates a match that has already kicked off;
+> **(b)** an own-kickoff deadline pin follows the kickoff the cron corrects;
+> **(c)** `match_evaluated` is in-app per match but ONE digest mail per user, like the
+> guess reminder; **(d)** UEFA's free API serves UCL/UEL/UECL — no extra Sportmonks slots;
+> **(e)** unpaired teams log at warning, exit 1 is for real failures only.
+
+## What changed since the plan above
+
+The Sportmonks key in `.env.local` was inspected against the live API. The subscription is
+`Starter` (Advanced) + `World Cup 2026`, and `GET /v3/football/leagues` returns exactly
+**13 leagues**:
+
+> Premier League (8) · FA Cup (24) · Carabao Cup (27) · Bundesliga (82) · La Liga (564) ·
+> World Cup (732) + its six qualification competitions (711/714/717/720/723/726/729)
+
+**Chance Liga (262), UCL (2), UEL (5) and UECL are NOT in the plan** — `GET
+/v3/football/leagues/262` answers *„you don't have access to it via your current
+subscription"*. So the „one vendor for all leagues" option from the TL;DR is off the table
+at this price point, and the split is not two-tier but **three**:
+
+| Tier | Provider | Covers | Cost | Auth |
+|---|---|---|---|---|
+| CZ | **FAČR** IS `is.fotbal.cz` | Chance Liga, MSFL, 5. liga, 6. liga — every FAČR-filed soutěž | free | **none** |
+| UEFA | **UEFA open API** `match.uefa.com/v5` | Liga mistrů, Evropská liga, Konferenční liga | free | none |
+| World | **Sportmonks** | Premier League (+ Bundesliga, La Liga, FA Cup, Carabao, MS 2026) | paid, already bought | api_token |
+
+Adding UCL/UEL/UECL to Sportmonks would be the only way to make it two-tier — decide
+whether that is worth extra league slots, given the UEFA API already covers them for free
+and its ids are **already the externalIds we store**.
+
+## Provider ↔ production source map (prod DB, 2026-08-08)
+
+| Source (prod) | Zápasů | externalId today | Feed that owns it | Bind is… |
+|---|---|---|---|---|
+| Premier League 2026/27 | 380 | `pl2627-arsenal-coventry-city` (synthetic) | Sportmonks league `8` | **remap needed** |
+| Chance Liga 2026/27 | 224 | `8350` (synthetic) | FAČR `b905e7e9-cfe2-4606-92da-eb0e02dd8ccc` | **remap needed** |
+| 3. MSFL sezóna 26/27 | 153 | *none* | FAČR `694cd96a-a84a-4801-bb6d-6dbcccfeb0e9` | **backfill needed** |
+| SATUM 5. liga mužů 2026/27 | 128 | FAČR zápas GUID | FAČR `85c0fb70-b5ec-4359-9f41-2195d05e7f97` | **drop-in** ✅ |
+| ČPP 6. liga mužů sk. B 2026/27 | 91 | FAČR zápas GUID | FAČR `5cf8386c-c75f-499d-a0e8-8315b29b84de` | **drop-in** ✅ |
+| Konferenční liga 2026/27 | 57 | UEFA match id | UEFA `competitionId=2019` | **drop-in** ✅ |
+| Evropská liga 2026/27 | 26 | UEFA match id | UEFA `competitionId=14` | **drop-in** ✅ |
+| Liga mistrů 2026/27 | 20 | UEFA match id | UEFA `competitionId=1` | **drop-in** ✅ |
+
+Five of eight sources need nothing but `app:matches:bind-feed` once their adapter exists.
+All eight are currently bound to `fixture` (a repo-relative JSON path) or to nothing, which
+is why no cron exists yet: replaying a static seed file is a no-op forever.
+
+## Adapter 1 — FAČR (no login, one GET per soutěž)
+
+The mfkfm implementation (`~/www/mfkfm/docs/facr-download-*.md`) logs in and pulls the
+**club-scoped** Excel export. We do not need any of that: the **competition** pages are
+fully public.
+
+```
+GET https://is.fotbal.cz/public/souteze/detail-souteze.aspx?req=<GUID>&sport=fotbal
+→ 200, 320–830 KB, whole season in one HTML document, no cookies, no Cloudflare
+```
+
+Verified: MSFL → 153 zápas GUIDs (prod has exactly 153), SATUM → 128 (prod: 128),
+ČPP → 91 (prod: 91), Chance Liga → **240** (prod: 224 — see the back-fill hazard below).
+
+Each row is a `<tr class="type_false">` with seven `<td>`s:
+
+| # | Cell | Example |
+|---|---|---|
+| 0 | kickoff, **Prague local**, `DD.MM.YYYY HH:MM` | `08.08.2026 10:30` |
+| 1 | home + table rank | `Český Těšín (16)` |
+| 2 | away + table rank | `FC Vřesina (9)` |
+| 3 | score + shootout | `4 : 1 (PK:0:0)` / `-- : -- (PK:0:0)` |
+| 4 | venue | `Český Těšín - tráva` |
+| 5 | pzn. | `změna termínu - hlášenka`, `Původní termín: 09.08.2026 10:15` |
+| 6 | akce — carries `zapas=<GUID>` + the zápis state | `nezahájen` / `zápis neuzavřen` / `zápis uzavřen` |
+
+`zapas=<GUID>` in cell 6 **is** our `externalId`. Status mapping (all four strings observed
+on live pages):
+
+| Score cell | Zápis link | → `FeedMatchStatus` |
+|---|---|---|
+| `-- : --` | `nezahájen` | `Scheduled` |
+| `N : M` | `zápis neuzavřen` | `Finished` (provisional — referee filed, report still open) |
+| `N : M` | `zápis uzavřen` | `Finished` (official) |
+| anything else | anything else | `Unknown` → reported loudly, never guessed |
+
+Treating „neuzavřen" as finished is safe: tips lock at kickoff, and a later correction is
+already a first-class path (`FeedSyncResult::$corrected` re-evaluates). **Not yet observed
+and therefore unmapped: odložený zápas, kontumace (3:0 k.), and a real `(PK:x:y)` shootout.**
+They will appear during the season; the `Unknown` bucket is the safety net, and each one is
+a one-line addition to the mapping table.
+
+**Scorers are NOT available anonymously** — `zapis-o-utkani-report.aspx?zapas=…` 302s to the
+login. So the FAČR adapter is a **score-only provider**: it emits `events: null`, which
+`FeedSynchronizer` already honors by leaving manually entered scorers untouched (P0.5). If
+`scorer_hit` ever needs to be automated for CZ, the mfkfm login flow is the upgrade path —
+but it is out of Phase 1.
+
+Competition discovery is also public: an anonymous ASP.NET postback on
+`prehled-soutezi.aspx` (`__EVENTTARGET=ctl00$MainContent$btnSearch`,
+`ctl00$MainContent$txtSearchCislo=2026001A1A`, `listSearchRocnik=19` = ročník 2026) returns
+the soutěž row with its `detail-souteze.aspx?req=<GUID>` link. That is how
+`b905e7e9-…` (Chance Liga) was found. Worth wrapping as
+`app:facr:find-competition <číslo>` so binding a new soutěž never means hand-copying a URL —
+but a human pasting the GUID once per season is an acceptable v1.
+
+## Adapter 2 — UEFA (one GET per soutěž)
+
+```
+GET https://match.uefa.com/v5/matches?competitionId=<1|14|2019>&seasonYear=2027&limit=100&offset=0
+```
+
+`offset` is **mandatory** (omitting it returns `404 null is not valid for offset`).
+Verified on UECL: 40 matches, `status ∈ {UPCOMING, FINISHED}`, finished rows carry
+`score.regular` + `score.total` and a `playerEvents.scorers[]` array with full player
+objects (name, id, `goalType: SCORED`, `phase: SECOND_HALF`). So UEFA is a **full**
+provider — score *and* scorers — and its `id` (e.g. `2049167`) is byte-identical to the
+`externalId` already stored in prod.
+
+Unresolved: the exact strings for postponed/cancelled/live, and whether a shootout appears
+as `score.penalties` — no UEFA tie has gone to extra time yet this season. Which means:
+
+> **P0.6 (AET / penalty shootout) is due sooner than the plan above says.** It is not
+> „spring 2027" — the UECL/UEL **play-off round is late August 2026** and its second legs
+> can go to extra time and penalties. Decide the representation before binding the UEFA
+> adapter, or those matches will fail `setFinalScore()`'s overtime invariant.
+
+## Adapter 3 — Sportmonks (one GET per *poll*, not per source)
+
+The single most useful shape, verified live:
+
+```
+GET /v3/football/fixtures/between/{from}/{to}
+      ?filters=fixtureLeagues:8,82,564
+      &include=participants;scores;state;round;venue;events
+      &per_page=50
+```
+
+One request returned 11 finished fixtures across three leagues with, per fixture:
+`state` (`{id:5, state:"FT", name:"Full Time"}`), `participants` with
+`meta.location = home|away`, `scores[]` rows described `CURRENT` / `1ST_HALF` / `2ND_HALF`
+per participant (→ our `periodScores` fall out directly), and `events[]` with
+`{minute, type_id:14, player_name, participant_id, result:"0-1"}` (→ `scorer_hit`).
+
+**The whole Sportmonks tier therefore costs 1–2 HTTP requests per poll regardless of how
+many sources are bound** — the league filter is comma-separated. Do not fetch per source.
+
+Rate limit, observed in every response body: `rate_limit.remaining` counts down from
+**2500 per hour, per requested entity** (`Fixture`, `League`, `Stage` are separate buckets),
+`resets_in_seconds` ≈ 3600. A 5-minute poll is 12 requests/hour = **0.5 % of budget**.
+There is no plausible way to be aggressive here.
+
+The complete state table is `GET /v3/football/states` (25 rows) — build the mapping from it
+rather than guessing:
+
+| Sportmonks | → |
+|---|---|
+| `NS`, `TBA`, `PENDING`, `DELAYED` | `Scheduled` |
+| `INPLAY_1ST_HALF`, `HT`, `INPLAY_2ND_HALF`, `BREAK`, `INPLAY_ET`, `EXTRA_TIME_BREAK`, `INPLAY_ET_2ND_HALF`, `PEN_BREAK`, `INPLAY_PENALTIES` | `Live` |
+| `FT`, `AET`, `FT_PEN`, `AWARDED`, `WO` | `Finished` |
+| `POSTPONED` | `Postponed` |
+| `CANCELLED`, `DELETED` | `Cancelled` (report-only) |
+| `SUSPENDED`, `ABANDONED`, `INTERRUPTED`, `AWAITING_UPDATES` | `Unknown` — deliberately: these need a human |
+
+## Polling: make cost proportional to football, not to wall-clock
+
+One cron entry, `*/5`, calling the existing `app:matches:sync`. Each source then decides
+whether it is **due**, from the kickoffs we already store:
+
+| Bucket | Condition (any match of this source) | Poll every |
+|---|---|---|
+| **hot** | state `live`, or kickoff between −15 min and +4 h ago | 5 min |
+| **warm** | kickoff within the next 6 h, or ended < 24 h ago | 30 min |
+| **cold** | neither | once daily, ~03:30 Prague |
+
+On a quiet Tuesday that is **8 requests for the whole day**. On a Saturday with four CZ
+soutěže playing it is a few hundred, spread out — nothing a public ASP.NET page will notice,
+and 2 % of the Sportmonks hourly bucket. This needs exactly **one new nullable column**,
+`match_sources.feed_polled_at`; the rest is a `FeedPollPolicy` query over `sport_matches`.
+
+Two cheap multipliers on top:
+
+- **Payload hash short-circuit.** Store `feed_payload_hash`; an unchanged FAČR page (830 KB
+  for Chance Liga) skips parsing and ~240 `findBySourceAndExternalId` lookups entirely.
+  Correctness does not depend on it — `FeedSynchronizer` is already idempotent — it just
+  makes the common case free.
+- **Windowed fetch for Sportmonks**: `between(today−2d, today+10d)` on hot/warm polls, full
+  season once nightly. Cuts the payload ~10×. FAČR and UEFA have no date-window endpoint,
+  so they always fetch whole-season; that is what the hash guard is for.
+
+## Hazards this turns on — read before scheduling the cron
+
+1. **Back-fill of already-played matches.** FAČR lists Chance Liga's full 240 zápasů; prod
+   deliberately holds 224 (kola 3–30, because kola 1–2 were already played at seed time).
+   A first sync would happily **create 16 finished matches inside a running soutěž**, where
+   nobody could ever have tipped — everyone scores zero on them. Fix before binding:
+   `FeedSynchronizer` must **never create a match whose kickoff is already in the past**;
+   report it instead and let an admin add it deliberately. (Rescheduling/finishing an
+   *existing* match is unaffected.)
+2. **The tip-deadline pin.** Chance Liga rounds 6+ carry placeholder 00:00-Prague kickoffs
+   with deadlines pinned by `app:tip-opening:bulk-set --deadline-own-kickoff`. The moment the
+   feed corrects those kickoffs, the **override stays at the old placeholder** and tipping
+   closes early — silently, for a whole round. Either re-run `bulk-set` after every sync that
+   moved kickoffs, or teach the synchronizer to carry a „pinned to own kickoff" override along
+   with the kickoff. This is a live foot-gun the day the Chance Liga feed goes on.
+3. **Notification bursts.** `NotifyMatchAddedHandler` is already safe — it only notifies
+   competitions that have *already started*, so a bulk fixture import into a fresh soutěž is
+   silent. `NotifyMatchEvaluatedHandler` is not: it emits one notification per
+   (user, competition) per finished match, and a Saturday sync finishing eight MSFL zápasů at
+   once becomes **eight notifications in one burst** — something manual entry never produced,
+   because a human enters results one at a time. Options: ship as-is and measure; or add a
+   digest window („3 zápasy vyhodnoceny"); or split by channel (in-app per match, e-mail
+   digested). Recommend shipping as-is *only* after the first automated round is watched.
+4. **Nobody is told when a kickoff moves.** `postponeTo()`/`reschedule()` change a user's tip
+   deadline and there is no notification type for it. Rare enough to ignore while a human
+   moves matches; routine once a feed does. A `match_rescheduled` NotificationType is the
+   natural companion to this work.
+5. **Team spellings.** FAČR uses legal entity names — `AC Sparta Praha fotbal, a.s.`,
+   `SK Slavia Praha - fotbal a.s.`, `ZBROJOVKA BRNO B` (upper-case) — which match nothing in
+   the directory. The pending-team gate blocks creation and reports, so
+   **`app:matches:sync --dry-run` is itself the alias-discovery tool**: run it once per source,
+   feed the `unresolved team` lines into `app:team-alias:add`, repeat until clean, only then
+   bind for real.
+6. **Cron ordering.** `app:guess-reminders:send` runs at `:00`; a `*/5` sync also fires at
+   `:00`. Reminders would go out against kickoffs up to 5 minutes stale. Harmless, but moving
+   the reminder to `2 * * * *` removes the race for free.
+
+## What shipped
+
+| Piece | Where |
+|---|---|
+| `FeedProvider`: `facr` / `uefa` / `sportmonks` / `fixture` (+ `reportsScorers()`) | `src/Enum/FeedProvider.php` |
+| Three adapters, each owning its own status mapping table | `src/Service/Feed/{Facr,Uefa,Sportmonks}MatchDataProvider.php` |
+| Never create a past-kickoff match; long-past rows silently ignored | `FeedSynchronizer::createFromSnapshot` |
+| Poll cadence hot/warm/cold + `match_sources.feed_polled_at` | `FeedPollPolicy`, `SportMatchRepository::hasLiveMatch` / `hasMatchKickingOffBetween` |
+| The sync pass itself (fetch → dispatch → log), so the console stays a wrapper | `FeedSyncRunner`, `FeedSyncReport` |
+| externalId bridge for the three mismatched sources | `ExternalIdAdopter` + `app:matches:adopt-external-ids` |
+| Own-kickoff deadline pin follows a corrected kickoff | `RepinOwnKickoffDeadlinesHandler`, `SportMatchUpdated::$previousKickoffAt` |
+| Per-call channel restriction; evaluation mail as ONE digest | `NotificationDelivery`, `SendMatchEvaluationDigestsHandler`, `app:match-digests:send` |
+| Cron: `*/5` sync, `:10` digest | `~/www/lily.srv/apps/wtips/cron.d/wtips` |
+
+Adapter payload shapes are pinned by unit tests built from **real trimmed responses**
+(`tests/Unit/Service/Feed/`) — that is where a provider changing its HTML or JSON shows up.
+
+## Rollout — one source at a time, ascending blast radius
+
+For each source, in this order: SATUM 5. liga → ČPP 6. liga → MSFL → UEFA trio →
+Chance Liga → Premier League.
+
+1. `app:matches:bind-feed <source> <provider> <ref>`
+2. `app:matches:sync --source=<source> --dry-run` — **this is the alias-discovery tool.**
+   Every „unresolved team" line is an `app:team-alias:add` waiting to happen. Repeat until
+   clean. Expect a lot for Chance Liga: FAČR files legal entity names („AC Sparta Praha
+   fotbal, a.s.", „SK Slavia Praha - fotbal a.s.", „ZBROJOVKA BRNO B").
+3. Only where the ids differ (Premier League, Chance Liga, MSFL):
+   `app:matches:adopt-external-ids <source> --dry-run`, read it, then run it for real.
+4. `app:matches:sync --source=<source>` and read the report.
+5. Leave it to the cron.
+
+`--source=` implies `--force`, so a targeted run never waits for the cadence.
+
+## Still open
+
+- **AET / penalty shootout.** DOMAIN.md (2026-07-29) locks ONE combined overtime pair — no
+  split, no columns. The convention to record when the first UEFA tie goes to penalties:
+  a shootout maps to the regular score **with the winner +1 goal** (1:1, won 4:3 on pens →
+  overtime pair `2:1`), which keeps the same scale as a real extra-time goal, is what players
+  actually tip, and satisfies the non-draw ≥ regular invariant. The UEFA adapter currently
+  reports the REGULAR score only and invents nothing, so a knockout tie is scored correctly by
+  every rule except `overtime_exact` until this lands. Due with the **August play-off round**.
+- **FAČR statuses not yet observed**: odložený zápas, kontumace, a real `(PK:x:y)`. Each will
+  arrive as an `Unknown` in the sync report, and each is one line in the adapter's table.
+- **FAČR scorers** stay manual (the zápis needs a login). Promoting to the authenticated flow
+  is a later, separate decision.
+- **Payload hash short-circuit** (skip parsing an unchanged 830 kB FAČR page) — a pure
+  optimization, deliberately not built yet.

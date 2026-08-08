@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Event;
 
+use App\Enum\NotificationDelivery;
 use App\Enum\NotificationType;
 use App\Query\GetCompetitionLeaderboard\GetCompetitionLeaderboard;
 use App\Query\QueryBus;
@@ -17,10 +18,14 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * `match_evaluated`: one notification per (user, competition) whose guess for the
- * just-finished match was evaluated — the points they scored on this match plus
- * their current standing (rank from the post-evaluation leaderboard). Dispatched
- * post-commit so the leaderboard already reflects the new evaluations.
+ * `match_evaluated`: one IN-APP notification per (user, competition) whose guess
+ * for the just-finished match was evaluated — the points they scored on this
+ * match plus their current standing (rank from the post-evaluation leaderboard).
+ * Dispatched post-commit so the leaderboard already reflects the new evaluations.
+ *
+ * The e-mail channel is deliberately NOT used here: see
+ * {@see \App\Command\SendMatchEvaluationDigests\SendMatchEvaluationDigestsHandler},
+ * which mails one digest per user instead of one mail per zápas.
  */
 #[AsMessageHandler]
 final readonly class NotifyMatchEvaluatedHandler
@@ -93,6 +98,11 @@ final readonly class NotifyMatchEvaluatedHandler
                     competition: $competition,
                     payload: ['points' => $points, 'rank' => $rank, 'sportMatchId' => $event->sportMatchId->toRfc4122()],
                     dedupKey: sprintf('match_evaluated:%s:%s', $event->sportMatchId->toRfc4122(), $competition->id->toRfc4122()),
+                    // In-app per match — that IS the feed. The e-mail channel is
+                    // served by the hourly digest instead, so an automated sync
+                    // finishing a whole round at once cannot fire one mail per
+                    // zápas. See NotificationDelivery.
+                    delivery: NotificationDelivery::InAppOnly,
                 );
             }
         }

@@ -104,6 +104,34 @@ final class NotificationRepository
      * Whether a deduped notification already exists for this user/type/key —
      * the Notifier's idempotency guard.
      */
+    /**
+     * Notifications of one type written since a moment, newest last — the input
+     * of the e-mail digests, which turn many recent in-app rows into one mail.
+     * Only rows carrying a dedup key are returned: a keyless row cannot be
+     * identified in a digest and would be re-sent on every sweep.
+     *
+     * @return list<Notification>
+     */
+    public function listSince(NotificationType $type, \DateTimeImmutable $since): array
+    {
+        /** @var list<Notification> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('n', 'u', 'c')
+            ->from(Notification::class, 'n')
+            ->join('n.user', 'u')
+            ->leftJoin('n.competition', 'c')
+            ->where('n.type = :type')
+            ->andWhere('n.createdAt >= :since')
+            ->andWhere('n.dedupKey IS NOT NULL')
+            ->setParameter('type', $type)
+            ->setParameter('since', $since)
+            ->orderBy('n.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
     public function existsForDedup(Uuid $userId, NotificationType $type, string $dedupKey): bool
     {
         $result = $this->entityManager->createQueryBuilder()

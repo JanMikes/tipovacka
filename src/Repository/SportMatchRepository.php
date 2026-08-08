@@ -61,6 +61,51 @@ class SportMatchRepository
     }
 
     /**
+     * Whether the source has any live match right now — the strongest signal
+     * that its feed is worth polling aggressively (see FeedPollPolicy).
+     */
+    public function hasLiveMatch(Uuid $matchSourceId): bool
+    {
+        return $this->existsForSource(
+            $matchSourceId,
+            static function ($queryBuilder): void {
+                $queryBuilder
+                    ->andWhere('m.state = :live')
+                    ->setParameter('live', SportMatchState::Live);
+            },
+        );
+    }
+
+    /** Whether the source has any match kicking off inside the window (inclusive). */
+    public function hasMatchKickingOffBetween(Uuid $matchSourceId, \DateTimeImmutable $from, \DateTimeImmutable $to): bool
+    {
+        return $this->existsForSource(
+            $matchSourceId,
+            static function ($queryBuilder) use ($from, $to): void {
+                $queryBuilder
+                    ->andWhere('m.kickoffAt BETWEEN :from AND :to')
+                    ->setParameter('from', $from)
+                    ->setParameter('to', $to);
+            },
+        );
+    }
+
+    private function existsForSource(Uuid $matchSourceId, callable $constrain): bool
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder()
+            ->select('1')
+            ->from(SportMatch::class, 'm')
+            ->where('m.matchSource = :matchSourceId')
+            ->andWhere('m.deletedAt IS NULL')
+            ->setParameter('matchSourceId', $matchSourceId)
+            ->setMaxResults(1);
+
+        $constrain($queryBuilder);
+
+        return [] !== $queryBuilder->getQuery()->getScalarResult();
+    }
+
+    /**
      * @return list<SportMatch>
      */
     public function listByMatchSource(

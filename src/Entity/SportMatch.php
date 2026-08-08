@@ -192,7 +192,10 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             $this->awayTeam = $awayTeam;
         }
 
-        if (null !== $kickoffAt) {
+        $previousKickoffAt = null;
+
+        if (null !== $kickoffAt && $kickoffAt->getTimestamp() !== $this->kickoffAt->getTimestamp()) {
+            $previousKickoffAt = $this->kickoffAt;
             $this->kickoffAt = $kickoffAt;
         }
 
@@ -204,6 +207,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         $this->recordThat(new SportMatchUpdated(
             sportMatchId: $this->id,
             occurredOn: $now,
+            previousKickoffAt: $previousKickoffAt,
         ));
     }
 
@@ -400,6 +404,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
             throw SportMatchInvalidTransition::from($this->state, 'reschedule');
         }
 
+        $previousKickoffAt = $this->kickoffAt;
         $this->kickoffAt = $newKickoffAt;
         $this->state = SportMatchState::Scheduled;
         $this->updatedAt = $now;
@@ -407,6 +412,7 @@ class SportMatch implements EntityWithEvents, SoftDeletable
         $this->recordThat(new SportMatchUpdated(
             sportMatchId: $this->id,
             occurredOn: $now,
+            previousKickoffAt: $previousKickoffAt->getTimestamp() !== $newKickoffAt->getTimestamp() ? $previousKickoffAt : null,
         ));
     }
 
