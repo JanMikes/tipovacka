@@ -13,7 +13,7 @@
     <header class="mb-8 mt-2">
         <span class="eyebrow">Můj účet</span>
         <h1 class="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Můj profil</h1>
-        <p class="mt-2 text-sm leading-relaxed text-white/70">Spravujte své osobní údaje.</p>
+        <p class="mt-2 text-sm leading-relaxed text-white/70">Spravujte své osobní údaje a heslo.</p>
     </header>
 
     <div class="grid gap-6 lg:grid-cols-3">
@@ -45,6 +45,18 @@
 
                 <div class="px-6 py-6">
                     <twig:Profile:ProfileForm />
+                </div>
+            </section>
+
+            {# Password change — the account's own credentials, hence its own card #}
+            <section class="card-glass overflow-hidden p-0">
+                <header class="flex items-center gap-2.5 border-b border-white/[0.06] px-6 py-4">
+                    <twig:ux:icon name="lucide:lock" class="h-5 w-5 text-accent-400" />
+                    <h2 class="text-base font-semibold text-white">Heslo</h2>
+                </header>
+
+                <div class="px-6 py-6">
+                    <twig:Profile:PasswordForm />
                 </div>
             </section>
         </div>
