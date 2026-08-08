@@ -49,7 +49,14 @@ final class AdoptFeedExternalIdsCommand extends Command
     {
         $this
             ->addArgument('source', InputArgument::REQUIRED, 'Match source UUID')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show the pairing without writing anything');
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show the pairing without writing anything')
+            ->addOption(
+                'kickoff-tolerance-hours',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How far a stored kickoff may sit from the feed\'s and still be the same match',
+                (string) ExternalIdAdopter::DEFAULT_KICKOFF_TOLERANCE_HOURS,
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -73,11 +80,12 @@ final class AdoptFeedExternalIdsCommand extends Command
 
         $snapshots = $provider->fetchMatches($source);
         $dryRun = (bool) $input->getOption('dry-run');
+        $tolerance = (int) $input->getOption('kickoff-tolerance-hours');
 
         if ($dryRun) {
-            $adoption = $this->adopter->adopt($source, $snapshots, apply: false);
+            $adoption = $this->adopter->adopt($source, $snapshots, apply: false, kickoffToleranceHours: $tolerance);
         } else {
-            $envelope = $this->commandBus->dispatch(new AdoptMessage($source->id, $snapshots));
+            $envelope = $this->commandBus->dispatch(new AdoptMessage($source->id, $snapshots, $tolerance));
             $result = $envelope->last(HandledStamp::class)?->getResult();
 
             if (!$result instanceof ExternalIdAdoption) {

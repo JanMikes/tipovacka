@@ -27,6 +27,6 @@ final readonly class AdoptFeedExternalIdsHandler
             throw FeedSyncUnavailable::notCurated($source->id);
         }
 
-        return $this->adopter->adopt($source, $command->snapshots, apply: true);
+        return $this->adopter->adopt($source, $command->snapshots, apply: true, kickoffToleranceHours: $command->kickoffToleranceHours);
     }
 }
