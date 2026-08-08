@@ -71,6 +71,19 @@ final readonly class FeedSynchronizer
         $result = new FeedSyncResult(dryRun: !$apply);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
+        $mayCreate = $this->isBridgedToThisFeed($source, $snapshots);
+
+        if (!$mayCreate) {
+            $result->addNeedsAdoption(sprintf(
+                'Every stored match carries an id from another feed and none match this one — run "app:matches:adopt-external-ids %s" first. Nothing was created.',
+                $source->id->toRfc4122(),
+            ));
+            $this->logger->error('Feed sync refused to create on a source that was never bridged to this feed.', [
+                'matchSourceId' => (string) $source->id,
+                'snapshots' => count($snapshots),
+            ]);
+        }
+
         $seenExternalIds = [];
 
         foreach ($snapshots as $snapshot) {
@@ -82,7 +95,7 @@ final readonly class FeedSynchronizer
             $seenExternalIds[$snapshot->externalId] = true;
 
             try {
-                $this->syncOne($source, $snapshot, $apply, $now, $result);
+                $this->syncOne($source, $snapshot, $apply, $now, $result, $mayCreate);
             } catch (\DomainException $e) {
                 $result->addError(sprintf('%s: %s', $snapshot->label(), $e->getMessage()));
                 $this->logger->warning('Feed snapshot could not be applied.', [
@@ -96,12 +109,45 @@ final readonly class FeedSynchronizer
         return $result;
     }
 
+    /**
+     * Whether this source's stored matches belong to the feed it is bound to.
+     *
+     * The dangerous shape is a source every one of whose matches carries an
+     * identifier from SOMEWHERE ELSE — a previous provider, or the synthetic ids
+     * a seed invented. Then no fixture is ever recognised, every one looks new,
+     * and the sync quietly builds a second season beside the one people are
+     * tipping. That is not hypothetical: on 2026-08-08 Chance Liga was bound to
+     * FAČR before it was bridged, the five-minute cron fired in between, and 220
+     * duplicate matches plus 1760 notifications had to be deleted by hand.
+     *
+     * Matches with NO externalId are deliberately not counted: a hand-maintained
+     * source that starts receiving feed fixtures is a legitimate, common case.
+     * The signal is foreign ids, not the mere presence of matches.
+     *
+     * @param list<MatchSnapshot> $snapshots
+     */
+    private function isBridgedToThisFeed(MatchSource $source, array $snapshots): bool
+    {
+        if ([] === $snapshots) {
+            return true;
+        }
+
+        $externalIds = array_map(static fn (MatchSnapshot $snapshot): string => $snapshot->externalId, $snapshots);
+
+        if ($this->sportMatches->countLinkedToExternalIds($source->id, $externalIds) > 0) {
+            return true;
+        }
+
+        return 0 === $this->sportMatches->countWithForeignExternalIds($source->id, $externalIds);
+    }
+
     private function syncOne(
         MatchSource $source,
         MatchSnapshot $snapshot,
         bool $apply,
         \DateTimeImmutable $now,
         FeedSyncResult $result,
+        bool $mayCreate,
     ): void {
         if (FeedMatchStatus::Unknown === $snapshot->status) {
             $result->addUnknownStatus(sprintf('%s [%s]', $snapshot->label(), $snapshot->rawStatus ?? '?'));
@@ -117,7 +163,9 @@ final readonly class FeedSynchronizer
         $existing = $this->sportMatches->findBySourceAndExternalId($source->id, $snapshot->externalId);
 
         if (null === $existing) {
-            $this->createFromSnapshot($source, $snapshot, $apply, $now, $result);
+            if ($mayCreate) {
+                $this->createFromSnapshot($source, $snapshot, $apply, $now, $result);
+            }
 
             return;
         }

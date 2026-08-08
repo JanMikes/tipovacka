@@ -111,6 +111,10 @@ final class SyncMatchesCommand extends Command
                 ));
             }
 
+            foreach ($result->needsAdoption as $message) {
+                $output->writeln(sprintf('  <error>%s</error>', $message));
+            }
+
             foreach ($result->errors as $message) {
                 $output->writeln(sprintf('  <error>%s</error>', $message));
             }

@@ -61,6 +61,57 @@ class SportMatchRepository
     }
 
     /**
+     * How many of the source's matches carry one of these external ids — i.e.
+     * how much of it the feed already recognises.
+     *
+     * @param list<string> $externalIds
+     */
+    public function countLinkedToExternalIds(Uuid $matchSourceId, array $externalIds): int
+    {
+        if ([] === $externalIds) {
+            return 0;
+        }
+
+        return (int) $this->scopedCount($matchSourceId)
+            ->andWhere('m.externalId IN (:externalIds)')
+            ->setParameter('externalIds', $externalIds)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * How many carry an externalId that is NOT one of these — matches belonging
+     * to some other provider's numbering. Manual matches (null) are excluded:
+     * a hand-maintained source gaining feed fixtures is legitimate. Together
+     * with {@see countLinkedToExternalIds} this answers „was this source ever
+     * bridged to the feed it is bound to?" (FeedSynchronizer).
+     *
+     * @param list<string> $externalIds
+     */
+    public function countWithForeignExternalIds(Uuid $matchSourceId, array $externalIds): int
+    {
+        $queryBuilder = $this->scopedCount($matchSourceId)->andWhere('m.externalId IS NOT NULL');
+
+        if ([] !== $externalIds) {
+            $queryBuilder
+                ->andWhere('m.externalId NOT IN (:externalIds)')
+                ->setParameter('externalIds', $externalIds);
+        }
+
+        return (int) $queryBuilder->getQuery()->getSingleScalarResult();
+    }
+
+    private function scopedCount(Uuid $matchSourceId): \Doctrine\ORM\QueryBuilder
+    {
+        return $this->entityManager->createQueryBuilder()
+            ->select('COUNT(m.id)')
+            ->from(SportMatch::class, 'm')
+            ->where('m.matchSource = :matchSourceId')
+            ->andWhere('m.deletedAt IS NULL')
+            ->setParameter('matchSourceId', $matchSourceId);
+    }
+
+    /**
      * Whether the source has any live match right now — the strongest signal
      * that its feed is worth polling aggressively (see FeedPollPolicy).
      */

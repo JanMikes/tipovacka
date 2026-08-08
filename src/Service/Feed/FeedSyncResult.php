@@ -45,6 +45,16 @@ final class FeedSyncResult
      */
     public private(set) array $skippedPastKickoff = [];
 
+    /**
+     * Feed rows whose fixture is already stored under a DIFFERENT identifier —
+     * the source is bound to this feed but was never bridged to it
+     * (app:matches:adopt-external-ids). Never created: that is how a duplicate
+     * season gets built next to the one people are tipping.
+     *
+     * @var list<string>
+     */
+    public private(set) array $needsAdoption = [];
+
     /** Feed team spellings with no directory/alias match — the pending-team gate. */
     /** @var list<string> */
     public private(set) array $unresolvedTeams = [];
@@ -68,7 +78,7 @@ final class FeedSyncResult
      * pairing/hygiene gaps that a human resolves at their own pace.
      */
     public bool $hasFailures {
-        get => [] !== $this->errors;
+        get => [] !== $this->errors || [] !== $this->needsAdoption;
     }
 
     /**
@@ -127,6 +137,11 @@ final class FeedSyncResult
     public function addSkippedPastKickoff(string $label): void
     {
         $this->skippedPastKickoff[] = $label;
+    }
+
+    public function addNeedsAdoption(string $label): void
+    {
+        $this->needsAdoption[] = $label;
     }
 
     public function addUnresolvedTeam(string $teamName): void
