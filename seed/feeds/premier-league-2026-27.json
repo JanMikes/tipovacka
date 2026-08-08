@@ -1,0 +1,3042 @@
+[
+  {
+    "externalId": "pl2627-arsenal-coventry-city",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-08-21T19:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-manchester-united",
+    "homeTeam": "Hull City",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-08-22T11:30:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-crystal-palace",
+    "homeTeam": "Everton",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-08-22T14:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-sunderland",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-08-22T14:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-leeds-united",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-08-22T14:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-tottenham-hotspur",
+    "homeTeam": "Brentford",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-08-22T16:30:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-aston-villa",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-08-23T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-afc-bournemouth",
+    "homeTeam": "Manchester City",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-08-23T13:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-liverpool",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-08-23T15:30:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-chelsea",
+    "homeTeam": "Fulham",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-08-24T19:00:00Z",
+    "status": "scheduled",
+    "round": "1. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-manchester-city",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-08-28T19:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-nottingham-forest",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-08-29T11:30:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-everton",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-hull-city",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-08-29T14:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-newcastle-united",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-08-29T16:30:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-brighton-and-hove-albion",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-08-30T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-brentford",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-08-30T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-fulham",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-08-30T13:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-ipswich-town",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-08-30T15:30:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-arsenal",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-08-31T19:00:00Z",
+    "status": "scheduled",
+    "round": "2. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-liverpool",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-09-04T19:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-afc-bournemouth",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-09-05T11:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-sunderland",
+    "homeTeam": "Brentford",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-leeds-united",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-crystal-palace",
+    "homeTeam": "Fulham",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-coventry-city",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-tottenham-hotspur",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-09-05T14:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-aston-villa",
+    "homeTeam": "Hull City",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-09-05T16:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-manchester-united",
+    "homeTeam": "Everton",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-09-06T13:00:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-chelsea",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-09-06T15:30:00Z",
+    "status": "scheduled",
+    "round": "3. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-brentford",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-nottingham-forest",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-hull-city",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-ipswich-town",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-fulham",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-09-12T14:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-everton",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-09-12T16:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-arsenal",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-09-12T19:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-brighton-and-hove-albion",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-09-13T13:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-manchester-city",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-09-13T15:30:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-newcastle-united",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-09-14T19:00:00Z",
+    "status": "scheduled",
+    "round": "4. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-chelsea",
+    "homeTeam": "Brentford",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-09-18T19:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-aston-villa",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-09-19T11:30:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-arsenal",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-09-19T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-ipswich-town",
+    "homeTeam": "Everton",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-09-19T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-crystal-palace",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-09-19T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-sunderland",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-09-19T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-hull-city",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-09-19T14:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-coventry-city",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-09-19T16:30:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-liverpool",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-09-20T13:00:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-manchester-united",
+    "homeTeam": "Fulham",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-09-20T15:30:00Z",
+    "status": "scheduled",
+    "round": "5. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-leeds-united",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-brentford",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-afc-bournemouth",
+    "homeTeam": "Chelsea",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-newcastle-united",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-nottingham-forest",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-everton",
+    "homeTeam": "Hull City",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-fulham",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-manchester-city",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-tottenham-hotspur",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-brighton-and-hove-albion",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-10-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "6. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-sunderland",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-liverpool",
+    "homeTeam": "Brentford",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-crystal-palace",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-chelsea",
+    "homeTeam": "Everton",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-hull-city",
+    "homeTeam": "Fulham",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-manchester-united",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-ipswich-town",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-aston-villa",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-arsenal",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-coventry-city",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-10-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "7. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-everton",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-manchester-city",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-tottenham-hotspur",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-fulham",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-newcastle-united",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-brentford",
+    "homeTeam": "Hull City",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-nottingham-forest",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-brighton-and-hove-albion",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-afc-bournemouth",
+    "homeTeam": "Manchester United",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-leeds-united",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-10-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "8. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-leeds-united",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-fulham",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-nottingham-forest",
+    "homeTeam": "Brentford",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-manchester-united",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-sunderland",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-ipswich-town",
+    "homeTeam": "Hull City",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-arsenal",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-brighton-and-hove-albion",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-everton",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-crystal-palace",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-10-31T15:00:00Z",
+    "status": "scheduled",
+    "round": "9. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-hull-city",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-brentford",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-liverpool",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-coventry-city",
+    "homeTeam": "Everton",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-newcastle-united",
+    "homeTeam": "Fulham",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-afc-bournemouth",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-tottenham-hotspur",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-aston-villa",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-manchester-city",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-chelsea",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-11-07T15:00:00Z",
+    "status": "scheduled",
+    "round": "10. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-nottingham-forest",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-sunderland",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-everton",
+    "homeTeam": "Brentford",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-leeds-united",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-crystal-palace",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-brighton-and-hove-albion",
+    "homeTeam": "Hull City",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-manchester-united",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-fulham",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-arsenal",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-ipswich-town",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-11-21T15:00:00Z",
+    "status": "scheduled",
+    "round": "11. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-manchester-city",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-newcastle-united",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-hull-city",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-liverpool",
+    "homeTeam": "Everton",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-afc-bournemouth",
+    "homeTeam": "Fulham",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-aston-villa",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-coventry-city",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-brentford",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-chelsea",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-tottenham-hotspur",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-11-28T15:00:00Z",
+    "status": "scheduled",
+    "round": "12. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-brighton-and-hove-albion",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-everton",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-arsenal",
+    "homeTeam": "Brentford",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-crystal-palace",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-ipswich-town",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-nottingham-forest",
+    "homeTeam": "Hull City",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-sunderland",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-leeds-united",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-manchester-united",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-fulham",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-12-02T20:00:00Z",
+    "status": "scheduled",
+    "round": "13. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-hull-city",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-crystal-palace",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-manchester-city",
+    "homeTeam": "Brentford",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-liverpool",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-fulham",
+    "homeTeam": "Everton",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-ipswich-town",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-coventry-city",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-sunderland",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-brighton-and-hove-albion",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-arsenal",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-12-05T15:00:00Z",
+    "status": "scheduled",
+    "round": "14. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-afc-bournemouth",
+    "homeTeam": "Arsenal",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-everton",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-aston-villa",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-manchester-united",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-brentford",
+    "homeTeam": "Fulham",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-tottenham-hotspur",
+    "homeTeam": "Hull City",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-newcastle-united",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-leeds-united",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-chelsea",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-nottingham-forest",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-12-12T15:00:00Z",
+    "status": "scheduled",
+    "round": "15. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-coventry-city",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-manchester-united",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-newcastle-united",
+    "homeTeam": "Brentford",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-ipswich-town",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-aston-villa",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-fulham",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-tottenham-hotspur",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-hull-city",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-everton",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-crystal-palace",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2026-12-19T15:00:00Z",
+    "status": "scheduled",
+    "round": "16. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-leeds-united",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-chelsea",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-arsenal",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-sunderland",
+    "homeTeam": "Everton",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-brighton-and-hove-albion",
+    "homeTeam": "Fulham",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-liverpool",
+    "homeTeam": "Hull City",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-brentford",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-nottingham-forest",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-manchester-city",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-afc-bournemouth",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-12-26T15:00:00Z",
+    "status": "scheduled",
+    "round": "17. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-liverpool",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-brentford",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-afc-bournemouth",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-manchester-city",
+    "homeTeam": "Everton",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-arsenal",
+    "homeTeam": "Fulham",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-leeds-united",
+    "homeTeam": "Hull City",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-chelsea",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-sunderland",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-nottingham-forest",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-brighton-and-hove-albion",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2026-12-30T20:00:00Z",
+    "status": "scheduled",
+    "round": "18. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-aston-villa",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-ipswich-town",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-crystal-palace",
+    "homeTeam": "Brentford",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-manchester-united",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-newcastle-united",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-everton",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-coventry-city",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-tottenham-hotspur",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-fulham",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-hull-city",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-01-02T15:00:00Z",
+    "status": "scheduled",
+    "round": "19. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-brentford",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-afc-bournemouth",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-chelsea",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-aston-villa",
+    "homeTeam": "Everton",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-tottenham-hotspur",
+    "homeTeam": "Fulham",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-coventry-city",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-manchester-city",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-newcastle-united",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-hull-city",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-liverpool",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-01-06T20:00:00Z",
+    "status": "scheduled",
+    "round": "20. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-ipswich-town",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-manchester-united",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-brighton-and-hove-albion",
+    "homeTeam": "Brentford",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-sunderland",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-everton",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-arsenal",
+    "homeTeam": "Hull City",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-crystal-palace",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-nottingham-forest",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-fulham",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-leeds-united",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-01-16T15:00:00Z",
+    "status": "scheduled",
+    "round": "21. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-newcastle-united",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-manchester-city",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-tottenham-hotspur",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-brentford",
+    "homeTeam": "Everton",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-aston-villa",
+    "homeTeam": "Fulham",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-hull-city",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-chelsea",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-liverpool",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-afc-bournemouth",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-coventry-city",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-01-23T15:00:00Z",
+    "status": "scheduled",
+    "round": "22. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-fulham",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-ipswich-town",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-manchester-united",
+    "homeTeam": "Brentford",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-nottingham-forest",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-leeds-united",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-crystal-palace",
+    "homeTeam": "Hull City",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-everton",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-arsenal",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-brighton-and-hove-albion",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-sunderland",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-01-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "23. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-liverpool",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-hull-city",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-coventry-city",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-newcastle-united",
+    "homeTeam": "Everton",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-manchester-city",
+    "homeTeam": "Fulham",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-tottenham-hotspur",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-afc-bournemouth",
+    "homeTeam": "Leeds United",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-chelsea",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-brentford",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-aston-villa",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-02-06T15:00:00Z",
+    "status": "scheduled",
+    "round": "24. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-afc-bournemouth",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-liverpool",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-brentford",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-leeds-united",
+    "homeTeam": "Everton",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-nottingham-forest",
+    "homeTeam": "Fulham",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-sunderland",
+    "homeTeam": "Hull City",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-arsenal",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-brighton-and-hove-albion",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-chelsea",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-manchester-city",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-02-10T20:00:00Z",
+    "status": "scheduled",
+    "round": "25. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-crystal-palace",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-fulham",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-coventry-city",
+    "homeTeam": "Brentford",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-tottenham-hotspur",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-ipswich-town",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-aston-villa",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-hull-city",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-newcastle-united",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-manchester-united",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-everton",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-02-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "26. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-chelsea",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-afc-bournemouth",
+    "homeTeam": "Coventry City",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-sunderland",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-nottingham-forest",
+    "homeTeam": "Everton",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-leeds-united",
+    "homeTeam": "Fulham",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-manchester-city",
+    "homeTeam": "Hull City",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-brighton-and-hove-albion",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-arsenal",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-brentford",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-liverpool",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-02-27T15:00:00Z",
+    "status": "scheduled",
+    "round": "27. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-tottenham-hotspur",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-crystal-palace",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-ipswich-town",
+    "homeTeam": "Brentford",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-fulham",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-coventry-city",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-hull-city",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-aston-villa",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-everton",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-newcastle-united",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-manchester-united",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-03-03T20:00:00Z",
+    "status": "scheduled",
+    "round": "28. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-newcastle-united",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-hull-city",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-arsenal",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-manchester-city",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-fulham",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-brighton-and-hove-albion",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-ipswich-town",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-everton",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-brentford",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-nottingham-forest",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-03-13T15:00:00Z",
+    "status": "scheduled",
+    "round": "29. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-sunderland",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-afc-bournemouth",
+    "homeTeam": "Brentford",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-coventry-city",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-tottenham-hotspur",
+    "homeTeam": "Everton",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-liverpool",
+    "homeTeam": "Fulham",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-chelsea",
+    "homeTeam": "Hull City",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-crystal-palace",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-manchester-united",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-leeds-united",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-aston-villa",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-03-20T15:00:00Z",
+    "status": "scheduled",
+    "round": "30. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-manchester-city",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-brighton-and-hove-albion",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-fulham",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-arsenal",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-everton",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-nottingham-forest",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-newcastle-united",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-hull-city",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-ipswich-town",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-brentford",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-04-10T14:00:00Z",
+    "status": "scheduled",
+    "round": "31. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-aston-villa",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-leeds-united",
+    "homeTeam": "Brentford",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-chelsea",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-afc-bournemouth",
+    "homeTeam": "Everton",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-sunderland",
+    "homeTeam": "Fulham",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-coventry-city",
+    "homeTeam": "Hull City",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-manchester-united",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-crystal-palace",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-tottenham-hotspur",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-liverpool",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-04-17T14:00:00Z",
+    "status": "scheduled",
+    "round": "32. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-arsenal",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-coventry-city",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-fulham",
+    "homeTeam": "Brentford",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-manchester-city",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-brighton-and-hove-albion",
+    "homeTeam": "Everton",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-liverpool",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-crystal-palace",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-ipswich-town",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-sunderland",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-hull-city",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-04-24T14:00:00Z",
+    "status": "scheduled",
+    "round": "33. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-tottenham-hotspur",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-nottingham-forest",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-manchester-united",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-aston-villa",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-everton",
+    "homeTeam": "Fulham",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-afc-bournemouth",
+    "homeTeam": "Hull City",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-leeds-united",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-chelsea",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-brentford",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-newcastle-united",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-05-01T14:00:00Z",
+    "status": "scheduled",
+    "round": "34. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-manchester-united",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-aston-villa",
+    "homeTeam": "Brentford",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-sunderland",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-hull-city",
+    "homeTeam": "Everton",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-ipswich-town",
+    "homeTeam": "Fulham",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-arsenal",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-liverpool",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-coventry-city",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-crystal-palace",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-chelsea",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-05-08T14:00:00Z",
+    "status": "scheduled",
+    "round": "35. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-nottingham-forest",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-newcastle-united",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-everton",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-tottenham-hotspur",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-brighton-and-hove-albion",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-fulham",
+    "homeTeam": "Hull City",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-manchester-city",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-brentford",
+    "homeTeam": "Liverpool",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-leeds-united",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-afc-bournemouth",
+    "homeTeam": "Sunderland",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-05-15T14:00:00Z",
+    "status": "scheduled",
+    "round": "36. kolo"
+  },
+  {
+    "externalId": "pl2627-afc-bournemouth-chelsea",
+    "homeTeam": "AFC Bournemouth",
+    "awayTeam": "Chelsea",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-brentford-hull-city",
+    "homeTeam": "Brentford",
+    "awayTeam": "Hull City",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-brighton-and-hove-albion-liverpool",
+    "homeTeam": "Brighton & Hove Albion",
+    "awayTeam": "Liverpool",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-everton-arsenal",
+    "homeTeam": "Everton",
+    "awayTeam": "Arsenal",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-fulham-coventry-city",
+    "homeTeam": "Fulham",
+    "awayTeam": "Coventry City",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-leeds-united-sunderland",
+    "homeTeam": "Leeds United",
+    "awayTeam": "Sunderland",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-city-aston-villa",
+    "homeTeam": "Manchester City",
+    "awayTeam": "Aston Villa",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-newcastle-united-crystal-palace",
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Crystal Palace",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-nottingham-forest-ipswich-town",
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Ipswich Town",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-tottenham-hotspur-manchester-united",
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Manchester United",
+    "kickoffUtc": "2027-05-23T14:00:00Z",
+    "status": "scheduled",
+    "round": "37. kolo"
+  },
+  {
+    "externalId": "pl2627-arsenal-brighton-and-hove-albion",
+    "homeTeam": "Arsenal",
+    "awayTeam": "Brighton & Hove Albion",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-aston-villa-tottenham-hotspur",
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Tottenham Hotspur",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-chelsea-brentford",
+    "homeTeam": "Chelsea",
+    "awayTeam": "Brentford",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-coventry-city-nottingham-forest",
+    "homeTeam": "Coventry City",
+    "awayTeam": "Nottingham Forest",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-crystal-palace-leeds-united",
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Leeds United",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-hull-city-newcastle-united",
+    "homeTeam": "Hull City",
+    "awayTeam": "Newcastle United",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-ipswich-town-everton",
+    "homeTeam": "Ipswich Town",
+    "awayTeam": "Everton",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-liverpool-afc-bournemouth",
+    "homeTeam": "Liverpool",
+    "awayTeam": "AFC Bournemouth",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-manchester-united-fulham",
+    "homeTeam": "Manchester United",
+    "awayTeam": "Fulham",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  },
+  {
+    "externalId": "pl2627-sunderland-manchester-city",
+    "homeTeam": "Sunderland",
+    "awayTeam": "Manchester City",
+    "kickoffUtc": "2027-05-30T15:00:00Z",
+    "status": "scheduled",
+    "round": "38. kolo"
+  }
+]

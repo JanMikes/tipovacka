@@ -1,0 +1,122 @@
+[
+  {
+    "name": "AFC Bournemouth",
+    "shortName": "BOU",
+    "country": "GB",
+    "brandColor": "#DA291C"
+  },
+  {
+    "name": "Arsenal",
+    "shortName": "ARS",
+    "country": "GB",
+    "brandColor": "#EF0107"
+  },
+  {
+    "name": "Aston Villa",
+    "shortName": "AVL",
+    "country": "GB",
+    "brandColor": "#670E36"
+  },
+  {
+    "name": "Brentford",
+    "shortName": "BRE",
+    "country": "GB",
+    "brandColor": "#D20000"
+  },
+  {
+    "name": "Brighton & Hove Albion",
+    "shortName": "BHA",
+    "country": "GB",
+    "brandColor": "#0057B8"
+  },
+  {
+    "name": "Chelsea",
+    "shortName": "CHE",
+    "country": "GB",
+    "brandColor": "#034694"
+  },
+  {
+    "name": "Coventry City",
+    "shortName": "COV",
+    "country": "GB",
+    "brandColor": "#4B92DB"
+  },
+  {
+    "name": "Crystal Palace",
+    "shortName": "CRY",
+    "country": "GB",
+    "brandColor": "#1B458F"
+  },
+  {
+    "name": "Everton",
+    "shortName": "EVE",
+    "country": "GB",
+    "brandColor": "#003399"
+  },
+  {
+    "name": "Fulham",
+    "shortName": "FUL",
+    "country": "GB",
+    "brandColor": "#000000"
+  },
+  {
+    "name": "Hull City",
+    "shortName": "HUL",
+    "country": "GB",
+    "brandColor": "#F18A00"
+  },
+  {
+    "name": "Ipswich Town",
+    "shortName": "IPS",
+    "country": "GB",
+    "brandColor": "#0044A9"
+  },
+  {
+    "name": "Leeds United",
+    "shortName": "LEE",
+    "country": "GB",
+    "brandColor": "#1D428A"
+  },
+  {
+    "name": "Liverpool",
+    "shortName": "LIV",
+    "country": "GB",
+    "brandColor": "#C8102E"
+  },
+  {
+    "name": "Manchester City",
+    "shortName": "MCI",
+    "country": "GB",
+    "brandColor": "#6CABDD"
+  },
+  {
+    "name": "Manchester United",
+    "shortName": "MUN",
+    "country": "GB",
+    "brandColor": "#DA291C"
+  },
+  {
+    "name": "Newcastle United",
+    "shortName": "NEW",
+    "country": "GB",
+    "brandColor": "#241F20"
+  },
+  {
+    "name": "Nottingham Forest",
+    "shortName": "NFO",
+    "country": "GB",
+    "brandColor": "#DD0000"
+  },
+  {
+    "name": "Sunderland",
+    "shortName": "SUN",
+    "country": "GB",
+    "brandColor": "#EB172B"
+  },
+  {
+    "name": "Tottenham Hotspur",
+    "shortName": "TOT",
+    "country": "GB",
+    "brandColor": "#132257"
+  }
+]
