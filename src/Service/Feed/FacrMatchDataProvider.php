@@ -56,7 +56,10 @@ final readonly class FacrMatchDataProvider implements MatchDataProvider
     {
         $html = $this->fetchCompetitionPage((string) $source->feedRef);
 
-        $rows = (new Crawler($html))->filter('tr[class^="type_"]');
+        // XPath, not a CSS selector: symfony/css-selector is a dev-only
+        // dependency, so Crawler::filter() throws in the production image
+        // („To filter with a CSS selector, install the CssSelector component").
+        $rows = (new Crawler($html))->filterXPath('descendant-or-self::tr[starts-with(@class, "type_")]');
 
         if (0 === $rows->count()) {
             // A wrong GUID renders a valid page with no fixture table at all —
@@ -101,7 +104,7 @@ final readonly class FacrMatchDataProvider implements MatchDataProvider
      */
     private function snapshotFromRow(int $index, Crawler $row): ?MatchSnapshot
     {
-        $cells = $row->filter('td');
+        $cells = $row->filterXPath('descendant-or-self::td');
 
         if ($cells->count() < 7) {
             return null;
@@ -148,7 +151,7 @@ final readonly class FacrMatchDataProvider implements MatchDataProvider
     private function externalId(Crawler $row): ?string
     {
         /** @var list<string> $hrefs */
-        $hrefs = $row->filter('a')->extract(['href']);
+        $hrefs = $row->filterXPath('descendant-or-self::a')->extract(['href']);
 
         foreach ($hrefs as $href) {
             if (1 === preg_match('/[?&]zapas=([0-9a-f-]{36})/i', $href, $matches)) {
