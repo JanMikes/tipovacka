@@ -51,6 +51,19 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
 
     private const string WINDOW_FORWARD = '+30 days';
 
+    /**
+     * On the FIRST fetch of a source the window is not enough: a season's other
+     * ~350 fixtures have to be visible at once, or `app:matches:adopt-external-ids`
+     * can only bridge the handful currently in range and every later fixture
+     * enters as a duplicate. So an unpolled source is fetched season-wide, in
+     * chunks under the 100-day cap, and every fetch after that is the window.
+     */
+    private const string SEASON_BACK = '-60 days';
+
+    private const string SEASON_FORWARD = '+330 days';
+
+    private const int CHUNK_DAYS = 90;
+
     private const int PAGE_SIZE = 50;
 
     /** Guards against an unbounded loop if `has_more` ever misbehaves. */
@@ -90,18 +103,48 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
         }
 
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $from = $now->modify(self::WINDOW_BACK)->format('Y-m-d');
-        $to = $now->modify(self::WINDOW_FORWARD)->format('Y-m-d');
+        $firstFetch = null === $source->feedPolledAt;
+
+        $start = $now->modify($firstFetch ? self::SEASON_BACK : self::WINDOW_BACK);
+        $end = $now->modify($firstFetch ? self::SEASON_FORWARD : self::WINDOW_FORWARD);
+
+        $rows = [];
+
+        foreach ($this->chunks($start, $end) as [$from, $to]) {
+            foreach ($this->fetchRows($leagueId, $from, $to) as $row) {
+                $rows[] = $row;
+            }
+        }
 
         $snapshots = [];
 
-        foreach ($this->fetchRows($leagueId, $from, $to) as $index => $row) {
+        foreach ($rows as $index => $row) {
             $snapshots[] = $this->snapshotFromRow($index, $row);
         }
 
         // Unlike the other providers an empty window is legitimate — a league in
         // its summer break simply has no fixtures in the next 30 days.
         return $snapshots;
+    }
+
+    /**
+     * Split a span into request-sized date ranges (Sportmonks rejects anything
+     * over 100 days).
+     *
+     * @return list<array{string, string}>
+     */
+    private function chunks(\DateTimeImmutable $start, \DateTimeImmutable $end): array
+    {
+        $chunks = [];
+        $cursor = $start;
+
+        while ($cursor < $end) {
+            $chunkEnd = min($cursor->modify(sprintf('+%d days', self::CHUNK_DAYS)), $end);
+            $chunks[] = [$cursor->format('Y-m-d'), $chunkEnd->format('Y-m-d')];
+            $cursor = $chunkEnd->modify('+1 day');
+        }
+
+        return $chunks;
     }
 
     /**

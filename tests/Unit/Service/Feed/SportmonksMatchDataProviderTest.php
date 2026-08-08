@@ -68,6 +68,56 @@ final class SportmonksMatchDataProviderTest extends TestCase
         self::assertSame('ABANDONED', $abandoned->rawStatus);
     }
 
+    /**
+     * A never-polled source must see the WHOLE season at once, or
+     * app:matches:adopt-external-ids can only bridge the fixtures currently in
+     * range and every later one enters as a duplicate. Sportmonks caps a range
+     * at 100 days, so that means several chunked requests.
+     */
+    public function testFirstFetchCoversTheSeasonInChunks(): void
+    {
+        $requests = 0;
+        $client = new MockHttpClient(function (string $method, string $url) use (&$requests): MockResponse {
+            ++$requests;
+
+            return new MockResponse($this->payload(), ['response_headers' => ['content-type' => 'application/json']]);
+        });
+
+        $provider = new SportmonksMatchDataProvider(
+            $client,
+            new MockClock(new \DateTimeImmutable('2026-08-08 12:00:00', new \DateTimeZone('UTC'))),
+            'test-key',
+        );
+
+        $provider->fetchMatches(FeedSourceFactory::create(FeedProvider::Sportmonks, '8'));
+
+        self::assertGreaterThan(1, $requests, 'a season does not fit in one 100-day request');
+    }
+
+    /** Once polled, the steady state is a single windowed request. */
+    public function testLaterFetchesAreOneWindowedRequest(): void
+    {
+        $requests = 0;
+        $client = new MockHttpClient(function () use (&$requests): MockResponse {
+            ++$requests;
+
+            return new MockResponse($this->payload(), ['response_headers' => ['content-type' => 'application/json']]);
+        });
+
+        $source = FeedSourceFactory::create(FeedProvider::Sportmonks, '8');
+        $source->markFeedPolled(new \DateTimeImmutable('2026-08-08 11:00:00', new \DateTimeZone('UTC')));
+
+        $provider = new SportmonksMatchDataProvider(
+            $client,
+            new MockClock(new \DateTimeImmutable('2026-08-08 12:00:00', new \DateTimeZone('UTC'))),
+            'test-key',
+        );
+
+        $provider->fetchMatches($source);
+
+        self::assertSame(1, $requests);
+    }
+
     public function testMissingApiKeyFailsBeforeAnyRequest(): void
     {
         $provider = new SportmonksMatchDataProvider(
@@ -96,7 +146,10 @@ final class SportmonksMatchDataProviderTest extends TestCase
             'test-key',
         );
 
-        return $provider->fetchMatches(FeedSourceFactory::create(FeedProvider::Sportmonks, '8'));
+        $source = FeedSourceFactory::create(FeedProvider::Sportmonks, '8');
+        $source->markFeedPolled(new \DateTimeImmutable('2026-08-08 11:00:00', new \DateTimeZone('UTC')));
+
+        return $provider->fetchMatches($source);
     }
 
     private function payload(): string
