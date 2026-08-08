@@ -36,6 +36,15 @@ final class FeedSyncResult
     /** @var list<string> */
     public private(set) array $cancelledReported = [];
 
+    /**
+     * Feed rows for matches that had already kicked off when we first saw them.
+     * Never created (nobody could have tipped them), only reported — an admin
+     * adds them by hand if the soutěž really should include them.
+     *
+     * @var list<string>
+     */
+    public private(set) array $skippedPastKickoff = [];
+
     /** Feed team spellings with no directory/alias match — the pending-team gate. */
     /** @var list<string> */
     public private(set) array $unresolvedTeams = [];
@@ -53,8 +62,26 @@ final class FeedSyncResult
     ) {
     }
 
-    public bool $hasProblems {
-        get => [] !== $this->unresolvedTeams || [] !== $this->errors || [] !== $this->unknownStatus;
+    /**
+     * A REAL failure — something the feed asked for could not be applied. This
+     * is the only bucket that fails the cron (and therefore pages): the rest are
+     * pairing/hygiene gaps that a human resolves at their own pace.
+     */
+    public bool $hasFailures {
+        get => [] !== $this->errors;
+    }
+
+    /**
+     * Attention-worthy but not a failure: a team spelling we could not pair, a
+     * status we refuse to guess, a cancellation needing confirmation, a past
+     * fixture we declined to import. Logged at warning level — visible in the
+     * logs, deliberately below Sentry's issue bar.
+     */
+    public bool $hasWarnings {
+        get => [] !== $this->unresolvedTeams
+            || [] !== $this->unknownStatus
+            || [] !== $this->cancelledReported
+            || [] !== $this->skippedPastKickoff;
     }
 
     public function addCreated(string $label): void
@@ -95,6 +122,11 @@ final class FeedSyncResult
     public function addCancelledReported(string $label): void
     {
         $this->cancelledReported[] = $label;
+    }
+
+    public function addSkippedPastKickoff(string $label): void
+    {
+        $this->skippedPastKickoff[] = $label;
     }
 
     public function addUnresolvedTeam(string $teamName): void

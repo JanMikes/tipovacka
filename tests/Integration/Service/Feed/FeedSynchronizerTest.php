@@ -53,6 +53,66 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         self::assertSame(AppFixtures::TEAM_SLAVIA_ID, (string) $match->awayTeam->id);
     }
 
+    /**
+     * The whole-season problem: a feed lists rounds played before this source
+     * existed (FAČR serves all 240 Chance Liga zápasů against the 224 seeded
+     * from kolo 3). Creating them would drop untippable matches into a running
+     * soutěž where every member scores zero on them, forever.
+     */
+    public function testDoesNotCreateAMatchThatHasAlreadyKickedOff(): void
+    {
+        // MockClock stands at 2025-06-15 12:00 UTC.
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Finished,
+            kickoffUtc: '2025-06-14 18:00:00 UTC',
+            homeScore: 2,
+            awayScore: 1,
+        )]);
+
+        self::assertSame([], $result->created);
+        self::assertCount(1, $result->skippedPastKickoff);
+        self::assertNull($this->sportMatches()->findBySourceAndExternalId(
+            Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            self::EXTERNAL_ID,
+        ));
+    }
+
+    /**
+     * Long-past rounds are not news — reporting them on every poll would bury
+     * the one recent miss that IS worth a look.
+     */
+    public function testAnAncientFixtureIsSkippedWithoutBeingReported(): void
+    {
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Finished,
+            kickoffUtc: '2025-01-10 18:00:00 UTC',
+            homeScore: 1,
+            awayScore: 0,
+        )]);
+
+        self::assertSame([], $result->created);
+        self::assertSame([], $result->skippedPastKickoff);
+    }
+
+    /**
+     * The guard is about CREATION only — a match we already track still accepts
+     * its result after kickoff, which is the entire point of the feed.
+     */
+    public function testAnExistingMatchStillReceivesItsResultAfterKickoff(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Finished,
+            kickoffUtc: '2025-07-01 18:00:00 UTC',
+            homeScore: 3,
+            awayScore: 0,
+        )]);
+
+        self::assertCount(1, $result->finished);
+        self::assertSame(3, $this->findSynced()->homeScore);
+    }
+
     public function testResolvesTeamsThroughAliases(): void
     {
         $this->commandBus()->dispatch(new AddTeamAliasCommand(

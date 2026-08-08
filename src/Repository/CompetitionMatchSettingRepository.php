@@ -25,6 +25,26 @@ class CompetitionMatchSettingRepository
         $this->entityManager->remove($setting);
     }
 
+    /**
+     * Every competition's override row for ONE match — the cross-competition
+     * view a match-level change (a moved kickoff) has to reconcile.
+     *
+     * @return list<CompetitionMatchSetting>
+     */
+    public function listByMatch(Uuid $sportMatchId): array
+    {
+        /** @var list<CompetitionMatchSetting> $result */
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('s')
+            ->from(CompetitionMatchSetting::class, 's')
+            ->where('s.sportMatch = :sportMatchId')
+            ->setParameter('sportMatchId', $sportMatchId)
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
     public function findByCompetitionAndMatch(Uuid $competitionId, Uuid $sportMatchId): ?CompetitionMatchSetting
     {
         return $this->entityManager->createQueryBuilder()

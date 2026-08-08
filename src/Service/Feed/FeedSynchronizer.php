@@ -43,6 +43,13 @@ use Psr\Log\LoggerInterface;
  */
 final readonly class FeedSynchronizer
 {
+    /**
+     * How far back an unknown, already-played fixture is still worth reporting.
+     * Older ones belong to rounds this source never covered and are ignored in
+     * silence — see createFromSnapshot().
+     */
+    private const string HISTORIC_CUTOFF = '-7 days';
+
     public function __construct(
         private SportMatchRepository $sportMatches,
         private MatchEventRepository $matchEvents,
@@ -136,6 +143,24 @@ final readonly class FeedSynchronizer
             // Nothing to void, nothing worth showing — a fixture that was
             // cancelled before we ever saw it is simply not imported.
             $result->addCancelledReported(sprintf('%s (not imported)', $snapshot->label()));
+
+            return;
+        }
+
+        // A feed lists the WHOLE season, including rounds played before this
+        // source existed (FAČR serves all 240 Chance Liga zápasů against the 224
+        // seeded from kolo 3; UEFA serves every qualifying round). Creating those
+        // would drop already-played matches into a running soutěž that nobody
+        // could ever have tipped — everyone scores zero on them, forever. Import
+        // only what is still ahead; a past fixture that genuinely belongs here is
+        // an admin's deliberate act.
+        if ($snapshot->kickoffUtc <= $now) {
+            // Only a RECENT miss is news. Rounds that finished long before this
+            // source existed are simply not ours, and reporting them on every
+            // poll would bury the one case worth looking at.
+            if ($snapshot->kickoffUtc > $now->modify(self::HISTORIC_CUTOFF)) {
+                $result->addSkippedPastKickoff($snapshot->label());
+            }
 
             return;
         }
