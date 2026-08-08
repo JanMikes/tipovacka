@@ -138,6 +138,15 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     /** Bind (or re-point) this source to an external feed. Curated sources only — the caller enforces it. */
     public function bindFeed(FeedProvider $provider, string $ref, \DateTimeImmutable $now): void
     {
+        // Pointing a source at a DIFFERENT feed makes everything the old one
+        // taught us stale, the poll stamp included: the next fetch is a first
+        // fetch, which is what tells an adapter to look at the whole season
+        // instead of a window (SportmonksMatchDataProvider) — and the whole
+        // season is what app:matches:adopt-external-ids has to see to bridge it.
+        if ($provider !== $this->feedProvider || $ref !== $this->feedRef) {
+            $this->feedPolledAt = null;
+        }
+
         $this->feedProvider = $provider;
         $this->feedRef = $ref;
         $this->updatedAt = $now;
