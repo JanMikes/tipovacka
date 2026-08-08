@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\AdoptFeedExternalIds;
 
+use App\Service\Feed\ExternalIdAdopter;
 use App\Service\Feed\MatchSnapshot;
 use Symfony\Component\Uid\Uuid;
 
@@ -20,6 +21,7 @@ final readonly class AdoptFeedExternalIdsCommand
     public function __construct(
         public Uuid $matchSourceId,
         public array $snapshots,
+        public int $kickoffToleranceHours = ExternalIdAdopter::DEFAULT_KICKOFF_TOLERANCE_HOURS,
     ) {
     }
 }

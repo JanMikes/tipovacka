@@ -32,11 +32,16 @@ use Psr\Clock\ClockInterface;
 final readonly class ExternalIdAdopter
 {
     /**
-     * How far a stored kickoff may sit from the feed's and still be the same
-     * match. Generous on purpose: Chance Liga rounds 6+ were seeded at 00:00
-     * Prague as placeholders, a whole day away from the real kickoff.
+     * Default distance a stored kickoff may sit from the feed's and still be the
+     * same match. Generous on purpose: placeholder kickoffs seeded at 00:00
+     * Prague land a whole day away from the real one.
+     *
+     * Widening it is SAFE for a league: an ordered (home, away) pair meets once
+     * per half-season, and any window catching two candidates is reported as
+     * ambiguous rather than guessed. Chance Liga needed ~20 days — four rounds
+     * were seeded on a placeholder date and one fixture had moved by 17 days.
      */
-    private const string KICKOFF_TOLERANCE = '36 hours';
+    public const int DEFAULT_KICKOFF_TOLERANCE_HOURS = 36;
 
     public function __construct(
         private SportMatchRepository $sportMatches,
@@ -47,12 +52,18 @@ final readonly class ExternalIdAdopter
 
     /**
      * @param list<MatchSnapshot> $snapshots
+     * @param int                 $kickoffToleranceHours how far a stored kickoff may sit from
+     *                                                   the feed's and still be the same match
      */
-    public function adopt(MatchSource $source, array $snapshots, bool $apply): ExternalIdAdoption
-    {
+    public function adopt(
+        MatchSource $source,
+        array $snapshots,
+        bool $apply,
+        int $kickoffToleranceHours = self::DEFAULT_KICKOFF_TOLERANCE_HOURS,
+    ): ExternalIdAdoption {
         $adoption = new ExternalIdAdoption(dryRun: !$apply);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
-        $tolerance = \DateInterval::createFromDateString(self::KICKOFF_TOLERANCE);
+        $tolerance = new \DateInterval(sprintf('PT%dH', max(1, $kickoffToleranceHours)));
 
         $candidates = $this->sportMatches->listByMatchSource($source->id);
         /** @var array<string, true> $consumed */
