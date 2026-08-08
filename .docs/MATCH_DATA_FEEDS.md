@@ -251,6 +251,10 @@ MSFL rounds every weekend):
 Everything in this part was **probed live on 2026-08-08**, not inferred. Where a claim
 came from the 2026-07-31 sweep and was not re-checked, it says so.
 
+> **Status: LIVE on wtips.cz since 2026-08-08.** All eight curated zdroje are bound,
+> bridged and polling unattended; results now arrive without anyone typing them.
+> See §Rollout log for what production changed about the plan.
+>
 > **Status: shipped.** `FacrMatchDataProvider`, `UefaMatchDataProvider` and
 > `SportmonksMatchDataProvider` all run against their real sources; the poll policy, the
 > past-kickoff guard, the deadline re-pin, the evaluation-mail digest and both cron entries
@@ -533,6 +537,52 @@ Chance Liga → Premier League.
 5. Leave it to the cron.
 
 `--source=` implies `--force`, so a targeted run never waits for the cadence.
+
+## Rollout log — 2026-08-08
+
+All eight curated sources bound, bridged and verified against live data:
+
+| Zdroj | Provider | Zápasů | externalId bridged | First automated results |
+|---|---|---|---|---|
+| Premier League 2026/27 | sportmonks `8` | 380 | 380 (adopted) | — season not started |
+| Chance Liga 2026/27 | facr `b905e7e9…` | 224 | 224 (adopted, 480 h tolerance) | 4, and **201 placeholder kickoffs corrected** |
+| 3. MSFL sezóna 26/27 | facr `694cd96a…` | 153 | 153 (adopted, had none) | 2 |
+| SATUM 5. liga 2026/27 | facr `85c0fb70…` | 128 | 128 (drop-in) | 6 |
+| ČPP 6. liga sk. B | facr `5cf8386c…` | 91 | 91 (drop-in) | — |
+| Konferenční liga | uefa `2019` | 57 | 57 (drop-in) | 25 event sheets |
+| Evropská liga | uefa `14` | 26 | 26 (drop-in) | 11 event sheets |
+| Liga mistrů | uefa `1` | 20 | 20 (drop-in) | 2 event sheets |
+
+Team pairing was far cheaper than feared: SATUM, ČPP and MSFL matched the directory
+**100 %** (their seeds came from FAČR in the first place), Sportmonks' 20 Premier League
+names matched **100 %**, and only Chance Liga needed aliases — 16, mapping FAČR's legal
+entity names (`AC Sparta Praha fotbal, a.s.`) onto the directory's friendly ones. The UEFA
+sources needed none at all: their matches pair by externalId, and team resolution only runs
+when a match is CREATED.
+
+The poll policy behaves as designed — a full unattended pass with nothing due costs eight
+cheap DB checks and **zero HTTP requests**:
+
+```
+3. MSFL sezóna 26/27: not due (warm)      Chance Liga 2026/27: not due (hot)
+Liga mistrů 2026/27: not due (cold)       Premier League 2026/27: not due (cold)
+```
+
+### What production taught us that the plan did not
+
+1. **`symfony/css-selector` is a dev dependency.** `Crawler::filter()` works in tests, dev and
+   all four CI jobs, and throws in the image (`composer install --no-dev`). CI structurally
+   cannot catch this. Fixed with `filterXPath()`; recorded as a convention in CLAUDE.md.
+2. **Binding before bridging duplicates a season** — the incident above, now guarded in code.
+3. **A placeholder kickoff can be 17 days out.** The adopter's fixed 36 h missed five Chance
+   Liga fixtures; `--kickoff-tolerance-hours` now takes an operator's judgement, and the
+   exactly-one-candidate rule keeps a wide window honest (480 h paired all 224, zero ambiguous).
+4. **A window is the wrong question on a first fetch.** Sportmonks' ±window let adoption see
+   30 of 380 Premier League fixtures; an unpolled source now fetches the season in chunks.
+5. **`feedPolledAt` had to become feed-scoped.** Premier League had been polled while bound to
+   a seed JSON, so switching it to Sportmonks still looked like a routine poll. `bindFeed()`
+   now clears the stamp whenever the provider or ref changes — which also gives operators a
+   supported way to force a season-wide re-read: unbind, rebind.
 
 ## Still open
 
