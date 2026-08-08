@@ -498,18 +498,37 @@ Two cheap multipliers on top:
 Adapter payload shapes are pinned by unit tests built from **real trimmed responses**
 (`tests/Unit/Service/Feed/`) — that is where a provider changing its HTML or JSON shows up.
 
+## Incident 2026-08-08 — binding before bridging (fixed in code)
+
+Chance Liga was bound to FAČR and the five-minute cron fired **before**
+`app:matches:adopt-external-ids` ran. Its 224 stored matches carried synthetic ids
+(`8350`…), so not one FAČR fixture was recognised, every future one looked new, and the sync
+created **220 duplicate matches + 1760 `match_added` notifications** in a competition people
+are tipping. Nobody had tipped the duplicates and no e-mail went out (the one user with
+`match_added` e-mail on is not in that soutěž); everything was deleted the same evening.
+
+`FeedSynchronizer` now refuses to CREATE on a source whose matches all carry ids from another
+feed (`FeedSyncResult::$needsAdoption`, which fails the cron). Matches with a NULL externalId
+do not trigger it — a hand-maintained source gaining feed fixtures is legitimate, and the
+signal is *foreign* ids, not the mere presence of matches. So the window between binding and
+bridging is now closed by the code rather than by the operator's memory.
+
 ## Rollout — one source at a time, ascending blast radius
 
 For each source, in this order: SATUM 5. liga → ČPP 6. liga → MSFL → UEFA trio →
 Chance Liga → Premier League.
 
-1. `app:matches:bind-feed <source> <provider> <ref>`
+1. `app:matches:bind-feed <source> <provider> <ref>` — safe even with the cron live: an
+   unbridged source now imports nothing and says so.
 2. `app:matches:sync --source=<source> --dry-run` — **this is the alias-discovery tool.**
    Every „unresolved team" line is an `app:team-alias:add` waiting to happen. Repeat until
    clean. Expect a lot for Chance Liga: FAČR files legal entity names („AC Sparta Praha
    fotbal, a.s.", „SK Slavia Praha - fotbal a.s.", „ZBROJOVKA BRNO B").
 3. Only where the ids differ (Premier League, Chance Liga, MSFL):
    `app:matches:adopt-external-ids <source> --dry-run`, read it, then run it for real.
+   Widen `--kickoff-tolerance-hours` when the stored kickoffs are placeholders — Chance Liga
+   needed ~480 h (four rounds seeded at 00:00 Prague, one fixture moved by 17 days). Widening
+   is safe: two candidates in the window are reported as ambiguous, never guessed.
 4. `app:matches:sync --source=<source>` and read the report.
 5. Leave it to the cron.
 

@@ -113,6 +113,41 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         self::assertSame(3, $this->findSynced()->homeScore);
     }
 
+    /**
+     * The 2026-08-08 incident, as a test. A source bound to a feed whose ids it
+     * has not adopted must import NOTHING: every fixture looks unseen, so the
+     * sync would build a duplicate season next to the one people are tipping.
+     */
+    public function testRefusesToCreateOnASourceThatHasNotAdoptedTheFeedIds(): void
+    {
+        // One stored match carrying an id from a DIFFERENT namespace.
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $before = count($this->sportMatches()->listByMatchSource(Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID)));
+
+        $result = $this->syncPublicSource([
+            $this->snapshot(status: FeedMatchStatus::Scheduled, externalId: 'other-namespace-1'),
+            $this->snapshot(status: FeedMatchStatus::Scheduled, externalId: 'other-namespace-2'),
+        ]);
+
+        self::assertSame([], $result->created);
+        self::assertNotSame([], $result->needsAdoption);
+        self::assertStringContainsString('adopt-external-ids', $result->needsAdoption[0]);
+        self::assertTrue($result->hasFailures, 'an unbridged source must fail the cron, not pass quietly');
+        self::assertCount($before, $this->sportMatches()->listByMatchSource(Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID)));
+    }
+
+    /** An empty source is a first import, not an unadopted one. */
+    public function testAnEmptySourceStillImportsEverything(): void
+    {
+        $result = $this->syncPublicSource([
+            $this->snapshot(status: FeedMatchStatus::Scheduled, externalId: 'fresh-1'),
+            $this->snapshot(status: FeedMatchStatus::Scheduled, externalId: 'fresh-2'),
+        ]);
+
+        self::assertCount(2, $result->created);
+        self::assertSame([], $result->needsAdoption);
+    }
+
     public function testResolvesTeamsThroughAliases(): void
     {
         $this->commandBus()->dispatch(new AddTeamAliasCommand(
@@ -391,6 +426,7 @@ final class FeedSynchronizerTest extends IntegrationTestCase
     private function snapshot(
         FeedMatchStatus $status,
         string $homeTeamName = 'Sparta Praha',
+        ?string $externalId = null,
         string $kickoffUtc = '2025-07-01 18:00:00 UTC',
         ?int $homeScore = null,
         ?int $awayScore = null,
@@ -399,7 +435,7 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         ?string $rawStatus = null,
     ): MatchSnapshot {
         return new MatchSnapshot(
-            externalId: self::EXTERNAL_ID,
+            externalId: $externalId ?? self::EXTERNAL_ID,
             homeTeamName: $homeTeamName,
             awayTeamName: 'Slavia Praha',
             kickoffUtc: new \DateTimeImmutable($kickoffUtc),
