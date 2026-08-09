@@ -82,7 +82,11 @@ final readonly class EnablePremiumHandler
 
         $count = count($nonOwnerMemberships);
 
-        if ($count > 0) {
+        // Premium on us (an admin's grant): re-enabling costs the organizer
+        // nothing and needs no wallet, so the whole charging block is skipped —
+        // including the InsufficientCredits refusal, which would otherwise stop
+        // an organizer with an empty wallet re-enabling premium they were given.
+        if ($count > 0 && !$competition->isPremiumSponsored) {
             $total = $count * PricingConfig::PREMIUM_PER_PLAYER;
             $wallet = $this->walletProvider->getForUpdateOrCreate($competition->owner, $now);
 

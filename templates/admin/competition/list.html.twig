@@ -40,6 +40,12 @@
                                     {% if competition.entryFeeCredits > 0 %}{{ competition.entryFeeCredits }} kr.{% else %}Zdarma{% endif %}
                                 </span>
                             {% endif %}
+                            {% if competition.isPremiumSponsored %}
+                                <span class="ml-1.5 inline-flex items-center gap-1 rounded-full border border-win/40 bg-win/15 px-2 py-0.5 text-xs font-semibold text-win">
+                                    <twig:ux:icon name="lucide:gift" class="h-3 w-3" />
+                                    Prémium na nás
+                                </span>
+                            {% endif %}
                             {% if competition.isDeleted %} <span class="text-xs font-normal text-white/40">(smazáno)</span>{% endif %}
                         </td>
                         <td class="px-4 py-3">{{ competition.matchSourceName }}</td>
@@ -50,6 +56,20 @@
                                 <a href="{{ path('competition_detail', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Detail</a>
                                 {% if competition.isGlobal and not competition.isDeleted %}
                                     <a href="{{ path('admin_global_competition_edit', {id: competition.id.toRfc4122}) }}" class="btn btn-ghost btn-sm">Nastavení</a>
+                                {% endif %}
+                                {# Sponsorship answers „give this partička premium on us"; a global
+                                   soutěž already runs on an admin-owned wallet, so it is not offered one. #}
+                                {% if not competition.isGlobal and not competition.isDeleted %}
+                                    <form method="post" action="{{ path('admin_competition_sponsor_premium', {id: competition.id.toRfc4122}) }}" class="inline"
+                                        data-controller="confirm"
+                                        data-confirm-title-value="{{ competition.isPremiumSponsored ? 'Ukončit sponzoring' : 'Prémium na nás' }}"
+                                        data-confirm-message-value="{{ competition.isPremiumSponsored
+                                            ? 'Soutěž „' ~ competition.name ~ '“ si dál platí organizátor. Prémium jí zůstane, ale za každého dalšího hráče se mu strhne ' ~ pricing.premiumPerPlayer ~ ' kr.'
+                                            : 'Soutěž „' ~ competition.name ~ '“ dostane prémium na náš účet: zapnou se všechny prémiové funkce a organizátorovi se nikdy nic nestrhne.' }}"
+                                        data-confirm-confirm-label-value="{{ competition.isPremiumSponsored ? 'Ukončit' : 'Dát prémium' }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('admin_competition_sponsor_premium_' ~ competition.id.toRfc4122) }}">
+                                        <button type="submit" class="btn btn-ghost btn-sm">{{ competition.isPremiumSponsored ? 'Ukončit sponzoring' : 'Prémium na nás' }}</button>
+                                    </form>
                                 {% endif %}
                                 {% if not competition.isDeleted %}
                                     <form method="post" action="{{ path('admin_competition_delete', {id: competition.id.toRfc4122}) }}" class="inline"
