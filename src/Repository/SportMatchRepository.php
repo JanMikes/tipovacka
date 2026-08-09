@@ -112,17 +112,27 @@ class SportMatchRepository
     }
 
     /**
-     * Whether the source has any live match right now — the strongest signal
-     * that its feed is worth polling aggressively (see FeedPollPolicy).
+     * Whether the source has a match that is live AND still plausibly being
+     * played — the strongest signal that its feed is worth polling aggressively
+     * (see FeedPollPolicy).
+     *
+     * The recency bound is what keeps that signal honest. Live is a state we
+     * enter on the feed's word and leave on the feed's word, so a fixture the
+     * provider abandons mid-game (Sportmonks ABANDONED maps to Unknown, which
+     * the synchronizer deliberately refuses to act on) stays live for good. With
+     * an unbounded check that one row pins its whole source to the five-minute
+     * cadence — 288 fetches a day, for ever, over a match nobody is waiting on.
      */
-    public function hasLiveMatch(Uuid $matchSourceId): bool
+    public function hasLiveMatchKickedOffSince(Uuid $matchSourceId, \DateTimeImmutable $since): bool
     {
         return $this->existsForSource(
             $matchSourceId,
-            static function ($queryBuilder): void {
+            static function ($queryBuilder) use ($since): void {
                 $queryBuilder
                     ->andWhere('m.state = :live')
-                    ->setParameter('live', SportMatchState::Live);
+                    ->andWhere('m.kickoffAt >= :since')
+                    ->setParameter('live', SportMatchState::Live)
+                    ->setParameter('since', $since);
             },
         );
     }

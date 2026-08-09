@@ -222,6 +222,97 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         self::assertEquals(new \DateTimeImmutable('2025-07-15 18:00:00 UTC'), $match->kickoffAt);
     }
 
+    /**
+     * The rule the whole live path exists to serve: a score on screen always
+     * means the FINAL score. A zápas in progress is marked live and carries no
+     * number, because 1:0 at half time is indistinguishable from 1:0 at the
+     * whistle in every surface that renders it.
+     */
+    public function testLiveSnapshotMarksTheMatchWithoutPublishingItsScore(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Live,
+            homeScore: 1,
+            awayScore: 0,
+            periodScores: [[1, 0]],
+        )]);
+
+        self::assertCount(1, $result->liveUpdated);
+
+        $match = $this->findSynced();
+        self::assertSame(SportMatchState::Live, $match->state);
+        self::assertNull($match->homeScore, 'a running score must never reach the database');
+        self::assertNull($match->awayScore);
+        self::assertNull($match->periodScores);
+    }
+
+    /**
+     * Because nothing about a match in progress is ours to write, every later
+     * poll of a live zápas is a genuine no-op — no writes, no events, no churn
+     * for the five-minute cron to push through the notification machinery.
+     */
+    public function testFurtherLiveSnapshotsChangeNothing(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $this->syncPublicSource([$this->snapshot(status: FeedMatchStatus::Live, homeScore: 1, awayScore: 0)]);
+
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Live,
+            homeScore: 3,
+            awayScore: 2,
+        )]);
+
+        self::assertSame(1, $result->unchanged);
+        self::assertSame([], $result->liveUpdated);
+        self::assertNull($this->findSynced()->homeScore);
+    }
+
+    /** …and the result lands in full the moment the feed calls it finished. */
+    public function testTheScoreAppearsWhenTheMatchIsFinished(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $this->syncPublicSource([$this->snapshot(status: FeedMatchStatus::Live, homeScore: 1, awayScore: 0)]);
+
+        $result = $this->syncPublicSource([$this->finishedSnapshot()]);
+
+        self::assertCount(1, $result->finished);
+
+        $match = $this->findSynced();
+        self::assertSame(SportMatchState::Finished, $match->state);
+        self::assertSame(2, $match->homeScore);
+        self::assertSame(1, $match->awayScore);
+    }
+
+    /**
+     * We hold it postponed, the feed is playing it — our postponement is the
+     * stale fact, so the fixture goes back on the calendar rather than getting
+     * stuck off it until someone notices.
+     */
+    public function testAPostponedMatchTheFeedIsPlayingGoesBackOnTheCalendar(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Postponed,
+            kickoffUtc: '2025-07-15 18:00:00 UTC',
+        )]);
+
+        $result = $this->syncPublicSource([$this->snapshot(
+            status: FeedMatchStatus::Live,
+            kickoffUtc: '2025-07-16 18:00:00 UTC',
+            homeScore: 1,
+            awayScore: 1,
+        )]);
+
+        self::assertCount(1, $result->liveUpdated);
+
+        $match = $this->findSynced();
+        self::assertSame(SportMatchState::Live, $match->state);
+        self::assertEquals(new \DateTimeImmutable('2025-07-16 18:00:00 UTC'), $match->kickoffAt);
+        self::assertNull($match->homeScore);
+    }
+
     public function testFinishedSnapshotWritesScorePeriodsAndEvents(): void
     {
         $this->syncPublicSource([$this->scheduledSnapshot()]);

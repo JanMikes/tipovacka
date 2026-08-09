@@ -29,6 +29,15 @@ final class TeamAliasRepository
     /** The global-directory team (matchSource IS NULL) an alias points to, if any. */
     public function findGlobalTeamByAlias(Uuid $sportId, string $alias): ?Team
     {
+        return $this->findGlobalByAlias($sportId, $alias)?->team;
+    }
+
+    /**
+     * The alias ROW itself — callers that need to tell „this alias already exists
+     * and already points where you are asking" apart from a real conflict.
+     */
+    public function findGlobalByAlias(Uuid $sportId, string $alias): ?TeamAlias
+    {
         /** @var ?TeamAlias $row */
         $row = $this->entityManager->createQueryBuilder()
             ->select('a', 't')
@@ -43,7 +52,7 @@ final class TeamAliasRepository
             ->getQuery()
             ->getOneOrNullResult();
 
-        return $row?->team;
+        return $row;
     }
 
     /** The local team of one private source an alias points to, if any. */
