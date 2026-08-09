@@ -35,6 +35,9 @@ use Psr\Log\LoggerInterface;
  *    `unresolvedTeams` until an admin adds a TeamAlias (the pending-team gate);
  *  - never cancels: a feed's "cancelled" is reported, not applied — our
  *    cancellation voids guesses and cannot be undone, so it stays a human call;
+ *  - never publishes a provisional score: a match in progress is marked live and
+ *    left without a number, so a score on screen always means the final one
+ *    (see applyLive);
  *  - per-snapshot fault isolation: one bad row lands in `errors`, the rest of
  *    the source still syncs.
  *
@@ -249,10 +252,11 @@ final readonly class FeedSynchronizer
         $result->addCreated($snapshot->label());
 
         // A fixture may already be beyond "scheduled" when first seen
-        // (feed switched on mid-season) — bring it to its real state.
+        // (feed switched on mid-season) — bring it to its real state. Live is a
+        // state, not a score: see applyLive().
         match ($snapshot->status) {
             FeedMatchStatus::Postponed => $match->postponeTo($snapshot->kickoffUtc, $now),
-            FeedMatchStatus::Live => $this->writeLiveScore($match, $snapshot, $now),
+            FeedMatchStatus::Live => $match->beginLive($now),
             FeedMatchStatus::Finished => $this->writeFinalScore($match, $snapshot, $now),
             default => null,
         };
@@ -310,6 +314,18 @@ final readonly class FeedSynchronizer
         $result->addKickoffMoved($snapshot->label());
     }
 
+    /**
+     * A match in progress is marked as such and NOTHING else — the running score
+     * is deliberately dropped on the floor.
+     *
+     * A number on the screen has to mean one thing, and here it means „this is
+     * how the zápas ended". Writing 1:0 at half time puts a score in front of
+     * people that is true now and wrong in twenty minutes, and nothing in the row
+     * distinguishes it from the final one they are being scored against — the
+     * „Live" pilulka is a different element than the number it qualifies, and a
+     * glance reads the number. So the feed publishes a result exactly once, when
+     * the zápas is over; until then the row says only that it is being played.
+     */
     private function applyLive(
         SportMatch $match,
         MatchSnapshot $snapshot,
@@ -324,8 +340,29 @@ final readonly class FeedSynchronizer
             return;
         }
 
+        if ($match->isPostponed) {
+            // We hold it postponed and the feed is playing it: our postponement
+            // is the stale fact. Put it back on the calendar at the kickoff the
+            // feed reports, then let it run; the result follows when it ends.
+            if ($apply) {
+                $match->reschedule($snapshot->kickoffUtc, $now);
+                $match->beginLive($now);
+            }
+            $result->addLiveUpdated($snapshot->label());
+
+            return;
+        }
+
+        if ($match->isLive) {
+            // Already marked — the score is not ours to write, so every later
+            // poll of a match in progress is a genuine no-op.
+            $result->addUnchanged();
+
+            return;
+        }
+
         if ($apply) {
-            $this->writeLiveScore($match, $snapshot, $now);
+            $match->beginLive($now);
         }
         $result->addLiveUpdated($snapshot->label());
     }
@@ -398,24 +435,6 @@ final readonly class FeedSynchronizer
             'sportMatchId' => (string) $match->id,
             'externalId' => $snapshot->externalId,
         ]);
-    }
-
-    private function writeLiveScore(SportMatch $match, MatchSnapshot $snapshot, \DateTimeImmutable $now): void
-    {
-        if (null === $snapshot->homeScore || null === $snapshot->awayScore) {
-            if ($match->isScheduled) {
-                $match->beginLive($now);
-            }
-
-            return;
-        }
-
-        $match->updateLiveScore(
-            homeScore: $snapshot->homeScore,
-            awayScore: $snapshot->awayScore,
-            periodScores: PeriodScores::fromNullableArray($snapshot->periodScores),
-            now: $now,
-        );
     }
 
     private function writeFinalScore(SportMatch $match, MatchSnapshot $snapshot, \DateTimeImmutable $now): void
