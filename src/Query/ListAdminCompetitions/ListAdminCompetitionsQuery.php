@@ -52,6 +52,8 @@ final readonly class ListAdminCompetitionsQuery
                 isDeleted: null !== $g->deletedAt,
                 isGlobal: $g->isGlobal,
                 entryFeeCredits: $g->entryFeeCredits,
+                monetization: $g->monetization->value,
+                isPremiumSponsored: $g->isPremiumSponsored,
             ),
             $competitions,
         ));

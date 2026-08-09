@@ -53,4 +53,16 @@ final class CompetitionIsGlobal extends \DomainException
     {
         return new self('Rozsah zápasů globální soutěže se upravuje jen v administraci.');
     }
+
+    /**
+     * Sponsorship exists to give a PARTIČKA what a global competition already
+     * has — an owner whose wallet is ours. A global competition is therefore
+     * never sponsored: it is edited in the admin area, where its monetization
+     * and entry fee are set together, and flipping it to premium from here
+     * would change advertised terms players joined under.
+     */
+    public static function premiumIsAlreadyOnUs(): self
+    {
+        return new self('Globální soutěž se nesponzoruje — její monetizaci nastavíte v administraci soutěže.');
+    }
 }

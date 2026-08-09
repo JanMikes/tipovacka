@@ -22,6 +22,8 @@ use App\Event\CompetitionTipsUnlocked;
 use App\Event\CompetitionUpdated;
 use App\Event\PremiumConfirmed;
 use App\Event\PremiumDowngraded;
+use App\Event\PremiumSponsored;
+use App\Event\PremiumSponsorshipWithdrawn;
 use App\Exception\CompetitionTipsCannotBeUnlocked;
 use App\Exception\CompetitionTipsLockTimeInvalid;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -131,6 +133,31 @@ class Competition implements EntityWithEvents, SoftDeletable
      */
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $premiumReconciledAt = null;
+
+    /**
+     * When an admin granted this competition premium AT OUR EXPENSE — „free
+     * premium from us" for a partička we want to have it. Null = ordinary
+     * premium, billed to the organizer per player.
+     *
+     * An admin could always run a GLOBAL competition on premium without any
+     * user paying, because the admin owns it. A private group had no such path:
+     * its organizer paid 10 credits per player or the competition downgraded at
+     * the first kickoff. This is that path — the same outcome for a partička,
+     * decided by an admin instead of by a wallet.
+     *
+     * The whole meaning of the flag is „create no charge rows". Nothing is
+     * charged on join and nothing at enable, so the reconciliation at
+     * competition start finds zero uncovered rows and simply confirms premium —
+     * which is why {@see \App\Command\ReconcilePremiumCompetitions} needs no
+     * knowledge of sponsorship at all.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $premiumSponsoredAt = null;
+
+    /** Whether premium here is on us rather than on the organizer's wallet. */
+    public bool $isPremiumSponsored {
+        get => null !== $this->premiumSponsoredAt;
+    }
 
     /** Premium toggle: show the anonymous tip-distribution bar to everyone. */
     #[ORM\Column(options: ['default' => false])]
@@ -576,6 +603,56 @@ class Competition implements EntityWithEvents, SoftDeletable
         $this->monetization = CompetitionMonetization::Premium;
         $this->premiumReconciledAt = null;
         $this->updatedAt = $now;
+    }
+
+    /**
+     * An admin puts this competition's premium on US: premium goes on (or stays
+     * on) and nobody is ever charged for it. The three feature toggles come on
+     * with it — a sponsored premium whose features are all off would be a gift
+     * of nothing — and the manager may still tune them afterwards.
+     *
+     * Clears {@see $premiumReconciledAt} the way {@see enablePremium} does, so a
+     * competition previously downgraded for want of credits is reconsidered at
+     * its next start, this time with no charges to cover.
+     */
+    public function sponsorPremium(\DateTimeImmutable $now): void
+    {
+        $this->monetization = CompetitionMonetization::Premium;
+        $this->premiumSponsoredAt = $now;
+        $this->premiumReconciledAt = null;
+        $this->premiumShowDistribution = true;
+        $this->premiumShowOthersTips = true;
+        $this->premiumAllowTipChanges = true;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new PremiumSponsored(
+            competitionId: $this->id,
+            ownerId: $this->owner->id,
+            occurredOn: $now,
+        ));
+    }
+
+    /**
+     * The gift ends: premium STAYS on and the toggles stay as they are, but the
+     * competition is billed normally from here — the next member to join is
+     * charged to the organizer like anywhere else. Withdrawing does not take
+     * away what the group already has; it only stops us paying for what comes
+     * next. Turning premium off entirely is the manager's own switch.
+     */
+    public function withdrawPremiumSponsorship(\DateTimeImmutable $now): void
+    {
+        if (null === $this->premiumSponsoredAt) {
+            return;
+        }
+
+        $this->premiumSponsoredAt = null;
+        $this->updatedAt = $now;
+
+        $this->recordThat(new PremiumSponsorshipWithdrawn(
+            competitionId: $this->id,
+            ownerId: $this->owner->id,
+            occurredOn: $now,
+        ));
     }
 
     /**

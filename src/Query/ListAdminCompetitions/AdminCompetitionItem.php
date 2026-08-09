@@ -18,6 +18,9 @@ final readonly class AdminCompetitionItem
         public bool $isDeleted,
         public bool $isGlobal,
         public int $entryFeeCredits,
+        public string $monetization,
+        /** Premium granted by an admin at our expense — nobody is charged for it. */
+        public bool $isPremiumSponsored,
     ) {
     }
 }

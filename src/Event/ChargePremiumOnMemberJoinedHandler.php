@@ -59,6 +59,15 @@ final readonly class ChargePremiumOnMemberJoinedHandler
             return;
         }
 
+        // Premium on us: no charge row is created at all, which is the whole of
+        // what sponsorship means. Creating one and forgiving it later would let
+        // an empty organizer wallet mark it Uncovered, and a single uncovered
+        // row downgrades the competition at its first kickoff — undoing the gift
+        // precisely when the group starts playing.
+        if ($competition->isPremiumSponsored) {
+            return;
+        }
+
         $member = $this->userRepository->get($event->userId);
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 

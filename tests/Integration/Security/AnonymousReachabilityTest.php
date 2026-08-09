@@ -46,6 +46,7 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Admin\Competition\CreateGlobalCompetitionController::class => true,
         \App\Controller\Admin\Competition\EditGlobalCompetitionController::class => true,
         \App\Controller\Admin\Competition\ListCompetitionsController::class => true,
+        \App\Controller\Admin\Competition\SponsorCompetitionPremiumController::class => true,
         \App\Controller\Admin\Credits\ListCreditLedgerController::class => true,
         \App\Controller\Admin\Credits\ListCreditPurchasesController::class => true,
         \App\Controller\Admin\MatchSource\AdminDeleteMatchSourceController::class => true,
