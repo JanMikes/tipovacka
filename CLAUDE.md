@@ -430,15 +430,16 @@ final class UserAlreadyExists extends \DomainException
   500 and, because component call sites live in templates, `composer quality` will not catch it —
   it surfaced once as ~20 integration failures that looked unrelated. Put the comment **above** the
   tag instead.
-- **Never use a CSS selector on a `DomCrawler\Crawler` in `src/`.** `symfony/css-selector` is a
-  **dev-only** dependency, so `Crawler::filter('td')` works in tests and dev and throws
-  `LogicException: To filter with a CSS selector, install the CssSelector component` in the
-  production image (built with `composer install --no-dev`). Use `filterXPath()` instead —
-  `filter('tr[class^="type_"]')` becomes
-  `filterXPath('descendant-or-self::tr[starts-with(@class, "type_")]')`. **CI cannot catch
-  this**: every job installs dev dependencies, so the first sign is a 500 (or, as on
-  2026-08-08, a cron job failing on the box) after deploy. Same trap applies to anything else
-  in `require-dev` — `symfony/browser-kit`, `symfony/stopwatch`, the profiler.
+- **A `require-dev` package used from `src/` is invisible until it reaches production.** Every CI
+  job installs dev dependencies; the production image is built `composer install --no-dev`. So the
+  code passes all four jobs and then throws on the box — the first sign is a 500 or a failing cron,
+  never a red build. This bit us on 2026-08-08: `Crawler::filter('tr[class^="type_"]')` in the FAČR
+  adapter threw `LogicException: To filter with a CSS selector, install the CssSelector component`
+  because `symfony/css-selector` was dev-only. **`symfony/css-selector` is now in `require`**
+  (2026-08-09), so `Crawler::filter()` is safe in `src/` — but the trap is the general one, and
+  `symfony/browser-kit`, `symfony/stopwatch`, `symfony/maker-bundle` and the profiler are all still
+  dev-only. Before using a vendor class in `src/`, check which block of `composer.json` it comes
+  from; if it belongs in production, move it to `require` rather than working around it.
 - **Lucide / iconify icons must be imported before use.** UX Icons runs with `on_demand: false` and `ignore_not_found: false` in dev (`config/packages/ux_icons.yaml`), so any `<twig:ux:icon name="lucide:foo" />` whose SVG is missing from `assets/icons/lucide/` throws a render-time exception. Before referencing a new icon in a template, import it: `docker compose exec web bin/console ux:icons:import lucide:<name>` (the command accepts multiple names separated by spaces). Commit the generated SVG under `assets/icons/lucide/`. Do NOT hand-write SVGs or flip `ignore_not_found` to silence the error.
 
 ## Frontend
