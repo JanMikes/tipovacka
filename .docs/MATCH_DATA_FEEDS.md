@@ -573,6 +573,8 @@ Liga mistrů 2026/27: not due (cold)       Premier League 2026/27: not due (cold
 1. **`symfony/css-selector` is a dev dependency.** `Crawler::filter()` works in tests, dev and
    all four CI jobs, and throws in the image (`composer install --no-dev`). CI structurally
    cannot catch this. Fixed with `filterXPath()`; recorded as a convention in CLAUDE.md.
+   *(2026-08-09: the package was moved to `require`, so the trap is now the general one about
+   `require-dev` rather than this package — see Day 2 below.)*
 2. **Binding before bridging duplicates a season** — the incident above, now guarded in code.
 3. **A placeholder kickoff can be 17 days out.** The adopter's fixed 36 h missed five Chance
    Liga fixtures; `--kickoff-tolerance-hours` now takes an operator's judgement, and the
@@ -583,6 +585,47 @@ Liga mistrů 2026/27: not due (cold)       Premier League 2026/27: not due (cold
    a seed JSON, so switching it to Sportmonks still looked like a routine poll. `bindFeed()`
    now clears the stamp whenever the provider or ref changes — which also gives operators a
    supported way to force a season-wide re-read: unbind, rebind.
+
+## Day 2 — 2026-08-09: what a day of real traffic surfaced
+
+The pipeline ran unattended overnight: **166/166 `matches-sync` runs exit 0**, no non-zero exit
+in either cron log, an empty messenger queue, no stuck fixtures (every past kickoff on a
+feed-bound zdroj had its result), and the three Sentry issues from the rollout were all
+one-offs from that evening's manual commands, none recurring. Four things still needed fixing.
+
+1. **The feed published provisional scores.** The headline finding, from the product owner: a
+   zápas in progress showed a running score, and nothing on the row distinguishes it from the
+   final one people are scored against. `applyLive` now marks the match live and writes
+   **nothing else** — the provider's in-play score is read and dropped. A number on a wtips
+   screen means „this is how it ended", always. Locked by four tests in `FeedSynchronizerTest`;
+   full reasoning in DOMAIN.md's decision log (2026-08-09).
+
+   The live path had **no test at all** before today, which is why the behaviour shipped
+   unquestioned: the plan treated „live" as a state to track and never asked what a half-played
+   score means to a reader.
+
+2. **`symfony/css-selector` moved from `require-dev` to `require`.** Item 1 of the list below
+   was fixed by rewriting the selector, which cured the symptom; the disease is that a
+   dev-only package used from `src/` is invisible to all four CI jobs and fails only on the
+   box. The adapters keep their XPath, but `Crawler::filter()` is now safe anywhere.
+
+3. **`app:team-alias:add` is idempotent.** Aliases arrive as a batch an operator re-runs after
+   fixing one line; re-adding an alias that already points at the requested team is now a
+   no-op instead of an exception (that exception is Sentry `TIPOVACKA-R`). A *different* team
+   is still a hard conflict.
+
+4. **A stuck-live match can no longer pin a zdroj to 5-minute polling.** `Live` is entered and
+   left on the feed's word, so a fixture the provider abandons mid-game (Sportmonks
+   `ABANDONED` maps to `Unknown`, which the synchronizer refuses to act on) keeps the state
+   for good. `FeedPollPolicy` now bounds its live trigger by kickoff recency
+   (`hasLiveMatchKickedOffSince`), so such a row decays to cold instead of costing 288 fetches
+   a day for the rest of the season. First tests for the policy landed with it.
+
+Two things looked wrong and are **not**: `Chance Liga 2026/27` warns „3 already-played matches
+not imported" on every poll (kolo 1–2 predate the seeded 224 — correct, and self-limiting once
+they age past the 7-day cutoff), and `Premier League pro Fantasy Magory` is a 380-match zdroj
+with no feed (a **private** zdroj, which by design is never feed-bound; its owner maintains it
+by hand).
 
 ## Still open
 

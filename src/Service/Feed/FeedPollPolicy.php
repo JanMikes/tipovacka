@@ -16,8 +16,10 @@ use App\Repository\SportMatchRepository;
  * Three cadences, driven entirely by the kickoffs we already store:
  *
  *  - HOT (5 min) — something of this source is being played right now: a match
- *    is live, or kicked off within the last few hours. This is the only window
- *    where a result can appear, and the only one worth polling aggressively.
+ *    kicked off within the last few hours, or is marked live and kicked off
+ *    within them. This is the only window where a result can appear, and the
+ *    only one worth polling aggressively. Both halves are bounded by that same
+ *    window on purpose — see hasLiveMatchKickedOffSince().
  *  - WARM (30 min) — a match starts within the next few hours or has just
  *    ended: late kickoff corrections and trailing result entry.
  *  - COLD (24 h) — nothing near. One fetch a day still catches fixture and
@@ -77,8 +79,14 @@ final readonly class FeedPollPolicy
 
     private function intervalSeconds(MatchSource $source, \DateTimeImmutable $now): int
     {
-        if ($this->sportMatches->hasLiveMatch($source->id)
-            || $this->sportMatches->hasMatchKickingOffBetween($source->id, $now->modify(self::PLAYING_WINDOW), $now)
+        // Both halves of "being played" are bounded by the same window: a match
+        // that kicked off within it, and a match MARKED live that kicked off
+        // within it. Without that second bound a fixture the provider abandons
+        // stays live for ever and holds its source at 288 fetches a day.
+        $playingSince = $now->modify(self::PLAYING_WINDOW);
+
+        if ($this->sportMatches->hasLiveMatchKickedOffSince($source->id, $playingSince)
+            || $this->sportMatches->hasMatchKickingOffBetween($source->id, $playingSince, $now)
         ) {
             return self::HOT_INTERVAL_SECONDS;
         }
