@@ -48,4 +48,13 @@ final class FeedPayloadInvalid extends \DomainException
     {
         return new self(sprintf('%s returned no matches for feedRef "%s" — wrong reference?', $provider, $feedRef));
     }
+
+    /**
+     * The response parsed, but not a single row survived to a snapshot — same
+     * danger as an empty response, wearing a well-formed envelope.
+     */
+    public static function unusableRows(string $provider, string $problem): self
+    {
+        return new self(sprintf('%s payload has no usable rows: %s', $provider, $problem));
+    }
 }
