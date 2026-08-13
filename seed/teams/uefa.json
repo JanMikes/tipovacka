@@ -5,6 +5,11 @@
     "country": "CZ"
   },
   {
+    "name": "AEK Atény",
+    "shortName": "AEK",
+    "country": "GR"
+  },
+  {
     "name": "AGF Aarhus",
     "shortName": "AGF",
     "country": "DK"
@@ -233,6 +238,11 @@
     "name": "Universitatea Craiova",
     "shortName": "UCR",
     "country": "RO"
+  },
+  {
+    "name": "Viking FK",
+    "shortName": "VIK",
+    "country": "NO"
   },
   {
     "name": "Víkingur Reykjavík",
