@@ -11,6 +11,7 @@ use App\Enum\MatchEventType;
 use App\Enum\MatchSide;
 use App\Exception\FeedPayloadInvalid;
 use App\Value\MatchEventInput;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,6 +43,7 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
 
     public function __construct(
         private HttpClientInterface $httpClient,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -65,13 +67,39 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
         }
 
         $snapshots = [];
+        $namelessRows = 0;
 
         foreach ($rows as $index => $row) {
             if ($this->isUndrawnTie($row)) {
                 continue;
             }
 
+            // Mid-draw, UEFA briefly serves rows whose team objects carry
+            // neither a name nor the isPlaceHolder flag (seen 2026-08-12, the
+            // UCL play-off draw window: the whole source failed every poll for
+            // 3.5 hours over one such row). The tie exists but its teams are
+            // not published yet — the same situation as an undrawn tie, and
+            // one unfinished row must not take the other ninety down with it.
+            if (null === $this->teamName($row, 'homeTeam') || null === $this->teamName($row, 'awayTeam')) {
+                ++$namelessRows;
+                $this->logger->warning('UEFA feed row has no team names yet — skipped until the draw publishes them.', [
+                    'matchSourceId' => (string) $source->id,
+                    'competitionId' => $competitionId,
+                    'row' => $index,
+                    'externalId' => $row['id'] ?? null,
+                ]);
+
+                continue;
+            }
+
             $snapshots[] = $this->snapshotFromRow($index, $row);
+        }
+
+        // A draw window leaves SOME rows nameless; ALL of them nameless means
+        // the payload shape changed under us, and returning [] would read as
+        // „nothing changed" on every poll, forever.
+        if ($namelessRows > 0 && [] === $snapshots) {
+            throw FeedPayloadInvalid::unusableRows(self::provides()->label(), sprintf('all %d rows are missing team names — has the payload shape changed?', $namelessRows));
         }
 
         return $snapshots;

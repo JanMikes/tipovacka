@@ -7,8 +7,10 @@ namespace App\Tests\Unit\Service\Feed;
 use App\Enum\FeedMatchStatus;
 use App\Enum\FeedProvider;
 use App\Enum\MatchSide;
+use App\Exception\FeedPayloadInvalid;
 use App\Service\Feed\UefaMatchDataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -85,15 +87,58 @@ final class UefaMatchDataProviderTest extends TestCase
     }
 
     /**
+     * Mid-draw, UEFA briefly serves rows whose team objects have neither a name
+     * nor the isPlaceHolder flag. On 2026-08-12 one such row failed the whole
+     * Liga mistrů sync every five minutes for 3.5 hours — it must be skipped
+     * like an undrawn tie, not abort the other ninety rows.
+     */
+    public function testRowWhoseTeamsHaveNoPublishedNameIsSkippedNotFatal(): void
+    {
+        $externalIds = array_map(static fn ($snapshot): string => $snapshot->externalId, $this->fetch());
+
+        self::assertNotContains('2049400', $externalIds);
+        self::assertCount(4, $externalIds, 'the rows around the nameless one still import');
+    }
+
+    /**
+     * EVERY row nameless is no draw window — the payload shape changed, and a
+     * silently empty result would read as „nothing changed" on every poll.
+     */
+    public function testAllRowsNamelessFailsTheSourceLoudly(): void
+    {
+        $payload = json_encode([
+            [
+                'id' => '1',
+                'status' => 'UPCOMING',
+                'kickOffTime' => ['dateTime' => '2026-08-26T19:00:00Z'],
+                'homeTeam' => ['id' => '7'],
+                'awayTeam' => ['id' => '8'],
+            ],
+            [
+                'id' => '2',
+                'status' => 'UPCOMING',
+                'kickOffTime' => ['dateTime' => '2026-08-26T19:00:00Z'],
+                'homeTeam' => ['id' => '9'],
+                'awayTeam' => ['id' => '10'],
+            ],
+        ], \JSON_THROW_ON_ERROR);
+
+        $this->expectException(FeedPayloadInvalid::class);
+        $this->expectExceptionMessage('no usable rows');
+
+        $this->fetch($payload);
+    }
+
+    /**
      * @return list<\App\Service\Feed\MatchSnapshot>
      */
-    private function fetch(): array
+    private function fetch(?string $payload = null): array
     {
         $client = new MockHttpClient([
-            new MockResponse($this->payload(), ['response_headers' => ['content-type' => 'application/json']]),
+            new MockResponse($payload ?? $this->payload(), ['response_headers' => ['content-type' => 'application/json']]),
         ]);
 
-        return (new UefaMatchDataProvider($client))->fetchMatches(
+        return (new UefaMatchDataProvider($client, new NullLogger()))->fetchMatches(
             FeedSourceFactory::create(
                 FeedProvider::Uefa,
                 '2019',
@@ -157,6 +202,16 @@ final class UefaMatchDataProviderTest extends TestCase
                 'awayTeam' => ['id' => '6', 'internationalName' => 'Dinamo City'],
                 'score' => ['regular' => ['home' => 0, 'away' => 0]],
                 'playerEvents' => ['scorers' => []],
+            ],
+            [
+                // A drawn tie whose team names UEFA has not published yet:
+                // no name keys, isPlaceHolder false (the 2026-08-12 shape).
+                'id' => '2049400',
+                'status' => 'UPCOMING',
+                'kickOffTime' => ['dateTime' => '2026-09-16T19:00:00Z'],
+                'homeTeam' => ['id' => '11', 'isPlaceHolder' => false],
+                'awayTeam' => ['id' => '12', 'isPlaceHolder' => false],
+                'score' => null,
             ],
         ], \JSON_THROW_ON_ERROR);
     }
