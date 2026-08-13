@@ -627,6 +627,21 @@ they age past the 7-day cutoff), and `Premier League pro Fantasy Magory` is a 38
 with no feed (a **private** zdroj, which by design is never feed-bound; its owner maintains it
 by hand).
 
+## Day 5 — 2026-08-12/13: the first draw window (Sentry `TIPOVACKA-V`)
+
+The UCL play-off draw broke the assumption that a non-placeholder row always names its
+teams: mid-draw, UEFA served rows whose team objects had **neither a name nor
+`isPlaceHolder: true`**, and one such row failed the whole Liga mistrů source every poll for
+3.5 hours. Fixed in PR #13: a nameless row is skipped like an undrawn tie (warning log);
+only ALL rows nameless — a shape change, not a draw — still fails the source.
+
+The draw also delivered the first post-rollout alias batch — UEFA aliases exist after all,
+they just wait for rounds whose participants weren't in the seeds. Eight spellings from
+`--dry-run`, six mapped onto existing directory teams, two teams created first
+(`seed/teams/uefa.json`): `AEK Atény` (GRE 50129) and `Viking FK` (NOR 52319 — Stavanger,
+**not** the seeded Víkingur Reykjavík; the feed's `countryCode` is the disambiguator worth
+checking before every alias).
+
 ## Still open
 
 - **AET / penalty shootout.** DOMAIN.md (2026-07-29) locks ONE combined overtime pair — no
