@@ -185,6 +185,101 @@ final class BulkSetTipOpeningCommandTest extends IntegrationTestCase
         self::assertNull($sibling->deadline);
     }
 
+    /**
+     * „Každý zápas se uzavírá 5 hodin před svým výkopem" — the same escape hatch
+     * as own-kickoff, only with a head start for the players.
+     */
+    public function testDeadlineBeforeKickoffPinsEachMatchAheadOfItsOwnKickoff(): void
+    {
+        $competitionId = Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID);
+
+        $this->tester()->execute([
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--deadline-before-kickoff' => '300',
+            '--apply' => true,
+        ]);
+
+        $this->entityManager()->clear();
+
+        // MATCH_SCHEDULED kicks off 2025-06-20 18:00 UTC, MATCH_PLAYOFF 2025-06-22 18:00.
+        $scheduled = $this->settingRepository()->findByCompetitionAndMatch(
+            $competitionId,
+            Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+        );
+        self::assertNotNull($scheduled);
+        self::assertEquals(new \DateTimeImmutable('2025-06-20 13:00:00'), $scheduled->deadline);
+
+        $playoff = $this->settingRepository()->findByCompetitionAndMatch(
+            $competitionId,
+            Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+        );
+        self::assertNotNull($playoff);
+        self::assertEquals(new \DateTimeImmutable('2025-06-22 13:00:00'), $playoff->deadline);
+    }
+
+    /**
+     * The one-time migration of soutěže still on „tipy se zamykají startem
+     * soutěže": every match without its own uzávěrka gets one, and a match an
+     * organizer already decided about is left exactly as it is.
+     */
+    public function testOnlyMissingDeadlineLeavesAStoredDeadlineAlone(): void
+    {
+        $competitionId = Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID);
+        $decidedId = Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID);
+        $organizerDeadline = new \DateTimeImmutable('2025-06-20 17:00:00');
+
+        $this->commandBus()->dispatch(new SetCompetitionMatchDeadlineCommand(
+            editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            competitionId: $competitionId,
+            sportMatchId: $decidedId,
+            deadline: $organizerDeadline,
+        ));
+
+        $this->tester()->execute([
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--deadline-before-kickoff' => '300',
+            '--only-missing-deadline' => true,
+            '--apply' => true,
+        ]);
+
+        $this->entityManager()->clear();
+
+        $decided = $this->settingRepository()->findByCompetitionAndMatch($competitionId, $decidedId);
+        self::assertNotNull($decided);
+        self::assertEquals($organizerDeadline, $decided->deadline, 'An organizer decision must survive the migration.');
+
+        $migrated = $this->settingRepository()->findByCompetitionAndMatch(
+            $competitionId,
+            Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID),
+        );
+        self::assertNotNull($migrated);
+        self::assertEquals(new \DateTimeImmutable('2025-06-22 13:00:00'), $migrated->deadline);
+    }
+
+    public function testTheTwoDeadlineStancesCannotBeCombined(): void
+    {
+        $tester = $this->tester();
+        $tester->execute([
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--deadline-own-kickoff' => true,
+            '--deadline-before-kickoff' => '300',
+        ]);
+
+        self::assertSame(Command::INVALID, $tester->getStatusCode());
+    }
+
+    public function testOnlyMissingDeadlineWithoutADeadlineStanceIsRefused(): void
+    {
+        $tester = $this->tester();
+        $tester->execute([
+            '--editor' => AppFixtures::ADMIN_ID,
+            '--opens-at' => '2025-06-16 12:00',
+            '--only-missing-deadline' => true,
+        ]);
+
+        self::assertSame(Command::INVALID, $tester->getStatusCode());
+    }
+
     public function testWithoutEitherEndTheCommandRefusesToRun(): void
     {
         $tester = $this->tester();

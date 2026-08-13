@@ -21,6 +21,10 @@ return App::config([
         ],
         'App\\Console\\' => [
             'resource' => '../src/Console/',
+            'exclude' => [
+                // A parsed-input value object, not a service.
+                '../src/Console/BulkTipWindowPlan.php',
+            ],
         ],
         'App\\Controller\\' => [
             'resource' => '../src/Controller/',
