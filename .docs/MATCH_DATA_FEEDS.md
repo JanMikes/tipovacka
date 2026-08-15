@@ -642,6 +642,24 @@ they just wait for rounds whose participants weren't in the seeds. Eight spellin
 **not** the seeded Víkingur Reykjavík; the feed's `countryCode` is the disambiguator worth
 checking before every alias).
 
+## Day 6 — 2026-08-13: the same window, the next field (Sentry `TIPOVACKA-X`)
+
+The next day the Evropská liga source failed identically for 3.5 hours (17:01–20:41 UTC, 45
+events) — this time on row #0 with **no `kickOffTime.dateTime`**: teams drawn, kickoff not
+scheduled yet.
+
+So the lesson of Day 5 was one field too narrow. **UEFA publishes a tie in instalments** —
+the fixture, then the team names, then the kickoff time — and any field still missing when we
+poll used to abort the whole source. The provider now skips a row on *any* per-row payload
+problem (`FeedPayloadInvalid` from `snapshotFromRow` is caught in the loop, logged at warning
+with the reason) instead of enumerating the fields that may lag. The loud case is unchanged
+and now broader: if **not one** non-placeholder row could be read, that is a shape change, not
+a draw, and it still fails the source. Replayed against the live 80-row Evropská liga payload
+with the 2026-08-13 shape reproduced: 79 of 80 import, one is skipped.
+
+The corollary for the next adapter: a row is a snapshot **or** a reason to wait, never a
+reason to drop the other ninety.
+
 ## Still open
 
 - **AET / penalty shootout.** DOMAIN.md (2026-07-29) locks ONE combined overtime pair — no

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use App\Logging\DropInteractiveConsoleFailures;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -29,6 +30,10 @@ return App::config([
                 MethodNotAllowedHttpException::class,
                 NotFoundHttpException::class,
             ],
+            // A hand-run maintenance command's failure is the operator's own
+            // feedback, not an incident — see the service for why this is keyed
+            // on the command and not on the exception class.
+            'before_send' => DropInteractiveConsoleFailures::class,
             'max_breadcrumbs' => 50,
             'in_app_exclude' => ['%kernel.cache_dir%'],
             'in_app_include' => ['%kernel.project_dir%/src'],

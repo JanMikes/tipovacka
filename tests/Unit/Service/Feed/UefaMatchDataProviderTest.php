@@ -101,7 +101,20 @@ final class UefaMatchDataProviderTest extends TestCase
     }
 
     /**
-     * EVERY row nameless is no draw window — the payload shape changed, and a
+     * The other half of the same instalment: on 2026-08-13 UEFA published freshly
+     * drawn Evropská liga ties with their team names but no kickOffTime.dateTime,
+     * and row #0 failed the whole source every five minutes for 3.5 hours.
+     */
+    public function testRowWithoutPublishedKickoffIsSkippedNotFatal(): void
+    {
+        $externalIds = array_map(static fn ($snapshot): string => $snapshot->externalId, $this->fetch());
+
+        self::assertNotContains('2049500', $externalIds);
+        self::assertCount(4, $externalIds, 'the rows around the kickoff-less one still import');
+    }
+
+    /**
+     * EVERY row unreadable is no draw window — the payload shape changed, and a
      * silently empty result would read as „nothing changed" on every poll.
      */
     public function testAllRowsNamelessFailsTheSourceLoudly(): void
@@ -211,6 +224,17 @@ final class UefaMatchDataProviderTest extends TestCase
                 'kickOffTime' => ['dateTime' => '2026-09-16T19:00:00Z'],
                 'homeTeam' => ['id' => '11', 'isPlaceHolder' => false],
                 'awayTeam' => ['id' => '12', 'isPlaceHolder' => false],
+                'score' => null,
+            ],
+            [
+                // A drawn tie whose kickoff UEFA has not scheduled yet: real
+                // team names, a kickOffTime carrying the date alone (the
+                // 2026-08-13 shape).
+                'id' => '2049500',
+                'status' => 'UPCOMING',
+                'kickOffTime' => ['date' => '2026-09-24'],
+                'homeTeam' => ['id' => '13', 'internationalName' => 'Ferencváros'],
+                'awayTeam' => ['id' => '14', 'internationalName' => 'Malmö'],
                 'score' => null,
             ],
         ], \JSON_THROW_ON_ERROR);

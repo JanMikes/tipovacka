@@ -67,39 +67,41 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
         }
 
         $snapshots = [];
-        $namelessRows = 0;
+        $unfinishedRows = [];
 
         foreach ($rows as $index => $row) {
             if ($this->isUndrawnTie($row)) {
                 continue;
             }
 
-            // Mid-draw, UEFA briefly serves rows whose team objects carry
-            // neither a name nor the isPlaceHolder flag (seen 2026-08-12, the
-            // UCL play-off draw window: the whole source failed every poll for
-            // 3.5 hours over one such row). The tie exists but its teams are
-            // not published yet — the same situation as an undrawn tie, and
-            // one unfinished row must not take the other ninety down with it.
-            if (null === $this->teamName($row, 'homeTeam') || null === $this->teamName($row, 'awayTeam')) {
-                ++$namelessRows;
-                $this->logger->warning('UEFA feed row has no team names yet — skipped until the draw publishes them.', [
+            try {
+                $snapshots[] = $this->snapshotFromRow($index, $row);
+            } catch (FeedPayloadInvalid $e) {
+                // Around a draw UEFA publishes a tie in instalments: the fixture
+                // first, then the team names, then the kickoff time — and each
+                // gap has already failed a whole source for hours (2026-08-12:
+                // Liga mistrů, team objects carrying neither a name nor the
+                // isPlaceHolder flag; 2026-08-13: Evropská liga, rows with no
+                // kickOffTime.dateTime). The tie exists but the feed has not
+                // finished describing it — the same situation as an undrawn tie,
+                // and one unfinished row must not take the other ninety down
+                // with it. The next poll picks it up.
+                $unfinishedRows[] = $e->getMessage();
+                $this->logger->warning('UEFA feed row is not complete yet — skipped until the feed fills it in.', [
                     'matchSourceId' => (string) $source->id,
                     'competitionId' => $competitionId,
                     'row' => $index,
                     'externalId' => $row['id'] ?? null,
+                    'problem' => $e->getMessage(),
                 ]);
-
-                continue;
             }
-
-            $snapshots[] = $this->snapshotFromRow($index, $row);
         }
 
-        // A draw window leaves SOME rows nameless; ALL of them nameless means
+        // A draw window leaves SOME rows unfinished; NOT ONE readable row means
         // the payload shape changed under us, and returning [] would read as
         // „nothing changed" on every poll, forever.
-        if ($namelessRows > 0 && [] === $snapshots) {
-            throw FeedPayloadInvalid::unusableRows(self::provides()->label(), sprintf('all %d rows are missing team names — has the payload shape changed?', $namelessRows));
+        if ([] !== $unfinishedRows && [] === $snapshots) {
+            throw FeedPayloadInvalid::unusableRows(self::provides()->label(), sprintf('not one of %d rows could be read (%s) — has the payload shape changed?', count($unfinishedRows), $unfinishedRows[0]));
         }
 
         return $snapshots;
