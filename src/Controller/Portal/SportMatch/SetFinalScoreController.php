@@ -59,6 +59,7 @@ final class SetFinalScoreController extends AbstractController
         $formData->awayScore = $sportMatch->awayScore;
         $formData->overtimeHomeScore = $sportMatch->overtimeHomeScore;
         $formData->overtimeAwayScore = $sportMatch->overtimeAwayScore;
+        $formData->decidedInOvertime = $sportMatch->hasOvertimeScore;
         $formData->periods = $this->prefillPeriods($sportMatch->periodScores?->toArray(), $sport->periodCount);
         $formData->events = array_map(
             static function (MatchEvent $event): MatchEventFormData {
@@ -112,8 +113,8 @@ final class SetFinalScoreController extends AbstractController
                         homeScore: $formData->homeScore,
                         awayScore: $formData->awayScore,
                         periodScores: $periodScores,
-                        overtimeHomeScore: $formData->overtimeHomeScore,
-                        overtimeAwayScore: $formData->overtimeAwayScore,
+                        overtimeHomeScore: $formData->overtimeScorePair[0] ?? null,
+                        overtimeAwayScore: $formData->overtimeScorePair[1] ?? null,
                         events: $events,
                         isLastMatch: $formData->isLastMatch,
                     ));

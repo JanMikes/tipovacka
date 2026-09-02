@@ -51,7 +51,7 @@ final class InvalidScore extends \DomainException
 
     public static function overtimeDraw(): self
     {
-        return new self('Skóre po prodloužení nemůže být remíza.');
+        return new self('Skóre po prodloužení nemůže být remíza. Po prodloužení nebo penaltách musí jeden tým vyhrát; skončil-li zápas remízou bez prodloužení, nechte prodloužení vypnuté.');
     }
 
     public static function overtimeBelowRegular(): self

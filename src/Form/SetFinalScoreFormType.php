@@ -56,6 +56,11 @@ final class SetFinalScoreFormType extends AbstractType
             'allow_delete' => false,
         ]);
 
+        $builder->add('decidedInOvertime', CheckboxType::class, [
+            'label' => 'Zápas se rozhodl až v prodloužení nebo na penalty / nájezdy',
+            'required' => false,
+        ]);
+
         $builder->add('overtimeHomeScore', IntegerType::class, [
             'label' => sprintf('Po prodloužení %s', $options['home_team']),
             'required' => false,

@@ -27,11 +27,34 @@ final class SetFinalScoreFormData
     #[Assert\Valid]
     public array $periods = [];
 
+    /**
+     * The organizer's explicit statement that the match was DECIDED after
+     * regular time (prodloužení / penalty / nájezdy). A drawn regular-time
+     * result with this unticked IS the complete final result (leagues, groups,
+     * first legs): the two overtime inputs below are then ignored, never
+     * validated, so a plain draw can never run into the „cannot be a draw
+     * after overtime" rule.
+     */
+    public bool $decidedInOvertime = false;
+
     #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
     public ?int $overtimeHomeScore = null;
 
     #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
     public ?int $overtimeAwayScore = null;
+
+    /**
+     * The overtime pair to store: null unless the organizer opted in AND
+     * filled both sides (the Callback validation guarantees the latter once
+     * the form is valid).
+     *
+     * @var array{int, int}|null
+     */
+    public ?array $overtimeScorePair {
+        get => $this->decidedInOvertime && null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore
+            ? [$this->overtimeHomeScore, $this->overtimeAwayScore]
+            : null;
+    }
 
     /** @var list<MatchEventFormData> */
     #[Assert\Valid]
@@ -131,19 +154,16 @@ final class SetFinalScoreFormData
 
     private function validateOvertime(ExecutionContextInterface $context): void
     {
-        if (!$this->isFinishing) {
-            return;
-        }
-
-        if ((null === $this->overtimeHomeScore) !== (null === $this->overtimeAwayScore)) {
-            $context->buildViolation('Zadejte prosím obě hodnoty skóre po prodloužení.')
-                ->atPath(null === $this->overtimeHomeScore ? 'overtimeHomeScore' : 'overtimeAwayScore')
-                ->addViolation();
-
+        // Not opted in = the overtime inputs carry no meaning, whatever they hold.
+        if (!$this->isFinishing || !$this->decidedInOvertime) {
             return;
         }
 
         if (null === $this->overtimeHomeScore || null === $this->overtimeAwayScore) {
+            $context->buildViolation('Zadejte prosím obě hodnoty skóre po prodloužení.')
+                ->atPath(null === $this->overtimeHomeScore ? 'overtimeHomeScore' : 'overtimeAwayScore')
+                ->addViolation();
+
             return;
         }
 
@@ -156,7 +176,7 @@ final class SetFinalScoreFormData
         }
 
         if ($this->overtimeHomeScore === $this->overtimeAwayScore) {
-            $context->buildViolation('Skóre po prodloužení nemůže být remíza.')
+            $context->buildViolation('Skóre po prodloužení nemůže být remíza. Po prodloužení nebo penaltách musí jeden tým vyhrát; skončil-li zápas remízou bez prodloužení, nechte prodloužení vypnuté.')
                 ->atPath('overtimeHomeScore')
                 ->addViolation();
 
