@@ -272,10 +272,16 @@ final class AnonymousReachabilityTest extends WebTestCase
      */
     private function controllerOf(Route $route): string
     {
-        /** @var class-string $controller */
+        /** @var string $controller */
         $controller = $route->getDefault('_controller');
 
-        return $controller;
+        // `Class::method` for a multi-action controller (HealthCheckController has
+        // liveness + readiness), bare `Class` for an invokable one. The inventory is
+        // keyed by CLASS — see the docblock — so the method is dropped.
+        /** @var class-string $class */
+        $class = strstr($controller, '::', true) ?: $controller;
+
+        return $class;
     }
 
     private function methodFor(Route $route): string

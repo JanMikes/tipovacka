@@ -133,17 +133,24 @@ return App::config([
             'alias' => 'App\\Service\\Identity\\RandomIdentityProvider',
         ],
         'App\\Middleware\\DispatchDomainEventsMiddleware' => null,
-        'session.pdo' => [
-            'class' => \PDO::class,
-            'factory' => ['@doctrine.dbal.default_connection', 'getNativeConnection'],
-        ],
         'Symfony\\Component\\HttpFoundation\\Session\\Storage\\Handler\\PdoSessionHandler' => [
-            // LOCK_ADVISORY is required because the handler shares Doctrine's native PDO
-            // (see session.pdo above). The default LOCK_TRANSACTIONAL wraps the whole
-            // request in a PDO-level transaction, which then clashes with
-            // doctrine_transaction middleware ("there is already an active transaction").
+            // Sessions live in Postgres (table `sessions`, migration Version20260420194408).
+            //
+            // The handler gets the DSN — deliberately NOT Doctrine's native PDO object.
+            // Given a DSN it opens its own connection lazily in open() and DROPS it in
+            // close() ("only close lazy-connection"), i.e. it reconnects on every request.
+            // Given a PDO object it keeps that one object for the lifetime of the
+            // FrankenPHP worker: when Postgres was re-created on 2026-09-03, Doctrine
+            // reconnected by itself but the handler kept the dead handle, and every page
+            // failed with "SQLSTATE[HY000]: General error: 7 no connection to the server"
+            // until the container was restarted — while the liveness probe (Doctrine)
+            // stayed green. HealthCheckController::readiness probes this path.
+            //
+            // LOCK_ADVISORY stays: pg_advisory_lock per session for the request, released
+            // in close(). The default LOCK_TRANSACTIONAL would hold a transaction open on
+            // this second connection for the whole request; nothing here needs that.
             'arguments' => [
-                '@session.pdo',
+                '%env(resolve:DATABASE_URL)%',
                 [
                     'lock_mode' => \Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler::LOCK_ADVISORY,
                 ],

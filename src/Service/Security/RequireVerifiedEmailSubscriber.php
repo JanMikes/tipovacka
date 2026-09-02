@@ -70,6 +70,7 @@ final class RequireVerifiedEmailSubscriber implements EventSubscriberInterface
         'competitions_list',
         'app_design_styleguide',
         'health_liveness',
+        'health_readiness',
         'stripe_webhook',
     ];
 
