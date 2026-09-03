@@ -133,19 +133,28 @@
                         {{ form_errors(form.periods) }}
                     </fieldset>
 
-                    {# ── Overtime (revealed only on a regular-time draw) ────── #}
+                    {# ── Overtime: ONE question, revealed only on a regular-time draw and only
+                          in a zdroj that plays extra time (MatchSource.hasOvertime). The draw is
+                          the final result unless a winner is picked; the stored pair (draw plus
+                          one goal for the winner) is derived, nobody types it. ── #}
+                    {% if form.overtimeWinner is defined %}
                     <fieldset class="field hidden" data-score-entry-target="overtime">
-                        <legend class="field-label">Po prodloužení / nájezdech</legend>
-                        <p class="mb-2 text-xs text-white/50">Konečný výsledek včetně prodloužení — remíza v základní hrací době zůstává hlavním výsledkem pro tipy.</p>
-                        <div class="flex items-center gap-3">
-                            <span class="w-28 shrink-0 text-sm text-white/70">Konečný stav</span>
-                            {{ form_widget(form.overtimeHomeScore, {attr: {class: 'input w-16 text-center', 'data-score-entry-target': 'overtimeHome'}}) }}
-                            <span class="text-white/40">:</span>
-                            {{ form_widget(form.overtimeAwayScore, {attr: {class: 'input w-16 text-center', 'data-score-entry-target': 'overtimeAway'}}) }}
+                        <legend class="field-label">Prodloužení / penalty</legend>
+                        <p class="mb-2 text-xs text-white/50">Skončil-li zápas remízou bez prodloužení (liga, skupina, první zápas dvojutkání), nechte první možnost. Vítěz se zapíše jako remíza plus jeden gól; na přesném průběhu prodloužení či počtu penalt nezáleží.</p>
+                        <div class="grid gap-2">
+                            {% for child in form.overtimeWinner %}
+                                <label class="cursor-pointer">
+                                    {{ form_widget(child, {attr: {class: 'peer sr-only', 'data-score-entry-target': 'overtimeChoice'}}) }}
+                                    <span class="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/60 transition-colors peer-checked:border-accent-400 peer-checked:bg-accent-500/15 peer-checked:text-white">
+                                        {{ child.vars.label }}
+                                    </span>
+                                </label>
+                            {% endfor %}
                         </div>
-                        {{ form_errors(form.overtimeHomeScore) }}
-                        {{ form_errors(form.overtimeAwayScore) }}
+                        {% do form.overtimeWinner.setRendered %}
+                        {{ form_errors(form.overtimeWinner) }}
                     </fieldset>
+                    {% endif %}
 
                     {# ── Scorers & cards ────────────────────────────────────── #}
                     <fieldset class="field">

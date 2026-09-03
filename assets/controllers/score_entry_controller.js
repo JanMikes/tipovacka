@@ -5,8 +5,9 @@ import TomSelect from 'tom-select';
  * Organizer score-entry form („Zapsat výsledek").
  *
  * - State toggle Probíhá / Ukončený: reveals the „poslední zápas" checkbox for
- *   finished matches; overtime inputs appear only when the entered regular
- *   score is a draw AND the state is finished.
+ *   finished matches; the overtime question (draw stands / who won after
+ *   extra time or penalties) appears only when the entered regular score is a
+ *   draw AND the state is finished, so a plain draw is saved as-is.
  * - Score steppers (+/−) around the two score inputs.
  * - Dynamic event rows (goals / cards) cloned from the Symfony CollectionType
  *   prototype; player-name inputs get a tom-select autocomplete backed by the
@@ -14,7 +15,7 @@ import TomSelect from 'tom-select';
  * - Non-blocking warning when goal-row counts don't match the entered score.
  */
 export default class extends Controller {
-    static targets = ['homeScore', 'awayScore', 'overtime', 'overtimeHome', 'overtimeAway', 'finishOnly', 'eventsList', 'eventRow', 'warning'];
+    static targets = ['homeScore', 'awayScore', 'overtime', 'overtimeChoice', 'finishOnly', 'eventsList', 'eventRow', 'warning'];
     static values = {
         playersUrl: String,
         homeTeamId: String,
@@ -61,11 +62,13 @@ export default class extends Controller {
             const showOvertime = finishing && isDraw;
             this.overtimeTarget.classList.toggle('hidden', !showOvertime);
 
-            // Disable (not clear) hidden overtime inputs: disabled inputs are not
-            // submitted, and a transient non-draw while correcting a score no
-            // longer wipes the stored overtime values once the draw is restored.
-            if (this.hasOvertimeHomeTarget) this.overtimeHomeTarget.disabled = !showOvertime;
-            if (this.hasOvertimeAwayTarget) this.overtimeAwayTarget.disabled = !showOvertime;
+            // Disable (not clear) the hidden radios: disabled inputs are not
+            // submitted, so a transient non-draw while correcting a score can
+            // never carry a stale winner pick along — and the pick is still
+            // there once the draw is restored.
+            this.overtimeChoiceTargets.forEach((radio) => {
+                radio.disabled = !showOvertime;
+            });
         }
 
         if (this.hasFinishOnlyTarget) {

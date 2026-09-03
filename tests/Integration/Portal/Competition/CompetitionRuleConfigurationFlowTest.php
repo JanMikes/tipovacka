@@ -76,7 +76,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         self::assertStringContainsString('Tip domácí', $html);
         self::assertStringContainsString('Správný tip domácího týmu', $html);
         self::assertStringContainsString('bonus za obě uhodnutá skóre', $html);
-        self::assertStringContainsString('Celkové skóre po prodloužení / penaltách', $html);
+        self::assertStringContainsString('Vítěz po prodloužení / penaltách', $html);
 
         // The two new period rules render here too, and period_tendency is kept.
         self::assertStringContainsString('Tip domácí v části zápasu', $html);

@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
+use App\Enum\MatchSide;
 use App\Enum\SportMatchState;
 use App\Event\GuessesEvaluatedForMatch;
 use App\Event\SportMatchCancelled;
@@ -20,6 +21,7 @@ use App\Event\SportMatchUpdated;
 use App\Exception\InvalidScore;
 use App\Exception\SportMatchCannotBeEdited;
 use App\Exception\SportMatchInvalidTransition;
+use App\Value\OvertimeOutcome;
 use App\Value\PeriodScores;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -84,8 +86,10 @@ class SportMatch implements EntityWithEvents, SoftDeletable
     private ?array $periodScoresData = null;
 
     /**
-     * Final score AFTER prolongation/shootout (home side). Settable only when the
-     * regular score is a draw; the regular score remains the primary result.
+     * Who won after extra time / a shootout, stored as the regular-time draw
+     * plus ONE goal for the winner (2:2 → 3:2 / 2:3) — never a real score, see
+     * Value\OvertimeOutcome. Settable only when the regular score is a draw;
+     * the regular score remains the primary result.
      */
     #[ORM\Column(nullable: true)]
     public private(set) ?int $overtimeHomeScore = null;
@@ -103,6 +107,14 @@ class SportMatch implements EntityWithEvents, SoftDeletable
 
     public bool $hasOvertimeScore {
         get => null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore;
+    }
+
+    /** Who won after extra time / a shootout; null when the match was not decided that way. */
+    public ?MatchSide $overtimeWinner {
+        get => null === $this->homeScore || null === $this->awayScore
+            || null === $this->overtimeHomeScore || null === $this->overtimeAwayScore
+            ? null
+            : OvertimeOutcome::fromScores($this->homeScore, $this->awayScore, $this->overtimeHomeScore, $this->overtimeAwayScore)?->winner;
     }
 
     public bool $isScheduled {
@@ -320,14 +332,14 @@ class SportMatch implements EntityWithEvents, SoftDeletable
                 throw InvalidScore::overtimeWithoutDraw();
             }
 
-            // The overtime score is the FINAL result incl. prolongation/shootout:
-            // it must decide the match and can never undo regular-time goals.
-            if ($overtimeHomeScore === $overtimeAwayScore) {
-                throw InvalidScore::overtimeDraw();
+            if (!$this->matchSource->hasOvertime) {
+                throw InvalidScore::overtimeNotPlayedInSource();
             }
 
-            if ($overtimeHomeScore < $homeScore || $overtimeAwayScore < $awayScore) {
-                throw InvalidScore::overtimeBelowRegular();
+            // The pair is not a score: it is the draw plus ONE goal for the
+            // winner (2:2 → 3:2 / 2:3) — see Value\OvertimeOutcome.
+            if (null === OvertimeOutcome::fromScores($homeScore, $awayScore, $overtimeHomeScore, $overtimeAwayScore)) {
+                throw InvalidScore::overtimeNotDrawPlusOne();
             }
         }
 

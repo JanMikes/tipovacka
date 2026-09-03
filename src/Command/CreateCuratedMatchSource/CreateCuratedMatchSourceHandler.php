@@ -43,6 +43,7 @@ final readonly class CreateCuratedMatchSourceHandler
             startAt: $command->startAt,
             endAt: $command->endAt,
             createdAt: $now,
+            hasOvertime: $command->hasOvertime,
         );
 
         $this->matchSourceRepository->save($matchSource);

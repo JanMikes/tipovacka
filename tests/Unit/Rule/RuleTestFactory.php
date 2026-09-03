@@ -53,6 +53,7 @@ final class RuleTestFactory
             startAt: null,
             endAt: null,
             createdAt: self::now(),
+            hasOvertime: true,
         );
         $matchSource->popEvents();
 

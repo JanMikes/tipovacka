@@ -43,6 +43,7 @@ final class AdminUpdateMatchSourceController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
+                hasOvertime: $formData->hasOvertime,
             ));
 
             $this->addFlash('success', 'Zdroj zápasů byl uložen.');

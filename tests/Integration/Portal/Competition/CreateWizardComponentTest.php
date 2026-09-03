@@ -110,6 +110,7 @@ final class CreateWizardComponentTest extends WebTestCase
             ->set('name', 'Hokej od začátku')
             ->set('fromScratch', true)
             ->set('sportId', Sport::HOCKEY_ID)
+            ->set('hasOvertime', true) // play-off: a draw goes on to overtime / shootout
             ->call('next')   // → rules
             ->call('next')   // → invites
             ->call('next')   // → support
@@ -123,6 +124,7 @@ final class CreateWizardComponentTest extends WebTestCase
         $competition = $this->competitionByName($client, 'Hokej od začátku');
         self::assertSame(MatchSourceKind::Private, $competition->headlineSource->kind);
         self::assertSame('hockey', $competition->headlineSource->sport->code);
+        self::assertTrue($competition->headlineSource->hasOvertime);
         self::assertSame(CompetitionMonetization::Boosts, $competition->monetization);
         self::assertCount(1, $this->memberships($client, $competition->id));
 
@@ -494,7 +496,7 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertStringContainsString('Chcete tipovat také střelce utkání?', $html);
 
         // ONE combined „po prodloužení / penaltách" entry — PP and PEN are not split.
-        self::assertSame(1, substr_count($html, 'Celkové skóre po prodloužení / penaltách'));
+        self::assertSame(1, substr_count($html, 'Vítěz po prodloužení / penaltách'));
         self::assertStringNotContainsString('po PEN', $html);
 
         // Fantasy is deferred out of the wizard entirely.

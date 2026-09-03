@@ -178,9 +178,9 @@ final class SubmitMemberTipsBatchController extends AbstractController
                     // The batch page edits only the main score + periods; the
                     // overtime and scorer parts of a full-replace update are
                     // passed through untouched from the existing guess. The OT
-                    // pair travels only while still valid against the NEW tip,
+                    // pair travels only while re-derived for the NEW tip (the winner pick survives a corrected draw),
                     // else it is dropped (consistent with the non-draw drop).
-                    $carryOvertime = $features->overtimeTip && $existing->overtimeTipValidFor($homeScore, $awayScore);
+                    $carriedOvertime = $features->overtimeTip ? $existing->overtimeTipFor($homeScore, $awayScore) : null;
 
                     $this->commandBus->dispatch(new UpdateGuessOnBehalfCommand(
                         actingUserId: $user->id,
@@ -188,8 +188,8 @@ final class SubmitMemberTipsBatchController extends AbstractController
                         homeScore: $homeScore,
                         awayScore: $awayScore,
                         periodScores: $periodScores,
-                        overtimeHomeScore: $carryOvertime ? $existing->overtimeHomeScore : null,
-                        overtimeAwayScore: $carryOvertime ? $existing->overtimeAwayScore : null,
+                        overtimeHomeScore: $carriedOvertime[0] ?? null,
+                        overtimeAwayScore: $carriedOvertime[1] ?? null,
                         scorers: $features->scorerTips ? $this->scorerWriter->inputsFor($existing) : [],
                     ));
                 }

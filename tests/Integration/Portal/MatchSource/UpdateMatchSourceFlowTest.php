@@ -27,6 +27,7 @@ final class UpdateMatchSourceFlowTest extends WebTestCase
 
         $client->submitForm('Uložit změny', [
             'match_source_form[name]' => 'Upravený turnaj',
+            'match_source_form[hasOvertime]' => '1',
         ]);
 
         self::assertResponseRedirects('/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID);
@@ -35,5 +36,6 @@ final class UpdateMatchSourceFlowTest extends WebTestCase
         $matchSource = $em->find(MatchSource::class, Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID));
         self::assertInstanceOf(MatchSource::class, $matchSource);
         self::assertSame('Upravený turnaj', $matchSource->name);
+        self::assertTrue($matchSource->hasOvertime);
     }
 }

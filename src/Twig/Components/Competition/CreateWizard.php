@@ -360,6 +360,7 @@ final class CreateWizard extends AbstractController
                 sportId: $ownMatchesFirst ? Uuid::fromString($this->sportId) : null,
                 fromScratch: $ownMatchesFirst,
                 withPin: $this->withPin,
+                ownMatchesHaveOvertime: $ownMatchesFirst && $this->hasOvertime,
                 monetization: CompetitionMonetization::from($this->monetization),
                 selectionMode: $first->selectionMode,
                 includePlayoff: $first->includePlayoff,

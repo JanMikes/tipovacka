@@ -2,10 +2,10 @@
     Wtips dark score-input block for a single match guess (Live Component).
     Props (via `this`): sportMatch, competitionId, isLocked, isWaiting, opensAt, openingNote,
     existingGuess, hasExistingGuess,
-    features (per-competition rule enablement), sport, periodNumbers, showOvertimeInputs,
+    features (per-competition rule enablement), sport, periodNumbers, showOvertimeWinnerChoice,
     scorerOptionGroups, selectedScorers.
-    Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeHomeScore,
-    overtimeAwayScore, scorersJson (hidden, written by the scorer-picker controller).
+    Writable models: homeScore, awayScore, period{1..3}{Home,Away}, overtimeWinner
+    ('' / 'home' / 'away'), scorersJson (hidden, written by the scorer-picker controller).
     Caller can override the wrapper via class="..."; `:bare="true"` drops the component's
     own card chrome entirely (B19 — for call sites that already render it inside a card),
     and `:showTeamLabels="false"` makes the per-input team labels `sr-only` (item 22 — the
@@ -58,9 +58,9 @@
                         {% for p in locked_guess.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %}
                     </p>
                 {% endif %}
-                {% if locked_guess.hasOvertimeTip %}
+                {% if locked_guess.overtimeWinner is not null %}
                     <p class="guess-locked-detail">
-                        Po prodloužení: {{ locked_guess.overtimeHomeScore }}:{{ locked_guess.overtimeAwayScore }}
+                        Po prodloužení / penaltách: {{ locked_guess.overtimeWinner.value == 'home' ? this.sportMatch.homeTeam.name : this.sportMatch.awayTeam.name }}
                     </p>
                 {% endif %}
                 {% if locked_guess.scorers|length > 0 %}
@@ -184,32 +184,32 @@
                 </fieldset>
             {% endif %}
 
-            {# ── Overtime tip (revealed reactively when the main tip is a draw) ── #}
-            {% if this.showOvertimeInputs %}
+            {# ── Overtime winner (revealed reactively when the main tip is a draw).
+                  Not a second score: the tip is „remíza X:X a vyhraje A"; the stored
+                  pair (draw plus one goal for the winner) is derived server-side. ── #}
+            {% if this.showOvertimeWinnerChoice %}
                 <fieldset class="mt-4 rounded-lg border border-accent-400/20 bg-accent-500/[0.05] p-3">
-                    <legend class="field-label px-1">Po prodloužení / nájezdech</legend>
-                    <p class="mb-2 text-xs text-white/50">Tipujete remízu — jak zápas skončí po prodloužení? Remíza v základní hrací době zůstává hlavním tipem.</p>
-                    <div class="flex items-center gap-3">
-                        <span class="w-24 shrink-0 text-sm text-white/70">Konečný stav</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="99"
-                            data-model="overtimeHomeScore"
-                            value="{{ overtimeHomeScore ?? '' }}"
-                            class="input w-16 text-center"
-                            aria-label="Po prodloužení – domácí"
-                        />
-                        <span class="text-white/40">:</span>
-                        <input
-                            type="number"
-                            min="0"
-                            max="99"
-                            data-model="overtimeAwayScore"
-                            value="{{ overtimeAwayScore ?? '' }}"
-                            class="input w-16 text-center"
-                            aria-label="Po prodloužení – hosté"
-                        />
+                    <legend class="field-label px-1">Po prodloužení / penaltách</legend>
+                    <p class="mb-2 text-xs text-white/50">Tipujete remízu {{ homeScore }}:{{ awayScore }} — kdo nakonec vyhraje v prodloužení nebo na penalty? Remíza v základní hrací době zůstává hlavním tipem.</p>
+                    <div class="flex flex-wrap gap-2">
+                        {% for option in [
+                            {value: '', label: 'Bez tipu'},
+                            {value: 'home', label: this.sportMatch.homeTeam.name},
+                            {value: 'away', label: this.sportMatch.awayTeam.name},
+                        ] %}
+                            <label class="cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="overtimeWinner-{{ this.competitionId }}-{{ this.sportMatch.id.toRfc4122 }}"
+                                    value="{{ option.value }}"
+                                    data-model="overtimeWinner"
+                                    class="peer sr-only"
+                                    {{ overtimeWinner == option.value ? 'checked' }}
+                                    aria-label="Po prodloužení – {{ option.label }}"
+                                />
+                                <span class="inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-semibold text-white/60 transition-colors peer-checked:border-accent-400 peer-checked:bg-accent-500/15 peer-checked:text-white">{{ option.label }}</span>
+                            </label>
+                        {% endfor %}
                     </div>
                 </fieldset>
             {% endif %}

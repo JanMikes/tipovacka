@@ -27,6 +27,9 @@ final class MatchSourceFormData
 
     public ?\DateTimeImmutable $endAt = null;
 
+    /** Cups / play-offs: a drawn match may go on to extra time or penalties. */
+    public bool $hasOvertime = false;
+
     /** Optional „Rovnou vytvořit globální soutěž" step (admin curated create only). */
     public bool $createGlobalCompetition = false;
 
@@ -46,6 +49,7 @@ final class MatchSourceFormData
         $formData->description = $matchSource->description;
         $formData->startAt = $matchSource->startAt;
         $formData->endAt = $matchSource->endAt;
+        $formData->hasOvertime = $matchSource->hasOvertime;
 
         return $formData;
     }

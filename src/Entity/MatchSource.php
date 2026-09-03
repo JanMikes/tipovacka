@@ -40,6 +40,15 @@ class MatchSource implements EntityWithEvents, SoftDeletable
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $endAt;
 
+    /**
+     * Whether a drawn match in this zdroj can go on to extra time / penalties
+     * (cups, play-offs, knockout ties). Off = a regular-time draw is always the
+     * final result: the organizer is never asked who won afterwards and the
+     * players get no winner pick, whatever a soutěž's rules say.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $hasOvertime = false;
+
     #[ORM\Column]
     public private(set) \DateTimeImmutable $updatedAt;
 
@@ -100,11 +109,13 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         ?\DateTimeImmutable $endAt,
         #[ORM\Column]
         private(set) \DateTimeImmutable $createdAt,
+        bool $hasOvertime = false,
     ) {
         $this->name = $name;
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
+        $this->hasOvertime = $hasOvertime;
         $this->updatedAt = $this->createdAt;
 
         $this->recordThat(new MatchSourceCreated(
@@ -121,12 +132,14 @@ class MatchSource implements EntityWithEvents, SoftDeletable
         ?string $description,
         ?\DateTimeImmutable $startAt,
         ?\DateTimeImmutable $endAt,
+        bool $hasOvertime,
         \DateTimeImmutable $now,
     ): void {
         $this->name = $name;
         $this->description = $description;
         $this->startAt = $startAt;
         $this->endAt = $endAt;
+        $this->hasOvertime = $hasOvertime;
         $this->updatedAt = $now;
 
         $this->recordThat(new MatchSourceUpdated(

@@ -6,10 +6,12 @@ namespace App\Entity;
 
 use App\Entity\Concerns\SoftDeletable;
 use App\Entity\Concerns\SoftDeletes;
+use App\Enum\MatchSide;
 use App\Event\GuessSubmitted;
 use App\Event\GuessUpdated;
 use App\Event\GuessVoided;
 use App\Exception\InvalidGuessScore;
+use App\Value\OvertimeOutcome;
 use App\Value\PeriodScores;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -44,9 +46,9 @@ class Guess implements EntityWithEvents, SoftDeletable
     private ?array $periodScoresData = null;
 
     /**
-     * Tip on the final score AFTER prolongation/shootout (home side). Allowed
-     * only when the main tip is a draw; mirrors SportMatch overtime semantics
-     * (must not be a draw, each side ≥ the regular tip).
+     * Who the player says wins after extra time / a shootout, stored like the
+     * match side: the tipped draw plus ONE goal for the winner (2:2 → 3:2 /
+     * 2:3), see Value\OvertimeOutcome. Allowed only when the main tip is a draw.
      */
     #[ORM\Column(nullable: true)]
     public private(set) ?int $overtimeHomeScore = null;
@@ -76,22 +78,31 @@ class Guess implements EntityWithEvents, SoftDeletable
         get => null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore;
     }
 
+    /** Who the tip says wins after extra time / a shootout; null without an overtime tip. */
+    public ?MatchSide $overtimeWinner {
+        get => null === $this->overtimeHomeScore || null === $this->overtimeAwayScore
+            ? null
+            : OvertimeOutcome::fromScores($this->homeScore, $this->awayScore, $this->overtimeHomeScore, $this->overtimeAwayScore)?->winner;
+    }
+
     /**
-     * Whether the stored overtime tip is still valid for a NEW main tip.
-     * Partial UIs (batch pages, on-behalf forms) use this to decide if the OT
-     * pair can be passed through a full-replace update — the new tip must be a
-     * draw and each OT side must stay ≥ the new regular tip; otherwise the OT
-     * tip is dropped (consistent with the non-draw drop).
+     * The overtime pair this tip's winner pick yields for a NEW main tip, or
+     * null when there is no pick or the new tip is not a draw. Partial UIs
+     * (batch pages, on-behalf forms) pass the untouched pick through a
+     * full-replace update with this — „vyhraje A" survives a corrected draw
+     * score (1:1 → 2:2) and drops with a non-draw.
+     *
+     * @return array{int, int}|null
      */
-    public function overtimeTipValidFor(int $homeScore, int $awayScore): bool
+    public function overtimeTipFor(int $homeScore, int $awayScore): ?array
     {
-        if (null === $this->overtimeHomeScore || null === $this->overtimeAwayScore) {
-            return false;
+        $winner = $this->overtimeWinner;
+
+        if (null === $winner || $homeScore !== $awayScore || !$this->sportMatch->matchSource->hasOvertime) {
+            return null;
         }
 
-        return $homeScore === $awayScore
-            && $this->overtimeHomeScore >= $homeScore
-            && $this->overtimeAwayScore >= $awayScore;
+        return (new OvertimeOutcome($winner))->scoreAfter($homeScore, $awayScore);
     }
 
     public function __construct(
@@ -237,15 +248,14 @@ class Guess implements EntityWithEvents, SoftDeletable
                 throw InvalidGuessScore::overtimeWithoutDraw();
             }
 
-            // Mirror of SportMatch semantics: the overtime tip is the FINAL
-            // result incl. prolongation/shootout — it must decide the match and
-            // can never undo regular-time goals.
-            if ($overtimeHomeScore === $overtimeAwayScore) {
-                throw InvalidGuessScore::overtimeDraw();
+            if (!$this->sportMatch->matchSource->hasOvertime) {
+                throw InvalidGuessScore::overtimeNotPlayedInSource();
             }
 
-            if ($overtimeHomeScore < $homeScore || $overtimeAwayScore < $awayScore) {
-                throw InvalidGuessScore::overtimeBelowRegular();
+            // Mirror of SportMatch semantics: the pair is not a score, it is
+            // the draw plus ONE goal for the winner — see Value\OvertimeOutcome.
+            if (null === OvertimeOutcome::fromScores($homeScore, $awayScore, $overtimeHomeScore, $overtimeAwayScore)) {
+                throw InvalidGuessScore::overtimeNotDrawPlusOne();
             }
         }
     }

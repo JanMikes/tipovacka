@@ -78,6 +78,9 @@ is built by `doctrine:schema:create`, which skips the migration's seed row).
 | `PRIVATE_SOURCE_*` | `019aaaaa-0000-7000-8000-000000000002` | `Chlapi u piva`     | private   | VERIFIED_USER |
 
 Both use sport football, `description/startAt/endAt = null`, not completed, not deleted.
+`PUBLIC_SOURCE` plays extra time (`hasOvertime = true` — a knockout competition, so the
+overtime winner pick / result question exist on its matches); `PRIVATE_SOURCE` does not
+(`hasOvertime = false` — a draw is final, no overtime question anywhere).
 (The constants keep the historical `PUBLIC_/PRIVATE_` prefixes; `PUBLIC_SOURCE` is the
 curated one.)
 

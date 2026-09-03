@@ -54,7 +54,7 @@ final readonly class RulePresetProvider
         PeriodHomeGoalsRule::IDENTIFIER => ['label' => 'Tip domácí v části zápasu', 'sub' => 'Trefený počet gólů domácích v poločase či třetině'],
         PeriodTendencyRule::IDENTIFIER => ['label' => 'Tendence části zápasu', 'sub' => 'Správný vítěz nebo remíza části (bez přesného skóre)'],
         ScorerHitRule::IDENTIFIER => ['label' => 'Trefený střelec', 'sub' => 'Body za každého správně tipnutého střelce'],
-        OvertimeExactRule::IDENTIFIER => ['label' => 'Celkové skóre po prodloužení / penaltách', 'sub' => 'Trefený konečný stav po prodloužení či penaltách, když zápas skončil v základní hrací době remízou'],
+        OvertimeExactRule::IDENTIFIER => ['label' => 'Vítěz po prodloužení / penaltách', 'sub' => 'Trefený vítěz po prodloužení či penaltách, když zápas skončil v základní hrací době remízou. Nabízí se jen u zdrojů zápasů, kde se prodloužení hraje'],
     ];
 
     public function __construct(

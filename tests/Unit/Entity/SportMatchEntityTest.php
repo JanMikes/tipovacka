@@ -10,6 +10,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\Team;
 use App\Entity\User;
+use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
 use App\Enum\SportMatchState;
 use App\Event\SportMatchCancelled;
@@ -69,6 +70,7 @@ final class SportMatchEntityTest extends TestCase
             startAt: null,
             endAt: null,
             createdAt: $this->now,
+            hasOvertime: true,
         );
         $matchSource->popEvents();
 
@@ -591,17 +593,45 @@ final class SportMatchEntityTest extends TestCase
         $match = $this->makeMatch();
 
         $this->expectException(InvalidScore::class);
-        $this->expectExceptionMessage('Skóre po prodloužení nemůže být remíza.');
+        $this->expectExceptionMessage('remíza plus jeden gól pro vítěze');
         $match->setFinalScore(2, 2, null, 3, 3, $this->now);
     }
 
-    public function testOvertimeCannotBeBelowRegularScore(): void
+    public function testOvertimeRefusedWhenTheZdrojPlaysNoOvertime(): void
     {
+        $match = $this->makeMatch();
+        $match->matchSource->updateDetails('Liga', null, null, null, false, $this->now);
+
+        $this->expectException(InvalidScore::class);
+        $this->expectExceptionMessage('prodloužení nehraje');
+        $match->setFinalScore(2, 2, null, 3, 2, $this->now);
+    }
+
+    public function testOvertimeMustBeTheDrawPlusOneGoalForTheWinner(): void
+    {
+        // 2:2 → 4:2 is a real extra-time score, but the app stores WHO WON,
+        // not how: only 3:2 / 2:3 are legal (Value\OvertimeOutcome).
         $match = $this->makeMatch();
 
         $this->expectException(InvalidScore::class);
-        $this->expectExceptionMessage('Skóre po prodloužení nemůže být nižší než skóre v základní hrací době.');
-        $match->setFinalScore(2, 2, null, 3, 1, $this->now);
+        $this->expectExceptionMessage('remíza plus jeden gól pro vítěze');
+        $match->setFinalScore(2, 2, null, 4, 2, $this->now);
+    }
+
+    public function testOvertimeWinnerIsReadBackFromTheStoredPair(): void
+    {
+        $match = $this->makeMatch();
+        $match->popEvents();
+
+        self::assertNull($match->overtimeWinner);
+
+        $match->setFinalScore(2, 2, null, 2, 3, $this->now);
+
+        self::assertSame(MatchSide::Away, $match->overtimeWinner);
+
+        $match->setFinalScore(2, 2, null, null, null, $this->now);
+
+        self::assertNull($match->overtimeWinner);
     }
 
     // ── S05: live score updates ─────────────────────────────────────────

@@ -20,6 +20,7 @@ use App\Service\Competition\CompetitionGuessFeatures;
 use App\Service\Competition\GuessFeatures;
 use App\Service\EffectiveTipDeadlineResolver;
 use App\Value\GuessScorerInput;
+use App\Value\OvertimeOutcome;
 use App\Value\PeriodScores;
 use App\Value\TipWindow;
 use Psr\Clock\ClockInterface;
@@ -125,15 +126,14 @@ final class GuessSubmitForm
     #[Assert\LessThanOrEqual(99)]
     public ?int $period3Away = null;
 
+    /**
+     * Who wins after extra time / penalties when the main tip is a draw:
+     * '' (no pick), 'home' or 'away'. The stored pair is derived (the draw
+     * plus one goal for the winner) — see Value\OvertimeOutcome.
+     */
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
-    public ?int $overtimeHomeScore = null;
-
-    #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
-    public ?int $overtimeAwayScore = null;
+    #[Assert\Choice(choices: ['', 'home', 'away'])]
+    public string $overtimeWinner = '';
 
     /** JSON list of {side: 'home'|'away', name: string} written by the scorer-picker Stimulus controller. */
     #[LiveProp(writable: true)]
@@ -169,8 +169,7 @@ final class GuessSubmitForm
 
         $this->homeScore = $existing->homeScore;
         $this->awayScore = $existing->awayScore;
-        $this->overtimeHomeScore = $existing->overtimeHomeScore;
-        $this->overtimeAwayScore = $existing->overtimeAwayScore;
+        $this->overtimeWinner = $existing->overtimeWinner->value ?? '';
 
         $periods = $existing->periodScores;
 
@@ -274,8 +273,13 @@ final class GuessSubmitForm
         get => range(1, min($this->sport->periodCount, self::MAX_RENDERED_PERIODS));
     }
 
-    public bool $showOvertimeInputs {
+    /**
+     * The „kdo vyhraje po prodloužení" radio: only in a soutěž that scores it,
+     * only for a zdroj that plays extra time at all, and only on a drawn tip.
+     */
+    public bool $showOvertimeWinnerChoice {
         get => $this->features->overtimeTip
+            && $this->sportMatch->matchSource->hasOvertime
             && null !== $this->homeScore
             && $this->homeScore === $this->awayScore;
     }
@@ -382,11 +386,12 @@ final class GuessSubmitForm
                 return; // errorMessage set.
             }
 
-            // The overtime tip travels only while the inputs are visible (rule
-            // enabled + draw tipped) — stale values from a previously tipped
+            // The winner pick travels only while the choice is visible (rule
+            // enabled + draw tipped) — a stale pick from a previously tipped
             // draw must never reach the handler.
-            $overtimeHome = $this->showOvertimeInputs ? $this->overtimeHomeScore : null;
-            $overtimeAway = $this->showOvertimeInputs ? $this->overtimeAwayScore : null;
+            $overtimePair = $this->showOvertimeWinnerChoice && '' !== $this->overtimeWinner
+                ? (new OvertimeOutcome(MatchSide::from($this->overtimeWinner)))->scoreAfter($homeScore, $awayScore)
+                : null;
 
             if (null === $existing) {
                 $this->dispatchCommand(new SubmitGuessCommand(
@@ -396,8 +401,8 @@ final class GuessSubmitForm
                     homeScore: $homeScore,
                     awayScore: $awayScore,
                     periodScores: $periodScores,
-                    overtimeHomeScore: $overtimeHome,
-                    overtimeAwayScore: $overtimeAway,
+                    overtimeHomeScore: $overtimePair[0] ?? null,
+                    overtimeAwayScore: $overtimePair[1] ?? null,
                     scorers: $scorers,
                 ));
                 $this->successMessage = 'Tip uložen.';
@@ -408,8 +413,8 @@ final class GuessSubmitForm
                     homeScore: $homeScore,
                     awayScore: $awayScore,
                     periodScores: $periodScores,
-                    overtimeHomeScore: $overtimeHome,
-                    overtimeAwayScore: $overtimeAway,
+                    overtimeHomeScore: $overtimePair[0] ?? null,
+                    overtimeAwayScore: $overtimePair[1] ?? null,
                     scorers: $scorers,
                 ));
                 $this->successMessage = 'Tip upraven.';

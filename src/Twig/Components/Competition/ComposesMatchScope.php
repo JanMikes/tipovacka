@@ -68,6 +68,10 @@ trait ComposesMatchScope
     #[LiveProp(writable: true)]
     public string $sportId = Sport::FOOTBALL_ID;
 
+    /** From-scratch zdroj only: a drawn match may go on to extra time / penalties (cups, play-offs). */
+    #[LiveProp(writable: true)]
+    public bool $hasOvertime = false;
+
     #[LiveProp(writable: true)]
     public string $sourceId = '';
 
