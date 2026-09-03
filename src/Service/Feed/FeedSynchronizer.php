@@ -258,7 +258,7 @@ final readonly class FeedSynchronizer
         match ($snapshot->status) {
             FeedMatchStatus::Postponed => $match->postponeTo($snapshot->kickoffUtc, $now),
             FeedMatchStatus::Live => $match->beginLive($now),
-            FeedMatchStatus::Finished => $this->writeFinalScore($match, $snapshot, $now),
+            FeedMatchStatus::Finished => $this->writeFinalScore($match, $snapshot, $now, $result),
             default => null,
         };
     }
@@ -390,7 +390,7 @@ final readonly class FeedSynchronizer
         $wasFinished = $match->isFinished;
 
         if ($apply) {
-            $this->writeFinalScore($match, $snapshot, $now);
+            $this->writeFinalScore($match, $snapshot, $now, $result);
         }
 
         $wasFinished ? $result->addCorrected($snapshot->label()) : $result->addFinished($snapshot->label());
@@ -438,8 +438,16 @@ final readonly class FeedSynchronizer
         ]);
     }
 
-    private function writeFinalScore(SportMatch $match, MatchSnapshot $snapshot, \DateTimeImmutable $now): void
+    private function writeFinalScore(SportMatch $match, MatchSnapshot $snapshot, \DateTimeImmutable $now, FeedSyncResult $result): void
     {
+        if ($this->overtimeIsImpossibleHere($match, $snapshot)) {
+            // Reported from the WRITE path on purpose, so it is said once when
+            // the result lands instead of on every five-minute poll: the pair is
+            // dropped identically in finalStateEquals(), so the next pass reads
+            // as unchanged and stays silent.
+            $result->addOvertimeNotPlayed($snapshot->label());
+        }
+
         $overtime = $this->overtimeToWrite($match, $snapshot);
 
         $match->setFinalScore(
@@ -487,8 +495,10 @@ final readonly class FeedSynchronizer
      */
     private function overtimeToWrite(SportMatch $match, MatchSnapshot $snapshot): ?array
     {
-        if (null !== $snapshot->overtimeHomeScore && null !== $snapshot->overtimeAwayScore) {
-            return [$snapshot->overtimeHomeScore, $snapshot->overtimeAwayScore];
+        $fromSnapshot = $this->snapshotOvertime($match, $snapshot);
+
+        if (null !== $fromSnapshot) {
+            return $fromSnapshot;
         }
 
         $winner = $match->overtimeWinner;
@@ -503,13 +513,46 @@ final readonly class FeedSynchronizer
     }
 
     /**
+     * The snapshot's own overtime pair, as far as this zdroj can hold one: null
+     * when the provider said nothing, and null on a zdroj that plays no
+     * prodloužení, where a draw IS the final result and the entity refuses the
+     * pair outright (InvalidScore::overtimeNotPlayedInSource).
+     *
+     * The drop happens HERE, once, and both the write and the equality check
+     * read it — otherwise a UEFA source whose „hraje se prodloužení" box is
+     * unticked would throw on every one of the 288 daily polls, or (had we only
+     * swallowed the write) report the same match as corrected for ever.
+     *
+     * @return array{int, int}|null
+     */
+    private function snapshotOvertime(SportMatch $match, MatchSnapshot $snapshot): ?array
+    {
+        if (null === $snapshot->overtimeHomeScore || null === $snapshot->overtimeAwayScore) {
+            return null;
+        }
+
+        return $match->matchSource->hasOvertime
+            ? [$snapshot->overtimeHomeScore, $snapshot->overtimeAwayScore]
+            : null;
+    }
+
+    /** Whether the feed reported a winner this zdroj is configured never to have. */
+    private function overtimeIsImpossibleHere(SportMatch $match, MatchSnapshot $snapshot): bool
+    {
+        return null !== $snapshot->overtimeHomeScore
+            && null !== $snapshot->overtimeAwayScore
+            && !$match->matchSource->hasOvertime;
+    }
+
+    /**
      * Whether a finished match already holds exactly this snapshot's result —
      * the guard that keeps repeated syncs from re-triggering evaluation
      * (every real write on a finished match fires SportMatchScoreUpdated,
      * which deletes and recomputes all evaluations). Periods and the overtime
-     * winner are compared only when the snapshot carries them (see
-     * periodScoresToWrite / overtimeToWrite), so a hand-entered value never
-     * reads as a correction on every poll.
+     * winner are compared only when the snapshot carries them AND this zdroj can
+     * hold them (see periodScoresToWrite / snapshotOvertime), so neither a
+     * hand-entered value nor a winner the zdroj plays no prodloužení for reads
+     * as a correction on every poll.
      */
     private function finalStateEquals(SportMatch $match, MatchSnapshot $snapshot): bool
     {
@@ -521,9 +564,10 @@ final readonly class FeedSynchronizer
             return false;
         }
 
-        if (null !== $snapshot->overtimeHomeScore && null !== $snapshot->overtimeAwayScore
-            && ($match->overtimeHomeScore !== $snapshot->overtimeHomeScore
-                || $match->overtimeAwayScore !== $snapshot->overtimeAwayScore)) {
+        $overtime = $this->snapshotOvertime($match, $snapshot);
+
+        if (null !== $overtime
+            && ($match->overtimeHomeScore !== $overtime[0] || $match->overtimeAwayScore !== $overtime[1])) {
             return false;
         }
 

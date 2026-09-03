@@ -25,7 +25,8 @@ use Symfony\Component\Uid\Uuid;
  * whole pipeline testable without a Console tester.
  *
  * Warnings (unpaired team names, statuses we refuse to guess, cancellations
- * awaiting confirmation, past fixtures we declined to import) are logged at
+ * awaiting confirmation, past fixtures we declined to import, an overtime winner
+ * a zdroj without prodloužení cannot hold) are logged at
  * warning level and reported; only real failures make {@see FeedSyncReport}
  * fail, because a missing team alias is hygiene, not an outage.
  */
@@ -154,6 +155,12 @@ final readonly class FeedSyncRunner
         if ([] !== $result->skippedPastKickoff) {
             $this->logger->warning('Feed listed matches that had already kicked off — not imported.', $context + [
                 'count' => count($result->skippedPastKickoff),
+            ]);
+        }
+
+        if ([] !== $result->overtimeNotPlayed) {
+            $this->logger->warning('Feed reported a winner after extra time on a zdroj that plays none — winner dropped, tick "hraje se prodloužení" if it should.', $context + [
+                'matches' => $result->overtimeNotPlayed,
             ]);
         }
 

@@ -149,8 +149,11 @@ plus ONE goal for the winner (`Value\OvertimeOutcome`), i.e. „who won", never 
 `FeedSynchronizer` treats a null overtime / period field in a snapshot as **unknown** and
 keeps a hand-entered winner or breakdown (re-derived for the snapshot's draw, dropped
 when the feed says the match was no draw). Whether a zdroj plays extra time at all is
-`MatchSource.hasOvertime`. Still pending: the UEFA adapter deriving the winner from
-`score.total` / `score.penalties` once a real shootout payload has been observed.
+`MatchSource.hasOvertime`. **DONE 2026-09-03**: the UEFA adapter derives the winner from
+`score.total` / `score.penalty` (see [Adapter 2](#adapter-2--uefa-one-get-per-soutěž) for the
+observed shapes), and the synchronizer drops a reported winner on a zdroj whose
+`hasOvertime` is off — reported as a warning, never an error, so one unticked checkbox
+cannot fail a five-minute cron.
 
 ### P0.7 — `MatchDataProvider` interface + snapshot DTOs
 
@@ -239,7 +242,7 @@ MSFL rounds every weekend):
 ## Open questions
 
 - FAČR API: timeline, terms, whether 1./2. liga are included (P0 items don't block on this).
-- AET/pens representation (P0.6) — needed before UCL/UEL knockouts, spring 2027.
+- ~~AET/pens representation (P0.6)~~ — decided and implemented 2026-09-03 (see P0.6).
 - Attribution placement for SoccersAPI (footer of match surfaces?) if it becomes Tier world.
 - Live in-play for CZ (FAČR tier is post-match only): acceptable for v1; if live UX is
   ever wanted for Chance Liga, that's a separate vendor decision — do not scrape for it.
@@ -377,13 +380,46 @@ objects (name, id, `goalType: SCORED`, `phase: SECOND_HALF`). So UEFA is a **ful
 provider — score *and* scorers — and its `id` (e.g. `2049167`) is byte-identical to the
 `externalId` already stored in prod.
 
-Unresolved: the exact strings for postponed/cancelled/live, and whether a shootout appears
-as `score.penalties` — no UEFA tie has gone to extra time yet this season. Which means:
+Still unresolved: the exact strings for postponed/cancelled/live — none has been served yet.
 
-> **P0.6 is decided (2026-09-03).** A shootout match arrives from the adapter as its
-> regular-time draw and is accepted; an admin records the winner on the result form and
-> the synchronizer keeps it on every later poll. Deriving it from the payload is the
-> remaining adapter step.
+### The score object, read live on 2026-09-03
+
+All 824 rows of the 2026/27 UCL (1) + UEL (14) + UECL (2019) seasons were pulled and their
+428 finished ones classified. A finished row's `score` holds `regular` + `total` +
+`aggregate`, and 21 of them additionally hold **`penalty`** — **singular**, not `penalties`
+as this doc previously guessed:
+
+| Key | What it is | Evidence |
+|---|---|---|
+| `score.regular` | THIS match's 90 minutes | every finished row |
+| `score.total` | THIS match's score **including extra time** | Pafos–Dinamo City `2049288` (UECL PO 2nd leg, 27 Aug): regular 2:2, **total 4:2** |
+| `score.penalty` | THIS match's shootout, only on the leg where it was taken | SK Rapid–Hearts `2049278` (26 Aug): regular 1:1, total 2:2, **penalty 3:4** |
+| `score.aggregate` | the **TIE** across both legs — never this match | Lech Poznań–Aarhus `2048731`: regular 0:3, total 1:4, aggregate 5:5 |
+
+Two fields look like the answer and are **not read**:
+
+- **`winner.aggregate`** decides the TIE and is repeated on **both legs**. Egnatia–Celje
+  `2048724` is a plain 3:3 FIRST leg (22 Jul) whose row already says
+  `WIN_ON_PENALTIES / Celje` — for a shootout taken five days later in the other leg.
+  Trusting it invents a winner for a match that drew. (21 of the 42 rows carrying
+  `WIN_ON_PENALTIES` are first legs with no shootout of their own.)
+- **`winner.match.reason`** is only ever `DRAW` or `WIN_REGULAR`, and describes the 90
+  minutes: all 112 regular-time draws say `DRAW`, the 11 that were then settled in extra
+  time included. It distinguishes nothing.
+
+So the adapter's rule is: a **finished, regular-time draw** takes the winner from this
+match's after-extra-time score, else from this match's shootout, else nothing. Counts in the
+sample: 11 draws settled in extra time, 10 on penalties (3 of them after a level extra
+time), 91 draws that stayed draws. A league-phase draw (Zrinjski–SK Rapid `2046402`, MD6,
+`score` = regular + total only) and a second leg settled on aggregate alone (Thun–Lech
+Poznań `2049242`, 2:2 with the tie 2:9) both correctly get **nothing**; so does a match won
+inside 90 minutes whose TIE went to penalties (Jablonec–Rangers `2049286`, 1:0 with a 4:3
+shootout in the row).
+
+The pair we store is never UEFA's: Pafos won 4:2 after extra time and the app records
+**3:2** — the draw plus one goal for the winner (`Value\OvertimeOutcome`). The seven rows
+above are trimmed verbatim into `tests/Unit/Service/Feed/payload/uefa-overtime-2026-09-03.json`
+and drive `UefaOvertimeWinnerTest`.
 
 ## Adapter 3 — Sportmonks (one GET per *poll*, not per source)
 
@@ -662,11 +698,11 @@ reason to drop the other ninety.
 
 ## Still open
 
-- **AET / penalty shootout — convention locked (2026-09-03), adapter mapping pending.** The
-  winner-plus-one pair is now enforced by `Value\OvertimeOutcome` and both entities, and the
-  synchronizer keeps a hand-entered winner across polls. The UEFA adapter still reports the
-  REGULAR score only; mapping `score.total` / `score.penalties` to a winner needs one real
-  shootout payload to confirm the field shapes.
+- ~~AET / penalty shootout — adapter mapping pending.~~ **RESOLVED 2026-09-03**: the field
+  shapes were read off 21 real shootouts and 11 real extra times (§Adapter 2), and
+  `UefaMatchDataProvider` now fills the winner in. FAČR's `(PK:x:y)` cell and Sportmonks'
+  equivalent stay unmapped — those adapters still report the regular score only, which
+  remains correct behaviour, not a bug.
 - **FAČR statuses not yet observed**: odložený zápas, kontumace, a real `(PK:x:y)`. Each will
   arrive as an `Unknown` in the sync report, and each is one line in the adapter's table.
 - **FAČR scorers** stay manual (the zápis needs a login). Promoting to the authenticated flow

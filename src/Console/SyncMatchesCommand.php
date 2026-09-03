@@ -99,6 +99,10 @@ final class SyncMatchesCommand extends Command
                 $output->writeln(sprintf('  <comment>unknown status: %s</comment>', $label));
             }
 
+            foreach ($result->overtimeNotPlayed as $label) {
+                $output->writeln(sprintf('  <comment>decided after extra time but the zdroj plays none — winner dropped: %s</comment>', $label));
+            }
+
             foreach ($result->cancelledReported as $label) {
                 $output->writeln(sprintf('  <comment>cancellation reported (manual action needed): %s</comment>', $label));
             }

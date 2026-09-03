@@ -11,6 +11,7 @@ use App\Enum\MatchEventType;
 use App\Enum\MatchSide;
 use App\Exception\FeedPayloadInvalid;
 use App\Value\MatchEventInput;
+use App\Value\OvertimeOutcome;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface as HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -26,9 +27,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * The endpoint returns a plain JSON array (no envelope, no pagination metadata),
  * so we page by offset until a short page comes back.
  *
- * A FULL provider: finished matches carry `score.regular` / `score.total` and a
- * `playerEvents.scorers[]` array, and the `id` is byte-identical to the
- * externalId already stored for these competitions.
+ * A FULL provider: finished matches carry `score.regular` / `score.total` /
+ * `score.penalty` and a `playerEvents.scorers[]` array, and the `id` is
+ * byte-identical to the externalId already stored for these competitions.
  */
 final readonly class UefaMatchDataProvider implements MatchDataProvider
 {
@@ -223,6 +224,9 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
         $rawStatus = is_string($row['status'] ?? null) ? $row['status'] : '';
         $status = $this->status($rawStatus);
         [$homeScore, $awayScore] = $this->regularScore($row);
+        $overtime = null !== $homeScore && null !== $awayScore
+            ? $this->overtimeWinner($row, $status, $homeScore, $awayScore)?->scoreAfter($homeScore, $awayScore)
+            : null;
 
         return new MatchSnapshot(
             externalId: (string) $externalId,
@@ -232,6 +236,8 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
             status: $status,
             homeScore: $homeScore,
             awayScore: $awayScore,
+            overtimeHomeScore: $overtime[0] ?? null,
+            overtimeAwayScore: $overtime[1] ?? null,
             events: $this->trustedEvents($this->events($row), $homeScore, $awayScore),
             round: $this->round($row),
             venue: $this->venue($row),
@@ -253,10 +259,9 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
 
     /**
      * The REGULAR-time score — the primary result every rule but `overtime_exact`
-     * scores. Extra time and shootouts live in `score.total` / `score.penalties`;
-     * mapping those onto the single combined overtime pair is a separate,
-     * deliberate step (see .docs/MATCH_DATA_FEEDS.md) and is NOT done here, so a
-     * knockout tie reports the 90-minute score and nothing invented.
+     * scores, and the one the app displays. Extra time and the shootout are read
+     * separately, as a WINNER, by overtimeWinner() below. Half a pair is no score
+     * (applyFinished rejects it either way), so it reads as unknown.
      *
      * @param array<mixed> $row
      *
@@ -264,22 +269,87 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
      */
     private function regularScore(array $row): array
     {
+        return $this->scorePair($row, 'regular') ?? [null, null];
+    }
+
+    /**
+     * Who won after extra time / penalties, or null for „this payload does not
+     * say" — which is what the synchronizer treats as unknown.
+     *
+     * Field shapes observed on the live endpoint on 2026-09-03, over all 428
+     * finished 2026/27 UCL+UEL+UECL rows (the doc records the matches):
+     *
+     *  - `score.regular` — THIS match's 90 minutes;
+     *  - `score.total` — THIS match's score including extra time (Pafos–Dinamo
+     *    City 2049288: regular 2:2, total 4:2, so Pafos won in the prolongation);
+     *  - `score.penalty` — SINGULAR, and only on the leg where the shootout was
+     *    actually taken (SK Rapid–Hearts 2049278: regular 1:1, total 2:2,
+     *    penalty 3:4);
+     *  - `score.aggregate` — the TIE across both legs. Never this match.
+     *
+     * Two things in the payload look like an answer and are not, so neither is
+     * read here. `winner.aggregate` decides the TIE and is repeated on BOTH legs:
+     * Egnatia–Celje (2048724) is a 3:3 FIRST leg already carrying
+     * `WIN_ON_PENALTIES / Celje` for a shootout taken five days later in Slovenia
+     * — trusting it would invent a winner for a match that simply drew. And
+     * `winner.match.reason` only ever says DRAW or WIN_REGULAR about the 90
+     * minutes (all 112 regular-time draws say DRAW, including the 11 that were
+     * then settled in extra time), so it distinguishes nothing.
+     *
+     * Hence: the winner is THIS match's after-extra-time score, else THIS match's
+     * shootout, else nothing. A league-phase draw (Zrinjski–SK Rapid 2046402) has
+     * neither and stays a draw; a second leg settled purely on aggregate
+     * (Thun–Lech Poznań 2049242, 2:2 with the tie 2:9) has neither either.
+     *
+     * @param array<mixed> $row
+     */
+    private function overtimeWinner(array $row, FeedMatchStatus $status, int $homeScore, int $awayScore): ?OvertimeOutcome
+    {
+        // Only a finished REGULAR-TIME DRAW can have one: a match won inside 90
+        // minutes keeps its winner even when the tie went to a shootout after it
+        // (Jablonec–Rangers 2049286 won 1:0 with a 4:3 shootout in the row).
+        if (FeedMatchStatus::Finished !== $status || $homeScore !== $awayScore) {
+            return null;
+        }
+
+        $total = $this->scorePair($row, 'total');
+
+        // Extra time only ever ADDS goals; a `total` below the regular score is
+        // not a score of this match and is not guessed at.
+        if (null !== $total && $total[0] >= $homeScore && $total[1] >= $awayScore && $total[0] !== $total[1]) {
+            return new OvertimeOutcome($total[0] > $total[1] ? MatchSide::Home : MatchSide::Away);
+        }
+
+        $penalty = $this->scorePair($row, 'penalty');
+
+        if (null !== $penalty && $penalty[0] !== $penalty[1]) {
+            return new OvertimeOutcome($penalty[0] > $penalty[1] ? MatchSide::Home : MatchSide::Away);
+        }
+
+        return null;
+    }
+
+    /**
+     * One `score.<key>` object as a home/away pair, or null when the payload has
+     * no complete one there.
+     *
+     * @param array<mixed> $row
+     *
+     * @return array{int, int}|null
+     */
+    private function scorePair(array $row, string $key): ?array
+    {
         $score = $row['score'] ?? null;
+        $pair = is_array($score) ? ($score[$key] ?? null) : null;
 
-        if (!is_array($score)) {
-            return [null, null];
+        if (!is_array($pair)) {
+            return null;
         }
 
-        $regular = $score['regular'] ?? null;
+        $home = $pair['home'] ?? null;
+        $away = $pair['away'] ?? null;
 
-        if (!is_array($regular)) {
-            return [null, null];
-        }
-
-        $home = $regular['home'] ?? null;
-        $away = $regular['away'] ?? null;
-
-        return [is_int($home) ? $home : null, is_int($away) ? $away : null];
+        return is_int($home) && is_int($away) ? [$home, $away] : null;
     }
 
     /**

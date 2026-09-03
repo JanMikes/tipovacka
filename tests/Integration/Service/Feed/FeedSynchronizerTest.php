@@ -437,6 +437,79 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         self::assertNull($this->findSynced()->overtimeWinner);
     }
 
+    /**
+     * The UEFA adapter now derives the winner from the payload, so a snapshot
+     * CAN carry the pair. On a zdroj that plays prodloužení it is simply the
+     * result — and the second poll of the same snapshot has to be a no-op, or
+     * every five minutes would delete and recompute the whole match's
+     * evaluations.
+     */
+    public function testAFeedReportedOvertimeWinnerIsStoredAndThenLeftAlone(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+
+        $decided = $this->snapshot(
+            status: FeedMatchStatus::Finished,
+            homeScore: 2,
+            awayScore: 2,
+            overtimeHomeScore: 2,
+            overtimeAwayScore: 3,
+        );
+
+        $result = $this->syncPublicSource([$decided]);
+
+        self::assertCount(1, $result->finished);
+        self::assertSame([], $result->overtimeNotPlayed);
+        $match = $this->findSynced();
+        self::assertSame([2, 2, 2, 3], [$match->homeScore, $match->awayScore, $match->overtimeHomeScore, $match->overtimeAwayScore]);
+        self::assertSame(MatchSide::Away, $match->overtimeWinner);
+
+        $again = $this->syncPublicSource([$decided]);
+
+        self::assertSame(1, $again->unchanged);
+        self::assertSame([], $again->corrected);
+    }
+
+    /**
+     * A curated zdroj whose „hraje se prodloužení" is off but whose feed serves
+     * knockout ties — the UEFA competitions serve both. The entity refuses the
+     * pair outright, so without dropping it here the source would throw on every
+     * one of its 288 daily polls. It is dropped, the score lands, and the report
+     * says so once — as a WARNING: the cron must not fail over a checkbox.
+     */
+    public function testAWinnerIsDroppedOnAZdrojThatPlaysNoOvertimeAndReportedOnce(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $this->withoutOvertime();
+
+        $decided = $this->snapshot(
+            status: FeedMatchStatus::Finished,
+            homeScore: 1,
+            awayScore: 1,
+            overtimeHomeScore: 2,
+            overtimeAwayScore: 1,
+        );
+
+        $result = $this->syncPublicSource([$decided]);
+
+        self::assertSame([], $result->errors, 'a checkbox must never fail the batch');
+        self::assertFalse($result->hasFailures);
+        self::assertTrue($result->hasWarnings);
+        self::assertCount(1, $result->overtimeNotPlayed);
+        self::assertCount(1, $result->finished);
+
+        $match = $this->findSynced();
+        self::assertSame([1, 1], [$match->homeScore, $match->awayScore]);
+        self::assertNull($match->overtimeWinner);
+
+        // Said once, when the result landed — the next poll is a plain no-op.
+        $again = $this->syncPublicSource([$decided]);
+
+        self::assertSame([], $again->overtimeNotPlayed);
+        self::assertSame([], $again->corrected);
+        self::assertSame(1, $again->unchanged);
+    }
+
     public function testCancellationIsReportedNotApplied(): void
     {
         $this->syncPublicSource([$this->scheduledSnapshot()]);
@@ -567,6 +640,8 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         ?int $homeScore = null,
         ?int $awayScore = null,
         ?array $periodScores = null,
+        ?int $overtimeHomeScore = null,
+        ?int $overtimeAwayScore = null,
         ?array $events = null,
         ?string $rawStatus = null,
     ): MatchSnapshot {
@@ -579,11 +654,28 @@ final class FeedSynchronizerTest extends IntegrationTestCase
             homeScore: $homeScore,
             awayScore: $awayScore,
             periodScores: $periodScores,
+            overtimeHomeScore: $overtimeHomeScore,
+            overtimeAwayScore: $overtimeAwayScore,
             events: $events,
             round: '1. kolo',
             venue: 'epet ARENA',
             rawStatus: $rawStatus,
         );
+    }
+
+    /** Turns „hraje se prodloužení" off on the fixture source (it ships on). */
+    private function withoutOvertime(): void
+    {
+        $source = $this->bindPublicSource();
+        $source->updateDetails(
+            name: $source->name,
+            description: $source->description,
+            startAt: $source->startAt,
+            endAt: $source->endAt,
+            hasOvertime: false,
+            now: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $source->popEvents();
     }
 
     private function findSynced(): SportMatch
