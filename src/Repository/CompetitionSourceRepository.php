@@ -118,6 +118,35 @@ class CompetitionSourceRepository
         return $map;
     }
 
+    /**
+     * How many zdroje the competition draws from, and how many of them play
+     * extra time — ONE statement, so a rule surface can say whether
+     * `overtime_exact` could ever score without hydrating the layer collection.
+     * Fed to {@see \App\Enum\OvertimeCoverage::fromCounts()}.
+     *
+     * @return array{total: int, withOvertime: int}
+     */
+    public function overtimeSourceCounts(Uuid $competitionId): array
+    {
+        /** @var array{total: int|string, withOvertime: int|string|null} $row */
+        $row = $this->entityManager->createQueryBuilder()
+            ->select(
+                'COUNT(cs.id) AS total',
+                'SUM(CASE WHEN ms.hasOvertime = true THEN 1 ELSE 0 END) AS withOvertime',
+            )
+            ->from(CompetitionSource::class, 'cs')
+            ->innerJoin('cs.matchSource', 'ms')
+            ->where('cs.competition = :competitionId')
+            ->setParameter('competitionId', $competitionId)
+            ->getQuery()
+            ->getSingleResult();
+
+        return [
+            'total' => (int) $row['total'],
+            'withOvertime' => (int) $row['withOvertime'],
+        ];
+    }
+
     /** The next free position in the competition's layer order. */
     public function nextPosition(Uuid $competitionId): int
     {

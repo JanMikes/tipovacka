@@ -157,4 +157,58 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         self::assertCount(1, $configurations);
         self::assertSame(20, $configurations[0]->points);
     }
+
+    /**
+     * An organizer may enable the overtime rule (the „Maxi" preset does) over
+     * zdroje that never play extra time, where it can never award a point. The
+     * rule is NOT hidden or auto-disabled for that — a soutěž can span several
+     * zdroje with different flags, and a flag can be switched on later — so the
+     * screen says so instead. VERIFIED_COMPETITION draws only from
+     * PRIVATE_SOURCE, whose hasOvertime is false.
+     */
+    public function testStrongOvertimeHintWhenNoZdrojPlaysExtraTime(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pravidla');
+
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString(
+            'Žádný ze zdrojů zápasů této soutěže nehraje prodloužení, takže by toto pravidlo nikdy nebodovalo. Prodloužení zapnete v nastavení zdroje zápasů.',
+            $html,
+        );
+        // The rule itself stays on offer — the hint is a caveat, not a removal.
+        self::assertStringContainsString('Vítěz po prodloužení / penaltách', $html);
+    }
+
+    /**
+     * PUBLIC_COMPETITION draws from PUBLIC_SOURCE, a knockout zdroj that does
+     * play extra time — there is nothing honest to warn about, so neither the
+     * strong nor the softer hint is rendered.
+     */
+    public function testNoOvertimeHintWhenEveryZdrojPlaysExtraTime(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/pravidla');
+
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+
+        self::assertStringContainsString('Vítěz po prodloužení / penaltách', $html);
+        self::assertStringNotContainsString('Žádný ze zdrojů zápasů této soutěže nehraje prodloužení', $html);
+        self::assertStringNotContainsString('Vítěze tipují hráči jen u zápasů ze zdrojů, které prodloužení hrají.', $html);
+    }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Twig\Components\Scoring;
 
+use App\Enum\OvertimeCoverage;
+use App\Rule\OvertimeExactRule;
 use App\Service\Scoring\RulePresetProvider;
 use Symfony\Component\Form\FormView;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
@@ -21,6 +23,13 @@ final class RuleFields
     public FormView $form;
 
     public bool $presetable = true;
+
+    /**
+     * How much of the soutěž's scope can go on to extra time, from
+     * {@see \App\Query\GetCompetitionRuleConfiguration\CompetitionRuleConfigurationResult}.
+     * Null on a surface that has no soutěž to ask (nothing is claimed then).
+     */
+    public ?OvertimeCoverage $overtimeCoverage = null;
 
     public function __construct(
         private readonly RulePresetProvider $rulePresetProvider,
@@ -62,5 +71,20 @@ final class RuleFields
      */
     public array $ruleCopy {
         get => $this->rulePresetProvider->copy();
+    }
+
+    /**
+     * Rule identifier → the caveat rendered under its copy. Only the overtime
+     * rule has one today, and its wording lives on {@see OvertimeCoverage} —
+     * shared with the create wizard, which renders the same map.
+     *
+     * @var array<string, string>
+     */
+    public array $ruleHints {
+        get {
+            $hint = $this->overtimeCoverage?->hint();
+
+            return null === $hint ? [] : [OvertimeExactRule::IDENTIFIER => $hint];
+        }
     }
 }

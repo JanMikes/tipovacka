@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Query\GetCompetitionRuleConfiguration;
 
+use App\Enum\OvertimeCoverage;
 use App\Repository\CompetitionRuleConfigurationRepository;
+use App\Repository\CompetitionSourceRepository;
 use App\Repository\GuessEvaluationRepository;
 use App\Rule\RuleRegistry;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -20,6 +22,7 @@ final readonly class GetCompetitionRuleConfigurationQuery
     public function __construct(
         private RuleRegistry $ruleRegistry,
         private CompetitionRuleConfigurationRepository $configurationRepository,
+        private CompetitionSourceRepository $sourceRepository,
         private GuessEvaluationRepository $evaluationRepository,
     ) {
     }
@@ -43,9 +46,14 @@ final readonly class GetCompetitionRuleConfigurationQuery
             );
         }
 
+        // Derived here rather than in Twig: whether the overtime rule could ever
+        // score is a fact about the soutěž's zdroje, not a rendering decision.
+        $overtimeCounts = $this->sourceRepository->overtimeSourceCounts($query->competitionId);
+
         return new CompetitionRuleConfigurationResult(
             items: $items,
             evaluationCount: $this->evaluationRepository->countForCompetition($query->competitionId),
+            overtimeCoverage: OvertimeCoverage::fromCounts($overtimeCounts['total'], $overtimeCounts['withOvertime']),
         );
     }
 }

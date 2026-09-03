@@ -654,6 +654,84 @@ final class CreateWizardComponentTest extends WebTestCase
         self::assertStringContainsString('Krok 1 ze 4', $html);
     }
 
+    /**
+     * The overtime rule is on offer whatever the košík holds — the „Maxi" preset
+     * turns it on — so step 2 says when the košík composed in step 1 could never
+     * make it score. A soutěž of nothing but its own matches is pointed back at
+     * the step that holds the switch, and flipping the switch clears the hint
+     * without leaving the step.
+     */
+    public function testFromScratchWithoutOvertimeIsWarnedOnTheRulesStep(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $withoutOvertime = (string) $component
+            ->set('name', 'Vlastní bez prodloužení')
+            ->set('fromScratch', true)
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Krok 2 ze 4', $withoutOvertime);
+        self::assertStringContainsString(
+            'Vlastní zápasy mají prodloužení vypnuté, zapnete ho v kroku Zápasy soutěže.',
+            $withoutOvertime,
+        );
+        // Never hidden, never auto-disabled — only annotated.
+        self::assertStringContainsString('Vítěz po prodloužení / penaltách', $withoutOvertime);
+
+        $withOvertime = (string) $component->set('hasOvertime', true)->render();
+
+        self::assertStringContainsString('Krok 2 ze 4', $withOvertime);
+        self::assertStringNotContainsString('Vlastní zápasy mají prodloužení vypnuté', $withOvertime);
+        self::assertStringNotContainsString('nehraje prodloužení', $withOvertime);
+    }
+
+    /** PUBLIC_SOURCE is a knockout zdroj that plays extra time — no caveat. */
+    public function testCuratedZdrojWithOvertimeGetsNoHintOnTheRulesStep(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Liga mistrů')
+            ->set('sourceId', AppFixtures::PUBLIC_SOURCE_ID)
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Krok 2 ze 4', $html);
+        self::assertStringContainsString('Vítěz po prodloužení / penaltách', $html);
+        self::assertStringNotContainsString('nehraje prodloužení', $html);
+        self::assertStringNotContainsString('Vlastní zápasy mají prodloužení vypnuté', $html);
+    }
+
+    /**
+     * A basketed zdroj that does not play extra time is not the wizard's own
+     * switch to flip, so the organizer is sent to that zdroj's settings instead.
+     * PRIVATE_SOURCE belongs to VERIFIED_USER and has hasOvertime off.
+     */
+    public function testBasketedZdrojWithoutOvertimeGetsTheZdrojWordedHint(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->user($client, AppFixtures::VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Competition:CreateWizard', [], $client);
+        $html = (string) $component
+            ->set('name', 'Chlapi u piva podruhé')
+            ->set('sourceId', AppFixtures::PRIVATE_SOURCE_ID)
+            ->call('next')
+            ->render();
+
+        self::assertStringContainsString('Krok 2 ze 4', $html);
+        self::assertStringContainsString(
+            'Žádný ze zdrojů zápasů této soutěže nehraje prodloužení, takže by toto pravidlo nikdy nebodovalo. Prodloužení zapnete v nastavení zdroje zápasů.',
+            $html,
+        );
+        self::assertStringNotContainsString('Vlastní zápasy mají prodloužení vypnuté', $html);
+    }
+
     // ---- helpers ----
 
     /** Renders step 2 („Pravidla") over a curated source. */

@@ -131,6 +131,17 @@ is not a score at all but the draw plus one goal for the winner (`Value\Overtime
 the winner pick is offered only where the zdroj plays extra time (`MatchSource.hasOvertime`,
 set on the wizard's from-scratch path and on the zdroj edit page). See DOMAIN.md §Scoring.
 
+Because the rule is offered whatever the košík holds, step 2 carries a hint next to it when
+the košík composed in step 1 could never make it score. Three states, resolved by
+`CreateWizard::$overtimeCoverage` over the basket (own matches answer with the `hasOvertime`
+LiveProp, every other layer with its zdroj's flag) and rendered through the shared
+`components/Scoring/_rule_hint.html.twig`, exactly as the post-creation rules screen renders
+it from `CompetitionRuleConfigurationResult.overtimeCoverage`. The copy lives in ONE place,
+`Enum\OvertimeCoverage`; a basket of nothing but the soutěž's own matches gets the wizard's
+own wording, pointing back at „Zápasy soutěže" rather than at a zdroj settings page that
+does not exist yet. The rule is never hidden and never auto-disabled — see DOMAIN.md
+§Scoring and the 2026-09-03 decision-log row.
+
 ## Playoff toggle — „Dohrávat turnaj?", inside the layer editor
 
 „Dohrávat turnaj?" (`includePlayoff`) sits in the zdroj editor, under the mode radios. It
