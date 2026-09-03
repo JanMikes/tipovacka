@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Query;
 
 use App\DataFixtures\AppFixtures;
+use App\Entity\Competition;
 use App\Entity\CompetitionRuleConfiguration;
+use App\Entity\CompetitionSource;
+use App\Entity\MatchSource;
+use App\Enum\OvertimeCoverage;
 use App\Query\GetCompetitionRuleConfiguration\GetCompetitionRuleConfiguration;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Uid\Uuid;
@@ -108,5 +112,65 @@ final class GetCompetitionRuleConfigurationQueryTest extends IntegrationTestCase
         ));
 
         self::assertSame(0, $withoutEvaluation->evaluationCount);
+    }
+
+    /**
+     * Whether the overtime rule could ever score is a fact about the soutěž's
+     * zdroje, so the query answers it — no read surface derives it from the
+     * entities on its own. PUBLIC_COMPETITION draws from PUBLIC_SOURCE, a
+     * knockout zdroj that plays extra time.
+     */
+    public function testEveryZdrojPlayingExtraTimeIsFullCoverage(): void
+    {
+        $result = $this->queryBus()->handle(new GetCompetitionRuleConfiguration(
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
+        ));
+
+        self::assertSame(OvertimeCoverage::All, $result->overtimeCoverage);
+        self::assertNull($result->overtimeCoverage->hint());
+    }
+
+    /** VERIFIED_COMPETITION draws only from PRIVATE_SOURCE, which does not. */
+    public function testNoZdrojPlayingExtraTimeIsNoCoverage(): void
+    {
+        $result = $this->queryBus()->handle(new GetCompetitionRuleConfiguration(
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+        ));
+
+        self::assertSame(OvertimeCoverage::None, $result->overtimeCoverage);
+        self::assertNotNull($result->overtimeCoverage->hint());
+    }
+
+    /**
+     * The reason the rule is never hidden or auto-disabled: a soutěž can span
+     * zdroje with different flags, and then the rule really does score — just
+     * not everywhere.
+     */
+    public function testAMixedScopeIsPartialCoverage(): void
+    {
+        $entityManager = $this->entityManager();
+
+        $competition = $entityManager->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        self::assertNotNull($competition);
+
+        $withOvertime = $entityManager->find(MatchSource::class, Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
+        self::assertNotNull($withOvertime);
+
+        $layer = new CompetitionSource(
+            id: Uuid::v7(),
+            competition: $competition,
+            matchSource: $withOvertime,
+            addedAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+            position: 1,
+        );
+        $competition->attachSource($layer);
+        $entityManager->persist($layer);
+        $entityManager->flush();
+
+        $result = $this->queryBus()->handle(new GetCompetitionRuleConfiguration(
+            competitionId: $competition->id,
+        ));
+
+        self::assertSame(OvertimeCoverage::Partial, $result->overtimeCoverage);
     }
 }

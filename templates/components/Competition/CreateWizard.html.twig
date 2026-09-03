@@ -11,6 +11,11 @@
    also rendered by Scoring:RuleFields — the wizard and the post-creation rules
    screen must never name a rule differently. #}
 {% set rule_copy = this.ruleCopy %}
+{# Per-rule caveats — today only the overtime rule, when the košík composed in
+   step 1 holds no zdroj that plays prodloužení. Resolved on the component
+   (CreateWizard.ruleHints), never here; the wording lives on Enum\OvertimeCoverage
+   and is shared with the post-creation rules screen. #}
+{% set rule_hints = this.ruleHints %}
 {% set section_headings = {
     base: 'Základní bodování',
     periods: 'Tipovat také ' ~ this.ruleSport.periodLabelPlural ~ ' zápasu?',
@@ -164,6 +169,9 @@
                                         <div class="field-label mb-0">{{ copy.label }}</div>
                                         {% if copy.sub %}
                                             <div class="mt-1 text-[13px] font-medium text-white">{{ copy.sub }}</div>
+                                        {% endif %}
+                                        {% if rule_hints[identifier] is defined %}
+                                            {% include 'components/Scoring/_rule_hint.html.twig' with {hint: rule_hints[identifier]} only %}
                                         {% endif %}
                                     </div>
                                     <div class="flex shrink-0 items-center gap-3">

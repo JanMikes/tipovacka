@@ -75,6 +75,7 @@ final class CompetitionRuleConfigurationController extends AbstractController
             'competition' => $competition,
             'items' => $result->items,
             'evaluationCount' => $result->evaluationCount,
+            'overtimeCoverage' => $result->overtimeCoverage,
         ]);
     }
 }

@@ -12,8 +12,10 @@ use App\Entity\User;
 use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
+use App\Enum\OvertimeCoverage;
 use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\QueryBus;
+use App\Rule\OvertimeExactRule;
 use App\Service\Competition\MatchScopeCatalog;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
@@ -187,6 +189,52 @@ final class CreateWizard extends AbstractController
     /** @var array<string, list<string>> */
     public array $rulePresets {
         get => $this->rulePresetProvider->presets();
+    }
+
+    /**
+     * How much of the basket composed in step 1 can go on to extra time. The
+     * soutěž does not exist yet, so this is resolved from the basket itself:
+     * „vlastní zápasy" answer with the {@see $hasOvertime} switch of step 1
+     * (which is exactly what {@see submit()} passes on), every other layer with
+     * its zdroj's own flag.
+     */
+    public OvertimeCoverage $overtimeCoverage {
+        get {
+            $sourcesById = $this->allSourcesById;
+            $withOvertime = 0;
+
+            foreach ($this->layers as $layer) {
+                $playsOvertime = '' === $layer['sourceId']
+                    ? $this->hasOvertime
+                    // A zdroj the user may no longer reference simply does not
+                    // vouch for extra time; `??` swallows the missing key too.
+                    : ($sourcesById[$layer['sourceId']]->hasOvertime ?? false);
+
+                if ($playsOvertime) {
+                    ++$withOvertime;
+                }
+            }
+
+            return OvertimeCoverage::fromCounts(count($this->layers), $withOvertime);
+        }
+    }
+
+    /**
+     * Rule identifier → the caveat rendered under its copy in step 2, the same
+     * map {@see \App\Twig\Components\Scoring\RuleFields} builds for the
+     * post-creation rules screen. A basket of nothing but the soutěž's own
+     * matches gets the wizard's own wording: the switch is a step away, not on
+     * a zdroj settings page that does not exist yet.
+     *
+     * @var array<string, string>
+     */
+    public array $ruleHints {
+        get {
+            $ownMatchesOnly = $this->hasOwnMatchesLayer && 1 === count($this->layers);
+            $hint = $this->overtimeCoverage->draftHint($ownMatchesOnly);
+
+            return null === $hint ? [] : [OvertimeExactRule::IDENTIFIER => $hint];
+        }
     }
 
     public int $creditBalance {

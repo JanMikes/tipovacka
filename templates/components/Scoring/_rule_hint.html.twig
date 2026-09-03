@@ -1,0 +1,15 @@
+{#
+    The caveat rendered under a scoring rule's copy.
+
+    ONE partial, two surfaces: the post-creation rules screen
+    (`Scoring:RuleFields`) and the wizard's „Pravidla" step
+    (`Competition:CreateWizard`). Both hand it a string taken from their own
+    `ruleHints` map, whose wording lives in src/Enum/OvertimeCoverage.php — a
+    rule must not read differently depending on which screen offers it.
+
+    hint  string — the sentence to show
+#}
+<div class="mt-1.5 flex items-start gap-1.5 text-[12px] leading-snug text-white/45">
+    <twig:ux:icon name="lucide:info" class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+    <span>{{ hint }}</span>
+</div>
