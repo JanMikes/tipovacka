@@ -97,11 +97,37 @@ final class GuessSubmitFormComponentTest extends WebTestCase
         $component->set('homeScore', 2)->set('awayScore', 1);
         self::assertStringNotContainsString('Po prodloužení', (string) $component->render());
 
-        // Draw tip ⇒ overtime inputs appear.
+        // Draw tip ⇒ the overtime winner pick appears (no second score).
         $component->set('awayScore', 2)->set('homeScore', 2);
         $html = (string) $component->render();
         self::assertStringContainsString('Po prodloužení', $html);
-        self::assertStringContainsString('data-model="overtimeHomeScore"', $html);
+        self::assertStringContainsString('data-model="overtimeWinner"', $html);
+    }
+
+    public function testZdrojWithoutOvertimeShowsNoWinnerPickEvenWhenTheRuleIsOn(): void
+    {
+        $client = static::createClient();
+
+        /** @var MessageBusInterface $commandBus */
+        $commandBus = $client->getContainer()->get('command.bus');
+        $commandBus->dispatch(new UpdateCompetitionRuleConfigurationCommand(
+            competitionId: Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID),
+            editorId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            changes: [
+                'overtime_exact' => ['enabled' => true, 'points' => 3],
+            ],
+        ));
+
+        $client->loginUser($this->getUser($client, AppFixtures::VERIFIED_USER_ID));
+
+        // PRIVATE_SOURCE („Chlapi u piva") plays no extra time — a draw is final.
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_PRIVATE_SCHEDULED_ID),
+            'competitionId' => AppFixtures::VERIFIED_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 1)->set('awayScore', 1);
+        self::assertStringNotContainsString('Po prodloužení', (string) $component->render());
     }
 
     public function testSubmitWithPeriodsStoresGuess(): void

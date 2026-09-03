@@ -49,13 +49,13 @@ final class InvalidScore extends \DomainException
         return new self('Skóre po prodloužení lze zadat jen při remíze v základní hrací době.');
     }
 
-    public static function overtimeDraw(): self
+    public static function overtimeNotPlayedInSource(): self
     {
-        return new self('Skóre po prodloužení nemůže být remíza. Po prodloužení nebo penaltách musí jeden tým vyhrát; skončil-li zápas remízou bez prodloužení, nechte prodloužení vypnuté.');
+        return new self('V tomto zdroji zápasů se prodloužení nehraje, remíza je konečný výsledek.');
     }
 
-    public static function overtimeBelowRegular(): self
+    public static function overtimeNotDrawPlusOne(): self
     {
-        return new self('Skóre po prodloužení nemůže být nižší než skóre v základní hrací době.');
+        return new self('Výsledek po prodloužení či penaltách se zapisuje jako remíza plus jeden gól pro vítěze, např. 2:2 → 3:2 nebo 2:3.');
     }
 }

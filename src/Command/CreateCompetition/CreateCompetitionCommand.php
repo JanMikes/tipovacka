@@ -37,6 +37,8 @@ final readonly class CreateCompetitionCommand
         public ?Uuid $sportId,
         public bool $fromScratch,
         public bool $withPin,
+        /** From-scratch only: the own zdroj plays extra time / penalties after a draw (cups, play-offs). */
+        public bool $ownMatchesHaveOvertime = false,
         public CompetitionMonetization $monetization = CompetitionMonetization::Boosts,
         public CompetitionMatchSelectionMode $selectionMode = CompetitionMatchSelectionMode::All,
         public bool $includePlayoff = true,

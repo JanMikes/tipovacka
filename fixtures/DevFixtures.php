@@ -270,6 +270,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             startAt: new \DateTimeImmutable('2024-06-14 00:00:00 UTC'),
             endAt: new \DateTimeImmutable('2024-07-14 23:59:59 UTC'),
             createdAt: new \DateTimeImmutable('2024-04-01 10:00:00 UTC'),
+            hasOvertime: true,
         );
         $euro->markCompleted(new \DateTimeImmutable('2024-07-15 12:00:00 UTC'));
         $euro->popEvents();
@@ -574,6 +575,7 @@ final class DevFixtures extends Fixture implements FixtureGroupInterface, Depend
             startAt: $today->modify('-16 days')->setTime(0, 0),
             endAt: $today->modify('+16 days')->setTime(23, 59, 59),
             createdAt: $seededAt,
+            hasOvertime: true,
         );
         $worldCupSource->popEvents();
         $manager->persist($worldCupSource);

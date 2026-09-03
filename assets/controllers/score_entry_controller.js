@@ -5,10 +5,9 @@ import TomSelect from 'tom-select';
  * Organizer score-entry form („Zapsat výsledek").
  *
  * - State toggle Probíhá / Ukončený: reveals the „poslední zápas" checkbox for
- *   finished matches; the overtime block appears only when the entered regular
- *   score is a draw AND the state is finished — and even then it is an opt-in:
- *   the score inputs show only once „rozhodlo se až v prodloužení" is ticked,
- *   so a plain draw is saved as-is.
+ *   finished matches; the overtime question (draw stands / who won after
+ *   extra time or penalties) appears only when the entered regular score is a
+ *   draw AND the state is finished, so a plain draw is saved as-is.
  * - Score steppers (+/−) around the two score inputs.
  * - Dynamic event rows (goals / cards) cloned from the Symfony CollectionType
  *   prototype; player-name inputs get a tom-select autocomplete backed by the
@@ -16,7 +15,7 @@ import TomSelect from 'tom-select';
  * - Non-blocking warning when goal-row counts don't match the entered score.
  */
 export default class extends Controller {
-    static targets = ['homeScore', 'awayScore', 'overtime', 'overtimeToggle', 'overtimeInputs', 'overtimeHome', 'overtimeAway', 'finishOnly', 'eventsList', 'eventRow', 'warning'];
+    static targets = ['homeScore', 'awayScore', 'overtime', 'overtimeChoice', 'finishOnly', 'eventsList', 'eventRow', 'warning'];
     static values = {
         playersUrl: String,
         homeTeamId: String,
@@ -49,10 +48,6 @@ export default class extends Controller {
         this.refresh();
     }
 
-    overtimeToggled() {
-        this.refresh();
-    }
-
     rowChanged() {
         this.updateWarning();
     }
@@ -67,16 +62,13 @@ export default class extends Controller {
             const showOvertime = finishing && isDraw;
             this.overtimeTarget.classList.toggle('hidden', !showOvertime);
 
-            // Disable (not clear) hidden overtime controls: disabled controls are
-            // not submitted, so a transient non-draw while correcting a score
-            // neither wipes the stored overtime values nor leaves a ticked but
-            // invisible opt-in behind (an unsubmitted checkbox reads as unticked).
-            if (this.hasOvertimeToggleTarget) this.overtimeToggleTarget.disabled = !showOvertime;
-
-            const decided = showOvertime && this.hasOvertimeToggleTarget && this.overtimeToggleTarget.checked;
-            if (this.hasOvertimeInputsTarget) this.overtimeInputsTarget.classList.toggle('hidden', !decided);
-            if (this.hasOvertimeHomeTarget) this.overtimeHomeTarget.disabled = !decided;
-            if (this.hasOvertimeAwayTarget) this.overtimeAwayTarget.disabled = !decided;
+            // Disable (not clear) the hidden radios: disabled inputs are not
+            // submitted, so a transient non-draw while correcting a score can
+            // never carry a stale winner pick along — and the pick is still
+            // there once the draw is restored.
+            this.overtimeChoiceTargets.forEach((radio) => {
+                radio.disabled = !showOvertime;
+            });
         }
 
         if (this.hasFinishOnlyTarget) {

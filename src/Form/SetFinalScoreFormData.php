@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Enum\MatchSide;
+use App\Value\OvertimeOutcome;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -27,33 +29,33 @@ final class SetFinalScoreFormData
     #[Assert\Valid]
     public array $periods = [];
 
+    public const string OVERTIME_DRAW_STANDS = 'draw';
+
     /**
-     * The organizer's explicit statement that the match was DECIDED after
-     * regular time (prodloužení / penalty / nájezdy). A drawn regular-time
-     * result with this unticked IS the complete final result (leagues, groups,
-     * first legs): the two overtime inputs below are then ignored, never
-     * validated, so a plain draw can never run into the „cannot be a draw
-     * after overtime" rule.
+     * The organizer's answer to ONE question, asked only on a regular-time
+     * draw: did the draw stand ('draw' — leagues, groups, first legs), or who
+     * won after extra time / penalties ('home' / 'away'). The stored pair is
+     * derived (the draw plus one goal for the winner, Value\OvertimeOutcome);
+     * nobody types a second score, so a plain draw can never run into an
+     * overtime rule.
      */
-    public bool $decidedInOvertime = false;
-
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
-    public ?int $overtimeHomeScore = null;
-
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
-    public ?int $overtimeAwayScore = null;
+    #[Assert\Choice(choices: [self::OVERTIME_DRAW_STANDS, 'home', 'away'], message: 'Zvolený výsledek po prodloužení není platný.')]
+    public string $overtimeWinner = self::OVERTIME_DRAW_STANDS;
 
     /**
-     * The overtime pair to store: null unless the organizer opted in AND
-     * filled both sides (the Callback validation guarantees the latter once
-     * the form is valid).
+     * The overtime pair to store — null unless a winner was chosen (the
+     * Callback validation guarantees the main score is a draw by then).
      *
      * @var array{int, int}|null
      */
     public ?array $overtimeScorePair {
-        get => $this->decidedInOvertime && null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore
-            ? [$this->overtimeHomeScore, $this->overtimeAwayScore]
-            : null;
+        get {
+            $winner = MatchSide::tryFrom($this->overtimeWinner);
+
+            return null === $winner || null === $this->homeScore || null === $this->awayScore
+                ? null
+                : (new OvertimeOutcome($winner))->scoreAfter($this->homeScore, $this->awayScore);
+        }
     }
 
     /** @var list<MatchEventFormData> */
@@ -154,40 +156,13 @@ final class SetFinalScoreFormData
 
     private function validateOvertime(ExecutionContextInterface $context): void
     {
-        // Not opted in = the overtime inputs carry no meaning, whatever they hold.
-        if (!$this->isFinishing || !$this->decidedInOvertime) {
-            return;
-        }
-
-        if (null === $this->overtimeHomeScore || null === $this->overtimeAwayScore) {
-            $context->buildViolation('Zadejte prosím obě hodnoty skóre po prodloužení.')
-                ->atPath(null === $this->overtimeHomeScore ? 'overtimeHomeScore' : 'overtimeAwayScore')
-                ->addViolation();
-
+        if (!$this->isFinishing || self::OVERTIME_DRAW_STANDS === $this->overtimeWinner) {
             return;
         }
 
         if (null !== $this->homeScore && null !== $this->awayScore && $this->homeScore !== $this->awayScore) {
-            $context->buildViolation('Skóre po prodloužení lze zadat jen při remíze v základní hrací době.')
-                ->atPath('overtimeHomeScore')
-                ->addViolation();
-
-            return;
-        }
-
-        if ($this->overtimeHomeScore === $this->overtimeAwayScore) {
-            $context->buildViolation('Skóre po prodloužení nemůže být remíza. Po prodloužení nebo penaltách musí jeden tým vyhrát; skončil-li zápas remízou bez prodloužení, nechte prodloužení vypnuté.')
-                ->atPath('overtimeHomeScore')
-                ->addViolation();
-
-            return;
-        }
-
-        if (null !== $this->homeScore && null !== $this->awayScore
-            && ($this->overtimeHomeScore < $this->homeScore || $this->overtimeAwayScore < $this->awayScore)
-        ) {
-            $context->buildViolation('Skóre po prodloužení nemůže být nižší než skóre v základní hrací době.')
-                ->atPath('overtimeHomeScore')
+            $context->buildViolation('Vítěze po prodloužení lze zvolit jen při remíze v základní hrací době.')
+                ->atPath('overtimeWinner')
                 ->addViolation();
         }
     }

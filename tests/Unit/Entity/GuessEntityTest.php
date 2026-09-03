@@ -12,6 +12,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\Team;
 use App\Entity\User;
+use App\Enum\MatchSide;
 use App\Enum\MatchSourceKind;
 use App\Event\GuessSubmitted;
 use App\Event\GuessUpdated;
@@ -46,7 +47,7 @@ final class GuessEntityTest extends TestCase
         return $user;
     }
 
-    private function makeMatchSource(User $owner): MatchSource
+    private function makeMatchSource(User $owner, bool $hasOvertime = true): MatchSource
     {
         $matchSource = new MatchSource(
             id: Uuid::fromString(AppFixtures::PRIVATE_SOURCE_ID),
@@ -58,6 +59,7 @@ final class GuessEntityTest extends TestCase
             startAt: null,
             endAt: null,
             createdAt: $this->now,
+            hasOvertime: $hasOvertime,
         );
         $matchSource->popEvents();
 
@@ -265,12 +267,33 @@ final class GuessEntityTest extends TestCase
         $this->makeGuessWithDetails(1, 1, null, 2, 2);
     }
 
-    public function testOvertimeTipMustNotBeBelowRegularTip(): void
+    public function testOvertimeTipRefusedWhenTheZdrojPlaysNoOvertime(): void
     {
         $this->expectException(InvalidGuessScore::class);
-        $this->expectExceptionMessage('nižší');
+        $this->expectExceptionMessage('prodloužení nehraje');
+
+        $this->makeGuessWithDetails(1, 1, null, 2, 1, sourceHasOvertime: false);
+    }
+
+    public function testOvertimeTipMustBeTheDrawPlusOneGoalForTheWinner(): void
+    {
+        $this->expectException(InvalidGuessScore::class);
+        $this->expectExceptionMessage('jeden gól pro vítěze');
 
         $this->makeGuessWithDetails(2, 2, null, 3, 1);
+    }
+
+    public function testOvertimeWinnerPickIsReDerivedForANewDrawAndDroppedForANonDraw(): void
+    {
+        // „1:1 a vyhrají domácí" (stored 2:1) — a batch page that changes only
+        // the main tip keeps the pick: 2:2 ⇒ 3:2, 0:0 ⇒ 1:0, 2:1 ⇒ gone.
+        $guess = $this->makeGuessWithDetails(1, 1, null, 2, 1);
+
+        self::assertSame(MatchSide::Home, $guess->overtimeWinner);
+        self::assertSame([3, 2], $guess->overtimeTipFor(2, 2));
+        self::assertSame([1, 0], $guess->overtimeTipFor(0, 0));
+        self::assertNull($guess->overtimeTipFor(2, 1));
+        self::assertNull($this->makeGuessWithDetails(1, 1)->overtimeTipFor(2, 2));
     }
 
     public function testOvertimeTipRequiresBothValues(): void
@@ -312,9 +335,10 @@ final class GuessEntityTest extends TestCase
         ?PeriodScores $periods = null,
         ?int $overtimeHome = null,
         ?int $overtimeAway = null,
+        bool $sourceHasOvertime = true,
     ): Guess {
         $user = $this->makeUser();
-        $matchSource = $this->makeMatchSource($user);
+        $matchSource = $this->makeMatchSource($user, $sourceHasOvertime);
         $competition = $this->makeCompetition($user, $matchSource);
         $match = $this->makeMatch($matchSource);
 

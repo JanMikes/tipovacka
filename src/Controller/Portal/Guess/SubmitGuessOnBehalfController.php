@@ -117,9 +117,9 @@ final class SubmitGuessOnBehalfController extends AbstractController
                 // scorers of a full-replace update are passed through untouched
                 // (filtered by feature enablement — a legacy part of a since-
                 // disabled feature is dropped, not rejected; the OT pair travels
-                // only while still valid against the NEW tip, else it is dropped).
+                // only while re-derived for the NEW tip (the winner pick survives a corrected draw), else it is dropped).
                 $features = $this->guessFeatures->featuresFor($competition->id);
-                $carryOvertime = $features->overtimeTip && $existing->overtimeTipValidFor($homeScore, $awayScore);
+                $carriedOvertime = $features->overtimeTip ? $existing->overtimeTipFor($homeScore, $awayScore) : null;
 
                 $this->commandBus->dispatch(new UpdateGuessOnBehalfCommand(
                     actingUserId: $user->id,
@@ -127,8 +127,8 @@ final class SubmitGuessOnBehalfController extends AbstractController
                     homeScore: $homeScore,
                     awayScore: $awayScore,
                     periodScores: $features->periodTips ? $existing->periodScores : null,
-                    overtimeHomeScore: $carryOvertime ? $existing->overtimeHomeScore : null,
-                    overtimeAwayScore: $carryOvertime ? $existing->overtimeAwayScore : null,
+                    overtimeHomeScore: $carriedOvertime[0] ?? null,
+                    overtimeAwayScore: $carriedOvertime[1] ?? null,
                     scorers: $features->scorerTips ? $this->scorerWriter->inputsFor($existing) : [],
                 ));
             }

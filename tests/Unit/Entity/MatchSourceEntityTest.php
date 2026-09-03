@@ -110,10 +110,12 @@ final class MatchSourceEntityTest extends TestCase
             description: 'Popis',
             startAt: $later,
             endAt: null,
+            hasOvertime: true,
             now: $later,
         );
 
         self::assertSame('Nový název', $matchSource->name);
+        self::assertTrue($matchSource->hasOvertime);
         self::assertSame('Popis', $matchSource->description);
         self::assertSame($later, $matchSource->startAt);
         self::assertSame($later, $matchSource->updatedAt);

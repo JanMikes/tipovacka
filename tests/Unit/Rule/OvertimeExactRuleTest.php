@@ -20,7 +20,7 @@ final class OvertimeExactRuleTest extends TestCase
         self::assertSame('overtime', $rule->category);
     }
 
-    public function testHitsOnExactOvertimeTip(): void
+    public function testHitsOnTheRightWinner(): void
     {
         $rule = new OvertimeExactRule();
 
@@ -34,15 +34,16 @@ final class OvertimeExactRuleTest extends TestCase
     {
         $rule = new OvertimeExactRule();
 
-        // Tipped 1:1 → OT 3:2; actual 2:2 → OT 3:2. The rule scores the OT
-        // continuation, not the regular draw (base rules already score that).
-        $guess = RuleTestFactory::guessWithDetails(1, 1, null, 3, 2);
+        // Tipped „1:1 a vyhrají domácí" (stored 2:1); actual 2:2 won by the
+        // home side (stored 3:2). The rule scores the WINNER, not the regular
+        // draw (base rules already score that).
+        $guess = RuleTestFactory::guessWithDetails(1, 1, null, 2, 1);
         $match = RuleTestFactory::finishedMatchWithDetails(2, 2, null, 3, 2);
 
         self::assertSame(1, $rule->evaluate($guess, $match, MatchContext::empty()));
     }
 
-    public function testZeroWhenOvertimeTipDiffers(): void
+    public function testZeroWhenTheOtherSideWon(): void
     {
         $rule = new OvertimeExactRule();
 

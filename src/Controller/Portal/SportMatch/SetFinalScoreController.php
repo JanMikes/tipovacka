@@ -57,9 +57,7 @@ final class SetFinalScoreController extends AbstractController
         $formData->state = $sportMatch->isLive ? SetFinalScoreFormData::STATE_LIVE : SetFinalScoreFormData::STATE_FINISHED;
         $formData->homeScore = $sportMatch->homeScore;
         $formData->awayScore = $sportMatch->awayScore;
-        $formData->overtimeHomeScore = $sportMatch->overtimeHomeScore;
-        $formData->overtimeAwayScore = $sportMatch->overtimeAwayScore;
-        $formData->decidedInOvertime = $sportMatch->hasOvertimeScore;
+        $formData->overtimeWinner = $sportMatch->overtimeWinner->value ?? SetFinalScoreFormData::OVERTIME_DRAW_STANDS;
         $formData->periods = $this->prefillPeriods($sportMatch->periodScores?->toArray(), $sport->periodCount);
         $formData->events = array_map(
             static function (MatchEvent $event): MatchEventFormData {
@@ -80,6 +78,7 @@ final class SetFinalScoreController extends AbstractController
             'home_team' => $sportMatch->homeTeam->name,
             'away_team' => $sportMatch->awayTeam->name,
             'allow_live' => $allowLive,
+            'with_overtime' => $sportMatch->matchSource->hasOvertime,
         ]);
         $form->handleRequest($request);
 

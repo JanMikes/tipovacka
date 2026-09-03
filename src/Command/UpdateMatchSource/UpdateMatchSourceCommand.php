@@ -14,6 +14,8 @@ final readonly class UpdateMatchSourceCommand
         public ?string $description,
         public ?\DateTimeImmutable $startAt,
         public ?\DateTimeImmutable $endAt,
+        /** Cups / play-offs: a drawn match may go on to extra time or penalties. */
+        public bool $hasOvertime = false,
     ) {
     }
 }

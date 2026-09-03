@@ -389,6 +389,8 @@ final class AppFixtures extends Fixture implements FixtureGroupInterface
             startAt: null,
             endAt: null,
             createdAt: $now,
+            // Liga mistrů: knockout ties go to extra time / penalties.
+            hasOvertime: true,
         );
         $public->popEvents();
         $manager->persist($public);

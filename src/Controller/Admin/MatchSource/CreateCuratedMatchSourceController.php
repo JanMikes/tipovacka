@@ -47,6 +47,7 @@ final class CreateCuratedMatchSourceController extends AbstractController
                 description: $formData->description ?: null,
                 startAt: $formData->startAt,
                 endAt: $formData->endAt,
+                hasOvertime: $formData->hasOvertime,
                 createGlobalCompetition: $formData->createGlobalCompetition,
                 globalCompetitionName: $formData->globalCompetitionName ?: null,
                 globalCompetitionEntryFee: $formData->globalCompetitionEntryFee,

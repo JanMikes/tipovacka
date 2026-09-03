@@ -23,6 +23,7 @@ final class UpdateMatchSourceHandlerTest extends IntegrationTestCase
             description: 'Nový popis',
             startAt: $startAt,
             endAt: null,
+            hasOvertime: true,
         ));
 
         $em = $this->entityManager();
@@ -33,5 +34,6 @@ final class UpdateMatchSourceHandlerTest extends IntegrationTestCase
         self::assertSame('Upravený název', $matchSource->name);
         self::assertSame('Nový popis', $matchSource->description);
         self::assertEquals($startAt, $matchSource->startAt);
+        self::assertTrue($matchSource->hasOvertime);
     }
 }

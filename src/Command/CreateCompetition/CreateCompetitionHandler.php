@@ -188,6 +188,7 @@ final readonly class CreateCompetitionHandler
             $this->userRepository->get($command->ownerId),
             $command->name,
             $now,
+            $command->ownMatchesHaveOvertime,
         );
     }
 

@@ -30,6 +30,17 @@
             </select>
             <p class="text-xs leading-relaxed text-white/50">Sport určuje strukturu zápasu ({{ this.selectedSport.periodLabelPlural }}) a bodování.</p>
         </div>
+        {# Only the wizard creates the zdroj here; the manage screen edits it on its own page. #}
+        {% if allow_from_scratch %}
+            <label class="option-card flex cursor-pointer items-start gap-3 {{ hasOvertime ? 'selected' : '' }}">
+                <input type="checkbox" class="mt-0.5 h-5 w-5 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
+                       data-model="hasOvertime" {{ hasOvertime ? 'checked' }} />
+                <span class="text-sm">
+                    <span class="block font-semibold text-white">Zápasy mohou po remíze pokračovat prodloužením nebo penaltami</span>
+                    <span class="mt-1 block text-xs leading-relaxed text-white/50">Zapněte u poháru či play-off. U ligy nechte vypnuté: remíza je pak konečný výsledek. Změnit to jde kdykoli v nastavení zdroje zápasů.</span>
+                </span>
+            </label>
+        {% endif %}
     {% else %}
         <div class="field">
             <label class="field-label" for="wizard-source">Zdroj zápasů</label>

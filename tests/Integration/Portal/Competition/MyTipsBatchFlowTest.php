@@ -198,7 +198,7 @@ final class MyTipsBatchFlowTest extends WebTestCase
         /** @var MessageBusInterface $commandBus */
         $commandBus = $client->getContainer()->get('command.bus');
 
-        // Enable the overtime rule for SUBSET, then store a 0:0 tip with OT 1:0.
+        // Enable the overtime rule for SUBSET, then store a 0:0 tip with the home side winning after overtime (OT 1:0).
         $commandBus->dispatch(new UpdateCompetitionRuleConfigurationCommand(
             competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
             editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
@@ -237,17 +237,17 @@ final class MyTipsBatchFlowTest extends WebTestCase
         $client->followRedirect();
         $content = (string) $client->getResponse()->getContent();
 
-        // Saved without an error: the stale OT pair (1:0 < new 1:1 tip) is
-        // dropped silently, consistent with the non-draw drop.
+        // Saved without an error: the batch page shows no overtime control, so
+        // the untouched winner pick (home wins) is carried over and re-derived
+        // for the new draw: 0:0 → 1:0 becomes 1:1 → 2:1.
         self::assertStringContainsString('Uloženo tipů: 1.', $content);
-        self::assertStringNotContainsString('Tip po prodloužení nemůže být nižší', $content);
 
         $em->clear();
         $guess = $this->findSubsetGuess($em, $matchId);
         self::assertSame(1, $guess->homeScore);
         self::assertSame(1, $guess->awayScore);
-        self::assertNull($guess->overtimeHomeScore);
-        self::assertNull($guess->overtimeAwayScore);
+        self::assertSame(2, $guess->overtimeHomeScore);
+        self::assertSame(1, $guess->overtimeAwayScore);
     }
 
     public function testPeriodsWithoutMainScoreShowsRowErrorInsteadOfDeleting(): void

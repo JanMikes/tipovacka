@@ -47,8 +47,12 @@ final class SetFinalScoreFlowTest extends WebTestCase
         self::assertAnySelectorTextContains('button', 'Gól Slavia Praha');
         self::assertAnySelectorTextContains('button', 'Karta');
         self::assertAnySelectorTextContains('label', 'Toto byl poslední zápas zdroje');
-        self::assertAnySelectorTextContains('label', 'Zápas se rozhodl až v prodloužení nebo na penalty / nájezdy');
-        self::assertSelectorExists('input[name="set_final_score_form[decidedInOvertime]"]:not([checked])');
+        // The overtime question is ONE choice (no second score), draw-stands by default.
+        self::assertAnySelectorTextContains('label', 'Remíza po základní hrací době je konečný výsledek');
+        self::assertAnySelectorTextContains('label', 'Vyhrál Sparta Praha v prodloužení nebo na penalty');
+        self::assertAnySelectorTextContains('label', 'Vyhrál Slavia Praha v prodloužení nebo na penalty');
+        self::assertSelectorExists('input[name="set_final_score_form[overtimeWinner]"][value="draw"][checked]');
+        self::assertSelectorNotExists('input[name="set_final_score_form[overtimeHomeScore]"]');
     }
 
     public function testLiveSaveThenFinishedSaveWithScorers(): void
@@ -149,33 +153,32 @@ final class SetFinalScoreFlowTest extends WebTestCase
                     ['homeScore' => '1', 'awayScore' => '1'],
                     ['homeScore' => '1', 'awayScore' => '1'],
                 ],
-                'decidedInOvertime' => '1',
-                'overtimeHomeScore' => '3',
-                'overtimeAwayScore' => '2',
+                'overtimeWinner' => 'home',
             ],
         ]);
 
         self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
 
+        // „Vyhrál Sparta" is stored as the draw plus one goal for the winner.
         $em->clear();
         $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
         self::assertInstanceOf(SportMatch::class, $match);
         self::assertSame(3, $match->overtimeHomeScore);
         self::assertSame(2, $match->overtimeAwayScore);
 
-        // Correcting a match that already has an overtime score pre-ticks the opt-in.
+        // Correcting a match that already has a winner pre-selects it.
         $client->request('GET', $url);
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('input[name="set_final_score_form[decidedInOvertime]"][checked]');
+        self::assertSelectorExists('input[name="set_final_score_form[overtimeWinner]"][value="home"][checked]');
     }
 
     /**
-     * The exact production payload of 2026-09-03: a Conference League qualifier
-     * first leg ended 2:2, the form revealed the overtime block on its own and
-     * the organizer typed the final score there again. Without the opt-in the
-     * overtime inputs mean nothing — the draw is saved as the final result.
+     * The production case of 2026-09-03: a Conference League qualifier first
+     * leg ended 2:2 and the organizer only needs the draw to stand. With the
+     * default answer the match is saved as a plain draw — no second score
+     * exists to get wrong.
      */
-    public function testDrawWithOvertimeValuesButNoOptInSavesThePlainDraw(): void
+    public function testDrawWithTheDefaultAnswerSavesThePlainDraw(): void
     {
         $client = static::createClient();
         $em = $this->loginAdmin($client);
@@ -185,8 +188,7 @@ final class SetFinalScoreFlowTest extends WebTestCase
                 'state' => 'finished',
                 'homeScore' => '2',
                 'awayScore' => '2',
-                'overtimeHomeScore' => '2',
-                'overtimeAwayScore' => '2',
+                'overtimeWinner' => 'draw',
             ],
         ]);
 
@@ -200,9 +202,72 @@ final class SetFinalScoreFlowTest extends WebTestCase
         self::assertSame(2, $match->awayScore);
         self::assertNull($match->overtimeHomeScore);
         self::assertNull($match->overtimeAwayScore);
+        self::assertNull($match->overtimeWinner);
     }
 
-    public function testOptedInOvertimeDrawIsRejectedWith422AndSaysHowToGetOut(): void
+    public function testDrawWithNoOvertimeAnswerAtAllSavesThePlainDraw(): void
+    {
+        // The radios are disabled (not submitted) while JS hides the question.
+        $client = static::createClient();
+        $em = $this->loginAdmin($client);
+
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore', [
+            'set_final_score_form' => [
+                'state' => 'finished',
+                'homeScore' => '1',
+                'awayScore' => '1',
+            ],
+        ]);
+
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame(SportMatchState::Finished, $match->state);
+        self::assertNull($match->overtimeWinner);
+    }
+
+    public function testZdrojWithoutOvertimeAsksNoOvertimeQuestionAndRefusesOne(): void
+    {
+        // PRIVATE_SOURCE plays no extra time: a draw is final, the question is
+        // not even built, and a forged answer is an extra field (422).
+        $client = static::createClient();
+        $em = $this->loginAdmin($client);
+
+        $url = '/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'/skore';
+
+        $client->request('GET', $url);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('input[name="set_final_score_form[overtimeWinner]"]');
+
+        $client->request('POST', $url, [
+            'set_final_score_form' => [
+                'state' => 'finished',
+                'homeScore' => '1',
+                'awayScore' => '1',
+                'overtimeWinner' => 'home',
+            ],
+        ]);
+        self::assertResponseStatusCodeSame(422);
+
+        $client->request('POST', $url, [
+            'set_final_score_form' => [
+                'state' => 'finished',
+                'homeScore' => '1',
+                'awayScore' => '1',
+            ],
+        ]);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID);
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_PRIVATE_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame(SportMatchState::Finished, $match->state);
+        self::assertNull($match->overtimeWinner);
+    }
+
+    public function testForgedOvertimeAnswerIsRejectedWith422(): void
     {
         $client = static::createClient();
         $this->loginAdmin($client);
@@ -212,36 +277,15 @@ final class SetFinalScoreFlowTest extends WebTestCase
                 'state' => 'finished',
                 'homeScore' => '2',
                 'awayScore' => '2',
-                'decidedInOvertime' => '1',
-                'overtimeHomeScore' => '2',
-                'overtimeAwayScore' => '2',
+                'overtimeWinner' => 'both',
             ],
         ]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertAnySelectorTextContains('body', 'Skóre po prodloužení nemůže být remíza.');
-        self::assertAnySelectorTextContains('body', 'nechte prodloužení vypnuté');
+        self::assertAnySelectorTextContains('body', 'Zvolený výsledek po prodloužení není platný.');
     }
 
-    public function testOptedInWithoutOvertimeValuesIsRejectedWith422(): void
-    {
-        $client = static::createClient();
-        $this->loginAdmin($client);
-
-        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore', [
-            'set_final_score_form' => [
-                'state' => 'finished',
-                'homeScore' => '1',
-                'awayScore' => '1',
-                'decidedInOvertime' => '1',
-            ],
-        ]);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertAnySelectorTextContains('body', 'Zadejte prosím obě hodnoty skóre po prodloužení.');
-    }
-
-    public function testOvertimeOnNonDrawIsRejectedWith422(): void
+    public function testWinnerPickOnNonDrawIsRejectedWith422(): void
     {
         $client = static::createClient();
         $this->loginAdmin($client);
@@ -253,14 +297,12 @@ final class SetFinalScoreFlowTest extends WebTestCase
                 'state' => 'finished',
                 'homeScore' => '2',
                 'awayScore' => '1',
-                'decidedInOvertime' => '1',
-                'overtimeHomeScore' => '3',
-                'overtimeAwayScore' => '2',
+                'overtimeWinner' => 'home',
             ],
         ]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertAnySelectorTextContains('body', 'Skóre po prodloužení lze zadat jen při remíze v základní hrací době.');
+        self::assertAnySelectorTextContains('body', 'Vítěze po prodloužení lze zvolit jen při remíze v základní hrací době.');
     }
 
     public function testEmptyScorerNameIsRejectedWith422NotACrash(): void

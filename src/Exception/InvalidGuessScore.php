@@ -34,13 +34,13 @@ final class InvalidGuessScore extends \DomainException
         return new self('Prodloužení lze tipnout jen při remíze v základní hrací době.');
     }
 
-    public static function overtimeDraw(): self
+    public static function overtimeNotPlayedInSource(): self
     {
-        return new self('Tip po prodloužení nemůže být remíza.');
+        return new self('V tomto zdroji zápasů se prodloužení nehraje, remíza je konečný tip.');
     }
 
-    public static function overtimeBelowRegular(): self
+    public static function overtimeNotDrawPlusOne(): self
     {
-        return new self('Tip po prodloužení nemůže být nižší než tip na základní hrací dobu.');
+        return new self('Tip po prodloužení či penaltách se zapisuje jako remíza plus jeden gól pro vítěze, např. 2:2 → 3:2 nebo 2:3.');
     }
 }

@@ -45,6 +45,17 @@
                 </div>
             </div>
 
+            <div class="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+                <label class="flex cursor-pointer items-start gap-3">
+                    {{ form_widget(form.hasOvertime, {attr: {class: 'mt-1'}}) }}
+                    <span>
+                        <span class="block text-sm font-semibold text-white">{{ form.hasOvertime.vars.label }}</span>
+                        <span class="mt-1 block text-xs leading-relaxed text-white/50">{{ form.hasOvertime.vars.help }}</span>
+                    </span>
+                </label>
+                {{ form_errors(form.hasOvertime) }}
+            </div>
+
             <div class="flex flex-wrap gap-3">
                 <button type="submit" class="btn btn-primary">
                     <twig:ux:icon name="lucide:save" class="h-4 w-4" />

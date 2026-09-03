@@ -94,7 +94,7 @@ final readonly class OwnMatchesSource
      * „Vytvořit soutěž od začátku" / „Vlastní zápasy" path, which has the sport,
      * the owner and the name in hand before there is a Competition to ask.
      */
-    public function create(Sport $sport, User $owner, string $competitionName, \DateTimeImmutable $now): MatchSource
+    public function create(Sport $sport, User $owner, string $competitionName, \DateTimeImmutable $now, bool $hasOvertime = false): MatchSource
     {
         $matchSource = new MatchSource(
             id: $this->identity->next(),
@@ -106,6 +106,7 @@ final readonly class OwnMatchesSource
             startAt: null,
             endAt: null,
             createdAt: $now,
+            hasOvertime: $hasOvertime,
         );
 
         $this->matchSourceRepository->save($matchSource);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use App\Enum\MatchSide;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -56,22 +57,28 @@ final class SetFinalScoreFormType extends AbstractType
             'allow_delete' => false,
         ]);
 
-        $builder->add('decidedInOvertime', CheckboxType::class, [
-            'label' => 'Zápas se rozhodl až v prodloužení nebo na penalty / nájezdy',
-            'required' => false,
-        ]);
-
-        $builder->add('overtimeHomeScore', IntegerType::class, [
-            'label' => sprintf('Po prodloužení %s', $options['home_team']),
-            'required' => false,
-            'attr' => ['min' => 0],
-        ]);
-
-        $builder->add('overtimeAwayScore', IntegerType::class, [
-            'label' => sprintf('Po prodloužení %s', $options['away_team']),
-            'required' => false,
-            'attr' => ['min' => 0],
-        ]);
+        // ONE question, shown only on a regular-time draw and only in a zdroj
+        // that plays extra time at all: did the draw stand, or who won after
+        // extra time / penalties. The stored pair is derived from the answer
+        // (Value\OvertimeOutcome); nobody types a second score.
+        if (true === $options['with_overtime']) {
+            $builder->add('overtimeWinner', ChoiceType::class, [
+                'label' => 'Prodloužení / penalty',
+                'choices' => [
+                    'Remíza po základní hrací době je konečný výsledek' => SetFinalScoreFormData::OVERTIME_DRAW_STANDS,
+                    sprintf('Vyhrál %s v prodloužení nebo na penalty', $options['home_team']) => MatchSide::Home->value,
+                    sprintf('Vyhrál %s v prodloužení nebo na penalty', $options['away_team']) => MatchSide::Away->value,
+                ],
+                'expanded' => true,
+                'multiple' => false,
+                'required' => false,
+                'placeholder' => false,
+                // The radios are disabled (not submitted) while the score is not a
+                // draw; a missing value then means the draw stands.
+                'empty_data' => SetFinalScoreFormData::OVERTIME_DRAW_STANDS,
+                'invalid_message' => 'Zvolený výsledek po prodloužení není platný.',
+            ]);
+        }
 
         $builder->add('events', CollectionType::class, [
             'label' => false,
@@ -96,10 +103,12 @@ final class SetFinalScoreFormType extends AbstractType
         $resolver->setDefaults([
             'data_class' => SetFinalScoreFormData::class,
             'allow_live' => true,
+            'with_overtime' => false,
         ]);
         $resolver->setRequired(['home_team', 'away_team']);
         $resolver->setAllowedTypes('home_team', 'string');
         $resolver->setAllowedTypes('away_team', 'string');
         $resolver->setAllowedTypes('allow_live', 'bool');
+        $resolver->setAllowedTypes('with_overtime', 'bool');
     }
 }

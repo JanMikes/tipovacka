@@ -33,6 +33,7 @@ final readonly class UpdateMatchSourceHandler
             description: $command->description,
             startAt: $command->startAt,
             endAt: $command->endAt,
+            hasOvertime: $command->hasOvertime,
             now: $now,
         );
     }
