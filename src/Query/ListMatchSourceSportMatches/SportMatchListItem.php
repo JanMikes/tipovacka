@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\ListMatchSourceSportMatches;
 
+use App\Enum\MatchSide;
 use App\Enum\SportMatchState;
 use App\Value\PeriodScores;
 use App\Value\TeamView;
@@ -26,8 +27,9 @@ final readonly class SportMatchListItem
         public ?PeriodScores $periodScores = null,
         public ?int $overtimeHomeScore = null,
         public ?int $overtimeAwayScore = null,
-        // Note: no `hasOvertimeScore` hook here — hooked properties cannot be
-        // readonly; templates check `overtimeHomeScore is not null` instead.
+        // Computed by the query (hooked properties cannot be readonly): who won
+        // after extra time / penalties. Templates print THIS, never the pair.
+        public ?MatchSide $overtimeWinner = null,
     ) {
     }
 }

@@ -115,12 +115,12 @@
                                         {% if state == 'finished' or (state == 'live' and m.homeScore is not null) %}
                                             <span class="flex flex-col items-center gap-0.5">
                                                 <span class="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-sm font-bold tabular-nums text-white">{{ m.homeScore }} : {{ m.awayScore }}</span>
-                                                {% if m.periodScores is not null or m.overtimeHomeScore is not null %}
+                                                {% if m.periodScores is not null or m.overtimeWinner is not null %}
                                                     <span class="whitespace-nowrap text-[11px] tabular-nums text-white/45">
                                                         {%- if m.periodScores is not null -%}
                                                             ({% for p in m.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
                                                         {%- endif -%}
-                                                        {%- if m.overtimeHomeScore is not null %} po prodl. {{ m.overtimeHomeScore }}:{{ m.overtimeAwayScore }}{% endif -%}
+                                                        {%- if m.overtimeWinner is not null %} po prodl. vítěz {{ m.overtimeWinner.value == 'home' ? m.homeTeam.name : m.awayTeam.name }}{% endif -%}
                                                     </span>
                                                 {% endif %}
                                             </span>

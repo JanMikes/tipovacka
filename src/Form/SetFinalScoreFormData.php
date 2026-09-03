@@ -37,14 +37,16 @@ final class SetFinalScoreFormData
      * won after extra time / penalties ('home' / 'away'). The stored pair is
      * derived (the draw plus one goal for the winner, Value\OvertimeOutcome);
      * nobody types a second score, so a plain draw can never run into an
-     * overtime rule.
+     * overtime rule. A pick submitted with a NON-draw score is meaningless and
+     * simply ignored (never a violation: the field is hidden then, so an error
+     * would point at a control the organizer cannot see).
      */
     #[Assert\Choice(choices: [self::OVERTIME_DRAW_STANDS, 'home', 'away'], message: 'Zvolený výsledek po prodloužení není platný.')]
     public string $overtimeWinner = self::OVERTIME_DRAW_STANDS;
 
     /**
-     * The overtime pair to store — null unless a winner was chosen (the
-     * Callback validation guarantees the main score is a draw by then).
+     * The overtime pair to store — null unless a winner was chosen AND the
+     * main score is a draw.
      *
      * @var array{int, int}|null
      */
@@ -52,7 +54,7 @@ final class SetFinalScoreFormData
         get {
             $winner = MatchSide::tryFrom($this->overtimeWinner);
 
-            return null === $winner || null === $this->homeScore || null === $this->awayScore
+            return null === $winner || null === $this->homeScore || null === $this->awayScore || $this->homeScore !== $this->awayScore
                 ? null
                 : (new OvertimeOutcome($winner))->scoreAfter($this->homeScore, $this->awayScore);
         }
@@ -94,7 +96,6 @@ final class SetFinalScoreFormData
     public function validate(ExecutionContextInterface $context): void
     {
         $this->validatePeriods($context);
-        $this->validateOvertime($context);
     }
 
     private function validatePeriods(ExecutionContextInterface $context): void
@@ -150,19 +151,6 @@ final class SetFinalScoreFormData
         if ($sumHome !== $this->homeScore || $sumAway !== $this->awayScore) {
             $context->buildViolation('Součet gólů za jednotlivé části zápasu musí odpovídat konečnému skóre.')
                 ->atPath('periods[0].homeScore')
-                ->addViolation();
-        }
-    }
-
-    private function validateOvertime(ExecutionContextInterface $context): void
-    {
-        if (!$this->isFinishing || self::OVERTIME_DRAW_STANDS === $this->overtimeWinner) {
-            return;
-        }
-
-        if (null !== $this->homeScore && null !== $this->awayScore && $this->homeScore !== $this->awayScore) {
-            $context->buildViolation('Vítěze po prodloužení lze zvolit jen při remíze v základní hrací době.')
-                ->atPath('overtimeWinner')
                 ->addViolation();
         }
     }

@@ -85,7 +85,7 @@ final class MatchSourceFormType extends AbstractType
         // match is final and nobody is ever asked who won afterwards.
         $builder->add('hasOvertime', CheckboxType::class, [
             'label' => 'Zápasy mohou po remíze pokračovat prodloužením nebo penaltami',
-            'help' => 'Zapněte u pohárů, play-off a vyřazovacích zápasů. U ligy nechte vypnuté: remíza je pak konečný výsledek a na vítěze po prodloužení se nikdo neptá.',
+            'help' => 'Zapněte u pohárů, play-off a vyřazovacích zápasů. U ligy nechte vypnuté: remíza je pak konečný výsledek a na vítěze po prodloužení se nikdo neptá. Vypnutí nesmaže už zapsané vítěze.',
             'required' => false,
         ]);
 

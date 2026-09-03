@@ -44,6 +44,7 @@ final readonly class ListMatchSourceSportMatchesQuery
                 periodScores: $m->periodScores,
                 overtimeHomeScore: $m->overtimeHomeScore,
                 overtimeAwayScore: $m->overtimeAwayScore,
+                overtimeWinner: $m->overtimeWinner,
             ),
             $matches,
         );

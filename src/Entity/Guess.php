@@ -74,10 +74,6 @@ class Guess implements EntityWithEvents, SoftDeletable
         get => PeriodScores::fromNullableArray($this->periodScoresData);
     }
 
-    public bool $hasOvertimeTip {
-        get => null !== $this->overtimeHomeScore && null !== $this->overtimeAwayScore;
-    }
-
     /** Who the tip says wins after extra time / a shootout; null without an overtime tip. */
     public ?MatchSide $overtimeWinner {
         get => null === $this->overtimeHomeScore || null === $this->overtimeAwayScore

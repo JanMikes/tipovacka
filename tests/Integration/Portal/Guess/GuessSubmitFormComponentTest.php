@@ -8,6 +8,7 @@ use App\Command\UpdateCompetitionRuleConfiguration\UpdateCompetitionRuleConfigur
 use App\DataFixtures\AppFixtures;
 use App\Entity\SportMatch;
 use App\Entity\User;
+use App\Twig\Components\Guess\GuessSubmitForm;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -130,6 +131,59 @@ final class GuessSubmitFormComponentTest extends WebTestCase
         self::assertStringNotContainsString('Po prodloužení', (string) $component->render());
     }
 
+    public function testForgedOvertimeWinnerIsRejectedNotACrash(): void
+    {
+        $client = static::createClient();
+        $this->enableOvertimeRuleForSubset($client);
+        $client->loginUser($this->getUser($client, AppFixtures::SECOND_VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_SCHEDULED_ID),
+            'competitionId' => AppFixtures::SUBSET_COMPETITION_ID,
+        ], $client);
+
+        // A tampered model value must fail validation (surfaced as the component's
+        // own error message), not blow up in MatchSide::from() with a 500.
+        $response = $component
+            ->set('homeScore', 1)
+            ->set('awayScore', 1)
+            ->set('overtimeWinner', 'both')
+            ->call('submit')
+            ->response();
+
+        self::assertSame(200, $response->getStatusCode());
+        $live = $component->component();
+        self::assertInstanceOf(GuessSubmitForm::class, $live);
+        self::assertNotNull($live->errorMessage);
+        self::assertNull($this->subsetGuess($client));
+    }
+
+    public function testAWinnerPickIsDroppedOnceTheTipIsNoDraw(): void
+    {
+        $client = static::createClient();
+        $this->enableOvertimeRuleForSubset($client);
+        $client->loginUser($this->getUser($client, AppFixtures::SECOND_VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_SCHEDULED_ID),
+            'competitionId' => AppFixtures::SUBSET_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 1)->set('awayScore', 1)->set('overtimeWinner', 'home')->call('submit');
+        $guess = $this->subsetGuess($client);
+        self::assertNotNull($guess);
+        self::assertSame([2, 1], [$guess->overtimeHomeScore, $guess->overtimeAwayScore]);
+
+        // The tip stops being a draw: the pick does not travel and is cleared from the form too.
+        $component->set('homeScore', 2)->set('awayScore', 0)->call('submit');
+        $guess = $this->subsetGuess($client);
+        self::assertNotNull($guess);
+        self::assertNull($guess->overtimeWinner);
+        $live = $component->component();
+        self::assertInstanceOf(GuessSubmitForm::class, $live);
+        self::assertSame('', $live->overtimeWinner);
+    }
+
     public function testSubmitWithPeriodsStoresGuess(): void
     {
         $client = static::createClient();
@@ -241,6 +295,42 @@ final class GuessSubmitFormComponentTest extends WebTestCase
             'Jméno hráče nesmí být delší než 120 znaků.',
             (string) $component->render(),
         );
+    }
+
+    private function enableOvertimeRuleForSubset(KernelBrowser $client): void
+    {
+        /** @var MessageBusInterface $commandBus */
+        $commandBus = $client->getContainer()->get('command.bus');
+        $commandBus->dispatch(new UpdateCompetitionRuleConfigurationCommand(
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+            changes: [
+                'overtime_exact' => ['enabled' => true, 'points' => 3],
+            ],
+        ));
+    }
+
+    private function subsetGuess(KernelBrowser $client): ?\App\Entity\Guess
+    {
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $em->clear();
+
+        /** @var \App\Entity\Guess|null $guess */
+        $guess = $em->createQueryBuilder()
+            ->select('g')
+            ->from(\App\Entity\Guess::class, 'g')
+            ->where('g.user = :u')
+            ->andWhere('g.sportMatch = :m')
+            ->andWhere('g.competition = :c')
+            ->andWhere('g.deletedAt IS NULL')
+            ->setParameter('u', Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID))
+            ->setParameter('m', Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID))
+            ->setParameter('c', Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID))
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $guess;
     }
 
     private function getUser(KernelBrowser $client, string $id): User

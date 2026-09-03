@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Service\Feed;
 
 use App\Command\AddTeamAlias\AddTeamAliasCommand;
+use App\Command\SetSportMatchFinalScore\SetSportMatchFinalScoreCommand;
 use App\Command\SyncMatchSourceFeed\SyncMatchSourceFeedCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
@@ -23,6 +24,7 @@ use App\Service\Feed\FeedSyncResult;
 use App\Service\Feed\MatchSnapshot;
 use App\Tests\Support\IntegrationTestCase;
 use App\Value\MatchEventInput;
+use App\Value\PeriodScores;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Uid\Uuid;
 
@@ -390,6 +392,49 @@ final class FeedSynchronizerTest extends IntegrationTestCase
         self::assertSame(3, $match->homeScore);
         // Score-only correction must not wipe the stored sheet.
         self::assertSame($idsBefore, $this->eventIds());
+    }
+
+    /**
+     * No real provider publishes a shootout winner or a period breakdown, so a
+     * null there means „unknown", not „none". Before this, every poll of a
+     * score-only feed wiped what the admin had entered by hand and re-evaluated
+     * the whole match — and never converged.
+     */
+    public function testAHandEnteredWinnerAndPeriodsSurviveScoreOnlyPolls(): void
+    {
+        $this->syncPublicSource([$this->scheduledSnapshot()]);
+        $draw = $this->snapshot(status: FeedMatchStatus::Finished, homeScore: 2, awayScore: 2);
+        $this->syncPublicSource([$draw]);
+
+        // The admin records what the feed cannot: the winner after penalties and the halves.
+        $this->commandBus()->dispatch(new SetSportMatchFinalScoreCommand(
+            sportMatchId: $this->findSynced()->id,
+            editorId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            homeScore: 2,
+            awayScore: 2,
+            periodScores: PeriodScores::fromArray([[1, 1], [1, 1]]),
+            overtimeHomeScore: 3,
+            overtimeAwayScore: 2,
+            events: null,
+        ));
+
+        $result = $this->syncPublicSource([$draw]);
+
+        self::assertSame(1, $result->unchanged);
+        self::assertSame([], $result->corrected);
+        $match = $this->findSynced();
+        self::assertSame(MatchSide::Home, $match->overtimeWinner);
+        self::assertSame([[1, 1], [1, 1]], $match->periodScores?->toArray());
+
+        // A corrected draw keeps the winner (re-derived for 1:1) but not halves that no longer add up.
+        $this->syncPublicSource([$this->snapshot(status: FeedMatchStatus::Finished, homeScore: 1, awayScore: 1)]);
+        $match = $this->findSynced();
+        self::assertSame([1, 1, 2, 1], [$match->homeScore, $match->awayScore, $match->overtimeHomeScore, $match->overtimeAwayScore]);
+        self::assertNull($match->periodScores);
+
+        // The feed says it was no draw after all: the winner is gone.
+        $this->syncPublicSource([$this->snapshot(status: FeedMatchStatus::Finished, homeScore: 2, awayScore: 1)]);
+        self::assertNull($this->findSynced()->overtimeWinner);
     }
 
     public function testCancellationIsReportedNotApplied(): void

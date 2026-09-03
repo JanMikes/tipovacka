@@ -57,7 +57,13 @@ final class SetFinalScoreController extends AbstractController
         $formData->state = $sportMatch->isLive ? SetFinalScoreFormData::STATE_LIVE : SetFinalScoreFormData::STATE_FINISHED;
         $formData->homeScore = $sportMatch->homeScore;
         $formData->awayScore = $sportMatch->awayScore;
-        $formData->overtimeWinner = $sportMatch->overtimeWinner->value ?? SetFinalScoreFormData::OVERTIME_DRAW_STANDS;
+        // Only where the zdroj still plays extra time: a winner recorded before
+        // the switch was turned off must not be smuggled into a form that has
+        // no control for it (the entity would refuse it and the match would
+        // become unsavable).
+        $formData->overtimeWinner = $sportMatch->matchSource->hasOvertime
+            ? ($sportMatch->overtimeWinner->value ?? SetFinalScoreFormData::OVERTIME_DRAW_STANDS)
+            : SetFinalScoreFormData::OVERTIME_DRAW_STANDS;
         $formData->periods = $this->prefillPeriods($sportMatch->periodScores?->toArray(), $sport->periodCount);
         $formData->events = array_map(
             static function (MatchEvent $event): MatchEventFormData {

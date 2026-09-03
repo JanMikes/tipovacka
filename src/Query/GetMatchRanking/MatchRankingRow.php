@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Query\GetMatchRanking;
 
+use App\Enum\MatchSide;
 use Symfony\Component\Uid\Uuid;
 
 final readonly class MatchRankingRow
@@ -30,6 +31,8 @@ final readonly class MatchRankingRow
         public ?int $overtimeHomeScore = null,
         public ?int $overtimeAwayScore = null,
         public array $scorerNames = [],
+        /** Who the tip says wins after extra time / penalties — the pair above is never shown as a score. */
+        public ?MatchSide $overtimeWinner = null,
     ) {
     }
 }

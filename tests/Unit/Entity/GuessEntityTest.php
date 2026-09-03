@@ -218,7 +218,7 @@ final class GuessEntityTest extends TestCase
         self::assertSame([[1, 0], [0, 1]], $guess->periodScores?->toArray());
         self::assertSame(2, $guess->overtimeHomeScore);
         self::assertSame(1, $guess->overtimeAwayScore);
-        self::assertTrue($guess->hasOvertimeTip);
+        self::assertNotNull($guess->overtimeWinner);
     }
 
     public function testPeriodTipMustMatchSportPeriodCount(): void
@@ -317,7 +317,7 @@ final class GuessEntityTest extends TestCase
         self::assertNull($guess->periodScores);
         self::assertNull($guess->overtimeHomeScore);
         self::assertNull($guess->overtimeAwayScore);
-        self::assertFalse($guess->hasOvertimeTip);
+        self::assertNull($guess->overtimeWinner);
     }
 
     public function testUpdateScoresValidatesOvertimeAgainstNewMainTip(): void

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Query\GetCompetitionGuessMatrix;
 
+use App\Enum\MatchSide;
+
 final readonly class MatrixCell
 {
     /**
@@ -19,6 +21,8 @@ final readonly class MatrixCell
         public ?int $overtimeHomeScore = null,
         public ?int $overtimeAwayScore = null,
         public array $scorerNames = [],
+        /** Who the tip says wins after extra time / penalties — the pair above is never shown as a score. */
+        public ?MatchSide $overtimeWinner = null,
     ) {
     }
 

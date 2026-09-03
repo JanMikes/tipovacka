@@ -118,16 +118,18 @@ would be wrong.
 (registration order is alphabetical-by-class, which would scatter the period rules).
 The wizard still *shadows* the section headings with a local, sport-interpolated map that
 phrases them as questions („Tipovat také poločasy zápasu?", „Chcete tipovat také střelce
-utkání?", „Tipovat celkové skóre po prodloužení či penaltách?").
+utkání?", „Tipovat vítěze po prodloužení či penaltách?").
 
 Four `periods` rules exist: exact / home goals / away goals / tendency. The two goal rules
 are **not** exclusive with `period_exact` (mirroring the whole-match trio); only
 `period_tendency` excludes an exact period. All four are disabled by default, and
 `CompetitionGuessFeatures::periodTips` is true if **any** of them is enabled.
 
-PP and PEN are deliberately **not** split — one combined „Celkové skóre po prodloužení /
-penaltách" entry backed by the single `overtime_exact` rule and the single overtime score
-pair on `SportMatch`/`Guess`.
+PP and PEN are deliberately **not** split — one „Vítěz po prodloužení / penaltách" entry
+backed by the single `overtime_exact` rule. Since 2026-09-03 the pair on `SportMatch`/`Guess`
+is not a score at all but the draw plus one goal for the winner (`Value\OvertimeOutcome`);
+the winner pick is offered only where the zdroj plays extra time (`MatchSource.hasOvertime`,
+set on the wizard's from-scratch path and on the zdroj edit page). See DOMAIN.md §Scoring.
 
 ## Playoff toggle — „Dohrávat turnaj?", inside the layer editor
 
