@@ -144,7 +144,7 @@
                     {%- if sport_match.periodScores is not null -%}
                         ({% for p in sport_match.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
                     {%- endif -%}
-                    {%- if sport_match.hasOvertimeScore %} po prodl. {{ sport_match.overtimeHomeScore }}:{{ sport_match.overtimeAwayScore }}{% endif -%}
+                    {%- if sport_match.overtimeWinner is not null %} po prodl. vítěz {{ sport_match.overtimeWinner.value == 'home' ? sport_match.homeTeam.name : sport_match.awayTeam.name }}{% endif -%}
                 </p>
             {% endif %}
 
@@ -308,12 +308,12 @@
                                         {# The optional tip parts the old „Jak tipovali ostatní" block
                                            carried — periods, prodloužení, střelci. Folded in here so
                                            the page holds ONE list of these tips, not two. #}
-                                        {% if row.periodScores is not null or row.overtimeHomeScore is not null or row.scorerNames|length > 0 %}
+                                        {% if row.periodScores is not null or row.overtimeWinner is not null or row.scorerNames|length > 0 %}
                                             <small class="mt-0.5 block text-[11px] font-light text-white/45">
                                                 {%- if row.periodScores is not null -%}
                                                     ({% for p in row.periodScores %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
                                                 {%- endif -%}
-                                                {%- if row.overtimeHomeScore is not null %} · prodl. {{ row.overtimeHomeScore }}:{{ row.overtimeAwayScore }}{% endif -%}
+                                                {%- if row.overtimeWinner is not null %} · prodl. vítěz {{ row.overtimeWinner.value == 'home' ? sport_match.homeTeam.name : sport_match.awayTeam.name }}{% endif -%}
                                                 {%- if row.scorerNames|length > 0 %} · {{ row.scorerNames|join(', ') }}{% endif -%}
                                             </small>
                                         {% endif %}

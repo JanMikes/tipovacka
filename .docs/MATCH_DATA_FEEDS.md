@@ -142,15 +142,15 @@ and silently zero `scorer_hit`. Add an explicit mode: full replace (current admi
 semantics, events are authoritative) vs score-only update (events untouched). The feed
 adapter declares which one it is per call.
 
-### P0.6 — OPEN DECISION: AET / penalty-shootout mapping
+### P0.6 — DECIDED 2026-09-03: AET / penalty-shootout mapping
 
-`setFinalScore()` requires overtime to be a non-draw ≥ the regular score, so a feed's
-„1:1 AET, 4:3 on pens" has no faithful representation (`overtimeHome/Away` means
-„score AFTER prolongation"). Options: (a) map AET+pens result into the existing
-overtime fields by convention (e.g. pens winner = +1 goal), (b) add explicit
-`penaltyHome/Away` columns, (c) Tier-world knockout matches only — decide before the
-UCL/UEL knockout phase (spring 2027), NOT needed for the league phases or Chance Liga.
-Record the choice in DOMAIN.md when made.
+Option (a), recorded in DOMAIN.md §Scoring: the overtime pair is the regular-time draw
+plus ONE goal for the winner (`Value\OvertimeOutcome`), i.e. „who won", never a score.
+`FeedSynchronizer` treats a null overtime / period field in a snapshot as **unknown** and
+keeps a hand-entered winner or breakdown (re-derived for the snapshot's draw, dropped
+when the feed says the match was no draw). Whether a zdroj plays extra time at all is
+`MatchSource.hasOvertime`. Still pending: the UEFA adapter deriving the winner from
+`score.total` / `score.penalties` once a real shootout payload has been observed.
 
 ### P0.7 — `MatchDataProvider` interface + snapshot DTOs
 
@@ -380,10 +380,10 @@ provider — score *and* scorers — and its `id` (e.g. `2049167`) is byte-ident
 Unresolved: the exact strings for postponed/cancelled/live, and whether a shootout appears
 as `score.penalties` — no UEFA tie has gone to extra time yet this season. Which means:
 
-> **P0.6 (AET / penalty shootout) is due sooner than the plan above says.** It is not
-> „spring 2027" — the UECL/UEL **play-off round is late August 2026** and its second legs
-> can go to extra time and penalties. Decide the representation before binding the UEFA
-> adapter, or those matches will fail `setFinalScore()`'s overtime invariant.
+> **P0.6 is decided (2026-09-03).** A shootout match arrives from the adapter as its
+> regular-time draw and is accepted; an admin records the winner on the result form and
+> the synchronizer keeps it on every later poll. Deriving it from the payload is the
+> remaining adapter step.
 
 ## Adapter 3 — Sportmonks (one GET per *poll*, not per source)
 
@@ -662,13 +662,11 @@ reason to drop the other ninety.
 
 ## Still open
 
-- **AET / penalty shootout.** DOMAIN.md (2026-07-29) locks ONE combined overtime pair — no
-  split, no columns. The convention to record when the first UEFA tie goes to penalties:
-  a shootout maps to the regular score **with the winner +1 goal** (1:1, won 4:3 on pens →
-  overtime pair `2:1`), which keeps the same scale as a real extra-time goal, is what players
-  actually tip, and satisfies the non-draw ≥ regular invariant. The UEFA adapter currently
-  reports the REGULAR score only and invents nothing, so a knockout tie is scored correctly by
-  every rule except `overtime_exact` until this lands. Due with the **August play-off round**.
+- **AET / penalty shootout — convention locked (2026-09-03), adapter mapping pending.** The
+  winner-plus-one pair is now enforced by `Value\OvertimeOutcome` and both entities, and the
+  synchronizer keeps a hand-entered winner across polls. The UEFA adapter still reports the
+  REGULAR score only; mapping `score.total` / `score.penalties` to a winner needs one real
+  shootout payload to confirm the field shapes.
 - **FAČR statuses not yet observed**: odložený zápas, kontumace, a real `(PK:x:y)`. Each will
   arrive as an `Unknown` in the sync report, and each is one line in the adapter's table.
 - **FAČR scorers** stay manual (the zápis needs a login). Promoting to the authenticated flow

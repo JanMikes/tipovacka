@@ -250,6 +250,55 @@ final class MyTipsBatchFlowTest extends WebTestCase
         self::assertSame(1, $guess->overtimeAwayScore);
     }
 
+    public function testTheBatchPageDropsAWinnerPickOnceTheOvertimeRuleIsOff(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        /** @var MessageBusInterface $commandBus */
+        $commandBus = $client->getContainer()->get('command.bus');
+
+        $commandBus->dispatch(new UpdateCompetitionRuleConfigurationCommand(
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+            changes: ['overtime_exact' => ['enabled' => true, 'points' => 3]],
+        ));
+        $commandBus->dispatch(new SubmitGuessCommand(
+            userId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            sportMatchId: Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID),
+            homeScore: 0,
+            awayScore: 0,
+            overtimeHomeScore: 1,
+            overtimeAwayScore: 0,
+        ));
+        // The organizer turns the overtime rule off: the pick no longer travels.
+        $commandBus->dispatch(new UpdateCompetitionRuleConfigurationCommand(
+            competitionId: Uuid::fromString(AppFixtures::SUBSET_COMPETITION_ID),
+            editorId: Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID),
+            changes: ['overtime_exact' => ['enabled' => false, 'points' => 3]],
+        ));
+
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $batchAction = '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/moje-tipy';
+        $crawler = $client->request('GET', $batchAction);
+        self::assertResponseIsSuccessful();
+        $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
+        $matchId = AppFixtures::MATCH_SCHEDULED_ID;
+        $form['guesses['.$matchId.'][homeScore]'] = '1';
+        $form['guesses['.$matchId.'][awayScore]'] = '1';
+        $client->submit($form);
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $guess = $this->findSubsetGuess($em, $matchId);
+        self::assertSame([1, 1], [$guess->homeScore, $guess->awayScore]);
+        self::assertNull($guess->overtimeWinner);
+    }
+
     public function testPeriodsWithoutMainScoreShowsRowErrorInsteadOfDeleting(): void
     {
         $client = static::createClient();

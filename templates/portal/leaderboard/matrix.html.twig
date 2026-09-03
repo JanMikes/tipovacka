@@ -143,8 +143,8 @@
                                                 {% for p in cell.periodScores %}{% set periods_text = periods_text|merge([p[0] ~ ':' ~ p[1]]) %}{% endfor %}
                                                 {% set extra_tip_parts = extra_tip_parts|merge(['Části: ' ~ periods_text|join(', ')]) %}
                                             {% endif %}
-                                            {% if cell.overtimeHomeScore is not null %}
-                                                {% set extra_tip_parts = extra_tip_parts|merge(['Po prodloužení: ' ~ cell.overtimeHomeScore ~ ':' ~ cell.overtimeAwayScore]) %}
+                                            {% if cell.overtimeWinner is not null %}
+                                                {% set extra_tip_parts = extra_tip_parts|merge(['Po prodloužení vítěz: ' ~ (cell.overtimeWinner.value == 'home' ? m.homeTeam.name : m.awayTeam.name)]) %}
                                             {% endif %}
                                             {% if cell.scorerNames|length > 0 %}
                                                 {% set extra_tip_parts = extra_tip_parts|merge(['Střelci: ' ~ cell.scorerNames|join(', ')]) %}

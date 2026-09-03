@@ -17,6 +17,7 @@ use App\Service\Player\PlayerNameNormalizer;
 use App\Service\SportMatch\MatchEventWriter;
 use App\Service\Team\TeamResolver;
 use App\Value\MatchEventInput;
+use App\Value\OvertimeOutcome;
 use App\Value\PeriodScores;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -439,12 +440,14 @@ final readonly class FeedSynchronizer
 
     private function writeFinalScore(SportMatch $match, MatchSnapshot $snapshot, \DateTimeImmutable $now): void
     {
+        $overtime = $this->overtimeToWrite($match, $snapshot);
+
         $match->setFinalScore(
             homeScore: (int) $snapshot->homeScore,
             awayScore: (int) $snapshot->awayScore,
-            periodScores: PeriodScores::fromNullableArray($snapshot->periodScores),
-            overtimeHomeScore: $snapshot->overtimeHomeScore,
-            overtimeAwayScore: $snapshot->overtimeAwayScore,
+            periodScores: $this->periodScoresToWrite($match, $snapshot),
+            overtimeHomeScore: $overtime[0] ?? null,
+            overtimeAwayScore: $overtime[1] ?? null,
             now: $now,
         );
 
@@ -456,10 +459,57 @@ final readonly class FeedSynchronizer
     }
 
     /**
+     * Null periods in a snapshot mean the provider does not KNOW them — no real
+     * adapter publishes a breakdown — so a stored, possibly hand-entered one
+     * survives as long as the regular score it sums to is unchanged. A provider
+     * that does know sends a value, and a value is authoritative. Same
+     * convention as events (null = untouched).
+     */
+    private function periodScoresToWrite(SportMatch $match, MatchSnapshot $snapshot): ?PeriodScores
+    {
+        if (null !== $snapshot->periodScores) {
+            return PeriodScores::fromNullableArray($snapshot->periodScores);
+        }
+
+        $sameScore = $match->homeScore === $snapshot->homeScore && $match->awayScore === $snapshot->awayScore;
+
+        return $sameScore ? $match->periodScores : null;
+    }
+
+    /**
+     * The same rule for the winner after extra time / penalties: null = unknown,
+     * so a winner the organizer recorded by hand is kept — re-derived for the
+     * snapshot's draw (Value\OvertimeOutcome) and dropped only when the feed
+     * says the match was no draw after all. Without this, every poll of a
+     * score-only provider wiped the winner and re-evaluated the whole match.
+     *
+     * @return array{int, int}|null
+     */
+    private function overtimeToWrite(SportMatch $match, MatchSnapshot $snapshot): ?array
+    {
+        if (null !== $snapshot->overtimeHomeScore && null !== $snapshot->overtimeAwayScore) {
+            return [$snapshot->overtimeHomeScore, $snapshot->overtimeAwayScore];
+        }
+
+        $winner = $match->overtimeWinner;
+        $home = $snapshot->homeScore;
+        $away = $snapshot->awayScore;
+
+        if (null === $winner || null === $home || null === $away || $home !== $away) {
+            return null;
+        }
+
+        return (new OvertimeOutcome($winner))->scoreAfter($home, $away);
+    }
+
+    /**
      * Whether a finished match already holds exactly this snapshot's result —
      * the guard that keeps repeated syncs from re-triggering evaluation
      * (every real write on a finished match fires SportMatchScoreUpdated,
-     * which deletes and recomputes all evaluations).
+     * which deletes and recomputes all evaluations). Periods and the overtime
+     * winner are compared only when the snapshot carries them (see
+     * periodScoresToWrite / overtimeToWrite), so a hand-entered value never
+     * reads as a correction on every poll.
      */
     private function finalStateEquals(SportMatch $match, MatchSnapshot $snapshot): bool
     {
@@ -467,12 +517,13 @@ final readonly class FeedSynchronizer
             return false;
         }
 
-        if ($match->periodScores?->toArray() !== $snapshot->periodScores) {
+        if (null !== $snapshot->periodScores && $match->periodScores?->toArray() !== $snapshot->periodScores) {
             return false;
         }
 
-        if ($match->overtimeHomeScore !== $snapshot->overtimeHomeScore
-            || $match->overtimeAwayScore !== $snapshot->overtimeAwayScore) {
+        if (null !== $snapshot->overtimeHomeScore && null !== $snapshot->overtimeAwayScore
+            && ($match->overtimeHomeScore !== $snapshot->overtimeHomeScore
+                || $match->overtimeAwayScore !== $snapshot->overtimeAwayScore)) {
             return false;
         }
 

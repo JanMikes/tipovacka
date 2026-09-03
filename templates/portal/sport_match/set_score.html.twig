@@ -138,7 +138,10 @@
                           the final result unless a winner is picked; the stored pair (draw plus
                           one goal for the winner) is derived, nobody types it. ── #}
                     {% if form.overtimeWinner is defined %}
-                    <fieldset class="field hidden" data-score-entry-target="overtime">
+                    {# Visible server-side when the current result is a finished draw, so
+                       a correction works without JS; the controller keeps it in step. #}
+                    {% set draw_now = form.vars.data.isFinishing and form.vars.data.homeScore is not null and form.vars.data.homeScore == form.vars.data.awayScore %}
+                    <fieldset class="field {{ draw_now ? '' : 'hidden' }}" data-score-entry-target="overtime">
                         <legend class="field-label">Prodloužení / penalty</legend>
                         <p class="mb-2 text-xs text-white/50">Skončil-li zápas remízou bez prodloužení (liga, skupina, první zápas dvojutkání), nechte první možnost. Vítěz se zapíše jako remíza plus jeden gól; na přesném průběhu prodloužení či počtu penalt nezáleží.</p>
                         <div class="grid gap-2">
@@ -152,8 +155,9 @@
                             {% endfor %}
                         </div>
                         {% do form.overtimeWinner.setRendered %}
-                        {{ form_errors(form.overtimeWinner) }}
                     </fieldset>
+                    {# Outside the fieldset: an error must stay visible even while JS hides the question. #}
+                    {{ form_errors(form.overtimeWinner) }}
                     {% endif %}
 
                     {# ── Scorers & cards ────────────────────────────────────── #}

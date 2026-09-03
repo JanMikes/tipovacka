@@ -14,18 +14,16 @@ final class Version20260902234207 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'MatchSource.hasOvertime: whether a drawn match in the zdroj can go on to extra time / penalties (default off: a draw is final).';
     }
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE match_sources ADD has_overtime BOOLEAN DEFAULT false NOT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE match_sources DROP has_overtime');
     }
 }

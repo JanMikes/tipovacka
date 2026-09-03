@@ -54,7 +54,7 @@ final readonly class RulePresetProvider
         PeriodHomeGoalsRule::IDENTIFIER => ['label' => 'Tip domácí v části zápasu', 'sub' => 'Trefený počet gólů domácích v poločase či třetině'],
         PeriodTendencyRule::IDENTIFIER => ['label' => 'Tendence části zápasu', 'sub' => 'Správný vítěz nebo remíza části (bez přesného skóre)'],
         ScorerHitRule::IDENTIFIER => ['label' => 'Trefený střelec', 'sub' => 'Body za každého správně tipnutého střelce'],
-        OvertimeExactRule::IDENTIFIER => ['label' => 'Vítěz po prodloužení / penaltách', 'sub' => 'Trefený vítěz po prodloužení či penaltách, když zápas skončil v základní hrací době remízou. Nabízí se jen u zdrojů zápasů, kde se prodloužení hraje'],
+        OvertimeExactRule::IDENTIFIER => ['label' => 'Vítěz po prodloužení / penaltách', 'sub' => 'Trefený vítěz po prodloužení či penaltách, když zápas skončil v základní hrací době remízou. Hráči tipují vítěze jen u zápasů ze zdrojů, které prodloužení hrají'],
     ];
 
     public function __construct(
@@ -91,7 +91,7 @@ final readonly class RulePresetProvider
     /**
      * Preset name → identifiers ENABLED by the preset (every other rule is
      * disabled). „standard" = base rules; „scorer" = base rules + scorer_hit;
-     * „maxi" = base rules + the whole per-period trio + the after-overtime score.
+     * „maxi" = base rules + the whole per-period trio + the winner after extra time.
      * Points always come from {@see defaultPoints()}.
      *
      * @return array<string, list<string>>

@@ -99,7 +99,7 @@
                     {%- if sport_match.periodScores is not null -%}
                         ({% for p in sport_match.periodScores.toArray %}{{ p[0] }}:{{ p[1] }}{% if not loop.last %}, {% endif %}{% endfor %})
                     {%- endif -%}
-                    {%- if sport_match.hasOvertimeScore %} po prodl. {{ sport_match.overtimeHomeScore }}:{{ sport_match.overtimeAwayScore }}{% endif -%}
+                    {%- if sport_match.overtimeWinner is not null %} po prodl. vítěz {{ sport_match.overtimeWinner.value == 'home' ? sport_match.homeTeam.name : sport_match.awayTeam.name }}{% endif -%}
                 </p>
             {% endif %}
         </section>

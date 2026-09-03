@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Portal\SportMatch;
 
+use App\Command\UpdateMatchSource\UpdateMatchSourceCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\MatchEvent;
 use App\Entity\MatchSource;
@@ -15,6 +16,7 @@ use App\Enum\SportMatchState;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 final class SetFinalScoreFlowTest extends WebTestCase
@@ -170,6 +172,19 @@ final class SetFinalScoreFlowTest extends WebTestCase
         $client->request('GET', $url);
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="set_final_score_form[overtimeWinner]"][value="home"][checked]');
+
+        // Every read surface prints the WINNER, never the fabricated 3:2 pair.
+        foreach ([
+            '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+            '/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID,
+            '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID,
+        ] as $page) {
+            $client->request('GET', $page);
+            self::assertResponseIsSuccessful($page);
+            $html = (string) $client->getResponse()->getContent();
+            self::assertStringContainsString('vítěz Sparta Praha', $html, $page);
+            self::assertStringNotContainsString('prodl. 3:2', $html, $page);
+        }
     }
 
     /**
@@ -285,14 +300,15 @@ final class SetFinalScoreFlowTest extends WebTestCase
         self::assertAnySelectorTextContains('body', 'Zvolený výsledek po prodloužení není platný.');
     }
 
-    public function testWinnerPickOnNonDrawIsRejectedWith422(): void
+    public function testWinnerPickOnNonDrawIsIgnoredNotRejected(): void
     {
+        // The question is hidden while the score is no draw, so a stale pick
+        // (JS off, or a corrected score) is meaningless — ignored, never an
+        // error pointing at a control the organizer cannot see.
         $client = static::createClient();
-        $this->loginAdmin($client);
+        $em = $this->loginAdmin($client);
 
-        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
-
-        $client->request('POST', $url, [
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore', [
             'set_final_score_form' => [
                 'state' => 'finished',
                 'homeScore' => '2',
@@ -301,8 +317,73 @@ final class SetFinalScoreFlowTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseStatusCodeSame(422);
-        self::assertAnySelectorTextContains('body', 'Vítěze po prodloužení lze zvolit jen při remíze v základní hrací době.');
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame([2, 1], [$match->homeScore, $match->awayScore]);
+        self::assertNull($match->overtimeWinner);
+    }
+
+    public function testCorrectingADrawWithAWinnerToAnotherDrawKeepsTheWinner(): void
+    {
+        $client = static::createClient();
+        $em = $this->loginAdmin($client);
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+
+        $client->request('POST', $url, ['set_final_score_form' => ['state' => 'finished', 'homeScore' => '2', 'awayScore' => '2', 'overtimeWinner' => 'home']]);
+        self::assertResponseRedirects();
+        $client->request('POST', $url, ['set_final_score_form' => ['state' => 'finished', 'homeScore' => '3', 'awayScore' => '3', 'overtimeWinner' => 'home']]);
+        self::assertResponseRedirects();
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame([3, 3, 4, 3], [$match->homeScore, $match->awayScore, $match->overtimeHomeScore, $match->overtimeAwayScore]);
+    }
+
+    public function testSwitchingOvertimeOffAfterAWinnerKeepsTheMatchEditable(): void
+    {
+        // A winner recorded while the zdroj played extra time must not lock the
+        // match once the switch is turned off: the form has no control for it,
+        // so the prefill must not smuggle it in either.
+        $client = static::createClient();
+        $em = $this->loginAdmin($client);
+        $url = '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/skore';
+
+        $client->request('POST', $url, ['set_final_score_form' => ['state' => 'finished', 'homeScore' => '2', 'awayScore' => '2', 'overtimeWinner' => 'home']]);
+        self::assertResponseRedirects();
+
+        /** @var MessageBusInterface $commandBus */
+        $commandBus = $client->getContainer()->get('command.bus');
+        $commandBus->dispatch(new UpdateMatchSourceCommand(
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            name: AppFixtures::PUBLIC_SOURCE_NAME,
+            description: null,
+            startAt: null,
+            endAt: null,
+            hasOvertime: false,
+        ));
+        $em->clear();
+
+        $client->request('GET', $url);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('input[name="set_final_score_form[overtimeWinner]"]');
+
+        // Re-saving the same draw works and, with no question left, drops the winner.
+        $client->request('POST', $url, ['set_final_score_form' => ['state' => 'finished', 'homeScore' => '2', 'awayScore' => '2']]);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame([2, 2], [$match->homeScore, $match->awayScore]);
+        self::assertNull($match->overtimeWinner);
+
+        // And a correction to a non-draw works too.
+        $client->request('POST', $url, ['set_final_score_form' => ['state' => 'finished', 'homeScore' => '2', 'awayScore' => '1']]);
+        self::assertResponseRedirects('/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
     }
 
     public function testEmptyScorerNameIsRejectedWith422NotACrash(): void

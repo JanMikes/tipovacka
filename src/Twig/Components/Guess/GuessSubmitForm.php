@@ -132,8 +132,16 @@ final class GuessSubmitForm
      * plus one goal for the winner) — see Value\OvertimeOutcome.
      */
     #[LiveProp(writable: true)]
-    #[Assert\Choice(choices: ['', 'home', 'away'])]
+    #[Assert\Choice(callback: 'overtimeWinnerChoices')]
     public string $overtimeWinner = '';
+
+    /**
+     * @return list<string>
+     */
+    public static function overtimeWinnerChoices(): array
+    {
+        return ['', ...array_column(MatchSide::cases(), 'value')];
+    }
 
     /** JSON list of {side: 'home'|'away', name: string} written by the scorer-picker Stimulus controller. */
     #[LiveProp(writable: true)]
@@ -418,6 +426,13 @@ final class GuessSubmitForm
                     scorers: $scorers,
                 ));
                 $this->successMessage = 'Tip upraven.';
+            }
+
+            // A pick that did not travel (tip is no draw any more) is gone from
+            // the stored guess; drop it from the form too, or a later draw would
+            // show a pre-selected winner the guess does not hold.
+            if (null === $overtimePair) {
+                $this->overtimeWinner = '';
             }
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();

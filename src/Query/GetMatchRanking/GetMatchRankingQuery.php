@@ -77,6 +77,7 @@ final readonly class GetMatchRankingQuery
                 'periodScores' => $guess->periodScores?->toArray(),
                 'overtimeHomeScore' => $guess->overtimeHomeScore,
                 'overtimeAwayScore' => $guess->overtimeAwayScore,
+                'overtimeWinner' => $guess->overtimeWinner,
                 'scorerNames' => $scorerNames,
             ];
         }
@@ -115,6 +116,7 @@ final readonly class GetMatchRankingQuery
                 overtimeHomeScore: $row['overtimeHomeScore'],
                 overtimeAwayScore: $row['overtimeAwayScore'],
                 scorerNames: $row['scorerNames'],
+                overtimeWinner: $row['overtimeWinner'],
             );
         }
 

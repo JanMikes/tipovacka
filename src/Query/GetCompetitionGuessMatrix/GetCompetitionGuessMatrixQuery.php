@@ -14,6 +14,7 @@ use App\Repository\MembershipRepository;
 use App\Repository\UserRepository;
 use App\Service\Competition\CompetitionMatchProvider;
 use App\Service\Competition\TipVisibilityGate;
+use App\Value\OvertimeOutcome;
 use App\Value\TeamView;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -112,6 +113,9 @@ final readonly class GetCompetitionGuessMatrixQuery
                     overtimeHomeScore: $row['overtimeHomeScore'],
                     overtimeAwayScore: $row['overtimeAwayScore'],
                     scorerNames: $scorerNamesByGuess[$row['guessId']->toRfc4122()] ?? [],
+                    overtimeWinner: null === $row['overtimeHomeScore'] || null === $row['overtimeAwayScore']
+                        ? null
+                        : OvertimeOutcome::fromScores($row['homeScore'], $row['awayScore'], $row['overtimeHomeScore'], $row['overtimeAwayScore'])?->winner,
                 );
 
             if (null !== $points) {
