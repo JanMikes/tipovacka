@@ -55,6 +55,18 @@ final class FeedSyncResult
      */
     public private(set) array $needsAdoption = [];
 
+    /**
+     * Matches the feed decided after extra time / penalties on a zdroj whose
+     * „hraje se prodloužení" is off. The winner is dropped (a draw is that
+     * zdroj's final result and the entity refuses the pair), the score itself is
+     * written as usual — reported so an admin can tick the box, never an error:
+     * the whole batch has to keep syncing and the cron must not page for a
+     * checkbox. Said once, when the result lands, not on every poll.
+     *
+     * @var list<string>
+     */
+    public private(set) array $overtimeNotPlayed = [];
+
     /** Feed team spellings with no directory/alias match — the pending-team gate. */
     /** @var list<string> */
     public private(set) array $unresolvedTeams = [];
@@ -91,7 +103,8 @@ final class FeedSyncResult
         get => [] !== $this->unresolvedTeams
             || [] !== $this->unknownStatus
             || [] !== $this->cancelledReported
-            || [] !== $this->skippedPastKickoff;
+            || [] !== $this->skippedPastKickoff
+            || [] !== $this->overtimeNotPlayed;
     }
 
     public function addCreated(string $label): void
@@ -142,6 +155,13 @@ final class FeedSyncResult
     public function addNeedsAdoption(string $label): void
     {
         $this->needsAdoption[] = $label;
+    }
+
+    public function addOvertimeNotPlayed(string $label): void
+    {
+        if (!in_array($label, $this->overtimeNotPlayed, true)) {
+            $this->overtimeNotPlayed[] = $label;
+        }
     }
 
     public function addUnresolvedTeam(string $teamName): void

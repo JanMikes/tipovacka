@@ -1,0 +1,417 @@
+[
+    {
+        "id": "2049288",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-08-27T17:00:00Z"
+        },
+        "homeTeam": {
+            "id": "2609532",
+            "internationalName": "Pafos"
+        },
+        "awayTeam": {
+            "id": "52792",
+            "internationalName": "Dinamo City"
+        },
+        "score": {
+            "aggregate": {
+                "away": 3,
+                "home": 5
+            },
+            "regular": {
+                "away": 2,
+                "home": 2
+            },
+            "total": {
+                "away": 2,
+                "home": 4
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            },
+            "aggregate": {
+                "reason": "WIN_ON_EXTRA_TIME",
+                "team": {
+                    "internationalName": "Pafos"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Play-Offs",
+                "type": "PLAY_OFF"
+            }
+        },
+        "leg": {
+            "number": 2
+        },
+        "matchday": {
+            "name": "MD2 - PO"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Limassol Stadium"
+                }
+            }
+        }
+    },
+    {
+        "id": "2049278",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-08-26T16:45:00Z"
+        },
+        "homeTeam": {
+            "id": "50042",
+            "internationalName": "SK Rapid"
+        },
+        "awayTeam": {
+            "id": "50120",
+            "internationalName": "Hearts"
+        },
+        "score": {
+            "aggregate": {
+                "away": 4,
+                "home": 4
+            },
+            "penalty": {
+                "away": 4,
+                "home": 3
+            },
+            "regular": {
+                "away": 1,
+                "home": 1
+            },
+            "total": {
+                "away": 2,
+                "home": 2
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            },
+            "aggregate": {
+                "reason": "WIN_ON_PENALTIES",
+                "team": {
+                    "internationalName": "Hearts"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Play-Offs",
+                "type": "PLAY_OFF"
+            }
+        },
+        "leg": {
+            "number": 2
+        },
+        "matchday": {
+            "name": "MD2 - PO"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Weststadion"
+                }
+            }
+        }
+    },
+    {
+        "id": "2048750",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-07-30T18:00:00Z"
+        },
+        "homeTeam": {
+            "id": "2608297",
+            "internationalName": "CSKA Sofia"
+        },
+        "awayTeam": {
+            "id": "60609",
+            "internationalName": "Qarabağ"
+        },
+        "score": {
+            "aggregate": {
+                "away": 0,
+                "home": 0
+            },
+            "penalty": {
+                "away": 4,
+                "home": 5
+            },
+            "regular": {
+                "away": 0,
+                "home": 0
+            },
+            "total": {
+                "away": 0,
+                "home": 0
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            },
+            "aggregate": {
+                "reason": "WIN_ON_PENALTIES",
+                "team": {
+                    "internationalName": "CSKA Sofia"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Second qualifying round",
+                "type": "SECOND_QUALIFYING"
+            }
+        },
+        "leg": {
+            "number": 2
+        },
+        "matchday": {
+            "name": "MD2"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Natsionalen Stadion Vasil Levski"
+                }
+            }
+        }
+    },
+    {
+        "id": "2049242",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-08-27T18:00:00Z"
+        },
+        "homeTeam": {
+            "id": "80409",
+            "internationalName": "Thun"
+        },
+        "awayTeam": {
+            "id": "64227",
+            "internationalName": "Lech Poznań"
+        },
+        "score": {
+            "aggregate": {
+                "away": 9,
+                "home": 2
+            },
+            "regular": {
+                "away": 2,
+                "home": 2
+            },
+            "total": {
+                "away": 2,
+                "home": 2
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            },
+            "aggregate": {
+                "reason": "WIN_ON_AGGREGATE",
+                "team": {
+                    "internationalName": "Lech Poznań"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Play-Offs",
+                "type": "PLAY_OFF"
+            }
+        },
+        "leg": {
+            "number": 2
+        },
+        "matchday": {
+            "name": "MD2 - PO"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Arena Thun"
+                }
+            }
+        }
+    },
+    {
+        "id": "2048724",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-07-22T19:00:00Z"
+        },
+        "homeTeam": {
+            "id": "88148",
+            "internationalName": "Egnatia"
+        },
+        "awayTeam": {
+            "id": "59030",
+            "internationalName": "Celje"
+        },
+        "score": {
+            "aggregate": {
+                "away": 5,
+                "home": 5
+            },
+            "regular": {
+                "away": 3,
+                "home": 3
+            },
+            "total": {
+                "away": 3,
+                "home": 3
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            },
+            "aggregate": {
+                "reason": "WIN_ON_PENALTIES",
+                "team": {
+                    "internationalName": "Celje"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Second qualifying round",
+                "type": "SECOND_QUALIFYING"
+            }
+        },
+        "leg": {
+            "number": 1
+        },
+        "matchday": {
+            "name": "MD1"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Egnatia"
+                }
+            }
+        }
+    },
+    {
+        "id": "2046402",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2025-12-18T20:00:00Z"
+        },
+        "homeTeam": {
+            "id": "73390",
+            "internationalName": "Zrinjski"
+        },
+        "awayTeam": {
+            "id": "50042",
+            "internationalName": "SK Rapid"
+        },
+        "score": {
+            "regular": {
+                "away": 1,
+                "home": 1
+            },
+            "total": {
+                "away": 1,
+                "home": 1
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "DRAW"
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "League Phase",
+                "type": "GROUP_STANDINGS"
+            }
+        },
+        "matchday": {
+            "name": "MD6"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Stadium of HŠK Zrinjski"
+                }
+            }
+        }
+    },
+    {
+        "id": "2049286",
+        "status": "FINISHED",
+        "kickOffTime": {
+            "dateTime": "2026-08-27T16:00:00Z"
+        },
+        "homeTeam": {
+            "id": "62169",
+            "internationalName": "Jablonec"
+        },
+        "awayTeam": {
+            "id": "50121",
+            "internationalName": "Rangers"
+        },
+        "score": {
+            "aggregate": {
+                "away": 1,
+                "home": 1
+            },
+            "penalty": {
+                "away": 3,
+                "home": 4
+            },
+            "regular": {
+                "away": 0,
+                "home": 1
+            },
+            "total": {
+                "away": 0,
+                "home": 1
+            }
+        },
+        "winner": {
+            "match": {
+                "reason": "WIN_REGULAR",
+                "team": {
+                    "internationalName": "Jablonec"
+                }
+            },
+            "aggregate": {
+                "reason": "WIN_ON_PENALTIES",
+                "team": {
+                    "internationalName": "Jablonec"
+                }
+            }
+        },
+        "round": {
+            "metaData": {
+                "name": "Play-Offs",
+                "type": "PLAY_OFF"
+            }
+        },
+        "leg": {
+            "number": 2
+        },
+        "matchday": {
+            "name": "MD2 - PO"
+        },
+        "stadium": {
+            "translations": {
+                "name": {
+                    "EN": "Stadion Střelnice"
+                }
+            }
+        }
+    }
+]
