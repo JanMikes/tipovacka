@@ -1,0 +1,54 @@
+{#
+    Every reason a sign-up was rejected, in ONE box right above the submit button.
+
+    Inline errors stay under their fields, but on a phone the first of them often
+    renders a screen above the button — tapping it looked like nothing happened
+    (2026-10-17, a visitor gave up after four tries). This box lists each problem
+    as „Field: what is wrong", links to the field, and is scrolled into view by the
+    signup-feedback controller after every failed submit.
+
+    Rendered only after a submit attempt (isValidated), so typing into a fresh form
+    never shouts at the visitor.
+#}
+{% macro items(view) %}
+    {% import _self as summary %}
+    {%- set label = view.vars.label ?: ((view.children|length > 0) ? (view.children|first).vars.label : null) -%}
+    {%- for error in view.vars.errors -%}
+        <li>
+            {%- if view.parent is not null and label -%}
+                <a href="#{{ (view.children|length > 0) ? (view.children|first).vars.id : view.vars.id }}" class="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white">{{ label }}</a>:
+            {% endif -%}
+            {{ error.message }}
+        </li>
+    {%- endfor -%}
+    {%- for child in view.children -%}
+        {{ summary.items(child) }}
+    {%- endfor -%}
+{% endmacro %}
+
+{% import _self as summary %}
+
+{% if submitted and not form.vars.valid %}
+    <div role="alert" tabindex="-1" data-signup-feedback-target="summary"
+         class="rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white/85 outline-none">
+        <p class="flex items-center gap-2 font-semibold text-white">
+            <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0 text-loss" />
+            {{ title|default('Účet zatím nevznikl — oprav prosím:') }}
+        </p>
+        <ul class="mt-2 list-disc space-y-1 pl-5">
+            {{ summary.items(form) }}
+        </ul>
+        {% if nicknameSuggestion|default(null) %}
+            <p class="mt-2.5 flex flex-wrap items-center gap-2">
+                Volná přezdívka:
+                <button type="button"
+                        data-action="signup-feedback#useNickname"
+                        data-signup-feedback-nickname-param="{{ nicknameSuggestion }}"
+                        class="inline-flex items-center gap-1 rounded-lg border border-accent-500/40 bg-accent-500/10 px-2 py-0.5 font-mono text-[13px] font-semibold text-accent-200 transition-colors hover:bg-accent-500/20">
+                    {{ nicknameSuggestion }}
+                    <span class="font-sans text-xs font-medium text-accent-300">použít</span>
+                </button>
+            </p>
+        {% endif %}
+    </div>
+{% endif %}

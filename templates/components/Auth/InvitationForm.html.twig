@@ -29,7 +29,7 @@
         </p>
     </div>
 
-    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'submit'}}) }}
+    {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'submit', 'data-controller': 'signup-feedback', 'data-signup-feedback-attempt-value': this.submitAttempts}}) }}
 
         <div class="field">
             {{ form_label(form.email, null, {label_attr: {class: label_class}}) }}
@@ -75,8 +75,7 @@
                     </span>
                     {{ form_widget(form.nickname, {attr: {class: input_class}}) }}
                 </div>
-                <p class="mt-1 text-xs text-white/40">3–30 znaků, pouze písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
-                {{ form_errors(form.nickname) }}
+                {{ include('components/Auth/_nickname_help.html.twig', {field: form.nickname, suggestion: this.nicknameSuggestion}) }}
             </div>
         {% endif %}
 
@@ -100,6 +99,9 @@
                     <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-5 w-5" /></span>
                 </button>
             </div>
+            {% if kind != kind_has_password %}
+                <p class="mt-1 text-xs text-white/45">Alespoň 8 znaků.</p>
+            {% endif %}
             {{ form_errors(form.password) }}
         </div>
 
@@ -126,6 +128,13 @@
                 {{ form_errors(form.gdprConsent) }}
             </div>
         {% endif %}
+
+        {{ include('components/Auth/_error_summary.html.twig', {
+            form: form,
+            submitted: this.isValidated,
+            nicknameSuggestion: kind == kind_new ? this.nicknameSuggestion : null,
+            title: kind == kind_has_password ? 'Přihlášení se nepovedlo — oprav prosím:' : 'Účet zatím nevznikl — oprav prosím:',
+        }) }}
 
         <button type="submit" class="btn btn-primary w-full">
             {% if kind == kind_has_password %}

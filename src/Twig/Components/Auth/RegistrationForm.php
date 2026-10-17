@@ -11,16 +11,20 @@ use App\Exception\UserAlreadyExists;
 use App\Form\RegistrationFormData;
 use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
+use App\Service\SignUp\NicknameSuggester;
+use App\Service\SignUp\RejectedSignUpLog;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -30,11 +34,37 @@ final class RegistrationForm extends AbstractController
     use ComponentWithFormTrait;
     use DefaultActionTrait;
 
+    /**
+     * Bumped on every submit so the signup-feedback controller knows to bring the
+     * error summary into view again — even when its content did not change.
+     */
+    #[LiveProp]
+    public int $submitAttempts = 0;
+
+    /**
+     * A free nickname the rules accept, offered while the typed one is rejected.
+     */
+    public ?string $nicknameSuggestion {
+        get {
+            if (0 === \count($this->getForm()->get('nickname')->getErrors())) {
+                return null;
+            }
+
+            return $this->nicknameSuggester->suggest(
+                (string) ($this->formValues['nickname'] ?? ''),
+                (string) ($this->formValues['firstName'] ?? ''),
+                (string) ($this->formValues['lastName'] ?? ''),
+            );
+        }
+    }
+
     public function __construct(
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
         private readonly UserRepository $userRepository,
         private readonly Security $security,
+        private readonly NicknameSuggester $nicknameSuggester,
+        private readonly RejectedSignUpLog $rejectedSignUpLog,
     ) {
     }
 
@@ -49,7 +79,15 @@ final class RegistrationForm extends AbstractController
     #[LiveAction]
     public function register(): ?Response
     {
-        $this->submitForm();
+        ++$this->submitAttempts;
+
+        try {
+            $this->submitForm();
+        } catch (UnprocessableEntityHttpException $e) {
+            $this->logRejection();
+
+            throw $e;
+        }
 
         /** @var RegistrationFormData $data */
         $data = $this->getForm()->getData();
@@ -67,13 +105,15 @@ final class RegistrationForm extends AbstractController
             $previous = $e->getPrevious();
 
             if ($previous instanceof UserAlreadyExists) {
-                $this->addInlineFormError('email', 'Tento e-mail je již zaregistrován.');
+                $this->addInlineFormError('email', 'Tento e-mail je již zaregistrován. Přihlas se k němu, případně si obnov zapomenuté heslo.');
+                $this->logRejection();
 
                 return null;
             }
 
             if ($previous instanceof NicknameAlreadyTaken) {
-                $this->addInlineFormError('nickname', 'Tato přezdívka je již obsazena.');
+                $this->addInlineFormError('nickname', 'Tato přezdívka je již obsazena — zvol si prosím jinou.');
+                $this->logRejection();
 
                 return null;
             }
@@ -90,6 +130,16 @@ final class RegistrationForm extends AbstractController
         $this->security->login($user);
 
         return $this->redirectToRoute('app_verify_email_pending');
+    }
+
+    private function logRejection(): void
+    {
+        $this->rejectedSignUpLog->record(
+            'registration',
+            $this->getForm(),
+            strtolower(trim((string) ($this->formValues['email'] ?? ''))),
+            ['attempt' => $this->submitAttempts],
+        );
     }
 
     /**

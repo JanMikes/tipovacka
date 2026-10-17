@@ -55,7 +55,7 @@ final class InvitationFormData
                 ),
                 new Assert\Regex(
                     pattern: '/^[A-Za-z0-9_.\-]+$/',
-                    message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
+                    message: 'Přezdívka nesmí obsahovat mezery ani diakritiku (háčky a čárky) — jen písmena bez diakritiky, čísla, podtržítko, tečku a pomlčku.',
                 ),
                 new UniqueNickname(),
             ]),
