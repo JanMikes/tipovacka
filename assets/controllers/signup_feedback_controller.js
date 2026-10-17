@@ -11,18 +11,22 @@ import { Controller } from '@hotwired/stimulus';
  *    re-dispatch `change` on every field (capture phase, so it runs before
  *    `live#action`), and Live sends the current values together with the action.
  *
- * 2) Scroll to the summary. On a phone the error under the e-mail field renders
- *    a screen above the button, so tapping it looked like nothing happened. The
- *    component bumps `attempt` on every submit; when it changes and the error
- *    summary is present, we bring it into view and focus it (screen readers
- *    announce it via role=alert).
+ * 2) Take the visitor to the problem. On a phone the error under the e-mail
+ *    field renders a screen above the button, so tapping it looked like nothing
+ *    happened. The component bumps `attempt` on every submit; when it changes we
+ *    scroll the FIRST invalid field to the middle of the screen, focus it and
+ *    pulse it once. The summary above the button lists every problem; each item
+ *    jumps to its field the same way (`focusField`).
+ *
+ * 3) One-tap fixes. `fill` puts a suggested value (a free nickname, the e-mail
+ *    with its domain typo corrected) into a field and lets Live re-validate it.
  *
  * Usage (on the <form> inside the Live component):
  *   data-controller="signup-feedback"
  *   data-signup-feedback-attempt-value="{{ this.submitAttempts }}"
- * and the summary element carries data-signup-feedback-target="summary".
- * A suggested-nickname button calls `signup-feedback#useNickname` with
- * data-signup-feedback-nickname-param="…".
+ * the summary element carries data-signup-feedback-target="summary"; a fix button
+ *   data-action="signup-feedback#fill"
+ *   data-signup-feedback-field-param="nickname" data-signup-feedback-value-param="…"
  */
 export default class extends Controller {
     static targets = ['summary'];
@@ -49,21 +53,11 @@ export default class extends Controller {
     }
 
     syncFields() {
-        this.element.querySelectorAll('input[name], select[name], textarea[name]').forEach((field) => {
-            if (field.disabled || field.type === 'hidden') {
-                return;
-            }
-
-            field.dispatchEvent(new Event('change', { bubbles: true }));
-        });
+        this.fields().forEach((field) => field.dispatchEvent(new Event('change', { bubbles: true })));
     }
 
     syncTypedBeforeBoot() {
-        this.element.querySelectorAll('input[name], select[name], textarea[name]').forEach((field) => {
-            if (field.disabled || field.type === 'hidden') {
-                return;
-            }
-
+        this.fields().forEach((field) => {
             const changed = field.type === 'checkbox' || field.type === 'radio'
                 ? field.checked !== field.defaultChecked
                 : field.value !== field.defaultValue;
@@ -74,16 +68,27 @@ export default class extends Controller {
         });
     }
 
-    // „Použít george.raska" — puts the suggested nickname into the field; the
-    // `change` lets Live re-validate it, so the error clears on the spot.
-    useNickname({ params: { nickname } }) {
-        const field = this.element.querySelector('input[name$="[nickname]"]');
+    // A summary item: „Přezdívka: …" → the nickname field, centred and focused.
+    focusField(event) {
+        const id = (event.currentTarget.getAttribute('href') || '').replace(/^#/, '');
+        const field = id ? document.getElementById(id) : null;
 
-        if (!field || !nickname) {
+        if (!field) {
             return;
         }
 
-        field.value = nickname;
+        event.preventDefault();
+        this.reveal(field);
+    }
+
+    fill({ params: { field: name, value } }) {
+        const field = this.element.querySelector(`[name$="[${name}]"]`);
+
+        if (!field || !value) {
+            return;
+        }
+
+        field.value = value;
         field.dispatchEvent(new Event('change', { bubbles: true }));
         field.focus();
     }
@@ -94,14 +99,33 @@ export default class extends Controller {
         }
 
         // Live morphs the DOM right after the attribute changes — wait a frame so
-        // the freshly rendered summary is the one we scroll to.
+        // we look at the freshly rendered errors.
         requestAnimationFrame(() => {
-            if (!this.hasSummaryTarget) {
-                return;
-            }
+            const firstInvalid = this.element.querySelector('[aria-invalid="true"]');
 
-            this.summaryTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            this.summaryTarget.focus({ preventScroll: true });
+            if (firstInvalid) {
+                this.reveal(firstInvalid);
+            } else if (this.hasSummaryTarget) {
+                this.summaryTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                this.summaryTarget.focus({ preventScroll: true });
+            }
         });
+    }
+
+    reveal(field) {
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        field.focus({ preventScroll: true });
+
+        const box = field.closest('.field') || field.closest('label') || field;
+        box.classList.remove('is-flagged');
+        // Restart the pulse even when the same field is flagged twice in a row.
+        void box.offsetWidth;
+        box.classList.add('is-flagged');
+        setTimeout(() => box.classList.remove('is-flagged'), 1600);
+    }
+
+    fields() {
+        return [...this.element.querySelectorAll('input[name], select[name], textarea[name]')]
+            .filter((field) => !field.disabled && field.type !== 'hidden');
     }
 }

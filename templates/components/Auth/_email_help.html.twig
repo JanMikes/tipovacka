@@ -1,0 +1,18 @@
+{#
+    A mistyped mailbox domain (seznam.cy, gmial.com) is a VALID address — validation lets
+    it through and the verification mail never arrives. A non-blocking, one-tap hint.
+    Expects `suggestion` (?string), from Service/SignUp/EmailTypoSuggester.
+#}
+{% if suggestion %}
+    <p class="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-white/70">
+        Nemysleli jste
+        <button type="button"
+                data-action="signup-feedback#fill"
+                data-signup-feedback-field-param="email"
+                data-signup-feedback-value-param="{{ suggestion }}"
+                class="inline-flex items-center gap-1 rounded-lg border border-accent-500/40 bg-accent-500/10 px-2 py-0.5 font-mono text-[13px] font-semibold text-accent-200 transition-colors hover:bg-accent-500/20">
+            {{ suggestion }}
+            <span class="font-sans text-xs font-medium text-accent-300">opravit</span>
+        </button>?
+    </p>
+{% endif %}

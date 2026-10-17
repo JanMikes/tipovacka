@@ -40,6 +40,7 @@
                 {{ form_widget(form.email, {attr: {class: input_class, disabled: this.emailLocked}}) }}
             </div>
             {{ form_errors(form.email) }}
+            {{ include('components/Auth/_email_help.html.twig', {suggestion: this.emailSuggestion}) }}
         </div>
 
         {% if kind == kind_new %}
@@ -133,7 +134,7 @@
             form: form,
             submitted: this.isValidated,
             nicknameSuggestion: kind == kind_new ? this.nicknameSuggestion : null,
-            title: kind == kind_has_password ? 'Přihlášení se nepovedlo — oprav prosím:' : 'Účet zatím nevznikl — oprav prosím:',
+            title: kind == kind_has_password ? 'Přihlášení se nepovedlo — opravte prosím:' : 'Účet zatím nevznikl — opravte prosím:',
         }) }}
 
         <button type="submit" class="btn btn-primary w-full">

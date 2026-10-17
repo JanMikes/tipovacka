@@ -11,6 +11,7 @@ use App\Exception\UserAlreadyExists;
 use App\Form\RegistrationFormData;
 use App\Form\RegistrationFormType;
 use App\Repository\UserRepository;
+use App\Service\SignUp\EmailTypoSuggester;
 use App\Service\SignUp\NicknameSuggester;
 use App\Service\SignUp\RejectedSignUpLog;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,12 +59,20 @@ final class RegistrationForm extends AbstractController
         }
     }
 
+    /**
+     * The address with its mailbox-domain typo corrected (seznam.cy → seznam.cz), if any.
+     */
+    public ?string $emailSuggestion {
+        get => $this->emailTypoSuggester->suggest((string) ($this->formValues['email'] ?? ''));
+    }
+
     public function __construct(
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
         private readonly UserRepository $userRepository,
         private readonly Security $security,
         private readonly NicknameSuggester $nicknameSuggester,
+        private readonly EmailTypoSuggester $emailTypoSuggester,
         private readonly RejectedSignUpLog $rejectedSignUpLog,
     ) {
     }
@@ -105,14 +114,14 @@ final class RegistrationForm extends AbstractController
             $previous = $e->getPrevious();
 
             if ($previous instanceof UserAlreadyExists) {
-                $this->addInlineFormError('email', 'Tento e-mail je již zaregistrován. Přihlas se k němu, případně si obnov zapomenuté heslo.');
+                $this->addInlineFormError('email', 'Tento e-mail je již zaregistrován. Přihlaste se k němu, případně si obnovte zapomenuté heslo.');
                 $this->logRejection();
 
                 return null;
             }
 
             if ($previous instanceof NicknameAlreadyTaken) {
-                $this->addInlineFormError('nickname', 'Tato přezdívka je již obsazena — zvol si prosím jinou.');
+                $this->addInlineFormError('nickname', 'Tato přezdívka je již obsazena — zvolte si prosím jinou.');
                 $this->logRejection();
 
                 return null;
