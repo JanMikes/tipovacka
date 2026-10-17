@@ -52,7 +52,7 @@ final readonly class SubmitGuessHandler
         $sportMatch = $this->sportMatchRepository->get($command->sportMatchId);
 
         if (!$this->membershipRepository->hasActiveMembership($user->id, $competition->id)) {
-            throw NotAMember::of($competition->id);
+            throw NotAMember::toTip();
         }
 
         if (!$this->matchProvider->includes($competition, $sportMatch)) {

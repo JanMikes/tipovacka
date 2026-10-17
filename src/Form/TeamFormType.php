@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\Sport;
+use App\Entity\Team;
 use App\Value\Country;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -38,6 +39,7 @@ final class TeamFormType extends AbstractType
                 'class' => Sport::class,
                 'choice_label' => 'name',
                 'placeholder' => 'Vyberte sport…',
+                'help' => 'Tým hraje jeden sport — po vytvoření už ho změnit nejde.',
                 'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository->createQueryBuilder('s')->orderBy('s.name', 'ASC'),
             ]);
         }
@@ -45,14 +47,15 @@ final class TeamFormType extends AbstractType
         $builder->add('name', TextType::class, [
             'label' => 'Název týmu',
             'empty_data' => '',
-            'attr' => ['placeholder' => 'Např. Sparta Praha'],
+            'help' => 'V rámci sportu musí být jedinečný — stejný klub v adresáři smí být jen jednou.',
+            'attr' => ['placeholder' => 'Např. Sparta Praha', 'maxlength' => Team::NAME_MAX_LENGTH],
         ]);
 
         $builder->add('shortName', TextType::class, [
             'label' => 'Zkratka',
             'required' => false,
             'help' => 'Nepovinné. Krátký kód pro úzké prostory, např. „SPA".',
-            'attr' => ['placeholder' => 'Např. SPA'],
+            'attr' => ['placeholder' => 'Např. SPA', 'maxlength' => Team::SHORT_NAME_MAX_LENGTH],
         ]);
 
         // A plain <select> over the whole ISO directory, upgraded by tom-select into
@@ -78,7 +81,7 @@ final class TeamFormType extends AbstractType
             'label' => 'Barva týmu',
             'required' => false,
             'help' => 'Nepovinné. HEX barva monogramu, např. #EE1C25. Prázdné = barva se odvodí z názvu.',
-            'attr' => ['placeholder' => '#EE1C25'],
+            'attr' => ['placeholder' => '#EE1C25', 'maxlength' => 7, 'autocomplete' => 'off', 'spellcheck' => 'false'],
         ]);
 
         $builder->add('logoFile', FileType::class, [

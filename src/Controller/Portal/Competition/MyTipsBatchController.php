@@ -7,6 +7,9 @@ namespace App\Controller\Portal\Competition;
 use App\Command\DeleteGuess\DeleteGuessCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\Command\UpdateGuess\UpdateGuessCommand;
+use App\Entity\Competition;
+use App\Entity\Guess;
+use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
@@ -45,6 +48,13 @@ use Symfony\Component\Uid\Uuid;
 #[IsGranted('ROLE_USER')]
 final class MyTipsBatchController extends AbstractController
 {
+    /** Which inputs of a rejected row the template marks invalid. */
+    public const string PART_SCORE = 'score';
+    public const string PART_PERIODS = 'periods';
+
+    /** Same ceiling as the tip card (Guess:GuessSubmitForm). */
+    private const int MAX_SCORE = 99;
+
     public function __construct(
         private readonly CompetitionRepository $competitionRepository,
         private readonly SportMatchRepository $sportMatchRepository,
@@ -67,13 +77,54 @@ final class MyTipsBatchController extends AbstractController
         $this->denyAccessUnlessGranted(CompetitionVoter::VIEW, $competition);
 
         if ($request->isMethod('POST')) {
-            return $this->save($request, $competition->id, $user);
+            return $this->save($request, $competition, $user);
         }
 
+        return $this->renderPage($competition, $user);
+    }
+
+    /**
+     * The table, fresh from the database — or, after a rejected save, with each
+     * rejected row showing what the player typed, its problem next to it and the
+     * whole list on top (422, so a reload does not resubmit).
+     *
+     * @param array<string, array{label: string, message: string, part: string}> $rowErrors  matchId → problem
+     * @param array<mixed>                                                       $submitted  the posted guesses
+     * @param list<string>                                                       $formErrors problems without a row to sit on
+     */
+    private function renderPage(
+        Competition $competition,
+        User $user,
+        array $rowErrors = [],
+        array $submitted = [],
+        array $formErrors = [],
+        bool $keepAllSubmitted = false,
+    ): Response {
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
 
         $rows = $this->buildRows($competition, $user, $now);
         $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
+        $sport = $competition->headlineSource->sport;
+
+        foreach ($rows as $index => $row) {
+            $matchId = $row['match']->id->toRfc4122();
+            $error = $rowErrors[$matchId] ?? null;
+            $posted = $submitted[$matchId] ?? null;
+
+            $rows[$index]['values'] = (null !== $error || $keepAllSubmitted) && \is_array($posted)
+                ? $this->postedValues($posted, $sport->periodCount)
+                : $this->storedValues($row['guess'], $sport->periodCount);
+            $rows[$index]['error'] = $error;
+            unset($rowErrors[$matchId]);
+        }
+
+        // A row that failed but is no longer listed (its uzávěrka passed meanwhile)
+        // still has to say why — in the box on top.
+        foreach ($rowErrors as $error) {
+            $formErrors[] = sprintf('%s: %s', $error['label'], $error['message']);
+        }
+
+        $hasErrors = [] !== $formErrors || \in_array(true, array_map(static fn (array $row): bool => null !== $row['error'], $rows), true);
 
         return $this->render('portal/competition/my_tips_batch.html.twig', [
             'competition' => $competition,
@@ -82,27 +133,32 @@ final class MyTipsBatchController extends AbstractController
             // B5: „no rows" has two very different causes — nothing scheduled, or
             // the whole soutěž is locked. The empty state must say which.
             'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
-            'sport' => $competition->headlineSource->sport,
+            'sport' => $sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
-        ]);
+            'form_errors' => $formErrors,
+        ], new Response(status: $hasErrors ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
-    private function save(Request $request, Uuid $competitionId, User $user): Response
+    private function save(Request $request, Competition $competition, User $user): Response
     {
+        $competitionId = $competition->id;
+        $guesses = $request->request->all('guesses');
         $csrfToken = $request->request->get('_token');
         $expectedToken = sprintf('my_tips_batch_%s_%s', $competitionId->toRfc4122(), $user->id->toRfc4122());
 
         if (!\is_string($csrfToken) || !$this->isCsrfTokenValid($expectedToken, $csrfToken)) {
-            throw $this->createAccessDeniedException('Invalid CSRF token.');
+            // Typically a form left open for hours: keep every typed tip on screen.
+            return $this->renderPage($competition, $user, [], $guesses, [
+                'Formulář mezitím vypršel, a tak se žádný tip neuložil. Vaše tipy jsme ponechali vyplněné — zkontrolujte je a klikněte znovu na „Uložit vše".',
+            ], true);
         }
 
-        $guesses = $request->request->all('guesses');
-        $competition = $this->competitionRepository->get($competitionId);
         $features = $this->guessFeatures->featuresFor($competitionId);
         $sport = $competition->headlineSource->sport;
 
         $saved = 0;
         $deleted = 0;
+        /** @var array<string, array{label: string, message: string, part: string}> $errors */
         $errors = [];
 
         foreach ($guesses as $sportMatchIdString => $scores) {
@@ -125,7 +181,10 @@ final class MyTipsBatchController extends AbstractController
             $awayRaw = trim($awayRaw);
 
             $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($sportMatchIdString));
-            $label = sprintf('%s vs %s', $sportMatch->homeTeam->name, $sportMatch->awayTeam->name);
+            $label = sprintf('%s – %s', $sportMatch->homeTeam->name, $sportMatch->awayTeam->name);
+            $reject = static function (string $message, string $part = self::PART_SCORE) use (&$errors, $sportMatchIdString, $label): void {
+                $errors[$sportMatchIdString] = ['label' => $label, 'message' => $message, 'part' => $part];
+            };
 
             $existing = $this->guessRepository->findActiveByUserMatchCompetition(
                 $user->id,
@@ -139,7 +198,7 @@ final class MyTipsBatchController extends AbstractController
                 // Periods typed without a main tip: neither a delete nor a
                 // silent discard — the row gets an explicit error.
                 if ($features->periodTips && $this->hasAnyPeriodInput($scores, $sport->periodCount)) {
-                    $errors[] = sprintf('%s: Vyplňte i celkové skóre zápasu.', $label);
+                    $reject('Vyplňte i celkové skóre zápasu — tip na části platí jen spolu s ním.');
 
                     continue;
                 }
@@ -155,14 +214,22 @@ final class MyTipsBatchController extends AbstractController
                     ));
                     ++$deleted;
                 } catch (HandlerFailedException $e) {
-                    $this->collectError($errors, $label, $e);
+                    $reject($this->domainMessage($e));
                 }
 
                 continue;
             }
 
-            if ('' === $homeRaw || '' === $awayRaw || !ctype_digit($homeRaw) || !ctype_digit($awayRaw)) {
-                $errors[] = sprintf('%s: vyplňte prosím obě skóre (nebo nechte obě pole prázdná).', $label);
+            if ('' === $homeRaw || '' === $awayRaw) {
+                $reject(null === $existing
+                    ? 'Doplňte skóre obou týmů, nebo nechte obě políčka prázdná a zápas se přeskočí.'
+                    : 'Doplňte skóre obou týmů, nebo nechte obě políčka prázdná a uložený tip se smaže.');
+
+                continue;
+            }
+
+            if (!$this->isScore($homeRaw) || !$this->isScore($awayRaw)) {
+                $reject('Skóre musí být celé číslo od 0 do 99.');
 
                 continue;
             }
@@ -173,7 +240,7 @@ final class MyTipsBatchController extends AbstractController
             $periodScores = null;
 
             if ($features->periodTips) {
-                $periodScores = $this->parsePeriodScores($scores, $sport->periodCount, $sport->periodLabelPlural, $label, $errors);
+                $periodScores = $this->parsePeriodScores($scores, $sport->periodCount, $sport->periodLabelPlural, $homeScore, $awayScore, $reject);
 
                 if (false === $periodScores) {
                     continue; // Error collected.
@@ -223,7 +290,7 @@ final class MyTipsBatchController extends AbstractController
 
                 ++$saved;
             } catch (HandlerFailedException $e) {
-                $this->collectError($errors, $label, $e);
+                $reject($this->domainMessage($e));
             }
         }
 
@@ -235,11 +302,11 @@ final class MyTipsBatchController extends AbstractController
             $this->addFlash('success', sprintf('Smazáno tipů: %d.', $deleted));
         }
 
-        foreach ($errors as $error) {
-            $this->addFlash('error', $error);
+        if ([] !== $errors) {
+            return $this->renderPage($competition, $user, $errors, $guesses);
         }
 
-        if (0 === $saved && 0 === $deleted && 0 === count($errors)) {
+        if (0 === $saved && 0 === $deleted) {
             $this->addFlash('info', 'Nebyly provedeny žádné změny.');
         }
 
@@ -248,10 +315,16 @@ final class MyTipsBatchController extends AbstractController
         ]);
     }
 
+    private function isScore(string $raw): bool
+    {
+        return ctype_digit($raw) && (int) $raw <= self::MAX_SCORE;
+    }
+
     /**
-     * @param list<string> $errors
+     * The player-facing reason a domain command refused the row; anything that is
+     * not a domain refusal is a bug and must surface as one.
      */
-    private function collectError(array &$errors, string $label, HandlerFailedException $e): void
+    private function domainMessage(HandlerFailedException $e): string
     {
         $inner = $e->getPrevious();
 
@@ -264,23 +337,64 @@ final class MyTipsBatchController extends AbstractController
             || $inner instanceof NotAMember
             || $inner instanceof MatchNotInCompetition
         ) {
-            $errors[] = sprintf('%s: %s', $label, $inner->getMessage());
-
-            return;
+            return $inner->getMessage();
         }
 
         throw $e;
     }
 
     /**
-     * All-or-nothing period tip from `guesses[<matchId>][periods][<n>][home|away]`.
+     * @param array<mixed> $posted
      *
-     * @param array<mixed> $scores
-     * @param list<string> $errors
+     * @return array{home: string, away: string, periods: array<int, array{home: string, away: string}>}
+     */
+    private function postedValues(array $posted, int $periodCount): array
+    {
+        $string = static fn (mixed $value): string => \is_string($value) ? trim($value) : '';
+        $periodsRaw = \is_array($posted['periods'] ?? null) ? $posted['periods'] : [];
+        $periods = [];
+
+        for ($number = 1; $number <= $periodCount; ++$number) {
+            $pair = \is_array($periodsRaw[$number] ?? null) ? $periodsRaw[$number] : [];
+            $periods[$number] = ['home' => $string($pair['home'] ?? null), 'away' => $string($pair['away'] ?? null)];
+        }
+
+        return ['home' => $string($posted['homeScore'] ?? null), 'away' => $string($posted['awayScore'] ?? null), 'periods' => $periods];
+    }
+
+    /**
+     * @return array{home: string, away: string, periods: array<int, array{home: string, away: string}>}
+     */
+    private function storedValues(?Guess $guess, int $periodCount): array
+    {
+        $stored = $guess?->periodScores?->toArray();
+        $periods = [];
+
+        for ($number = 1; $number <= $periodCount; ++$number) {
+            $pair = $stored[$number - 1] ?? null;
+            $periods[$number] = null === $pair
+                ? ['home' => '', 'away' => '']
+                : ['home' => (string) $pair[0], 'away' => (string) $pair[1]];
+        }
+
+        return [
+            'home' => null === $guess ? '' : (string) $guess->homeScore,
+            'away' => null === $guess ? '' : (string) $guess->awayScore,
+            'periods' => $periods,
+        ];
+    }
+
+    /**
+     * All-or-nothing period tip from `guesses[<matchId>][periods][<n>][home|away]`,
+     * whose sums must match the main tip (checked here, not only in the entity, so
+     * the error lands on the period inputs and says what they add up to).
+     *
+     * @param array<mixed>                   $scores
+     * @param callable(string, string): void $reject
      *
      * @return PeriodScores|false|null false = validation error (collected)
      */
-    private function parsePeriodScores(array $scores, int $periodCount, string $periodLabelPlural, string $label, array &$errors): PeriodScores|false|null
+    private function parsePeriodScores(array $scores, int $periodCount, string $periodLabelPlural, int $homeScore, int $awayScore, callable $reject): PeriodScores|false|null
     {
         $periodsRaw = $scores['periods'] ?? [];
 
@@ -291,6 +405,7 @@ final class MyTipsBatchController extends AbstractController
         $pairs = [];
         $anyFilled = false;
         $allFilled = true;
+        $allValid = true;
 
         for ($number = 1; $number <= $periodCount; ++$number) {
             $pair = $periodsRaw[$number] ?? [];
@@ -301,8 +416,15 @@ final class MyTipsBatchController extends AbstractController
                 $anyFilled = true;
             }
 
-            if ('' === $homeRaw || '' === $awayRaw || !ctype_digit($homeRaw) || !ctype_digit($awayRaw)) {
+            if ('' === $homeRaw || '' === $awayRaw) {
                 $allFilled = false;
+                $pairs[] = [0, 0];
+
+                continue;
+            }
+
+            if (!$this->isScore($homeRaw) || !$this->isScore($awayRaw)) {
+                $allValid = false;
                 $pairs[] = [0, 0];
 
                 continue;
@@ -315,13 +437,33 @@ final class MyTipsBatchController extends AbstractController
             return null;
         }
 
-        if (!$allFilled) {
-            $errors[] = sprintf('%s: vyplňte prosím všechny %s, nebo je nechte prázdné.', $label, $periodLabelPlural);
+        if (!$allValid) {
+            $reject(sprintf('Skóre za %s musí být celá čísla od 0 do 99.', $periodLabelPlural), self::PART_PERIODS);
 
             return false;
         }
 
-        return PeriodScores::fromArray($pairs);
+        if (!$allFilled) {
+            $reject(sprintf('Vyplňte prosím všechny %s, nebo je nechte prázdné.', $periodLabelPlural), self::PART_PERIODS);
+
+            return false;
+        }
+
+        $periodScores = PeriodScores::fromArray($pairs);
+
+        if ($periodScores->sumHome() !== $homeScore || $periodScores->sumAway() !== $awayScore) {
+            $reject(InvalidGuessScore::periodSumMismatch(
+                $periodScores->sumHome(),
+                $periodScores->sumAway(),
+                $homeScore,
+                $awayScore,
+                $periodLabelPlural,
+            )->getMessage(), self::PART_PERIODS);
+
+            return false;
+        }
+
+        return $periodScores;
     }
 
     /**
@@ -358,9 +500,9 @@ final class MyTipsBatchController extends AbstractController
     }
 
     /**
-     * @return list<array{match: \App\Entity\SportMatch, guess: \App\Entity\Guess|null, deadline: \DateTimeImmutable, waiting: bool, opensAt: ?\DateTimeImmutable, openingNote: ?string}>
+     * @return list<array{match: SportMatch, guess: Guess|null, deadline: \DateTimeImmutable, waiting: bool, opensAt: ?\DateTimeImmutable, openingNote: ?string}>
      */
-    private function buildRows(\App\Entity\Competition $competition, User $user, \DateTimeImmutable $now): array
+    private function buildRows(Competition $competition, User $user, \DateTimeImmutable $now): array
     {
         $allMatches = $this->matchProvider->matchesFor($competition);
         $candidateMatches = array_values(array_filter(

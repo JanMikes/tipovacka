@@ -42,12 +42,14 @@ final class SetFinalScoreFormType extends AbstractType
 
         $builder->add('homeScore', IntegerType::class, [
             'label' => sprintf('Skóre %s', $options['home_team']),
-            'attr' => ['min' => 0],
+            'invalid_message' => 'Skóre zadejte jako celé číslo, např. 2.',
+            'attr' => ['min' => 0, 'step' => 1, 'inputmode' => 'numeric', 'autocomplete' => 'off'],
         ]);
 
         $builder->add('awayScore', IntegerType::class, [
             'label' => sprintf('Skóre %s', $options['away_team']),
-            'attr' => ['min' => 0],
+            'invalid_message' => 'Skóre zadejte jako celé číslo, např. 2.',
+            'attr' => ['min' => 0, 'step' => 1, 'inputmode' => 'numeric', 'autocomplete' => 'off'],
         ]);
 
         $builder->add('periods', CollectionType::class, [

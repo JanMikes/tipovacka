@@ -80,9 +80,10 @@
             {% for identifier in section.identifiers %}
                 {% set entryForm = form.rules[identifier] %}
                 {% set copy = rule_copy[identifier] ?? { label: entryForm.points.vars.label ?? identifier, sub: null } %}
+                {% set points_invalid = not entryForm.points.vars.valid %}
                 <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-white/[0.06] py-3 last:border-b-0">
                     <div class="min-w-0">
-                        <div class="field-label mb-0">{{ copy.label }}</div>
+                        <div id="{{ entryForm.points.vars.id }}_label" class="field-label mb-0 {{ points_invalid ? '!text-loss' }}">{{ copy.label }}</div>
                         {% if copy.sub %}
                             <div class="mt-1 text-[13px] font-medium text-white">{{ copy.sub }}</div>
                         {% endif %}
@@ -106,11 +107,15 @@
                                 class: 'num-input w-24',
                                 'data-scoring-preset-target': 'field',
                                 'data-rule': identifier,
+                                'aria-labelledby': entryForm.points.vars.id ~ '_label',
                             },
                         }) }}
                     </div>
+                    {# Inside the row, so the message sits next to the rule it is about. #}
+                    {% if points_invalid %}
+                        <div class="w-full">{{ form_errors(entryForm.points) }}</div>
+                    {% endif %}
                 </div>
-                {{ form_errors(entryForm.points) }}
             {% endfor %}
         {% endfor %}
     </div>

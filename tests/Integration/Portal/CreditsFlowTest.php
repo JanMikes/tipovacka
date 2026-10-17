@@ -9,6 +9,7 @@ use App\Command\InitiateCreditPurchase\InitiateCreditPurchaseCommand;
 use App\Command\InitiateCreditPurchase\InitiatedCreditCheckout;
 use App\DataFixtures\AppFixtures;
 use App\Entity\CreditPurchase;
+use App\Enum\BoostType;
 use App\Tests\Support\WebFlowHelpers;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -85,7 +86,9 @@ final class CreditsFlowTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSelectorTextContains('form', 'Minimální nákup je 100 kreditů.');
+        self::assertSelectorTextContains('form', 'Minimální nákup je 100 kreditů (100 Kč) — zadejte prosím 100 nebo víc.');
+        // The rejected field is marked for the form-feedback controller to reveal.
+        self::assertSelectorExists('input[name="buy_credits_form[credits]"][aria-invalid="true"]');
 
         $purchaseCount = (int) $this->testEntityManager()->createQueryBuilder()
             ->select('COUNT(p.id)')
@@ -94,6 +97,88 @@ final class CreditsFlowTest extends WebTestCase
             ->getSingleScalarResult();
 
         self::assertSame(0, $purchaseCount);
+    }
+
+    public function testBuyWithANonNumberSaysWhatToType(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+
+        $this->client->request('POST', '/kredity/koupit', [
+            'buy_credits_form' => ['credits' => 'sto'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('form', 'Zadejte prosím celé číslo bez mezer a desetinné čárky, např. 250.');
+    }
+
+    /**
+     * Stripe down (or misconfigured) used to answer the buyer with a 500 page — not
+     * knowing whether money moved. Now the same page comes back, 422, with the reason in
+     * the form's summary box; nothing is written.
+     */
+    public function testCheckoutThatCannotBeOpenedStaysOnThePageAndSaysNothingWasCharged(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $this->paymentGateway()->nextCheckoutFailure = new \RuntimeException('Stripe API unreachable');
+
+        $this->client->request('POST', '/kredity/koupit', [
+            'buy_credits_form' => ['credits' => '250'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('#dobit [role="alert"]', 'Platbu se nepodařilo spustit');
+        self::assertSelectorTextContains('#dobit [role="alert"]', 'Nic jsme vám nestrhli');
+
+        $purchaseCount = (int) $this->testEntityManager()->createQueryBuilder()
+            ->select('COUNT(p.id)')
+            ->from(CreditPurchase::class, 'p')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        self::assertSame(0, $purchaseCount);
+    }
+
+    public function testBuyFormStatesTheLimitsUpFront(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $crawler = $this->client->request('GET', '/kredity');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#dobit', 'Celé číslo od 100 do 100 000');
+        $input = $crawler->filter('input[name="buy_credits_form[credits]"]');
+        self::assertSame('numeric', $input->attr('inputmode'));
+        // A fresh form shouts at nobody.
+        self::assertSelectorNotExists('#dobit [role="alert"]');
+    }
+
+    /**
+     * A booster the wallet cannot cover routes its „Odemknout za N kr." here; the dobití
+     * card says which booster, how much is missing, and what to do.
+     */
+    public function testArrivingFromAnUnaffordableBoosterNamesTheShortfall(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $this->client->request('GET', '/kredity?vylepseni='.BoostType::OthersTips->value);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#dobit', BoostType::OthersTips->label());
+        self::assertSelectorTextContains('#dobit', sprintf('vám chybí %d kreditů', BoostType::OthersTips->price()));
+    }
+
+    public function testNoShortfallNoticeWhenTheWalletCoversTheBooster(): void
+    {
+        $this->testCommandBus()->dispatch(new AdjustUserCreditsCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            amount: 500,
+            note: 'Testovací dobití',
+            adjustedById: Uuid::fromString(AppFixtures::ADMIN_ID),
+        ));
+
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $this->client->request('GET', '/kredity?vylepseni='.BoostType::OthersTips->value);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextNotContains('#dobit', 'vám chybí');
     }
 
     public function testCancelledReturnShowsInfo(): void

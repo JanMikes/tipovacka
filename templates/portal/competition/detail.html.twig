@@ -222,7 +222,8 @@
             liště sem jen skočí), takže `modal` controller i dialog jsou tu právě jednou.
         #}
         {% if can_invite_panel %}
-            <section id="pozvat" class="card-glass p-5 sm:p-6" data-controller="modal">
+            <section id="pozvat" class="card-glass p-5 sm:p-6" data-controller="modal"
+                     {% if invitation_rejected|default(false) %}data-modal-open-value="true"{% endif %}>
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="min-w-0">
                         <h2 class="flex items-center gap-2 text-lg font-semibold text-white">

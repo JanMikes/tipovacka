@@ -61,4 +61,33 @@ final class PostponeRescheduleFlowTest extends WebTestCase
         self::assertInstanceOf(SportMatch::class, $match);
         self::assertSame(SportMatchState::Scheduled, $match->state);
     }
+
+    public function testAnUnreadableNewKickoffIsExplainedNextToTheFieldAndKeepsTheInput(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $crawler = $client->request('GET', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID);
+        $token = $crawler->filter('form[action$="/odlozit"] input[name="_token"]')->attr('value');
+
+        $client->request('POST', '/zapasy/'.AppFixtures::MATCH_SCHEDULED_ID.'/odlozit', [
+            '_token' => $token,
+            'new_kickoff_at' => '2025-02-31 18:00',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Termín „2025-02-31 18:00" neumíme přečíst');
+        $input = $client->getCrawler()->filter('form[action$="/odlozit"] input[name="new_kickoff_at"]');
+        self::assertSame('true', $input->attr('aria-invalid'));
+        self::assertSame('2025-02-31 18:00', $input->attr('value'));
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame(SportMatchState::Scheduled, $match->state);
+    }
 }

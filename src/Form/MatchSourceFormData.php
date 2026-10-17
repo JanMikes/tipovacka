@@ -8,6 +8,7 @@ use App\Entity\MatchSource;
 use App\Entity\Sport;
 use App\Enum\CompetitionMonetization;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 final class MatchSourceFormData
 {
@@ -21,6 +22,8 @@ final class MatchSourceFormData
     )]
     public string $name = '';
 
+    /** The column is TEXT (unbounded); the cap only keeps a pasted novel out of the zdroj header. */
+    #[Assert\Length(max: 2000, maxMessage: 'Popis může mít nejvýš {{ limit }} znaků — zkraťte ho prosím.')]
     public ?string $description = null;
 
     public ?\DateTimeImmutable $startAt = null;
@@ -52,5 +55,15 @@ final class MatchSourceFormData
         $formData->hasOvertime = $matchSource->hasOvertime;
 
         return $formData;
+    }
+
+    #[Assert\Callback]
+    public function validatePeriod(ExecutionContextInterface $context): void
+    {
+        if (null !== $this->startAt && null !== $this->endAt && $this->endAt <= $this->startAt) {
+            $context->buildViolation('Konec musí být po začátku — upravte jedno z dat.')
+                ->atPath('endAt')
+                ->addViolation();
+        }
     }
 }

@@ -304,6 +304,66 @@ final class EmailInvitationLandingTest extends WebTestCase
     }
 
     /**
+     * The invitation is revoked while the invitee is filling in the form. The status page
+     * is a whole document — answering the Live submit with it would nest a landing page
+     * inside the form. The submit reloads the landing instead, which shows the status.
+     */
+    public function testInvitationRevokedMidFormReloadsTheLandingInsteadOfNestingAPage(): void
+    {
+        $client = static::createClient();
+        $em = $this->em($client);
+
+        $stub = new User(
+            id: Uuid::v7(),
+            email: AppFixtures::PENDING_INVITATION_EMAIL,
+            password: null,
+            nickname: 'stub_'.bin2hex(random_bytes(3)),
+            createdAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $stub->popEvents();
+        $em->persist($stub);
+        $em->flush();
+
+        $component = $this->createInvitationFormComponent($client);
+
+        $em->getConnection()->executeStatement(
+            'UPDATE competition_invitations SET revoked_at = :now WHERE id = :id',
+            ['now' => '2025-06-15 11:00:00', 'id' => AppFixtures::PENDING_INVITATION_ID],
+        );
+
+        $response = $component->submitForm([
+            'invitation_form' => [
+                'email' => AppFixtures::PENDING_INVITATION_EMAIL,
+                'password' => 'Str0ngP4ssword!',
+                'passwordConfirm' => 'Str0ngP4ssword!',
+                'gdprConsent' => '1',
+            ],
+        ], 'submit')->response();
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertSame(self::EMAIL_TOKEN_URL, $response->headers->get('Location'));
+
+        $client->request('GET', self::EMAIL_TOKEN_URL);
+        self::assertSelectorTextContains('body', 'Pozvánka byla zrušena');
+        self::assertSelectorTextContains('body', 'požádejte ho o novou');
+    }
+
+    public function testStatusPagesNeverDeadEnd(): void
+    {
+        $client = static::createClient();
+        $this->em($client)->getConnection()->executeStatement(
+            'UPDATE competition_invitations SET expires_at = :past WHERE id = :id',
+            ['past' => '2024-01-01 00:00:00', 'id' => AppFixtures::PENDING_INVITATION_ID],
+        );
+
+        $crawler = $client->request('GET', self::EMAIL_TOKEN_URL);
+        self::assertCount(1, $crawler->filter('.card-glass a[href="/"]'));
+
+        $crawler = $client->request('GET', '/pozvanka/'.str_repeat('0', 64));
+        self::assertCount(1, $crawler->filter('.card-glass a[href="/pripojit"]'));
+    }
+
+    /**
      * @return \Symfony\UX\LiveComponent\Test\TestLiveComponent
      */
     private function createInvitationFormComponent(KernelBrowser $client)

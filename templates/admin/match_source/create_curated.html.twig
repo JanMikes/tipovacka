@@ -77,11 +77,13 @@
                     <div class="field">
                         {{ form_label(form.globalCompetitionEntryFee) }}
                         {{ form_widget(form.globalCompetitionEntryFee) }}
+                        {{ form_help(form.globalCompetitionEntryFee, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                         {{ form_errors(form.globalCompetitionEntryFee) }}
                     </div>
                     <div class="field">
                         {{ form_label(form.globalCompetitionMonetization) }}
                         {{ form_widget(form.globalCompetitionMonetization) }}
+                        <p class="mt-1 text-xs leading-relaxed text-white/50">Prémium platíte vy — {{ pricing.premiumPerPlayer }} kr. za každého připojeného hráče, u veřejné soutěže bez předem známého stropu. Vylepšení si hráči kupují sami.</p>
                         {{ form_errors(form.globalCompetitionMonetization) }}
                     </div>
                 </div>

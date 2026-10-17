@@ -23,18 +23,27 @@
             <h2 class="text-lg font-bold tracking-tight text-white">Upravit kredity</h2>
             <p class="mt-1 text-xs leading-relaxed text-white/50">Úprava se uživateli zobrazí v historii transakcí včetně poznámky.</p>
 
-            {{ form_start(form, {attr: {class: 'mt-4 space-y-4', novalidate: 'novalidate'}}) }}
+            {# Money moves the moment this submits — confirm first (confirm-modal.md). #}
+            {{ form_start(form, {attr: {
+                class: 'mt-4 space-y-4',
+                novalidate: 'novalidate',
+                'data-controller': 'confirm',
+                'data-confirm-variant-value': 'warning',
+                'data-confirm-title-value': 'Upravit kredity',
+                'data-confirm-message-value': 'Opravdu upravit kredity uživatele „' ~ user.displayName ~ '“? Změna se hned projeví v jeho zůstatku a uvidí ji v historii transakcí i s poznámkou. Vrátit ji jde jen další opačnou úpravou.',
+                'data-confirm-confirm-label-value': 'Ano, upravit kredity',
+            }}) }}
                 <div class="field">
                     {{ form_label(form.amount) }}
-                    {{ form_widget(form.amount, {attr: {class: 'input'}}) }}
-                    {{ form_help(form.amount) }}
+                    {{ form_widget(form.amount) }}
+                    {{ form_help(form.amount, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                     {{ form_errors(form.amount) }}
                 </div>
 
                 <div class="field">
                     {{ form_label(form.note) }}
-                    {{ form_widget(form.note, {attr: {class: 'input'}}) }}
-                    {{ form_help(form.note) }}
+                    {{ form_widget(form.note) }}
+                    {{ form_help(form.note, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                     {{ form_errors(form.note) }}
                 </div>
 

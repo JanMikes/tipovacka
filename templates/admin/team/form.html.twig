@@ -34,29 +34,34 @@
             <div class="field">
                 {{ form_label(form.sport) }}
                 {{ form_widget(form.sport) }}
+                {{ form_help(form.sport, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                 {{ form_errors(form.sport) }}
             </div>
         {% endif %}
         <div class="field">
             {{ form_label(form.name) }}
             {{ form_widget(form.name) }}
+            {{ form_help(form.name, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
             {{ form_errors(form.name) }}
         </div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="field">
                 {{ form_label(form.shortName) }}
                 {{ form_widget(form.shortName) }}
+                {{ form_help(form.shortName, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                 {{ form_errors(form.shortName) }}
             </div>
             <div class="field">
                 {{ form_label(form.country) }}
                 {{ form_widget(form.country) }}
+                {{ form_help(form.country, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
                 {{ form_errors(form.country) }}
             </div>
         </div>
         <div class="field">
             {{ form_label(form.brandColor) }}
             {{ form_widget(form.brandColor) }}
+            {{ form_help(form.brandColor, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
             {{ form_errors(form.brandColor) }}
         </div>
         <div class="field">
@@ -68,6 +73,7 @@
                 </div>
             {% endif %}
             {{ form_widget(form.logoFile) }}
+            {{ form_help(form.logoFile, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}
             {{ form_errors(form.logoFile) }}
             {% if form.removeLogo is defined %}
                 <label class="mt-3 flex items-center gap-2 text-sm text-white/70">

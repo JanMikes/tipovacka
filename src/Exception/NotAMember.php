@@ -14,4 +14,10 @@ final class NotAMember extends \DomainException
     {
         return new self(sprintf('Nejsi členem soutěže "%s".', $competitionId->toRfc4122()));
     }
+
+    /** The player's own tip into a soutěž they are not (or no longer) a member of. */
+    public static function toTip(): self
+    {
+        return new self('Nejste členem této soutěže, a tak do ní nemůžete tipovat. Nejdřív se k soutěži připojte.');
+    }
 }

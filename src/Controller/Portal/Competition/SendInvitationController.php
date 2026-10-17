@@ -46,7 +46,10 @@ final class SendInvitationController extends AbstractController
         $this->denyAccessUnlessGranted(CompetitionVoter::INVITE_MEMBER, $competition);
 
         $formData = new SendInvitationFormData();
-        $form = $this->createForm(SendInvitationFormType::class, $formData);
+        // Explicit action: a refused form is re-rendered on another page.
+        $form = $this->createForm(SendInvitationFormType::class, $formData, [
+            'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -66,13 +69,19 @@ final class SendInvitationController extends AbstractController
                 ));
 
             $this->addFlash('success', 'Pozvánka byla odeslána.');
-        } else {
-            foreach ($form->getErrors(true) as $error) {
-                $this->addFlash('error', $error->getMessage());
-            }
+
+            return $this->redirectToRoute(...$this->backTo($request, $competition->id));
         }
 
-        return $this->redirectToRoute(...$this->backTo($request, $competition->id));
+        // A rejected address is shown where it was typed — the page it came from,
+        // re-rendered (422) with this very form, its value kept and the error under
+        // the field — instead of a flash above a blank field after a redirect.
+        return $this->forward(
+            'competition_detail' === $this->backTo($request, $competition->id)[0]
+                ? CompetitionDetailController::class
+                : CompetitionSettingsController::class,
+            ['id' => $competition->id->toRfc4122(), 'rejectedInvitationForm' => $form],
+        );
     }
 
     /**

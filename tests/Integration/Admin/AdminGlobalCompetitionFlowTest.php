@@ -7,6 +7,7 @@ namespace App\Tests\Integration\Admin;
 use App\Command\AdjustUserCredits\AdjustUserCreditsCommand;
 use App\Command\CreateGlobalCompetition\CreateGlobalCompetitionCommand;
 use App\Command\JoinGlobalCompetition\JoinGlobalCompetitionCommand;
+use App\Command\LeaveCompetition\LeaveCompetitionCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Competition;
 use App\Entity\MatchSource;
@@ -108,6 +109,76 @@ final class AdminGlobalCompetitionFlowTest extends WebTestCase
         $selected = $crawler->filter('select[name="global_competition_form[matchSource]"] option[selected]');
         self::assertCount(1, $selected, 'The curated source should be preselected.');
         self::assertSame(AppFixtures::PUBLIC_SOURCE_NAME, trim($selected->text()));
+    }
+
+    public function testCreateRejectsANegativeFeeOnTheFieldAndSaysWhatIsAllowed(): void
+    {
+        $client = static::createClient();
+        $this->loginAdmin($client);
+
+        $client->request('GET', '/admin/souteze/globalni/vytvorit');
+        // The fee rules are stated before the admin types anything.
+        self::assertSelectorTextContains('body', 'Jakmile se připojí první hráč, vstupné ani monetizaci už nezměníte');
+
+        $client->submitForm('Vytvořit globální soutěž', [
+            'global_competition_form[matchSource]' => AppFixtures::PUBLIC_SOURCE_ID,
+            'global_competition_form[name]' => 'Soutěž se záporným vstupným',
+            'global_competition_form[entryFeeCredits]' => '-5',
+            'global_competition_form[monetization]' => 'none',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Vstupné nemůže být záporné. Zadejte 0 (zdarma)');
+        self::assertSelectorExists('#global_competition_form_entryFeeCredits[aria-invalid="true"]');
+        self::assertNull($this->competitionByName($client, 'Soutěž se záporným vstupným'));
+    }
+
+    /**
+     * The handler locks the terms once anybody besides the owner EVER joined; the page
+     * used to count only active members and offered an editable form it then refused.
+     */
+    public function testTermsStayLockedAfterTheFirstPlayerLeftAndARejectedSaveStaysOnTheForm(): void
+    {
+        $client = static::createClient();
+        $bus = $this->testCommandBus();
+
+        $envelope = $bus->dispatch(new CreateGlobalCompetitionCommand(
+            adminId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            matchSourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID),
+            name: 'Globální soutěž s odešlým hráčem',
+            entryFeeCredits: 0,
+            monetization: CompetitionMonetization::None,
+        ));
+        $competition = $envelope->last(HandledStamp::class)?->getResult();
+        self::assertInstanceOf(Competition::class, $competition);
+        $bus->dispatch(new JoinGlobalCompetitionCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            competitionId: $competition->id,
+        ));
+        $bus->dispatch(new LeaveCompetitionCommand(
+            userId: Uuid::fromString(AppFixtures::VERIFIED_USER_ID),
+            competitionId: $competition->id,
+        ));
+
+        $this->loginAdmin($client);
+        $url = '/admin/souteze/'.$competition->id->toRfc4122().'/globalni/upravit';
+        $client->request('GET', $url);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('body', 'Vstupné je uzamčeno');
+        self::assertSelectorExists('#global_competition_form_entryFeeCredits[disabled]');
+
+        // A save that slips through anyway is answered on the form, not by a redirect.
+        $client->request('POST', $url, [
+            'global_competition_form' => [
+                'entryFeeCredits' => '30',
+                'monetization' => 'none',
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Změny se neuložily: mezitím se do soutěže připojil první hráč');
+        self::assertSame(0, $this->competitionByName($client, 'Globální soutěž s odešlým hráčem')?->entryFeeCredits);
     }
 
     public function testEditGlobalShowsPremiumChargesPanel(): void

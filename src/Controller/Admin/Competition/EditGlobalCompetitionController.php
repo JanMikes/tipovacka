@@ -13,6 +13,7 @@ use App\Query\QueryBus;
 use App\Repository\CompetitionRepository;
 use App\Repository\MembershipRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -46,9 +47,11 @@ final class EditGlobalCompetitionController extends AbstractController
             return $this->redirectToRoute('admin_competition_list');
         }
 
-        // Fee-lock: fee/monetization are editable only while the owner is the
-        // sole member (a non-owner joined ⇒ terms locked).
-        $feeLocked = $this->membershipRepository->countActiveMembers($competition->id) > 1;
+        // Fee-lock: fee/monetization are editable only until the first non-owner
+        // EVER joined — the same monotonic count UpdateGlobalCompetitionHandler
+        // enforces (a member who joined and left keeps it locked). Counting only
+        // active members here offered an editable form the handler then refused.
+        $feeLocked = $this->membershipRepository->countAllForCompetition($competition->id) > 1;
 
         $formData = GlobalCompetitionFormData::fromCompetition($competition);
         $form = $this->createForm(GlobalCompetitionFormType::class, $formData, ['with_source' => false]);
@@ -61,19 +64,20 @@ final class EditGlobalCompetitionController extends AbstractController
                     entryFeeCredits: $formData->entryFeeCredits,
                     monetization: $formData->monetization,
                 ));
-            } catch (HandlerFailedException $handlerFailed) {
-                if ($handlerFailed->getPrevious() instanceof GlobalCompetitionFeeLocked) {
-                    $this->addFlash('error', 'Vstupné už nelze změnit — do soutěže se připojil první hráč.');
 
-                    return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+                $this->addFlash('success', 'Nastavení globální soutěže bylo uloženo.');
+
+                return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
+            } catch (HandlerFailedException $handlerFailed) {
+                if (!$handlerFailed->getPrevious() instanceof GlobalCompetitionFeeLocked) {
+                    throw $handlerFailed;
                 }
 
-                throw $handlerFailed;
+                // A player joined while the form was open: say so ON the form (422),
+                // with the lock banner, instead of bouncing away to a flash.
+                $feeLocked = true;
+                $form->addError(new FormError('Změny se neuložily: mezitím se do soutěže připojil první hráč, a vstupné ani monetizaci už proto změnit nejde. Hráči se přidali za původních podmínek.'));
             }
-
-            $this->addFlash('success', 'Nastavení globální soutěže bylo uloženo.');
-
-            return $this->redirectToRoute('competition_detail', ['id' => $competition->id->toRfc4122()]);
         }
 
         return $this->render('admin/competition/edit_global.html.twig', [

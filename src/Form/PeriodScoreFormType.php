@@ -19,13 +19,15 @@ final class PeriodScoreFormType extends AbstractType
         $builder->add('homeScore', IntegerType::class, [
             'label' => false,
             'required' => false,
-            'attr' => ['min' => 0],
+            'invalid_message' => 'Skóre části zadejte jako celé číslo, např. 1.',
+            'attr' => ['min' => 0, 'step' => 1, 'inputmode' => 'numeric', 'autocomplete' => 'off'],
         ]);
 
         $builder->add('awayScore', IntegerType::class, [
             'label' => false,
             'required' => false,
-            'attr' => ['min' => 0],
+            'invalid_message' => 'Skóre části zadejte jako celé číslo, např. 1.',
+            'attr' => ['min' => 0, 'step' => 1, 'inputmode' => 'numeric', 'autocomplete' => 'off'],
         ]);
     }
 

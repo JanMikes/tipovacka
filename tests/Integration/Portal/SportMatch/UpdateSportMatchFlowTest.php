@@ -39,6 +39,33 @@ final class UpdateSportMatchFlowTest extends WebTestCase
         self::assertSame('Čtvrtfinále', $match->round);
     }
 
+    public function testReassigningATeamOfAMatchWithRecordedScorersIsExplainedOnTheFieldNotA409Page(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        // MATCH_FINISHED carries scorers and a card (Bohemians 1905 vs Jablonec).
+        $client->request('GET', '/zapasy/'.AppFixtures::MATCH_FINISHED_ID.'/upravit');
+        self::assertResponseIsSuccessful();
+
+        $client->submitForm('Uložit změny', [
+            'sport_match_form[homeTeam]' => 'Úplně jiný tým',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Tým zápasu nelze změnit');
+        self::assertSame('true', $client->getCrawler()->filter('input[name="sport_match_form[homeTeam]"]')->attr('aria-invalid'));
+
+        $em->clear();
+        $match = $em->find(SportMatch::class, Uuid::fromString(AppFixtures::MATCH_FINISHED_ID));
+        self::assertInstanceOf(SportMatch::class, $match);
+        self::assertSame('Bohemians 1905', $match->homeTeam->name);
+    }
+
     public function testRoundCanBeChangedAndCleared(): void
     {
         $client = static::createClient();

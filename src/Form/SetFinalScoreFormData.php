@@ -17,12 +17,12 @@ final class SetFinalScoreFormData
     #[Assert\Choice(choices: [self::STATE_LIVE, self::STATE_FINISHED])]
     public string $state = self::STATE_FINISHED;
 
-    #[Assert\NotNull(message: 'Zadejte prosím skóre domácích.')]
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
+    #[Assert\NotNull(message: 'Zadejte prosím skóre domácích (celé číslo, 0 nebo víc).')]
+    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné — zadejte 0 nebo víc.')]
     public ?int $homeScore = null;
 
-    #[Assert\NotNull(message: 'Zadejte prosím skóre hostů.')]
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
+    #[Assert\NotNull(message: 'Zadejte prosím skóre hostů (celé číslo, 0 nebo víc).')]
+    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné — zadejte 0 nebo víc.')]
     public ?int $awayScore = null;
 
     /** @var list<PeriodScoreFormData> */
@@ -149,7 +149,13 @@ final class SetFinalScoreFormData
         $sumAway = array_sum(array_column($filled, 1));
 
         if ($sumHome !== $this->homeScore || $sumAway !== $this->awayScore) {
-            $context->buildViolation('Součet gólů za jednotlivé části zápasu musí odpovídat konečnému skóre.')
+            $context->buildViolation(sprintf(
+                'Součet skóre za jednotlivé části (%d:%d) musí odpovídat konečnému skóre (%d:%d). Opravte části, nebo je nechte celé prázdné.',
+                $sumHome,
+                $sumAway,
+                $this->homeScore,
+                $this->awayScore,
+            ))
                 ->atPath('periods[0].homeScore')
                 ->addViolation();
         }

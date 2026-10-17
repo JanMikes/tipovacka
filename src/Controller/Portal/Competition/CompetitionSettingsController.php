@@ -22,6 +22,7 @@ use App\Service\Credits\PricingConfig;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -58,8 +59,20 @@ final class CompetitionSettingsController extends AbstractController
     ) {
     }
 
-    public function __invoke(string $id): Response
-    {
+    /**
+     * The two invitation forms post to their own controllers; a REJECTED one comes
+     * back here through {@see SendInvitationController} / {@see SendBulkInvitationsController}
+     * and is re-rendered as it was refused — the typed addresses kept, the error
+     * under the field, status 422 — instead of a flash above a blank form.
+     *
+     * @param FormInterface<mixed>|null $rejectedInvitationForm
+     * @param FormInterface<mixed>|null $rejectedBulkInvitationForm
+     */
+    public function __invoke(
+        string $id,
+        ?FormInterface $rejectedInvitationForm = null,
+        ?FormInterface $rejectedBulkInvitationForm = null,
+    ): Response {
         /** @var User $user */
         $user = $this->getUser();
 
@@ -89,14 +102,14 @@ final class CompetitionSettingsController extends AbstractController
             ))
             : [];
 
-        $invitationForm = $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
+        $invitationForm = $rejectedInvitationForm ?? $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
             'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
         ]);
 
         $bulkInvitationForm = $canManage
-            ? $this->createForm(BulkInvitationFormType::class, new BulkInvitationFormData(), [
+            ? ($rejectedBulkInvitationForm ?? $this->createForm(BulkInvitationFormType::class, new BulkInvitationFormData(), [
                 'action' => $this->generateUrl('competition_invitation_send_bulk', ['id' => $competition->id->toRfc4122()]),
-            ])
+            ]))
             : null;
 
         $leaderboard = $this->queryBus->handle(new GetCompetitionLeaderboard(competitionId: $competition->id));
@@ -126,6 +139,9 @@ final class CompetitionSettingsController extends AbstractController
             'pendingInvitations' => $pendingInvitations,
             'score_by_user_id' => $scoreByUserId,
             'rule_items' => $ruleConfiguration->items,
-        ]);
+            'bulk_invitation_rejected' => null !== $rejectedBulkInvitationForm,
+        ], new Response(status: null === $rejectedInvitationForm && null === $rejectedBulkInvitationForm
+            ? Response::HTTP_OK
+            : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 }

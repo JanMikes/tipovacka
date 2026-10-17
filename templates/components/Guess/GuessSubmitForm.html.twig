@@ -15,6 +15,13 @@
     destroy the tom-select instance; its state reaches the component through the
     hidden scorersJson input (data-model + dispatched input events).
 #}
+{% macro part_error(message, align = 'center') %}
+    <p class="mt-1.5 flex items-start gap-1.5 text-xs text-loss {{ align == 'center' ? 'justify-center text-center' : '' }}" role="alert">
+        <twig:ux:icon name="lucide:circle-alert" class="mt-px h-3.5 w-3.5 shrink-0" />
+        <span>{{ message }}</span>
+    </p>
+{% endmacro %}
+{% import _self as guess_ui %}
 <div{{ attributes.defaults(this.bare ? {} : {class: 'rounded-xl border border-white/10 bg-white/[0.03] p-4'}) }}>
 
     {# The locked panel is a BOXED, modest chip — never a second big scoreline. On a
@@ -23,6 +30,16 @@
        „Konečný výsledek"; this one is small, boxed and labelled „Váš tip". #}
     {# Čekání na otevření je také „locked", ale z opačného důvodu než uzávěrka —
        proto se větví PŘED ní a mluví o budoucnosti, ne o zmeškané příležitosti. #}
+    {# A tip rejected because the window closed (or has not opened) while the form
+       was open re-renders straight into the locked panel — the refusal must stay
+       visible there, or the player would think the tip went through. #}
+    {% if (this.isWaiting or this.isLocked) and this.errorMessage %}
+        <p role="alert" class="mb-3 flex items-start gap-1.5 rounded-lg border border-loss/30 bg-loss/10 px-3 py-2 text-sm text-loss">
+            <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{{ this.errorMessage }}</span>
+        </p>
+    {% endif %}
+
     {% if this.isWaiting %}
         <div class="guess-locked">
             <p class="guess-locked-note">
@@ -86,17 +103,20 @@
             />
         </div>
     {% else %}
-        {% if this.errorMessage %}
-            <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-loss/30 bg-loss/10 px-3 py-2 text-sm text-loss">
-                <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0" />
-                {{ this.errorMessage }}
+        {# A message about the whole tip sits on top; one about a part of it (an empty
+           score, the periods, the scorers) sits right under that part instead — see
+           the `error_field` blocks below. #}
+        {% if this.errorMessage and this.errorField is null %}
+            <p role="alert" tabindex="-1" data-form-feedback-target="summary" class="mb-3 flex items-start gap-1.5 rounded-lg border border-loss/30 bg-loss/10 px-3 py-2 text-sm text-loss outline-none">
+                <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{{ this.errorMessage }}</span>
             </p>
         {% endif %}
 
         {% if this.successMessage %}
-            <p class="mb-3 flex items-center gap-1.5 rounded-lg border border-win/30 bg-win/10 px-3 py-2 text-sm text-win">
-                <twig:ux:icon name="lucide:circle-check-big" class="h-4 w-4 shrink-0" />
-                {{ this.successMessage }}
+            <p role="status" class="mb-3 flex items-start gap-1.5 rounded-lg border border-win/30 bg-win/10 px-3 py-2 text-sm text-win">
+                <twig:ux:icon name="lucide:circle-check-big" class="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{{ this.successMessage }}</span>
             </p>
         {% endif %}
 
@@ -109,7 +129,10 @@
         {% endif %}
 
         {# DS tip-card stepper area: .tip-inputs grid (home · colon · away) + full-width block button. #}
-        <form data-action="live#action:prevent" data-live-action-param="submit">
+        {# form-feedback: after a rejected submit it scrolls to the first aria-invalid
+           input (or the message box) and focuses it — on a long match list the
+           message would otherwise render out of sight. #}
+        <form data-controller="form-feedback" data-action="live#action:prevent" data-live-action-param="submit" novalidate>
             <div class="tip-inputs">
                 <div class="text-center">
                     <label class="{{ this.showTeamLabels ? 'field-label mb-1.5 block' : 'sr-only' }}" for="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}">
@@ -117,15 +140,19 @@
                     </label>
                     <input
                         type="number"
+                        inputmode="numeric"
                         min="0"
                         max="99"
+                        step="1"
+                        autocomplete="off"
                         id="guess_home_{{ this.sportMatch.id }}_{{ this.competitionId }}"
                         data-model="homeScore"
                         value="{{ homeScore ?? '' }}"
                         class="score-input"
+                        {% if this.hasError('homeScore') %}aria-invalid="true"{% endif %}
                     />
-                    {% if _errors is defined and _errors.getAll('homeScore')|length > 0 %}
-                        <p class="mt-1 text-xs text-loss">{{ _errors.getAll('homeScore')[0].message }}</p>
+                    {% if this.getError('homeScore') %}
+                        {{ guess_ui.part_error(this.getError('homeScore').message) }}
                     {% endif %}
                 </div>
 
@@ -137,23 +164,31 @@
                     </label>
                     <input
                         type="number"
+                        inputmode="numeric"
                         min="0"
                         max="99"
+                        step="1"
+                        autocomplete="off"
                         id="guess_away_{{ this.sportMatch.id }}_{{ this.competitionId }}"
                         data-model="awayScore"
                         value="{{ awayScore ?? '' }}"
                         class="score-input"
+                        {% if this.hasError('awayScore') %}aria-invalid="true"{% endif %}
                     />
-                    {% if _errors is defined and _errors.getAll('awayScore')|length > 0 %}
-                        <p class="mt-1 text-xs text-loss">{{ _errors.getAll('awayScore')[0].message }}</p>
+                    {% if this.getError('awayScore') %}
+                        {{ guess_ui.part_error(this.getError('awayScore').message) }}
                     {% endif %}
                 </div>
             </div>
+            {% if this.errorMessage and this.errorField in ['score', 'homeScore', 'awayScore'] %}
+                {{ guess_ui.part_error(this.errorMessage) }}
+            {% endif %}
 
             {# ── Period tips (iff period rules enabled; labels per sport) ── #}
             {% if this.features.periodTips %}
                 <fieldset class="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
                     <legend class="field-label px-1">Tip na {{ this.sport.periodLabelPlural }} <span class="font-normal normal-case text-white/40">(nepovinné)</span></legend>
+                    <p class="mb-2 text-xs text-white/50">Vyplňte buď všechny {{ this.sport.periodLabelPlural }}, nebo žádnou; jejich součet musí sedět s tipem na celý zápas.</p>
                     <div class="space-y-2">
                         {% for number in this.periodNumbers %}
                             {% set tip = this.periodTip(number) %}
@@ -161,26 +196,41 @@
                                 <span class="w-24 shrink-0 text-sm text-white/70">{{ number }}. {{ this.sport.periodLabelSingular }}</span>
                                 <input
                                     type="number"
+                                    inputmode="numeric"
                                     min="0"
                                     max="99"
+                                    step="1"
+                                    autocomplete="off"
                                     data-model="period{{ number }}Home"
                                     value="{{ tip[0] ?? '' }}"
                                     class="input w-16 text-center"
+                                    {% if this.hasError('period' ~ number ~ 'Home') %}aria-invalid="true"{% endif %}
                                     aria-label="{{ number }}. {{ this.sport.periodLabelSingular }} – domácí"
                                 />
                                 <span class="text-white/40">:</span>
                                 <input
                                     type="number"
+                                    inputmode="numeric"
                                     min="0"
                                     max="99"
+                                    step="1"
+                                    autocomplete="off"
                                     data-model="period{{ number }}Away"
                                     value="{{ tip[1] ?? '' }}"
                                     class="input w-16 text-center"
+                                    {% if this.hasError('period' ~ number ~ 'Away') %}aria-invalid="true"{% endif %}
                                     aria-label="{{ number }}. {{ this.sport.periodLabelSingular }} – hosté"
                                 />
                             </div>
+                            {% set period_error = this.getError('period' ~ number ~ 'Home') ?? this.getError('period' ~ number ~ 'Away') %}
+                            {% if period_error %}
+                                {{ guess_ui.part_error(period_error.message, 'start') }}
+                            {% endif %}
                         {% endfor %}
                     </div>
+                    {% if this.errorMessage and this.errorField == 'periods' %}
+                        {{ guess_ui.part_error(this.errorMessage, 'start') }}
+                    {% endif %}
                 </fieldset>
             {% endif %}
 
@@ -211,6 +261,9 @@
                             </label>
                         {% endfor %}
                     </div>
+                    {% if this.getError('overtimeWinner') %}
+                        {{ guess_ui.part_error(this.getError('overtimeWinner').message, 'start') }}
+                    {% endif %}
                 </fieldset>
             {% endif %}
 
@@ -263,6 +316,12 @@
                         />
                     </div>
                 </div>
+                {# Outside the data-live-ignore island, or a re-render could never show it. #}
+                {% if this.errorMessage and this.errorField == 'scorers' %}
+                    <div tabindex="-1" data-form-feedback-target="summary" class="outline-none">
+                        {{ guess_ui.part_error(this.errorMessage, 'start') }}
+                    </div>
+                {% endif %}
             {% endif %}
 
             {% set is_clearing = this.hasExistingGuess and homeScore is null and awayScore is null %}

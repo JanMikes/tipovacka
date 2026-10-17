@@ -34,16 +34,39 @@
         <section class="card-glass order-1 w-full p-8 sm:p-10 lg:order-2 lg:max-w-[30rem] lg:justify-self-end">
             <span class="eyebrow">Přihlášení</span>
             <h2 class="mb-2 mt-2 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">Pojďte tipovat.</h2>
-            <p class="mb-7 text-sm leading-relaxed text-white/70">Zadejte e-mail a heslo. Bez sázek, bez peněz — jen pro radost.</p>
+            <p class="mb-7 text-sm leading-relaxed text-white/70">Zadejte e-mail a heslo, se kterými jste se zaregistrovali.</p>
 
-            {% if error %}
-                <div class="mb-6 flex items-start gap-2.5 rounded-xl border border-loss/30 bg-loss/10 px-4 py-3 text-sm text-loss" role="alert">
-                    <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-5 w-5 shrink-0" />
-                    <span>{{ error.messageKey|trans(error.messageData, 'security') }}</span>
-                </div>
-            {% endif %}
+            {#- Every failure names the next step (.docs/features/form-feedback.md): a wrong
+                password points at the reset, a closed account at the contact. A wrong
+                e-mail and a wrong password read the same on purpose — the page never
+                reveals whether an address has an account. -#}
+            {% set credentials_failed = failure == constant('App\\Controller\\Auth\\LoginController::FAILURE_CREDENTIALS') %}
 
-            <form method="post" action="{{ path('app_login') }}" class="flex flex-col gap-4">
+            <form method="post" action="{{ path('app_login') }}" class="flex flex-col gap-4" data-controller="form-feedback">
+                {% if error %}
+                    <div class="flex items-start gap-2.5 rounded-xl border border-loss/30 bg-loss/10 px-4 py-3 text-sm text-white/85" id="login-error" role="alert" data-form-feedback-target="summary" tabindex="-1">
+                        <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-5 w-5 shrink-0 text-loss" />
+                        <div class="flex flex-col gap-1.5">
+                            {% if credentials_failed %}
+                                <p class="font-semibold text-white">Nesprávný e-mail nebo heslo.</p>
+                                <p>Zkontrolujte, že je e-mail napsaný správně, a zadejte heslo znovu — záleží u něj na velkých a malých písmenech.</p>
+                                <p>
+                                    <a href="{{ path('app_forgot_password_request') }}" class="font-semibold text-accent-300 underline decoration-accent-500/30 underline-offset-2 hover:text-white">Nastavte si nové heslo</a>,
+                                    pokud si ho nepamatujete. Účet ještě nemáte?
+                                    <a href="{{ path('app_register') }}" class="font-semibold text-accent-300 underline decoration-accent-500/30 underline-offset-2 hover:text-white">Zaregistrujte se</a>.
+                                </p>
+                            {% elseif failure == constant('App\\Controller\\Auth\\LoginController::FAILURE_ACCOUNT') %}
+                                <p>{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+                                <p>
+                                    <a href="mailto:kontakt@wtips.cz" class="font-semibold text-accent-300 underline decoration-accent-500/30 underline-offset-2 hover:text-white">Napsat na kontakt@wtips.cz</a>
+                                </p>
+                            {% else %}
+                                <p>{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
                 <div class="field">
                     <label for="email">E-mail</label>
                     <div class="relative">
@@ -55,10 +78,15 @@
                             id="email"
                             name="_username"
                             value="{{ lastUsername }}"
-                            autocomplete="email"
+                            autocomplete="username"
+                            inputmode="email"
+                            autocapitalize="none"
+                            spellcheck="false"
+                            maxlength="180"
                             required
+                            {% if lastUsername is empty %}autofocus{% endif %}
                             class="input !pl-[42px]"
-                            placeholder="marek@firma.cz"
+                            placeholder="vas@email.cz"
                         >
                     </div>
                 </div>
@@ -78,6 +106,8 @@
                             name="_password"
                             autocomplete="current-password"
                             required
+                            {% if lastUsername is not empty %}autofocus{% endif %}
+                            {% if credentials_failed %}aria-invalid="true" aria-describedby="login-error"{% endif %}
                             data-password-visibility-target="input"
                             class="input !pl-[42px] !pr-12"
                             placeholder="••••••••"

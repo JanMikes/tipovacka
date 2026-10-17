@@ -32,9 +32,14 @@ import { Controller } from '@hotwired/stimulus';
  *           <button type="button" data-action="modal#close">Zavřít</button>
  *       </dialog>
  *   </div>
+ *
+ * `data-modal-open-value="true"` opens the dialog on connect — for a form inside
+ * it that came back rejected, whose errors must not hide behind a closed panel.
  */
 export default class extends Controller {
     static targets = ['dialog'];
+
+    static values = { open: Boolean };
 
     connect() {
         this.onBackdropClick = this.onBackdropClick.bind(this);
@@ -43,6 +48,10 @@ export default class extends Controller {
         if (this.hasDialogTarget) {
             this.dialogTarget.addEventListener('click', this.onBackdropClick);
             this.dialogTarget.addEventListener('close', this.onClose);
+
+            if (this.openValue) {
+                this.open();
+            }
         }
     }
 

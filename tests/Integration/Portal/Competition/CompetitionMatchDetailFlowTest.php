@@ -31,6 +31,41 @@ final class CompetitionMatchDetailFlowTest extends WebTestCase
         return '/souteze/'.$competitionId.'/zapasy/'.$sportMatchId;
     }
 
+    // ─────────────── organizer: „Tipování tohoto zápasu" ───────────────
+
+    /**
+     * A refused deadline comes back on the match page (422) with the typed value
+     * and the reason — naming the kickoff in Czech time — under the field, not as
+     * a vague flash over a reset form.
+     */
+    public function testADeadlineAfterKickoffIsRefusedUnderTheFieldWithTheValueKept(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+
+        $client->request('POST', self::url(AppFixtures::PUBLIC_COMPETITION_ID, AppFixtures::MATCH_SCHEDULED_ID).'/uzaverka', [
+            'competition_match_deadline_form' => ['deadline' => '2025-06-20 21:00'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('#competition_match_deadline_form_deadline[aria-invalid="true"][value="2025-06-20 21:00"]');
+        self::assertSelectorTextContains('form[action$="/uzaverka"]', 'nejpozději ve chvíli výkopu (20. 6. 2025 20:00)');
+    }
+
+    public function testAnUnreadableDeadlineSaysWhichFormatItWants(): void
+    {
+        $client = static::createClient();
+        $this->loginUserById($client, AppFixtures::ADMIN_ID);
+
+        $client->request('POST', self::url(AppFixtures::PUBLIC_COMPETITION_ID, AppFixtures::MATCH_SCHEDULED_ID).'/uzaverka', [
+            'competition_match_deadline_form' => ['deadline' => 'zítra večer'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('#competition_match_deadline_form_deadline[aria-invalid="true"]');
+        self::assertSelectorTextContains('body', 'Zadejte datum a čas ve tvaru RRRR-MM-DD HH:MM');
+    }
+
     // ─────────────────────────── access ───────────────────────────
 
     public function testMemberCanLoadTheMatchPage(): void

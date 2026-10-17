@@ -1,0 +1,13 @@
+{#
+    One inline error under a hand-wired Live input (the create wizard, „Zápasy
+    soutěže") — the same markup the form theme's form_errors renders, so a
+    LiveProp-driven field reads exactly like a Symfony form field.
+
+    Expects: message (string|null), id (referenced by the input's aria-describedby).
+    The input itself carries aria-invalid="true", which is what form-feedback jumps to.
+#}
+{% if message|default(null) %}
+    <ul id="{{ id }}" class="mt-1 space-y-0.5 text-sm text-loss">
+        <li class="flex items-start gap-1.5">{{ ux_icon('lucide:circle-alert', {class: 'mt-[3px] h-3.5 w-3.5 shrink-0', 'aria-hidden': 'true'}) }}<span>{{ message }}</span></li>
+    </ul>
+{% endif %}

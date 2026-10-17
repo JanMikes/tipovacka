@@ -30,6 +30,9 @@ final class FakePaymentGateway implements PaymentGateway, ResetInterface
     /** @var array<string, InvoiceDetails> */
     public array $invoices = [];
 
+    /** Thrown (once) by the next createCreditCheckoutSession() — Stripe being down. */
+    public ?\Throwable $nextCheckoutFailure = null;
+
     private int $sequence = 0;
 
     public function createCustomer(string $email, string $name, Uuid $userId): string
@@ -47,6 +50,13 @@ final class FakePaymentGateway implements PaymentGateway, ResetInterface
         string $successUrl,
         string $cancelUrl,
     ): CheckoutSession {
+        if (null !== $this->nextCheckoutFailure) {
+            $failure = $this->nextCheckoutFailure;
+            $this->nextCheckoutFailure = null;
+
+            throw $failure;
+        }
+
         $sessionId = 'cs_test_'.++$this->sequence;
 
         $this->createdSessions[] = [
@@ -131,6 +141,7 @@ final class FakePaymentGateway implements PaymentGateway, ResetInterface
         $this->createdSessions = [];
         $this->sessions = [];
         $this->invoices = [];
+        $this->nextCheckoutFailure = null;
         $this->sequence = 0;
     }
 }

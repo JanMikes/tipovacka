@@ -361,6 +361,57 @@ final class BoostFlowTest extends WebTestCase
         self::assertGreaterThanOrEqual(1, $crawler->filter('a[href^="/kredity"]')->count());
     }
 
+    /**
+     * The broke member's „Odemknout za N kr." names the booster in its top-up link, so
+     * the dobití card can say what is missing.
+     */
+    public function testBrokeMembersTopUpLinkCarriesTheBoosterToTheDobitiCard(): void
+    {
+        $client = static::createClient();
+        $this->lockTips();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+
+        $crawler = $client->request('GET', self::BOOSTS_BATCH);
+        $link = $crawler->filter('a[href^="/kredity?vylepseni=tip_change"]');
+        self::assertGreaterThanOrEqual(1, $link->count());
+
+        $client->request('GET', (string) $link->first()->attr('href'));
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('#dobit', BoostType::TipChange->label());
+        self::assertSelectorTextContains('#dobit', sprintf('vám chybí %d kreditů', BoostType::TipChange->price()));
+    }
+
+    /**
+     * A page rendered while the wallet could pay, submitted after it emptied: the refusal
+     * lands on the dobití card (anchored), which names the shortfall — computed from the
+     * live balance, never from the request.
+     */
+    public function testPurchaseRefusedForInsufficientCreditsLandsOnTheDobitiCardWithTheShortfall(): void
+    {
+        $client = static::createClient();
+        $this->lockTips();
+        $this->loginUserById($client, AppFixtures::SECOND_VERIFIED_USER_ID);
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, 100);
+
+        $crawler = $client->request('GET', self::BOOSTS_MATCH_DETAIL);
+        $token = $crawler->filter('form[action="'.self::BOOSTS_PURCHASE.'"] input[name="_token"]')->first()->attr('value');
+
+        $this->grant(AppFixtures::SECOND_VERIFIED_USER_ID, -90);
+
+        $client->request('POST', self::BOOSTS_PURCHASE, [
+            '_token' => $token,
+            'type' => 'tip_change',
+            '_redirect' => self::BOOSTS_MATCH_DETAIL,
+        ]);
+
+        self::assertResponseRedirects('/kredity?vylepseni=tip_change#dobit');
+        $client->followRedirect();
+        self::assertSelectorTextContains('#dobit', sprintf('vám chybí %d kreditů', BoostType::TipChange->price() - 10));
+
+        self::assertNull($this->activeTipChange(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertSame(10, $this->balanceOf(AppFixtures::SECOND_VERIFIED_USER_ID));
+    }
+
     // ── B6: no purchase once the competition is fully over ────────────────────
 
     /**

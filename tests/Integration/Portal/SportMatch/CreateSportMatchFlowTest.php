@@ -111,6 +111,30 @@ final class CreateSportMatchFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Zadejte prosím domácí tým.');
     }
 
+    public function testATeamPlayingItselfIsRejectedOnTheAwayField(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/zapasy/novy');
+        $client->submitForm('Vytvořit zápas', [
+            'sport_match_form[homeTeam]' => 'Tygři',
+            'sport_match_form[awayTeam]' => 'tygři ',
+            'sport_match_form[kickoffAt]' => 'zítra v osm',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Tým nemůže hrát sám se sebou');
+        self::assertSelectorTextContains('body', 've tvaru RRRR-MM-DD HH:MM (český čas)');
+        $crawler = $client->getCrawler();
+        self::assertSame('true', $crawler->filter('input[name="sport_match_form[awayTeam]"]')->attr('aria-invalid'));
+        self::assertNull($crawler->filter('input[name="sport_match_form[homeTeam]"]')->attr('aria-invalid'));
+    }
+
     public function testNonOwnerCannotCreateMatch(): void
     {
         $client = static::createClient();

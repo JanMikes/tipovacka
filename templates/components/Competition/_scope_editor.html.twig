@@ -7,7 +7,12 @@
     začátku" (pick a sport, no zdroj at all) while the basket is still empty; the
     manage screen never does — a soutěž that exists already has its sport, and its
     own zápasy are added with the „Vlastní zápasy" button instead.
+
+    Errors come from the trait's `fieldErrors` (keys sport / source / matches /
+    teams) and render next to the input they are about; the input carries
+    aria-invalid, so form-feedback takes the organizer straight to it.
 #}
+{% set scope_errors = fieldErrors %}
 {% if draftOpen %}
     {% if allow_from_scratch %}
         <label class="option-card flex cursor-pointer items-start gap-3 {{ fromScratch ? 'selected' : '' }}">
@@ -23,11 +28,13 @@
     {% if fromScratch and not this.isGlobalScope %}
         <div class="field">
             <label class="field-label" for="wizard-sport">Sport</label>
-            <select id="wizard-sport" class="input" data-model="sportId">
+            <select id="wizard-sport" class="input" data-model="sportId"
+                    {% if scope_errors.sport is defined %}aria-invalid="true" aria-describedby="wizard-sport-error"{% endif %}>
                 {% for sport in this.availableSports %}
                     <option value="{{ sport.id.toRfc4122 }}" {{ sportId == sport.id.toRfc4122 ? 'selected' }}>{{ sport.name }}</option>
                 {% endfor %}
             </select>
+            {{ include('components/Competition/_field_error.html.twig', {message: scope_errors.sport ?? null, id: 'wizard-sport-error'}) }}
             <p class="text-xs leading-relaxed text-white/50">Sport určuje strukturu zápasu ({{ this.selectedSport.periodLabelPlural }}) a bodování.</p>
         </div>
         {# Only the wizard creates the zdroj here; the manage screen edits it on its own page. #}
@@ -44,7 +51,8 @@
     {% else %}
         <div class="field">
             <label class="field-label" for="wizard-source">Zdroj zápasů</label>
-            <select id="wizard-source" class="input" data-model="sourceId">
+            <select id="wizard-source" class="input" data-model="sourceId"
+                    {% if scope_errors.source is defined %}aria-invalid="true" aria-describedby="wizard-source-error"{% endif %}>
                 <option value="">Vyberte zdroj zápasů…</option>
                 {% for source in this.availableSources %}
                     {% set dates = source.startAt ? source.startAt|date('j. n. Y', 'Europe/Prague') : '' %}
@@ -54,6 +62,7 @@
                     </option>
                 {% endfor %}
             </select>
+            {{ include('components/Competition/_field_error.html.twig', {message: scope_errors.source ?? null, id: 'wizard-source-error'}) }}
             <p class="text-xs leading-relaxed text-white/50">{{ this.isGlobalScope ? 'Globální soutěž zahrnuje všechny zápasy vybraného zdroje.' : 'Rozpis zápasů, nad kterým se soutěž tipuje.' }}</p>
         </div>
 
@@ -101,9 +110,22 @@
                         </div>
                         <p class="mt-2 text-xs leading-relaxed text-white/50">Soutěž zahrne všechny zápasy vybraných týmů — i ty, které se do rozpisu přidají později (třeba playoff).</p>
                     </div>
+                    {# Outside the island: data-live-ignore would freeze it. The picker
+                       is tom-select (its <select> is hidden), so there is no input to
+                       mark invalid — the message itself is where form-feedback scrolls. #}
+                    {% if scope_errors.teams is defined %}
+                        <div role="alert" tabindex="-1" data-form-feedback-target="summary" class="outline-none">
+                            {{ include('components/Competition/_field_error.html.twig', {message: scope_errors.teams, id: 'wizard-teams-error'}) }}
+                        </div>
+                    {% endif %}
                     </div>
                 {% elseif this.isSubset %}
                     <div data-controller="wizard-matches">
+                        {% if scope_errors.matches is defined %}
+                            <div class="mb-3">
+                                {{ include('components/Competition/_field_error.html.twig', {message: scope_errors.matches, id: 'wizard-matches-error'}) }}
+                            </div>
+                        {% endif %}
                         <div class="relative mb-3">
                             <twig:ux:icon name="lucide:search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                             <input type="text" class="input pl-9" placeholder="Filtrovat zápasy…"
@@ -122,6 +144,7 @@
                                                data-search="{{ (match.homeTeam.name ~ ' ' ~ match.awayTeam.name)|lower }}">
                                             <input type="checkbox" class="h-4 w-4 shrink-0 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500"
                                                    data-model="norender|selectedMatchIds[]" value="{{ match.id.toRfc4122 }}"
+                                                   {% if scope_errors.matches is defined and loop.first and loop.parent.loop.first %}aria-invalid="true" aria-describedby="wizard-matches-error"{% endif %}
                                                    {{ match.id.toRfc4122 in selectedMatchIds ? 'checked' }} />
                                             <span class="text-sm text-white/80">{{ match.homeTeam.name }} – {{ match.awayTeam.name }} <span class="text-white/40">({{ match.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }})</span></span>
                                             {% if match.isPlayoff %}

@@ -11,7 +11,7 @@ final class InvalidGuessScore extends \DomainException
 {
     public static function create(): self
     {
-        return new self('Skóre musí být 0 nebo vyšší.');
+        return new self('Skóre nemůže být záporné — zadejte celé číslo od 0 do 99.');
     }
 
     public static function periodCountMismatch(int $expected, string $periodLabelPlural): self
@@ -19,9 +19,16 @@ final class InvalidGuessScore extends \DomainException
         return new self(sprintf('Tip musí obsahovat skóre pro %d %s (nebo žádné).', $expected, $periodLabelPlural));
     }
 
-    public static function periodSumMismatch(): self
+    public static function periodSumMismatch(int $periodsHome, int $periodsAway, int $homeScore, int $awayScore, string $periodLabelPlural): self
     {
-        return new self('Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.');
+        return new self(sprintf(
+            'Součet tipů na %1$s (%2$d:%3$d) musí odpovídat tipu na celý zápas (%4$d:%5$d). Upravte %1$s, nebo je nechte prázdné.',
+            $periodLabelPlural,
+            $periodsHome,
+            $periodsAway,
+            $homeScore,
+            $awayScore,
+        ));
     }
 
     public static function overtimeIncomplete(): self

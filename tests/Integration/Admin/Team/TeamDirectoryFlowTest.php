@@ -179,6 +179,59 @@ final class TeamDirectoryFlowTest extends WebTestCase
         self::assertSame('AC Sparta Praha', $team->name);
     }
 
+    /** One row per club per sport: a duplicate used to surface as a 500 from the unique index. */
+    public function testCreatingADuplicateTeamIsRejectedOnTheNameField(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::ADMIN_ID);
+
+        $client->request('GET', '/admin/tymy/vytvorit');
+        $client->submitForm('Vytvořit tým', [
+            'team_form[sport]' => Sport::FOOTBALL_ID,
+            'team_form[name]' => 'sparta praha',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'V adresáři už je tým „Sparta Praha“');
+        self::assertSelectorExists('#team_form_name[aria-invalid="true"]');
+    }
+
+    public function testRenamingOntoAnotherTeamIsRejectedButACasingFixIsNot(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::ADMIN_ID);
+
+        $client->request('GET', '/admin/tymy/'.AppFixtures::TEAM_SPARTA_ID.'/upravit');
+        $client->submitForm('Uložit změny', ['team_form[name]' => 'Slavia Praha']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Název „Slavia Praha“ už má jiný tým');
+        self::assertSame('Sparta Praha', $this->reloadSparta($client)->name);
+
+        $client->request('GET', '/admin/tymy/'.AppFixtures::TEAM_SPARTA_ID.'/upravit');
+        $client->submitForm('Uložit změny', ['team_form[name]' => 'SPARTA Praha']);
+
+        self::assertResponseRedirects('/admin/tymy');
+    }
+
+    /** A file that passes the Image constraint yet cannot be decoded: a field error, not a 422 error page. */
+    public function testAnUndecodableLogoIsRejectedOnTheLogoField(): void
+    {
+        $client = static::createClient();
+        $this->login($client, AppFixtures::ADMIN_ID);
+
+        $client->request('GET', '/admin/tymy/'.AppFixtures::TEAM_SPARTA_ID.'/upravit');
+        $client->submitForm('Uložit změny', [
+            'team_form[name]' => 'Sparta Praha',
+            'team_form[logoFile]' => $this->truncatedPngUpload(),
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Tenhle obrázek se nepodařilo zpracovat');
+        self::assertSelectorExists('#team_form_logoFile[aria-invalid="true"]');
+        self::assertNull($this->reloadSparta($client)->logo);
+    }
+
     public function testNonAdminIsForbidden(): void
     {
         $client = static::createClient();
@@ -199,6 +252,16 @@ final class TeamDirectoryFlowTest extends WebTestCase
         imagepng($image, $path);
 
         return new UploadedFile($path, 'sparta.png', 'image/png', test: true);
+    }
+
+    /** PNG signature + header only: the mime sniff says image/png, GD cannot decode it. */
+    private function truncatedPngUpload(): UploadedFile
+    {
+        $full = $this->pngUpload();
+        $path = sys_get_temp_dir().'/team-logo-broken-'.uniqid().'.png';
+        file_put_contents($path, substr((string) file_get_contents($full->getPathname()), 0, 33));
+
+        return new UploadedFile($path, 'broken.png', 'image/png', test: true);
     }
 
     private function reloadSparta(KernelBrowser $client): Team

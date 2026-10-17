@@ -19,16 +19,21 @@ final class AdjustCreditsFormType extends AbstractType
     {
         $builder->add('amount', IntegerType::class, [
             'label' => 'Počet kreditů',
-            'help' => 'Kladné číslo kredity přidá, záporné odebere (korekce).',
+            'help' => sprintf('Celé číslo, 1 kredit = 1 Kč. Kladné číslo kredity přidá, záporné odebere (korekce) — nejvýše %d najednou a zůstatek nesmí klesnout pod nulu.', AdjustCreditsFormData::MAX_ADJUSTMENT),
+            'invalid_message' => 'Zadejte celé číslo bez desetinných míst, např. 500 nebo -200.',
             'attr' => [
                 'placeholder' => 'Např. 500',
+                'min' => -AdjustCreditsFormData::MAX_ADJUSTMENT,
+                'max' => AdjustCreditsFormData::MAX_ADJUSTMENT,
+                'step' => 1,
             ],
         ]);
 
         $builder->add('note', TextareaType::class, [
             'label' => 'Poznámka',
-            'help' => 'Zobrazí se uživateli v historii transakcí.',
+            'help' => 'Povinné. Zobrazí se uživateli v historii transakcí.',
             'attr' => [
+                'maxlength' => 500,
                 'placeholder' => 'Např. Kompenzace za výpadek, výhra v soutěži…',
                 'rows' => 2,
             ],

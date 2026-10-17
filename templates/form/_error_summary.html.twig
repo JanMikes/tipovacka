@@ -1,14 +1,12 @@
 {#
-    Every reason a sign-up was rejected, in ONE box right above the submit button.
+    Every reason a form was rejected, in ONE box. Inline errors stay under their fields;
+    this box lists each problem as „Field: what is wrong", and tapping an item scrolls
+    that field to the middle of the screen and focuses it (form-feedback#focusField).
 
-    Inline errors stay under their fields, but on a phone the first of them often
-    renders a screen above the button — tapping it looked like nothing happened
-    (2026-10-17, a visitor gave up after four tries). This box lists each problem
-    as „Field: what is wrong"; tapping an item scrolls that field to the middle of the
-    screen and focuses it (signup-feedback#focusField).
-
-    Rendered only after a submit attempt (isValidated), so typing into a fresh form
-    never shouts at the visitor.
+    The form theme renders it at the top of a rejected classic form; a Live form
+    includes it itself (sign-up: right above the button) and passes submitted:
+    this.isValidated, so typing into a fresh form never shouts at the visitor.
+    Expects form, submitted; optional title, nicknameSuggestion.
 #}
 {% macro items(view) %}
     {% import _self as summary %}
@@ -16,7 +14,7 @@
     {%- for error in view.vars.errors -%}
         <li>
             {%- if view.parent is not null and label -%}
-                <a href="#{{ (view.children|length > 0) ? (view.children|first).vars.id : view.vars.id }}" data-action="signup-feedback#focusField" class="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white">{{ label }}</a>:
+                <a href="#{{ (view.children|length > 0) ? (view.children|first).vars.id : view.vars.id }}" data-action="form-feedback#focusField" class="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white">{{ label }}</a>:
             {% endif -%}
             {{ error.message }}
         </li>
@@ -29,11 +27,11 @@
 {% import _self as summary %}
 
 {% if submitted and not form.vars.valid %}
-    <div role="alert" tabindex="-1" data-signup-feedback-target="summary"
+    <div role="alert" tabindex="-1" data-form-feedback-target="summary"
          class="rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white/85 outline-none">
         <p class="flex items-center gap-2 font-semibold text-white">
             <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0 text-loss" />
-            {{ title|default('Účet zatím nevznikl — opravte prosím:') }}
+            {{ title|default('Formulář zatím nejde odeslat — opravte prosím:') }}
         </p>
         <ul class="mt-2 list-disc space-y-1 pl-5">
             {{ summary.items(form) }}
@@ -42,9 +40,9 @@
             <p class="mt-2.5 flex flex-wrap items-center gap-2">
                 Volná přezdívka:
                 <button type="button"
-                        data-action="signup-feedback#fill"
-                        data-signup-feedback-field-param="nickname"
-                        data-signup-feedback-value-param="{{ nicknameSuggestion }}"
+                        data-action="form-feedback#fill"
+                        data-form-feedback-field-param="nickname"
+                        data-form-feedback-value-param="{{ nicknameSuggestion }}"
                         class="inline-flex items-center gap-1 rounded-lg border border-accent-500/40 bg-accent-500/10 px-2 py-0.5 font-mono text-[13px] font-semibold text-accent-200 transition-colors hover:bg-accent-500/20">
                     {{ nicknameSuggestion }}
                     <span class="font-sans text-xs font-medium text-accent-300">použít</span>

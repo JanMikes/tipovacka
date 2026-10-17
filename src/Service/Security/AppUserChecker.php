@@ -19,15 +19,15 @@ final class AppUserChecker implements UserCheckerInterface
         }
 
         if ($user->isDeleted()) {
-            throw new CustomUserMessageAuthenticationException('Tento účet byl smazán. Pro obnovení kontaktujte podporu.');
+            throw new CustomUserMessageAuthenticationException('Tento účet byl smazán. Pokud ho chcete obnovit, napište nám na kontakt@wtips.cz.');
         }
 
         if (!$user->isActive) {
-            throw new CustomUserMessageAuthenticationException('Váš účet byl zablokován. Pro více informací kontaktujte podporu.');
+            throw new CustomUserMessageAuthenticationException('Tento účet byl zablokován. Pokud jde podle vás o omyl, napište nám na kontakt@wtips.cz.');
         }
 
         if (null === $user->email) {
-            throw new CustomUserMessageAuthenticationException('Tento účet nemá přiřazený e-mail, přihlášení není možné.');
+            throw new CustomUserMessageAuthenticationException('K tomuto účtu nemáme uložený e-mail, proto se k němu přihlásit nejde. Napište nám na kontakt@wtips.cz a pomůžeme vám.');
         }
     }
 

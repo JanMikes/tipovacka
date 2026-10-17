@@ -158,6 +158,47 @@ final class SportMatchImporterTest extends TestCase
         self::assertGreaterThanOrEqual(1, count($preview->errors));
     }
 
+    public function testPreviewRefusesAnImpossibleDateInsteadOfRollingItOver(): void
+    {
+        $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné)\n"
+            ."A,B,2026-02-31 18:00,\n";
+
+        $preview = $this->importer->preview($this->uploadedFileWithContent($csv), $this->makeMatchSource(), $this->now);
+
+        self::assertCount(0, $preview->validRows);
+        self::assertCount(1, $preview->errors);
+        self::assertStringContainsString('RRRR-MM-DD HH:MM', $preview->errors[0]->message);
+    }
+
+    public function testPreviewAcceptsACzechExcelCsv(): void
+    {
+        // What „Uložit jako CSV" produces in a Czech Excel: Windows-1250, semicolons,
+        // and the date as the cell displays it.
+        $csv = "Domácí;Hosté;Začátek (YYYY-MM-DD HH:MM);Místo (nepovinné)\n"
+            ."Baník Ostrava;Sigma Olomouc;10. 5. 2026 18:00;Městský stadion\n";
+        $encoded = (string) iconv('UTF-8', 'Windows-1250', $csv);
+
+        $preview = $this->importer->preview($this->uploadedFileWithContent($encoded), $this->makeMatchSource(), $this->now);
+
+        self::assertCount(0, $preview->errors);
+        self::assertCount(1, $preview->validRows);
+        self::assertSame('Baník Ostrava', $preview->validRows[0]->homeTeam);
+        self::assertSame('Městský stadion', $preview->validRows[0]->venue);
+        self::assertSame('2026-05-10 16:00', $preview->validRows[0]->kickoffAt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i'));
+    }
+
+    public function testPreviewRefusesATeamPlayingItself(): void
+    {
+        $csv = "Domácí,Hosté,Začátek (YYYY-MM-DD HH:MM),Místo (nepovinné)\n"
+            ."Lvi,lvi,2026-05-10 18:00,\n";
+
+        $preview = $this->importer->preview($this->uploadedFileWithContent($csv), $this->makeMatchSource(), $this->now);
+
+        self::assertCount(0, $preview->validRows);
+        self::assertSame(SportMatchImporter::COLUMN_AWAY, $preview->errors[0]->column);
+        self::assertStringContainsString('nemůže hrát sám se sebou', $preview->errors[0]->message);
+    }
+
     public function testPreviewThrowsOnMalformedHeaders(): void
     {
         $csv = "Home,Away,When,Where\nA,B,2026-05-10 18:00,\n";

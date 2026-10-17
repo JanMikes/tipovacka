@@ -76,7 +76,7 @@ final readonly class InvitationAcceptanceService
         if (!$currentUser->isVerified && InvitationKind::Email !== $context->kind) {
             $this->rememberIntent($context, $currentUser);
             $this->flash('warning', sprintf(
-                'Nejprve si ověř svou e-mailovou adresu — pak tě rovnou přidáme do soutěže %s.',
+                'Nejprve si prosím ověřte e-mailovou adresu — pak vás rovnou přidáme do soutěže %s.',
                 $context->competitionName,
             ));
 
@@ -112,16 +112,16 @@ final readonly class InvitationAcceptanceService
 
             $this->commandBus->dispatch($command);
 
-            $this->flash('success', 'Byl(a) jsi přidán(a) do soutěže.');
+            $this->flash('success', 'Jste v soutěži — můžete začít tipovat.');
         } catch (HandlerFailedException $handlerFailed) {
             $inner = $handlerFailed->getPrevious();
 
             if ($inner instanceof AlreadyMember) {
-                $this->flash('info', 'V soutěži již jsi.');
+                $this->flash('info', 'V této soutěži už jste.');
             } elseif ($inner instanceof InsufficientCredits) {
                 return $this->redirectToTopUp($context, $user);
             } elseif ($inner instanceof CannotJoinFinishedMatchSource) {
-                $this->flash('warning', 'Zdroj zápasů této soutěže je již ukončen.');
+                $this->flash('warning', 'Do této soutěže se už připojit nejde — soutěž skončila.');
 
                 return new RedirectResponse($this->urlGenerator->generate('dashboard'));
             } elseif ($inner instanceof CompetitionInvitationExpired

@@ -63,7 +63,7 @@ final readonly class SetCompetitionMatchDeadlineHandler
         $openingNote = $command->changeOpening ? $command->openingNote : $existing?->openingNote;
 
         if (null !== $command->deadline && $command->deadline > $sportMatch->kickoffAt) {
-            throw CompetitionMatchDeadlineAfterKickoff::create();
+            throw CompetitionMatchDeadlineAfterKickoff::create($sportMatch->kickoffAt);
         }
 
         if (null !== $opensAt) {

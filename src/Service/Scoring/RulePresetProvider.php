@@ -25,6 +25,13 @@ use App\Rule\ScorerHitRule;
 final readonly class RulePresetProvider
 {
     /** Rendering order + Czech section headings per Rule::$category. */
+    /**
+     * The most points one rule may award — the ONE bound both rules screens
+     * enforce (the wizard's step 2 and the post-creation form) and render as the
+     * input's max, so the organizer is told the range before typing.
+     */
+    public const int MAX_POINTS = 1000;
+
     public const array SECTION_HEADINGS = [
         'base' => 'Základní bodování',
         'periods' => 'Části zápasu',

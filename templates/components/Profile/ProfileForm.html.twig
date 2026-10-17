@@ -1,6 +1,10 @@
 <div{{ attributes }}>
     {{ form_start(form, {attr: {class: 'flex flex-col gap-5', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'save'}}) }}
 
+        <p class="-mb-1 text-xs leading-relaxed text-white/50">
+            Vše je nepovinné. Jméno a příjmení uvidí ostatní hráči vašich soutěží vedle vaší přezdívky (např. v žebříčku).
+        </p>
+
         <div class="grid gap-5 sm:grid-cols-2">
             <div class="field">
                 {{ form_label(form.firstName, null, {label_attr: {class: 'field-label'}}) }}
@@ -33,8 +37,11 @@
                 </span>
                 {{ form_widget(form.phone, {attr: {class: 'input !pl-[42px]'}}) }}
             </div>
+            {{ form_help(form.phone) }}
             {{ form_errors(form.phone) }}
         </div>
+
+        {{ form_errors(form) }}
 
         <button type="submit" class="btn btn-primary mt-1 self-start">
             <twig:ux:icon name="lucide:save" class="h-4 w-4" />

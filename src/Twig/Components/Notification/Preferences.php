@@ -14,6 +14,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 /**
@@ -25,6 +26,14 @@ use Symfony\UX\LiveComponent\DefaultActionTrait;
 final class Preferences
 {
     use DefaultActionTrait;
+
+    /**
+     * What the last toggle saved, shown in place — the switch flipping alone does not
+     * say whether it was stored (a re-render that failed would flip nothing, but a
+     * slow one looks the same for a moment). Not writable: only {@see toggle} sets it.
+     */
+    #[LiveProp]
+    public ?string $savedMessage = null;
 
     public function __construct(
         private readonly Security $security,
@@ -65,7 +74,12 @@ final class Preferences
             return;
         }
 
-        $notificationType = NotificationType::from($type);
+        $notificationType = NotificationType::tryFrom($type);
+
+        if (null === $notificationType) {
+            return;
+        }
+
         $preference = $this->preferenceRepository->findOne($user->id, $notificationType);
 
         $inApp = null !== $preference ? $preference->inApp : $notificationType->defaultInApp();
@@ -85,6 +99,13 @@ final class Preferences
             inApp: $inApp,
             email: $email,
         ));
+
+        $this->savedMessage = sprintf(
+            'Uloženo — %s %s: %s.',
+            $notificationType->label(),
+            'inApp' === $channel ? 'v aplikaci' : 'e-mailem',
+            ('inApp' === $channel ? $inApp : $email) ? 'zapnuto' : 'vypnuto',
+        );
     }
 
     private function currentUser(): ?User

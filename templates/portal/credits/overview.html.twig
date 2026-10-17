@@ -39,9 +39,28 @@
                the POST-only Stripe action, so this card is the buying page. #}
             <div id="dobit" class="card-glass p-6 scroll-mt-24" data-controller="credit-amount">
                 <h2 class="text-lg font-bold tracking-tight text-white">Dobít kredity</h2>
-                <p class="mt-1 text-xs leading-relaxed text-white/50">Platba kartou přes Stripe, fakturu dostanete e-mailem. Minimum je 100 kreditů.</p>
+                {% set min_credits = constant('App\\Command\\InitiateCreditPurchase\\InitiateCreditPurchaseCommand::MINIMUM_CREDITS') %}
+                <p class="mt-1 text-xs leading-relaxed text-white/50">Platba kartou přes Stripe, fakturu dostanete e-mailem. Minimum je {{ min_credits }} kreditů ({{ min_credits }} Kč).</p>
 
-                {{ form_start(form, {attr: {class: 'mt-4 space-y-4', novalidate: 'novalidate'}}) }}
+                {# Arrived from a booster this wallet cannot cover („Odemknout za N kr." routes
+                   here instead of the confirm dialog): say what is missing and what to do, so
+                   the visitor is not left guessing why „Koupit" opened a payment page. #}
+                {% if boostShortfall|default(null) %}
+                    <div class="surface-accent mt-4 rounded-xl p-3.5 text-sm leading-relaxed text-white/80" role="status">
+                        <p class="flex items-start gap-2">
+                            <twig:ux:icon name="lucide:info" class="mt-0.5 h-4 w-4 shrink-0 text-accent-300" />
+                            <span>
+                                Na vylepšení <strong class="font-semibold text-white">„{{ boostShortfall.label }}“</strong> ({{ boostShortfall.price }} kr.)
+                                vám chybí <strong class="font-semibold text-white">{{ boostShortfall.missing|credits }}</strong>.
+                                Dobijte si alespoň {{ max(min_credits, boostShortfall.missing)|credits }} a pak se k vylepšení vraťte — koupíte ho stejným tlačítkem.
+                            </span>
+                        </p>
+                    </div>
+                {% endif %}
+
+                {# One field: its error sits under it. The summary box is kept for an error of
+                   the WHOLE form (the payment gateway could not be opened), which has no field. #}
+                {{ form_start(form, {attr: {class: 'mt-4 space-y-4', novalidate: 'novalidate'}, error_summary: form.vars.errors|length > 0, error_summary_title: 'Platbu se nepodařilo spustit:'}) }}
                     <div class="grid grid-cols-2 gap-2">
                         {% for preset in [100, 250, 500, 1000] %}
                             <button type="button"
@@ -61,6 +80,7 @@
                             'data-credit-amount-target': 'input',
                             'data-action': 'input->credit-amount#sync',
                         }}) }}
+                        {{ form_help(form.credits) }}
                         {{ form_errors(form.credits) }}
                     </div>
 

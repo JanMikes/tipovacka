@@ -65,12 +65,6 @@ final class InvitationForm extends AbstractController
     #[LiveProp]
     public string $token = '';
 
-    /**
-     * Bumped on every submit so the signup-feedback controller knows to bring the
-     * error summary into view again — even when its content did not change.
-     */
-    #[LiveProp]
-    public int $submitAttempts = 0;
 
     private ?InvitationContext $resolvedContext = null;
 
@@ -154,7 +148,6 @@ final class InvitationForm extends AbstractController
     #[LiveAction]
     public function submit(): ?Response
     {
-        ++$this->submitAttempts;
         $kind = $this->userKind;
 
         if ($this->emailLocked) {
@@ -175,11 +168,31 @@ final class InvitationForm extends AbstractController
         $data->userKind = $kind;
         $email = $this->resolveSubmittedEmail($data->email);
 
-        return match ($kind) {
+        $response = match ($kind) {
             InvitationFormData::KIND_NEW => $this->handleRegister($data, $email),
             InvitationFormData::KIND_HAS_PASSWORD => $this->handleLogin($data, $email),
             InvitationFormData::KIND_STUB => $this->handleCompleteRegistration($data),
             default => throw new \LogicException(sprintf('Unhandled userKind "%s".', $kind)),
+        };
+
+        // A status page (the invitation expired / was revoked / accepted meanwhile) is a
+        // whole document, but the answer to a Live action replaces only this component —
+        // the visitor would get a landing page nested in the form, or a broken render.
+        // Reload the landing instead: it re-resolves the invitation and shows that status.
+        if (null !== $response && !$response->isRedirection()) {
+            return new RedirectResponse($this->landingUrl());
+        }
+
+        return $response;
+    }
+
+    private function landingUrl(): string
+    {
+        return match ($this->context->kind) {
+            InvitationKind::Email => $this->urlGenerator->generate('competition_accept_invitation', ['token' => $this->context->token]),
+            InvitationKind::ShareableLink => $this->urlGenerator->generate('competition_join_by_link', ['token' => $this->context->token]),
+            InvitationKind::Pin => $this->urlGenerator->generate('competition_join_by_pin'),
+            InvitationKind::GlobalCompetition => $this->urlGenerator->generate('competition_global_invitation', ['id' => $this->context->competitionId->toRfc4122()]),
         };
     }
 
@@ -231,7 +244,7 @@ final class InvitationForm extends AbstractController
         $this->acceptanceService->rememberIntent($this->context, $user);
         $this->security->login($user);
         $this->acceptanceService->flash('success', sprintf(
-            'Registrace proběhla úspěšně. Potvrď e-mail a rovnou tě přidáme do soutěže %s.',
+            'Registrace proběhla úspěšně. Potvrďte e-mail a rovnou vás přidáme do soutěže %s.',
             $this->context->competitionName,
         ));
 
@@ -265,7 +278,7 @@ final class InvitationForm extends AbstractController
             $this->acceptanceService->rememberIntent($this->context, $user);
             $this->security->login($user);
             $this->acceptanceService->flash('warning', sprintf(
-                'Nejprve si ověř svou e-mailovou adresu — pak tě rovnou přidáme do soutěže %s.',
+                'Nejprve si prosím ověřte e-mailovou adresu — pak vás rovnou přidáme do soutěže %s.',
                 $this->context->competitionName,
             ));
 
@@ -324,7 +337,7 @@ final class InvitationForm extends AbstractController
         \assert($user instanceof User, 'User with invitation email must exist after completing registration.');
 
         $this->security->login($user);
-        $this->acceptanceService->flash('success', 'Registrace dokončena, vítej v soutěži!');
+        $this->acceptanceService->flash('success', 'Registrace je dokončená. Vítejte v soutěži!');
 
         // `?pripojeno=1` (item 28) states the fact „you have just joined" — completing a
         // pre-provisioned account's registration creates the membership right here, so
@@ -383,7 +396,7 @@ final class InvitationForm extends AbstractController
             'invitation:'.$this->kind,
             $this->getForm(),
             strtolower(trim((string) ($this->formValues['email'] ?? ''))),
-            ['user_kind' => $this->userKind, 'attempt' => $this->submitAttempts],
+            ['user_kind' => $this->userKind],
         );
     }
 

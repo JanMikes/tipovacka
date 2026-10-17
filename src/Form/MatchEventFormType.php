@@ -42,7 +42,8 @@ final class MatchEventFormType extends AbstractType
         $builder->add('minute', IntegerType::class, [
             'label' => 'Minuta',
             'required' => false,
-            'attr' => ['min' => 0, 'max' => 150],
+            'invalid_message' => 'Minutu zadejte jako celé číslo od 0 do 150, nebo ji nechte prázdnou.',
+            'attr' => ['min' => 0, 'max' => 150, 'step' => 1, 'inputmode' => 'numeric', 'autocomplete' => 'off'],
         ]);
 
         $builder->add('playerName', TextType::class, [

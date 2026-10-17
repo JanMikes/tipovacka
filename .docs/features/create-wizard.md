@@ -173,6 +173,30 @@ The private step shows no prices and no credit balance: nothing is charged at cr
 the CTA is always „Vytvořit soutěž". `None` is not offered privately — it is reachable only
 via the admin global branch, which keeps its original copy, price list and balance strip.
 
+## A step that cannot advance says why — at the input
+
+The wizard is a real `<form data-controller="form-feedback">`; „Pokračovat", „Přeskočit" and
+„Vytvořit soutěž" are its submit buttons (`type="submit"` + `live#action:prevent`), so after
+the re-render answering them [form-feedback](form-feedback.md) scrolls to the first
+`aria-invalid` input, focuses and pulses it.
+
+- **Errors are per input**, in the trait's `fieldErrors` LiveProp (key → message: `name`,
+  `description`, `entryFee`, `sport`, `source`, `matches`, `teams`, `rule_<identifier>`,
+  `emails`), rendered by `components/Competition/_field_error.html.twig` under the input,
+  which carries `aria-invalid` + `aria-describedby`. `errorMessage` is left for refusals that
+  belong to no input (the domain's at submit) and is the controller's `summary` target.
+- **Step 1 flags everything at once** (name AND zdroj), not the first problem only.
+  „Podle týmu" with no team: tom-select hides its `<select>`, so the message (outside the
+  `data-live-ignore` island) is itself the `summary` scroll target.
+- **Step 2** refuses points outside 0–`RulePresetProvider::MAX_POINTS` at the rule's input.
+- **Step 3 validates the e-mails before leaving** (`CompetitionInviter::malformedAddresses`,
+  the same check the handler's strict mode runs) and names every bad address. Without it a
+  typo surfaced only at „Vytvořit" — two steps after the textarea.
+- **`submit()` re-validates every step and brings the failing one back** — its input is not
+  rendered on step 4. A `DomainException` from the handler is shown as is (they are written
+  for the organizer; a refused basket returns to step 1); anything else is logged and shown
+  as „chyba na naší straně", never as raw internals.
+
 ## Judgment calls
 
 - **The basket is server state, not client state** — `layers` is a writable array LiveProp

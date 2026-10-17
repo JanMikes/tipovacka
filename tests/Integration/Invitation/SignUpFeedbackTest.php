@@ -45,8 +45,7 @@ final class SignUpFeedbackTest extends WebTestCase
         $body = (string) $component->response()->getContent();
         self::assertStringContainsString('Účet zatím nevznikl', $body);
         self::assertStringContainsString('nesmí obsahovat mezery ani diakritiku', $body);
-        self::assertStringContainsString('data-signup-feedback-value-param="petr.svoboda"', $body);
-        self::assertStringContainsString('data-signup-feedback-attempt-value="1"', $body);
+        self::assertStringContainsString('data-form-feedback-value-param="petr.svoboda"', $body);
     }
 
     public function testEveryProblemIsListedInTheSummary(): void
@@ -64,7 +63,7 @@ final class SignUpFeedbackTest extends WebTestCase
         self::assertSame(422, $component->response()->getStatusCode());
         $summary = $this->summaryOf((string) $component->response()->getContent());
         self::assertStringContainsString('Heslo musí mít alespoň 8 znaků.', $summary);
-        self::assertStringContainsString('Hesla se musí shodovat.', $summary);
+        self::assertStringContainsString('Hesla se neshodují. Zadejte do obou polí stejné heslo.', $summary);
         self::assertStringContainsString('souhlasit se zpracováním osobních údajů', $summary);
     }
 
@@ -122,7 +121,7 @@ final class SignUpFeedbackTest extends WebTestCase
         $summary = $this->summaryOf($body);
         self::assertStringContainsString('nesmí obsahovat mezery ani diakritiku', $summary);
         self::assertStringContainsString('Heslo musí mít alespoň 8 znaků.', $summary);
-        self::assertStringContainsString('data-signup-feedback-value-param="jiri.novak"', $body);
+        self::assertStringContainsString('data-form-feedback-value-param="jiri.novak"', $body);
     }
 
     public function testMistypedMailboxDomainOffersTheCorrection(): void
@@ -134,7 +133,7 @@ final class SignUpFeedbackTest extends WebTestCase
             ->render();
 
         self::assertStringContainsString('Nemysleli jste', $rendered);
-        self::assertStringContainsString('data-signup-feedback-value-param="tipujici@seznam.cz"', $rendered);
+        self::assertStringContainsString('data-form-feedback-value-param="tipujici@seznam.cz"', $rendered);
     }
 
     public function testUntickedConsentIsMarkedInvalid(): void
@@ -181,7 +180,7 @@ final class SignUpFeedbackTest extends WebTestCase
 
     private function summaryOf(string $html): string
     {
-        $start = strpos($html, 'data-signup-feedback-target="summary"');
+        $start = strpos($html, 'data-form-feedback-target="summary"');
         self::assertNotFalse($start, 'The error summary must be rendered.');
         $end = strpos($html, '</div>', $start);
         self::assertNotFalse($end);

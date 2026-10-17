@@ -48,7 +48,10 @@ final class ResetPasswordForm extends AbstractController
     {
         $token = $this->getTokenFromSession();
 
+        // Both ways out are redirects — a full page load — so a flash is seen here.
         if (null === $token) {
+            $this->addFlash('warning', 'Odkaz pro obnovení hesla jsme v tomto prohlížeči nenašli. Otevřete ho znovu z e-mailu, nebo si tady vyžádejte nový.');
+
             return $this->redirectToRoute('app_forgot_password_request');
         }
 
@@ -57,6 +60,7 @@ final class ResetPasswordForm extends AbstractController
             $user = $this->resetPasswordHelper->validateTokenAndFetchUser($token);
         } catch (ResetPasswordExceptionInterface) {
             $this->cleanSessionAfterReset();
+            $this->addFlash('warning', 'Odkaz pro obnovení hesla mezitím vypršel nebo už byl použit. Zadejte e-mail a pošleme vám nový.');
 
             return $this->redirectToRoute('app_forgot_password_request');
         }
@@ -75,7 +79,7 @@ final class ResetPasswordForm extends AbstractController
         ));
 
         $this->cleanSessionAfterReset();
-        $this->addFlash('success', 'Heslo bylo úspěšně obnoveno. Nyní se můžete přihlásit.');
+        $this->addFlash('success', 'Heslo je změněné. Přihlaste se prosím novým heslem.');
 
         return $this->redirectToRoute('app_login');
     }

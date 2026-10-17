@@ -38,4 +38,24 @@ final class UpdateMatchSourceFlowTest extends WebTestCase
         self::assertSame('Upravený turnaj', $matchSource->name);
         self::assertTrue($matchSource->hasOvertime);
     }
+
+    public function testAnEndBeforeTheStartIsRejectedOnTheEndField(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $client->request('GET', '/turnaje/'.AppFixtures::PRIVATE_SOURCE_ID.'/upravit');
+        $client->submitForm('Uložit změny', [
+            'match_source_form[startAt]' => '2025-09-01 10:00',
+            'match_source_form[endAt]' => '2025-08-01 10:00',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'Konec musí být po začátku');
+        self::assertSame('true', $client->getCrawler()->filter('input[name="match_source_form[endAt]"]')->attr('aria-invalid'));
+    }
 }

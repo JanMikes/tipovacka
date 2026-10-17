@@ -9,8 +9,8 @@ use Symfony\Component\HttpKernel\Attribute\WithHttpStatus;
 #[WithHttpStatus(422)]
 final class SportMatchImportFailed extends \RuntimeException
 {
-    public static function withMessage(string $message): self
+    public static function withMessage(string $message, ?\Throwable $previous = null): self
     {
-        return new self($message);
+        return new self($message, previous: $previous);
     }
 }

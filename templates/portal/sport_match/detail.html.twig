@@ -130,13 +130,25 @@
                     {% endif %}
 
                     {% if can_edit and (sport_match.isScheduled or sport_match.isPostponed) %}
-                        <form method="post" action="{{ path('sport_match_postpone', {id: match_id}) }}" class="flex flex-wrap items-end gap-2">
+                        {% set postpone_error = postpone_error|default(null) %}
+                        <form method="post" action="{{ path('sport_match_postpone', {id: match_id}) }}" class="flex flex-wrap items-end gap-2" data-controller="form-feedback" novalidate>
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_postpone_' ~ match_id) }}">
                             <div class="field">
                                 <label class="field-label" for="postpone-kickoff-{{ match_id }}">Nový termín</label>
                                 <input type="text" name="new_kickoff_at" id="postpone-kickoff-{{ match_id }}" required
                                        data-controller="datepicker" data-datepicker-mode-value="datetime"
+                                       autocomplete="off" placeholder="RRRR-MM-DD HH:MM"
+                                       value="{{ postpone_value|default('') }}"
+                                       aria-describedby="postpone-kickoff-{{ match_id }}-help"
+                                       {% if postpone_error %}aria-invalid="true"{% endif %}
                                        class="input w-auto">
+                                <p id="postpone-kickoff-{{ match_id }}-help" class="text-xs text-white/50">Český čas, např. 2026-05-10 18:00.</p>
+                                {% if postpone_error %}
+                                    <p class="flex items-start gap-1.5 text-sm text-loss" role="alert">
+                                        <twig:ux:icon name="lucide:circle-alert" class="mt-[3px] h-3.5 w-3.5 shrink-0" />
+                                        <span>{{ postpone_error }}</span>
+                                    </p>
+                                {% endif %}
                             </div>
                             <button type="submit" class="btn btn-ghost btn-sm">
                                 <twig:ux:icon name="lucide:clock" class="h-4 w-4" />Odložit
@@ -145,13 +157,25 @@
                     {% endif %}
 
                     {% if can_edit and sport_match.isPostponed %}
-                        <form method="post" action="{{ path('sport_match_reschedule', {id: match_id}) }}" class="flex flex-wrap items-end gap-2">
+                        {% set reschedule_error = reschedule_error|default(null) %}
+                        <form method="post" action="{{ path('sport_match_reschedule', {id: match_id}) }}" class="flex flex-wrap items-end gap-2" data-controller="form-feedback" novalidate>
                             <input type="hidden" name="_token" value="{{ csrf_token('sport_match_reschedule_' ~ match_id) }}">
                             <div class="field">
                                 <label class="field-label" for="reschedule-kickoff-{{ match_id }}">Nový termín</label>
                                 <input type="text" name="new_kickoff_at" id="reschedule-kickoff-{{ match_id }}" required
                                        data-controller="datepicker" data-datepicker-mode-value="datetime"
+                                       autocomplete="off" placeholder="RRRR-MM-DD HH:MM"
+                                       value="{{ reschedule_value|default('') }}"
+                                       aria-describedby="reschedule-kickoff-{{ match_id }}-help"
+                                       {% if reschedule_error %}aria-invalid="true"{% endif %}
                                        class="input w-auto">
+                                <p id="reschedule-kickoff-{{ match_id }}-help" class="text-xs text-white/50">Český čas, např. 2026-05-10 18:00.</p>
+                                {% if reschedule_error %}
+                                    <p class="flex items-start gap-1.5 text-sm text-loss" role="alert">
+                                        <twig:ux:icon name="lucide:circle-alert" class="mt-[3px] h-3.5 w-3.5 shrink-0" />
+                                        <span>{{ reschedule_error }}</span>
+                                    </p>
+                                {% endif %}
                             </div>
                             <button type="submit" class="btn btn-primary btn-sm">
                                 <twig:ux:icon name="lucide:calendar" class="h-4 w-4" />Přesunout zpět

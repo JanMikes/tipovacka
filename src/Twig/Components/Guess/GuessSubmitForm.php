@@ -13,6 +13,7 @@ use App\Entity\Sport;
 use App\Entity\SportMatch;
 use App\Entity\User;
 use App\Enum\MatchSide;
+use App\Exception\InvalidGuessScore;
 use App\Repository\CompetitionRepository;
 use App\Repository\GuessRepository;
 use App\Repository\PlayerRepository;
@@ -24,6 +25,7 @@ use App\Value\OvertimeOutcome;
 use App\Value\PeriodScores;
 use App\Value\TipWindow;
 use Psr\Clock\ClockInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Envelope;
@@ -59,6 +61,15 @@ final class GuessSubmitForm
 
     private const int MAX_RENDERED_PERIODS = 3;
 
+    public const string SCORE_RANGE_MESSAGE = 'Zadejte celé číslo od 0 do 99.';
+
+    /** The part of the form an {@see $errorMessage} is about — the template marks it and prints the message next to it. */
+    public const string ERROR_FIELD_HOME = 'homeScore';
+    public const string ERROR_FIELD_AWAY = 'awayScore';
+    public const string ERROR_FIELD_SCORE = 'score';
+    public const string ERROR_FIELD_PERIODS = 'periods';
+    public const string ERROR_FIELD_SCORERS = 'scorers';
+
     #[LiveProp]
     public SportMatch $sportMatch;
 
@@ -87,43 +98,35 @@ final class GuessSubmitForm
     public bool $showTeamLabels = true;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $homeScore = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $awayScore = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period1Home = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period1Away = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period2Home = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period2Away = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period3Home = null;
 
     #[LiveProp(writable: true)]
-    #[Assert\GreaterThanOrEqual(0)]
-    #[Assert\LessThanOrEqual(99)]
+    #[Assert\Range(notInRangeMessage: self::SCORE_RANGE_MESSAGE, min: 0, max: 99)]
     public ?int $period3Away = null;
 
     /**
@@ -132,7 +135,7 @@ final class GuessSubmitForm
      * plus one goal for the winner) — see Value\OvertimeOutcome.
      */
     #[LiveProp(writable: true)]
-    #[Assert\Choice(callback: 'overtimeWinnerChoices')]
+    #[Assert\Choice(callback: 'overtimeWinnerChoices', message: 'Vyberte prosím jednu z nabídnutých možností, kdo vyhraje po prodloužení.')]
     public string $overtimeWinner = '';
 
     /**
@@ -150,6 +153,15 @@ final class GuessSubmitForm
     #[LiveProp]
     public ?string $errorMessage = null;
 
+    /**
+     * Where {@see $errorMessage} belongs (one of the ERROR_FIELD_* constants), or null
+     * for a message about the whole tip (deadline passed, not a member …). The template
+     * prints the message next to that part and marks its inputs aria-invalid, so the
+     * form-feedback controller scrolls to and focuses it after the submit re-render.
+     */
+    #[LiveProp]
+    public ?string $errorField = null;
+
     #[LiveProp]
     public ?string $successMessage = null;
 
@@ -163,6 +175,7 @@ final class GuessSubmitForm
         private readonly ClockInterface $clock,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -344,16 +357,41 @@ final class GuessSubmitForm
         };
     }
 
+    /**
+     * Whether the template should mark the given part (an ERROR_FIELD_* constant, or a
+     * period model name such as period2Home) as invalid: the component's own
+     * {@see $errorField}, or a constraint violation on that model.
+     */
+    public function hasError(string $field): bool
+    {
+        if (null !== $this->errorField) {
+            if ($field === $this->errorField) {
+                return true;
+            }
+
+            if (self::ERROR_FIELD_SCORE === $this->errorField && \in_array($field, [self::ERROR_FIELD_HOME, self::ERROR_FIELD_AWAY], true)) {
+                return true;
+            }
+
+            if (self::ERROR_FIELD_PERIODS === $this->errorField && str_starts_with($field, 'period')) {
+                return true;
+            }
+        }
+
+        return null !== $this->getError($field);
+    }
+
     #[LiveAction]
     public function submit(): void
     {
         $this->errorMessage = null;
+        $this->errorField = null;
         $this->successMessage = null;
 
         $user = $this->security->getUser();
 
         if (!$user instanceof User) {
-            $this->errorMessage = 'Musíte být přihlášeni.';
+            $this->errorMessage = 'Pro uložení tipu se prosím přihlaste.';
 
             return;
         }
@@ -369,20 +407,39 @@ final class GuessSubmitForm
                     userId: $user->id,
                     guessId: $existing->id,
                 ));
-                $this->successMessage = 'Tip smazán.';
+                $this->successMessage = sprintf(
+                    'Tip smazán. Nový můžete zadat do %s.',
+                    $this->formatPrague($this->effectiveDeadline),
+                );
 
                 return;
             }
 
             if (null === $homeScore || null === $awayScore) {
-                $this->errorMessage = 'Vyplňte prosím oba tipy.';
+                $this->errorField = null === $homeScore && null === $awayScore
+                    ? self::ERROR_FIELD_SCORE
+                    : (null === $homeScore ? self::ERROR_FIELD_HOME : self::ERROR_FIELD_AWAY);
+                $this->errorMessage = null === $homeScore && null === $awayScore
+                    ? 'Zadejte skóre obou týmů, např. 2 : 1.'
+                    : sprintf(
+                        'Doplňte ještě skóre týmu %s (celé číslo od 0 do 99).',
+                        null === $homeScore ? $this->sportMatch->homeTeam->name : $this->sportMatch->awayTeam->name,
+                    );
 
                 return;
             }
 
-            $this->validate();
+            // Field errors render next to their inputs (and keep re-validating
+            // live as the player fixes them); the message above names the fix.
+            $this->validate(false);
 
-            $periodScores = $this->buildPeriodScores();
+            if (!$this->isValid()) {
+                $this->errorMessage = 'Tip se neuložil — opravte prosím zvýrazněná políčka.';
+
+                return;
+            }
+
+            $periodScores = $this->buildPeriodScores($homeScore, $awayScore);
 
             if (false === $periodScores) {
                 return; // errorMessage set.
@@ -413,7 +470,7 @@ final class GuessSubmitForm
                     overtimeAwayScore: $overtimePair[1] ?? null,
                     scorers: $scorers,
                 ));
-                $this->successMessage = 'Tip uložen.';
+                $this->successMessage = sprintf('Tip uložen. Změnit ho můžete do %s.', $this->formatPrague($this->effectiveDeadline));
             } else {
                 $this->dispatchCommand(new UpdateGuessCommand(
                     userId: $user->id,
@@ -425,7 +482,7 @@ final class GuessSubmitForm
                     overtimeAwayScore: $overtimePair[1] ?? null,
                     scorers: $scorers,
                 ));
-                $this->successMessage = 'Tip upraven.';
+                $this->successMessage = sprintf('Tip upraven. Změnit ho můžete do %s.', $this->formatPrague($this->effectiveDeadline));
             }
 
             // A pick that did not travel (tip is no draw any more) is gone from
@@ -435,15 +492,33 @@ final class GuessSubmitForm
                 $this->overtimeWinner = '';
             }
         } catch (HandlerFailedException $e) {
-            $previous = $e->getPrevious();
-            $this->errorMessage = null !== $previous ? $previous->getMessage() : $e->getMessage();
+            $this->rejectWith($e->getPrevious() ?? $e);
+        } catch (\DomainException $e) {
+            $this->rejectWith($e);
+        }
+    }
 
-            return;
-        } catch (\DomainException|\RuntimeException $e) {
-            $this->errorMessage = $e->getMessage();
+    /**
+     * A refusal from the domain (deadline passed, not yet open, not a member …) is
+     * written in Czech for the player and shown in place — in the locked panel too,
+     * because a deadline that passed while the form was open re-renders as locked.
+     * Anything else is a bug: a calm generic message here, the details in the log.
+     */
+    private function rejectWith(\Throwable $e): void
+    {
+        if ($e instanceof \DomainException || str_starts_with($e::class, 'App\\Exception\\')) {
+            $this->errorMessage = 'Tip se neuložil: '.$e->getMessage();
 
             return;
         }
+
+        $this->logger->error('Guess submit failed unexpectedly.', ['exception' => $e]);
+        $this->errorMessage = 'Tip se nepodařilo uložit kvůli chybě na naší straně. Zkuste to prosím za chvíli znovu.';
+    }
+
+    private function formatPrague(\DateTimeImmutable $moment): string
+    {
+        return $moment->setTimezone(new \DateTimeZone('Europe/Prague'))->format('j. n. Y H:i');
     }
 
     private function findExistingGuess(): ?Guess
@@ -487,7 +562,7 @@ final class GuessSubmitForm
      *
      * @return PeriodScores|false|null false = validation failed (errorMessage set)
      */
-    private function buildPeriodScores(): PeriodScores|false|null
+    private function buildPeriodScores(int $homeScore, int $awayScore): PeriodScores|false|null
     {
         if (!$this->features->periodTips) {
             return null;
@@ -516,12 +591,30 @@ final class GuessSubmitForm
         }
 
         if (!$allFilled) {
-            $this->errorMessage = sprintf('Vyplňte prosím všechny %s, nebo je nechte prázdné.', $this->sport->periodLabelPlural);
+            $this->errorField = self::ERROR_FIELD_PERIODS;
+            $this->errorMessage = sprintf('Vyplňte prosím všechny %s, nebo je nechte prázdné — tip na části platí jen celý.', $this->sport->periodLabelPlural);
 
             return false;
         }
 
-        return PeriodScores::fromArray($pairs);
+        $periodScores = PeriodScores::fromArray($pairs);
+
+        // Same rule as the Guess entity, checked here so the message can point at
+        // the period inputs and say what the numbers add up to.
+        if ($periodScores->sumHome() !== $homeScore || $periodScores->sumAway() !== $awayScore) {
+            $this->errorField = self::ERROR_FIELD_PERIODS;
+            $this->errorMessage = InvalidGuessScore::periodSumMismatch(
+                $periodScores->sumHome(),
+                $periodScores->sumAway(),
+                $homeScore,
+                $awayScore,
+                $this->sport->periodLabelPlural,
+            )->getMessage();
+
+            return false;
+        }
+
+        return $periodScores;
     }
 
     /**
@@ -536,7 +629,8 @@ final class GuessSubmitForm
         $decoded = $this->decodeScorers();
 
         if (null === $decoded) {
-            $this->errorMessage = 'Tip na střelce se nepodařilo zpracovat, zkuste to prosím znovu.';
+            $this->errorField = self::ERROR_FIELD_SCORERS;
+            $this->errorMessage = 'Tip na střelce se nepodařilo zpracovat. Vyberte střelce prosím znovu, nebo pole nechte prázdné.';
 
             return null;
         }
@@ -545,7 +639,8 @@ final class GuessSubmitForm
 
         foreach ($decoded as $item) {
             if (mb_strlen($item['name']) > Player::NAME_MAX_LENGTH) {
-                $this->errorMessage = sprintf('Jméno hráče nesmí být delší než %d znaků.', Player::NAME_MAX_LENGTH);
+                $this->errorField = self::ERROR_FIELD_SCORERS;
+                $this->errorMessage = sprintf('Jméno hráče nesmí být delší než %d znaků — zkraťte ho prosím.', Player::NAME_MAX_LENGTH);
 
                 return null;
             }

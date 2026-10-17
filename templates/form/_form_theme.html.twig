@@ -7,6 +7,26 @@
    and required fields — which Symfony automatically tags with class="required"
    on their <label> — get a red asterisk via CSS in assets/styles/app.css. #}
 
+{#- Every form tells the visitor what is wrong and takes them to it — see
+    .docs/features/form-feedback.md. The form-feedback controller is attached to EVERY
+    form here, and a classic (non-Live) form that came back rejected gets the error
+    summary at its top. A Live form decides itself: pass error_summary: this.isValidated
+    to form_start, or include form/_error_summary.html.twig where it reads best. -#}
+{%- block form_start -%}
+    {%- set attr = attr|merge({'data-controller': ((attr['data-controller'] ?? '') ~ ' form-feedback')|trim}) -%}
+    {{- parent() -}}
+    {%- set show_summary = error_summary ?? (attr['data-model'] is not defined and form.vars.submitted and not form.vars.valid) -%}
+    {%- if show_summary -%}
+        {{- include('form/_error_summary.html.twig', {form: form, submitted: true, title: error_summary_title ?? null}) -}}
+    {%- endif -%}
+{%- endblock form_start -%}
+
+{#- Help text (the `help` option): a quiet hint under the field — rules stated up front. -#}
+{%- block form_help -%}
+    {%- set help_attr = help_attr|merge({class: help_attr.class|default('mt-1 text-xs leading-relaxed text-white/50')}) -%}
+    {{- parent() -}}
+{%- endblock form_help -%}
+
 {%- block form_errors -%}
     {%- if errors|length > 0 -%}
         <ul class="mt-1 space-y-0.5 text-sm text-loss">

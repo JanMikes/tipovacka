@@ -69,16 +69,71 @@ final class LoginFlowTest extends WebTestCase
         self::assertSelectorTextContains('body', 'zablokován');
     }
 
-    public function testInvalidCredentialsShowError(): void
+    /**
+     * A wrong password names the next step (the reset, the sign-up), keeps the typed
+     * e-mail and marks the password field — the form-feedback controller takes the
+     * visitor straight to it.
+     */
+    public function testInvalidCredentialsSayWhatToDoNext(): void
     {
         $client = static::createClient();
         $client->request('POST', '/prihlaseni', [
-            '_username' => 'nobody@nowhere.com',
+            '_username' => AppFixtures::VERIFIED_USER_EMAIL,
             '_password' => 'wrongpassword',
         ]);
 
         self::assertResponseRedirects('/prihlaseni');
-        $client->followRedirect();
+        $crawler = $client->followRedirect();
         self::assertResponseIsSuccessful();
+
+        self::assertSelectorTextContains('[role="alert"]', 'Nesprávný e-mail nebo heslo.');
+        self::assertCount(1, $crawler->filter('[role="alert"] a[href="/reset-hesla"]'));
+        self::assertCount(1, $crawler->filter('[role="alert"] a[href="/registrace"]'));
+        self::assertSame(AppFixtures::VERIFIED_USER_EMAIL, $crawler->filter('input[name="_username"]')->attr('value'));
+        self::assertSame('true', $crawler->filter('input[name="_password"]')->attr('aria-invalid'));
+        self::assertNull($crawler->filter('input[name="_username"]')->attr('aria-invalid'));
+        self::assertCount(1, $crawler->filter('form[data-controller~="form-feedback"]'));
+    }
+
+    /**
+     * An unknown address reads exactly like a wrong password — the page must not reveal
+     * who has an account.
+     */
+    public function testUnknownEmailIsIndistinguishableFromWrongPassword(): void
+    {
+        $client = static::createClient();
+        $client->request('POST', '/prihlaseni', [
+            '_username' => 'nikdo@example.test',
+            '_password' => 'wrongpassword',
+        ]);
+
+        $client->followRedirect();
+        self::assertSelectorTextContains('[role="alert"]', 'Nesprávný e-mail nebo heslo.');
+    }
+
+    public function testClosedAccountOffersTheContact(): void
+    {
+        $client = static::createClient();
+        $client->request('POST', '/prihlaseni', [
+            '_username' => AppFixtures::DELETED_USER_EMAIL,
+            '_password' => AppFixtures::DEFAULT_PASSWORD,
+        ]);
+
+        $crawler = $client->followRedirect();
+        self::assertSelectorTextContains('[role="alert"]', 'Tento účet byl smazán.');
+        self::assertCount(1, $crawler->filter('[role="alert"] a[href="mailto:kontakt@wtips.cz"]'));
+        // Nothing the visitor typed is wrong — no field is marked.
+        self::assertCount(0, $crawler->filter('[aria-invalid="true"]'));
+    }
+
+    public function testCleanLoginPageMarksNothing(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/prihlaseni');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('[role="alert"]'));
+        self::assertSame('username', $crawler->filter('input[name="_username"]')->attr('autocomplete'));
+        self::assertSame('current-password', $crawler->filter('input[name="_password"]')->attr('autocomplete'));
     }
 }

@@ -31,9 +31,10 @@
     {% endif %}
 
     {{ form_start(form, {attr: {class: 'space-y-5', novalidate: 'novalidate'}}) }}
-        <div class="field sm:max-w-xs">
+        <div class="field">
             {{ form_label(form.entryFeeCredits) }}
-            {{ form_widget(form.entryFeeCredits, {attr: fee_locked ? {disabled: 'disabled'} : {}}) }}
+            <div class="sm:max-w-xs">{{ form_widget(form.entryFeeCredits, {attr: form.entryFeeCredits.vars.attr|merge(fee_locked ? {disabled: 'disabled'} : {})}) }}</div>
+            {% if not fee_locked %}{{ form_help(form.entryFeeCredits, {help_attr: {class: 'mt-1 text-xs leading-relaxed text-white/50'}}) }}{% endif %}
             {{ form_errors(form.entryFeeCredits) }}
         </div>
         <div class="field">

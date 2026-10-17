@@ -36,6 +36,8 @@ final class ChangePasswordFormType extends AbstractType
             ],
             'first_options' => [
                 'label' => 'Nové heslo',
+                'help' => sprintf('Alespoň %d znaků a jiné než současné heslo.', ChangePasswordFormData::MIN_LENGTH),
+                'help_attr' => ['class' => 'mt-1 text-xs leading-relaxed text-white/45'],
                 'attr' => [
                     'placeholder' => 'Zadejte nové heslo',
                     'autocomplete' => 'new-password',
@@ -48,7 +50,7 @@ final class ChangePasswordFormType extends AbstractType
                     'autocomplete' => 'new-password',
                 ],
             ],
-            'invalid_message' => 'Hesla se musí shodovat.',
+            'invalid_message' => 'Hesla se neshodují. Zadejte do obou polí stejné heslo.',
         ]);
     }
 

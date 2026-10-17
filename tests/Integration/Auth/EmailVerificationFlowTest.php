@@ -42,6 +42,25 @@ final class EmailVerificationFlowTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Zkontroluj');
     }
 
+    /**
+     * The airlock answers the one question it gets — „the mail never came" — with the
+     * three things that help: the spam folder, a resend, and a way out of a typo.
+     */
+    public function testVerifyEmailPendingPageSaysWhatToDoWhenNothingArrives(): void
+    {
+        $client = static::createClient();
+        $user = $this->entityManager($client)->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $crawler = $client->request('GET', '/overeni-ceka');
+
+        self::assertSelectorTextContains('body', 'E-mail nedorazil?');
+        self::assertSelectorTextContains('body', 'Spam');
+        self::assertCount(1, $crawler->filter('a[href="mailto:kontakt@wtips.cz"]'));
+        self::assertCount(1, $crawler->filter('form[action="/overeni-ceka/znovu-odeslat"][data-controller~="form-feedback"]'));
+    }
+
     public function testSuccessfulVerificationLogsUserInAndRedirectsToDashboard(): void
     {
         $client = static::createClient();

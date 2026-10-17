@@ -170,8 +170,8 @@ final class CompetitionLockTipsFlowTest extends WebTestCase
     {
         yield 'in the past' => ['2025-06-14 09:00', 'Čas uzamčení musí být v budoucnosti.'];
         yield 'after the competition start' => ['2025-06-21 09:00', 'Uzamčení musí nastat dřív, než soutěž začne'];
-        yield 'unparseable' => ['zítra večer', 'Neplatný formát data a času uzamčení.'];
-        yield 'empty' => ['', 'Vyberte datum a čas uzamčení.'];
+        yield 'unparseable' => ['zítra večer', 'Datum a čas uzamčení se nepodařilo přečíst.'];
+        yield 'empty' => ['', 'Vyberte v kalendáři datum a čas, kdy se mají tipy uzamknout'];
     }
 
     #[DataProvider('refusedScheduleProvider')]

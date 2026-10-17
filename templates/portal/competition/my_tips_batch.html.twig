@@ -15,12 +15,25 @@
         <h1 class="mt-2 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">Moje tipy</h1>
         <p class="mt-3 text-sm leading-relaxed text-white/70">
             Zadejte nebo upravte všechny své tipy v jedné tabulce.
-            Zobrazují se jen zápasy, u kterých je tipování ještě otevřené.
-            Prázdná pole se přeskočí — nebo smažou stávající tip.
+            Zobrazují se jen zápasy, u kterých je tipování ještě otevřené — každý jen do své uzávěrky.
+            Skóre je celé číslo od 0 do 99. Zápas s prázdnými políčky se přeskočí; pokud už na něj tip máte, smaže se.
         </p>
     </header>
 
     {% if rows|length == 0 %}
+        {# A save can empty the table (every uzávěrka passed meanwhile) — the reasons
+           must still be read somewhere. #}
+        {% if form_errors|default([])|length > 0 %}
+            <div role="alert" class="mb-4 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white/85">
+                <p class="flex items-center gap-2 font-semibold text-white">
+                    <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0 text-loss" />
+                    Tipy se neuložily:
+                </p>
+                <ul class="mt-2 list-disc space-y-1 pl-5">
+                    {% for message in form_errors %}<li>{{ message }}</li>{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         {# B5: an empty table after a lock must say WHY — „žádné zápasy" would be a lie. #}
         <div class="card flex flex-col items-center gap-3 p-10 text-center">
             {% if tips_locked %}
@@ -39,10 +52,46 @@
             {% endif %}
         </div>
     {% else %}
+        {# form-feedback: a rejected save comes back as 422 with the problem rows marked
+           (aria-invalid) — the controller scrolls to the first one and focuses it; the
+           summary on top links every problem to its row. #}
+        {% set row_errors = rows|filter(r => r.error is not null) %}
         <form method="post"
-              action="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}">
+              action="{{ path('competition_my_tips_batch', {id: competition.id.toRfc4122}) }}"
+              data-controller="form-feedback"
+              novalidate>
             <input type="hidden" name="_token"
                    value="{{ csrf_token('my_tips_batch_' ~ competition.id.toRfc4122 ~ '_' ~ app.user.id.toRfc4122) }}">
+
+            {% if row_errors|length > 0 or form_errors|default([])|length > 0 %}
+                <div role="alert" tabindex="-1" data-form-feedback-target="summary"
+                     class="mb-4 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white/85 outline-none">
+                    <p class="flex items-center gap-2 font-semibold text-white">
+                        <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0 text-loss" />
+                        {% if row_errors|length > 0 %}
+                            {{ row_errors|length == 1 ? 'Jeden tip se neuložil' : 'Některé tipy se neuložily' }} — opravte prosím:
+                        {% else %}
+                            Tipy se neuložily:
+                        {% endif %}
+                    </p>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        {% for message in form_errors|default([]) %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                        {% for row in row_errors %}
+                            {# A waiting row has no inputs — its message is the target then. #}
+                            {% set target = row.waiting ? 'tip-' ~ row.match.id.toRfc4122 ~ '-error' : (row.error.part == 'periods' ? 'tip-' ~ row.match.id.toRfc4122 ~ '-p1-home' : 'tip-' ~ row.match.id.toRfc4122 ~ '-home') %}
+                            <li>
+                                <a href="#{{ target }}" data-action="form-feedback#focusField" class="font-semibold text-white underline decoration-white/40 underline-offset-2 hover:decoration-white">{{ row.error.label }}</a>:
+                                {{ row.error.message }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if row_errors|length > 0 %}
+                        <p class="mt-2 text-xs text-white/60">Ostatní tipy se uložily. Opravené zápasy uložte znovu tlačítkem „Uložit vše".</p>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <section class="card overflow-hidden p-0">
                 {# Stejný vnitřní okraj jako `.bt-row` na obou šířkách (20 / 24 px). #}
@@ -111,50 +160,76 @@
                                     <twig:ux:icon name="lucide:clock" class="h-4 w-4 shrink-0" />
                                     Tipování ještě není otevřené
                                 </div>
+                                {% if row.error %}
+                                    <p id="tip-{{ row.match.id.toRfc4122 }}-error" class="flex items-start gap-1.5 text-sm text-loss">
+                                        <twig:ux:icon name="lucide:circle-alert" class="mt-[3px] h-3.5 w-3.5 shrink-0" />
+                                        <span>{{ row.error.message }}</span>
+                                    </p>
+                                {% endif %}
                             {% else %}
                             <div class="bt-controls">
+                                {% set row_id = row.match.id.toRfc4122 %}
+                                {% set score_invalid = row.error is not null and row.error.part == 'score' %}
+                                {% set periods_invalid = row.error is not null and row.error.part == 'periods' %}
                                 <div class="bt-scores">
                                     {# inputmode: na mobilu vyskočí číselná klávesnice, ne QWERTY. #}
                                     <input type="number"
                                            inputmode="numeric"
-                                           name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
-                                           min="0" max="99"
-                                           value="{{ row.guess ? row.guess.homeScore : '' }}"
+                                           id="tip-{{ row_id }}-home"
+                                           name="guesses[{{ row_id }}][homeScore]"
+                                           min="0" max="99" step="1"
+                                           autocomplete="off"
+                                           value="{{ row.values.home }}"
                                            class="score-input"
+                                           {% if score_invalid %}aria-invalid="true" aria-describedby="tip-{{ row_id }}-error"{% endif %}
                                            aria-label="Domácí – {{ row.match.homeTeam.name }}">
                                     <span class="colon">:</span>
                                     <input type="number"
                                            inputmode="numeric"
-                                           name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
-                                           min="0" max="99"
-                                           value="{{ row.guess ? row.guess.awayScore : '' }}"
+                                           id="tip-{{ row_id }}-away"
+                                           name="guesses[{{ row_id }}][awayScore]"
+                                           min="0" max="99" step="1"
+                                           autocomplete="off"
+                                           value="{{ row.values.away }}"
                                            class="score-input"
+                                           {% if score_invalid %}aria-invalid="true" aria-describedby="tip-{{ row_id }}-error"{% endif %}
                                            aria-label="Hosté – {{ row.match.awayTeam.name }}">
                                 </div>
                                 {% if features.periodTips %}
-                                    {% set guess_periods = row.guess and row.guess.periodScores is not null ? row.guess.periodScores.toArray : null %}
                                     <div class="bt-periods">
                                         {% for number in 1..sport.periodCount %}
                                             <span class="bt-period">
                                                 {{ number }}. {{ sport.periodLabelSingular }}
                                                 <input type="number"
                                                        inputmode="numeric"
-                                                       name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][home]"
-                                                       min="0" max="99"
-                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][0] : '' }}"
+                                                       id="tip-{{ row_id }}-p{{ number }}-home"
+                                                       name="guesses[{{ row_id }}][periods][{{ number }}][home]"
+                                                       min="0" max="99" step="1"
+                                                       autocomplete="off"
+                                                       value="{{ row.values.periods[number].home ?? '' }}"
                                                        class="input px-1 text-center text-sm"
+                                                       {% if periods_invalid %}aria-invalid="true" aria-describedby="tip-{{ row_id }}-error"{% endif %}
                                                        aria-label="{{ number }}. {{ sport.periodLabelSingular }} – domácí">
                                                 <span class="text-white/30">:</span>
                                                 <input type="number"
                                                        inputmode="numeric"
-                                                       name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][away]"
-                                                       min="0" max="99"
-                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][1] : '' }}"
+                                                       id="tip-{{ row_id }}-p{{ number }}-away"
+                                                       name="guesses[{{ row_id }}][periods][{{ number }}][away]"
+                                                       min="0" max="99" step="1"
+                                                       autocomplete="off"
+                                                       value="{{ row.values.periods[number].away ?? '' }}"
                                                        class="input px-1 text-center text-sm"
+                                                       {% if periods_invalid %}aria-invalid="true" aria-describedby="tip-{{ row_id }}-error"{% endif %}
                                                        aria-label="{{ number }}. {{ sport.periodLabelSingular }} – hosté">
                                             </span>
                                         {% endfor %}
                                     </div>
+                                {% endif %}
+                                {% if row.error %}
+                                    <p id="tip-{{ row_id }}-error" class="flex max-w-xs items-start gap-1.5 text-sm text-loss sm:text-right">
+                                        <twig:ux:icon name="lucide:circle-alert" class="mt-[3px] h-3.5 w-3.5 shrink-0" />
+                                        <span>{{ row.error.message }}</span>
+                                    </p>
                                 {% endif %}
                             </div>
                             {% endif %}

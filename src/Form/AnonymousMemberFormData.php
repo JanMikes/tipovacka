@@ -24,12 +24,12 @@ final class AnonymousMemberFormData
                 new Assert\Length(
                     min: 3,
                     max: 30,
-                    minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky.',
+                    minMessage: 'Přezdívka musí mít alespoň {{ limit }} znaky. Nebo ji nechte prázdnou a zobrazí se celé jméno.',
                     maxMessage: 'Přezdívka nesmí být delší než {{ limit }} znaků.',
                 ),
                 new Assert\Regex(
                     pattern: '/^[A-Za-z0-9_.\-]+$/',
-                    message: 'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
+                    message: 'Přezdívka smí obsahovat jen písmena bez diakritiky, číslice, tečku, pomlčku a podtržítko — bez mezer. Např. petr.novak.',
                 ),
                 new UniqueNickname(),
             ]),

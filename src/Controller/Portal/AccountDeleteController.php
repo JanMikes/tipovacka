@@ -33,7 +33,7 @@ final class AccountDeleteController extends AbstractController
 
         if ($request->isMethod('POST')) {
             if (!$this->isCsrfTokenValid('delete_account', (string) $request->request->get('_token', ''))) {
-                $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
+                $this->addFlash('error', 'Neplatný bezpečnostní token — stránka byla nejspíš otevřená příliš dlouho. Účet zůstal beze změny; pokud ho chcete smazat, potvrďte to prosím znovu.');
 
                 return $this->redirectToRoute('account_delete');
             }

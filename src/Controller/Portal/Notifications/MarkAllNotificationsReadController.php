@@ -28,7 +28,7 @@ final class MarkAllNotificationsReadController extends AbstractController
         $user = $this->getUser();
 
         if (!$this->isCsrfTokenValid('notifications_read_all', (string) $request->request->get('_token', ''))) {
-            $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
+            $this->addFlash('error', 'Neplatný bezpečnostní token — stránka byla nejspíš otevřená příliš dlouho. Klikněte prosím na „Označit vše jako přečtené“ znovu.');
 
             return $this->redirectToRoute('notifications');
         }

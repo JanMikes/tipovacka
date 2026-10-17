@@ -6,6 +6,7 @@ namespace App\Controller\Portal\Guess;
 
 use App\Command\SubmitGuessOnBehalf\SubmitGuessOnBehalfCommand;
 use App\Command\UpdateGuessOnBehalf\UpdateGuessOnBehalfCommand;
+use App\Controller\Portal\Competition\ManageMemberTipsController;
 use App\Entity\User;
 use App\Exception\GuessAlreadyExists;
 use App\Exception\GuessDeadlinePassed;
@@ -84,6 +85,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
         $sport = $competition->headlineSource->sport;
 
         $saved = 0;
+        /** @var array<string, string> $errors match UUID → what is wrong with that row */
         $errors = [];
 
         foreach ($guesses as $sportMatchIdString => $scores) {
@@ -116,14 +118,16 @@ final class SubmitMemberTipsBatchController extends AbstractController
             $sportMatch = $this->sportMatchRepository->get(Uuid::fromString($sportMatchIdString));
             $label = sprintf('%s vs %s', $sportMatch->homeTeam->name, $sportMatch->awayTeam->name);
 
+            // Errors are keyed by match: each is shown under its own row (the
+            // page is re-rendered with what was typed), and in the summary.
             if ($bothEmpty) {
-                $errors[] = sprintf('%s: Vyplňte i celkové skóre zápasu.', $label);
+                $errors[$sportMatchIdString] = sprintf('%s: Vyplnili jste jen části zápasu — doplňte i celkové skóre, nebo části smažte.', $label);
 
                 continue;
             }
 
             if ('' === $homeRaw || '' === $awayRaw || !ctype_digit($homeRaw) || !ctype_digit($awayRaw)) {
-                $errors[] = sprintf('%s: vyplňte prosím obě skóre.', $label);
+                $errors[$sportMatchIdString] = sprintf('%s: Vyplňte prosím obě skóre (domácí i hosté) celým číslem, nebo nechte obě políčka prázdná.', $label);
 
                 continue;
             }
@@ -134,7 +138,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
             $periodScores = null;
 
             if ($features->periodTips) {
-                $periodScores = $this->parsePeriodScores($scores, $sport->periodCount, $sport->periodLabelPlural, $label, $errors);
+                $periodScores = $this->parsePeriodScores($scores, $sport->periodCount, $sport->periodLabelPlural, $label, $errors, $sportMatchIdString);
 
                 if (false === $periodScores) {
                     continue; // Error collected.
@@ -206,7 +210,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
                     || $inner instanceof NotAMember
                     || $inner instanceof MatchNotInCompetition
                 ) {
-                    $errors[] = sprintf('%s: %s', $label, $inner->getMessage());
+                    $errors[$sportMatchIdString] = sprintf('%s: %s', $label, $inner->getMessage());
                 } else {
                     throw $e;
                 }
@@ -217,11 +221,18 @@ final class SubmitMemberTipsBatchController extends AbstractController
             $this->addFlash('success', sprintf('Uloženo tipů: %d (pro %s).', $saved, $member->displayName));
         }
 
-        foreach ($errors as $error) {
-            $this->addFlash('error', $error);
+        // A rejected row comes back AS TYPED with its reason under it (422), the
+        // page re-rendered by its own controller — a redirect would reset every
+        // input to the saved state and leave only a list of flashes above it.
+        if ([] !== $errors) {
+            return $this->forward(
+                ManageMemberTipsController::class,
+                ['id' => $competition->id->toRfc4122(), 'rejectedTips' => ['errors' => $errors, 'values' => $guesses]],
+                ['member' => $member->id->toRfc4122()],
+            );
         }
 
-        if (0 === $saved && 0 === count($errors)) {
+        if (0 === $saved) {
             $this->addFlash('info', 'Nebyly provedeny žádné změny.');
         }
 
@@ -234,12 +245,12 @@ final class SubmitMemberTipsBatchController extends AbstractController
     /**
      * All-or-nothing period tip from `guesses[<matchId>][periods][<n>][home|away]`.
      *
-     * @param array<mixed> $scores
-     * @param list<string> $errors
+     * @param array<mixed>          $scores
+     * @param array<string, string> $errors keyed by match UUID
      *
      * @return PeriodScores|false|null false = validation error (collected)
      */
-    private function parsePeriodScores(array $scores, int $periodCount, string $periodLabelPlural, string $label, array &$errors): PeriodScores|false|null
+    private function parsePeriodScores(array $scores, int $periodCount, string $periodLabelPlural, string $label, array &$errors, string $matchKey): PeriodScores|false|null
     {
         $periodsRaw = $scores['periods'] ?? [];
 
@@ -275,7 +286,7 @@ final class SubmitMemberTipsBatchController extends AbstractController
         }
 
         if (!$allFilled) {
-            $errors[] = sprintf('%s: vyplňte prosím všechny %s, nebo je nechte prázdné.', $label, $periodLabelPlural);
+            $errors[$matchKey] = sprintf('%s: Vyplňte prosím všechny %s, nebo je nechte prázdné.', $label, $periodLabelPlural);
 
             return false;
         }

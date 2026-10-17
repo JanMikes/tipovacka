@@ -127,7 +127,7 @@
                                            keeps offering the boost at its price and simply
                                            routes an insufficient wallet through dobití
                                            (item 23). #}
-                                        <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm w-full">
+                                        <a href="{{ path('credits', {vylepseni: type.value}) }}#dobit" class="btn btn-primary btn-sm w-full">
                                             <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
                                             Koupit za {{ type.price }} kr.
                                         </a>
@@ -204,7 +204,7 @@
                                 </button>
                             </form>
                         {% else %}
-                            <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                            <a href="{{ path('credits', {vylepseni: type.value}) }}#dobit" class="dist-unlock group">
                                 Odemknout za {{ type.price }} kr.
                                 <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                             </a>
@@ -240,7 +240,7 @@
                                     </button>
                                 </form>
                             {% else %}
-                                <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm">
+                                <a href="{{ path('credits', {vylepseni: type.value}) }}#dobit" class="btn btn-primary btn-sm">
                                     <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
                                     Odemknout za {{ type.price }} kr.
                                 </a>
@@ -283,7 +283,7 @@
             {% elseif mon == 'boosts' %}
                 {# Same control, same price — a wallet that cannot cover it is routed
                    through dobití instead of the confirm dialog (item 23). #}
-                <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                <a href="{{ path('credits', {vylepseni: type.value}) }}#dobit" class="dist-unlock group">
                     Odemknout za {{ type.price }} kr.
                     <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </a>
@@ -323,7 +323,7 @@
                             </button>
                         </form>
                     {% else %}
-                        <a href="{{ path('credits') }}#dobit" class="btn btn-primary btn-sm">
+                        <a href="{{ path('credits', {vylepseni: type.value}) }}#dobit" class="btn btn-primary btn-sm">
                             <twig:ux:icon name="lucide:unlock" class="h-4 w-4" />
                             Odemknout za {{ type.price }} kr.
                         </a>

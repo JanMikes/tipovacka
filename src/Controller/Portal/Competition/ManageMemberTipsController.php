@@ -44,7 +44,15 @@ final class ManageMemberTipsController extends AbstractController
     ) {
     }
 
-    public function __invoke(Request $request, string $id): Response
+    /**
+     * `$rejectedTips` comes from {@see \App\Controller\Portal\Guess\SubmitMemberTipsBatchController}
+     * when some rows were refused: `errors` (match UUID → message) and `values`
+     * (the submitted `guesses` array), so the page re-renders AS TYPED (422) with
+     * each reason under its own row.
+     *
+     * @param array{errors?: array<string, string>, values?: array<mixed>} $rejectedTips
+     */
+    public function __invoke(Request $request, string $id, array $rejectedTips = []): Response
     {
         $competition = $this->competitionRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(CompetitionVoter::MANAGE_MEMBERS, $competition);
@@ -124,6 +132,8 @@ final class ManageMemberTipsController extends AbstractController
 
         $lockMoment = $this->deadlineResolver->lockMomentFor($competition);
 
+        $rowErrors = $rejectedTips['errors'] ?? [];
+
         return $this->render('portal/competition/manage_member_tips.html.twig', [
             'competition' => $competition,
             'members' => $members,
@@ -134,6 +144,8 @@ final class ManageMemberTipsController extends AbstractController
             'tips_locked' => null !== $lockMoment && $lockMoment <= $now,
             'sport' => $competition->headlineSource->sport,
             'features' => $this->guessFeatures->featuresFor($competition->id),
-        ]);
+            'row_errors' => $rowErrors,
+            'typed' => [] === $rowErrors ? [] : ($rejectedTips['values'] ?? []),
+        ], new Response(status: [] === $rowErrors ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 }

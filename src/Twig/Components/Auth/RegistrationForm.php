@@ -25,7 +25,6 @@ use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
-use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 
@@ -35,12 +34,6 @@ final class RegistrationForm extends AbstractController
     use ComponentWithFormTrait;
     use DefaultActionTrait;
 
-    /**
-     * Bumped on every submit so the signup-feedback controller knows to bring the
-     * error summary into view again — even when its content did not change.
-     */
-    #[LiveProp]
-    public int $submitAttempts = 0;
 
     /**
      * A free nickname the rules accept, offered while the typed one is rejected.
@@ -88,8 +81,6 @@ final class RegistrationForm extends AbstractController
     #[LiveAction]
     public function register(): ?Response
     {
-        ++$this->submitAttempts;
-
         try {
             $this->submitForm();
         } catch (UnprocessableEntityHttpException $e) {
@@ -147,7 +138,6 @@ final class RegistrationForm extends AbstractController
             'registration',
             $this->getForm(),
             strtolower(trim((string) ($this->formValues['email'] ?? ''))),
-            ['attempt' => $this->submitAttempts],
         );
     }
 

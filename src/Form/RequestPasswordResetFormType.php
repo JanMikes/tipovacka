@@ -20,8 +20,13 @@ final class RequestPasswordResetFormType extends AbstractType
             'label' => 'E-mailová adresa',
             'empty_data' => '',
             'attr' => [
-                'placeholder' => 'Zadejte vaši e-mailovou adresu',
+                'placeholder' => 'vas@email.cz',
                 'autocomplete' => 'email',
+                'inputmode' => 'email',
+                'autocapitalize' => 'none',
+                'spellcheck' => 'false',
+                'maxlength' => 180,
+                'autofocus' => true,
             ],
         ]);
     }

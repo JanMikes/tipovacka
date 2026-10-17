@@ -60,6 +60,7 @@
                     <input type="hidden" name="navrat" value="detail">
                     <div class="flex flex-wrap items-end gap-3">
                         <div class="field min-w-[200px] flex-1">
+                            {{ form_label(invitation_form.email, null, {label_attr: {class: 'sr-only'}}) }}
                             {{ form_widget(invitation_form.email, {attr: {class: 'input'}}) }}
                             {{ form_errors(invitation_form.email) }}
                         </div>

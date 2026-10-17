@@ -177,7 +177,7 @@
                     {{ form_end(invitationForm) }}
 
                     {% if bulkInvitationForm %}
-                        <details class="mt-5 border-t border-white/10 pt-5">
+                        <details class="mt-5 border-t border-white/10 pt-5"{% if bulk_invitation_rejected|default(false) %} open{% endif %}>
                             <summary class="cursor-pointer text-sm font-semibold text-white transition-colors hover:text-accent-300">
                                 Pozvat více lidí najednou
                             </summary>

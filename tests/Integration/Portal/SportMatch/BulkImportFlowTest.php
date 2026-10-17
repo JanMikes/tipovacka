@@ -121,8 +121,35 @@ final class BulkImportFlowTest extends WebTestCase
             'import_sport_matches_form[file]' => $file,
         ]);
 
-        self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Chyby');
+        // A rejected import is a rejected form: 422, and the line + column + fix are named.
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'V souboru je 1 chyba');
+        self::assertSelectorTextContains('body', 'Řádek 2');
+        self::assertSelectorTextContains('body', 'Datum „not-a-date" neumíme přečíst');
+    }
+
+    public function testAFileWithoutTheTemplateHeaderIsRejectedOnTheFileFieldAndKeepsTheReturnPath(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $path = tempnam(sys_get_temp_dir(), 'smi_').'.csv';
+        file_put_contents($path, "Home,Away,When,Where\nA,B,2026-05-10 18:00,\n");
+        $file = new UploadedFile($path, 'matches.csv', 'text/csv', null, true);
+
+        $client->request('GET', '/turnaje/'.AppFixtures::PUBLIC_SOURCE_ID.'/zapasy/import?soutez='.AppFixtures::PUBLIC_COMPETITION_ID);
+        $client->submitForm('Nahrát a zobrazit náhled', [
+            'import_sport_matches_form[file]' => $file,
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('body', 'V prvním řádku souboru chybí sloupec „Domácí"');
+        self::assertSame('true', $client->getCrawler()->filter('input[name="import_sport_matches_form[file]"]')->attr('aria-invalid'));
+        self::assertCount(1, $client->getCrawler()->filter('form[action*="soutez='.AppFixtures::PUBLIC_COMPETITION_ID.'"]'));
     }
 
     private function importedMatch(EntityManagerInterface $em, string $homeTeamName): SportMatch

@@ -58,6 +58,8 @@ final class MatchSourceFormType extends AbstractType
         $builder->add('startAt', DateTimeType::class, [
             'label' => 'Začátek',
             'required' => false,
+            'help' => 'Nepovinné, český čas.',
+            'invalid_message' => 'Zadejte datum a čas ve tvaru RRRR-MM-DD HH:MM (český čas), např. 2026-05-10 18:00.',
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
             'html5' => false,
@@ -71,6 +73,8 @@ final class MatchSourceFormType extends AbstractType
         $builder->add('endAt', DateTimeType::class, [
             'label' => 'Konec',
             'required' => false,
+            'help' => 'Nepovinné, český čas.',
+            'invalid_message' => 'Zadejte datum a čas ve tvaru RRRR-MM-DD HH:MM (český čas), např. 2026-05-10 18:00.',
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
             'html5' => false,
@@ -107,7 +111,8 @@ final class MatchSourceFormType extends AbstractType
                 'required' => false,
                 'help' => '0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.',
                 'empty_data' => '0',
-                'attr' => ['min' => 0],
+                'invalid_message' => 'Vstupné zadejte jako celé číslo kreditů, např. 50 (0 = zdarma).',
+                'attr' => ['min' => 0, 'step' => 1, 'inputmode' => 'numeric'],
             ]);
 
             $builder->add('globalCompetitionMonetization', EnumType::class, [

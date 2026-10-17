@@ -26,8 +26,8 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * A player buys a per-competition boost from a paywall / the „Získej výhody"
- * sidebar. Insufficient credits redirect to the top-up page with a friendly
- * message; other domain guards flash an error and return to the origin page.
+ * sidebar. Insufficient credits redirect to the top-up card, which names the
+ * shortfall; other domain guards flash an error and return to the origin page.
  */
 #[Route(
     '/souteze/{id}/vylepseni/koupit',
@@ -55,7 +55,7 @@ final class PurchaseBoostController extends AbstractController
         $backTo = $this->resolveRedirect($request, $competition->id);
 
         if (!$this->isCsrfTokenValid('boost_purchase_'.$competition->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
-            $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
+            $this->addFlash('error', 'Neplatný bezpečnostní token — stránka byla nejspíš otevřená příliš dlouho. Nic jsme vám nestrhli; zkuste vylepšení koupit znovu.');
 
             return $this->redirect($backTo);
         }
@@ -63,7 +63,7 @@ final class PurchaseBoostController extends AbstractController
         $type = BoostType::tryFrom((string) $request->request->get('type', ''));
 
         if (null === $type) {
-            $this->addFlash('error', 'Neznámý typ vylepšení.');
+            $this->addFlash('error', 'Takové vylepšení neznáme — načtěte prosím stránku znovu a vyberte vylepšení z nabídky.');
 
             return $this->redirect($backTo);
         }
@@ -78,12 +78,20 @@ final class PurchaseBoostController extends AbstractController
             $inner = $handlerFailed->getPrevious();
 
             if ($inner instanceof InsufficientCredits) {
-                $this->addFlash('error', $inner->getMessage().' Dokupte si prosím kredity.');
-
-                return $this->redirectToRoute('credits');
+                // The dobití card itself names the booster and the shortfall (computed
+                // from the live balance) — no flash: it would render a screen above the
+                // card the `#dobit` anchor scrolls to, saying the same thing twice.
+                return $this->redirectToRoute('credits', ['vylepseni' => $type->value, '_fragment' => 'dobit']);
             }
 
-            if ($inner instanceof BoostNotAvailable || $inner instanceof CompetitionAlreadyOver || $inner instanceof NotAMember) {
+            if ($inner instanceof NotAMember) {
+                // The exception speaks to a developer (tykání + a raw UUID).
+                $this->addFlash('error', 'Vylepšení si můžete koupit jen v soutěži, které se účastníte — nejprve se do ní připojte.');
+
+                return $this->redirect($backTo);
+            }
+
+            if ($inner instanceof BoostNotAvailable || $inner instanceof CompetitionAlreadyOver) {
                 $this->addFlash('error', $inner->getMessage());
 
                 return $this->redirect($backTo);
