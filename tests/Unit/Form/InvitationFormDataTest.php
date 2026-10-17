@@ -201,7 +201,7 @@ final class InvitationFormDataTest extends TestCase
         $this->assertHasViolation(
             $violations,
             'nickname',
-            'Přezdívka smí obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.',
+            'Přezdívka nesmí obsahovat mezery ani diakritiku (háčky a čárky) — jen písmena bez diakritiky, čísla, podtržítko, tečku a pomlčku.',
         );
     }
 

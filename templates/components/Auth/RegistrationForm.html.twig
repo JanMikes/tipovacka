@@ -1,5 +1,5 @@
 <div{{ attributes }}>
-    {{ form_start(form, {attr: {class: 'flex flex-col gap-4', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register'}}) }}
+    {{ form_start(form, {attr: {class: 'flex flex-col gap-4', novalidate: 'novalidate', 'data-model': 'on(change)|*', 'data-action': 'live#action:prevent', 'data-live-action-param': 'register', 'data-controller': 'signup-feedback', 'data-signup-feedback-attempt-value': this.submitAttempts}}) }}
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="field">
@@ -21,8 +21,7 @@
                     </span>
                     {{ form_widget(form.nickname, {attr: {class: 'input !pl-[42px]', placeholder: 'vase_prezdivka'}}) }}
                 </div>
-                <p class="text-[11px] leading-relaxed text-white/40">3–30 znaků, písmena, čísla, podtržítko, tečka nebo pomlčka.</p>
-                {{ form_errors(form.nickname) }}
+                {{ include('components/Auth/_nickname_help.html.twig', {field: form.nickname, suggestion: this.nicknameSuggestion}) }}
             </div>
         </div>
 
@@ -67,6 +66,7 @@
                         <span class="hidden" data-password-visibility-target="iconHide"><twig:ux:icon name="lucide:eye-off" class="h-[18px] w-[18px]" /></span>
                     </button>
                 </div>
+                <p class="mt-1 text-xs text-white/45">Alespoň 8 znaků.</p>
                 {{ form_errors(form.password.first) }}
             </div>
 
@@ -93,6 +93,8 @@
             </label>
             {{ form_errors(form.gdprConsent) }}
         </div>
+
+        {{ include('components/Auth/_error_summary.html.twig', {form: form, submitted: this.isValidated, nicknameSuggestion: this.nicknameSuggestion}) }}
 
         <button type="submit" class="btn btn-primary mt-2 w-full">
             Vytvořit účet

@@ -56,6 +56,16 @@ return App::config([
                 'level' => 'debug',
                 'formatter' => 'monolog.formatter.json',
             ],
+            // A rejected sign-up is INFO and never triggers the fingers_crossed flush
+            // above, so it gets its own unbuffered stream — `docker compose logs web`
+            // then answers „why can't I register?" (2026-10-17).
+            'signup' => [
+                'type' => 'stream',
+                'path' => 'php://stderr',
+                'level' => 'info',
+                'channels' => ['signup'],
+                'formatter' => 'monolog.formatter.json',
+            ],
             'console' => [
                 'type' => 'console',
                 'process_psr_3_messages' => false,

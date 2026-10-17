@@ -20,6 +20,8 @@ use App\Repository\UserRepository;
 use App\Service\Invitation\InvitationAcceptanceService;
 use App\Service\Invitation\InvitationContext;
 use App\Service\Invitation\InvitationContextResolver;
+use App\Service\SignUp\NicknameSuggester;
+use App\Service\SignUp\RejectedSignUpLog;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -28,6 +30,7 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -61,6 +64,13 @@ final class InvitationForm extends AbstractController
     #[LiveProp]
     public string $token = '';
 
+    /**
+     * Bumped on every submit so the signup-feedback controller knows to bring the
+     * error summary into view again — even when its content did not change.
+     */
+    #[LiveProp]
+    public int $submitAttempts = 0;
+
     private ?InvitationContext $resolvedContext = null;
 
     public function __construct(
@@ -71,6 +81,8 @@ final class InvitationForm extends AbstractController
         private readonly InvitationContextResolver $contextResolver,
         private readonly ClockInterface $clock,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly NicknameSuggester $nicknameSuggester,
+        private readonly RejectedSignUpLog $rejectedSignUpLog,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -86,6 +98,25 @@ final class InvitationForm extends AbstractController
 
     public string $userKind {
         get => $this->resolveUserKind();
+    }
+
+    /**
+     * A free nickname the rules accept, offered while the typed one is rejected.
+     */
+    public ?string $nicknameSuggestion {
+        get {
+            $form = $this->getForm();
+
+            if (!$form->has('nickname') || 0 === \count($form->get('nickname')->getErrors())) {
+                return null;
+            }
+
+            return $this->nicknameSuggester->suggest(
+                (string) ($this->formValues['nickname'] ?? ''),
+                (string) ($this->formValues['firstName'] ?? ''),
+                (string) ($this->formValues['lastName'] ?? ''),
+            );
+        }
     }
 
     public bool $emailLocked {
@@ -114,6 +145,7 @@ final class InvitationForm extends AbstractController
     #[LiveAction]
     public function submit(): ?Response
     {
+        ++$this->submitAttempts;
         $kind = $this->userKind;
 
         if ($this->emailLocked) {
@@ -121,7 +153,13 @@ final class InvitationForm extends AbstractController
             $this->formValues['email'] = $this->context->presetEmail;
         }
 
-        $this->submitForm();
+        try {
+            $this->submitForm();
+        } catch (UnprocessableEntityHttpException $e) {
+            $this->logRejection();
+
+            throw $e;
+        }
 
         /** @var InvitationFormData $data */
         $data = $this->getForm()->getData();
@@ -153,14 +191,15 @@ final class InvitationForm extends AbstractController
             $previous = $e->getPrevious();
 
             if ($previous instanceof UserAlreadyExists) {
-                // Race: account was just created. Tell the user and let them try again as login.
-                $this->acceptanceService->flash('info', 'Na tento e-mail už existuje účet. Přihlaš se prosím.');
+                // Race: account was just created. Say so at the field — a flash would only
+                // surface on the NEXT full page load, never in this Live re-render.
+                $this->reject('email', 'Na tento e-mail už existuje účet. Zadej k němu heslo a přihlas se.');
 
                 return null;
             }
 
             if ($previous instanceof NicknameAlreadyTaken) {
-                $this->addInlineFormError('nickname', 'Tato přezdívka je již obsazena.');
+                $this->reject('nickname', 'Tato přezdívka je již obsazena — zvol si prosím jinou.');
 
                 return null;
             }
@@ -198,21 +237,15 @@ final class InvitationForm extends AbstractController
             && null !== $this->context->presetEmail
             && 0 !== strcasecmp($email, $this->context->presetEmail)
         ) {
-            $this->acceptanceService->flash('warning', sprintf('Tato pozvánka je určena pro adresu %s.', $this->context->presetEmail));
+            $this->reject('email', sprintf('Tato pozvánka je určena pro adresu %s — přihlas se k ní.', $this->context->presetEmail));
 
             return null;
         }
 
         $user = $this->userRepository->findByEmail($email);
 
-        if (null === $user || !$user->hasPassword) {
-            $this->addInlineFormError('password', 'Nesprávný e-mail nebo heslo.');
-
-            return null;
-        }
-
-        if (!$this->passwordHasher->isPasswordValid($user, $data->password)) {
-            $this->addInlineFormError('password', 'Nesprávný e-mail nebo heslo.');
+        if (null === $user || !$user->hasPassword || !$this->passwordHasher->isPasswordValid($user, $data->password)) {
+            $this->reject('password', 'Nesprávný e-mail nebo heslo. Zapomenuté heslo si můžeš obnovit odkazem nad polem.');
 
             return null;
         }
@@ -244,9 +277,9 @@ final class InvitationForm extends AbstractController
         // address belongs to an account we cannot prove the visitor owns — send them
         // through password reset instead of handing it over.
         if (InvitationKind::Email !== $this->context->kind) {
-            $this->acceptanceService->flash(
-                'info',
-                'Na tento e-mail už účet existuje, ale nemá heslo. Nastav si ho přes „Zapomenuté heslo" a pak se přihlas.',
+            $this->reject(
+                'email',
+                'Na tento e-mail už účet existuje, ale ještě nemá heslo. Nastav si ho přes Zapomenuté heslo na přihlašovací stránce a pak se přihlas.',
             );
 
             return null;
@@ -269,7 +302,7 @@ final class InvitationForm extends AbstractController
 
             if ($previous instanceof InvitationAlreadyRegistered) {
                 // Account already has a password — log in instead.
-                $this->acceptanceService->flash('info', 'Účet už má heslo. Přihlaš se prosím.');
+                $this->reject('password', 'Tento účet už heslo má. Obnov stránku a přihlas se svým heslem.');
 
                 return null;
             }
@@ -323,6 +356,26 @@ final class InvitationForm extends AbstractController
         }
 
         return strtolower(trim($submitted));
+    }
+
+    /**
+     * A rejection found after validation passed: shown at the field (and in the summary),
+     * and logged like a validation failure.
+     */
+    private function reject(string $fieldName, string $message): void
+    {
+        $this->addInlineFormError($fieldName, $message);
+        $this->logRejection();
+    }
+
+    private function logRejection(): void
+    {
+        $this->rejectedSignUpLog->record(
+            'invitation:'.$this->kind,
+            $this->getForm(),
+            strtolower(trim((string) ($this->formValues['email'] ?? ''))),
+            ['user_kind' => $this->userKind, 'attempt' => $this->submitAttempts],
+        );
     }
 
     /**
