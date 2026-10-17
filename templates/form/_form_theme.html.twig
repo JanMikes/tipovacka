@@ -11,7 +11,7 @@
     {%- if errors|length > 0 -%}
         <ul class="mt-1 space-y-0.5 text-sm text-loss">
             {%- for error in errors -%}
-                <li>{{ error.message }}</li>
+                <li class="flex items-start gap-1.5">{{ ux_icon('lucide:circle-alert', {class: 'mt-[3px] h-3.5 w-3.5 shrink-0', 'aria-hidden': 'true'}) }}<span>{{ error.message }}</span></li>
             {%- endfor -%}
         </ul>
     {%- endif -%}
@@ -107,6 +107,9 @@
 
 {%- block checkbox_widget -%}
     {%- set attr = attr|merge({class: attr.class|default('h-4 w-4 rounded border-white/20 bg-inset text-accent-500 focus:ring-accent-500 focus:ring-offset-0')}) -%}
+    {%- if not valid -%}
+        {%- set attr = attr|merge({'aria-invalid': 'true'}) -%}
+    {%- endif -%}
     {{- parent() -}}
 {%- endblock checkbox_widget -%}
 

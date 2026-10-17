@@ -20,6 +20,7 @@ use App\Repository\UserRepository;
 use App\Service\Invitation\InvitationAcceptanceService;
 use App\Service\Invitation\InvitationContext;
 use App\Service\Invitation\InvitationContextResolver;
+use App\Service\SignUp\EmailTypoSuggester;
 use App\Service\SignUp\NicknameSuggester;
 use App\Service\SignUp\RejectedSignUpLog;
 use Psr\Clock\ClockInterface;
@@ -82,6 +83,7 @@ final class InvitationForm extends AbstractController
         private readonly ClockInterface $clock,
         private readonly UrlGeneratorInterface $urlGenerator,
         private readonly NicknameSuggester $nicknameSuggester,
+        private readonly EmailTypoSuggester $emailTypoSuggester,
         private readonly RejectedSignUpLog $rejectedSignUpLog,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
@@ -117,6 +119,13 @@ final class InvitationForm extends AbstractController
                 (string) ($this->formValues['lastName'] ?? ''),
             );
         }
+    }
+
+    /**
+     * The address with its mailbox-domain typo corrected (seznam.cy → seznam.cz), if any.
+     */
+    public ?string $emailSuggestion {
+        get => $this->emailLocked ? null : $this->emailTypoSuggester->suggest((string) ($this->formValues['email'] ?? ''));
     }
 
     public bool $emailLocked {
@@ -193,13 +202,13 @@ final class InvitationForm extends AbstractController
             if ($previous instanceof UserAlreadyExists) {
                 // Race: account was just created. Say so at the field — a flash would only
                 // surface on the NEXT full page load, never in this Live re-render.
-                $this->reject('email', 'Na tento e-mail už existuje účet. Zadej k němu heslo a přihlas se.');
+                $this->reject('email', 'Na tento e-mail už existuje účet. Zadejte k němu heslo a přihlaste se.');
 
                 return null;
             }
 
             if ($previous instanceof NicknameAlreadyTaken) {
-                $this->reject('nickname', 'Tato přezdívka je již obsazena — zvol si prosím jinou.');
+                $this->reject('nickname', 'Tato přezdívka je již obsazena — zvolte si prosím jinou.');
 
                 return null;
             }
@@ -237,7 +246,7 @@ final class InvitationForm extends AbstractController
             && null !== $this->context->presetEmail
             && 0 !== strcasecmp($email, $this->context->presetEmail)
         ) {
-            $this->reject('email', sprintf('Tato pozvánka je určena pro adresu %s — přihlas se k ní.', $this->context->presetEmail));
+            $this->reject('email', sprintf('Tato pozvánka je určena pro adresu %s — přihlaste se k ní.', $this->context->presetEmail));
 
             return null;
         }
@@ -245,7 +254,7 @@ final class InvitationForm extends AbstractController
         $user = $this->userRepository->findByEmail($email);
 
         if (null === $user || !$user->hasPassword || !$this->passwordHasher->isPasswordValid($user, $data->password)) {
-            $this->reject('password', 'Nesprávný e-mail nebo heslo. Zapomenuté heslo si můžeš obnovit odkazem nad polem.');
+            $this->reject('password', 'Nesprávný e-mail nebo heslo. Zapomenuté heslo si můžete obnovit odkazem nad polem.');
 
             return null;
         }
@@ -279,7 +288,7 @@ final class InvitationForm extends AbstractController
         if (InvitationKind::Email !== $this->context->kind) {
             $this->reject(
                 'email',
-                'Na tento e-mail už účet existuje, ale ještě nemá heslo. Nastav si ho přes Zapomenuté heslo na přihlašovací stránce a pak se přihlas.',
+                'Na tento e-mail už účet existuje, ale ještě nemá heslo. Nastavte si ho přes Zapomenuté heslo na přihlašovací stránce a pak se přihlaste.',
             );
 
             return null;
@@ -302,7 +311,7 @@ final class InvitationForm extends AbstractController
 
             if ($previous instanceof InvitationAlreadyRegistered) {
                 // Account already has a password — log in instead.
-                $this->reject('password', 'Tento účet už heslo má. Obnov stránku a přihlas se svým heslem.');
+                $this->reject('password', 'Tento účet už heslo má. Obnovte stránku a přihlaste se svým heslem.');
 
                 return null;
             }

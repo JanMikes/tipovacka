@@ -11,6 +11,7 @@
                     {{ form_widget(form.email, {attr: {class: 'input !pl-[42px]', placeholder: 'vas@email.cz'}}) }}
                 </div>
                 {{ form_errors(form.email) }}
+                {{ include('components/Auth/_email_help.html.twig', {suggestion: this.emailSuggestion}) }}
             </div>
 
             <div class="field">

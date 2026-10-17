@@ -11,8 +11,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
  * Turns what a visitor typed as a nickname (or their name) into one the rules accept.
  *
  * The nickname allows only ASCII letters, digits, underscore, dot and hyphen — a Czech
- * visitor naturally types „George Raška" and was told only what is forbidden. Offering
- * a concrete free alternative („george.raska") turns the rejection into a one-tap fix.
+ * visitor naturally types „Petr Svoboda" and was told only what is forbidden. Offering
+ * a concrete free alternative („petr.svoboda") turns the rejection into a one-tap fix.
  */
 final readonly class NicknameSuggester
 {

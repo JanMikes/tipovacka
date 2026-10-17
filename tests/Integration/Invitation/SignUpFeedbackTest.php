@@ -33,19 +33,19 @@ final class SignUpFeedbackTest extends WebTestCase
         self::assertStringContainsString('bez mezer a diakritiky', $rendered);
     }
 
-    public function testLinkRegistrationWithCzechNameAsNicknameExplainsAndSuggestsFix(): void
+    public function testLinkRegistrationWithFullNameAsNicknameExplainsAndSuggestsFix(): void
     {
         $client = static::createClient();
         $component = $this->invitationForm($client);
         $client->catchExceptions(true);
 
-        $component->submitForm($this->invitationRegistration(['nickname' => 'George Raška']), 'submit');
+        $component->submitForm($this->invitationRegistration(['nickname' => 'Petr Svoboda']), 'submit');
 
         self::assertSame(422, $component->response()->getStatusCode());
         $body = (string) $component->response()->getContent();
         self::assertStringContainsString('Účet zatím nevznikl', $body);
         self::assertStringContainsString('nesmí obsahovat mezery ani diakritiku', $body);
-        self::assertStringContainsString('data-signup-feedback-nickname-param="george.raska"', $body);
+        self::assertStringContainsString('data-signup-feedback-value-param="petr.svoboda"', $body);
         self::assertStringContainsString('data-signup-feedback-attempt-value="1"', $body);
     }
 
@@ -122,7 +122,33 @@ final class SignUpFeedbackTest extends WebTestCase
         $summary = $this->summaryOf($body);
         self::assertStringContainsString('nesmí obsahovat mezery ani diakritiku', $summary);
         self::assertStringContainsString('Heslo musí mít alespoň 8 znaků.', $summary);
-        self::assertStringContainsString('data-signup-feedback-nickname-param="jiri.novak"', $body);
+        self::assertStringContainsString('data-signup-feedback-value-param="jiri.novak"', $body);
+    }
+
+    public function testMistypedMailboxDomainOffersTheCorrection(): void
+    {
+        $client = static::createClient();
+
+        $rendered = (string) $this->invitationForm($client)
+            ->set('invitation_form', ['email' => 'tipujici@seznam.cy'])
+            ->render();
+
+        self::assertStringContainsString('Nemysleli jste', $rendered);
+        self::assertStringContainsString('data-signup-feedback-value-param="tipujici@seznam.cz"', $rendered);
+    }
+
+    public function testUntickedConsentIsMarkedInvalid(): void
+    {
+        $client = static::createClient();
+        $component = $this->invitationForm($client);
+        $client->catchExceptions(true);
+
+        $component->submitForm($this->invitationRegistration(['gdprConsent' => null]), 'submit');
+
+        self::assertMatchesRegularExpression(
+            '/<input[^>]*name="invitation_form\[gdprConsent\]"[^>]*aria-invalid="true"|<input[^>]*aria-invalid="true"[^>]*name="invitation_form\[gdprConsent\]"/',
+            (string) $component->response()->getContent(),
+        );
     }
 
     private function invitationForm(KernelBrowser $client): TestLiveComponent
@@ -142,12 +168,12 @@ final class SignUpFeedbackTest extends WebTestCase
     {
         return [
             'invitation_form' => array_filter(array_replace([
-                'email' => 'george-like@example.test',
+                'email' => 'petr-svoboda@example.test',
                 'password' => 'Str0ngP4ssword!',
                 'passwordConfirm' => 'Str0ngP4ssword!',
-                'nickname' => 'george_like',
-                'firstName' => 'George',
-                'lastName' => 'Raška',
+                'nickname' => 'petr_svoboda',
+                'firstName' => 'Petr',
+                'lastName' => 'Svoboda',
                 'gdprConsent' => '1',
             ], $overrides), static fn (mixed $value): bool => null !== $value),
         ];
