@@ -233,7 +233,7 @@ final class GuessEntityTest extends TestCase
     public function testPeriodTipSumMustMatchMainTip(): void
     {
         $this->expectException(InvalidGuessScore::class);
-        $this->expectExceptionMessage('Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.');
+        $this->expectExceptionMessage('Součet tipů na poločasy (2:1) musí odpovídat tipu na celý zápas (3:0).');
 
         // Periods sum to 2:1, main tip says 3:0.
         $this->makeGuessWithDetails(3, 0, PeriodScores::fromArray([[1, 0], [1, 1]]));
@@ -245,7 +245,7 @@ final class GuessEntityTest extends TestCase
         $guess->popEvents();
 
         $this->expectException(InvalidGuessScore::class);
-        $this->expectExceptionMessage('Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.');
+        $this->expectExceptionMessage('Součet tipů na poločasy (1:1) musí odpovídat tipu na celý zápas (2:1).');
 
         // Periods sum to 1:1, new main tip says 2:1.
         $guess->updateScores(2, 1, $this->later, PeriodScores::fromArray([[1, 0], [0, 1]]));

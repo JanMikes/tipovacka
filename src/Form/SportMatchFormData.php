@@ -6,6 +6,7 @@ namespace App\Form;
 
 use App\Entity\SportMatch;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 final class SportMatchFormData
 {
@@ -51,5 +52,17 @@ final class SportMatchFormData
         $formData->isPlayoff = $sportMatch->isPlayoff;
 
         return $formData;
+    }
+
+    #[Assert\Callback]
+    public function validateTeams(ExecutionContextInterface $context): void
+    {
+        $home = mb_strtolower(trim($this->homeTeam));
+
+        if ('' !== $home && $home === mb_strtolower(trim($this->awayTeam))) {
+            $context->buildViolation('Tým nemůže hrát sám se sebou — vyberte jiný hostující tým, než je domácí.')
+                ->atPath('awayTeam')
+                ->addViolation();
+        }
     }
 }

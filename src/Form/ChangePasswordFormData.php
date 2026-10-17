@@ -8,18 +8,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class ChangePasswordFormData
 {
+    public const int MIN_LENGTH = 8;
+
     #[Assert\NotBlank(message: 'Zadejte prosím současné heslo.')]
     public ?string $currentPassword = null;
 
     #[Assert\NotBlank(message: 'Zadejte prosím nové heslo.')]
     #[Assert\Length(
-        min: 8,
+        min: self::MIN_LENGTH,
         max: 4096,
-        minMessage: 'Heslo musí mít alespoň {{ limit }} znaků.',
+        minMessage: 'Nové heslo musí mít alespoň {{ limit }} znaků — přidejte prosím další znaky.',
+        maxMessage: 'Nové heslo může mít nejvýše {{ limit }} znaků.',
     )]
     #[Assert\NotEqualTo(
         propertyPath: 'currentPassword',
-        message: 'Nové heslo se musí lišit od současného.',
+        message: 'Nové heslo je stejné jako současné — zvolte prosím jiné.',
     )]
     public ?string $newPassword = null;
 }

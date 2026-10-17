@@ -14,7 +14,7 @@ final class CompetitionMatchDeadlineFormData
     /** Admin-only — the field is built only when the form gets `with_opening`. */
     public ?\DateTimeImmutable $opensAt = null;
 
-    #[Assert\Length(max: CompetitionMatchSetting::OPENING_NOTE_MAX_LENGTH)]
+    #[Assert\Length(max: CompetitionMatchSetting::OPENING_NOTE_MAX_LENGTH, maxMessage: 'Text může mít nejvýš {{ limit }} znaků. Zkraťte ho prosím.')]
     public ?string $openingNote = null;
 
     public static function fromSetting(?CompetitionMatchSetting $setting): self

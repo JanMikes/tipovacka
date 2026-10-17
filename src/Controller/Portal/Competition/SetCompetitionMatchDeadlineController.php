@@ -16,6 +16,8 @@ use App\Repository\CompetitionRepository;
 use App\Repository\SportMatchRepository;
 use App\Voter\CompetitionVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
@@ -61,6 +63,11 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         $formData = new CompetitionMatchDeadlineFormData();
         $form = $this->createForm(CompetitionMatchDeadlineFormType::class, $formData, [
             'with_opening' => $isAdmin,
+            // Explicit, because a refused form is re-rendered on the match page.
+            'action' => $this->generateUrl('competition_sport_match_set_deadline', [
+                'competitionId' => $competition->id->toRfc4122(),
+                'sportMatchId' => $sportMatch->id->toRfc4122(),
+            ]),
         ]);
         $form->handleRequest($request);
 
@@ -69,10 +76,12 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
             'sportMatchId' => $sportMatch->id->toRfc4122(),
         ]);
 
-        if (!$form->isSubmitted() || !$form->isValid()) {
-            $this->addFlash('error', 'Neplatný vstup uzávěrky.');
-
+        if (!$form->isSubmitted()) {
             return $redirect;
+        }
+
+        if (!$form->isValid()) {
+            return $this->rejected($competition->id, $sportMatch->id, $form);
         }
 
         try {
@@ -88,17 +97,24 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         } catch (HandlerFailedException $e) {
             $previous = $e->getPrevious();
 
-            if ($previous instanceof CompetitionMatchDeadlineAfterKickoff
-                || $previous instanceof MatchNotInCompetition
-                || $previous instanceof CompetitionMatchOpeningAfterDeadline
-                || $previous instanceof CompetitionMatchOpeningNoteWithoutTime
-            ) {
+            if ($previous instanceof MatchNotInCompetition) {
                 $this->addFlash('error', $previous->getMessage());
 
                 return $redirect;
             }
 
-            throw $e;
+            // Each refusal is about ONE field — it goes under that field, with the
+            // typed values kept, rather than into a flash over a reset form.
+            $field = match (true) {
+                $previous instanceof CompetitionMatchDeadlineAfterKickoff => 'deadline',
+                $previous instanceof CompetitionMatchOpeningAfterDeadline => 'opensAt',
+                $previous instanceof CompetitionMatchOpeningNoteWithoutTime => 'openingNote',
+                default => throw $e,
+            };
+
+            $form->get($form->has($field) ? $field : 'deadline')->addError(new FormError($previous->getMessage()));
+
+            return $this->rejected($competition->id, $sportMatch->id, $form);
         }
 
         $this->addFlash(
@@ -109,5 +125,20 @@ final class SetCompetitionMatchDeadlineController extends AbstractController
         );
 
         return $redirect;
+    }
+
+    /**
+     * The match page, re-rendered (422) with this very form: values kept, the
+     * error under its field — {@see CompetitionMatchDetailController} takes it.
+     *
+     * @param FormInterface<mixed> $form
+     */
+    private function rejected(Uuid $competitionId, Uuid $sportMatchId, FormInterface $form): Response
+    {
+        return $this->forward(CompetitionMatchDetailController::class, [
+            'competitionId' => $competitionId->toRfc4122(),
+            'sportMatchId' => $sportMatchId->toRfc4122(),
+            'rejectedDeadlineForm' => $form,
+        ]);
     }
 }

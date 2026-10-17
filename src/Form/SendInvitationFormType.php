@@ -22,7 +22,8 @@ final class SendInvitationFormType extends AbstractType
             'attr' => [
                 'placeholder' => 'kamarad@example.com',
                 'autocomplete' => 'off',
-                'inputmode' => 'email',
+                'autocapitalize' => 'none',
+                'spellcheck' => 'false',
             ],
         ]);
     }

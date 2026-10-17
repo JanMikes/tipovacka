@@ -31,9 +31,19 @@ final class AdminUpdateMatchSourceController extends AbstractController
         $matchSource = $this->matchSourceRepository->get(Uuid::fromString($id));
         $this->denyAccessUnlessGranted(MatchSourceVoter::EDIT, $matchSource);
 
+        // UpdateMatchSourceHandler refuses a completed source (MatchSourceAlreadyCompleted,
+        // a bare 409 page). Say why up front and send the admin where it can be reopened.
+        if ($matchSource->isCompleted) {
+            $this->addFlash('warning', sprintf(
+                'Zdroj zápasů „%s“ je ukončený, proto ho nejde upravit. Pokud ho potřebujete změnit, nejprve ho v jeho detailu znovu otevřete.',
+                $matchSource->name,
+            ));
+
+            return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+        }
+
         $formData = MatchSourceFormData::fromMatchSource($matchSource);
-        $form = $this->createForm(MatchSourceFormType::class, $formData, [
-        ]);
+        $form = $this->createForm(MatchSourceFormType::class, $formData);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {

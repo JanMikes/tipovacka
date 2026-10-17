@@ -52,7 +52,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
             $body = $crawler->filter('body')->text();
 
             self::assertStringContainsString(
-                'Chystáš se připojit do soutěže '.$competitionName.'.',
+                'Chystáte se připojit do soutěže '.$competitionName.'.',
                 $body,
                 'The soutěž must still be named, with the period attached.',
             );
@@ -69,7 +69,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
 
         $client->request('GET', self::LINK_URL);
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Chystáš se připojit do soutěže');
+        self::assertSelectorTextContains('body', 'Chystáte se připojit do soutěže');
         self::assertSelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
 
         $user = $this->registerThroughLanding($client, InvitationKind::ShareableLink, AppFixtures::VERIFIED_COMPETITION_LINK_TOKEN, 'funnel-link@example.test', 'funnel_link');
@@ -113,7 +113,7 @@ final class InviteFunnelJourneyTest extends WebTestCase
         $client->submitForm('Pokračovat', ['join_by_pin_form[pin]' => AppFixtures::VERIFIED_COMPETITION_PIN]);
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('body', 'Chystáš se připojit do soutěže');
+        self::assertSelectorTextContains('body', 'Chystáte se připojit do soutěže');
         self::assertSelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
 
         $user = $this->registerThroughLanding($client, InvitationKind::Pin, AppFixtures::VERIFIED_COMPETITION_PIN, 'funnel-pin@example.test', 'funnel_pin');

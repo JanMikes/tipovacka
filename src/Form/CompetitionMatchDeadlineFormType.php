@@ -35,7 +35,8 @@ final class CompetitionMatchDeadlineFormType extends AbstractType
             // Stored in UTC, entered/displayed in Czech local time.
             'model_timezone' => 'UTC',
             'view_timezone' => 'Europe/Prague',
-            'help' => 'Vlastní uzávěrka tohoto zápasu — přepíše uzamčení soutěže, nejpozději do výkopu. Nechte prázdné pro výchozí pravidlo.',
+            'invalid_message' => 'Zadejte datum a čas ve tvaru RRRR-MM-DD HH:MM (např. 2025-06-20 18:00), nebo je vyberte v kalendáři.',
+            'help' => 'Vlastní uzávěrka tohoto zápasu (český čas) — přepíše uzamčení soutěže, nejpozději do výkopu. Nechte prázdné pro výchozí pravidlo.',
         ]);
 
         if (true !== $options['with_opening']) {
@@ -52,7 +53,8 @@ final class CompetitionMatchDeadlineFormType extends AbstractType
             'format' => 'yyyy-MM-dd HH:mm',
             'model_timezone' => 'UTC',
             'view_timezone' => 'Europe/Prague',
-            'help' => 'Do té doby zápas nikdo netipuje — je vidět v seznamu, ale bez políček na tip. Nechte prázdné, aby šel tipovat hned.',
+            'invalid_message' => 'Zadejte datum a čas ve tvaru RRRR-MM-DD HH:MM (např. 2025-06-20 18:00), nebo je vyberte v kalendáři.',
+            'help' => 'Český čas. Do té doby zápas nikdo netipuje — je vidět v seznamu, ale bez políček na tip. Musí být dřív než uzávěrka. Nechte prázdné, aby šel tipovat hned.',
         ]);
 
         $builder->add('openingNote', TextareaType::class, [

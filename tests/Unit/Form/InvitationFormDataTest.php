@@ -99,7 +99,7 @@ final class InvitationFormDataTest extends TestCase
 
         $violations = $this->validator->validate($data);
 
-        $this->assertHasViolation($violations, 'passwordConfirm', 'Hesla se musí shodovat.');
+        $this->assertHasViolation($violations, 'passwordConfirm', 'Hesla se neshodují. Zadejte do obou polí stejné heslo.');
     }
 
     public function testHasPasswordKindOnlyRequiresEmailAndPassword(): void

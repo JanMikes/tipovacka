@@ -89,8 +89,24 @@ trait ComposesMatchScope
     #[LiveProp(writable: true)]
     public string $selectedTeamIdsCsv = '';
 
+    /**
+     * A problem that belongs to no single input (a domain refusal at save time).
+     * Rendered at the top of the form.
+     */
     #[LiveProp]
     public ?string $errorMessage = null;
+
+    /**
+     * Input key → what is wrong with it and how to fix it, rendered NEXT TO that
+     * input (which also gets aria-invalid, so form-feedback takes the organizer
+     * straight to it). Keys: name, description, entryFee, sport, source, matches,
+     * teams, emails. A LiveProp so the message survives an unrelated re-render
+     * (picking a zdroj, toggling a mode) until the next attempt to move on.
+     *
+     * @var array<string, string>
+     */
+    #[LiveProp]
+    public array $fieldErrors = [];
 
     /**
      * The zdroj „Vlastní zápasy" already resolves to. Null in the wizard — the
@@ -406,24 +422,8 @@ trait ComposesMatchScope
     #[LiveAction]
     public function addLayer(): void
     {
-        $this->errorMessage = null;
-
-        $layer = $this->draftLayer();
-
-        if (null === $layer) {
-            return;
-        }
-
-        if (null !== $this->editingIndex && isset($this->layers[$this->editingIndex])) {
-            $this->layers[$this->editingIndex] = $layer;
-        } else {
-            $this->layers[] = $layer;
-        }
-
-        $this->resetDraft();
-        // Composing more than one zdroj is the exception, so the editor closes
-        // and the basket becomes the step. „Přidat zdroj" reopens it.
-        $this->draftOpen = false;
+        $this->clearErrors();
+        $this->commitDraft();
     }
 
     /**
@@ -435,9 +435,9 @@ trait ComposesMatchScope
     #[LiveAction]
     public function addLayerAndContinue(): void
     {
-        $this->addLayer();
+        $this->clearErrors();
 
-        if (null !== $this->errorMessage) {
+        if (!$this->commitDraft()) {
             return;
         }
 
@@ -454,7 +454,7 @@ trait ComposesMatchScope
 
         $layer = $this->layers[$index];
 
-        $this->errorMessage = null;
+        $this->clearErrors();
         $this->editingIndex = $index;
         $this->sourceId = $layer['sourceId'];
         $this->fromScratch = '' === $layer['sourceId'];
@@ -475,7 +475,7 @@ trait ComposesMatchScope
         $remaining = $this->layers;
         unset($remaining[$index]);
         $this->layers = array_values($remaining);
-        $this->errorMessage = null;
+        $this->clearErrors();
 
         if ([] === $this->layers) {
             $this->draftOpen = true;
@@ -486,7 +486,7 @@ trait ComposesMatchScope
     #[LiveAction]
     public function startLayer(): void
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
         $this->resetDraft();
         $this->draftOpen = true;
     }
@@ -499,7 +499,7 @@ trait ComposesMatchScope
     #[LiveAction]
     public function addOwnMatchesLayer(): void
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
 
         if ($this->hasOwnMatchesLayer) {
             return;
@@ -519,7 +519,7 @@ trait ComposesMatchScope
     #[LiveAction]
     public function cancelLayer(): void
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
         $this->resetDraft();
         $this->draftOpen = [] === $this->layers;
     }
@@ -548,24 +548,64 @@ trait ComposesMatchScope
     /**
      * Leaving the editor open with a usable zdroj commits it, so nobody has to
      * press „Přidat" before „Pokračovat" / „Uložit". Returns false when the
-     * commit failed (with `$errorMessage` set).
+     * commit failed (with the offending input flagged in `$fieldErrors`).
      */
     private function commitOpenDraft(): bool
     {
         if ($this->draftOpen && ($this->fromScratch || null !== $this->selectedSource)) {
-            $this->addLayer();
-
-            if (null !== $this->errorMessage) {
-                return false;
-            }
+            return $this->commitDraft();
         }
 
         return true;
     }
 
     /**
-     * The draft editor's current state as a basket layer, or null (with
-     * `$errorMessage` set) when it does not describe a usable one.
+     * Puts the draft editor into the basket — the ONE place a layer is added.
+     * Never clears earlier errors: the callers that validate a whole step have
+     * already flagged other inputs and the organizer should see them all at once.
+     */
+    private function commitDraft(): bool
+    {
+        $layer = $this->draftLayer();
+
+        if (null === $layer) {
+            return false;
+        }
+
+        if (null !== $this->editingIndex && isset($this->layers[$this->editingIndex])) {
+            $this->layers[$this->editingIndex] = $layer;
+        } else {
+            $this->layers[] = $layer;
+        }
+
+        $this->resetDraft();
+        // Composing more than one zdroj is the exception, so the editor closes
+        // and the basket becomes the step. „Přidat zdroj" reopens it.
+        $this->draftOpen = false;
+
+        return true;
+    }
+
+    private function clearErrors(): void
+    {
+        $this->errorMessage = null;
+        $this->fieldErrors = [];
+    }
+
+    /** Flags one input; the first message for an input wins. */
+    private function rejectField(string $field, string $message): void
+    {
+        $this->fieldErrors[$field] ??= $message;
+    }
+
+    public bool $hasErrors {
+        get => null !== $this->errorMessage || [] !== $this->fieldErrors;
+    }
+
+    /**
+     * The draft editor's current state as a basket layer, or null (with the
+     * offending input flagged in `$fieldErrors`) when it does not describe a
+     * usable one.
      *
      * @return array{sourceId: string, mode: string, includePlayoff: bool, matchIds: list<string>, teamIds: list<string>}|null
      */
@@ -584,7 +624,7 @@ trait ComposesMatchScope
         $source = $this->selectedSource;
 
         if (null === $source) {
-            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+            $this->rejectField('source', 'Vyberte prosím zdroj zápasů ze seznamu — rozpis, nad kterým se bude tipovat.');
 
             return null;
         }
@@ -592,10 +632,10 @@ trait ComposesMatchScope
         $locked = $this->lockedSport;
 
         if (null !== $locked && !$source->sport->id->equals($locked->id) && 0 !== $this->editingIndex) {
-            $this->errorMessage = sprintf(
-                'Soutěž může kombinovat jen zdroje stejného sportu — už jste vybrali %s.',
+            $this->rejectField('source', sprintf(
+                'Soutěž může kombinovat jen zdroje stejného sportu — už jste vybrali %s. Vyberte zdroj se stejným sportem.',
                 mb_strtolower($locked->name),
-            );
+            ));
 
             return null;
         }
@@ -604,13 +644,13 @@ trait ComposesMatchScope
         $teamIds = array_map(static fn (Uuid $id): string => $id->toRfc4122(), $this->filterTeamUuids());
 
         if ($this->isSubset && [] === $matchIds) {
-            $this->errorMessage = 'Vyberte prosím alespoň jeden zápas.';
+            $this->rejectField('matches', 'Vyberte prosím alespoň jeden zápas — zaškrtněte ty, které se mají tipovat, nebo zvolte „Všechny zápasy".');
 
             return null;
         }
 
         if ($this->isTeams && [] === $teamIds) {
-            $this->errorMessage = 'Vyberte prosím alespoň jeden tým.';
+            $this->rejectField('teams', 'Vyberte prosím alespoň jeden tým — začněte psát jeho název do pole a vyberte ho z nabídky, nebo zvolte „Všechny zápasy".');
 
             return null;
         }

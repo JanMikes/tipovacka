@@ -186,7 +186,7 @@ final readonly class UpdateCompetitionScopeHandler
             // A zdroj already feeding the soutěž may finish („poslední zápas")
             // without the soutěž losing it; a NEW one has to be live.
             if (!$matchSource->isActive && null === $competition->sourceFor($matchSource->id)) {
-                throw new \DomainException(sprintf('Zdroj zápasů „%s" už není aktivní, do soutěže ho přidat nelze.', $matchSource->name));
+                throw new \DomainException(sprintf('Zdroj zápasů „%s" už není aktivní, do soutěže ho přidat nelze. Odeberte ho prosím ze seznamu a vyberte jiný.', $matchSource->name));
             }
 
             $resolved[$key] = [$matchSource, $spec];

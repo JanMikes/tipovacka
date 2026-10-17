@@ -266,10 +266,13 @@ final class GuessSubmitFormComponentTest extends WebTestCase
             ->set('period2Away', 1)
             ->call('submit');
 
+        $html = (string) $component->render();
         self::assertStringContainsString(
-            'Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.',
-            (string) $component->render(),
+            'Součet tipů na poločasy (1:1) musí odpovídat tipu na celý zápas (2:1).',
+            $html,
         );
+        // The message sits on the period inputs, which are marked for the form-feedback controller.
+        self::assertMatchesRegularExpression('/data-model="period1Home"[^>]*aria-invalid="true"/s', $html);
     }
 
     public function testOverlongScorerNameIsRejectedInline(): void
@@ -292,9 +295,84 @@ final class GuessSubmitFormComponentTest extends WebTestCase
 
         // Czech 422 copy, no database driver exception.
         self::assertStringContainsString(
-            'Jméno hráče nesmí být delší než 120 znaků.',
+            'Jméno hráče nesmí být delší než 120 znaků',
             (string) $component->render(),
         );
+    }
+
+    public function testAMissingScoreNamesTheTeamAndMarksItsInput(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getUser($client, AppFixtures::SECOND_VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_SCHEDULED_ID),
+            'competitionId' => AppFixtures::SUBSET_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 2)->call('submit');
+
+        $html = (string) $component->render();
+        self::assertStringContainsString('Doplňte ještě skóre týmu Slavia Praha', $html);
+        self::assertMatchesRegularExpression('/data-model="awayScore"[^>]*aria-invalid="true"/s', $html);
+        self::assertDoesNotMatchRegularExpression('/data-model="homeScore"[^>]*aria-invalid="true"/s', $html);
+        self::assertStringContainsString('data-controller="form-feedback"', $html);
+        self::assertNull($this->subsetGuess($client));
+    }
+
+    public function testAnOutOfRangeScoreIsExplainedNextToItsInputNotAsAnEnglishError(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getUser($client, AppFixtures::SECOND_VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_SCHEDULED_ID),
+            'competitionId' => AppFixtures::SUBSET_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 120)->set('awayScore', 1)->call('submit');
+
+        $html = (string) $component->render();
+        self::assertStringContainsString(GuessSubmitForm::SCORE_RANGE_MESSAGE, $html);
+        self::assertStringContainsString('opravte prosím zvýrazněná políčka', $html);
+        self::assertStringNotContainsString('Component validation failed', $html);
+        self::assertMatchesRegularExpression('/data-model="homeScore"[^>]*aria-invalid="true"/s', $html);
+        self::assertNull($this->subsetGuess($client));
+    }
+
+    public function testASavedTipSaysUntilWhenItCanStillBeChanged(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getUser($client, AppFixtures::SECOND_VERIFIED_USER_ID));
+
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_SCHEDULED_ID),
+            'competitionId' => AppFixtures::SUBSET_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 2)->set('awayScore', 0)->call('submit');
+
+        // MATCH_SCHEDULED kicks off 2025-06-20 18:00 UTC = 20:00 Prague (its own deadline).
+        self::assertStringContainsString('Tip uložen. Změnit ho můžete do 20. 6. 2025 20:00.', (string) $component->render());
+    }
+
+    public function testATipRefusedByTheDomainIsShownInPlaceEvenWhenTheCardIsLocked(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getUser($client, AppFixtures::ADMIN_ID));
+
+        // MATCH_LIVE has kicked off: the card renders locked, and a submit that still
+        // arrives (form opened before the kickoff) must say why it was refused.
+        $component = $this->createLiveComponent('Guess:GuessSubmitForm', [
+            'sportMatch' => $this->getMatch($client, AppFixtures::MATCH_LIVE_ID),
+            'competitionId' => AppFixtures::PUBLIC_COMPETITION_ID,
+        ], $client);
+
+        $component->set('homeScore', 1)->set('awayScore', 0)->call('submit');
+
+        $html = (string) $component->render();
+        self::assertStringContainsString('Tip se neuložil:', $html);
+        self::assertStringContainsString('Tipování uzavřeno', $html);
     }
 
     private function enableOvertimeRuleForSubset(KernelBrowser $client): void

@@ -29,6 +29,7 @@ final class ResetPasswordFormType extends AbstractType
                 'attr' => [
                     'placeholder' => 'Zadejte nové heslo',
                     'autocomplete' => 'new-password',
+                    'autofocus' => true,
                 ],
             ],
             'second_options' => [
@@ -38,7 +39,7 @@ final class ResetPasswordFormType extends AbstractType
                     'autocomplete' => 'new-password',
                 ],
             ],
-            'invalid_message' => 'Hesla se musí shodovat.',
+            'invalid_message' => 'Hesla se neshodují. Zadejte do obou polí stejné heslo.',
         ]);
     }
 

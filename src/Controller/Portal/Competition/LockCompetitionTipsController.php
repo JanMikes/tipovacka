@@ -62,7 +62,7 @@ final class LockCompetitionTipsController extends AbstractController
             $raw = trim((string) $request->request->get('lock_at', ''));
 
             if ('' === $raw) {
-                $this->addFlash('error', 'Vyberte datum a čas uzamčení.');
+                $this->addFlash('error', 'Vyberte v kalendáři datum a čas, kdy se mají tipy uzamknout — nebo zvolte „Ihned".');
 
                 return $redirect;
             }
@@ -70,7 +70,7 @@ final class LockCompetitionTipsController extends AbstractController
             $lockAt = $this->parseLockAt($raw);
 
             if (null === $lockAt) {
-                $this->addFlash('error', 'Neplatný formát data a času uzamčení.');
+                $this->addFlash('error', 'Datum a čas uzamčení se nepodařilo přečíst. Vyberte je prosím v kalendáři (tvar RRRR-MM-DD HH:MM, český čas).');
 
                 return $redirect;
             }

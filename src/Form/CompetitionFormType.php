@@ -31,6 +31,7 @@ final class CompetitionFormType extends AbstractType
             'empty_data' => '',
             'attr' => [
                 'placeholder' => 'Např. Kámoši u piva',
+                'maxlength' => 160,
             ],
         ]);
 
@@ -60,7 +61,7 @@ final class CompetitionFormType extends AbstractType
         $builder->add('hideOthersTipsBeforeDeadline', CheckboxType::class, [
             'label' => 'Schovat tipy ostatních před uzávěrkou',
             'required' => false,
-            'help' => 'Když je zapnuto, ostatní členové uvidí tvůj tip až po uzávěrce zápasu. Ty samozřejmě vždy vidíš svoje.',
+            'help' => 'Když je zapnuto, členové uvidí tipy ostatních až po uzávěrce zápasu. Svůj vlastní tip vidí každý vždy.',
         ]);
 
         if (true !== $options['with_source_selection']) {

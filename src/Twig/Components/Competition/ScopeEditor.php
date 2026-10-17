@@ -15,6 +15,7 @@ use App\Service\Competition\MatchScopeCatalog;
 use App\Service\Competition\OwnMatchesSource;
 use App\Voter\CompetitionVoter;
 use App\Voter\MatchSourceVoter;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -60,6 +61,7 @@ final class ScopeEditor extends AbstractController
         private readonly OwnMatchesSource $ownMatchesSource,
         private readonly CompetitionMatchSelectionRepository $selectionRepository,
         private readonly CompetitionTeamFilterRepository $teamFilterRepository,
+        private readonly LoggerInterface $logger,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -137,7 +139,7 @@ final class ScopeEditor extends AbstractController
     #[LiveAction]
     public function save(): ?Response
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
         $this->denyAccessUnlessGranted(CompetitionVoter::EDIT, $this->competition);
 
         // An editor left open with a usable zdroj counts as „add it" — nobody has
@@ -147,7 +149,7 @@ final class ScopeEditor extends AbstractController
         }
 
         if ([] === $this->layers) {
-            $this->errorMessage = 'Soutěž musí mít aspoň jeden zdroj zápasů.';
+            $this->errorMessage = 'Soutěž musí mít aspoň jeden zdroj zápasů — přidejte ho tlačítkem „Přidat zdroj zápasů", nebo zvolte „Vlastní zápasy" a zápasy zadáte sami.';
 
             return null;
         }
@@ -173,8 +175,17 @@ final class ScopeEditor extends AbstractController
                 layers: $this->layerSpecs,
             ));
         } catch (HandlerFailedException $e) {
-            $previous = $e->getPrevious();
-            $this->errorMessage = null !== $previous ? $previous->getMessage() : $e->getMessage();
+            $refusal = $e->getPrevious();
+
+            // The domain's refusals are written for the organizer (sport mismatch,
+            // a zdroj that ended, a global soutěž); anything else is our failure —
+            // logged, and never shown as raw internals.
+            if ($refusal instanceof \DomainException) {
+                $this->errorMessage = $refusal->getMessage();
+            } else {
+                $this->logger->error('Saving the competition scope failed.', ['exception' => $e]);
+                $this->errorMessage = 'Zápasy soutěže se nepodařilo uložit kvůli chybě na naší straně. Zkuste to prosím za chvíli znovu.';
+            }
 
             return null;
         }

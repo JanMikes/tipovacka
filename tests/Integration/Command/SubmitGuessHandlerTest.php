@@ -51,7 +51,7 @@ final class SubmitGuessHandlerTest extends IntegrationTestCase
     public function testFailsWhenNotMember(): void
     {
         $this->expectException(HandlerFailedException::class);
-        $this->expectExceptionMessage('Nejsi členem');
+        $this->expectExceptionMessage('Nejste členem této soutěže');
 
         try {
             $this->commandBus()->dispatch(new SubmitGuessCommand(

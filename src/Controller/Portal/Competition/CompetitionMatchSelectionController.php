@@ -15,6 +15,7 @@ use App\Repository\CompetitionMatchSelectionRepository;
 use App\Repository\CompetitionRepository;
 use App\Repository\CompetitionTeamFilterRepository;
 use App\Repository\SportMatchRepository;
+use App\Value\TeamView;
 use App\Voter\CompetitionVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -130,22 +131,25 @@ final class CompetitionMatchSelectionController extends AbstractController
                 }
             }
 
+            // A refused selection is re-rendered AS SUBMITTED (422) with the reason
+            // above the checklist — a redirect would throw the organizer's ticks
+            // away and put the message in a flash above the saved state.
             if (0 === count($selectedMatchIds)) {
-                $this->addFlash('error', 'Vyberte prosím alespoň jeden zápas.');
-            } else {
-                try {
-                    $this->commandBus->dispatch(new UpdateCompetitionMatchSelectionCommand(
-                        editorId: $user->id,
-                        competitionId: $competition->id,
-                        selectedMatchIds: $selectedMatchIds,
-                        competitionSourceId: $layer->id,
-                    ));
-
-                    $this->addFlash('success', 'Výběr zápasů byl uložen.');
-                } catch (HandlerFailedException $e) {
-                    $this->flashDomainError($e);
-                }
+                return $this->renderSubset($competition, $layer, [], 'Soutěž musí mít v tomto zdroji aspoň jeden zápas. Zaškrtněte zápasy, které se mají tipovat — nebo zdroj ze soutěže odeberte v „Zápasy soutěže".');
             }
+
+            try {
+                $this->commandBus->dispatch(new UpdateCompetitionMatchSelectionCommand(
+                    editorId: $user->id,
+                    competitionId: $competition->id,
+                    selectedMatchIds: $selectedMatchIds,
+                    competitionSourceId: $layer->id,
+                ));
+            } catch (HandlerFailedException $e) {
+                return $this->renderSubset($competition, $layer, $selectedMatchIds, $this->domainRefusal($e));
+            }
+
+            $this->addFlash('success', 'Výběr zápasů byl uložen.');
 
             return $this->redirectToRoute('competition_match_selection', [
                 'id' => $competition->id->toRfc4122(),
@@ -153,7 +157,17 @@ final class CompetitionMatchSelectionController extends AbstractController
             ]);
         }
 
-        $selectedIds = array_flip($this->selectionRepository->selectedMatchIdsForLayer($layer->id));
+        return $this->renderSubset($competition, $layer, null, null);
+    }
+
+    /**
+     * @param list<Uuid>|null $submittedIds the ticks of a refused submit, or null for the saved selection
+     */
+    private function renderSubset(Competition $competition, CompetitionSource $layer, ?array $submittedIds, ?string $error): Response
+    {
+        $selectedIds = null === $submittedIds
+            ? array_flip($this->selectionRepository->selectedMatchIdsForLayer($layer->id))
+            : array_flip(array_map(static fn (Uuid $id): string => $id->toRfc4122(), $submittedIds));
 
         $selectable = array_values(array_filter(
             $this->sportMatchRepository->listByMatchSource($layer->matchSource->id),
@@ -176,7 +190,8 @@ final class CompetitionMatchSelectionController extends AbstractController
             'layers' => $this->manageableLayers($competition),
             'mode' => 'subset',
             'groups' => $groups,
-        ]);
+            'error' => $error,
+        ], new Response(status: null === $error ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 
     private function manageTeams(Request $request, Competition $competition, CompetitionSource $layer, User $user): Response
@@ -193,21 +208,21 @@ final class CompetitionMatchSelectionController extends AbstractController
             }
 
             if (0 === count($teamIds)) {
-                $this->addFlash('error', 'Vyberte prosím alespoň jeden tým.');
-            } else {
-                try {
-                    $this->commandBus->dispatch(new UpdateCompetitionTeamFilterCommand(
-                        editorId: $user->id,
-                        competitionId: $competition->id,
-                        teamIds: $teamIds,
-                        competitionSourceId: $layer->id,
-                    ));
-
-                    $this->addFlash('success', 'Filtr týmů byl uložen.');
-                } catch (HandlerFailedException $e) {
-                    $this->flashDomainError($e);
-                }
+                return $this->renderTeams($competition, $layer, [], 'Vyberte prosím alespoň jeden tým — začněte psát jeho název do pole a vyberte ho z nabídky. Soutěž bez týmu by neměla žádné zápasy.');
             }
+
+            try {
+                $this->commandBus->dispatch(new UpdateCompetitionTeamFilterCommand(
+                    editorId: $user->id,
+                    competitionId: $competition->id,
+                    teamIds: $teamIds,
+                    competitionSourceId: $layer->id,
+                ));
+            } catch (HandlerFailedException $e) {
+                return $this->renderTeams($competition, $layer, null, $this->domainRefusal($e));
+            }
+
+            $this->addFlash('success', 'Filtr týmů byl uložen.');
 
             return $this->redirectToRoute('competition_match_selection', [
                 'id' => $competition->id->toRfc4122(),
@@ -215,13 +230,22 @@ final class CompetitionMatchSelectionController extends AbstractController
             ]);
         }
 
+        return $this->renderTeams($competition, $layer, null, null);
+    }
+
+    /**
+     * @param list<TeamView>|null $submittedTeams the picks of a refused submit, or null for the saved filter
+     */
+    private function renderTeams(Competition $competition, CompetitionSource $layer, ?array $submittedTeams, ?string $error): Response
+    {
         return $this->render('portal/competition/match_selection.html.twig', [
             'competition' => $competition,
             'layer' => $layer,
             'layers' => $this->manageableLayers($competition),
             'mode' => 'teams',
-            'filter_teams' => $this->teamFilterRepository->teamViewsForLayer($layer->id),
-        ]);
+            'filter_teams' => $submittedTeams ?? $this->teamFilterRepository->teamViewsForLayer($layer->id),
+            'error' => $error,
+        ], new Response(status: null === $error ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 
     private function assertCsrf(Request $request, Competition $competition): void
@@ -233,15 +257,18 @@ final class CompetitionMatchSelectionController extends AbstractController
         }
     }
 
-    private function flashDomainError(HandlerFailedException $e): void
+    /**
+     * The domain's own words for a refused selection (MatchNotInCompetition /
+     * TeamNotInSource / the empty-selection guard) — written for the organizer.
+     */
+    private function domainRefusal(HandlerFailedException $e): string
     {
         $previous = $e->getPrevious();
 
-        // Covers MatchNotInCompetition / TeamNotInSource and the empty-selection guard.
         if (!$previous instanceof \DomainException) {
             throw $e;
         }
 
-        $this->addFlash('error', $previous->getMessage());
+        return $previous->getMessage();
     }
 }

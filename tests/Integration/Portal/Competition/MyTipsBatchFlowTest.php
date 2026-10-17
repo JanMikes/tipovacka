@@ -333,10 +333,10 @@ final class MyTipsBatchFlowTest extends WebTestCase
         $form['guesses['.$matchId.'][periods][1][home]'] = '1';
         $client->submit($form);
 
-        self::assertResponseRedirects();
-        $client->followRedirect();
+        // Rejected rows come back in place (422), not as a flash after a redirect.
+        self::assertResponseStatusCodeSame(422);
         self::assertStringContainsString(
-            'Vyplňte i celkové skóre zápasu.',
+            'Vyplňte i celkové skóre zápasu',
             (string) $client->getResponse()->getContent(),
         );
 
@@ -376,12 +376,91 @@ final class MyTipsBatchFlowTest extends WebTestCase
         $form['guesses['.$matchId.'][periods][2][away]'] = '1';
         $client->submit($form);
 
-        self::assertResponseRedirects();
-        $client->followRedirect();
+        self::assertResponseStatusCodeSame(422);
+        $crawler = $client->getCrawler();
         self::assertStringContainsString(
-            'Součet skóre za jednotlivé části musí odpovídat tipu na základní hrací dobu.',
+            'Součet tipů na poločasy (1:1) musí odpovídat tipu na celý zápas (2:1).',
             (string) $client->getResponse()->getContent(),
         );
+        // The period inputs are the ones marked, and they keep what was typed.
+        $period = $crawler->filter(sprintf('input[name="guesses[%s][periods][2][away]"]', $matchId));
+        self::assertSame('true', $period->attr('aria-invalid'));
+        self::assertSame('1', $period->attr('value'));
+        self::assertNull($crawler->filter(sprintf('input[name="guesses[%s][homeScore]"]', $matchId))->attr('aria-invalid'));
+    }
+
+    public function testARejectedRowKeepsWhatWasTypedAndTheOthersAreSaved(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $batchAction = '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/moje-tipy';
+        $crawler = $client->request('GET', $batchAction);
+        self::assertResponseIsSuccessful();
+
+        $form = $crawler->filter(sprintf('form[action="%s"]', $batchAction))->form();
+        $form['guesses['.AppFixtures::MATCH_SCHEDULED_ID.'][homeScore]'] = '120';
+        $form['guesses['.AppFixtures::MATCH_SCHEDULED_ID.'][awayScore]'] = '1';
+        $form['guesses['.AppFixtures::MATCH_PLAYOFF_ID.'][homeScore]'] = '2';
+        $form['guesses['.AppFixtures::MATCH_PLAYOFF_ID.'][awayScore]'] = '2';
+        $client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Uloženo tipů: 1.', $content);
+        self::assertStringContainsString('Jeden tip se neuložil', $content);
+        self::assertStringContainsString('Sparta Praha – Slavia Praha', $content);
+        self::assertStringContainsString('Skóre musí být celé číslo od 0 do 99.', $content);
+        self::assertStringContainsString('data-controller="form-feedback"', $content);
+
+        $home = $client->getCrawler()->filter(sprintf('input[name="guesses[%s][homeScore]"]', AppFixtures::MATCH_SCHEDULED_ID));
+        self::assertSame('120', $home->attr('value'));
+        self::assertSame('true', $home->attr('aria-invalid'));
+
+        $em->clear();
+        $saved = $em->createQueryBuilder()
+            ->select('g')->from(Guess::class, 'g')
+            ->where('g.user = :u')->andWhere('g.sportMatch = :m')->andWhere('g.competition = :c')
+            ->setParameter('u', Uuid::fromString(AppFixtures::ADMIN_ID))
+            ->setParameter('m', Uuid::fromString(AppFixtures::MATCH_PLAYOFF_ID))
+            ->setParameter('c', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
+            ->getQuery()->getOneOrNullResult();
+        self::assertInstanceOf(Guess::class, $saved);
+        $rejected = $em->createQueryBuilder()
+            ->select('g')->from(Guess::class, 'g')
+            ->where('g.user = :u')->andWhere('g.sportMatch = :m')->andWhere('g.competition = :c')
+            ->setParameter('u', Uuid::fromString(AppFixtures::ADMIN_ID))
+            ->setParameter('m', Uuid::fromString(AppFixtures::MATCH_SCHEDULED_ID))
+            ->setParameter('c', Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID))
+            ->getQuery()->getOneOrNullResult();
+        self::assertNull($rejected);
+    }
+
+    public function testAnExpiredFormKeepsEveryTypedTipInsteadOfA403(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $user = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($user);
+        $client->loginUser($user);
+
+        $batchAction = '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/moje-tipy';
+        $client->request('POST', $batchAction, [
+            '_token' => 'expired',
+            'guesses' => [AppFixtures::MATCH_PRIVATE_SCHEDULED_ID => ['homeScore' => '4', 'awayScore' => '3']],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Formulář mezitím vypršel', (string) $client->getResponse()->getContent());
+        $home = $client->getCrawler()->filter(sprintf('input[name="guesses[%s][homeScore]"]', AppFixtures::MATCH_PRIVATE_SCHEDULED_ID));
+        self::assertSame('4', $home->attr('value'));
     }
 
     private function findSubsetGuess(EntityManagerInterface $em, string $matchId): Guess

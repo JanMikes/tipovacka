@@ -78,9 +78,26 @@
                   competitionId: competition.id.toRfc4122,
                   memberId: selectedMember.id.toRfc4122,
               }) }}"
-              data-controller="tip-fill">
+              data-controller="tip-fill form-feedback" novalidate>
             <input type="hidden" name="_token"
                    value="{{ csrf_token('guess_on_behalf_batch_' ~ competition.id.toRfc4122 ~ '_' ~ selectedMember.id.toRfc4122) }}">
+
+            {# Rows the last save refused — re-rendered as typed, each reason also
+               under its own row. The rest of the batch was saved. #}
+            {% if row_errors|default([])|length > 0 %}
+                <div role="alert" tabindex="-1" data-form-feedback-target="summary"
+                     class="mb-4 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white/85 outline-none">
+                    <p class="flex items-center gap-2 font-semibold text-white">
+                        <twig:ux:icon name="lucide:circle-alert" class="h-4 w-4 shrink-0 text-loss" />
+                        Tyto tipy jsme neuložili — opravte je prosím a uložte znovu:
+                    </p>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        {% for match_key, message in row_errors %}
+                            <li><a href="#tip-{{ match_key }}-home" data-action="form-feedback#focusField" class="underline decoration-white/40 underline-offset-2 hover:decoration-white">{{ message }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
 
             <section class="card overflow-hidden p-0">
                 <header class="border-b border-white/[0.06] px-6 py-5">
@@ -133,6 +150,9 @@
 
                 <ul class="divide-y divide-white/[0.06]">
                     {% for row in rows %}
+                        {% set match_key = row.match.id.toRfc4122 %}
+                        {% set row_error = row_errors[match_key] ?? null %}
+                        {% set typed_row = typed[match_key] ?? null %}
                         <li class="flex flex-wrap items-center justify-between gap-4 px-6 py-5">
                             <div class="flex min-w-0 flex-1 items-center gap-3">
                                 <twig:TeamFlag :team="row.match.homeTeam" size="40" />
@@ -175,9 +195,11 @@
                                 {% endif %}
                                 <div class="flex items-center gap-2.5">
                                     <input type="number"
+                                           id="tip-{{ match_key }}-home"
                                            name="guesses[{{ row.match.id.toRfc4122 }}][homeScore]"
-                                           min="0" max="99"
-                                           value="{{ row.guess ? row.guess.homeScore : '' }}"
+                                           min="0" max="99" step="1" inputmode="numeric"
+                                           value="{{ typed_row is not null ? (typed_row.homeScore ?? '') : (row.guess ? row.guess.homeScore : '') }}"
+                                           {% if row_error %}aria-invalid="true" aria-describedby="tip-{{ match_key }}-error"{% endif %}
                                            class="score-input"
                                            data-tip-fill-target="score"
                                            data-match="{{ row.match.id.toRfc4122 }}"
@@ -185,8 +207,9 @@
                                     <span class="text-lg font-bold text-white/40">:</span>
                                     <input type="number"
                                            name="guesses[{{ row.match.id.toRfc4122 }}][awayScore]"
-                                           min="0" max="99"
-                                           value="{{ row.guess ? row.guess.awayScore : '' }}"
+                                           min="0" max="99" step="1" inputmode="numeric"
+                                           value="{{ typed_row is not null ? (typed_row.awayScore ?? '') : (row.guess ? row.guess.awayScore : '') }}"
+                                           {% if row_error %}aria-invalid="true" aria-describedby="tip-{{ match_key }}-error"{% endif %}
                                            class="score-input"
                                            data-tip-fill-target="score"
                                            data-match="{{ row.match.id.toRfc4122 }}"
@@ -200,15 +223,15 @@
                                                 {{ number }}. {{ sport.periodLabelSingular }}
                                                 <input type="number"
                                                        name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][home]"
-                                                       min="0" max="99"
-                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][0] : '' }}"
+                                                       min="0" max="99" step="1" inputmode="numeric"
+                                                       value="{{ typed_row is not null ? (typed_row.periods[number].home ?? '') : (guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][0] : '') }}"
                                                        class="input h-8 w-12 px-1 text-center text-sm"
                                                        aria-label="{{ number }}. {{ sport.periodLabelSingular }} – domácí">
                                                 <span class="text-white/30">:</span>
                                                 <input type="number"
                                                        name="guesses[{{ row.match.id.toRfc4122 }}][periods][{{ number }}][away]"
-                                                       min="0" max="99"
-                                                       value="{{ guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][1] : '' }}"
+                                                       min="0" max="99" step="1" inputmode="numeric"
+                                                       value="{{ typed_row is not null ? (typed_row.periods[number].away ?? '') : (guess_periods and guess_periods[number - 1] is defined ? guess_periods[number - 1][1] : '') }}"
                                                        class="input h-8 w-12 px-1 text-center text-sm"
                                                        aria-label="{{ number }}. {{ sport.periodLabelSingular }} – hosté">
                                             </span>
@@ -216,6 +239,11 @@
                                     </div>
                                 {% endif %}
                             </div>
+                            {% endif %}
+                            {% if row_error %}
+                                <div class="w-full">
+                                    {{ include('components/Competition/_field_error.html.twig', {message: row_error, id: 'tip-' ~ match_key ~ '-error'}) }}
+                                </div>
                             {% endif %}
                         </li>
                     {% endfor %}

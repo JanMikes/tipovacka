@@ -12,7 +12,7 @@
         </span>
         <h1 class="mt-2 text-2xl font-bold tracking-tight text-white">Zadejte PIN soutěže</h1>
         <p class="mt-2 text-sm leading-relaxed text-white/60">
-            Zadejte 8místný PIN, který vám dal organizátor. Ukážeme vám, do které soutěže se chystáte —
+            Zadejte 8místný PIN, který vám dal organizátor soutěže. Ukážeme vám, do které soutěže se chystáte —
             {% if app.user %}a rovnou vás připojíme.{% else %}účet si můžete založit hned potom.{% endif %}
         </p>
 
@@ -23,6 +23,7 @@
                     {{ form_label(form.pin, null, {label_attr: {class: 'field-label mb-1.5 block'}}) }}
                     {{ form_widget(form.pin, {attr: {class: 'input text-center font-mono text-lg tracking-[0.3em]'}}) }}
                     {{ form_errors(form.pin) }}
+                    {{ form_help(form.pin, {help_attr: {class: 'mt-1.5 text-xs text-white/45'}}) }}
                 </div>
 
                 <button type="submit" class="btn btn-primary w-full">

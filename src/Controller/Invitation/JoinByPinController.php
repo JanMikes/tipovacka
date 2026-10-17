@@ -37,6 +37,9 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/pripojit', name: 'competition_join_by_pin')]
 final class JoinByPinController extends AbstractController
 {
+    /** Shared with the 8-box PIN bar ({@see QuickJoinByPinController}), which lands here on a miss. */
+    public const string UNKNOWN_PIN = 'Soutěž s tímto PINem jsme nenašli. Zkontrolujte všech 8 číslic, případně si PIN ověřte u organizátora — mohl ho mezitím změnit.';
+
     public function __construct(
         private readonly InvitationContextResolver $contextResolver,
         private readonly InvitationAcceptanceService $acceptanceService,
@@ -58,7 +61,7 @@ final class JoinByPinController extends AbstractController
             try {
                 $context = $this->contextResolver->resolve(InvitationKind::Pin, $formData->pin, $now);
             } catch (InvalidPin) {
-                $form->get('pin')->addError(new FormError('Zadaný PIN neexistuje.'));
+                $form->get('pin')->addError(new FormError(self::UNKNOWN_PIN));
 
                 return $this->renderForm($form);
             }

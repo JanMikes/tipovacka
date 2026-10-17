@@ -6,14 +6,18 @@ namespace App\Controller\Portal\SportMatch;
 
 use App\Command\UpdateSportMatch\UpdateSportMatchCommand;
 use App\Entity\User;
+use App\Exception\SportMatchCannotBeEdited;
+use App\Exception\SportMatchTeamsLocked;
 use App\Form\SportMatchFormData;
 use App\Form\SportMatchFormType;
 use App\Repository\SportMatchRepository;
 use App\Service\Competition\ScopeReturn;
 use App\Voter\SportMatchVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -53,24 +57,43 @@ final class UpdateSportMatchController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->commandBus->dispatch(new UpdateSportMatchCommand(
-                sportMatchId: $sportMatch->id,
-                editorId: $user->id,
-                homeTeam: $formData->homeTeam,
-                awayTeam: $formData->awayTeam,
-                kickoffAt: $formData->kickoffAt,
-                venue: $formData->venue ?: null,
-                round: $formData->round ?: null,
-                isPlayoff: $formData->isPlayoff,
-            ));
+            // Captured before the command: the handler may already have swapped
+            // the teams on the (then rolled-back) entity when it refuses.
+            $currentHome = $sportMatch->homeTeam->name;
 
-            $this->addFlash('success', 'Zápas byl uložen.');
+            try {
+                $this->commandBus->dispatch(new UpdateSportMatchCommand(
+                    sportMatchId: $sportMatch->id,
+                    editorId: $user->id,
+                    homeTeam: $formData->homeTeam,
+                    awayTeam: $formData->awayTeam,
+                    kickoffAt: $formData->kickoffAt,
+                    venue: $formData->venue ?: null,
+                    round: $formData->round ?: null,
+                    isPlayoff: $formData->isPlayoff,
+                ));
 
-            if (null !== $scopeCompetitionId) {
-                return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+                $this->addFlash('success', 'Zápas byl uložen.');
+
+                if (null !== $scopeCompetitionId) {
+                    return $this->redirectToRoute('competition_scope', ['id' => $scopeCompetitionId]);
+                }
+
+                return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
+            } catch (HandlerFailedException $e) {
+                $refusal = $e->getPrevious();
+
+                // The domain's refusals are written for the organizer — put them on
+                // the field they are about (re-rendered with 422) instead of a 409 page.
+                if ($refusal instanceof SportMatchTeamsLocked) {
+                    $field = 0 !== strcasecmp(trim($formData->homeTeam), $currentHome) ? 'homeTeam' : 'awayTeam';
+                    $form->get($field)->addError(new FormError($refusal->getMessage()));
+                } elseif ($refusal instanceof SportMatchCannotBeEdited) {
+                    $form->addError(new FormError($refusal->getMessage()));
+                } else {
+                    throw $e;
+                }
             }
-
-            return $this->redirectToRoute('sport_match_detail', ['id' => $sportMatch->id->toRfc4122()]);
         }
 
         return $this->render('portal/sport_match/form.html.twig', [

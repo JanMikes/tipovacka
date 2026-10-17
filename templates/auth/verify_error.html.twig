@@ -16,7 +16,14 @@
         {{ errorMessage ?? 'Ověřovací odkaz je neplatný nebo vypršel.' }}
     </p>
 
-    {% if showResend is defined and showResend %}
+    {# A dead end is never the answer: every error offers the way to a fresh link —
+       a new verification mail (showResend) or any other retry (retryUrl + retryLabel). #}
+    {% if retryUrl is defined and retryUrl %}
+        <a href="{{ retryUrl }}" class="btn btn-primary mt-8 w-full">
+            <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
+            {{ retryLabel }}
+        </a>
+    {% elseif showResend is defined and showResend %}
         <a href="{{ path('app_verify_email_pending') }}" class="btn btn-primary mt-8 w-full">
             <twig:ux:icon name="lucide:mail" class="h-4 w-4" />
             Vyžádat nový ověřovací e-mail

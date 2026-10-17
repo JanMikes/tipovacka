@@ -49,6 +49,8 @@ final class SportMatchFormType extends AbstractType
 
         $builder->add('kickoffAt', DateTimeType::class, [
             'label' => 'Začátek zápasu',
+            'help' => 'Český čas. Tipovat jde jen do začátku zápasu — zápas zadaný se začátkem v minulosti už nikdo netipne.',
+            'invalid_message' => 'Zadejte datum a čas začátku ve tvaru RRRR-MM-DD HH:MM (český čas), např. 2026-05-10 18:00.',
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
             'with_seconds' => false,

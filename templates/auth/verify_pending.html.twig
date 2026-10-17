@@ -43,7 +43,16 @@
             Dokud e-mail neověříte, zůstane zbytek aplikace zamčený — soutěže, tipy ani žebříčky zatím nejsou dostupné.
         </p>
 
-        <form method="post" action="{{ path('app_resend_verification_email') }}" class="mt-8">
+        <div class="mt-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/60">
+            <p class="font-semibold text-white/80">E-mail nedorazil?</p>
+            <ul class="mt-1.5 list-disc space-y-1 pl-5">
+                <li>Podívejte se do složky Hromadné, Spam nebo Promoakce — odesílatelem je {{ brand_name }}.</li>
+                <li>Pošlete si ho znovu tlačítkem níže; fungovat bude odkaz z kteréhokoli z nich.</li>
+                <li>Spletli jste se v adrese? Napište nám na <a href="mailto:kontakt@wtips.cz" class="font-semibold text-accent-300 hover:text-white">kontakt@wtips.cz</a> a opravíme ji.</li>
+            </ul>
+        </div>
+
+        <form method="post" action="{{ path('app_resend_verification_email') }}" class="mt-6" data-controller="form-feedback">
             <input type="hidden" name="_token" value="{{ csrf_token('resend_verification') }}">
             <button type="submit" class="btn btn-primary w-full">
                 <twig:ux:icon name="lucide:mail" class="h-4 w-4" />

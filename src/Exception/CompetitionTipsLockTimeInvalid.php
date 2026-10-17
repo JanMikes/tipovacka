@@ -16,12 +16,12 @@ final class CompetitionTipsLockTimeInvalid extends \DomainException
 {
     public static function notInFuture(): self
     {
-        return new self('Čas uzamčení musí být v budoucnosti.');
+        return new self('Čas uzamčení musí být v budoucnosti. Vyberte pozdější čas, nebo zvolte „Ihned".');
     }
 
     public static function afterCompetitionStart(): self
     {
-        return new self('Uzamčení musí nastat dřív, než soutěž začne — tedy před výkopem prvního zápasu.');
+        return new self('Uzamčení musí nastat dřív, než soutěž začne — tedy před výkopem prvního zápasu. Vyberte dřívější čas.');
     }
 
     public static function alreadyLocked(): self

@@ -14,6 +14,7 @@ use App\Service\SportMatch\SportMatchImportSession;
 use App\Voter\SportMatchVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -60,11 +61,15 @@ final class BulkImportPreviewController extends AbstractController
                     $this->session->clear($matchSource->id);
                 }
             } catch (SportMatchImportFailed $e) {
-                $this->addFlash('error', $e->getMessage());
-
-                return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+                // On the file field itself (re-rendered with 422) — a redirect would
+                // drop the „soutez" return path and show the reason a screen away.
+                $form->get('file')->addError(new FormError($e->getMessage()));
+                $this->session->clear($matchSource->id);
             }
         }
+
+        // A preview with bad rows is a rejected import: 422, like any rejected form.
+        $rejected = null !== $preview && [] !== $preview->errors;
 
         return $this->render('portal/sport_match/import.html.twig', [
             'form' => $form,
@@ -72,6 +77,6 @@ final class BulkImportPreviewController extends AbstractController
             'preview' => $preview,
             // „Přišel jsem sem ze soutěže" — carried through upload → preview → commit.
             'scope_competition_id' => $this->scopeReturn->competitionId($request),
-        ]);
+        ], $rejected ? new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY) : null);
     }
 }

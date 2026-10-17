@@ -173,6 +173,11 @@ html { color-scheme: dark; }
     label.is-flagged input[type="checkbox"] {
         animation: field-flag 0.8s ease-out 2;
     }
+    /* form-feedback: a classic form on its way — the second tap is swallowed */
+    form[aria-busy="true"] :is(button[type="submit"], input[type="submit"]):not([formnovalidate]) {
+        opacity: 0.7;
+        cursor: progress;
+    }
     @media (prefers-reduced-motion: reduce) {
         .is-flagged :is(input, select, textarea), label.is-flagged input[type="checkbox"] { animation: none; }
     }

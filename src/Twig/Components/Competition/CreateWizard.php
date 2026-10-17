@@ -13,6 +13,9 @@ use App\Enum\BoostType;
 use App\Enum\CompetitionMatchSelectionMode;
 use App\Enum\CompetitionMonetization;
 use App\Enum\OvertimeCoverage;
+use App\Exception\CompetitionSourcesSportMismatch;
+use App\Exception\InvalidInvitationEmails;
+use App\Exception\TeamNotInSource;
 use App\Query\GetCreditWallet\GetCreditWallet;
 use App\Query\QueryBus;
 use App\Rule\OvertimeExactRule;
@@ -20,8 +23,10 @@ use App\Service\Competition\MatchScopeCatalog;
 use App\Service\Competition\PinGenerator;
 use App\Service\Competition\ShareableLinkTokenGenerator;
 use App\Service\Credits\PricingConfig;
+use App\Service\Invitation\CompetitionInviter;
 use App\Service\Scoring\RulePresetProvider;
 use App\Voter\MatchSourceVoter;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -58,6 +63,9 @@ final class CreateWizard extends AbstractController
     use DefaultActionTrait;
 
     private const int FIRST_STEP = 1;
+
+    /** Mirrors the `name` column (and the edit form's Length constraint). */
+    public const int NAME_MAX_LENGTH = 160;
 
     #[LiveProp]
     public int $step = self::FIRST_STEP;
@@ -118,6 +126,8 @@ final class CreateWizard extends AbstractController
         private readonly PinGenerator $pinGenerator,
         private readonly ShareableLinkTokenGenerator $linkTokenGenerator,
         private readonly QueryBus $queryBus,
+        private readonly CompetitionInviter $inviter,
+        private readonly LoggerInterface $logger,
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
     ) {
@@ -292,7 +302,7 @@ final class CreateWizard extends AbstractController
     #[LiveAction]
     public function next(): void
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
 
         if (!$this->validateStep($this->step)) {
             return;
@@ -309,7 +319,7 @@ final class CreateWizard extends AbstractController
     #[LiveAction]
     public function back(): void
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
 
         $sequence = $this->stepSequence;
         $index = array_search($this->step, $sequence, true);
@@ -335,7 +345,7 @@ final class CreateWizard extends AbstractController
         $this->fromScratch = false;
         $this->selectionMode = 'all';
         $this->monetization = CompetitionMonetization::None->value;
-        $this->errorMessage = null;
+        $this->clearErrors();
     }
 
     #[LiveAction]
@@ -343,7 +353,7 @@ final class CreateWizard extends AbstractController
     {
         $this->isGlobalKind = false;
         $this->monetization = CompetitionMonetization::Premium->value;
-        $this->errorMessage = null;
+        $this->clearErrors();
     }
 
     #[LiveAction]
@@ -355,11 +365,15 @@ final class CreateWizard extends AbstractController
     #[LiveAction]
     public function submit(): ?Response
     {
-        $this->errorMessage = null;
+        $this->clearErrors();
 
-        // Defensive re-validation of every gated step actually shown.
+        // Defensive re-validation of every gated step actually shown. A step that
+        // fails is brought back on screen — its message sits next to an input
+        // that the current step does not render.
         foreach ($this->stepSequence as $stepToValidate) {
             if (!$this->validateStep($stepToValidate)) {
+                $this->step = $stepToValidate;
+
                 return null;
             }
         }
@@ -373,7 +387,8 @@ final class CreateWizard extends AbstractController
         $specs = $this->layerSpecs;
 
         if ([] === $specs) {
-            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+            $this->step = self::FIRST_STEP;
+            $this->rejectField('source', 'Vyberte prosím zdroj zápasů.');
 
             return null;
         }
@@ -421,8 +436,7 @@ final class CreateWizard extends AbstractController
                 shareableLinkToken: $this->shareableLinkToken,
             ));
         } catch (HandlerFailedException $e) {
-            $previous = $e->getPrevious();
-            $this->errorMessage = null !== $previous ? $previous->getMessage() : $e->getMessage();
+            $this->explainRefusal($e);
 
             return null;
         }
@@ -461,7 +475,8 @@ final class CreateWizard extends AbstractController
         $first = $this->layerSpecs[0] ?? null;
 
         if (null === $first || null === $first->matchSourceId) {
-            $this->errorMessage = 'Vyberte prosím zdroj zápasů.';
+            $this->step = self::FIRST_STEP;
+            $this->rejectField('source', 'Vyberte prosím zdroj zápasů.');
 
             return null;
         }
@@ -483,8 +498,7 @@ final class CreateWizard extends AbstractController
                 filterTeamIds: $first->filterTeamIds,
             ));
         } catch (HandlerFailedException $e) {
-            $previous = $e->getPrevious();
-            $this->errorMessage = null !== $previous ? $previous->getMessage() : $e->getMessage();
+            $this->explainRefusal($e);
 
             return null;
         }
@@ -510,49 +524,122 @@ final class CreateWizard extends AbstractController
     {
         return match ($step) {
             1 => $this->validateBasics(),
+            2 => $this->validateRules(),
+            3 => $this->validateInvites(),
             default => true,
         };
     }
 
+    /**
+     * Step 1. Every problem is flagged at once, next to its own input — the
+     * organizer fixes the name AND picks a zdroj in one go instead of meeting the
+     * second refusal only after fixing the first.
+     */
     private function validateBasics(): bool
     {
-        if ('' === trim($this->name)) {
-            $this->errorMessage = 'Zadejte prosím název soutěže.';
+        $name = trim($this->name);
 
-            return false;
+        if ('' === $name) {
+            $this->rejectField('name', 'Zadejte prosím název soutěže — třeba „Kámoši u piva". Uvidí ho všichni, koho pozvete.');
+        } elseif (mb_strlen($name) > self::NAME_MAX_LENGTH) {
+            $this->rejectField('name', sprintf('Název soutěže může mít nejvýš %d znaků, teď jich má %d. Zkraťte ho prosím.', self::NAME_MAX_LENGTH, mb_strlen($name)));
         }
 
-        if (mb_strlen(trim($this->description)) > Competition::DESCRIPTION_MAX_LENGTH) {
-            $this->errorMessage = sprintf('Popis soutěže nesmí být delší než %d znaků.', Competition::DESCRIPTION_MAX_LENGTH);
+        $descriptionLength = mb_strlen(trim($this->description));
 
-            return false;
+        if ($descriptionLength > Competition::DESCRIPTION_MAX_LENGTH) {
+            $this->rejectField('description', sprintf('Popis soutěže může mít nejvýš %d znaků, teď jich má %d. Zkraťte ho prosím.', Competition::DESCRIPTION_MAX_LENGTH, $descriptionLength));
         }
 
         if ($this->isGlobalKind && $this->entryFeeCredits < 0) {
-            $this->errorMessage = 'Vstupné nesmí být záporné.';
-
-            return false;
+            $this->rejectField('entryFee', 'Vstupné nemůže být záporné. Zadejte počet kreditů, 0 znamená zdarma.');
         }
 
-        if ($this->fromScratch && null === $this->catalog->findSport(Uuid::fromString($this->sportId))) {
-            $this->errorMessage = 'Vyberte prosím sport.';
-
-            return false;
+        if ($this->fromScratch && (!Uuid::isValid($this->sportId) || null === $this->catalog->findSport(Uuid::fromString($this->sportId)))) {
+            $this->rejectField('sport', 'Vyberte prosím sport, který se v soutěži bude tipovat.');
         }
 
         // Leaving the step with the editor still open and usable commits it, so
         // the one-zdroj case never has to press „Přidat" before „Pokračovat".
-        if (!$this->commitOpenDraft()) {
-            return false;
+        if (!isset($this->fieldErrors['sport']) && $this->commitOpenDraft() && [] === $this->layers) {
+            $this->rejectField('source', $this->isGlobalKind
+                ? 'Vyberte zdroj zápasů ze seznamu — globální soutěž se tipuje nad jeho rozpisem.'
+                : 'Vyberte zdroj zápasů ze seznamu, nebo zaškrtněte „Vytvořit soutěž od začátku" a zápasy zadáte sami.');
         }
 
-        if ([] === $this->layers) {
-            $this->errorMessage = 'Vyberte zdroj zápasů, nebo zvolte „Vytvořit soutěž od začátku".';
+        return [] === $this->fieldErrors;
+    }
 
-            return false;
+    /**
+     * Step 2. Points are what the leaderboard is made of, so an out-of-range
+     * value is refused at its own input rather than silently clamped.
+     */
+    private function validateRules(): bool
+    {
+        foreach ($this->defaultPoints as $identifier => $default) {
+            $points = $this->rulePoints[$identifier] ?? $default;
+
+            if ($points < 0 || $points > RulePresetProvider::MAX_POINTS) {
+                $this->rejectField('rule_'.$identifier, sprintf('Zadejte celé číslo od 0 do %d.', RulePresetProvider::MAX_POINTS));
+            }
         }
 
-        return true;
+        return [] === $this->fieldErrors;
+    }
+
+    /**
+     * Step 3. A malformed address would roll the whole creation back at submit
+     * ({@see InvalidInvitationEmails}); refusing it HERE keeps the organizer on
+     * the textarea that holds it, with every bad line named.
+     */
+    private function validateInvites(): bool
+    {
+        if ($this->isGlobalKind || '' === trim($this->inviteEmailsRaw)) {
+            return true;
+        }
+
+        $malformed = $this->inviter->malformedAddresses([$this->inviteEmailsRaw]);
+
+        if ([] === $malformed) {
+            return true;
+        }
+
+        $this->rejectField('emails', InvalidInvitationEmails::withEmails(
+            array_map(static fn (array $entry): string => $entry['email'], $malformed),
+        )->getMessage());
+
+        return false;
+    }
+
+    /**
+     * A command the domain refused. Its own message is written for the organizer
+     * (it says what to change), and the step that can fix it is brought back;
+     * anything else is OUR failure — logged, and never shown as raw internals.
+     */
+    private function explainRefusal(HandlerFailedException $e): void
+    {
+        $refusal = $e->getPrevious();
+
+        if ($refusal instanceof InvalidInvitationEmails) {
+            $this->step = 3;
+            $this->rejectField('emails', $refusal->getMessage());
+
+            return;
+        }
+
+        if ($refusal instanceof \DomainException) {
+            // A refused basket is fixed where the basket is composed.
+            if ($refusal instanceof CompetitionSourcesSportMismatch || $refusal instanceof TeamNotInSource) {
+                $this->step = self::FIRST_STEP;
+            }
+
+            $this->errorMessage = $refusal->getMessage();
+
+            return;
+        }
+
+        $this->logger->error('Creating a competition from the wizard failed.', ['exception' => $e]);
+        $this->errorMessage = 'Soutěž se nepodařilo vytvořit kvůli chybě na naší straně. Nic jste neztratili — zkuste to prosím za chvíli znovu.';
     }
 
     /**
@@ -567,7 +654,7 @@ final class CreateWizard extends AbstractController
 
             $changes[$identifier] = [
                 'enabled' => in_array($identifier, $this->enabledRuleIds, true),
-                'points' => max(0, (int) $points),
+                'points' => min(RulePresetProvider::MAX_POINTS, max(0, (int) $points)),
             ];
         }
 

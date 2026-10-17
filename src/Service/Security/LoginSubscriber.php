@@ -137,7 +137,7 @@ final class LoginSubscriber implements EventSubscriberInterface
             return null;
         }
 
-        $flashBag?->add('success', 'Byl(a) jsi přidán(a) do soutěže.');
+        $flashBag?->add('success', 'Jste v soutěži — můžete začít tipovat.');
 
         return $this->competitionIdOf($envelope->last(HandledStamp::class)?->getResult());
     }
@@ -149,7 +149,7 @@ final class LoginSubscriber implements EventSubscriberInterface
     private function explain(?\Throwable $failure, ?FlashBagInterface $flashBag): void
     {
         if ($failure instanceof AlreadyMember) {
-            $flashBag?->add('info', 'V soutěži již jsi.');
+            $flashBag?->add('info', 'V této soutěži už jste.');
 
             return;
         }
@@ -159,24 +159,25 @@ final class LoginSubscriber implements EventSubscriberInterface
         // „nepodařilo se uplatnit" — nothing is broken, the wallet is just short. We do
         // not auto-join after a top-up anywhere, so there is nothing to remember here.
         if ($failure instanceof InsufficientCredits) {
-            $flashBag?->add('warning', 'Na vstupné do soutěže nemáš dost kreditů. Dobij si je a připoj se ze stránky soutěže.');
+            $flashBag?->add('warning', 'Na vstupné do soutěže nemáte dost kreditů. Dobijte si je a připojte se ze stránky soutěže.');
 
             return;
         }
 
-        $known = $failure instanceof InvalidShareableLink
-            || $failure instanceof InvalidPin
-            || $failure instanceof InvalidInvitationToken
-            || $failure instanceof CannotJoinFinishedMatchSource
-            || $failure instanceof CompetitionInvitationExpired
-            || $failure instanceof CompetitionInvitationAlreadyAccepted
-            || $failure instanceof CompetitionInvitationAlreadyRevoked;
+        // Each known outcome says WHY and what to do next — „se nepodařilo uplatnit"
+        // alone left a fresh account on the Nástěnka with no way forward.
+        $message = match (true) {
+            $failure instanceof CannotJoinFinishedMatchSource => 'Do soutěže, kam jste se chystali, se už připojit nejde — soutěž mezitím skončila.',
+            $failure instanceof CompetitionInvitationExpired => 'Pozvánka do soutěže mezitím vypršela. Požádejte organizátora o novou.',
+            $failure instanceof CompetitionInvitationAlreadyAccepted => 'Tuto pozvánku do soutěže už někdo přijal. Pokud to nejste vy, požádejte organizátora o novou.',
+            $failure instanceof CompetitionInvitationAlreadyRevoked,
+            $failure instanceof InvalidInvitationToken => 'Organizátor pozvánku do soutěže mezitím zrušil. Požádejte ho o novou.',
+            $failure instanceof InvalidShareableLink,
+            $failure instanceof InvalidPin => 'Odkaz nebo PIN do soutěže mezitím přestal platit — organizátor ho nejspíš změnil. Požádejte ho o nový.',
+            default => throw $failure ?? new \LogicException('Pending join failed without a cause.'),
+        };
 
-        if (!$known) {
-            throw $failure ?? new \LogicException('Pending join failed without a cause.');
-        }
-
-        $flashBag?->add('warning', 'Pozvánku do soutěže se nepodařilo uplatnit.');
+        $flashBag?->add('warning', $message);
     }
 
     private function competitionIdOf(mixed $result): ?Uuid

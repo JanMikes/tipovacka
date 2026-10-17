@@ -145,6 +145,32 @@ final class NotificationCenterFlowTest extends WebTestCase
         self::assertTrue($preference->inApp);
     }
 
+    /**
+     * Each toggle saves instantly — and now says so in place, since a flash from a Live
+     * action would only show on the next page load.
+     */
+    public function testPreferenceToggleConfirmsTheSaveInPlace(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+
+        $component = $this->createLiveComponent('Notification:Preferences', [], $this->client);
+        self::assertStringNotContainsString('Uloženo', (string) $component->render());
+
+        $rendered = (string) $component->call('toggle', ['type' => 'guess_reminder', 'channel' => 'email'])->render();
+
+        self::assertStringContainsString('Uloženo — '.NotificationType::GuessReminder->label().' e-mailem: vypnuto.', $rendered);
+    }
+
+    public function testUnknownPreferenceTypeIsIgnoredNotAServerError(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+
+        $component = $this->createLiveComponent('Notification:Preferences', [], $this->client);
+        $rendered = (string) $component->call('toggle', ['type' => 'no_such_type', 'channel' => 'email'])->render();
+
+        self::assertStringNotContainsString('Uloženo', $rendered);
+    }
+
     private function notifications(): NotificationRepository
     {
         /* @var NotificationRepository */

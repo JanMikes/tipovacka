@@ -38,7 +38,7 @@ final class InvitationFormData
         expression: 'this.userKind in ["new", "stub"]',
         constraints: [
             new Assert\NotBlank(message: 'Zopakujte prosím heslo.'),
-            new Assert\EqualTo(propertyPath: 'password', message: 'Hesla se musí shodovat.'),
+            new Assert\EqualTo(propertyPath: 'password', message: 'Hesla se neshodují. Zadejte do obou polí stejné heslo.'),
         ],
     )]
     public ?string $passwordConfirm = null;

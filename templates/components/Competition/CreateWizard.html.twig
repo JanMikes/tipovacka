@@ -23,8 +23,13 @@
     overtime: 'Tipovat vítěze po prodloužení či penaltách?',
 } %}
 
+{% set errors = fieldErrors %}
+
 <div {{ attributes }} class="mx-auto w-full max-w-3xl">
-    <div class="modal-panel !p-0">
+    {# A real <form> so form-feedback can take the organizer to the input that
+       stopped the step: „Pokračovat" / „Vytvořit" are its submit buttons (each
+       fires its Live action and prevents the native submit). #}
+    <form class="modal-panel !p-0" novalidate autocomplete="off" data-controller="form-feedback">
         {# ---- Stepper ---- #}
         <div class="border-b border-white/10 px-6 py-6 sm:px-8">
             <div class="stepper">
@@ -49,7 +54,8 @@
 
         <div class="px-6 py-7 sm:px-8">
             {% if errorMessage %}
-                <div class="mb-5 flex items-start gap-2 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white">
+                <div role="alert" tabindex="-1" data-form-feedback-target="summary"
+                     class="mb-5 flex items-start gap-2 rounded-xl border border-loss/40 bg-loss/10 px-4 py-3 text-sm text-white outline-none">
                     <twig:ux:icon name="lucide:circle-alert" class="mt-0.5 h-4 w-4 shrink-0 text-loss" />
                     <span>{{ errorMessage }}</span>
                 </div>
@@ -93,7 +99,10 @@
                     <div class="field">
                         <label class="field-label" for="wizard-name">Název soutěže</label>
                         <input id="wizard-name" type="text" class="input" placeholder="Např. Kámoši u piva"
-                               data-model="norender|name" value="{{ name }}" maxlength="160" />
+                               data-model="norender|name" value="{{ name }}" maxlength="{{ constant('App\\Twig\\Components\\Competition\\CreateWizard::NAME_MAX_LENGTH') }}"
+                               required autocomplete="off"
+                               {% if errors.name is defined %}aria-invalid="true" aria-describedby="wizard-name-error"{% endif %} />
+                        {{ include('components/Competition/_field_error.html.twig', {message: errors.name ?? null, id: 'wizard-name-error'}) }}
                     </div>
 
                     {# Popis soutěže (item 19) — nepovinný, uvidí ho členové v detailu soutěže. #}
@@ -101,14 +110,18 @@
                         <label class="field-label" for="wizard-description">Popis soutěže</label>
                         <textarea id="wizard-description" class="input" rows="3" placeholder="Stručný popis soutěže…"
                                   data-model="norender|description"
+                                  {% if errors.description is defined %}aria-invalid="true" aria-describedby="wizard-description-error"{% endif %}
                                   maxlength="{{ constant('App\\Entity\\Competition::DESCRIPTION_MAX_LENGTH') }}">{{ description }}</textarea>
-                        <p class="text-xs leading-relaxed text-white/50">Nepovinné. Uvidí ho členové v detailu soutěže.</p>
+                        {{ include('components/Competition/_field_error.html.twig', {message: errors.description ?? null, id: 'wizard-description-error'}) }}
+                        <p class="text-xs leading-relaxed text-white/50">Nepovinné, nejvýš {{ constant('App\\Entity\\Competition::DESCRIPTION_MAX_LENGTH') }} znaků. Uvidí ho členové v detailu soutěže.</p>
                     </div>
 
                     {% if isGlobalKind %}
                         <div class="field">
                             <label class="field-label" for="wizard-entry-fee">Vstupné (kredity)</label>
-                            <input id="wizard-entry-fee" type="number" min="0" class="input" data-model="entryFeeCredits" value="{{ entryFeeCredits }}" />
+                            <input id="wizard-entry-fee" type="number" min="0" step="1" inputmode="numeric" class="input" data-model="entryFeeCredits" value="{{ entryFeeCredits }}"
+                                   {% if errors.entryFee is defined %}aria-invalid="true" aria-describedby="wizard-entry-fee-error"{% endif %} />
+                            {{ include('components/Competition/_field_error.html.twig', {message: errors.entryFee ?? null, id: 'wizard-entry-fee-error'}) }}
                             <p class="text-xs leading-relaxed text-white/50">0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.</p>
                         </div>
                     {% endif %}
@@ -129,7 +142,7 @@
                 <div class="mb-6">
                     <span class="eyebrow">Krok {{ this.stepPosition }} ze {{ this.stepCount }}</span>
                     <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Vyberte pravidla</h2>
-                    <p class="mt-1 text-sm text-white/60">Bodování ovlivní pořadí v žebříčku. Hodnoty lze kdykoli upravit.</p>
+                    <p class="mt-1 text-sm text-white/60">Bodování ovlivní pořadí v žebříčku. Každé pravidlo dává 0 až {{ constant('App\\Service\\Scoring\\RulePresetProvider::MAX_POINTS') }} bodů; hodnoty lze kdykoli upravit.</p>
                 </div>
 
                 <div data-controller="scoring-preset"
@@ -164,9 +177,10 @@
                             </div>
                             {% for identifier in section.identifiers %}
                                 {% set copy = rule_copy[identifier] ?? { label: identifier, sub: null } %}
+                                {% set points_error = errors['rule_' ~ identifier] ?? null %}
                                 <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-white/[0.06] py-3 last:border-b-0">
                                     <div class="min-w-0">
-                                        <div class="field-label mb-0">{{ copy.label }}</div>
+                                        <div id="wizard-rule-{{ identifier }}-label" class="field-label mb-0 {{ points_error ? '!text-loss' }}">{{ copy.label }}</div>
                                         {% if copy.sub %}
                                             <div class="mt-1 text-[13px] font-medium text-white">{{ copy.sub }}</div>
                                         {% endif %}
@@ -182,11 +196,18 @@
                                                    {{ identifier in enabledRuleIds ? 'checked' }} />
                                             <span class="cursor-pointer">Aktivní</span>
                                         </label>
-                                        <input type="number" min="0" max="1000" class="num-input w-24"
+                                        <input type="number" min="0" max="{{ constant('App\\Service\\Scoring\\RulePresetProvider::MAX_POINTS') }}" step="1" inputmode="numeric" class="num-input w-24"
                                                data-model="norender|rulePoints.{{ identifier }}"
                                                data-scoring-preset-target="field" data-rule="{{ identifier }}"
+                                               aria-labelledby="wizard-rule-{{ identifier }}-label"
+                                               {% if points_error %}aria-invalid="true" aria-describedby="wizard-rule-{{ identifier }}-error"{% endif %}
                                                value="{{ rulePoints[identifier] ?? this.defaultPoints[identifier] }}" />
                                     </div>
+                                    {% if points_error %}
+                                        <div class="w-full">
+                                            {{ include('components/Competition/_field_error.html.twig', {message: points_error, id: 'wizard-rule-' ~ identifier ~ '-error'}) }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         {% endfor %}
@@ -239,8 +260,11 @@
                     <div class="field">
                         <label class="field-label" for="wizard-emails">Pozvat e-mailem</label>
                         <textarea id="wizard-emails" class="input" rows="3" placeholder="jan@example.com, petr@example.com…"
+                                  inputmode="email" autocapitalize="none" spellcheck="false"
+                                  {% if errors.emails is defined %}aria-invalid="true" aria-describedby="wizard-emails-error"{% endif %}
                                   data-model="norender|inviteEmailsRaw">{{ inviteEmailsRaw }}</textarea>
-                        <p class="text-xs leading-relaxed text-white/50">Adresy oddělte čárkou, mezerou nebo novým řádkem. Každý dostane pozvánku e-mailem.</p>
+                        {{ include('components/Competition/_field_error.html.twig', {message: errors.emails ?? null, id: 'wizard-emails-error'}) }}
+                        <p class="text-xs leading-relaxed text-white/50">Adresy oddělte čárkou, mezerou nebo novým řádkem. Každý dostane pozvánku e-mailem a místo v soutěži mu podržíme — než ji přijme, můžete za něj tipovat.</p>
                     </div>
                 </div>
 
@@ -385,14 +409,14 @@
             <div class="flex items-center gap-3">
                 {% if step == 3 %}
                     {# W3: bare „Přeskočit" — the step heading already says invites are optional. #}
-                    <button type="button" class="btn btn-link text-sm" data-action="live#action" data-live-action-param="next">Přeskočit</button>
+                    <button type="submit" class="btn btn-link text-sm" data-action="live#action:prevent" data-live-action-param="next">Přeskočit</button>
                 {% endif %}
                 {% if not this.isLastStep %}
-                    <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="next">
+                    <button type="submit" class="btn btn-primary" data-action="live#action:prevent" data-live-action-param="next">
                         Pokračovat<twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
                     </button>
                 {% else %}
-                    <button type="button" class="btn btn-primary" data-action="live#action" data-live-action-param="submit">
+                    <button type="submit" class="btn btn-primary" data-action="live#action:prevent" data-live-action-param="submit">
                         <twig:ux:icon name="lucide:party-popper" class="h-4 w-4" />
                         {# W4: no „Vytvořit a přispět" any more — the new step-4 copy charges
                            nothing at creation; Premium is activated later, if at all. #}
@@ -401,5 +425,5 @@
                 {% endif %}
             </div>
         </div>
-    </div>
+    </form>
 </div>

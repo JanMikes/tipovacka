@@ -18,6 +18,8 @@ final class ImportSportMatchesFormType extends AbstractType
     {
         $builder->add('file', FileType::class, [
             'label' => 'Soubor (XLSX nebo CSV)',
+            'help' => 'Nejvýš 2 MB.',
+            'attr' => ['accept' => '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'],
         ]);
     }
 

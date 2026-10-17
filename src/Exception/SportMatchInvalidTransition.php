@@ -12,10 +12,26 @@ final class SportMatchInvalidTransition extends \DomainException
 {
     public static function from(SportMatchState $currentState, string $attemptedTransition): self
     {
+        $state = match ($currentState) {
+            SportMatchState::Scheduled => 'Zápas je naplánovaný',
+            SportMatchState::Live => 'Zápas právě probíhá',
+            SportMatchState::Finished => 'Zápas už skončil',
+            SportMatchState::Postponed => 'Zápas je odložený',
+            SportMatchState::Cancelled => 'Zápas je zrušený',
+        };
+        $action = match ($attemptedTransition) {
+            'live' => 'zahájit',
+            'live_score' => 'zapsat průběžné skóre',
+            'postpone' => 'odložit',
+            'reschedule' => 'přesunout zpět do plánu',
+            'cancel' => 'zrušit',
+            default => 'takto změnit',
+        };
+
         return new self(sprintf(
-            'Neplatný přechod stavu zápasu: z "%s" nelze provést "%s".',
-            $currentState->value,
-            $attemptedTransition,
+            '%s, a tak ho teď nelze %s. Obnovte stránku — stav zápasu se mezitím nejspíš změnil.',
+            $state,
+            $action,
         ));
     }
 }

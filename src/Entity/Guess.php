@@ -227,7 +227,7 @@ class Guess implements EntityWithEvents, SoftDeletable
             // Mirror of the SportMatch invariant: the per-period tips must add
             // up to the main (regular-time) tip.
             if ($periodScores->sumHome() !== $homeScore || $periodScores->sumAway() !== $awayScore) {
-                throw InvalidGuessScore::periodSumMismatch();
+                throw InvalidGuessScore::periodSumMismatch($periodScores->sumHome(), $periodScores->sumAway(), $homeScore, $awayScore, $sport->periodLabelPlural);
             }
         }
 

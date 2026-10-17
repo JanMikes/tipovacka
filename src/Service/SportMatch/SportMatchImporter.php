@@ -46,7 +46,7 @@ final class SportMatchImporter
         $rows = $sheet->toArray(null, true, true, false);
 
         if ([] === $rows) {
-            throw SportMatchImportFailed::withMessage('Soubor je prázdný.');
+            throw SportMatchImportFailed::withMessage('Soubor je prázdný. Vyplňte do šablony aspoň jeden zápas a nahrajte ho znovu.');
         }
 
         $headerRow = array_shift($rows);
@@ -77,27 +77,31 @@ final class SportMatchImporter
             $rowErrors = [];
 
             if ('' === $home) {
-                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_HOME, 'Chybí domácí tým.');
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_HOME, 'Chybí domácí tým — doplňte jeho název.');
             } elseif (mb_strlen($home) > 120) {
-                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_HOME, 'Domácí tým je delší než 120 znaků.');
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_HOME, 'Název domácího týmu je delší než 120 znaků — zkraťte ho.');
             }
 
             if ('' === $away) {
-                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_AWAY, 'Chybí hostující tým.');
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_AWAY, 'Chybí hostující tým — doplňte jeho název.');
             } elseif (mb_strlen($away) > 120) {
-                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_AWAY, 'Hostující tým je delší než 120 znaků.');
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_AWAY, 'Název hostujícího týmu je delší než 120 znaků — zkraťte ho.');
+            }
+
+            if ('' !== $home && mb_strtolower($home) === mb_strtolower($away)) {
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_AWAY, sprintf('Tým „%s" nemůže hrát sám se sebou — opravte domácí nebo hostující tým.', $away));
             }
 
             $kickoffAt = null;
             if ('' === $kickoffRaw) {
-                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_KICKOFF, 'Chybí začátek zápasu.');
+                $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_KICKOFF, 'Chybí začátek zápasu — doplňte datum a čas, např. 2026-05-10 18:00.');
             } else {
                 $kickoffAt = $this->parseKickoff($kickoffRaw);
                 if (null === $kickoffAt) {
                     $rowErrors[] = new SportMatchImportError(
                         $rowNumber,
                         self::COLUMN_KICKOFF,
-                        sprintf('Neplatný formát data "%s". Očekáváno YYYY-MM-DD HH:MM.', $kickoffRaw),
+                        sprintf('Datum „%s" neumíme přečíst. Zapište ho jako RRRR-MM-DD HH:MM v českém čase, např. 2026-05-10 18:00.', $kickoffRaw),
                     );
                 }
             }
@@ -105,7 +109,7 @@ final class SportMatchImporter
             $venue = null;
             if ('' !== $venueRaw) {
                 if (mb_strlen($venueRaw) > 160) {
-                    $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_VENUE, 'Místo je delší než 160 znaků.');
+                    $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_VENUE, 'Místo je delší než 160 znaků — zkraťte ho.');
                 } else {
                     $venue = $venueRaw;
                 }
@@ -114,7 +118,7 @@ final class SportMatchImporter
             $round = null;
             if ('' !== $roundRaw) {
                 if (mb_strlen($roundRaw) > 120) {
-                    $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_ROUND, 'Kolo je delší než 120 znaků.');
+                    $rowErrors[] = new SportMatchImportError($rowNumber, self::COLUMN_ROUND, 'Kolo je delší než 120 znaků — zkraťte ho.');
                 } else {
                     $round = $roundRaw;
                 }
@@ -127,7 +131,7 @@ final class SportMatchImporter
                     $rowErrors[] = new SportMatchImportError(
                         $rowNumber,
                         self::COLUMN_PLAYOFF,
-                        sprintf('Neplatná hodnota "%s". Očekáváno ano/ne (případně 1/0), nebo prázdné pole.', $playoffRaw),
+                        sprintf('Hodnotě „%s" nerozumíme. Napište ano nebo ne (případně 1/0), nebo pole nechte prázdné.', $playoffRaw),
                     );
                 } else {
                     $isPlayoff = $parsedPlayoff;
@@ -242,7 +246,7 @@ final class SportMatchImporter
     {
         $path = $file->getRealPath();
         if (false === $path) {
-            throw SportMatchImportFailed::withMessage('Soubor nelze přečíst.');
+            throw SportMatchImportFailed::withMessage('Soubor se nepodařilo přečíst. Nahrajte ho prosím znovu.');
         }
 
         $extension = strtolower($file->getClientOriginalExtension());
@@ -250,8 +254,11 @@ final class SportMatchImporter
         try {
             if ('csv' === $extension) {
                 $reader = new CsvReader();
-                $reader->setInputEncoding('UTF-8');
-                $reader->setDelimiter(',');
+                // Czech Excel saves „CSV" as Windows-1250 separated by semicolons;
+                // the template is UTF-8 with commas. Accept both.
+                $reader->setInputEncoding(CsvReader::GUESS_ENCODING);
+                $reader->setFallbackEncoding('Windows-1250');
+                $reader->setDelimiter($this->sniffDelimiter($path));
                 $reader->setEnclosure('"');
 
                 return $reader->load($path);
@@ -259,7 +266,7 @@ final class SportMatchImporter
 
             return IOFactory::load($path);
         } catch (\Throwable $e) {
-            throw SportMatchImportFailed::withMessage(sprintf('Nelze načíst soubor: %s', $e->getMessage()));
+            throw SportMatchImportFailed::withMessage('Soubor se nepodařilo přečíst. Uložte ho prosím jako XLSX, nebo jako CSV oddělené čárkou či středníkem, a nahrajte znovu.', $e);
         }
     }
 
@@ -279,7 +286,7 @@ final class SportMatchImporter
         foreach ([self::COLUMN_HOME, self::COLUMN_AWAY, self::COLUMN_KICKOFF, self::COLUMN_VENUE] as $expected) {
             $columnIndex = array_search($expected, $normalised, true);
             if (false === $columnIndex) {
-                throw SportMatchImportFailed::withMessage(sprintf('Ve zdrojovém souboru chybí sloupec "%s".', $expected));
+                throw SportMatchImportFailed::withMessage(sprintf('V prvním řádku souboru chybí sloupec „%s". První řádek musí obsahovat názvy sloupců přesně jako šablona — stáhněte si ji a data do ní zkopírujte.', $expected));
             }
             $map[$expected] = $columnIndex;
         }
@@ -343,14 +350,39 @@ final class SportMatchImporter
     {
         // Times in the uploaded file are Czech local time; store them in UTC.
         $localTimezone = new \DateTimeZone('Europe/Prague');
+        // ISO as in the template, plus the Czech „10. 5. 2026 18:00" a spreadsheet
+        // shows (and hands over) for a date cell formatted the Czech way.
+        $normalised = (string) preg_replace('/\s*\.\s*/', '.', $raw);
 
-        foreach (['Y-m-d H:i', 'Y-m-d\TH:i', 'Y-m-d H:i:s'] as $format) {
-            $parsed = \DateTimeImmutable::createFromFormat($format, $raw, $localTimezone);
-            if ($parsed instanceof \DateTimeImmutable) {
+        foreach (['Y-m-d H:i', 'Y-m-d\TH:i', 'Y-m-d H:i:s', 'j.n.Y H:i', 'j.n.Y H:i:s'] as $format) {
+            $parsed = \DateTimeImmutable::createFromFormat('!'.$format, $normalised, $localTimezone);
+            $warnings = \DateTimeImmutable::getLastErrors();
+
+            // createFromFormat() silently rolls 2026-02-31 over to March — refuse it.
+            if ($parsed instanceof \DateTimeImmutable && (false === $warnings || 0 === $warnings['warning_count'])) {
                 return $parsed->setTimezone(new \DateTimeZone('UTC'));
             }
         }
 
         return null;
+    }
+
+    /**
+     * Semicolon or tab when the header line uses it more than commas, else comma.
+     * (PhpSpreadsheet's own inference also weighs „:", which every kickoff contains.).
+     */
+    private function sniffDelimiter(string $path): string
+    {
+        $handle = fopen($path, 'r');
+        $firstLine = false !== $handle ? (string) fgets($handle) : '';
+
+        if (false !== $handle) {
+            fclose($handle);
+        }
+
+        $counts = [',' => substr_count($firstLine, ','), ';' => substr_count($firstLine, ';'), "\t" => substr_count($firstLine, "\t")];
+        arsort($counts);
+
+        return 0 === reset($counts) ? ',' : (string) array_key_first($counts);
     }
 }

@@ -63,6 +63,47 @@ final class AdminCreditsFlowTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(422);
         self::assertAnySelectorTextContains('form', 'Nedostatek kreditů');
+        // …and how far the admin CAN go.
+        self::assertAnySelectorTextContains('form', 'Odeberte nejvýše');
+        self::assertSelectorExists('#adjust_credits_form_amount[aria-invalid="true"]');
+    }
+
+    public function testZeroAdjustmentSaysHowToFixIt(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::ADMIN_ID);
+
+        $this->client->request('POST', '/admin/uzivatele/'.AppFixtures::VERIFIED_USER_ID.'/kredity', [
+            'adjust_credits_form' => ['amount' => '0', 'note' => 'Korekce'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertAnySelectorTextContains('form', 'Úprava o 0 kreditů nic nezmění');
+        self::assertSelectorExists('#adjust_credits_form_amount[aria-invalid="true"]');
+    }
+
+    public function testFractionalAmountAsksForAWholeNumber(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::ADMIN_ID);
+
+        $this->client->request('POST', '/admin/uzivatele/'.AppFixtures::VERIFIED_USER_ID.'/kredity', [
+            'adjust_credits_form' => ['amount' => '12.5', 'note' => 'Korekce'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertAnySelectorTextContains('form', 'Zadejte celé číslo bez desetinných míst');
+    }
+
+    public function testAdjustmentAsksForConfirmationAndStatesItsLimits(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::ADMIN_ID);
+
+        $this->client->request('GET', '/admin/uzivatele/'.AppFixtures::VERIFIED_USER_ID.'/kredity');
+
+        self::assertResponseIsSuccessful();
+        // Money-moving: the confirm modal sits in front of the submit, next to form-feedback.
+        self::assertSelectorExists('form[data-controller~="confirm"][data-controller~="form-feedback"]');
+        self::assertSelectorExists('#adjust_credits_form_amount[min="-100000"][max="100000"][step="1"]');
+        self::assertAnySelectorTextContains('form', 'zůstatek nesmí klesnout pod nulu');
     }
 
     public function testNoteIsRequired(): void
@@ -74,7 +115,7 @@ final class AdminCreditsFlowTest extends WebTestCase
         ]);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertAnySelectorTextContains('form', 'Poznámka je povinná');
+        self::assertAnySelectorTextContains('form', 'Napište důvod úpravy');
     }
 
     public function testNonAdminCannotAdjustCredits(): void

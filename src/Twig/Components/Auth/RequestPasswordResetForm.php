@@ -7,6 +7,7 @@ namespace App\Twig\Components\Auth;
 use App\Command\RequestPasswordReset\RequestPasswordResetCommand;
 use App\Form\RequestPasswordResetFormData;
 use App\Form\RequestPasswordResetFormType;
+use App\Service\SignUp\EmailTypoSuggester;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormInterface;
@@ -23,9 +24,18 @@ final class RequestPasswordResetForm extends AbstractController
     use ComponentWithFormTrait;
     use DefaultActionTrait;
 
+    /**
+     * The address with its mailbox-domain typo corrected (seznam.cy → seznam.cz), if any —
+     * a mistyped domain is a valid address, so the reset mail would silently go nowhere.
+     */
+    public ?string $emailSuggestion {
+        get => $this->emailTypoSuggester->suggest((string) ($this->formValues['email'] ?? ''));
+    }
+
     public function __construct(
         #[Autowire(service: 'command.bus')]
         private readonly MessageBusInterface $commandBus,
+        private readonly EmailTypoSuggester $emailTypoSuggester,
     ) {
     }
 

@@ -130,11 +130,74 @@ final class ProfileEditFlowTest extends WebTestCase
             ],
         ], 'save')->render();
 
-        self::assertStringContainsString('Současné heslo není správné.', (string) $rendered);
+        self::assertStringContainsString('Současné heslo není správné — zkontrolujte překlepy a Caps Lock.', (string) $rendered);
 
         /** @var UserPasswordHasherInterface $hasher */
         $hasher = $client->getContainer()->get(UserPasswordHasherInterface::class);
         self::assertTrue($hasher->isPasswordValid($this->getVerifiedUser($client), AppFixtures::DEFAULT_PASSWORD));
+    }
+
+    /**
+     * A value that can never be a phone number is rejected next to the field, saying
+     * what to type — and nothing is saved.
+     */
+    public function testPhoneThatIsNotANumberIsRejectedWithAnExample(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getVerifiedUser($client));
+
+        $component = $this->createLiveComponent('Profile:ProfileForm', [], $client);
+        $client->catchExceptions(true);
+
+        $component->submitForm([
+            'profile_form' => [
+                'firstName' => 'Jan',
+                'lastName' => 'Novák',
+                'phone' => 'zavolej mi',
+            ],
+        ], 'save');
+
+        self::assertSame(422, $component->response()->getStatusCode());
+        $rendered = (string) $component->response()->getContent();
+        self::assertStringContainsString('Telefon zadejte jen číslicemi, případně s předvolbou a mezerami, např. +420 123 456 789.', $rendered);
+        self::assertMatchesRegularExpression('/name="profile_form\[phone\]"[^>]*aria-invalid="true"|aria-invalid="true"[^>]*name="profile_form\[phone\]"/', $rendered);
+        self::assertNotSame('zavolej mi', $this->getVerifiedUser($client)->phone);
+    }
+
+    public function testProfileFormStatesWhoSeesTheNameAndHowToWriteThePhone(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getVerifiedUser($client));
+
+        $rendered = (string) $this->createLiveComponent('Profile:ProfileForm', [], $client)->render();
+
+        self::assertStringContainsString('uvidí ostatní hráči vašich soutěží', $rendered);
+        self::assertStringContainsString('autocomplete="tel"', $rendered);
+        self::assertStringContainsString('maxlength="20"', $rendered);
+    }
+
+    public function testMismatchedNewPasswordsSayHowToFixIt(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->getVerifiedUser($client));
+
+        $component = $this->createLiveComponent('Profile:PasswordForm', [], $client);
+        $client->catchExceptions(true);
+
+        $component->submitForm([
+            'change_password_form' => [
+                'currentPassword' => AppFixtures::DEFAULT_PASSWORD,
+                'newPassword' => [
+                    'first' => 'brandnewpassword123',
+                    'second' => 'brandnewpassword124',
+                ],
+            ],
+        ], 'save');
+
+        self::assertSame(422, $component->response()->getStatusCode());
+        $rendered = (string) $component->response()->getContent();
+        self::assertStringContainsString('Hesla se neshodují. Zadejte do obou polí stejné heslo.', $rendered);
+        self::assertStringContainsString('Alespoň 8 znaků a jiné než současné heslo.', $rendered);
     }
 
     private function getVerifiedUser(KernelBrowser $client): User

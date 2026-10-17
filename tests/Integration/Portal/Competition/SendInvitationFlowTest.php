@@ -78,4 +78,51 @@ final class SendInvitationFlowTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
     }
+
+    /**
+     * A refused address comes back where it was typed — the settings page,
+     * re-rendered (422) with the value kept and the error under the field —
+     * not as a flash above an emptied field after a redirect.
+     */
+    public function testARejectedAddressIsShownUnderTheFieldWithTheValueKept(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->owner($client));
+
+        $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/nastaveni');
+        $client->submitForm('Odeslat pozvánku', [
+            'send_invitation_form[email]' => 'kamarad-bez-zavinace.example.com',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('#send_invitation_form_email[aria-invalid="true"][value="kamarad-bez-zavinace.example.com"]');
+        self::assertSelectorTextContains('.field', 'Zkontrolujte zavináč a doménu');
+    }
+
+    /** The player's copy of the form lives in the „Pozvat přítele" dialog, which reopens with the error. */
+    public function testARejectedAddressFromTheCompetitionPageReopensTheInviteDialog(): void
+    {
+        $client = static::createClient();
+        $client->loginUser($this->owner($client));
+
+        $client->request('POST', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/odeslat', [
+            'navrat' => 'detail',
+            'send_invitation_form' => ['email' => ''],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('#pozvat[data-modal-open-value="true"]');
+        self::assertSelectorExists('#pozvat #send_invitation_form_email[aria-invalid="true"]');
+        self::assertSelectorTextContains('#pozvat', 'Zadejte e-mailovou adresu člověka, kterého chcete pozvat.');
+    }
+
+    private function owner(\Symfony\Bundle\FrameworkBundle\KernelBrowser $client): User
+    {
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+
+        return $owner;
+    }
 }

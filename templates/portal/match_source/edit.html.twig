@@ -35,12 +35,14 @@
                 <div class="field">
                     {{ form_label(form.startAt, null, {label_attr: {class: 'field-label'}}) }}
                     {{ form_widget(form.startAt, {attr: {class: 'input'}}) }}
+                    {{ form_help(form.startAt) }}
                     {{ form_errors(form.startAt) }}
                 </div>
 
                 <div class="field">
                     {{ form_label(form.endAt, null, {label_attr: {class: 'field-label'}}) }}
                     {{ form_widget(form.endAt, {attr: {class: 'input'}}) }}
+                    {{ form_help(form.endAt) }}
                     {{ form_errors(form.endAt) }}
                 </div>
             </div>

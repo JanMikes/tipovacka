@@ -211,4 +211,34 @@ final class CompetitionMatchSelectionFlowTest extends WebTestCase
         $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/zapasy-vyber');
         self::assertResponseRedirects('/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/nastaveni');
     }
+
+    /**
+     * Unticking everything is refused AT the checklist: the page is re-rendered
+     * as submitted (422, nothing ticked) with the reason above the list — not a
+     * flash over a redirect that silently restores the saved ticks.
+     */
+    public function testAnEmptySelectionIsRefusedInlineWithTheChecklistAsSubmitted(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::SECOND_VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber');
+        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        self::assertIsString($token);
+        self::assertGreaterThan(0, $crawler->filter('input[name="matches[]"][checked]')->count());
+
+        $crawler = $client->request('POST', '/souteze/'.AppFixtures::SUBSET_COMPETITION_ID.'/zapasy-vyber', [
+            '_token' => $token,
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorTextContains('#selection-error', 'Soutěž musí mít v tomto zdroji aspoň jeden zápas.');
+        self::assertCount(0, $crawler->filter('input[name="matches[]"][checked]'));
+        self::assertCount(1, $crawler->filter('input[name="matches[]"][aria-invalid="true"]'));
+        self::assertSelectorExists('form[data-controller="form-feedback"]');
+    }
 }

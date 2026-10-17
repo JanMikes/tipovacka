@@ -85,7 +85,7 @@
                     {# Same CTA, same price, only the destination differs: a wallet that
                        cannot cover the boost goes to dobití first (item 23). Never a
                        „Chybí kredity" label — the offer is the offer. #}
-                    <a href="{{ path('credits') }}#dobit" class="dist-unlock group">
+                    <a href="{{ path('credits', {vylepseni: constant('App\\Enum\\BoostType::TipDistribution').value}) }}#dobit" class="dist-unlock group">
                         Odemknout za {{ stats.price }} kr.
                         <twig:ux:icon name="lucide:arrow-right" class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                     </a>
@@ -214,7 +214,7 @@
         {% else %}
             {# The strip is identical to the affordable one — same CTA, same price; it
                just leads to dobití instead of the confirm dialog (item 23). #}
-            <a href="{{ path('credits') }}#dobit" class="tip-stats-locked group">
+            <a href="{{ path('credits', {vylepseni: constant('App\\Enum\\BoostType::TipDistribution').value}) }}#dobit" class="tip-stats-locked group">
                 <span class="tip-stats-head">
                     <span class="pill pill-warn"><twig:ux:icon name="lucide:sparkles" class="h-3 w-3" />Vylepšení</span>
                     <span class="tip-stats-eyebrow">Jak tipují ostatní?</span>

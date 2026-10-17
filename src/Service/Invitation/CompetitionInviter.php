@@ -97,14 +97,9 @@ final readonly class CompetitionInviter
                 continue;
             }
 
-            $violations = $this->validator->validate($email, [
-                new Assert\Email(message: 'Neplatná e-mailová adresa.'),
-                new Assert\Length(max: 180, maxMessage: 'E-mail je příliš dlouhý.'),
-            ]);
+            $reason = $this->violationFor($email);
 
-            if (count($violations) > 0) {
-                $violation = $violations[0];
-                $reason = null !== $violation ? (string) $violation->getMessage() : 'Neplatná e-mailová adresa.';
+            if (null !== $reason) {
                 $invalid[] = ['email' => $email, 'reason' => $reason];
 
                 continue;
@@ -164,6 +159,56 @@ final readonly class CompetitionInviter
             alreadyPending: $alreadyPending,
             invalid: $invalid,
         );
+    }
+
+    /**
+     * The addresses {@see invite()} would refuse as malformed — WITHOUT touching
+     * anything. The create wizard asks before it leaves the invitations step, so
+     * the organizer fixes the very lines that are wrong while still looking at
+     * them, instead of meeting the refusal two steps later.
+     *
+     * @param list<string> $rawEntries same shape as for {@see invite()}
+     *
+     * @return list<array{email: string, reason: string}>
+     */
+    public function malformedAddresses(array $rawEntries): array
+    {
+        $invalid = [];
+        $seen = [];
+
+        foreach ($this->parseEmails($rawEntries) as $rawEntry) {
+            $email = strtolower(trim($rawEntry));
+
+            if ('' === $email || isset($seen[$email])) {
+                continue;
+            }
+            $seen[$email] = true;
+
+            $reason = $this->violationFor($email);
+
+            if (null !== $reason) {
+                $invalid[] = ['email' => $email, 'reason' => $reason];
+            }
+        }
+
+        return $invalid;
+    }
+
+    /** Why one (normalised) address cannot be invited, or null when it can. */
+    private function violationFor(string $email): ?string
+    {
+        $violations = $this->validator->validate($email, [
+            new Assert\Email(message: 'Neplatná e-mailová adresa.'),
+            new Assert\Length(max: 180, maxMessage: 'E-mail je příliš dlouhý.'),
+        ]);
+
+        if (0 === count($violations)) {
+            return null;
+        }
+
+        $violation = $violations[0];
+
+        return null !== $violation ? (string) $violation->getMessage() : 'Neplatná e-mailová adresa.';
     }
 
     /**

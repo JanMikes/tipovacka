@@ -114,7 +114,7 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
         $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/pravidla');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('form[data-controller="confirm-recalculation"][data-confirm-recalculation-count-value="1"]');
+        self::assertSelectorExists('form[data-controller~="confirm-recalculation"][data-confirm-recalculation-count-value="1"]');
     }
 
     public function testAdminCanUpdateRuleConfiguration(): void
@@ -156,6 +156,31 @@ final class CompetitionRuleConfigurationFlowTest extends WebTestCase
 
         self::assertCount(1, $configurations);
         self::assertSame(20, $configurations[0]->points);
+    }
+
+    /** Out-of-range points are refused at the rule's own row, its label marked, 422. */
+    public function testOutOfRangePointsAreRefusedInTheRuleRow(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $admin = $em->find(User::class, Uuid::fromString(AppFixtures::ADMIN_ID));
+        self::assertNotNull($admin);
+        $client->loginUser($admin);
+
+        $client->request('GET', '/souteze/'.AppFixtures::PUBLIC_COMPETITION_ID.'/pravidla');
+        $crawler = $client->submitForm('Uložit pravidla', [
+            'competition_rule_configuration_form[rules][exact_score][points]' => '5000',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        $input = $crawler->filter('#competition_rule_configuration_form_rules_exact_score_points');
+        self::assertSame('true', $input->attr('aria-invalid'));
+        self::assertSame('1000', $input->attr('max'));
+        self::assertStringContainsString(
+            'Jedno pravidlo může dát nejvýš 1000 bodů.',
+            (string) $input->closest('.flex-wrap')?->text(),
+        );
     }
 
     /**

@@ -28,6 +28,7 @@ use App\Value\TipWindow;
 use App\Voter\CompetitionVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -66,7 +67,13 @@ final class CompetitionDetailController extends AbstractController
     ) {
     }
 
-    public function __invoke(Request $request, string $id): Response
+    /**
+     * `$rejectedInvitationForm` is the „Pozvat přítele" form as {@see SendInvitationController}
+     * refused it: re-rendered (422) with its value and error, and the dialog open.
+     *
+     * @param FormInterface<mixed>|null $rejectedInvitationForm
+     */
+    public function __invoke(Request $request, string $id, ?FormInterface $rejectedInvitationForm = null): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -177,9 +184,9 @@ final class CompetitionDetailController extends AbstractController
         // it may be shown — an unbuilt form is one that cannot be posted by accident.
         $canInvite = $this->isGranted(CompetitionVoter::INVITE_MEMBER, $competition);
         $invitationForm = $canInvite
-            ? $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
+            ? ($rejectedInvitationForm ?? $this->createForm(SendInvitationFormType::class, new SendInvitationFormData(), [
                 'action' => $this->generateUrl('competition_invitation_send', ['id' => $competition->id->toRfc4122()]),
-            ])->createView()
+            ]))->createView()
             : null;
 
         // The card appears when there is ANY way in to hand over: an e-mail invitation, or
@@ -227,7 +234,8 @@ final class CompetitionDetailController extends AbstractController
             'leaderboard_my_row' => $myRow,
             'can_invite_panel' => $canInvitePanel,
             'invitation_form' => $invitationForm,
-        ]);
+            'invitation_rejected' => null !== $rejectedInvitationForm,
+        ], new Response(status: null === $rejectedInvitationForm ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 
     /**

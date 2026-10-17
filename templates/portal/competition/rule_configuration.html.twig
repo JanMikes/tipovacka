@@ -24,7 +24,8 @@
     }}) }}
 
     <p class="mb-4 text-sm leading-relaxed text-white/60">
-        Bodování ovlivní pořadí v žebříčku. Hodnoty lze kdykoli upravit.
+        Bodování ovlivní pořadí v žebříčku. Každé pravidlo dává 0 až {{ constant('App\\Service\\Scoring\\RulePresetProvider::MAX_POINTS') }} bodů; hodnoty lze kdykoli upravit
+        a už odehrané zápasy se po uložení přepočítají.
     </p>
 
     <div class="card-glass mb-6 p-5 sm:p-6">

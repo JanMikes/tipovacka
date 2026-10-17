@@ -133,7 +133,7 @@ final class VerifyEmailController extends AbstractController
                 'userId' => $userId,
             ]);
 
-            $this->addFlash('info', 'E-mail byl ověřen. Přihlas se prosím znovu.');
+            $this->addFlash('info', 'E-mail je ověřený. Přihlaste se prosím.');
 
             return $this->redirectToRoute('app_login');
         }
@@ -142,7 +142,7 @@ final class VerifyEmailController extends AbstractController
         // sets one (e.g. invitation/join intent handling). Honor it so we don't drop
         // the post-login redirect target on the floor.
         $loginResponse = $this->security->login($verifiedUser, firewallName: 'main');
-        $this->addFlash('success', 'E-mail byl úspěšně ověřen. Jsi přihlášen(a).');
+        $this->addFlash('success', 'E-mail je ověřený a jste přihlášeni. Vítejte!');
 
         return $loginResponse ?? $this->redirectToRoute('dashboard');
     }

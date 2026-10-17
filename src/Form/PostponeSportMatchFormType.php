@@ -18,6 +18,7 @@ final class PostponeSportMatchFormType extends AbstractType
     {
         $builder->add('newKickoffAt', DateTimeType::class, [
             'label' => 'Nový termín',
+            'invalid_message' => 'Zadejte nový termín ve tvaru RRRR-MM-DD HH:MM (český čas), např. 2026-05-10 18:00.',
             'widget' => 'single_text',
             'input' => 'datetime_immutable',
             'with_seconds' => false,

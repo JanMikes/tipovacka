@@ -11,10 +11,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 final class PeriodScoreFormData
 {
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
+    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné — zadejte 0 nebo víc.')]
     public ?int $homeScore = null;
 
-    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné.')]
+    #[Assert\GreaterThanOrEqual(value: 0, message: 'Skóre nemůže být záporné — zadejte 0 nebo víc.')]
     public ?int $awayScore = null;
 
     public bool $isEmpty {

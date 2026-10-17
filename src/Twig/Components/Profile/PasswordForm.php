@@ -63,7 +63,7 @@ final class PasswordForm extends AbstractController
             ));
         } catch (HandlerFailedException $e) {
             if ($e->getPrevious() instanceof InvalidCurrentPassword) {
-                $this->addInlineFormError('currentPassword', 'Současné heslo není správné.');
+                $this->addInlineFormError('currentPassword', 'Současné heslo není správné — zkontrolujte překlepy a Caps Lock.');
 
                 return null;
             }

@@ -9,14 +9,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class BuyCreditsFormData
 {
-    #[Assert\NotNull(message: 'Zadejte prosím počet kreditů.')]
+    #[Assert\NotNull(message: 'Zadejte prosím, kolik kreditů chcete dobít — nejméně '.InitiateCreditPurchaseCommand::MINIMUM_CREDITS.'.')]
     #[Assert\GreaterThanOrEqual(
         value: InitiateCreditPurchaseCommand::MINIMUM_CREDITS,
-        message: 'Minimální nákup je {{ compared_value }} kreditů.',
+        message: 'Minimální nákup je {{ compared_value }} kreditů ({{ compared_value }} Kč) — zadejte prosím {{ compared_value }} nebo víc.',
     )]
     #[Assert\LessThanOrEqual(
         value: InitiateCreditPurchaseCommand::MAXIMUM_CREDITS,
-        message: 'Maximální nákup je {{ compared_value }} kreditů.',
+        message: 'Najednou lze dobít nejvýše {{ compared_value }} kreditů — zadejte prosím menší počet, nebo nákup rozdělte do více plateb.',
     )]
     public ?int $credits = InitiateCreditPurchaseCommand::MINIMUM_CREDITS;
 }

@@ -35,10 +35,7 @@ final class PasswordResetController extends AbstractController
         $sessionToken = $this->getTokenFromSession();
 
         if (null === $sessionToken) {
-            return $this->render('auth/verify_error.html.twig', [
-                'errorMessage' => 'Nebyl nalezen žádný token pro obnovení hesla. Zkuste to znovu.',
-                'showResend' => false,
-            ]);
+            return $this->renderLinkError('Odkaz pro obnovení hesla jsme v tomto prohlížeči nenašli. Otevřete ho znovu z e-mailu, nebo si vyžádejte nový.');
         }
 
         try {
@@ -47,14 +44,20 @@ final class PasswordResetController extends AbstractController
         } catch (ResetPasswordExceptionInterface) {
             $this->cleanSessionAfterReset();
 
-            return $this->render('auth/verify_error.html.twig', [
-                'errorMessage' => 'Token pro obnovení hesla je neplatný nebo vypršel. Vyžádejte si nový.',
-                'showResend' => false,
-            ]);
+            return $this->renderLinkError('Odkaz pro obnovení hesla je neplatný nebo vypršel — platí 1 hodinu a použít jde jen jednou. Vyžádejte si nový, pošleme vám ho hned.');
         }
 
         return $this->render('auth/password_reset.html.twig', [
             'tokenLifetime' => $this->resetPasswordHelper->getTokenLifetime(),
+        ]);
+    }
+
+    private function renderLinkError(string $message): Response
+    {
+        return $this->render('auth/verify_error.html.twig', [
+            'errorMessage' => $message,
+            'retryUrl' => $this->generateUrl('app_forgot_password_request'),
+            'retryLabel' => 'Poslat nový odkaz pro obnovení hesla',
         ]);
     }
 }

@@ -151,4 +151,51 @@ final class ManageMemberTipsFlowTest extends WebTestCase
         $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy');
         self::assertResponseStatusCodeSame(403);
     }
+
+    /**
+     * A half-filled row is refused AT that row: the page is re-rendered (422)
+     * with what was typed, the reason under the row and in a summary — not a
+     * flash over a redirect that resets every input to the saved state.
+     */
+    public function testAHalfFilledRowComesBackAsTypedWithItsReasonUnderIt(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        $competition = $em->find(Competition::class, Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID));
+        $unverified = $em->find(User::class, Uuid::fromString(AppFixtures::UNVERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        self::assertNotNull($competition);
+        self::assertNotNull($unverified);
+
+        $membership = new Membership(
+            id: Uuid::v7(),
+            competition: $competition,
+            user: $unverified,
+            joinedAt: new \DateTimeImmutable('2025-06-15 12:00:00 UTC'),
+        );
+        $membership->popEvents();
+        $em->persist($membership);
+        $em->flush();
+
+        $client->loginUser($owner);
+
+        $crawler = $client->request('GET', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/spravovat-tipy?member='.AppFixtures::UNVERIFIED_USER_ID);
+        $form = $crawler->filter(sprintf(
+            'form[action="/souteze/%s/spravovat-tipy/%s"]',
+            AppFixtures::VERIFIED_COMPETITION_ID,
+            AppFixtures::UNVERIFIED_USER_ID,
+        ))->form();
+        $form['guesses['.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'][homeScore]'] = '3';
+        $crawler = $client->submit($form);
+
+        self::assertResponseStatusCodeSame(422);
+        $home = $crawler->filter('#tip-'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'-home');
+        self::assertSame('3', $home->attr('value'));
+        self::assertSame('true', $home->attr('aria-invalid'));
+        self::assertSelectorTextContains('#tip-'.AppFixtures::MATCH_PRIVATE_SCHEDULED_ID.'-error', 'Vyplňte prosím obě skóre');
+        self::assertSelectorTextContains('[data-form-feedback-target="summary"]', 'Tyto tipy jsme neuložili');
+    }
 }

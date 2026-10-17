@@ -35,6 +35,9 @@ final class GlobalCompetitionFormType extends AbstractType
                 'class' => MatchSource::class,
                 'choice_label' => 'name',
                 'placeholder' => 'Vyberte zdroj zápasů…',
+                'help' => 'Jen aktivní kurátorované zdroje. Po vytvoření soutěže už zdroj změnit nejde.',
+                // The source got completed or deleted between render and submit.
+                'invalid_message' => 'Vybraný zdroj zápasů už není k dispozici (byl ukončen nebo smazán). Vyberte prosím jiný.',
                 'query_builder' => static fn (EntityRepository $repository): QueryBuilder => $repository->createQueryBuilder('t')
                     ->where('t.kind = :kind')
                     ->andWhere('t.completedAt IS NULL')
@@ -46,7 +49,10 @@ final class GlobalCompetitionFormType extends AbstractType
             $builder->add('name', TextType::class, [
                 'label' => 'Název soutěže',
                 'empty_data' => '',
-                'attr' => ['placeholder' => 'Např. Tipovačka Ligy mistrů'],
+                'attr' => [
+                    'placeholder' => 'Např. Tipovačka Ligy mistrů',
+                    'maxlength' => GlobalCompetitionFormData::NAME_MAX_LENGTH,
+                ],
             ]);
 
             // Item 19: the description travels with the name — both are set here
@@ -66,9 +72,10 @@ final class GlobalCompetitionFormType extends AbstractType
 
         $builder->add('entryFeeCredits', IntegerType::class, [
             'label' => 'Vstupné (kredity)',
-            'help' => '0 = zdarma. Vstupné se strhne jednou při připojení a je nevratné.',
+            'help' => 'Celé číslo, 1 kredit = 1 Kč; 0 = zdarma. Strhne se hráči jednou při připojení a je nevratné. Jakmile se připojí první hráč, vstupné ani monetizaci už nezměníte.',
             'empty_data' => '0',
-            'attr' => ['min' => 0],
+            'invalid_message' => 'Vstupné zadejte jako celé číslo kreditů bez desetinných míst, např. 0 nebo 50.',
+            'attr' => ['min' => 0, 'step' => 1],
         ]);
 
         // Expanded (radio) so the admin templates can render explained cards — a

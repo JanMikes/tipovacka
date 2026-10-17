@@ -19,6 +19,11 @@ final class InvalidInvitationEmails extends \DomainException
      */
     public static function withEmails(array $emails): self
     {
-        return new self(sprintf('Neplatné e-mailové adresy: %s.', implode(', ', $emails)));
+        return new self(sprintf(
+            1 === count($emails)
+                ? 'Adresa %s není platný e-mail. Opravte ji (zkontrolujte zavináč a doménu, např. jmeno@seznam.cz), nebo ji ze seznamu smažte.'
+                : 'Tyto adresy nejsou platné e-maily: %s. Opravte je (zkontrolujte zavináč a doménu, např. jmeno@seznam.cz), nebo je ze seznamu smažte.',
+            implode(', ', $emails),
+        ));
     }
 }

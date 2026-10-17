@@ -34,6 +34,7 @@ use App\Voter\GuessVotingContext;
 use App\Voter\SportMatchVoter;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -93,7 +94,14 @@ final class CompetitionMatchDetailController extends AbstractController
     ) {
     }
 
-    public function __invoke(string $competitionId, string $sportMatchId, Request $request): Response
+    /**
+     * `$rejectedDeadlineForm` is the organizer's „Tipování tohoto zápasu" form as
+     * {@see SetCompetitionMatchDeadlineController} refused it — re-rendered (422)
+     * with the typed values and the error under its field.
+     *
+     * @param FormInterface<mixed>|null $rejectedDeadlineForm
+     */
+    public function __invoke(string $competitionId, string $sportMatchId, Request $request, ?FormInterface $rejectedDeadlineForm = null): Response
     {
         /** @var User $currentUser */
         $currentUser = $this->getUser();
@@ -199,9 +207,9 @@ final class CompetitionMatchDetailController extends AbstractController
                 competitionId: $competition->id,
                 teamIds: [$sportMatch->homeTeam->id, $sportMatch->awayTeam->id],
             )),
-            'deadline_form' => $this->deadlineForm($competition, $sportMatch),
+            'deadline_form' => $this->deadlineForm($competition, $sportMatch, $rejectedDeadlineForm),
             'current_user_id' => $currentUser->id,
-        ]);
+        ], new Response(status: null === $rejectedDeadlineForm ? Response::HTTP_OK : Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 
     /**
@@ -325,10 +333,17 @@ final class CompetitionMatchDetailController extends AbstractController
         return $rows;
     }
 
-    private function deadlineForm(Competition $competition, SportMatch $sportMatch): ?\Symfony\Component\Form\FormView
+    /**
+     * @param FormInterface<mixed>|null $rejected
+     */
+    private function deadlineForm(Competition $competition, SportMatch $sportMatch, ?FormInterface $rejected): ?\Symfony\Component\Form\FormView
     {
         if (!$this->isGranted(CompetitionVoter::EDIT, $competition)) {
             return null;
+        }
+
+        if (null !== $rejected) {
+            return $rejected->createView();
         }
 
         $existingSetting = $this->competitionMatchSettingRepository->findByCompetitionAndMatch(

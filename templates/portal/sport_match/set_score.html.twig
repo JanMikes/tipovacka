@@ -13,8 +13,8 @@
         <button type="button" class="btn btn-ghost btn-sm shrink-0 px-2" data-action="score-entry#removeRow" title="Odebrat řádek" aria-label="Odebrat řádek">
             <twig:ux:icon name="lucide:x" class="h-4 w-4" />
         </button>
-        {{ form_errors(row.minute) }}
-        {{ form_errors(row.playerName) }}
+        {# Errors on their own full-width line under the row, never squeezed between the inputs. #}
+        <div class="basis-full empty:hidden">{{ form_errors(row.type) }}{{ form_errors(row.side) }}{{ form_errors(row.minute) }}{{ form_errors(row.playerName) }}</div>
     </div>
 {% endmacro %}
 
@@ -48,7 +48,8 @@
             <div class="card-glass p-6 sm:p-8">
                 {{ form_start(form, {attr: {class: 'space-y-8', novalidate: 'novalidate'}}) }}
 
-                    {{ form_errors(form) }}
+                    {# Root errors (the domain refusing the result) are listed in the error
+                       summary the form theme renders at the top of a rejected form. #}
 
                     {# ── State: Probíhá / Ukončený toggle, or a static pill when
                           the match can no longer run live (finished correction) ── #}
@@ -117,15 +118,20 @@
                     {# ── Period scores (labels per sport) ───────────────────── #}
                     <fieldset class="field">
                         <legend class="field-label">{{ sport.periodLabelPlural|capitalize }} <span class="font-normal normal-case text-white/40">(nepovinné)</span></legend>
+                        <p class="mb-2 text-xs text-white/50">Vyplňujte postupně od první části. U ukončeného zápasu buď všechny {{ sport.periodLabelPlural }}, nebo žádnou — jejich součet musí sedět s konečným skóre.</p>
                         <div class="space-y-2">
                             {% for periodForm in form.periods %}
-                                <div class="flex items-center gap-3">
-                                    <span class="w-28 shrink-0 text-sm text-white/70">{{ loop.index }}. {{ sport.periodLabelSingular }}</span>
-                                    {{ form_widget(periodForm.homeScore, {attr: {class: 'input w-16 text-center'}}) }}
-                                    <span class="text-white/40">:</span>
-                                    {{ form_widget(periodForm.awayScore, {attr: {class: 'input w-16 text-center'}}) }}
-                                    {{ form_errors(periodForm.homeScore) }}
-                                    {{ form_errors(periodForm.awayScore) }}
+                                <div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-28 shrink-0 text-sm text-white/70">{{ loop.index }}. {{ sport.periodLabelSingular }}</span>
+                                        {{ form_widget(periodForm.homeScore, {attr: {class: 'input w-16 text-center', 'aria-label': loop.index ~ '. ' ~ sport.periodLabelSingular ~ ' – ' ~ sport_match.homeTeam.name}}) }}
+                                        <span class="text-white/40">:</span>
+                                        {{ form_widget(periodForm.awayScore, {attr: {class: 'input w-16 text-center', 'aria-label': loop.index ~ '. ' ~ sport.periodLabelSingular ~ ' – ' ~ sport_match.awayTeam.name}}) }}
+                                    </div>
+                                    <div class="pl-[7.75rem]">
+                                        {{ form_errors(periodForm.homeScore) }}
+                                        {{ form_errors(periodForm.awayScore) }}
+                                    </div>
                                 </div>
                             {% endfor %}
                         </div>

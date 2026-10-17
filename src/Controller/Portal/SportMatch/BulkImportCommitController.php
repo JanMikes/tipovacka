@@ -45,17 +45,17 @@ final class BulkImportCommitController extends AbstractController
         $this->denyAccessUnlessGranted(SportMatchVoter::CREATE, $matchSource);
 
         if (!$this->isCsrfTokenValid('sport_match_import_commit_'.$matchSource->id->toRfc4122(), (string) $request->request->get('_token', ''))) {
-            $this->addFlash('error', 'Neplatný bezpečnostní token. Zkuste to znovu.');
+            $this->addFlash('error', 'Formulář mezitím vypršel a nic se neimportovalo. Nahrajte prosím soubor znovu.');
 
-            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()] + $this->scopeParam($request));
         }
 
         $rows = $this->session->consume($matchSource->id);
 
         if ([] === $rows) {
-            $this->addFlash('error', 'Žádná data k importu. Nejprve nahrajte soubor.');
+            $this->addFlash('error', 'Náhled importu už vypršel (nebo byl potvrzen v jiném okně), a tak se nic neimportovalo. Nahrajte prosím soubor znovu.');
 
-            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()]);
+            return $this->redirectToRoute('sport_match_import', ['matchSourceId' => $matchSource->id->toRfc4122()] + $this->scopeParam($request));
         }
 
         $this->commandBus->dispatch(new BulkImportSportMatchesCommand(
@@ -64,7 +64,7 @@ final class BulkImportCommitController extends AbstractController
             rows: $rows,
         ));
 
-        $this->addFlash('success', sprintf('Importováno %d zápasů.', count($rows)));
+        $this->addFlash('success', sprintf('Importováno zápasů: %d.', count($rows)));
 
         $scopeCompetitionId = $this->scopeReturn->competitionId($request);
 
@@ -73,5 +73,15 @@ final class BulkImportCommitController extends AbstractController
         }
 
         return $this->redirectToRoute('match_source_detail', ['id' => $matchSource->id->toRfc4122()]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function scopeParam(Request $request): array
+    {
+        $scopeCompetitionId = $this->scopeReturn->competitionId($request);
+
+        return null === $scopeCompetitionId ? [] : ['soutez' => $scopeCompetitionId];
     }
 }

@@ -91,8 +91,8 @@ final class TipOpeningSurfacesTest extends WebTestCase
             ],
         ]);
 
-        self::assertResponseRedirects();
-        $client->followRedirect();
+        // Rejected in place (422) — the row says why, no redirect + flash round trip.
+        self::assertResponseStatusCodeSame(422);
 
         self::assertNull($this->storedGuess($client));
         self::assertStringContainsString(

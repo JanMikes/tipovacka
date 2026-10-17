@@ -72,6 +72,15 @@ Match editing itself reuses the ordinary match screens; `ScopeReturn` (`?soutez=
 them back here after a save or delete. It carries a competition UUID, never a URL — the target
 route is fixed, so a crafted parameter cannot redirect anywhere else.
 
+## Errors
+
+Both surfaces share the trait's `fieldErrors` (see [create-wizard](create-wizard.md)): an
+unusable editor flags `source` / `matches` / `teams` at that input. On this screen the basket
+section is a `<form data-controller="form-feedback">` with „Uložit" as its submit button —
+ONLY that section, because the „Vlastní zápasy" panel below holds its own delete forms and
+forms may not nest. A save the domain refuses shows its message at the top of that form; a
+non-domain failure is logged and shown generically.
+
 ## Judgment calls
 
 - **One implementation, two surfaces.** Duplicating the basket into a second component was the

@@ -1,6 +1,10 @@
 {% extends 'auth/_layout.html.twig' %}
 
 {% set competition_name = context ? context.competitionName : null %}
+{# Every status page offers a way forward — a dead end with nothing to click is where
+   a new visitor gives up. Signed in → their Nástěnka; not yet → the homepage. #}
+{% set way_out_url = app.user ? path('dashboard') : path('app_home') %}
+{% set way_out_label = app.user ? 'Přejít na Nástěnku' : 'Na úvodní stránku' %}
 
 {% block title %}{{ competition_name ? 'Připojení do soutěže ' ~ competition_name : 'Pozvánka' }} — {{ brand_name }}{% endblock %}
 
@@ -14,11 +18,17 @@
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka nenalezena</h2>
-            <p class="mt-3 text-white/60">Odkaz je neplatný nebo už neexistuje.</p>
-            <a href="{{ path('app_login') }}" class="btn btn-primary mt-8 w-full">
-                <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
-                Přihlášení
+            <p class="mt-3 text-white/60">Odkaz je neplatný nebo už neexistuje. Zkontrolujte, že jste ho otevřeli celý (dlouhé odkazy se v některých aplikacích zalomí), nebo požádejte organizátora o nový.</p>
+            <a href="{{ path('competition_join_by_pin') }}" class="btn btn-primary mt-8 w-full">
+                <twig:ux:icon name="lucide:key-round" class="h-4 w-4" />
+                Mám PIN soutěže
             </a>
+            {% if not app.user %}
+                <a href="{{ path('app_login') }}" class="btn btn-link mt-4 inline-flex items-center gap-1.5 text-sm">
+                    <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
+                    Přihlásit se
+                </a>
+            {% endif %}
         </div>
 
     {% elseif step == 'expired' %}
@@ -28,7 +38,8 @@
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka vypršela</h2>
-            <p class="mt-3 text-white/60">Požádejte pozvatele o novou pozvánku.</p>
+            <p class="mt-3 text-white/60">Platnost pozvánky skončila. Požádejte toho, kdo vás pozval, o novou — nebo o PIN soutěže.</p>
+            <a href="{{ way_out_url }}" class="btn btn-ghost mt-8 w-full">{{ way_out_label }}</a>
         </div>
 
     {% elseif step == 'revoked' %}
@@ -38,7 +49,8 @@
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka byla zrušena</h2>
-            <p class="mt-3 text-white/60">Tato pozvánka už není platná.</p>
+            <p class="mt-3 text-white/60">Organizátor tuto pozvánku zrušil, takže už neplatí. Pokud se chcete připojit, požádejte ho o novou.</p>
+            <a href="{{ way_out_url }}" class="btn btn-ghost mt-8 w-full">{{ way_out_label }}</a>
         </div>
 
     {% elseif step == 'accepted' %}
@@ -48,11 +60,19 @@
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka už byla přijata</h2>
-            <p class="mt-3 text-white/60">Přihlaste se a pokračujte v tipování.</p>
-            <a href="{{ path('app_login') }}" class="btn btn-primary mt-8 w-full">
-                <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
-                Přihlášení
-            </a>
+            {% if app.user %}
+                <p class="mt-3 text-white/60">Pokud jste ji přijali vy, soutěž najdete na Nástěnce.</p>
+                <a href="{{ path('dashboard') }}" class="btn btn-primary mt-8 w-full">
+                    <twig:ux:icon name="lucide:arrow-right" class="h-4 w-4" />
+                    Přejít na Nástěnku
+                </a>
+            {% else %}
+                <p class="mt-3 text-white/60">Přihlaste se a pokračujte v tipování.</p>
+                <a href="{{ path('app_login') }}" class="btn btn-primary mt-8 w-full">
+                    <twig:ux:icon name="lucide:log-in" class="h-4 w-4" />
+                    Přihlásit se
+                </a>
+            {% endif %}
         </div>
 
     {% elseif step == 'match_source_completed' %}
@@ -61,8 +81,9 @@
                 <twig:ux:icon name="lucide:lock" class="h-8 w-8" />
             </div>
             <p class="eyebrow mt-6">Pozvánka</p>
-            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Zdroj zápasů už skončil</h2>
-            <p class="mt-3 text-white/60">Zdroj zápasů této soutěže je už ukončen, připojit se nejde.</p>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Soutěž už skončila</h2>
+            <p class="mt-3 text-white/60">Všechny zápasy soutěže{% if competition_name %} <strong class="font-semibold text-white">{{ competition_name }}</strong>{% endif %} už jsou odehrané, takže se do ní připojit nejde. Zeptejte se organizátora, jestli chystá další.</p>
+            <a href="{{ way_out_url }}" class="btn btn-ghost mt-8 w-full">{{ way_out_label }}</a>
         </div>
 
     {% elseif step == 'email_mismatch' %}
@@ -73,7 +94,7 @@
             <p class="eyebrow mt-6">Pozvánka</p>
             <h2 class="mt-2 text-2xl font-bold tracking-tight text-white">Pozvánka je pro jiný e-mail</h2>
             <p class="mt-3 text-white/60">
-                Jste přihlášen(a) jako <strong class="font-semibold text-white">{{ current_user_email }}</strong>, ale tato pozvánka patří adrese <strong class="font-semibold text-white">{{ context.presetEmail }}</strong>.
+                Teď jste přihlášeni jako <strong class="font-semibold text-white">{{ current_user_email }}</strong>, ale tato pozvánka patří adrese <strong class="font-semibold text-white">{{ context.presetEmail }}</strong>.
             </p>
             <form method="post" action="{{ path('app_logout') }}" class="mt-8">
                 <button type="submit" class="btn btn-primary w-full">
@@ -81,6 +102,7 @@
                     Odhlásit se a pokračovat
                 </button>
             </form>
+            <p class="mt-4 text-sm text-white/50">Po odhlášení se otevře přihlášení — přihlaste se k adrese z pozvánky, nebo si k ní založte účet.</p>
         </div>
 
     {% else %}
@@ -90,7 +112,7 @@
                 <twig:ux:icon name="lucide:users" class="h-5 w-5" />
             </span>
             <p class="text-sm leading-relaxed text-white/70">
-                Chystáš se připojit do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>.
+                Chystáte se připojit do soutěže <strong class="font-semibold text-white">{{ context.competitionName }}</strong>.
             </p>
         </div>
 
@@ -105,7 +127,7 @@
                     <twig:ux:icon name="lucide:coins" class="h-5 w-5" />
                 </span>
                 <p class="text-sm leading-relaxed text-white/70">
-                    Vstupné je <strong class="font-semibold text-white">{{ context.entryFeeCredits|credits }}</strong> — odečteme je z tvého kreditu ve chvíli, kdy se připojíš. Když ti kredity nestačí, nabídneme dobití.
+                    Vstupné je <strong class="font-semibold text-white">{{ context.entryFeeCredits|credits }}</strong> — odečteme je z vašeho kreditu ve chvíli, kdy se připojíte. Když vám kredity nestačí, nabídneme dobití.
                 </p>
             </div>
         {% endif %}

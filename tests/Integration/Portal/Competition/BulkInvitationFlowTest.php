@@ -131,4 +131,45 @@ final class BulkInvitationFlowTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
     }
+
+    /**
+     * The good addresses are invited; the malformed ones come back in the
+     * textarea (and ONLY they), each named under it, so the organizer fixes
+     * exactly those lines.
+     */
+    public function testMalformedAddressesComeBackInTheTextareaWhileTheRestAreInvited(): void
+    {
+        $client = static::createClient();
+        /** @var EntityManagerInterface $em */
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $owner = $em->find(User::class, Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+        self::assertNotNull($owner);
+        $client->loginUser($owner);
+
+        $crawler = $client->request('POST', '/souteze/'.AppFixtures::VERIFIED_COMPETITION_ID.'/pozvanky/hromadne', [
+            'bulk_invitation_form' => [
+                'emails' => "hrac-platny@example.com\nhrac-bez-zavinace.example.com, hrac@@example.com",
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSelectorExists('details[open] #bulk_invitation_form_emails[aria-invalid="true"]');
+        self::assertSame(
+            "hrac-bez-zavinace.example.com\nhrac@@example.com",
+            trim($crawler->filter('#bulk_invitation_form_emails')->text('', false)),
+        );
+        self::assertSelectorTextContains('#pozvanky details[open]', 'Tyto adresy jsme nepozvali');
+        self::assertSelectorTextContains('body', 'Odesláno pozvánek: 1.');
+
+        $em->clear();
+        $invited = $em->createQueryBuilder()
+            ->select('i')->from(CompetitionInvitation::class, 'i')
+            ->where('i.competition = :competitionId')
+            ->andWhere('i.email = :email')
+            ->setParameter('competitionId', Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID))
+            ->setParameter('email', 'hrac-platny@example.com')
+            ->getQuery()->getResult();
+        self::assertCount(1, $invited);
+    }
 }

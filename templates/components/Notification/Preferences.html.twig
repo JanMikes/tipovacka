@@ -4,6 +4,15 @@
     channel and re-renders.
 #}
 <div {{ attributes.defaults({ class: 'space-y-2' }) }}>
+    {# Every toggle saves at once; this line confirms it in place (a flash would only
+       show on the next page load). Always rendered so screen readers announce it. #}
+    <p class="flex min-h-5 items-center gap-1.5 px-4 text-[13px] font-medium text-win" role="status" aria-live="polite">
+        {% if savedMessage %}
+            <twig:ux:icon name="lucide:circle-check-big" class="h-4 w-4 shrink-0" />
+            {{ savedMessage }}
+        {% endif %}
+    </p>
+
     <div class="hidden items-center gap-4 px-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40 sm:flex">
         <span class="flex-1">Typ oznámení</span>
         <span class="w-20 text-center">V aplikaci</span>
