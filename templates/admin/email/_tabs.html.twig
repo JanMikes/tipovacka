@@ -1,0 +1,15 @@
+{# The two halves of the admin „E-maily" area: what actually went out, and what each mail looks like. #}
+{% set _tabs = [
+    {route: 'admin_sent_email_list', label: 'Odeslané', icon: 'lucide:mail', match: ['admin_sent_email_list', 'admin_sent_email_detail']},
+    {route: 'admin_email_list',      label: 'Náhledy šablon', icon: 'lucide:settings', match: ['admin_email_list']},
+] %}
+<div class="mb-6 flex flex-wrap gap-1 rounded-xl border border-white/10 bg-surface p-1 text-sm">
+    {% for tab in _tabs %}
+        {% set is_active = app.request.attributes.get('_route') in tab.match %}
+        <a href="{{ path(tab.route) }}"
+           class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors {{ is_active ? 'bg-accent-500 font-semibold text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+            <twig:ux:icon name="{{ tab.icon }}" class="h-3.5 w-3.5" />
+            {{ tab.label }}
+        </a>
+    {% endfor %}
+</div>

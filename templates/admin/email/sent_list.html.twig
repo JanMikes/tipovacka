@@ -1,0 +1,100 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Odeslané e-maily — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">E-maily</li>
+{% endblock %}
+
+{% block admin_title %}E-maily{% endblock %}
+{% block admin_subtitle %}Vše, co se aplikace pokusila odeslat — komu, kdy a jestli to poštovní server převzal. Záznamy se po 90 dnech mažou.{% endblock %}
+
+{% block admin_body %}
+{{ include('admin/email/_tabs.html.twig') }}
+
+<form method="get" action="{{ path('admin_sent_email_list') }}" class="mb-4 flex flex-wrap items-end gap-3">
+    <div class="field mb-0 min-w-0 flex-1 basis-64">
+        <label for="filter-q" class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/50">Adresa nebo předmět</label>
+        <input id="filter-q" type="search" name="q" value="{{ search }}" class="input w-full" placeholder="např. novak@ nebo Chybí vám">
+    </div>
+    <div class="field mb-0">
+        <label for="filter-status" class="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-white/50">Výsledek</label>
+        <select id="filter-status" name="stav" class="input">
+            <option value="">Všechny</option>
+            {% for option in statuses %}
+                <option value="{{ option.value }}" {{ status is same as(option) ? 'selected' }}>{{ option.label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">
+        <twig:ux:icon name="lucide:filter" class="h-4 w-4" />
+        Filtrovat
+    </button>
+    {% if search or status %}
+        <a href="{{ path('admin_sent_email_list') }}" class="btn btn-ghost btn-sm">Zrušit filtr</a>
+    {% endif %}
+</form>
+
+<div class="card-glass overflow-hidden p-0">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-xs uppercase tracking-wider text-white/50">
+                    <th class="px-4 py-3 text-left font-semibold">Datum</th>
+                    <th class="px-4 py-3 text-left font-semibold">Komu</th>
+                    <th class="px-4 py-3 text-left font-semibold">Předmět</th>
+                    <th class="px-4 py-3 text-left font-semibold">E-mail</th>
+                    <th class="px-4 py-3 text-left font-semibold">Výsledek</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in log.items %}
+                    <tr class="border-b border-white/[0.06] text-white/80 hover:bg-white/[0.03]">
+                        <td class="whitespace-nowrap px-4 py-3 text-white/70">{{ entry.createdAt|date('d. m. Y H:i:s') }}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-white">{{ entry.recipient }}</span>
+                            {% if entry.userName %}<span class="block text-xs text-white/40">{{ entry.userName }}</span>{% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <a href="{{ path('admin_sent_email_detail', {id: entry.id.toRfc4122}) }}" class="text-white hover:text-accent-300">{{ entry.subject }}</a>
+                            {% if entry.error %}<p class="mt-0.5 text-xs leading-relaxed text-loss">{{ entry.error|length > 140 ? entry.error|slice(0, 140) ~ '…' : entry.error }}</p>{% endif %}
+                        </td>
+                        <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-white/50">{{ entry.template ?? '—' }}</td>
+                        <td class="px-4 py-3"><twig:Badge label="{{ entry.status.label }}" variant="{{ entry.status.value == 'sent' ? 'win' : 'loss' }}" /></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="px-4 py-12 text-center text-white/50">
+                            {{ search or status ? 'Tomuto filtru neodpovídá žádný e-mail.' : 'Zatím se neodeslal žádný e-mail.' }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if log.page > 1 or log.hasNextPage %}
+    {% set _query = {q: search ?: null, stav: status ? status.value : null}|filter(v => v is not null) %}
+    <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Stránkování">
+        {% if log.page > 1 %}
+            <a href="{{ path('admin_sent_email_list', _query|merge({strana: log.page - 1})) }}" class="btn btn-ghost btn-sm">
+                <twig:ux:icon name="lucide:chevron-left" class="h-4 w-4" />
+                Novější
+            </a>
+        {% else %}
+            <span></span>
+        {% endif %}
+        <span class="text-white/40">Strana {{ log.page }} · celkem {{ log.total }}</span>
+        {% if log.hasNextPage %}
+            <a href="{{ path('admin_sent_email_list', _query|merge({strana: log.page + 1})) }}" class="btn btn-ghost btn-sm">
+                Starší
+                <twig:ux:icon name="lucide:chevron-right" class="h-4 w-4" />
+            </a>
+        {% else %}
+            <span></span>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

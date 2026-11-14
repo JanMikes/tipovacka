@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block admin_body %}
+{{ include('admin/email/_tabs.html.twig') }}
+
     <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
         <nav class="space-y-4 text-sm" aria-label="E-maily">
             {% set current_group = null %}

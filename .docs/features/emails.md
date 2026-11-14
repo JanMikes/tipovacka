@@ -104,3 +104,29 @@ expires and it is not a login: the pages behind it can only turn e-mail DOWN. Ro
 **Operational requirements** (outside this repo): the relay's DKIM signature must cover the
 `List-Unsubscribe` and `List-Unsubscribe-Post` headers, and `APP_URL` must be the public
 HTTPS origin — Gmail ignores a one-click target that is not HTTPS.
+
+## The audit log — „Odeslané e-maily"
+
+`/admin/odeslane-e-maily` lists every attempt to send a mail: when, to whom (and whose account
+that is), the subject, which mail it was, whether the relay took it, and — for an accepted
+one — what it said. Admin-only (`^/admin`); it holds other people's addresses.
+
+- Written by `Service/Email/EmailLogRecorder`, a subscriber on the mailer's own events, so
+  every mail is covered and **no sender logs anything itself**. A mail queued but not yet
+  consumed has no row; a mail that fails and is retried has one row per attempt.
+- **Sent** rows are written on `SentMessageEvent`, inside the worker's transaction.
+  **Failed** rows are written on Messenger's `WorkerMessageFailedEvent`, i.e. *after* the
+  rollback — the mailer's own failure event fires inside the transaction that is about to be
+  rolled back and would lose the row. That handler is the one place outside fixtures that
+  calls `flush()`.
+- **„Sent" means accepted by the relay, not delivered.** A bounce arrives later, in the
+  `robot@` mailbox, and is not known here.
+- The stored text is the plain-text part run through `EmailBodyRedactor`: query strings are
+  dropped and any path segment of 20+ characters that is not a UUID is masked. The rule is
+  generic on purpose — a reset, verification, invitation or unsubscribe link is a credential,
+  and a mail added later is covered without anyone listing it as sensitive.
+- **Retention: 90 days** (`EmailLog::RETENTION_DAYS`). `app:match-digests:send` prunes the log
+  after its sweep, so the log needs no crontab entry of its own.
+- In a test, a mail only reaches the log once the queue is consumed — dispatch the queued
+  `SendEmailMessage` with a `ReceivedStamp` (see `EmailLogRecorderTest`).
+
