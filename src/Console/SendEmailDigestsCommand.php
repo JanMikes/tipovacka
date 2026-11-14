@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console;
 
+use App\Command\PruneEmailLog\PruneEmailLogCommand;
 use App\Command\SendEmailDigests\SendEmailDigestsCommand as SendDigestsMessage;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,7 +20,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
  * The NAME is `app:match-digests:send` because that is what the crontab calls
  * — it was born as the digest of evaluated matches and must stay stable. What
  * it runs has grown: it now sends every mail that is one-for-many — the hourly
- * collapse of queued notifications and each player's daily summary. The alias
+ * collapse of queued notifications and each player's daily summary — and then
+ * prunes the e-mail audit log past its retention. The alias
  * `app:email-digests:send` is the name to use by hand.
  */
 #[AsCommand(
@@ -41,6 +43,11 @@ final class SendEmailDigestsCommand extends Command
         $this->commandBus->dispatch(new SendDigestsMessage());
 
         $output->writeln('<info>E-mail digests sent.</info>');
+
+        // The hourly e-mail job also keeps the e-mail audit log within its
+        // retention — one job owns everything periodic about mail, so the log
+        // needs no crontab entry of its own.
+        $this->commandBus->dispatch(new PruneEmailLogCommand());
 
         return Command::SUCCESS;
     }

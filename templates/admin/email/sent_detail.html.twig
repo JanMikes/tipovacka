@@ -1,0 +1,57 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ entry.subject }} — Odeslané e-maily — Admin — {{ brand_name }}{% endblock %}
+
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="flex items-center"><a href="{{ path('admin_sent_email_list') }}" class="transition-colors hover:text-accent-300">E-maily</a></li>
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">Detail</li>
+{% endblock %}
+
+{% block admin_title %}{{ entry.subject }}{% endblock %}
+
+{% block admin_body %}
+<div class="card-glass p-6">
+    <dl class="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+        <div>
+            <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">Komu</dt>
+            <dd class="mt-1 break-all text-white">{{ entry.recipient }}{% if entry.userName %} <span class="text-white/50">({{ entry.userName }})</span>{% endif %}</dd>
+        </div>
+        <div>
+            <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">Kdy</dt>
+            <dd class="mt-1 text-white">{{ entry.createdAt|date('d. m. Y H:i:s') }}</dd>
+        </div>
+        <div>
+            <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">Výsledek</dt>
+            <dd class="mt-1"><twig:Badge label="{{ entry.status.label }}" variant="{{ entry.status.value == 'sent' ? 'win' : 'loss' }}" /></dd>
+        </div>
+        <div>
+            <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">E-mail</dt>
+            <dd class="mt-1 font-mono text-xs text-white/80">{{ entry.template ?? '—' }}</dd>
+        </div>
+        {% if entry.messageId %}
+            <div class="sm:col-span-2">
+                <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">ID zprávy u poštovního serveru</dt>
+                <dd class="mt-1 break-all font-mono text-xs text-white/80">{{ entry.messageId }}</dd>
+            </div>
+        {% endif %}
+        {% if entry.error %}
+            <div class="sm:col-span-2">
+                <dt class="text-[11px] font-semibold uppercase tracking-wider text-white/40">Chyba</dt>
+                <dd class="mt-1 break-words text-loss">{{ entry.error }}</dd>
+            </div>
+        {% endif %}
+    </dl>
+</div>
+
+<div class="card-glass p-6">
+    <h2 class="text-sm font-bold text-white">Text e-mailu</h2>
+    {% if entry.body %}
+        <p class="mt-1 text-[13px] text-white/50">Textová podoba zprávy. Odkazy jsou zkrácené na to, kam vedou — bez tokenů a podpisů, aby se z tohoto záznamu nedal převzít účet.</p>
+        <pre class="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-inset p-4 text-[13px] leading-relaxed text-white/80">{{ entry.body }}</pre>
+    {% else %}
+        <p class="mt-1 text-[13px] text-white/50">U neúspěšného pokusu se text neukládá — zpráva se sestavuje až při odeslání.</p>
+    {% endif %}
+</div>
+{% endblock %}

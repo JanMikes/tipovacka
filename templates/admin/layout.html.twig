@@ -16,7 +16,7 @@
     {route: 'admin_user_list',       label: 'Uživatelé', icon: 'lucide:user',     match: ['admin_user_list', 'admin_user_credits']},
     {route: 'admin_credit_purchases', label: 'Kredity',  icon: 'lucide:wallet',   match: ['admin_credit_purchases', 'admin_credit_ledger']},
     {route: 'admin_rule_list',       label: 'Pravidla',  icon: 'lucide:activity', match: ['admin_rule_list']},
-    {route: 'admin_email_list',      label: 'E-maily',   icon: 'lucide:mail',     match: ['admin_email_list']},
+    {route: 'admin_sent_email_list', label: 'E-maily',   icon: 'lucide:mail',     match: ['admin_sent_email_list', 'admin_sent_email_detail', 'admin_email_list']},
 ] %}
 {% set _title = block('admin_title')|trim %}
 {% set _subtitle = block('admin_subtitle')|trim %}

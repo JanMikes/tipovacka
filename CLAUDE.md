@@ -165,14 +165,14 @@ src/
   free, only reassigning a match to a *different* team is guarded (`SportMatchTeamsLocked`). Monogram
   (contrast-safe) via `Value/TeamMonogram`; query DTOs carry `Value/TeamView`. See [team-picker](.docs/features/team-picker.md).
 
-### Entities (29)
+### Entities (30)
 
 `User`, `Sport`, `Team`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
 `CompetitionMatchSelection`, `CompetitionTeamFilter`, `CompetitionMatchSetting`,
 `CompetitionRuleConfiguration`, `Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`,
 `GuessEvaluation`, `GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`,
 `CreditWallet`, `CreditTransaction`, `CreditPurchase`, `CompetitionPremiumCharge`, `BoostPurchase`,
-`Notification`, `NotificationPreference`, `NotificationSettings`, `ResetPasswordRequest`.
+`Notification`, `NotificationPreference`, `NotificationSettings`, `EmailLog`, `ResetPasswordRequest`.
 
 ## Key Patterns
 
@@ -479,7 +479,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Competition switcher](.docs/features/competition-switcher.md) — `<twig:SoutezSwitcher>`: grouped („Probíhající" / „Ukončené") searchable tom-select over the viewer's soutěže, name + zdroj zápasů + Prague date range; a real GET `<form>` so it works with JS off, hence `route` must be path-parameter-free (`/zebricek?soutez=` resolves and redirects)
 - [Pending join intent](.docs/features/join-intent.md) — „I am about to join this soutěž", carried through sign-up **and** the verification-mail round trip. Four public landings (e-mail invitation / shareable link / PIN / global soutěž), one `PendingJoinStore` (session for a visitor with no account, `User.pendingJoin*` once one exists), consumed by `LoginSubscriber`. A link or a PIN never verifies an account; only an e-mail invitation does
 - [Form feedback](.docs/features/form-feedback.md) — EVERY form (wired in the form theme's `form_start`) jumps to + focuses + pulses the first invalid field after a rejected submit, shows an error summary (classic: automatic at the top; Live: opt in with `error_summary: this.isValidated`), syncs DOM values into Live models, and swallows double submits. Hand-written `<form>`: add `data-controller="form-feedback"` + `aria-invalid`. Never flash from a Live action that returns `null` — it renders only on the next page load. Sign-up adds nickname/e-mail-typo one-tap fixes and the `signup` rejection log
-- [E-maily](.docs/features/emails.md) — ONE mail layout (`emails/layout.html.twig`: light by default + a dark variant, every style inline AND a class, PNG logo, no web fonts), previewed at `/admin/e-maily`. Notification mail is throttled by the player's e-mail frequency (daily summary by default / as it happens / none), a per-soutěž mute and the type's `EmailTiming`, and every one can be left without logging in (`/e-maily/{token}` + the RFC 8058 one-click header)
+- [E-maily](.docs/features/emails.md) — ONE mail layout (`emails/layout.html.twig`: light by default + a dark variant, every style inline AND a class, PNG logo, no web fonts), previewed at `/admin/e-maily`. Notification mail is throttled by the player's e-mail frequency (daily summary by default / as it happens / none), a per-soutěž mute and the type's `EmailTiming`, and every one can be left without logging in (`/e-maily/{token}` + the RFC 8058 one-click header). Every attempt to send ANY mail is recorded by `EmailLogRecorder` (mailer events — senders never log) and listed for admins at `/admin/odeslane-e-maily`, links redacted, kept 90 days
 - [Pozvat přítele](.docs/features/invite-a-friend.md) — inviting is a **player's** action, not an organizer privilege: `INVITE_MEMBER` is granted to any member while `Competition::$isOpenToInvites` (a global soutěž always; a private one while a PIN or link exists). ONE modal on the competition detail (`#pozvat`). A **global** soutěž is invited into via the public `/souteze/{id}/pozvanka` landing and the invitee pays the entry fee — its invitation writes nothing; the private path's pre-provisioned seat is refused there (`CompetitionIsGlobal::seatCannotBePreProvisioned`)
 
 ## Testing
