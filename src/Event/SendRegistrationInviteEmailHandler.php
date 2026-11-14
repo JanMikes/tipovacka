@@ -28,7 +28,7 @@ final readonly class SendRegistrationInviteEmailHandler
 
         $email = (new TemplatedEmail())
             ->to($event->email)
-            ->subject('Váš účet jsme nenašli — Tipovačka')
+            ->subject('Účet s touto adresou u nás není')
             ->htmlTemplate('emails/registration_invite.html.twig')
             ->context([
                 'registerUrl' => $registerUrl,

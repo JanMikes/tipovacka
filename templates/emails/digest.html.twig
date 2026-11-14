@@ -1,0 +1,81 @@
+{#
+    MANY notifications in one mail, grouped by soutěž — the player's daily summary
+    (`digest.daily`) or the hourly collapse of a burst. `digest` is an App\Value\EmailDigest;
+    `muteUrls[i]` is the „ztlumit tuto soutěž" link of `digest.sections[i]` (null for the
+    section that has no soutěž). Sent only by NotificationMailer.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_ui.html.twig' as ui %}
+
+{% block title %}{{ digest.subject }}{% endblock %}
+{% block preheader %}{% for section in digest.sections|filter(s => s.competitionName) %}{{ section.competitionName }}{{ loop.last ? '' : ' · ' }}{% endfor %}{% endblock %}
+
+{% block content %}
+    <p class="eyebrow" style="{{ st.eyebrow }}">{{ digest.daily ? 'Denní souhrn' : 'Souhrn' }} &middot; {{ 'now'|date('j. n.') }}</p>
+    <h1 class="h1" style="{{ st.h1 }}{{ digest.summary ? 'margin-bottom:6px;' : '' }}">{{ digest.headline }}</h1>
+    {% if digest.summary %}
+        <p class="muted" style="{{ st.muted }}margin-bottom:18px;">{{ digest.summary }}</p>
+    {% endif %}
+
+    {% for section in digest.sections %}
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="panel" style="{{ st.panel }}margin:0 0 14px;">
+            <tr>
+                <td class="cell" style="{{ st.rowCellFirst }}">
+                    {% if section.competitionUrl %}
+                        <a class="h2" href="{{ absolute_url(section.competitionUrl) }}" style="{{ st.h2 }}margin:0;text-decoration:none;">{{ section.competitionName }}</a>
+                    {% else %}
+                        <span class="h2" style="{{ st.h2 }}margin:0;">Ostatní</span>
+                    {% endif %}
+                </td>
+                <td class="cell" align="right" valign="middle" width="70" style="{{ st.rowCellFirst }}padding-left:0;text-align:right;white-space:nowrap;">
+                    {% if muteUrls[loop.index0] %}
+                        <a class="detail" href="{{ muteUrls[loop.index0] }}" style="{{ st.detail }}text-decoration:underline;">Ztlumit</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% if section.missingTips %}
+                <tr>
+                    <td class="cell row" colspan="2" style="{{ st.rowCell }}">
+                        <a class="strong" href="{{ absolute_url(section.missingTips.url) }}" style="{{ st.strong }}text-decoration:none;">{{ section.missingTips.title }}</a>
+                        <span class="detail" style="{{ st.detail }}">&nbsp;&middot;&nbsp;{{ section.missingTips.detail }}</span>
+                    </td>
+                </tr>
+            {% endif %}
+            {% for item in section.items %}
+                <tr>
+                    <td class="cell row" colspan="2" style="{{ st.rowCell }}">
+                        {{ item.title }}
+                        {% if item.detail %}
+                            <br><span class="detail" style="{{ st.detail }}">{{ item.detail }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            {% if section.hiddenItemCount > 0 %}
+                <tr>
+                    <td class="cell row" colspan="2" style="{{ st.rowCell }}">
+                        <span class="detail" style="{{ st.detail }}">… a další ({{ section.hiddenItemCount }}) najdete v aplikaci.</span>
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endfor %}
+
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="padding-top:6px;">
+        {{ ui.button(digest.actionLabel, absolute_url(digest.actionUrl)) }}
+    </td></tr></table>
+{% endblock %}
+
+{% block footer_reason %}
+    <p class="footer" style="{{ st.footer }}">
+        {% if digest.daily %}
+            Posíláme vám nejvýš jeden souhrn denně, po {{ digestHour }}:00.
+        {% else %}
+            Tento souhrn vám chodí, protože máte zapnutá e-mailová oznámení.
+        {% endif %}
+        <br>
+        <a class="footer-link" href="{{ settingsUrl }}" style="{{ st.footerLink }}">Změnit, jak často píšeme</a>
+        &nbsp;&middot;&nbsp;
+        <a class="footer-link" href="{{ unsubscribeUrl }}" style="{{ st.footerLink }}">Odhlásit</a>
+    </p>
+{% endblock %}

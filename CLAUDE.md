@@ -65,7 +65,7 @@ them by hand to exercise them:
 docker compose exec web bin/console app:premium:reconcile            # every 5 min in prod
 docker compose exec web bin/console app:matches:sync --dry-run       # every 5 min in prod (feed pipeline)
 docker compose exec web bin/console app:guess-reminders:send         # hourly in prod
-docker compose exec web bin/console app:match-digests:send           # hourly at :10 in prod
+docker compose exec web bin/console app:match-digests:send           # hourly at :10 in prod (e-mail digests + daily summaries)
 docker compose exec web bin/console app:leaderboard:capture-snapshots # 03:00 Europe/Prague in prod
 ```
 
@@ -94,7 +94,8 @@ The recurring domain jobs run as standalone console commands in `src/Console/`
 (`#[AsCommand]`), each a thin wrapper dispatching a command-bus message or calling one
 service — no business logic in a console class: `app:premium:reconcile` (every 5 min),
 `app:matches:sync` (every 5 min), `app:guess-reminders:send` (hourly),
-`app:match-digests:send` (hourly at :10), `app:leaderboard:capture-snapshots`
+`app:match-digests:send` (hourly at :10 — historical name; it sends every one-for-many
+notification mail, alias `app:email-digests:send`), `app:leaderboard:capture-snapshots`
 (03:00 Europe/Prague). They are invoked by **host cron**
 (lily.srv `apps/wtips/cron.d/wtips` per D30, wrapped by `lily-cron-run` + `sentry-cli monitors`
 for ops visibility/monitorability) — NOT by symfony/scheduler, which was removed. Each cron
@@ -149,8 +150,13 @@ src/
   unlocks it share ONE name, from `BoostType::label()` — see DOMAIN.md §Monetization.
 - **`EffectiveTipDeadlineResolver`** — per-match effective tip deadline: extend-only `max()` of
   competition lock / late-added kickoff / „Měnit tip" window / manager override.
-- **`Notification/Notifier`** — writes one `Notification` per delivery, honoring the user's
-  per-type × channel preferences (stamps `inAppVisible`).
+- **`Notification/Notifier`** — THE entry point for a notification: writes one `Notification`
+  per delivery and mails it now, queues it for a digest, or neither — as decided by
+  **`Notification/NotificationPolicy`** (muted soutěž → per-type × channel preference → the
+  user's e-mail frequency → the type's `EmailTiming`). **`Notification/NotificationMailer`** is
+  the only sender of notification mail (it adds the no-login unsubscribe links and the
+  `List-Unsubscribe` headers). Never mail a notification from a handler. See
+  [emails](.docs/features/emails.md).
 - **`Credits/PricingConfig`** — the single home for every credit price (never scatter literals).
 - **`Team/TeamResolver`** — the single home for the hybrid team-scope rule: a match/import/picker
   team NAME resolves to a `Team` — curated source → shared GLOBAL directory (find-or-create),
@@ -159,14 +165,14 @@ src/
   free, only reassigning a match to a *different* team is guarded (`SportMatchTeamsLocked`). Monogram
   (contrast-safe) via `Value/TeamMonogram`; query DTOs carry `Value/TeamView`. See [team-picker](.docs/features/team-picker.md).
 
-### Entities (28)
+### Entities (29)
 
 `User`, `Sport`, `Team`, `MatchSource`, `SportMatch`, `Player`, `MatchEvent`, `Competition`,
 `CompetitionMatchSelection`, `CompetitionTeamFilter`, `CompetitionMatchSetting`,
 `CompetitionRuleConfiguration`, `Membership`, `CompetitionInvitation`, `Guess`, `GuessScorer`,
 `GuessEvaluation`, `GuessEvaluationRulePoints`, `LeaderboardSnapshot`, `LeaderboardTieResolution`,
 `CreditWallet`, `CreditTransaction`, `CreditPurchase`, `CompetitionPremiumCharge`, `BoostPurchase`,
-`Notification`, `NotificationPreference`, `ResetPasswordRequest`.
+`Notification`, `NotificationPreference`, `NotificationSettings`, `ResetPasswordRequest`.
 
 ## Key Patterns
 
@@ -473,6 +479,7 @@ Cross-cutting UI / frontend patterns have short usage docs in [`.docs/features/`
 - [Competition switcher](.docs/features/competition-switcher.md) — `<twig:SoutezSwitcher>`: grouped („Probíhající" / „Ukončené") searchable tom-select over the viewer's soutěže, name + zdroj zápasů + Prague date range; a real GET `<form>` so it works with JS off, hence `route` must be path-parameter-free (`/zebricek?soutez=` resolves and redirects)
 - [Pending join intent](.docs/features/join-intent.md) — „I am about to join this soutěž", carried through sign-up **and** the verification-mail round trip. Four public landings (e-mail invitation / shareable link / PIN / global soutěž), one `PendingJoinStore` (session for a visitor with no account, `User.pendingJoin*` once one exists), consumed by `LoginSubscriber`. A link or a PIN never verifies an account; only an e-mail invitation does
 - [Form feedback](.docs/features/form-feedback.md) — EVERY form (wired in the form theme's `form_start`) jumps to + focuses + pulses the first invalid field after a rejected submit, shows an error summary (classic: automatic at the top; Live: opt in with `error_summary: this.isValidated`), syncs DOM values into Live models, and swallows double submits. Hand-written `<form>`: add `data-controller="form-feedback"` + `aria-invalid`. Never flash from a Live action that returns `null` — it renders only on the next page load. Sign-up adds nickname/e-mail-typo one-tap fixes and the `signup` rejection log
+- [E-maily](.docs/features/emails.md) — ONE mail layout (`emails/layout.html.twig`: light by default + a dark variant, every style inline AND a class, PNG logo, no web fonts), previewed at `/admin/e-maily`. Notification mail is throttled by the player's e-mail frequency (daily summary by default / as it happens / none), a per-soutěž mute and the type's `EmailTiming`, and every one can be left without logging in (`/e-maily/{token}` + the RFC 8058 one-click header)
 - [Pozvat přítele](.docs/features/invite-a-friend.md) — inviting is a **player's** action, not an organizer privilege: `INVITE_MEMBER` is granted to any member while `Competition::$isOpenToInvites` (a global soutěž always; a private one while a PIN or link exists). ONE modal on the competition detail (`#pozvat`). A **global** soutěž is invited into via the public `/souteze/{id}/pozvanka` landing and the invitee pays the entry fee — its invitation writes nothing; the private path's pre-provisioned seat is refused there (`CompetitionIsGlobal::seatCannotBePreProvisioned`)
 
 ## Testing

@@ -168,4 +168,26 @@ class MembershipRepository
 
         return $result;
     }
+
+    /**
+     * Whether the user silenced this soutěž ({@see Membership::$notificationsMuted}).
+     * False when they are not an active member — nothing to mute.
+     */
+    public function hasMutedNotifications(Uuid $userId, Uuid $competitionId): bool
+    {
+        $result = $this->entityManager->createQueryBuilder()
+            ->select('1')
+            ->from(Membership::class, 'm')
+            ->where('m.user = :userId')
+            ->andWhere('m.competition = :competitionId')
+            ->andWhere('m.leftAt IS NULL')
+            ->andWhere('m.notificationsMuted = true')
+            ->setParameter('userId', $userId)
+            ->setParameter('competitionId', $competitionId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return null !== $result;
+    }
 }

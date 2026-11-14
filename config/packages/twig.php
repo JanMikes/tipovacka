@@ -13,6 +13,11 @@ return App::config([
         'date' => [
             'timezone' => 'Europe/Prague',
         ],
+        // The plain-text alternative of every mail is derived from its HTML by OUR
+        // converter — the default (strip_tags) loses every link. See the class doc.
+        'mailer' => [
+            'html_to_text_converter' => \App\Service\Email\MailTextConverter::class,
+        ],
         'globals' => [
             // Brand name. Hardcoded "Wtips" — the app is fully rebranded, no transition phase.
             'brand_name' => 'Wtips',

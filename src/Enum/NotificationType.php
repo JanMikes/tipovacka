@@ -81,6 +81,54 @@ enum NotificationType: string
         };
     }
 
+    /** The heading this type sits under in the preference matrix. */
+    public function category(): NotificationCategory
+    {
+        return match ($this) {
+            self::GuessReminder, self::MatchAdded => NotificationCategory::Tipping,
+            self::MatchEvaluated, self::CompetitionEnded => NotificationCategory::Results,
+            self::PremiumBalanceLow,
+            self::PremiumChargeUncovered,
+            self::PremiumDowngraded,
+            self::PremiumEnabled,
+            self::BoostRefunded,
+            self::MemberJoined => NotificationCategory::Organizer,
+        };
+    }
+
+    /** How this type behaves on the e-mail channel — see {@see EmailTiming}. */
+    public function emailTiming(): EmailTiming
+    {
+        return match ($this) {
+            self::PremiumBalanceLow,
+            self::PremiumChargeUncovered,
+            self::PremiumDowngraded => EmailTiming::Urgent,
+            self::MatchEvaluated,
+            self::MatchAdded,
+            self::MemberJoined => EmailTiming::Burst,
+            self::GuessReminder => EmailTiming::Live,
+            self::CompetitionEnded,
+            self::PremiumEnabled,
+            self::BoostRefunded => EmailTiming::Standard,
+        };
+    }
+
+    /** The label of the button a mail about this type ends with. */
+    public function actionLabel(): string
+    {
+        return match ($this) {
+            self::GuessReminder => 'Natipovat',
+            self::MatchAdded => 'Zobrazit zápas',
+            self::MatchEvaluated => 'Zobrazit výsledek',
+            self::CompetitionEnded => 'Konečné pořadí',
+            self::PremiumBalanceLow, self::PremiumChargeUncovered => 'Dobít kredity',
+            self::PremiumDowngraded,
+            self::PremiumEnabled,
+            self::BoostRefunded,
+            self::MemberJoined => 'Otevřít soutěž',
+        };
+    }
+
     /** Lucide icon name (without the `lucide:` prefix) for the feed row. */
     public function icon(): string
     {

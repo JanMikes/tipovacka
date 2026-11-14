@@ -1,50 +1,51 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-</head>
-<body style="margin:0;padding:0;background-color:#0a111e;font-family:Arial,Helvetica,sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a111e;padding:40px 0;">
-        <tr>
-            <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#141e36;border:1px solid #1b2742;border-radius:12px;overflow:hidden;">
-                    <tr>
-                        <td style="background-color:#0f1726;padding:32px 40px;text-align:center;">
-                            <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:bold;letter-spacing:-0.02em;">{{ brand_name }}</h1>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding:40px;">
-                            <h2 style="color:#ffffff;font-size:20px;margin:0 0 16px;">{{ title }}</h2>
-                            <p style="color:#c4cddd;line-height:1.6;margin:0 0 24px;">
-                                {{ body|nl2br }}
-                            </p>
-                            {% if url is not empty %}
-                                <table width="100%" cellpadding="0" cellspacing="0">
-                                    <tr>
-                                        <td align="center" style="padding:8px 0 24px;">
-                                            <a href="{{ url }}" style="background-color:#4699d0;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:16px;display:inline-block;">
-                                                Zobrazit v aplikaci
-                                            </a>
-                                        </td>
-                                    </tr>
-                                </table>
-                            {% endif %}
-                            <p style="color:#96a3c1;font-size:14px;line-height:1.6;margin:0;">
-                                Toto upozornění si můžete vypnout v Nastavení oznámení.
-                            </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="background-color:#0a111e;padding:24px 40px;text-align:center;">
-                            <p style="color:#6b7ca3;font-size:12px;margin:0;">&copy; {{ "now"|date("Y") }} {{ brand_name }}. Vše hraje, nic se nesází.</p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
+{#
+    ONE notification, mailed on its own — a guess reminder for an „průběžně" player, a
+    money alert, a single piece of news. Sent only by NotificationMailer, which supplies
+    `unsubscribeUrl` (switches off THIS type, no login) and `settingsUrl`.
+
+    `body` is plain text with line breaks; `items` is an optional list under it (the
+    reminder lists one soutěž per row). `url` and item urls are host-relative.
+#}
+{% extends 'emails/layout.html.twig' %}
+{% import 'emails/_ui.html.twig' as ui %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block preheader %}{{ body|split("\n")|first }}{% endblock %}
+
+{% block content %}
+    <p class="eyebrow" style="{{ st.eyebrow }}">{{ type.label }}</p>
+    <h1 class="h1" style="{{ st.h1 }}">{{ title }}</h1>
+    <p class="p" style="{{ st.p }}">{{ body|nl2br }}</p>
+
+    {% if items is not empty %}
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="panel" style="{{ st.panel }}margin:4px 0 20px;">
+            {% for item in items %}
+                <tr>
+                    <td class="cell {{ loop.first ? '' : 'row' }}" style="{{ loop.first ? st.rowCellFirst : st.rowCell }}">
+                        {% if item.url %}
+                            <a class="strong" href="{{ absolute_url(item.url) }}" style="{{ st.strong }}text-decoration:none;">{{ item.title }}</a>
+                        {% else %}
+                            <span class="strong" style="{{ st.strong }}">{{ item.title }}</span>
+                        {% endif %}
+                        {% if item.detail %}
+                            <br><span class="detail" style="{{ st.detail }}">{{ item.detail }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    {% if url is not empty %}
+        {{ ui.button(type.actionLabel, absolute_url(url)) }}
+    {% endif %}
+{% endblock %}
+
+{% block footer_reason %}
+    <p class="footer" style="{{ st.footer }}">
+        Tento e-mail vám chodí, protože máte zapnuté oznámení „{{ type.label }}“.<br>
+        <a class="footer-link" href="{{ unsubscribeUrl }}" style="{{ st.footerLink }}">Odhlásit tento typ</a>
+        &nbsp;&middot;&nbsp;
+        <a class="footer-link" href="{{ settingsUrl }}" style="{{ st.footerLink }}">Změnit, jak často píšeme</a>
+    </p>
+{% endblock %}

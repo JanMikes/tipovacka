@@ -6,9 +6,12 @@ namespace App\Tests\Integration\Portal\Notifications;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Notification;
+use App\Enum\EmailFrequency;
 use App\Enum\NotificationType;
+use App\Repository\MembershipRepository;
 use App\Repository\NotificationPreferenceRepository;
 use App\Repository\NotificationRepository;
+use App\Repository\NotificationSettingsRepository;
 use App\Repository\UserRepository;
 use App\Tests\Support\WebFlowHelpers;
 use Doctrine\ORM\EntityManagerInterface;
@@ -169,6 +172,76 @@ final class NotificationCenterFlowTest extends WebTestCase
         $rendered = (string) $component->call('toggle', ['type' => 'no_such_type', 'channel' => 'email'])->render();
 
         self::assertStringNotContainsString('Uloženo', $rendered);
+    }
+
+    public function testSettingsTabShowsFrequencyAndTheUsersCompetitions(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $this->client->request('GET', '/oznameni?tab=nastaveni');
+
+        self::assertResponseIsSuccessful();
+        self::assertAnySelectorTextContains('body', 'Jak často vám máme psát e-mailem');
+        // The default frequency is the daily summary — its radio is the checked one.
+        self::assertSelectorTextContains('[role="radio"][aria-checked="true"]', 'Jednou denně');
+        self::assertAnySelectorTextContains('body', AppFixtures::VERIFIED_COMPETITION_NAME);
+        // The matrix is grouped under category headings.
+        self::assertAnySelectorTextContains('body', 'Tipování');
+        self::assertAnySelectorTextContains('body', 'Výsledky');
+    }
+
+    public function testFrequencyAndDigestHourPersist(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+
+        $component = $this->createLiveComponent('Notification:Preferences', [], $this->client);
+
+        $rendered = (string) $component->call('setDigestHour', ['hour' => 18])->render();
+        self::assertStringContainsString('Uloženo — denní souhrn po 18:00.', $rendered);
+        self::assertSame([EmailFrequency::Daily, 18], $this->emailDelivery());
+
+        $rendered = (string) $component->call('setFrequency', ['frequency' => 'never'])->render();
+        self::assertStringContainsString('Uloženo — e-maily: žádné e-maily.', $rendered);
+        // The hour survives a frequency change, for the day e-mail comes back.
+        self::assertSame([EmailFrequency::Never, 18], $this->emailDelivery());
+        self::assertStringContainsString('E-maily máte vypnuté úplně', $rendered);
+
+        $component->call('setFrequency', ['frequency' => 'no_such']);
+        self::assertSame([EmailFrequency::Never, 18], $this->emailDelivery());
+    }
+
+    public function testMutingACompetitionPersistsAndCanBeUndone(): void
+    {
+        $this->loginUserById($this->client, AppFixtures::VERIFIED_USER_ID);
+        $memberships = self::getContainer()->get(MembershipRepository::class);
+        $userId = Uuid::fromString(AppFixtures::VERIFIED_USER_ID);
+        $competitionId = Uuid::fromString(AppFixtures::VERIFIED_COMPETITION_ID);
+
+        $component = $this->createLiveComponent('Notification:Preferences', [], $this->client);
+
+        $rendered = (string) $component->call('toggleMute', ['competition' => AppFixtures::VERIFIED_COMPETITION_ID])->render();
+        self::assertStringContainsString('Uloženo — soutěž '.AppFixtures::VERIFIED_COMPETITION_NAME.': ztlumena.', $rendered);
+        self::assertTrue($memberships->hasMutedNotifications($userId, $competitionId));
+
+        $component->call('toggleMute', ['competition' => AppFixtures::VERIFIED_COMPETITION_ID]);
+        self::assertFalse($memberships->hasMutedNotifications($userId, $competitionId));
+
+        // Not a member of this one — ignored, not an error.
+        $rendered = (string) $component->call('toggleMute', ['competition' => AppFixtures::PUBLIC_COMPETITION_ID])->render();
+        self::assertStringNotContainsString(AppFixtures::PUBLIC_COMPETITION_NAME.': ztlumena', $rendered);
+    }
+
+    /**
+     * The stored frequency and summary hour, read through a fresh entity manager —
+     * every Live action runs in its own kernel.
+     *
+     * @return array{EmailFrequency, int}|null
+     */
+    private function emailDelivery(): ?array
+    {
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+        $settings = self::getContainer()->get(NotificationSettingsRepository::class)->findForUser(Uuid::fromString(AppFixtures::VERIFIED_USER_ID));
+
+        return null !== $settings ? [$settings->emailFrequency, $settings->digestHour] : null;
     }
 
     private function notifications(): NotificationRepository

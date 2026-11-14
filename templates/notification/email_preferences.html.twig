@@ -1,0 +1,104 @@
+{% extends 'auth/_layout.html.twig' %}
+
+{#
+    The no-login unsubscribe page a notification mail links to. One decision per screen:
+    with a scope it asks „odhlásit právě tohle?" and does it on ONE button; afterwards it
+    says what happened and offers the undo. Softer alternatives sit below, because most
+    people who reach for „odhlásit" wanted fewer mails, not none.
+#}
+{% set subject = state.scopeLabel %}
+{% set base_action = path('email_preferences', { token: token }) %}
+
+{% block title %}Nastavení e-mailů — {{ brand_name }}{% endblock %}
+{% block meta_robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block auth_card %}
+<div class="card-glass p-8 sm:p-10">
+    <div class="text-center">
+        {% if subject and not state.scopeSubscribed %}
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-win/30 bg-win/10 text-win">
+                <twig:ux:icon name="lucide:circle-check" class="h-8 w-8" />
+            </div>
+            <p class="eyebrow mt-6">E-maily</p>
+            <h1 class="mt-2 text-2xl font-bold tracking-tight text-white">Odhlášeno</h1>
+            <p class="mt-3 text-white/60">
+                {{ subject|capitalize }} — na adresu {{ state.maskedEmail }} už {{ state.scopeIsAll ? 'chodit nebudou' : 'chodit nebude' }}.
+            </p>
+            <form method="post" action="{{ base_action }}" class="mt-8">
+                <input type="hidden" name="co" value="{{ state.scopeSlug }}">
+                <input type="hidden" name="akce" value="obnovit">
+                <button type="submit" class="btn btn-ghost w-full">
+                    <twig:ux:icon name="lucide:rotate-ccw" class="h-4 w-4" />
+                    Vrátit zpět
+                </button>
+            </form>
+        {% elseif subject %}
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-accent-300">
+                <twig:ux:icon name="lucide:bell" class="h-8 w-8" />
+            </div>
+            <p class="eyebrow mt-6">E-maily</p>
+            <h1 class="mt-2 text-2xl font-bold tracking-tight text-white">
+                {% if done == 'obnovit' %}Zase zapnuto{% else %}Odhlásit {{ subject }}?{% endif %}
+            </h1>
+            <p class="mt-3 text-white/60">
+                {% if done == 'obnovit' %}
+                    {{ subject|capitalize }} — na adresu {{ state.maskedEmail }} zase chodí.
+                {% else %}
+                    {{ state.scopeConsequence }}
+                {% endif %}
+            </p>
+            <form method="post" action="{{ base_action }}" class="mt-8">
+                <input type="hidden" name="co" value="{{ state.scopeSlug }}">
+                <input type="hidden" name="akce" value="odhlasit">
+                <button type="submit" class="btn {{ done == 'obnovit' ? 'btn-ghost' : 'btn-primary' }} w-full">
+                    Odhlásit
+                </button>
+            </form>
+        {% else %}
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-accent-300">
+                <twig:ux:icon name="lucide:bell" class="h-8 w-8" />
+            </div>
+            <p class="eyebrow mt-6">E-maily</p>
+            <h1 class="mt-2 text-2xl font-bold tracking-tight text-white">Jak často vám máme psát?</h1>
+            <p class="mt-3 text-white/60">
+                Na adresu {{ state.maskedEmail }} teď posíláme oznámení:
+                <strong class="text-white">{{ state.frequency.label|lower }}{% if state.frequency.value == 'daily' %} v {{ state.digestHour }}:00{% endif %}</strong>.
+            </p>
+        {% endif %}
+    </div>
+
+    {# ── Softer alternatives ── #}
+    <div class="mt-8 space-y-3 border-t border-white/10 pt-6">
+        {% if done == 'denne' %}
+            <p class="flex items-center gap-2 text-sm font-medium text-win" role="status">
+                <twig:ux:icon name="lucide:circle-check" class="h-4 w-4 shrink-0" />
+                Nastaveno — odteď nejvýš jeden souhrn denně.
+            </p>
+        {% elseif state.frequency.value == 'immediate' %}
+            <form method="post" action="{{ base_action }}">
+                <input type="hidden" name="co" value="{{ state.scopeSlug }}">
+                <input type="hidden" name="akce" value="denne">
+                <button type="submit" class="btn btn-ghost w-full">
+                    <twig:ux:icon name="lucide:calendar" class="h-4 w-4" />
+                    Raději jen jeden souhrn denně
+                </button>
+            </form>
+        {% endif %}
+
+        {% if not state.scopeIsAll and state.frequency.value != 'never' %}
+            <form method="post" action="{{ base_action }}">
+                <input type="hidden" name="co" value="vse">
+                <input type="hidden" name="akce" value="odhlasit">
+                <button type="submit" class="btn btn-ghost w-full">
+                    Odhlásit všechny e-maily s oznámeními
+                </button>
+            </form>
+        {% endif %}
+
+        <a href="{{ path('notifications', { tab: 'nastaveni' }) }}" class="btn btn-link flex w-full items-center justify-center gap-1.5 pt-2 text-sm">
+            <twig:ux:icon name="lucide:settings" class="h-4 w-4" />
+            Všechna nastavení oznámení
+        </a>
+    </div>
+</div>
+{% endblock %}

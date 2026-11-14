@@ -32,6 +32,16 @@ class Membership implements EntityWithEvents
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $boostIntroSeenAt = null;
 
+    /**
+     * The member silenced this soutěž: no notification about it reaches them on
+     * ANY channel — no feed row, no mail, and its matches are left out of the tip
+     * reminder. Money alerts ({@see \App\Enum\EmailTiming::Urgent}) are the one
+     * exception, because they are about the member's wallet, not about the game.
+     * Membership itself is untouched: they still play, tip and rank.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    public private(set) bool $notificationsMuted = false;
+
     public bool $isActive {
         get => null === $this->leftAt;
     }
@@ -86,6 +96,16 @@ class Membership implements EntityWithEvents
         }
 
         $this->boostIntroSeenAt = $now;
+    }
+
+    public function muteNotifications(): void
+    {
+        $this->notificationsMuted = true;
+    }
+
+    public function unmuteNotifications(): void
+    {
+        $this->notificationsMuted = false;
     }
 
     public function removeBy(Uuid $removedByUserId, \DateTimeImmutable $now): void

@@ -49,6 +49,8 @@ final class AnonymousReachabilityTest extends WebTestCase
         \App\Controller\Admin\Competition\SponsorCompetitionPremiumController::class => true,
         \App\Controller\Admin\Credits\ListCreditLedgerController::class => true,
         \App\Controller\Admin\Credits\ListCreditPurchasesController::class => true,
+        \App\Controller\Admin\Email\ListEmailPreviewsController::class => true,
+        \App\Controller\Admin\Email\ShowEmailPreviewController::class => true,
         \App\Controller\Admin\MatchSource\AdminDeleteMatchSourceController::class => true,
         \App\Controller\Admin\MatchSource\AdminMarkCompletedController::class => true,
         \App\Controller\Admin\MatchSource\AdminUpdateMatchSourceController::class => true,
@@ -112,6 +114,14 @@ final class AnonymousReachabilityTest extends WebTestCase
         // competition is on the public „Soutěže" list anyway. Public still means „may be
         // READ": joining demands a verified account AND the entry fee.
         \App\Controller\Invitation\JoinGlobalCompetitionInviteController::class => false,
+
+        // --- Unsubscribe from notification e-mail (public on purpose) --------------------
+        // Reached from a link in a mail, by someone who may not be signed in anywhere: an
+        // unsubscribe behind a login gets answered with the spam button. The signed token
+        // in the URL names the player; without a valid one the route is a 404. What the
+        // token may do is only ever LESS e-mail — see EmailPreferencesController.
+        \App\Controller\Notification\EmailPreferencesController::class => false,
+        \App\Controller\Notification\OneClickUnsubscribeController::class => false,
 
         // --- Portal (the whole authenticated app) --------------------------------------
         \App\Controller\Portal\AccountDeleteController::class => true,

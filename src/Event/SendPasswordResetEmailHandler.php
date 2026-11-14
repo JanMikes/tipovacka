@@ -28,7 +28,7 @@ final readonly class SendPasswordResetEmailHandler
 
         $email = (new TemplatedEmail())
             ->to($event->email)
-            ->subject('Obnovení hesla — Tipovačka')
+            ->subject('Nastavte si nové heslo k Wtips')
             ->htmlTemplate('emails/password_reset.html.twig')
             ->context([
                 'resetUrl' => $resetUrl,

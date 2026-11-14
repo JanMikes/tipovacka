@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console;
 
-use App\Command\SendMatchEvaluationDigests\SendMatchEvaluationDigestsCommand as SendDigestsMessage;
+use App\Command\SendEmailDigests\SendEmailDigestsCommand as SendDigestsMessage;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,19 +13,21 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Host-cron entry point for the hourly match-evaluation digest (lily.srv
- * `apps/wtips/cron.d/wtips`, D30 — keep the name stable).
+ * Host-cron entry point for the hourly e-mail sweep (lily.srv
+ * `apps/wtips/cron.d/wtips`, D30).
  *
- * Sends the e-mail half of `match_evaluated`: one mail per user covering every
- * match evaluated since their last digest, so an automated feed finishing a
- * whole round cannot turn into one mail per zápas. In-app rows are written
- * immediately by the event handler and are untouched by this job.
+ * The NAME is `app:match-digests:send` because that is what the crontab calls
+ * — it was born as the digest of evaluated matches and must stay stable. What
+ * it runs has grown: it now sends every mail that is one-for-many — the hourly
+ * collapse of queued notifications and each player's daily summary. The alias
+ * `app:email-digests:send` is the name to use by hand.
  */
 #[AsCommand(
     name: 'app:match-digests:send',
-    description: 'Send the e-mail digest of recently evaluated matches.',
+    description: 'Send the due notification e-mail digests (hourly collapse + daily summaries).',
+    aliases: ['app:email-digests:send'],
 )]
-final class SendMatchEvaluationDigestsCommand extends Command
+final class SendEmailDigestsCommand extends Command
 {
     public function __construct(
         #[Autowire(service: 'command.bus')]
@@ -38,7 +40,7 @@ final class SendMatchEvaluationDigestsCommand extends Command
     {
         $this->commandBus->dispatch(new SendDigestsMessage());
 
-        $output->writeln('<info>Match evaluation digests sent.</info>');
+        $output->writeln('<info>E-mail digests sent.</info>');
 
         return Command::SUCCESS;
     }

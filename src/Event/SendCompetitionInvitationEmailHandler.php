@@ -32,7 +32,7 @@ final readonly class SendCompetitionInvitationEmailHandler
 
         $email = (new TemplatedEmail())
             ->to($event->email)
-            ->subject('Pozvánka do soutěže na Tipovačce')
+            ->subject(sprintf('%s vás zve do soutěže %s', $invitation->inviter->displayName, $invitation->competition->name))
             ->htmlTemplate('emails/competition_invitation.html.twig')
             ->context([
                 'inviterNickname' => $invitation->inviter->displayName,
