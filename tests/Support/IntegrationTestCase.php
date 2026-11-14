@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Support;
 
+use App\Command\ChangeEmailDelivery\ChangeEmailDeliveryCommand;
+use App\Enum\EmailFrequency;
 use App\Query\QueryBus;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -11,6 +13,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
+use Symfony\Component\Uid\Uuid;
 
 abstract class IntegrationTestCase extends KernelTestCase
 {
@@ -70,6 +73,17 @@ abstract class IntegrationTestCase extends KernelTestCase
     {
         /* @var RecordedDomainEvents */
         return self::getContainer()->get(RecordedDomainEvents::class);
+    }
+
+    /**
+     * Puts a fixture user on an e-mail frequency. Without it a user is on the
+     * default (the daily summary), where most notifications wait for the sweep
+     * instead of being mailed at once — a test about „this mail goes out now"
+     * has to say so.
+     */
+    protected function setEmailFrequency(string $userId, EmailFrequency $frequency, ?int $digestHour = null): void
+    {
+        $this->commandBus()->dispatch(new ChangeEmailDeliveryCommand(Uuid::fromString($userId), $frequency, $digestHour));
     }
 
     protected function firstWrappedException(HandlerFailedException $exception): ?\Throwable

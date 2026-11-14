@@ -59,4 +59,32 @@ final class NotificationPreferenceRepository
 
         return $map;
     }
+
+    /**
+     * UUIDs (RFC4122) of the users who explicitly switched the e-mail channel
+     * OFF for a type — the sweep's one-statement lookup, as a set.
+     *
+     * @return array<string, true>
+     */
+    public function userIdsWithEmailOff(NotificationType $type): array
+    {
+        /** @var list<NotificationPreference> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('p', 'u')
+            ->from(NotificationPreference::class, 'p')
+            ->join('p.user', 'u')
+            ->where('p.type = :type')
+            ->andWhere('p.email = false')
+            ->setParameter('type', $type)
+            ->getQuery()
+            ->getResult();
+
+        $set = [];
+
+        foreach ($rows as $row) {
+            $set[$row->user->id->toRfc4122()] = true;
+        }
+
+        return $set;
+    }
 }

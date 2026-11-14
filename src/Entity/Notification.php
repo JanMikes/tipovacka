@@ -20,6 +20,9 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table(name: 'notifications')]
 #[ORM\Index(columns: ['user_id', 'read_at', 'created_at'], name: 'IDX_notifications_user_feed')]
 #[ORM\Index(columns: ['user_id', 'type', 'dedup_key'], name: 'IDX_notifications_dedup')]
+// The predicate is spelled the way PostgreSQL stores it (each condition parenthesised) —
+// any other spelling makes schema:validate report a diff forever.
+#[ORM\Index(columns: ['email_queued_at'], name: 'IDX_notifications_email_pending', options: ['where' => '((email_queued_at IS NOT NULL) AND (email_sent_at IS NULL))'])]
 class Notification
 {
     #[ORM\Column(length: 160)]
@@ -64,6 +67,20 @@ class Notification
     #[ORM\Column(options: ['default' => true])]
     public private(set) bool $inAppVisible = true;
 
+    /**
+     * Set when the e-mail for this row is owed but must not go out on its own —
+     * it waits for the sweep that turns many rows into one mail (the hourly
+     * collapse of a burst, or the player's daily summary). Null = this row was
+     * either mailed directly or never meant for e-mail. A row is PENDING while
+     * this is set and {@see $emailSentAt} is not.
+     */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $emailQueuedAt = null;
+
+    /** When the queued e-mail was settled — sent in a digest, or dropped because the player opted out meanwhile. */
+    #[ORM\Column(nullable: true)]
+    public private(set) ?\DateTimeImmutable $emailSentAt = null;
+
     #[ORM\Column(nullable: true)]
     public private(set) ?\DateTimeImmutable $readAt = null;
 
@@ -94,6 +111,7 @@ class Notification
         ?array $payload = null,
         ?string $dedupKey = null,
         bool $inAppVisible = true,
+        bool $emailQueued = false,
     ) {
         $this->title = $title;
         $this->body = $body;
@@ -101,6 +119,21 @@ class Notification
         $this->payload = $payload;
         $this->dedupKey = $dedupKey;
         $this->inAppVisible = $inAppVisible;
+        $this->emailQueuedAt = $emailQueued ? $this->createdAt : null;
+    }
+
+    /**
+     * The queued e-mail is settled — it went out in a digest, or it was dropped
+     * because the player opted out before the sweep. Either way it never
+     * becomes pending again.
+     */
+    public function settleEmail(\DateTimeImmutable $now): void
+    {
+        if (null === $this->emailQueuedAt || null !== $this->emailSentAt) {
+            return;
+        }
+
+        $this->emailSentAt = $now;
     }
 
     public function markRead(\DateTimeImmutable $now): void

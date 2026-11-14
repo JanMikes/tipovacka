@@ -1,0 +1,47 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}E-maily — Admin — {{ brand_name }}{% endblock %}
+{% block admin_title %}E-maily{% endblock %}
+{% block admin_subtitle %}Všechny e-maily, které aplikace posílá, s ukázkovými daty. Skutečný vzhled se v každém poštovním klientu mírně liší.{% endblock %}
+{% block admin_breadcrumbs %}
+    <li aria-hidden="true" class="text-white/30">/</li>
+    <li class="font-medium text-white/80" aria-current="page">E-maily</li>
+{% endblock %}
+
+{% block admin_body %}
+    <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <nav class="space-y-4 text-sm" aria-label="E-maily">
+            {% set current_group = null %}
+            {% for slug, preview in previews %}
+                {% if preview.group != current_group %}
+                    {% set current_group = preview.group %}
+                    <p class="px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">{{ preview.group }}</p>
+                {% endif %}
+                <a href="{{ path('admin_email_list', { mail: slug }) }}"
+                   class="block rounded-lg px-3 py-2 transition-colors {{ slug == selected ? 'bg-white/10 font-semibold text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' }}">
+                    {{ preview.label }}
+                </a>
+            {% endfor %}
+        </nav>
+
+        <div class="min-w-0 space-y-4">
+            <div class="card p-4">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-white/40">Předmět</p>
+                <p class="mt-1 text-sm font-semibold text-white">{{ previews[selected].subject }}</p>
+            </div>
+
+            <div class="flex flex-wrap items-start gap-6">
+                <div class="min-w-0 flex-1 basis-[600px]">
+                    <p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">Počítač</p>
+                    <iframe src="{{ path('admin_email_preview', { mail: selected }) }}" title="Náhled e-mailu na počítači"
+                            class="h-[760px] w-full rounded-xl border border-white/10 bg-white"></iframe>
+                </div>
+                <div class="shrink-0">
+                    <p class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/40">Telefon</p>
+                    <iframe src="{{ path('admin_email_preview', { mail: selected }) }}" title="Náhled e-mailu na telefonu"
+                            class="h-[760px] w-[375px] max-w-full rounded-xl border border-white/10 bg-white"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

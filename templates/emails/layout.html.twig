@@ -1,0 +1,161 @@
+{#
+    THE one e-mail skeleton — every mail extends it. Structure and client hacks are adapted
+    from Cerberus „fluid" (MIT, github.com/TedGoas/Cerberus); the dark-mode approach from
+    Postmark's transactional templates (MIT). Read .docs/features/emails.md before changing it.
+
+    Three rules the markup below follows, each of them the answer to a client that bit us:
+
+      1. LIGHT by default, dark as an enhancement. Gmail on iOS and Outlook on Windows invert
+         a dark mail into a washed-out light one and cannot be told not to — a light mail
+         survives every client, and Apple Mail still gets the navy look through the
+         `prefers-color-scheme` block.
+      2. Every style that matters is INLINE (`st.*` below). The Gmail app drops the whole
+         <style> block for non-Google accounts, so the block may only hold enhancements:
+         resets, the mobile breakpoint and the dark palette.
+      3. The logo is a PNG with its navy tile baked in. Images are never inverted, so the
+         wordmark stays legible on whatever background a client decides to paint.
+
+    Blocks a mail fills: `title`, `preheader` (the inbox preview line), `content`,
+    `footer_reason` (why the recipient got it — the unsubscribe links live there).
+    Styles for children: the `st` map set below is visible inside their blocks.
+#}
+{% set font = '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif' %}
+{% set st = {
+    eyebrow: 'margin:0 0 10px;font-family:' ~ font ~ ';font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#2a6e9e;',
+    h1: 'margin:0 0 16px;font-family:' ~ font ~ ';font-size:24px;line-height:31px;font-weight:700;letter-spacing:-0.01em;color:#0f1726;',
+    h2: 'margin:0 0 6px;font-family:' ~ font ~ ';font-size:17px;line-height:24px;font-weight:700;color:#0f1726;',
+    p: 'margin:0 0 16px;font-family:' ~ font ~ ';font-size:16px;line-height:25px;color:#3a4763;',
+    muted: 'margin:0 0 12px;font-family:' ~ font ~ ';font-size:14px;line-height:22px;color:#56658a;',
+    strong: 'font-weight:700;color:#0f1726;',
+    link: 'color:#2a6e9e;text-decoration:underline;',
+    panel: 'background-color:#f3f6fb;border:1px solid #dbe3ef;border-radius:10px;',
+    panelCell: 'padding:16px 18px;font-family:' ~ font ~ ';font-size:15px;line-height:23px;color:#3a4763;',
+    rowCell: 'padding:12px 18px;border-top:1px solid #dbe3ef;font-family:' ~ font ~ ';font-size:15px;line-height:23px;color:#3a4763;',
+    rowCellFirst: 'padding:12px 18px;font-family:' ~ font ~ ';font-size:15px;line-height:23px;color:#3a4763;',
+    detail: 'font-size:13px;line-height:20px;color:#56658a;',
+    footer: 'margin:0 0 8px;font-family:' ~ font ~ ';font-size:12px;line-height:19px;color:#5b6b8f;',
+    footerLink: 'color:#5b6b8f;text-decoration:underline;',
+} %}
+<!DOCTYPE html>
+<html lang="cs" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>{% block title %}{{ brand_name }}{% endblock %}</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <![endif]-->
+    <style>
+        :root { color-scheme: light dark; supported-color-schemes: light dark; }
+        html, body { margin: 0 auto !important; padding: 0 !important; height: 100% !important; width: 100% !important; }
+        * { -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt !important; mso-table-rspace: 0pt !important; }
+        img { -ms-interpolation-mode: bicubic; }
+        a[x-apple-data-detectors], .unstyle-auto-detected-links a { border-bottom: 0 !important; cursor: default !important; color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+        .btn-td, .btn-a { transition: all 100ms ease-in; }
+        .btn-td:hover, .btn-a:hover { background-color: #1f5176 !important; }
+
+        @media screen and (max-width: 600px) {
+            .card-pad { padding: 28px 22px 24px !important; }
+            .h1 { font-size: 22px !important; line-height: 28px !important; }
+            .btn-table { width: 100% !important; }
+            .btn-a { padding: 15px 16px !important; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body, .bg-page { background-color: #0a111e !important; }
+            .card { background-color: #141e36 !important; border-color: #243356 !important; border-top-color: #4699d0 !important; }
+            .h1, .h2, .strong, .logo { color: #ffffff !important; }
+            .p, .cell { color: #c4cddd !important; }
+            .muted, .detail { color: #96a3c1 !important; }
+            .eyebrow, .link { color: #8ac3e8 !important; }
+            .panel { background-color: #0f1726 !important; border-color: #243356 !important; }
+            .row { border-top-color: #243356 !important; }
+            .btn-td, .btn-a { background-color: #4699d0 !important; color: #06101c !important; }
+            .footer, .footer-link { color: #8492b5 !important; }
+        }
+
+        /* Outlook.com / the Outlook apps: same palette, their own attribute hooks. */
+        [data-ogsb] .bg-page { background-color: #0a111e !important; }
+        [data-ogsb] .card { background-color: #141e36 !important; border-color: #243356 !important; }
+        [data-ogsb] .panel { background-color: #0f1726 !important; border-color: #243356 !important; }
+        [data-ogsb] .btn-td, [data-ogsb] .btn-a { background-color: #4699d0 !important; }
+        [data-ogsc] .h1, [data-ogsc] .h2, [data-ogsc] .strong { color: #ffffff !important; }
+        [data-ogsc] .p, [data-ogsc] .cell { color: #c4cddd !important; }
+        [data-ogsc] .muted, [data-ogsc] .detail { color: #96a3c1 !important; }
+        [data-ogsc] .eyebrow, [data-ogsc] .link { color: #8ac3e8 !important; }
+        [data-ogsc] .btn-a { color: #06101c !important; }
+        [data-ogsc] .footer, [data-ogsc] .footer-link { color: #8492b5 !important; }
+    </style>
+</head>
+<body width="100%" class="bg-page" style="margin:0;padding:0 !important;mso-line-height-rule:exactly;background-color:#eef2f8;">
+<center role="article" aria-roledescription="email" lang="cs" class="bg-page" style="width:100%;background-color:#eef2f8;">
+    <!--[if mso | IE]>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#eef2f8;">
+    <tr>
+    <td>
+    <![endif]-->
+
+    {# Inbox preview line. The second div pads it with invisible characters so the client
+       does not continue the preview with the first words of the body. #}
+    <div style="max-height:0;overflow:hidden;mso-hide:all;" aria-hidden="true">{% block preheader %}{% endblock %}</div>
+    <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;font-family:sans-serif;" aria-hidden="true">&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+
+    <div style="max-width:600px;margin:0 auto;padding:0 12px;" class="email-container">
+        <!--[if mso]>
+        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600">
+        <tr>
+        <td>
+        <![endif]-->
+        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin:auto;">
+            <tr>
+                <td style="padding:32px 0 22px;text-align:center;">
+                    <a href="{{ absolute_url('/') }}" style="text-decoration:none;">
+                        <img src="{{ logo_url|default(absolute_url('/images/email/logo.png')) }}" width="120" height="48" alt="{{ brand_name }}" class="logo" style="display:block;margin:0 auto;border:0;width:120px;height:48px;font-family:{{ font }};font-size:22px;line-height:48px;font-weight:700;color:#0f1726;">
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td class="card" style="background-color:#ffffff;border:1px solid #dbe3ef;border-top:4px solid #4699d0;border-radius:14px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                            <td class="card-pad" style="padding:36px 40px 30px;text-align:left;">
+                                {% block content %}{% endblock %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:22px 12px 36px;text-align:center;">
+                    {% block footer_reason %}{% endblock %}
+                    <p class="footer" style="{{ st.footer }}">
+                        &copy; {{ 'now'|date('Y') }} {{ brand_name }} &middot; Vše hraje, nic se nesází.
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <!--[if mso]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
+    </div>
+
+    <!--[if mso | IE]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+</center>
+</body>
+</html>

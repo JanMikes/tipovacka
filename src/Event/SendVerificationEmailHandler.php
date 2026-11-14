@@ -51,7 +51,7 @@ final readonly class SendVerificationEmailHandler
 
         $email = (new TemplatedEmail())
             ->to(new Address($user->email, $user->displayName))
-            ->subject('Ověřte prosím svou e-mailovou adresu')
+            ->subject('Potvrďte svůj e-mail a můžete tipovat')
             ->htmlTemplate('emails/verify_email.html.twig')
             ->context([
                 'nickname' => $user->displayName,

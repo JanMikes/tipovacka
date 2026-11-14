@@ -55,7 +55,7 @@ final readonly class InviteToGlobalCompetitionHandler
         $this->mailer->send(
             (new TemplatedEmail())
                 ->to(strtolower(trim($command->email)))
-                ->subject('Pozvánka do soutěže na Tipovačce')
+                ->subject(sprintf('%s vás zve do soutěže %s', $inviter->displayName, $competition->name))
                 ->htmlTemplate('emails/global_competition_invitation.html.twig')
                 ->context([
                     'inviterNickname' => $inviter->displayName,

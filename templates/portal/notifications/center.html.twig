@@ -41,7 +41,6 @@
         </div>
 
         {% if tab == 'nastaveni' %}
-            <p class="mb-4 text-sm text-white/50">Vyberte, o čem chcete být informováni v aplikaci a e-mailem.</p>
             <twig:Notification:Preferences />
         {% else %}
             {% if notifications is empty %}

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Command;
 
 use App\Command\CreateSportMatch\CreateSportMatchCommand;
+use App\Command\MuteCompetitionNotifications\MuteCompetitionNotificationsCommand;
 use App\Command\SendGuessReminders\SendGuessRemindersCommand;
 use App\Command\SetNotificationPreference\SetNotificationPreferenceCommand;
 use App\Command\SubmitGuess\SubmitGuessCommand;
 use App\DataFixtures\AppFixtures;
 use App\Entity\Notification;
 use App\Entity\SportMatch;
+use App\Enum\EmailFrequency;
 use App\Enum\NotificationType;
 use App\Tests\Support\IntegrationTestCase;
 use Symfony\Component\Mailer\Messenger\SendEmailMessage;
@@ -27,6 +29,15 @@ use Symfony\Component\Uid\Uuid;
  */
 final class SendGuessRemindersHandlerTest extends IntegrationTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // This sweep only ever MAILS a player on the „průběžně" frequency; one on the
+        // daily summary (the default) reads about missing tips there instead.
+        $this->setEmailFrequency(AppFixtures::ADMIN_ID, EmailFrequency::Immediate);
+    }
+
     /** Adds a scheduled PUBLIC_SOURCE match kicking off within the 24 h window (now = 2025-06-15 12:00). */
     private function addNearMatch(string $home = 'Blízký Domácí', string $kickoff = '2025-06-16 10:00:00 UTC'): SportMatch
     {
@@ -198,6 +209,63 @@ final class SendGuessRemindersHandlerTest extends IntegrationTestCase
         self::assertNotNull($visible[0]->url);
         self::assertStringContainsString(AppFixtures::VERIFIED_COMPETITION_ID, $visible[0]->url);
         self::assertStringStartsWith('/', $visible[0]->url);
+    }
+
+    /**
+     * On the daily summary the sweep still writes the feed row at once, but sends
+     * no mail — the summary states the missing tips itself, freshly computed.
+     */
+    public function testDailySummaryPlayerGetsTheFeedRowButNoMailFromThisSweep(): void
+    {
+        $this->setEmailFrequency(AppFixtures::ADMIN_ID, EmailFrequency::Daily);
+        $this->addNearMatch();
+
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        self::assertCount(1, $this->visibleReminders(AppFixtures::ADMIN_ID));
+        self::assertSame(0, $this->reminderEmailCountFor(AppFixtures::ADMIN_EMAIL));
+    }
+
+    /** A muted soutěž is left out of the reminder; the others still remind. */
+    public function testMutedCompetitionIsLeftOutOfTheReminder(): void
+    {
+        $this->addNearMatch();
+
+        $this->commandBus()->dispatch(new MuteCompetitionNotificationsCommand(
+            userId: Uuid::fromString(AppFixtures::ADMIN_ID),
+            competitionId: Uuid::fromString(AppFixtures::PUBLIC_COMPETITION_ID),
+            muted: true,
+        ));
+
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        $visible = $this->visibleReminders(AppFixtures::ADMIN_ID);
+        self::assertCount(1, $visible);
+        self::assertSame('Chybí vám 4 tipy', $visible[0]->title);
+        self::assertStringNotContainsString(AppFixtures::PUBLIC_COMPETITION_NAME, $visible[0]->body);
+    }
+
+    /** The mail lists one soutěž per row and carries the no-login unsubscribe. */
+    public function testReminderMailListsCompetitionsAndCanBeUnsubscribedFrom(): void
+    {
+        $this->addNearMatch();
+
+        $this->commandBus()->dispatch(new SendGuessRemindersCommand());
+
+        $mails = array_values(array_filter(
+            self::getMailerMessages(),
+            static fn ($message): bool => $message instanceof Email && str_contains((string) $message->getSubject(), 'Chybí vám'),
+        ));
+        self::assertCount(1, $mails);
+
+        $html = (string) $mails[0]->getHtmlBody();
+        self::assertStringContainsString(AppFixtures::PUBLIC_COMPETITION_NAME, $html);
+        self::assertStringContainsString(AppFixtures::GLOBAL_COMPETITION_NAME, $html);
+        self::assertStringContainsString('Natipovat', $html);
+        // The bullet list is the FEED row's text; the mail renders rows instead.
+        self::assertStringNotContainsString('•', $html);
+        self::assertStringContainsString('Odhlásit tento typ', $html);
+        self::assertNotNull($mails[0]->getHeaders()->get('List-Unsubscribe'));
     }
 
     /**
