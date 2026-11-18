@@ -696,6 +696,42 @@ with the 2026-08-13 shape reproduced: 79 of 80 import, one is skipped.
 The corollary for the next adapter: a row is a snapshot **or** a reason to wait, never a
 reason to drop the other ninety.
 
+## Incident 2026-10-28 → 11-17 — the Premier League went silent (fixed in code)
+
+**What users saw:** no Premier League match after 25. 10. was evaluated. 20 played matches
+(31. 10. – 8. 11.) stayed `scheduled`; 147 tips in two soutěže were never scored.
+
+**Why:** the Sportmonks key stopped covering league 8 — every response now names the plan
+**„Football Free Plan"** (on 2026-08-08 it was *Starter + World Cup 2026*). For a league outside
+the subscription Sportmonks answers **HTTP 200 with no rows** and the same message it uses for a
+genuinely empty range (*„…did not return any results or you don't have access to it via your
+current subscription"*). The adapter deliberately accepted an empty window (winter break), so
+every pass for three weeks logged `0 snapshots … 0 unchanged`, exit 0 — green everywhere. When
+access came back on 2026-11-17 16:35 UTC the 7-day back window no longer reached the stranded
+matches, so they would never have finished on their own.
+
+**What changed (self-healing + loud):**
+
+- **Self-healing window.** `FeedSyncRunner` passes each provider the kickoff of the oldest
+  feed-linked match still awaiting a result (`awaitingResultSince`, ≤ 120 days back). Sportmonks
+  starts its window there (−1 day) instead of at −7 days, so an outage's backlog finishes by itself
+  on the first poll after the feed returns. FAČR and UEFA read the whole season anyway.
+- **Warm while a result is owed.** `FeedPollPolicy` keeps a source on the 30-min cadence while a
+  feed-linked match of the last 7 days still awaits its result — recovery within half an hour, not
+  on the next daily poll; bounded so one never-resolved fixture cannot hold it warm all season.
+- **An empty Sportmonks answer is cross-checked.** It fails the pass when the league is missing
+  from `GET /v3/my/leagues` (message names the plan) or when results are owed in the window. Only a
+  covered league with nothing outstanding may be empty.
+- **Overdue-result watchdog.** Every pass ends by listing feed-linked matches still without a
+  result **12 h** after kickoff (healthy p95 is 2.2 h for every provider). Any such match FAILS the
+  pass (exit 1 → lily cron alert + Sentry cron monitor) until the result is in — by the feed or an
+  admin. This catches every cause, not just this one.
+- **Token out of the URL.** The key now travels in the `Authorization` header; it used to be in the
+  query string of every request URL, which the HTTP client logs at INFO (→ Sentry Logs).
+
+**Still a business decision:** the Sportmonks subscription itself. Whatever plan the key is on must
+cover league 8 — if it lapses again, the watchdog now says so within 12 h instead of three weeks.
+
 ## Still open
 
 - ~~AET / penalty shootout — adapter mapping pending.~~ **RESOLVED 2026-09-03**: the field

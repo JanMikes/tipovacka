@@ -151,6 +151,76 @@ class SportMatchRepository
         );
     }
 
+    /**
+     * Kickoff of the oldest FEED-LINKED match of the source that kicked off inside
+     * the range and still has no result (scheduled or live). The feed is what owes
+     * these a result, so a windowed provider reaches back to it — see
+     * {@see \App\Service\Feed\MatchDataProvider::fetchMatches()}. Matches without
+     * an externalId are left out on purpose: the feed will never finish a match it
+     * does not know, and widening every poll for one would be pure cost.
+     */
+    public function findOldestKickoffAwaitingFeedResult(
+        Uuid $matchSourceId,
+        \DateTimeImmutable $from,
+        \DateTimeImmutable $to,
+    ): ?\DateTimeImmutable {
+        $oldest = $this->entityManager->createQueryBuilder()
+            ->select('MIN(m.kickoffAt)')
+            ->from(SportMatch::class, 'm')
+            ->where('m.matchSource = :matchSourceId')
+            ->andWhere('m.deletedAt IS NULL')
+            ->andWhere('m.externalId IS NOT NULL')
+            ->andWhere('m.state IN (:awaiting)')
+            ->andWhere('m.kickoffAt BETWEEN :from AND :to')
+            ->setParameter('matchSourceId', $matchSourceId)
+            ->setParameter('awaiting', [SportMatchState::Scheduled, SportMatchState::Live])
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return is_string($oldest) ? new \DateTimeImmutable($oldest, new \DateTimeZone('UTC')) : null;
+    }
+
+    /**
+     * Feed-linked matches of ACTIVE feed-bound sources that kicked off before the
+     * cut-off and still have no result — the feed pipeline's health check. A
+     * healthy feed finishes a match ~2 h after kickoff; anything here means the
+     * feed is down, the vendor stopped covering the league, or a status needs a
+     * human (abandoned, suspended).
+     *
+     * @return list<SportMatch>
+     */
+    public function listOverdueFeedResults(\DateTimeImmutable $kickedOffBefore, ?Uuid $onlyMatchSourceId = null): array
+    {
+        $queryBuilder = $this->entityManager->createQueryBuilder()
+            ->select('m', 't', 'ht', 'at')
+            ->from(SportMatch::class, 'm')
+            ->innerJoin('m.matchSource', 't')
+            ->innerJoin('m.homeTeam', 'ht')
+            ->innerJoin('m.awayTeam', 'at')
+            ->where('t.feedProvider IS NOT NULL')
+            ->andWhere('t.completedAt IS NULL')
+            ->andWhere('t.deletedAt IS NULL')
+            ->andWhere('m.deletedAt IS NULL')
+            ->andWhere('m.externalId IS NOT NULL')
+            ->andWhere('m.state IN (:awaiting)')
+            ->andWhere('m.kickoffAt < :before')
+            ->setParameter('awaiting', [SportMatchState::Scheduled, SportMatchState::Live])
+            ->setParameter('before', $kickedOffBefore)
+            ->orderBy('m.kickoffAt', 'ASC')
+            ->addOrderBy('m.id', 'ASC');
+
+        if (null !== $onlyMatchSourceId) {
+            $queryBuilder->andWhere('t.id = :onlyMatchSourceId')->setParameter('onlyMatchSourceId', $onlyMatchSourceId);
+        }
+
+        /** @var list<SportMatch> $matches */
+        $matches = $queryBuilder->getQuery()->getResult();
+
+        return $matches;
+    }
+
     private function existsForSource(Uuid $matchSourceId, callable $constrain): bool
     {
         $queryBuilder = $this->entityManager->createQueryBuilder()

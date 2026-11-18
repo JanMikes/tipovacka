@@ -21,7 +21,13 @@ use App\Repository\SportMatchRepository;
  *    only one worth polling aggressively. Both halves are bounded by that same
  *    window on purpose — see hasLiveMatchKickedOffSince().
  *  - WARM (30 min) — a match starts within the next few hours or has just
- *    ended: late kickoff corrections and trailing result entry.
+ *    ended: late kickoff corrections and trailing result entry. Also while a
+ *    feed-linked match of the last week is STILL awaiting its result: after a
+ *    feed outage that is what makes the self-healing window
+ *    ({@see MatchDataProvider::fetchMatches()}) catch up within half an hour
+ *    instead of on the next daily poll. Bounded to a week so one fixture the
+ *    vendor never resolves cannot hold its source warm for the season — the
+ *    overdue-result alert in {@see FeedSyncRunner} is what asks a human.
  *  - COLD (24 h) — nothing near. One fetch a day still catches fixture and
  *    kickoff changes weeks ahead of anyone tipping them.
  *
@@ -36,6 +42,8 @@ final readonly class FeedPollPolicy
     private const string WARM_LOOKAHEAD = '+6 hours';
 
     private const string WARM_LOOKBACK = '-24 hours';
+
+    private const string AWAITING_RESULT_LOOKBACK = '-7 days';
 
     private const int HOT_INTERVAL_SECONDS = 5 * 60;
 
@@ -95,6 +103,14 @@ final readonly class FeedPollPolicy
             $source->id,
             $now->modify(self::WARM_LOOKBACK),
             $now->modify(self::WARM_LOOKAHEAD),
+        )) {
+            return self::WARM_INTERVAL_SECONDS;
+        }
+
+        if (null !== $this->sportMatches->findOldestKickoffAwaitingFeedResult(
+            $source->id,
+            $now->modify(self::AWAITING_RESULT_LOOKBACK),
+            $now,
         )) {
             return self::WARM_INTERVAL_SECONDS;
         }

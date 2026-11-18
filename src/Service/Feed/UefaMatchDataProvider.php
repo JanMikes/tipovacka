@@ -53,7 +53,7 @@ final readonly class UefaMatchDataProvider implements MatchDataProvider
         return FeedProvider::Uefa;
     }
 
-    public function fetchMatches(MatchSource $source): array
+    public function fetchMatches(MatchSource $source, ?\DateTimeImmutable $awaitingResultSince = null): array
     {
         $competitionId = trim((string) $source->feedRef);
 
