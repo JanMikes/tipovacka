@@ -141,6 +141,39 @@ class GuessRepository
     }
 
     /**
+     * Active tips per match, for many matches in one query.
+     *
+     * @param list<Uuid> $sportMatchIds
+     *
+     * @return array<string, int> sport match UUID → active tip count (matches with none are absent)
+     */
+    public function countActiveByMatches(array $sportMatchIds): array
+    {
+        if ([] === $sportMatchIds) {
+            return [];
+        }
+
+        /** @var list<array{matchId: Uuid|string, tips: int|string}> $rows */
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(g.sportMatch) AS matchId', 'COUNT(g.id) AS tips')
+            ->from(Guess::class, 'g')
+            ->where('g.sportMatch IN (:ids)')
+            ->andWhere('g.deletedAt IS NULL')
+            ->groupBy('g.sportMatch')
+            ->setParameter('ids', $sportMatchIds)
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+
+        foreach ($rows as $row) {
+            $counts[(string) $row['matchId']] = (int) $row['tips'];
+        }
+
+        return $counts;
+    }
+
+    /**
      * @return list<Guess>
      */
     public function findActiveByMatch(Uuid $sportMatchId): array

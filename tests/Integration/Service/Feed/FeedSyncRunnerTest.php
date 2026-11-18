@@ -8,11 +8,17 @@ use App\DataFixtures\AppFixtures;
 use App\Entity\MatchSource;
 use App\Enum\FeedProvider;
 use App\Enum\SportMatchState;
+use App\Exception\FeedResultsOverdue;
+use App\Repository\MatchSourceRepository;
 use App\Repository\SportMatchRepository;
 use App\Service\Feed\FeedPollPolicy;
+use App\Service\Feed\FeedSynchronizer;
 use App\Service\Feed\FeedSyncReport;
 use App\Service\Feed\FeedSyncRunner;
+use App\Service\Feed\MatchDataProviderRegistry;
 use App\Tests\Support\IntegrationTestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 
@@ -76,6 +82,31 @@ final class FeedSyncRunnerTest extends IntegrationTestCase
         self::assertSame(SportMatchState::Finished, $this->syncedMatch()?->state);
     }
 
+    /**
+     * „We must not hear about it from a user": once an hour the overdue state is
+     * an ERROR carrying {@see FeedResultsOverdue} — its own Sentry issue, which
+     * the „wtips feed" alert rule mails on every occurrence. The other passes of
+     * the hour stay at warning so an outage costs ~24 Sentry events a day.
+     */
+    public function testOverdueResultsRaiseOneDedicatedErrorAnHour(): void
+    {
+        $this->sync();
+        $this->mockClock()->modify('+1 day -2 minutes'); // 2025-06-16 11:58
+
+        $logger = $this->recordingLogger();
+        $this->runnerLoggingTo($logger)->run(onlySourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
+        self::assertSame(['warning'], array_column($logger->records, 'level'), 'mid-hour: warning only');
+
+        $this->mockClock()->modify('+3 minutes'); // 12:01 — the top-of-the-hour pass
+        $logger = $this->recordingLogger();
+        $this->runnerLoggingTo($logger)->run(onlySourceId: Uuid::fromString(AppFixtures::PUBLIC_SOURCE_ID));
+
+        self::assertSame(['error'], array_column($logger->records, 'level'));
+        $exception = $logger->records[0]['context']['exception'] ?? null;
+        self::assertInstanceOf(FeedResultsOverdue::class, $exception);
+        self::assertStringContainsString('1 played match has still without a result', $exception->getMessage());
+    }
+
     public function testOrdinaryResultLatencyIsNotOverdue(): void
     {
         $this->sync();
@@ -123,6 +154,38 @@ final class FeedSyncRunnerTest extends IntegrationTestCase
         self::assertSame([], $report->failed);
 
         return $report;
+    }
+
+    private function runnerLoggingTo(LoggerInterface $logger): FeedSyncRunner
+    {
+        $container = self::getContainer();
+
+        return new FeedSyncRunner(
+            $container->get(MatchSourceRepository::class),
+            $container->get(SportMatchRepository::class),
+            $container->get(MatchDataProviderRegistry::class),
+            $container->get(FeedSynchronizer::class),
+            $container->get(FeedPollPolicy::class),
+            $this->clock(),
+            $logger,
+            $this->commandBus(),
+        );
+    }
+
+    /**
+     * @return AbstractLogger&object{records: list<array{level: mixed, message: string|\Stringable, context: array<mixed>}>}
+     */
+    private function recordingLogger(): AbstractLogger
+    {
+        return new class () extends AbstractLogger {
+            /** @var list<array{level: mixed, message: string|\Stringable, context: array<mixed>}> */
+            public array $records = [];
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->records[] = ['level' => $level, 'message' => $message, 'context' => $context];
+            }
+        };
     }
 
     private function writeFeed(string $status, ?int $homeScore = null, ?int $awayScore = null): void

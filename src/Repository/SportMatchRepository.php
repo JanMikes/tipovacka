@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\Membership;
 use App\Entity\SportMatch;
+use App\Enum\MatchSourceKind;
 use App\Enum\SportMatchState;
 use App\Exception\SportMatchNotFound;
 use Doctrine\ORM\EntityManagerInterface;
@@ -213,6 +214,48 @@ class SportMatchRepository
 
         if (null !== $onlyMatchSourceId) {
             $queryBuilder->andWhere('t.id = :onlyMatchSourceId')->setParameter('onlyMatchSourceId', $onlyMatchSourceId);
+        }
+
+        /** @var list<SportMatch> $matches */
+        $matches = $queryBuilder->getQuery()->getResult();
+
+        return $matches;
+    }
+
+    /**
+     * Matches of ACTIVE zdroje of the given kind that kicked off inside the range
+     * and still have no result (scheduled or live) — feed-bound and manual alike.
+     * The daily missing-results check ({@see \App\Service\SportMatch\MissingResultsCheck}):
+     * every one of them holds tips nobody can evaluate.
+     *
+     * @return list<SportMatch>
+     */
+    public function listMissingResult(
+        MatchSourceKind $kind,
+        \DateTimeImmutable $kickedOffBefore,
+        ?\DateTimeImmutable $kickedOffAfter = null,
+    ): array {
+        $queryBuilder = $this->entityManager->createQueryBuilder()
+            ->select('m', 't', 'ht', 'at')
+            ->from(SportMatch::class, 'm')
+            ->innerJoin('m.matchSource', 't')
+            ->innerJoin('m.homeTeam', 'ht')
+            ->innerJoin('m.awayTeam', 'at')
+            ->where('t.kind = :kind')
+            ->andWhere('t.completedAt IS NULL')
+            ->andWhere('t.deletedAt IS NULL')
+            ->andWhere('m.deletedAt IS NULL')
+            ->andWhere('m.state IN (:awaiting)')
+            ->andWhere('m.kickoffAt < :before')
+            ->setParameter('kind', $kind)
+            ->setParameter('awaiting', [SportMatchState::Scheduled, SportMatchState::Live])
+            ->setParameter('before', $kickedOffBefore)
+            ->orderBy('t.name', 'ASC')
+            ->addOrderBy('m.kickoffAt', 'ASC')
+            ->addOrderBy('m.id', 'ASC');
+
+        if (null !== $kickedOffAfter) {
+            $queryBuilder->andWhere('m.kickoffAt >= :after')->setParameter('after', $kickedOffAfter);
         }
 
         /** @var list<SportMatch> $matches */

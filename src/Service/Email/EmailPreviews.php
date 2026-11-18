@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Email;
 
 use App\Enum\NotificationType;
+use App\Service\SportMatch\MissingResult;
 use App\Value\EmailDigest;
 use App\Value\EmailDigestSection;
 use App\Value\EmailItem;
@@ -171,6 +172,21 @@ final readonly class EmailPreviews
                         daily: true,
                         unsubscribeScope: UnsubscribeScope::all(),
                     ),
+                ],
+            ],
+            'admin-chybejici-vysledky' => [
+                'label' => 'Zápasy bez výsledku (adminům)',
+                'group' => 'Administrace',
+                'subject' => 'Wtips: 3 odehrané zápasy bez výsledku',
+                'template' => 'emails/admin_missing_results.html.twig',
+                'context' => [
+                    'curated' => [
+                        new MissingResult('Premier League 2026/27', 'Chelsea', 'Manchester United', new \DateTimeImmutable('-3 days'), true, 9, self::SAMPLE_LINK),
+                        new MissingResult('Okresní přebor 2026/27', 'Lhota', 'Újezd', new \DateTimeImmutable('-1 day'), false, 4, self::SAMPLE_LINK),
+                    ],
+                    'privateRecent' => [
+                        new MissingResult('Hospoda U Lípy', 'Sparta Praha', 'Slavia Praha', new \DateTimeImmutable('-2 days'), false, 6, self::SAMPLE_LINK),
+                    ],
                 ],
             ],
         ];
