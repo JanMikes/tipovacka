@@ -20,6 +20,16 @@ interface MatchDataProvider
 {
     public static function provides(): FeedProvider;
 
-    /** @return list<MatchSnapshot> */
-    public function fetchMatches(MatchSource $source): array;
+    /**
+     * @param \DateTimeImmutable|null $awaitingResultSince kickoff of the OLDEST stored match of this
+     *                                                     source that has kicked off but still has no
+     *                                                     result. A provider that fetches a date window
+     *                                                     instead of the whole season must reach back at
+     *                                                     least this far — that is what lets the pipeline
+     *                                                     heal itself after a feed outage longer than its
+     *                                                     usual window. Whole-season providers ignore it.
+     *
+     * @return list<MatchSnapshot>
+     */
+    public function fetchMatches(MatchSource $source, ?\DateTimeImmutable $awaitingResultSince = null): array;
 }

@@ -50,6 +50,36 @@ final class FeedPayloadInvalid extends \DomainException
     }
 
     /**
+     * The vendor answered, but the subscription does not (or no longer does)
+     * include this league — the vendor itself reports that as an empty 200.
+     *
+     * @param list<string> $plans
+     */
+    public static function notInSubscription(string $provider, string $feedRef, array $plans): self
+    {
+        return new self(sprintf(
+            '%s: league "%s" is not covered by the current subscription (plans: %s) — results cannot arrive until it is.',
+            $provider,
+            $feedRef,
+            [] === $plans ? 'unknown' : implode(', ', $plans),
+        ));
+    }
+
+    /**
+     * An empty window that contains matches we know were played: whatever the
+     * vendor's reason, nothing is going to finish them.
+     */
+    public static function emptyWhileAwaitingResults(string $provider, string $feedRef, \DateTimeImmutable $awaitingSince): self
+    {
+        return new self(sprintf(
+            '%s returned no fixtures for "%s" although matches since %s UTC are still awaiting a result.',
+            $provider,
+            $feedRef,
+            $awaitingSince->format('Y-m-d H:i'),
+        ));
+    }
+
+    /**
      * The response parsed, but not a single row survived to a snapshot — same
      * danger as an empty response, wearing a well-formed envelope.
      */

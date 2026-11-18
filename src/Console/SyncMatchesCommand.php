@@ -23,8 +23,9 @@ use Symfony\Component\Uid\Uuid;
  * exit code. All behaviour lives in the service so it is testable without a
  * console tester.
  *
- * EXIT CODES: 1 only on a REAL failure — a provider that could not be fetched or
- * a snapshot that could not be applied. Unpaired team names and unmapped
+ * EXIT CODES: 1 only on a REAL failure — a provider that could not be fetched, a
+ * snapshot that could not be applied, or a feed-linked match still without a
+ * result 12 h after kickoff (the watchdog: its tips are not being evaluated). Unpaired team names and unmapped
  * statuses are printed and logged at warning level but exit 0: they need a human
  * eventually, not a pager at 03:00.
  */
@@ -126,6 +127,18 @@ final class SyncMatchesCommand extends Command
 
         foreach ($report->failed as $entry) {
             $output->writeln(sprintf('<error>%s: %s</error>', $entry['source']->name, $entry['error']));
+        }
+
+        if ([] !== $report->overdue) {
+            $output->writeln(sprintf(
+                '<error>%d feed-linked %s still without a result 12+ h after kickoff — tips are not being evaluated:</error>',
+                count($report->overdue),
+                1 === count($report->overdue) ? 'match' : 'matches',
+            ));
+
+            foreach ($report->overdue as $label) {
+                $output->writeln(sprintf('  <error>%s</error>', $label));
+            }
         }
     }
 }

@@ -32,13 +32,32 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * before anyone tips them. The window is deliberately asymmetric: a few days
  * back (late result corrections) against a few weeks forward (TV reschedules).
  *
- * Rate limit is 2500 requests/hour PER ENTITY and every response restates the
- * remaining budget; one poll costs 1 request per bound source (+1 per extra
- * page), so there is no realistic way to exhaust it.
+ * The window is SELF-HEALING: it always reaches back to the oldest stored match
+ * still awaiting a result (`$awaitingResultSince`). Before that, a feed outage
+ * longer than the back window stranded every match played during it — exactly
+ * what happened 2026-10-28 → 2026-11-17, when the subscription stopped covering
+ * the Premier League and 20 played matches were never finished nor evaluated.
+ *
+ * An EMPTY answer is never taken at face value. Sportmonks reports a league the
+ * subscription no longer covers as HTTP 200 with no rows and the same message
+ * it uses for a genuinely empty range, so an empty window is cross-checked: it
+ * fails when results are known to be missing, or when the league is not among
+ * the subscription's leagues (`GET /v3/my/leagues`). Only a covered league with
+ * nothing outstanding (a winter break) may legitimately come back empty.
+ *
+ * Rate limit is PER ENTITY and plan-dependent (2500/h on Starter, ~180/h on
+ * the free plan) and every response restates the remaining budget; one poll
+ * costs 1 request per bound source (+1 per extra page, +1 per 90 days of a
+ * widened window), so even the free plan is far from exhausted.
+ *
+ * The token travels in the `Authorization` header, never the query string —
+ * request URLs end up in INFO logs, and INFO is shipped to Sentry Logs.
  */
 final readonly class SportmonksMatchDataProvider implements MatchDataProvider
 {
     private const string BASE_URL = 'https://api.sportmonks.com/v3/football/fixtures/between';
+
+    private const string MY_LEAGUES_URL = 'https://api.sportmonks.com/v3/my/leagues';
 
     private const string INCLUDES = 'participants;scores;state;round;venue;events';
 
@@ -50,6 +69,13 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
     private const string WINDOW_BACK = '-7 days';
 
     private const string WINDOW_FORWARD = '+30 days';
+
+    /**
+     * How far the self-healing window may reach back for a match still awaiting
+     * its result. Longer than any plausible outage, short enough that one
+     * forgotten fixture cannot make every poll fetch the whole season.
+     */
+    private const string HEAL_LIMIT_BACK = '-120 days';
 
     /**
      * On the FIRST fetch of a source the window is not enough: a season's other
@@ -90,7 +116,7 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
         return FeedProvider::Sportmonks;
     }
 
-    public function fetchMatches(MatchSource $source): array
+    public function fetchMatches(MatchSource $source, ?\DateTimeImmutable $awaitingResultSince = null): array
     {
         $leagueId = trim((string) $source->feedRef);
 
@@ -105,15 +131,21 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
         $now = \DateTimeImmutable::createFromInterface($this->clock->now());
         $firstFetch = null === $source->feedPolledAt;
 
-        $start = $now->modify($firstFetch ? self::SEASON_BACK : self::WINDOW_BACK);
-        $end = $now->modify($firstFetch ? self::SEASON_FORWARD : self::WINDOW_FORWARD);
+        [$start, $end] = $firstFetch
+            ? [$now->modify(self::SEASON_BACK), $now->modify(self::SEASON_FORWARD)]
+            : [$this->windowStart($now, $awaitingResultSince), $now->modify(self::WINDOW_FORWARD)];
 
         $rows = [];
+        $plans = [];
 
         foreach ($this->chunks($start, $end) as [$from, $to]) {
-            foreach ($this->fetchRows($leagueId, $from, $to) as $row) {
+            foreach ($this->fetchRows($leagueId, $from, $to, $plans) as $row) {
                 $rows[] = $row;
             }
+        }
+
+        if ([] === $rows) {
+            $this->assertEmptyIsGenuine($leagueId, $awaitingResultSince, $plans);
         }
 
         $snapshots = [];
@@ -122,9 +154,76 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
             $snapshots[] = $this->snapshotFromRow($index, $row);
         }
 
-        // Unlike the other providers an empty window is legitimate — a league in
-        // its summer break simply has no fixtures in the next 30 days.
         return $snapshots;
+    }
+
+    /**
+     * The usual few days back, or further when an older stored match is still
+     * waiting for its result — a day of slack before its kickoff absorbs any
+     * timezone or kickoff-move skew, and the reach is capped.
+     */
+    private function windowStart(\DateTimeImmutable $now, ?\DateTimeImmutable $awaitingResultSince): \DateTimeImmutable
+    {
+        $start = $now->modify(self::WINDOW_BACK);
+
+        if (null === $awaitingResultSince) {
+            return $start;
+        }
+
+        $healFrom = max($awaitingResultSince->modify('-1 day'), $now->modify(self::HEAL_LIMIT_BACK));
+
+        return min($start, $healFrom);
+    }
+
+    /**
+     * An empty window is believable only for a league the subscription covers
+     * and with no result outstanding. Anything else is an outage dressed as a
+     * quiet week, and must fail the job instead of reporting „0 unchanged".
+     *
+     * @param list<string> $plans
+     */
+    private function assertEmptyIsGenuine(string $leagueId, ?\DateTimeImmutable $awaitingResultSince, array $plans): void
+    {
+        if (!in_array($leagueId, $this->subscribedLeagueIds(), true)) {
+            throw FeedPayloadInvalid::notInSubscription(self::provides()->label(), $leagueId, $plans);
+        }
+
+        if (null !== $awaitingResultSince) {
+            throw FeedPayloadInvalid::emptyWhileAwaitingResults(self::provides()->label(), $leagueId, $awaitingResultSince);
+        }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function subscribedLeagueIds(): array
+    {
+        $ids = [];
+
+        for ($page = 1; $page <= self::MAX_PAGES; ++$page) {
+            $payload = $this->get(self::MY_LEAGUES_URL, ['per_page' => self::PAGE_SIZE, 'page' => $page]);
+            $data = $payload['data'] ?? null;
+
+            if (!is_array($data)) {
+                break;
+            }
+
+            foreach ($data as $league) {
+                $id = is_array($league) ? ($league['id'] ?? null) : null;
+
+                if (is_int($id) || is_string($id)) {
+                    $ids[] = (string) $id;
+                }
+            }
+
+            $pagination = $payload['pagination'] ?? null;
+
+            if (!is_array($pagination) || true !== ($pagination['has_more'] ?? false)) {
+                break;
+            }
+        }
+
+        return $ids;
     }
 
     /**
@@ -148,14 +247,23 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
     }
 
     /**
+     * @param list<string> $plans filled with the subscription's plan names, for the error message
+     *
      * @return list<array<mixed>>
      */
-    private function fetchRows(string $leagueId, string $from, string $to): array
+    private function fetchRows(string $leagueId, string $from, string $to, array &$plans): array
     {
         $rows = [];
 
         for ($page = 1; $page <= self::MAX_PAGES; ++$page) {
-            $payload = $this->requestPage($leagueId, $from, $to, $page);
+            $payload = $this->get(sprintf('%s/%s/%s', self::BASE_URL, $from, $to), [
+                'filters' => sprintf('fixtureLeagues:%s', $leagueId),
+                'include' => self::INCLUDES,
+                'per_page' => self::PAGE_SIZE,
+                'page' => $page,
+            ]);
+
+            $plans = $this->planNames($payload) ?: $plans;
             $data = $payload['data'] ?? null;
 
             if (!is_array($data)) {
@@ -179,21 +287,48 @@ final readonly class SportmonksMatchDataProvider implements MatchDataProvider
     }
 
     /**
+     * Every response restates the subscription; its plan names are what tells a
+     * human at a glance that „Starter" quietly became „Football Free Plan".
+     *
+     * @param array<mixed> $payload
+     *
+     * @return list<string>
+     */
+    private function planNames(array $payload): array
+    {
+        $names = [];
+        $subscriptions = $payload['subscription'] ?? null;
+
+        foreach (is_array($subscriptions) ? $subscriptions : [] as $subscription) {
+            $plans = is_array($subscription) ? ($subscription['plans'] ?? null) : null;
+
+            foreach (is_array($plans) ? $plans : [] as $plan) {
+                $name = is_array($plan) ? ($plan['plan'] ?? null) : null;
+
+                if (is_string($name) && '' !== $name) {
+                    $names[] = $name;
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * @param array<string, int|string> $query
+     *
      * @return array<mixed>
      */
-    private function requestPage(string $leagueId, string $from, string $to, int $page): array
+    private function get(string $url, array $query): array
     {
         try {
-            return $this->httpClient->request('GET', sprintf('%s/%s/%s', self::BASE_URL, $from, $to), [
-                'query' => [
-                    'api_token' => $this->apiKey,
-                    'filters' => sprintf('fixtureLeagues:%s', $leagueId),
-                    'include' => self::INCLUDES,
-                    'per_page' => self::PAGE_SIZE,
-                    'page' => $page,
-                ],
+            return $this->httpClient->request('GET', $url, [
+                'query' => $query,
                 'timeout' => self::TIMEOUT_SECONDS,
-                'headers' => ['Accept' => 'application/json'],
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => (string) $this->apiKey,
+                ],
             ])->toArray();
         } catch (HttpExceptionInterface|\JsonException $e) {
             throw FeedPayloadInvalid::requestFailed(self::provides()->label(), $e->getMessage());

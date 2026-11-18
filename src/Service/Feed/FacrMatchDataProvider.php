@@ -52,7 +52,7 @@ final readonly class FacrMatchDataProvider implements MatchDataProvider
         return FeedProvider::Facr;
     }
 
-    public function fetchMatches(MatchSource $source): array
+    public function fetchMatches(MatchSource $source, ?\DateTimeImmutable $awaitingResultSince = null): array
     {
         $html = $this->fetchCompetitionPage((string) $source->feedRef);
 

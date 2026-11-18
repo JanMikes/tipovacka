@@ -41,7 +41,7 @@ final readonly class FixtureFileProvider implements MatchDataProvider
         return FeedProvider::Fixture;
     }
 
-    public function fetchMatches(MatchSource $source): array
+    public function fetchMatches(MatchSource $source, ?\DateTimeImmutable $awaitingResultSince = null): array
     {
         $path = (string) $source->feedRef;
         if (!str_starts_with($path, '/')) {

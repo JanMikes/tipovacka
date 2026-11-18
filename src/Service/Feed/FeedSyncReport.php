@@ -23,6 +23,9 @@ final class FeedSyncReport
     /** @var list<array{source: MatchSource, error: string}> */
     public private(set) array $failed = [];
 
+    /** @var list<string> feed-linked matches long past kickoff with no result (human-readable) */
+    public private(set) array $overdue = [];
+
     public function addSynced(MatchSource $source, int $snapshots, FeedSyncResult $result): void
     {
         $this->synced[] = ['source' => $source, 'snapshots' => $snapshots, 'result' => $result];
@@ -38,15 +41,21 @@ final class FeedSyncReport
         $this->failed[] = ['source' => $source, 'error' => $error];
     }
 
+    public function addOverdue(string $label): void
+    {
+        $this->overdue[] = $label;
+    }
+
     /**
-     * Fetch errors and unapplicable snapshots — and nothing else. Unresolved
-     * team names and unmapped statuses are warnings by explicit decision: we
-     * pair everything we can and report the rest, but a missing alias is not an
-     * outage and must not page anyone at 03:00.
+     * Fetch errors, unapplicable snapshots and overdue results — and nothing
+     * else. Unresolved team names and unmapped statuses are warnings by explicit
+     * decision: we pair everything we can and report the rest, but a missing
+     * alias is not an outage and must not page anyone at 03:00. A played match
+     * whose result never arrives IS one: its tips stay unevaluated.
      */
     public bool $hasFailures {
         get {
-            if ([] !== $this->failed) {
+            if ([] !== $this->failed || [] !== $this->overdue) {
                 return true;
             }
 

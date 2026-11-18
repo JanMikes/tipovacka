@@ -7,6 +7,7 @@ namespace App\Service\Feed;
 use App\Command\SyncMatchSourceFeed\SyncMatchSourceFeedCommand;
 use App\Entity\MatchSource;
 use App\Repository\MatchSourceRepository;
+use App\Repository\SportMatchRepository;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -29,11 +30,31 @@ use Symfony\Component\Uid\Uuid;
  * a zdroj without prodloužení cannot hold) are logged at
  * warning level and reported; only real failures make {@see FeedSyncReport}
  * fail, because a missing team alias is hygiene, not an outage.
+ *
+ * Self-healing + watchdog (after the 2026-10-28 → 11-17 Premier League outage,
+ * when a lapsed vendor subscription answered „no fixtures" for three weeks and
+ * every pass reported success):
+ *  - each provider is told the kickoff of the oldest feed-linked match still
+ *    awaiting a result, and a windowed provider reaches back to it — so the
+ *    results of an outage arrive by themselves once the feed is back;
+ *  - every pass ends with the overdue check: a feed-linked match still without
+ *    a result {@see OVERDUE_AFTER} after kickoff FAILS the pass (exit 1 → the
+ *    lily cron alert + the Sentry cron monitor) and keeps failing it until the
+ *    result is in. A healthy feed finishes a match ~2 h after kickoff (p95
+ *    2.2 h across every provider, measured 2026-11-18), so this never fires on
+ *    ordinary latency — only when nobody is going to deliver that result.
  */
 final readonly class FeedSyncRunner
 {
+    /** A result still missing this long after kickoff is an incident, not latency. */
+    public const string OVERDUE_AFTER = '-12 hours';
+
+    /** How far back a provider is asked to heal; matches older than this need a human anyway. */
+    private const string HEAL_LOOKBACK = '-120 days';
+
     public function __construct(
         private MatchSourceRepository $matchSources,
+        private SportMatchRepository $sportMatches,
         private MatchDataProviderRegistry $providers,
         private FeedSynchronizer $synchronizer,
         private FeedPollPolicy $pollPolicy,
@@ -60,7 +81,40 @@ final readonly class FeedSyncRunner
             $this->runOne($source, $report, $now, $dryRun, $force || null !== $onlySourceId);
         }
 
+        $this->checkOverdueResults($report, $now, $onlySourceId);
+
         return $report;
+    }
+
+    private function checkOverdueResults(FeedSyncReport $report, \DateTimeImmutable $now, ?Uuid $onlySourceId): void
+    {
+        $overdue = $this->sportMatches->listOverdueFeedResults($now->modify(self::OVERDUE_AFTER), $onlySourceId);
+
+        if ([] === $overdue) {
+            return;
+        }
+
+        $labels = [];
+
+        foreach ($overdue as $match) {
+            $label = sprintf(
+                '%s: %s – %s (%s UTC)',
+                $match->matchSource->name,
+                $match->homeTeam->name,
+                $match->awayTeam->name,
+                $match->kickoffAt->format('Y-m-d H:i'),
+            );
+            $labels[] = $label;
+            $report->addOverdue($label);
+        }
+
+        // Warning, not error: the failed exit code is the alert (lily cron +
+        // Sentry cron monitor), and this runs every five minutes — an error
+        // record would turn one incident into ~300 Sentry events a day.
+        $this->logger->warning('Feed-linked matches are overdue for a result — the feed is not delivering them.', [
+            'count' => count($overdue),
+            'matches' => array_slice($labels, 0, 20),
+        ]);
     }
 
     private function runOne(
@@ -92,8 +146,14 @@ final readonly class FeedSyncRunner
             return;
         }
 
+        $awaitingResultSince = $this->sportMatches->findOldestKickoffAwaitingFeedResult(
+            $source->id,
+            $now->modify(self::HEAL_LOOKBACK),
+            $now,
+        );
+
         try {
-            $snapshots = $provider->fetchMatches($source);
+            $snapshots = $provider->fetchMatches($source, $awaitingResultSince);
         } catch (\Throwable $e) {
             $report->addFailed($source, $e->getMessage());
             $this->logger->error('Feed fetch failed.', [
