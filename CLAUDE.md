@@ -67,6 +67,7 @@ docker compose exec web bin/console app:matches:sync --dry-run       # every 5 m
 docker compose exec web bin/console app:guess-reminders:send         # hourly in prod
 docker compose exec web bin/console app:match-digests:send           # hourly at :10 in prod (e-mail digests + daily summaries)
 docker compose exec web bin/console app:leaderboard:capture-snapshots # 03:00 Europe/Prague in prod
+docker compose exec web bin/console app:matches:check-results --dry-run # daily 08:00 Prague: played matches without a result → Sentry + admin mail
 ```
 
 ## Architecture Overview
@@ -96,7 +97,8 @@ service — no business logic in a console class: `app:premium:reconcile` (every
 `app:matches:sync` (every 5 min), `app:guess-reminders:send` (hourly),
 `app:match-digests:send` (hourly at :10 — historical name; it sends every one-for-many
 notification mail, alias `app:email-digests:send`), `app:leaderboard:capture-snapshots`
-(03:00 Europe/Prague). They are invoked by **host cron**
+(03:00 Europe/Prague), `app:matches:check-results` (daily 08:00 Prague — played matches still
+without a result: ERROR → Sentry issue, mail to every admin, exit 1). They are invoked by **host cron**
 (lily.srv `apps/wtips/cron.d/wtips` per D30, wrapped by `lily-cron-run` + `sentry-cli monitors`
 for ops visibility/monitorability) — NOT by symfony/scheduler, which was removed. Each cron
 entry runs `docker compose run --rm messenger-consumer bin/console app:…`; keep the command

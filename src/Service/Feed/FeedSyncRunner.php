@@ -6,6 +6,7 @@ namespace App\Service\Feed;
 
 use App\Command\SyncMatchSourceFeed\SyncMatchSourceFeedCommand;
 use App\Entity\MatchSource;
+use App\Exception\FeedResultsOverdue;
 use App\Repository\MatchSourceRepository;
 use App\Repository\SportMatchRepository;
 use Psr\Clock\ClockInterface;
@@ -40,7 +41,9 @@ use Symfony\Component\Uid\Uuid;
  *  - every pass ends with the overdue check: a feed-linked match still without
  *    a result {@see OVERDUE_AFTER} after kickoff FAILS the pass (exit 1 → the
  *    lily cron alert + the Sentry cron monitor) and keeps failing it until the
- *    result is in. A healthy feed finishes a match ~2 h after kickoff (p95
+ *    result is in; once an hour it is also logged as a dedicated
+ *    {@see FeedResultsOverdue} Sentry issue, which the „wtips feed" alert rule
+ *    e-mails on every occurrence (a user must never be the one to tell us). A healthy feed finishes a match ~2 h after kickoff (p95
  *    2.2 h across every provider, measured 2026-11-18), so this never fires on
  *    ordinary latency — only when nobody is going to deliver that result.
  */
@@ -51,6 +54,9 @@ final readonly class FeedSyncRunner
 
     /** How far back a provider is asked to heal; matches older than this need a human anyway. */
     private const string HEAL_LOOKBACK = '-120 days';
+
+    /** The first five minutes of each hour: exactly one pass of the every-five-minutes cron. */
+    private const int ALERT_MINUTES_PAST_HOUR = 5;
 
     public function __construct(
         private MatchSourceRepository $matchSources,
@@ -108,13 +114,23 @@ final readonly class FeedSyncRunner
             $report->addOverdue($label);
         }
 
-        // Warning, not error: the failed exit code is the alert (lily cron +
-        // Sentry cron monitor), and this runs every five minutes — an error
-        // record would turn one incident into ~300 Sentry events a day.
-        $this->logger->warning('Feed-linked matches are overdue for a result — the feed is not delivering them.', [
+        $context = [
             'count' => count($overdue),
             'matches' => array_slice($labels, 0, 20),
-        ]);
+        ];
+
+        // ERROR once an hour — the top-of-the-hour pass of the */5 cron — so a
+        // long outage is one Sentry issue with ~24 events a day, not ~300; every
+        // other pass logs a warning (Sentry Logs) and still fails its exit code.
+        if ((int) $now->format('i') < self::ALERT_MINUTES_PAST_HOUR) {
+            $this->logger->error('Feed results are overdue — tips are not being evaluated.', $context + [
+                'exception' => FeedResultsOverdue::matches(count($overdue), $labels[0]),
+            ]);
+
+            return;
+        }
+
+        $this->logger->warning('Feed results are overdue — tips are not being evaluated.', $context);
     }
 
     private function runOne(

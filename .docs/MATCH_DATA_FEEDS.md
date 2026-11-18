@@ -729,6 +729,23 @@ matches, so they would never have finished on their own.
 - **Token out of the URL.** The key now travels in the `Authorization` header; it used to be in the
   query string of every request URL, which the HTTP client logs at INFO (→ Sentry Logs).
 
+**Alerting — a user must never be the one to tell us** (product owner, 2026-11-18). Three layers,
+each reaching a human on its own:
+
+1. **Feed watchdog, hourly.** `app:matches:sync` fails (exit 1) on every pass while a feed-linked
+   match is overdue, and once an hour logs ERROR with `FeedResultsOverdue` — a dedicated Sentry
+   issue, never mixed with the cron-monitor issue (that one flaps on infra noise: TIPOVACKA-W,
+   83 events Oct–Nov).
+2. **Fetch failures.** A Sportmonks plan without the league → `FeedPayloadInvalid` at ERROR.
+3. **Daily safety net — `app:matches:check-results` (08:00 Prague).** Every curated zdroj, feed
+   OR manual: a played match without a result 12 h after kickoff → ERROR with
+   `MatchResultsMissing`, a mail to every admin (links + tip counts), exit 1. Private zdroje
+   (the organizer's job) appear in that mail for the last 7 days only, never as a failure.
+
+Sentry alert rule **„wtips feed: results not arriving"** (project tipovacka) mails on EVERY event
+of `FeedResultsOverdue`, `MatchResultsMissing` or `FeedPayloadInvalid`, at most hourly — so it
+keeps nagging until fixed even if someone resolves the issue.
+
 **Still a business decision:** the Sportmonks subscription itself. Whatever plan the key is on must
 cover league 8 — if it lapses again, the watchdog now says so within 12 h instead of three weeks.
 

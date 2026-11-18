@@ -1,0 +1,45 @@
+{% extends 'emails/layout.html.twig' %}
+
+{% block title %}Zápasy bez výsledku{% endblock %}
+{% block preheader %}Odehrané zápasy, u kterých nemůžeme vyhodnotit tipy.{% endblock %}
+
+{% macro rows(items, st) %}
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="panel" style="{{ st.panel }}margin:4px 0 20px;">
+        {% for item in items %}
+            <tr>
+                <td class="cell {{ loop.first ? '' : 'row' }}" valign="top" style="{{ loop.first ? st.rowCellFirst : st.rowCell }}">
+                    <a href="{{ item.url }}" class="strong" style="{{ st.strong }}">{{ item.homeTeam }} – {{ item.awayTeam }}</a><br>
+                    <span class="detail" style="{{ st.detail }}">
+                        {{ item.sourceName }} &middot; {{ item.kickoffAt|date('j. n. Y H:i', 'Europe/Prague') }}
+                        &middot; {{ item.tips }} {{ item.tips == 1 ? 'tip' : (item.tips > 1 and item.tips < 5 ? 'tipy' : 'tipů') }}
+                        &middot; {{ item.feedBound ? 'automatický zdroj' : 'ruční zdroj' }}
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endmacro %}
+
+{% block content %}
+    <p class="eyebrow" style="{{ st.eyebrow }}">Kontrola výsledků &middot; {{ 'now'|date('j. n.', 'Europe/Prague') }}</p>
+
+    {% if curated is not empty %}
+        <h1 class="h1" style="{{ st.h1 }}">{{ curated|length }} {{ curated|length == 1 ? 'zápas' : (curated|length < 5 ? 'zápasy' : 'zápasů') }} bez výsledku</h1>
+        <p class="p" style="{{ st.p }}">
+            Tyto zápasy už jsou odehrané, ale nemají výsledek, takže hráčům nevyhodnotíme tipy.
+            U automatického zdroje je výpadek dodavatele dat, u ručního zdroje je potřeba výsledek zadat.
+            Hlášení chodí denně, dokud výsledky nedoplníme.
+        </p>
+        {{ _self.rows(curated, st) }}
+    {% else %}
+        <h1 class="h1" style="{{ st.h1 }}">Soukromé zdroje bez výsledků</h1>
+    {% endif %}
+
+    {% if privateRecent is not empty %}
+        <p class="p" style="{{ st.p }}">
+            <span class="strong" style="{{ st.strong }}">Pro informaci – soukromé zdroje.</span>
+            Výsledky zadává organizátor. Jde o zápasy z posledních 7 dní.
+        </p>
+        {{ _self.rows(privateRecent, st) }}
+    {% endif %}
+{% endblock %}
